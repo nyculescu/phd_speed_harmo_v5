@@ -1,0 +1,47 @@
+# =============================================================================
+# m43_v0 — experiment config
+# =============================================================================
+meta:
+  base_configs:
+    - ../_common_config.yaml
+  version: m43_v0
+
+execution:
+  default_train_config: qrdqn_config.yaml
+  train_and_eval_sequential:
+    enabled: true
+    configs:
+      - qrdqn_config.yaml
+      - dqn_config.yaml
+
+evaluation:
+  results_folder_name: m43_v0
+  controller_order:
+    - QRDQN
+    - DQN
+    - No_Ctrl_Baseline
+  controllers:
+    - name: QRDQN
+      type: drl
+      model_to_load: best_model
+      enabled: true
+      config_path: configurations/m43_v0/qrdqn_config.yaml
+      model_path_override: trained_models/m43_v0/QRDQN_train
+    - name: DQN
+      type: drl
+      model_to_load: best_model
+      enabled: true
+      config_path: configurations/m43_v0/dqn_config.yaml
+      model_path_override: trained_models/m43_v0/DQN_train
+    - name: No_Ctrl_Baseline
+      type: baseline
+      enabled: true
+  params:
+    allowed_demands: [1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200]
+    episode_duration: 7950
+    episodes_per_combo: 10
+    scenario_prefix: eval_m43_v0
+    scenario_selection_mode: random
+    clean_results_subdirs: true
+    max_workers: 500
+    sequential: false

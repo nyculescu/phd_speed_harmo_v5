@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<additional>
+    <!-- ========== VSL POIs ========== -->
+    <poi id="vsl_seg_2_before" type="VSL" lane="seg_2_before_0" pos="1.0" posLat="-6.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_2_before"/>
+    <poi id="vsl_seg_1_before" type="VSL" lane="seg_1_before_0" pos="1.0" posLat="-6.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_1_before"/>
+    <poi id="vsl_seg_0_before" type="VSL" lane="seg_0_before_0" pos="1.0" posLat="-6.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_0_before"/>
+    <!-- ========== Detectors for seg_2_before ========== -->
+    <inductionLoop id="flow_loop_seg_2_before_0_entry" lane="seg_2_before_0" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_entry" lane="seg_2_before_1" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_entry" lane="seg_2_before_2" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_3_entry" lane="seg_2_before_3" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_mid" lane="seg_2_before_0" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_mid" lane="seg_2_before_1" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_mid" lane="seg_2_before_2" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_3_mid" lane="seg_2_before_3" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_exit" lane="seg_2_before_0" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_exit" lane="seg_2_before_1" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_exit" lane="seg_2_before_2" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_3_exit" lane="seg_2_before_3" pos="1000.0" freq="30" file="/dev/null"/>
+    <!-- ========== Detectors for seg_1_before ========== -->
+    <inductionLoop id="flow_loop_seg_1_before_0_entry" lane="seg_1_before_0" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_entry" lane="seg_1_before_1" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_entry" lane="seg_1_before_2" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_3_entry" lane="seg_1_before_3" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_mid" lane="seg_1_before_0" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_mid" lane="seg_1_before_1" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_mid" lane="seg_1_before_2" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_3_mid" lane="seg_1_before_3" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_exit" lane="seg_1_before_0" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_exit" lane="seg_1_before_1" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_exit" lane="seg_1_before_2" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_3_exit" lane="seg_1_before_3" pos="1000.0" freq="30" file="/dev/null"/>
+    <!-- ========== Detectors for seg_0_before ========== -->
+    <inductionLoop id="flow_loop_seg_0_before_0_entry" lane="seg_0_before_0" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_entry" lane="seg_0_before_1" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_entry" lane="seg_0_before_2" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_3_entry" lane="seg_0_before_3" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_mid" lane="seg_0_before_0" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_mid" lane="seg_0_before_1" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_mid" lane="seg_0_before_2" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_3_mid" lane="seg_0_before_3" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_exit" lane="seg_0_before_0" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_exit" lane="seg_0_before_1" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_exit" lane="seg_0_before_2" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_3_exit" lane="seg_0_before_3" pos="1000.0" freq="30" file="/dev/null"/>
+    <!-- ========== Detectors for seg_0_after ========== -->
+    <inductionLoop id="flow_loop_seg_0_after_0_entry" lane="seg_0_after_0" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_entry" lane="seg_0_after_1" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_entry" lane="seg_0_after_2" pos="0.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_mid" lane="seg_0_after_0" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_mid" lane="seg_0_after_1" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_mid" lane="seg_0_after_2" pos="500.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_exit" lane="seg_0_after_0" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_exit" lane="seg_0_after_1" pos="1000.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_exit" lane="seg_0_after_2" pos="1000.0" freq="30" file="/dev/null"/>
+    <e3Detector id="e3_seg_2_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_2_before_0" pos="0.0"/>
+        <detEntry lane="seg_2_before_1" pos="0.0"/>
+        <detEntry lane="seg_2_before_2" pos="0.0"/>
+        <detEntry lane="seg_2_before_3" pos="0.0"/>
+        <detExit lane="seg_2_before_0" pos="1000.0"/>
+        <detExit lane="seg_2_before_1" pos="1000.0"/>
+        <detExit lane="seg_2_before_2" pos="1000.0"/>
+        <detExit lane="seg_2_before_3" pos="1000.0"/>
+    </e3Detector>
+    <e3Detector id="e3_seg_1_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_1_before_0" pos="0.0"/>
+        <detEntry lane="seg_1_before_1" pos="0.0"/>
+        <detEntry lane="seg_1_before_2" pos="0.0"/>
+        <detEntry lane="seg_1_before_3" pos="0.0"/>
+        <detExit lane="seg_1_before_0" pos="1000.0"/>
+        <detExit lane="seg_1_before_1" pos="1000.0"/>
+        <detExit lane="seg_1_before_2" pos="1000.0"/>
+        <detExit lane="seg_1_before_3" pos="1000.0"/>
+    </e3Detector>
+    <e3Detector id="e3_seg_0_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_0_before_0" pos="0.0"/>
+        <detEntry lane="seg_0_before_1" pos="0.0"/>
+        <detEntry lane="seg_0_before_2" pos="0.0"/>
+        <detEntry lane="seg_0_before_3" pos="0.0"/>
+        <detExit lane="seg_0_before_0" pos="1000.0"/>
+        <detExit lane="seg_0_before_1" pos="1000.0"/>
+        <detExit lane="seg_0_before_2" pos="1000.0"/>
+        <detExit lane="seg_0_before_3" pos="1000.0"/>
+    </e3Detector>
+    <e3Detector id="e3_corridor" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_2_before_0" pos="0.0"/>
+        <detEntry lane="seg_2_before_1" pos="0.0"/>
+        <detEntry lane="seg_2_before_2" pos="0.0"/>
+        <detEntry lane="seg_2_before_3" pos="0.0"/>
+        <detExit lane="seg_0_after_0" pos="1000.0"/>
+        <detExit lane="seg_0_after_1" pos="1000.0"/>
+        <detExit lane="seg_0_after_2" pos="1000.0"/>
+    </e3Detector>
+</additional>
