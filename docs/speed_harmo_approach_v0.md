@@ -38,7 +38,7 @@ Plant compliance experiments at demands 1600–3200 veh/h showed the following r
 
 **The agent was only capable of doing useful work during 16–27% of each episode.** For the other 73–84% of the time, any action it took was either harmful or irrelevant. No reward signal can train a good policy under these conditions.
 
-The regime gate (v7/v8) partially addressed this, but it is a band-aid: the agent still receives observations and computes actions during FREE_FLOW and CONGESTED periods, wasting sample budget and polluting the policy gradient.
+The regime gate (v7/v8) partially addressed this, but it is a band-aid: the agent still receives observations and computes actions during FREE_FLOW and CONGESTED periods, wasting sample budget and polluting the policy gradient [R12]. External regime-based activation is a recognised pattern in the VSL literature [R26], but it delegates the regime boundary decision to hand-engineered logic rather than letting the agent learn it; including the regime as a one-hot in the observation [R15], [R25], [R26] yields a conditional policy that self-selects behaviour per regime without an external gate.
 
 ### 1.2 The Lag Problem
 
@@ -253,10 +253,14 @@ At 50% MPR, roughly half the vehicles in each upstream segment are directly cont
 | Parameter | v4 | v5 |
 |---|---|---|
 | E1 aggregation window | 150 s | 30 s |
-| Control period (action frequency) | 150 s (= 1 E1 window) | 150 s (held for 5 E1 windows) |
+| Control period (action frequency) | 150 s (= 1 E1 window) | 30 s (= 1 E1 window) |
 | State at each control step | 1 observation | Stack of last 5 × 30s observations |
 
-The 30s E1 window is achievable in SUMO by setting `freq="30"` on E1 detectors. The corridor transit time at 65 kph = 165 s ≈ 5.5 windows. Stacking 5 observations gives the agent a 150s temporal context with 5× finer resolution than v4. The agent still acts once every 150s, maintaining consistency with real-world VSL operational constraints.
+The 30s E1 window is achievable in SUMO by setting `freq="30"` on E1 detectors. The control period equals one E1 aggregation window (30s), giving 265 decisions per episode.
+
+Physical VSL sign deployments require multi-minute display intervals so that drivers have sufficient time to read, react, and adjust speed before the limit changes again; field-deployed systems such as MARVEL respect this constraint [R10]. Lagrangian CAV control eliminates it entirely: the speed command is a digital message delivered directly to the vehicle controller (V2V/I2V channel), and the CAV responds within one simulation step with no display-time concern [R3], [R24]. Concretely, Vinitsky et al. [R3] update CAV maximum speed at every 1–2 simulation seconds; Ko et al. [R24] issue speed harmonisation commands every 10 s — both an order of magnitude faster than any physical-sign constraint.
+
+The 5-frame state stack provides 150s of temporal look-back context but does not constrain the decision frequency. Acting every 30s yields 265 decisions per episode (vs. 53 at a 150s hold), giving 5× more training signal and tighter temporal credit assignment.
 
 ### 6.2 State Space
 
@@ -283,7 +287,7 @@ The state vector `s_t ∈ ℝ^(5 × F)` is the concatenation of the last 5 E1 fe
 
 All features are normalised to `[0, 1]` or `[−1, 1]` using known physical bounds (speed: 0–130 kph; flow: 0–4000 veh/h; occupancy: 0–100%; etc.).
 
-**Regime indicator:** Computed from `seg_0_before` E1 readings using `RegimeDetector` (canonical implementation in `core/src/regime_detector.py`). The one-hot encoding makes the regime explicitly observable to the agent, so it can learn a conditional policy without a regime gate wrapper.
+**Regime indicator:** Computed from `seg_0_before` E1 readings using `RegimeDetector` (canonical implementation in `core/src/regime_detector.py`). The one-hot encoding makes the regime explicitly observable to the agent, so it can learn a conditional policy without a regime gate wrapper. Including traffic-regime features (density, jam length, bottleneck probability) in the observation to enable conditional control is established practice [R15], [R25], [R26]; the one-hot formulation here makes the conditioning signal explicit rather than implicit.
 
 ### 6.3 Action Space
 
@@ -301,7 +305,7 @@ All features are normalised to `[0, 1]` or `[−1, 1]` using known physical boun
 
 The 7-action design covers the operationally relevant range (70–100 kph) with sufficient resolution. A single action is applied uniformly to all 3 upstream segments (one-zone controller). This is simpler than the per-segment design of v4 and avoids combinatorial explosion; multi-zone control is listed as a future extension.
 
-**Implementation note:** The posted limit is absolute (not additive delta), computed once per control step. CAVs receive `slowDown(target_ms, sumo_step_length)` every simulation step until the next control decision. HDVs see `setMaxSpeed(lane_id, target_ms)`.
+**Implementation note:** The posted limit is absolute (not additive delta), computed once per control step. CAVs receive `slowDown(target_ms, sumo_step_length)` every simulation step until the next control decision. HDVs see `setMaxSpeed(lane_id, target_ms)`. Absolute actions are stateless: the effect of action `k` is always the same speed level regardless of the previous action, eliminating the accumulated-state dependency introduced by delta formulations [R3]. Delta-based designs require explicit anti-oscillation constraints (e.g. ±30 km/h change cap [R15], or ≤10 mph/min rate limit [R25]) that degrade control performance; here oscillation is discouraged instead through the smoothness term in the reward (§6.4), which is softer and does not penalise rapid correction when warranted.
 
 ### 6.4 Reward Function
 
@@ -606,6 +610,9 @@ Papers marked **[LOCAL]** are available in `phd_speed_harmo_v4/docs/academic_pap
 | [R21] | Hegyi, A. et al. (2008). SPECIALIST: A Dynamic Speed Limit Control Algorithm Based on Shock Wave Theory. *IEEE ITSC 2008*. | **[LOCAL]** `papers_RL_RM/SPECIALIST A dynamic speed limit control algorithm based on shock wave theory.pdf` |
 | [R22] | Cooperative Multi-Agent RL for Large Scale VSL Control. | **[LOCAL]** `papers_RL_VSL/Cooperative Multi-Agent Reinforcement Learning for Large Scale Variable Speed Limit Control.pdf` |
 | [R23] | Multi-agent RL-Based VSL Strategy by Leveraging CAVs in Mixed Traffic Flow. | **[LOCAL]** `papers_RL_VSL/Multi-agent Reinforcement Learning-Based Variable Speed Limit Strategy by Leveraging Connected and Autonomous Vehicles in Mixed Traffic Flow.pdf` |
+| [R24] | Ko, B., Ryu, S., Park, B.B., Son, S.H. (2020). Speed Harmonisation and Merge Control Using Connected Automated Vehicles on a Highway Lane Closure: A Reinforcement Learning Approach. *IET Intelligent Transport Systems, 14*(8), 947–957. https://doi.org/10.1049/iet-its.2019.0709 | **[LOCAL]** `papers_RL_VSL/Speed harmonisation and merge control using connected automated vehicles on a.pdf` |
+| [R25] | Li, Z., Liu, P., Xu, C., Duan, H., Wang, W. (2017). Reinforcement Learning-Based Variable Speed Limit Control Strategy to Reduce Traffic Congestion at Freeway Recurrent Bottlenecks. *IEEE Transactions on Intelligent Transportation Systems, 18*(11), 3204–3217. https://doi.org/10.1109/TITS.2016.2639361 | **[LOCAL]** `papers_RL_VSL/Reinforcement Learning Based Variable Speed Limit Control Strategy to Reduce Traffic Congestion at Freeway Recurrent Bottlenecks.pdf` |
+| [R26] | Han, Y., Hegyi, A., Zhang, L., He, Z., Chung, E., Liu, P. (2022). A New Reinforcement Learning-Based Variable Speed Limit Control Approach to Improve Traffic Efficiency Against Freeway Jam Waves. *Transportation Research Part C: Emerging Technologies, 144*, 103903. https://doi.org/10.1016/j.trc.2022.103903 | **[LOCAL]** `papers_RL_VSL/A new reinforcement learning-based variable speed limit control approach to improve traffic efficiency against freeway jam waves.pdf` |
 
 ---
 
@@ -619,10 +626,11 @@ Papers marked **[LOCAL]** are available in `phd_speed_harmo_v4/docs/academic_pap
 | Risk measure | None | CVaR α=0.1 at inference | [R1],[R2]: distributional RL enables risk-averse policies |
 | Exploration | ε-greedy | NoisyNet | [R8]: state-dependent exploration; no ε schedule |
 | Observation window | 150s | 30s (stack ×5) | Removes lag; 5× temporal resolution |
-| Control period | 150s | 150s (unchanged) | Operational constraint; matched to physical response time |
+| Control period | 150s | 30s (= 1 E1 window) | [R3], [R24]: Lagrangian CAV control eliminates VSL sign display-time constraint |
 | State dimension | ~20 | 110 (5-frame stack) | Temporal context needed for credit assignment |
 | Reward terms | 9 terms + constraint | 3 terms | [R10]: MARVEL field deployment uses exactly this structure |
-| Regime gate | External wrapper | Regime in state | Agent learns conditional policy; no gate needed |
+| Regime gate | External wrapper | Regime in state (one-hot) | [R15],[R25],[R26]: regime features in obs enable conditional policy; [R12]: gate pollutes policy gradient |
+| Action type | Delta (relative Δ speed) | Absolute level (stateless) | [R3]: delta formulation creates accumulated-state dependency; [R15],[R25]: anti-flicker constraints degrade performance |
 | CAV penetration | Not modelled | 50%, 75%, 100% sweep | [R3], [R4]: MPR is key independent variable |
 
 ---

@@ -4,6 +4,9 @@ Standalone project — Lagrangian CAV control with distributional RL (QR-DQN).
 Single topology: 4-to-3 highway merge (`merge_4_to_3_v0`).
 Run all commands from the project root (`phd_speed_harmo_v5/`).
 
+Goal: Speed harmonization at a 4→3 lane highway merge using Lagrangian CAV direct control (via traci.vehicle.slowDown())
+on CAVs + Distributional RL (QR-DQN and Rainbow C51). The key shift from v4: no longer relying on HDV compliance with posted signs.
+
 ## v4 → v5 paradigm shift
 
 | | v4 | v5 |
