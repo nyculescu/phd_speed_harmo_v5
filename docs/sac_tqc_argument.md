@@ -267,7 +267,25 @@ The state must contain enough information for the agent to:
 
 Including `prev_action` in the state restores the Markov property for the smoothness reward term (Li et al. [R25], p. 3205: *"two previous actions (speed limits)"* included in the state).
 
-### 6.3 What about E3 data?
+### 6.3 Why 3-frame stack is sufficient
+
+The 3-frame stack provides 90 s of look-back (3 × 30 s windows). The question is whether this captures enough temporal context for the agent to detect congestion onset and learn temporal selectivity.
+
+**Empirical answer from baseline data:**
+
+At 7000 vph (no control), the transition from FREE_FLOW to CONGESTED takes **10 steps (300 s)**:
+- Step 10 (t=300 s): seg_0_before drops to 72.6 kph (METASTABLE), seg_2_before still at 97.5 kph
+- Step 20 (t=600 s): seg_0_before drops to 44.9 kph (CONGESTED), seg_2_before still at 102.7 kph
+
+The 3-frame stack sees 3 of those 10 transition steps at any given time. But the agent does not need to see the entire transition — it needs to detect that the transition has *started*. The relevant signal is visible in a **single frame**: the spatial speed gradient (seg_0_before = 72 kph while seg_2_before = 97 kph). The 3 frames add the temporal derivative: "seg_0_before is dropping over consecutive windows."
+
+At 6500 vph, the system oscillates in/out of METASTABLE without full breakdown (steps 23, 26, 27, 42, 117 show brief METASTABLE dips). The 3-frame stack captures these oscillations.
+
+**Why not 5 frames (150 s)?** With γ = 0.99 and 120 steps per episode, credit assignment over 5 frames (γ^5 = 0.951) is no better than over 3 frames (γ^3 = 0.970). The marginal information from frames t−4 and t−5 is small — the speed gradient is already fully visible in the most recent 3 frames. The 5-frame stack from the v4 design (§6.1 of speed_harmo_approach_v0.md) was motivated by the 150 s control period at the time; with 30 s control, 3 frames is the right match.
+
+**Fallback if 3 frames proves insufficient:** If SAC/TQC fail to learn temporal selectivity after 500 episodes, RecurrentPPO (SB3-Contrib) with LSTM replaces the frame stack entirely — the LSTM learns its own temporal features. If LSTM succeeds where frame stack fails, the bottleneck was temporal context and should be documented as such.
+
+### 6.4 What about E3 data?
 
 E3 `meanTimeLoss` per segment is a direct measure of delay and could replace or supplement the E1 speed-based features. However, E3 travel time is only available when vehicles have fully traversed the segment (entry-to-exit), introducing a measurement lag of 30–90 s depending on segment length and speed. For the 30 s control period, E1 data (available at every aggregation boundary) provides more timely feedback. E3 corridor-level `meanTravelTime` may be useful as a secondary reward signal (TTS proxy) but is not needed in the observation for regime detection.
 
@@ -496,6 +514,36 @@ All three use identical hyperparameters where applicable (learning rate, network
 | `n_critics` | 2 | 2 |
 | `n_quantiles` | — | 25 |
 | `top_quantiles_to_drop_per_net` | — | 2 |
+
+### 9.4 The "do nothing" region: why no action reparameterization is needed
+
+SAC's initial policy is a squashed Gaussian centered near the middle of the action range. For the mainline dimension, this is ~90 kph — a moderate restriction. During free-flow episodes (3000–5500 vph), this initial restriction is harmful: it creates rolling roadblocks that increase σ_upstream and reduce flow.
+
+**Concern:** The top portion of the action range [~100, 120 kph] produces near-identical outcomes at free-flow (all are effectively "do nothing"). Exploration in this plateau wastes early training episodes.
+
+**Analysis — the reward signal is clear and immediate:**
+
+| Scenario (5000 vph) | Mean speed | σ_upstream | Δv_temporal | DS flow | r_harmo | r_q | Total |
+|---|---|---|---|---|---|---|---|
+| No control | 110.7 kph | 2.33 | 3.36 | 4515 | −0.151 | 0.753 | **+0.143** |
+| 110 kph VSL | 52.4 kph | 21.11 | 5.79 | 4544 | −0.545 | 0.757 | **−0.073** |
+| 90 kph VSL | 63.0 kph | 23.13 | 5.18 | 4813 | −0.558 | 0.802 | **−0.066** |
+
+Even the mildest restriction (110 kph) during free-flow produces a reward gap of **+0.143 − (−0.073) = 0.216** compared to no control. This is a strong, unambiguous learning signal: unnecessary restriction is clearly worse than doing nothing.
+
+**Why SAC self-corrects within ~50–100 episodes:**
+
+1. **Entropy regularization** ensures the policy samples broadly during early training, including the high-action [100, 120] kph region where "do nothing" is optimal.
+2. **The regime one-hot** (FREE_FLOW / METASTABLE / CONGESTED) in the state gives the critic a direct feature to condition on. After observing a few dozen episodes where FREE_FLOW + low action → negative reward and FREE_FLOW + high action → positive reward, the critic learns the conditional value function.
+3. **The off-policy replay buffer** retains both good and bad episodes. The critic learns from both simultaneously — it does not need to re-explore the plateau each epoch.
+
+**Why action reparameterization (e.g., restriction fraction ∈ [0, 1]) is not necessary:**
+
+SB3's SAC implementation uses tanh squashing: raw policy output ∈ ℝ → tanh → [−1, 1] → affine → [60, 120]. The initial μ ≈ 0 maps to ~90 kph. After the critic learns the regime-dependent value landscape, the actor's μ shifts to a regime-conditional value. The plateau at [100, 120] is not a problem because:
+- The critic correctly assigns similar Q-values to all actions in the plateau → the actor gradient is small there → the policy naturally moves toward the informative region [60, 100] during transitional episodes.
+- During free-flow episodes, the critic gradient points toward high actions → the policy converges to ~120 kph.
+
+**Conclusion:** No code change needed. The reward signal is strong enough (0.216 gap) and SAC's architecture handles plateaus by design. Monitor the first 100 episodes: if the mean episode reward at 5000 vph is not trending positive by episode 100, the issue is elsewhere (likely reward weights, not action parameterization).
 
 ---
 
