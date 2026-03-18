@@ -116,7 +116,7 @@ class ActionStrategy(ABC):
     @abstractmethod
     def apply_action(
         self,
-        action: int,
+        action: Any,
         metrics: Any,
     ) -> Tuple[Dict[str, float], float, Optional[str]]:
         """Return (speed_limits_ms, penalty, pattern_name)."""

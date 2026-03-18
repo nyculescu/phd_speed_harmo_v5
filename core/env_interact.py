@@ -1,20 +1,20 @@
 # core/env_interact.py
 """
+Gymnasium environment wrapping a SUMO ramps_v1 simulation.
+
 Design
 ------
 - One env step = one E1 aggregation window (``aggregation_time`` seconds).
-- Speed limits are posted to all lanes in the controlled upstream segments.
+- Speed limits are posted to controlled segments (mainline + ramp transition).
 - CAVs receive ``traci.vehicle.slowDown()`` at every SUMO step.
-- ``sumo_cfg_path=None`` → dry-run mode: no SUMO process, all metrics are
-  zero.  Used for unit/integration tests without a SUMO installation.
-
+- ``sumo_cfg_path=None`` → dry-run mode: no SUMO process, all metrics zero.
 """
 from __future__ import annotations
 
 import logging
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
@@ -26,38 +26,41 @@ from .sar_frame import ActionStrategy, RewardFunction, StateRepresentation
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Network topology constants for merge_4_to_3
+# ramps_v1 topology constants
 # ---------------------------------------------------------------------------
 
-# Upstream segments ordered from furthest-from-merge to closest.
-# Each has 4 lanes (the 4-lane highway before the 4→3 merge point).
-_UPSTREAM_SEGS: Tuple[str, ...] = ("seg_2_before", "seg_1_before", "seg_0_before")
-_UPSTREAM_LANE_COUNT: int = 4
+# All segments with their lane counts.
+_SEGMENT_LANES: Dict[str, int] = {
+    "seg_3_before": 3,
+    "seg_2_before": 3,
+    "seg_1_before": 3,
+    "seg_0_before": 3,
+    "seg_0_after": 4,
+    "seg_1_after": 3,
+    "ramp_on_approach": 1,
+    "ramp_on_transition": 1,
+    "ramp_on_merge": 1,
+    "ramp_off_diverge": 1,
+    "ramp_off_transition": 1,
+    "ramp_off_departure": 1,
+}
 
-# Downstream segment (3 lanes after the merge).
-_DOWNSTREAM_SEG: str = "seg_0_after"
-_DOWNSTREAM_LANE_COUNT: int = 3
+# Segments that receive posted speed limits from the action.
+_CONTROLLED_SEGS: Tuple[str, ...] = (
+    "seg_0_before", "seg_1_before", "seg_2_before", "ramp_on_transition",
+)
 
-# E1 detector position within each segment to read from.
-# "exit" = closest to merge inside the upstream segment (best predictive signal).
-# "entry" = just after the merge for the downstream segment.
-_US_DET_POS: str = "exit"
-_DS_DET_POS: str = "entry"
+# E1 detector position to read.
+_DET_POS: str = "exit"
 
-# Segments that receive posted speed limits (same order as TrafficMetrics.current_speed_limits).
-_CONTROLLED_SEGS: Tuple[str, ...] = ("seg_0_before", "seg_1_before", "seg_2_before")
-
-
-def _us_det_ids(seg: str) -> List[str]:
-    return [f"flow_loop_{seg}_{i}_{_US_DET_POS}" for i in range(_UPSTREAM_LANE_COUNT)]
+# Ramp edge prefixes (for CAV slowdown routing).
+_RAMP_EDGES: Tuple[str, ...] = (
+    "ramp_on_approach", "ramp_on_transition", "ramp_on_merge",
+)
 
 
-def _ds_det_ids() -> List[str]:
-    return [f"flow_loop_{_DOWNSTREAM_SEG}_{i}_{_DS_DET_POS}" for i in range(_DOWNSTREAM_LANE_COUNT)]
-
-
-def _seg_lane_ids(seg: str, n: int) -> List[str]:
-    return [f"{seg}_{i}" for i in range(n)]
+def _det_ids(seg: str, n_lanes: int) -> List[str]:
+    return [f"flow_loop_{seg}_{i}_{_DET_POS}" for i in range(n_lanes)]
 
 
 def _free_port() -> int:
@@ -72,7 +75,7 @@ def _free_port() -> int:
 
 class TrafficEnv(gym.Env):
     """
-    Gymnasium environment wrapping a SUMO merge_4_to_3_v0 simulation.
+    Gymnasium environment for the ramps_v1 SUMO network.
 
     Parameters
     ----------
@@ -115,15 +118,12 @@ class TrafficEnv(gym.Env):
         self.cav_percent = float(cav_percent)
         self.aggregation_time = int(aggregation_time)
 
-        # Each SUMO step is 1 s; one env step advances aggregation_time SUMO steps.
         self._steps_per_window: int = self.aggregation_time
         self._max_steps: int = self.episode_duration // self.aggregation_time
 
-        # gymnasium spaces (delegated to SAR components)
         self.observation_space = self.state_repr.get_observation_space()
         self.action_space = self.action_strat.get_action_space()
 
-        # Runtime
         self._sumo_proc: Optional[subprocess.Popen] = None
         self._port: int = 0
         self._step_count: int = 0
@@ -148,7 +148,7 @@ class TrafficEnv(gym.Env):
 
         if not self.dry_run:
             self._start_sumo()
-            self._advance_sumo(self._steps_per_window)  # first window
+            self._advance_sumo(self._steps_per_window)
             self._collect_metrics()
 
         obs = self._make_obs()
@@ -156,25 +156,28 @@ class TrafficEnv(gym.Env):
 
     def step(
         self,
-        action: int,
+        action: Any,
     ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
-        action = int(action)
-
         # 1. Apply action → speed limits (m/s per segment)
         speed_limits_ms, penalty, pattern = self.action_strat.apply_action(
             action, self._metrics
         )
 
-        # 2. Update control bookkeeping in metrics
-        self._metrics.prev_action_idx = self._metrics.action_idx
-        self._metrics.action_idx = action
+        # 2. Update control bookkeeping
+        self._metrics.prev_action = (
+            self._metrics.action.copy() if self._metrics.action is not None else None
+        )
+        if isinstance(action, np.ndarray):
+            self._metrics.action = action.copy()
+        else:
+            self._metrics.action = np.array([action], dtype=np.float32)
+
         for i, seg in enumerate(_CONTROLLED_SEGS):
             limit_ms = speed_limits_ms.get(seg, MAX_SPEED_KPH / 3.6)
             self._metrics.current_speed_limits[i] = limit_ms * 3.6  # kph
 
-        # 3. Advance simulation
+        # 3. Advance simulation (pure Lagrangian: only CAV slowDown, no lane setMaxSpeed)
         if not self.dry_run:
-            self._apply_segment_limits(speed_limits_ms)
             self._advance_sumo(self._steps_per_window)
             self._collect_metrics()
 
@@ -213,7 +216,7 @@ class TrafficEnv(gym.Env):
     # ------------------------------------------------------------------
 
     def _start_sumo(self) -> None:
-        import traci  # type: ignore[import]
+        import traci
 
         self._port = _free_port()
         cmd = [
@@ -234,7 +237,7 @@ class TrafficEnv(gym.Env):
         if self.dry_run:
             return
         try:
-            import traci  # type: ignore[import]
+            import traci
             traci.close()
         except Exception:
             pass
@@ -247,57 +250,65 @@ class TrafficEnv(gym.Env):
             self._sumo_proc = None
 
     def _advance_sumo(self, n_steps: int) -> None:
-        import traci  # type: ignore[import]
+        import traci
 
-        limit_ms = self._metrics.current_speed_limits[0] / 3.6  # seg_0_before
+        mainline_limit_ms = self._metrics.current_speed_limits[0] / 3.6
+        ramp_limit_ms = self._metrics.current_speed_limits[3] / 3.6
         for _ in range(n_steps):
             traci.simulationStep()
             if self.cav_percent > 0.0:
-                self._apply_cav_slowdown(limit_ms)
+                self._apply_cav_slowdown(mainline_limit_ms, ramp_limit_ms)
 
     # ------------------------------------------------------------------
     # Speed control
     # ------------------------------------------------------------------
 
-    def _apply_segment_limits(self, speed_limits_ms: Dict[str, float]) -> None:
-        """Set lane maxspeed for all lanes in each controlled segment."""
-        import traci  # type: ignore[import]
+    # _apply_segment_limits() removed — pure Lagrangian control (v5 paradigm).
+    # HDVs slow down via car-following behind decelerating CAVs, not via
+    # lane speed caps. See docs/slowDown_argument.md for rationale.
+    #
+    # TODO (future iteration): re-introduce as a secondary effect for HDVs
+    # with 5 kph granularity rounded up, updated every 5 minutes based on
+    # current traffic state. This would simulate advisory VSL signs for
+    # HDVs that are ahead of all CAVs on their lane.
 
-        for seg, limit_ms in speed_limits_ms.items():
-            for lane in _seg_lane_ids(seg, _UPSTREAM_LANE_COUNT):
-                try:
-                    traci.lane.setMaxSpeed(lane, float(limit_ms))
-                except Exception:
-                    pass
-
-    def _apply_cav_slowdown(self, limit_ms: float) -> None:
+    def _apply_cav_slowdown(
+        self, mainline_limit_ms: float, ramp_limit_ms: float
+    ) -> None:
         """Issue slowDown() to all CAV vehicles."""
-        import traci  # type: ignore[import]
+        import traci
 
-        duration_ms = float(self.aggregation_time)  # TraCI 1.26+: seconds (not ms)
+        duration = float(self.aggregation_time)
         for veh_id in traci.vehicle.getIDList():
             try:
                 vtype = traci.vehicle.getTypeID(veh_id)
             except Exception:
                 continue
-            if "cav" in vtype.lower():
-                try:
-                    traci.vehicle.slowDown(veh_id, limit_ms, duration_ms)
-                except Exception:
-                    pass
+            if "cav" not in vtype.lower():
+                continue
+            # Determine which limit applies based on which edge the vehicle is on
+            try:
+                edge = traci.vehicle.getRoadID(veh_id)
+            except Exception:
+                continue
+            limit = ramp_limit_ms if edge in _RAMP_EDGES else mainline_limit_ms
+            try:
+                traci.vehicle.slowDown(veh_id, limit, duration)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Metrics collection
     # ------------------------------------------------------------------
 
     def _collect_metrics(self) -> None:
-        """Read E1 detector aggregates from SUMO and populate self._metrics."""
-        import traci  # type: ignore[import]
+        """Read E1 detector aggregates from SUMO for all 12 segments."""
+        import traci
 
-        def _read(det_ids: List[str]) -> Tuple[float, float, float]:
-            """Return (flow_vph, speed_ms, occ_pct) aggregated across detector list."""
+        def _read(det_ids_list: List[str]) -> Tuple[float, float, float]:
+            """Return (flow_vph, speed_ms, occ_pct)."""
             counts, speeds, occs = [], [], []
-            for det in det_ids:
+            for det in det_ids_list:
                 try:
                     cnt = float(traci.inductionloop.getLastIntervalVehicleNumber(det))
                     spd = float(traci.inductionloop.getLastIntervalMeanSpeed(det))
@@ -319,24 +330,22 @@ class TrafficEnv(gym.Env):
 
         m = self._metrics
 
-        m.flow_rate_vph_us0, m.avg_speed_upstream_s0, m.occupancy_pct_us0 = _read(
-            _us_det_ids(_UPSTREAM_SEGS[2])  # seg_0_before (closest to merge)
-        )
-        m.flow_rate_vph_us1, m.avg_speed_upstream_s1, m.occupancy_pct_us1 = _read(
-            _us_det_ids(_UPSTREAM_SEGS[1])  # seg_1_before
-        )
-        m.flow_rate_vph_us2, m.avg_speed_upstream_s2, m.occupancy_pct_us2 = _read(
-            _us_det_ids(_UPSTREAM_SEGS[0])  # seg_2_before (furthest from merge)
-        )
-        m.flow_rate_vph_ds0, m.avg_speed_downstream_s0, m.occupancy_pct_ds0 = _read(
-            _ds_det_ids()
-        )
+        # Read all segments
+        for seg, n_lanes in _SEGMENT_LANES.items():
+            flow, speed, occ = _read(_det_ids(seg, n_lanes))
+            setattr(m, f"{seg}_speed_ms", speed)
+            setattr(m, f"{seg}_flow_vph", flow)
+            setattr(m, f"{seg}_occ_pct", occ)
 
+        # Upstream demand (sum of mainline upstream flows)
         m.upstream_demand_vph = (
-            m.flow_rate_vph_us0 + m.flow_rate_vph_us1 + m.flow_rate_vph_us2
+            m.seg_3_before_flow_vph
+            + m.seg_2_before_flow_vph
+            + m.seg_1_before_flow_vph
+            + m.seg_0_before_flow_vph
         )
 
-        # TTS increment: vehicles-in-network × step_duration (conservative proxy).
+        # TTS increment
         try:
             n_veh = float(traci.vehicle.getIDCount())
         except Exception:

@@ -2,13 +2,18 @@
 """
 Traffic measurement container for a single E1 aggregation window.
 
-Only fields consumed by v5 SAR components are included.
-TrafficSafetyMetrics is not used in v5.
+Covers all 12 segments of the ramps_v1 topology:
+  Mainline: seg_3_before, seg_2_before, seg_1_before, seg_0_before,
+            seg_0_after, seg_1_after
+  On-ramp:  ramp_on_approach, ramp_on_transition, ramp_on_merge
+  Off-ramp: ramp_off_diverge, ramp_off_transition, ramp_off_departure
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+
+import numpy as np
 
 from .constants import MAX_SPEED_KPH
 
@@ -19,36 +24,81 @@ _DEFAULT_SPEED_LIMIT_KPH: float = MAX_SPEED_KPH
 class TrafficMetrics:
     """Per-step traffic measurements populated by TrafficEnv."""
 
-    # Speed (m/s) — flow-weighted mean from E1 tripwire lanes.
-    avg_speed_upstream_s0: float = 0.0
-    avg_speed_upstream_s1: float = 0.0
-    avg_speed_upstream_s2: float = 0.0
-    avg_speed_downstream_s0: float = 0.0
+    # ------------------------------------------------------------------
+    # Per-segment measurements: speed (m/s), flow (veh/h), occupancy (%)
+    # ------------------------------------------------------------------
 
-    # Flow (veh/h) — summed from per-lane induction-loop counts.
-    flow_rate_vph_us0: float = 0.0
-    flow_rate_vph_us1: float = 0.0
-    flow_rate_vph_us2: float = 0.0
-    flow_rate_vph_ds0: float = 0.0
+    # Upstream mainline (furthest → closest to merge)
+    seg_3_before_speed_ms: float = 0.0
+    seg_3_before_flow_vph: float = 0.0
+    seg_3_before_occ_pct: float = 0.0
 
-    # Occupancy (%) — mean from E1 tripwire lanes.
-    occupancy_pct_us0: float = 0.0
-    occupancy_pct_us1: float = 0.0
-    occupancy_pct_us2: float = 0.0
-    occupancy_pct_ds0: float = 0.0
+    seg_2_before_speed_ms: float = 0.0
+    seg_2_before_flow_vph: float = 0.0
+    seg_2_before_occ_pct: float = 0.0
 
-    # Current posted speed limits (kph) — [seg_0_before, seg_1_before, seg_2_before].
+    seg_1_before_speed_ms: float = 0.0
+    seg_1_before_flow_vph: float = 0.0
+    seg_1_before_occ_pct: float = 0.0
+
+    seg_0_before_speed_ms: float = 0.0
+    seg_0_before_flow_vph: float = 0.0
+    seg_0_before_occ_pct: float = 0.0
+
+    # Weaving zone (4 lanes)
+    seg_0_after_speed_ms: float = 0.0
+    seg_0_after_flow_vph: float = 0.0
+    seg_0_after_occ_pct: float = 0.0
+
+    # Downstream (3 lanes)
+    seg_1_after_speed_ms: float = 0.0
+    seg_1_after_flow_vph: float = 0.0
+    seg_1_after_occ_pct: float = 0.0
+
+    # On-ramp
+    ramp_on_approach_speed_ms: float = 0.0
+    ramp_on_approach_flow_vph: float = 0.0
+    ramp_on_approach_occ_pct: float = 0.0
+
+    ramp_on_transition_speed_ms: float = 0.0
+    ramp_on_transition_flow_vph: float = 0.0
+    ramp_on_transition_occ_pct: float = 0.0
+
+    ramp_on_merge_speed_ms: float = 0.0
+    ramp_on_merge_flow_vph: float = 0.0
+    ramp_on_merge_occ_pct: float = 0.0
+
+    # Off-ramp
+    ramp_off_diverge_speed_ms: float = 0.0
+    ramp_off_diverge_flow_vph: float = 0.0
+    ramp_off_diverge_occ_pct: float = 0.0
+
+    ramp_off_transition_speed_ms: float = 0.0
+    ramp_off_transition_flow_vph: float = 0.0
+    ramp_off_transition_occ_pct: float = 0.0
+
+    ramp_off_departure_speed_ms: float = 0.0
+    ramp_off_departure_flow_vph: float = 0.0
+    ramp_off_departure_occ_pct: float = 0.0
+
+    # ------------------------------------------------------------------
+    # Control state
+    # ------------------------------------------------------------------
+
+    # Current posted speed limits (kph):
+    # [seg_0_before, seg_1_before, seg_2_before, ramp_on_transition]
     current_speed_limits: List[float] = field(
-        default_factory=lambda: [_DEFAULT_SPEED_LIMIT_KPH] * 3
+        default_factory=lambda: [_DEFAULT_SPEED_LIMIT_KPH] * 4
     )
 
-    # Control indices (written by ActionStrategy, read by RewardFunction).
-    action_idx: Optional[int] = None
-    prev_action_idx: Optional[int] = None
+    # Continuous action vectors (written by ActionStrategy, read by RewardFunction)
+    action: Optional[np.ndarray] = None
+    prev_action: Optional[np.ndarray] = None
 
-    # Global context features used by StateRepresentation.
+    # ------------------------------------------------------------------
+    # Global context
+    # ------------------------------------------------------------------
+
     upstream_demand_vph: float = 0.0
     tts_increment_s: float = 0.0
-
-    # Simulation bookkeeping.
     simulation_step: int = 0

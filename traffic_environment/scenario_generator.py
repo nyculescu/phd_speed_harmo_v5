@@ -29,10 +29,15 @@ _TOPOLOGY_FILES: Dict[str, Dict[str, str]] = {
         "net": "4_3_merge.net.xml",
         "detectors": "loops_detectors_m43_v0.add.xml",
     },
+    "ramps_v1": {
+        "net": "ramps_v1.net.xml",
+        "detectors": "detectors_ramps_v1.add.xml",
+    },
 }
 
 _TOPOLOGY_POSTFIX: Dict[str, str] = {
     "merge_4_to_3_v0": "_m43v0",
+    "ramps_v1": "_rv1",
 }
 
 
@@ -43,6 +48,8 @@ def _normalize_network_topology(value: Any) -> str:
     cleaned = raw.replace("-", "_")
     if cleaned in {"merge_4_to_3_v0", "m43v0", "merge43v0", "merge_4_to_3", "merge43", "m43"}:
         return "merge_4_to_3_v0"
+    if cleaned in {"ramps_v1", "rv1", "ramps1", "ramp_v1", "r44"}:
+        return "ramps_v1"
     return cleaned
 
 

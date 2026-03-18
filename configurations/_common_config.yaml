@@ -1,31 +1,39 @@
 # =============================================================================
 # Project-level common configuration — phd_speed_harmo_v5
 # All experiments inherit from this file.
-# Topology: ramp_on_v0 (3-lane mainline + on-ramp, no off-ramp)
+# Topology: ramps_v1 (3L mainline + on-ramp + off-ramp, 500m weaving zone)
 # =============================================================================
 
 sumo:
-  aggregation_time: 30          # must match freq in detectors_ramps_v0.add.xml
+  aggregation_time: 30          # must match freq in detectors_ramps_v1.add.xml
   step_length: 1.0
-  episode_duration_s: 7950      # 265 × 30 s windows
-  warmup_s: 300
+  episode_duration_s: 3600      # 120 × 30 s windows (1 hour)
+  warmup_s: 100                 # ramp departure delay
   custom_config:
     speed_limit_direct_control_CAV: true
-    regime_gate_enabled: false  # regime encoded as one-hot in state features
+    regime_gate_enabled: false   # regime encoded as one-hot in state features
 
 scenario_generation:
-  network_topology: ramps_v0
+  network_topology: ramps_v1
   cavs_percentage: 50.0
 
-# SAR framework: to be defined after Step 1 (no-control baseline) analysis.
-# sar:
-#   algorithm: TQC_v0
-#   state: ramp_on_state_v0
-#   action: ramp_on_action_v0
-#   reward: ramp_on_reward_v0
+sar:
+  state: r44_state_v0
+  action: r44_action_v0
+  reward: r44_reward_v0
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+  ref_flow_vph: 5000.0
+  target_speed_kph: 80.0
+  reward_weights:
+    w_v: 0.50
+    w_q: 0.35
+    w_a: 0.15
 
 logging:
-  log_dir: ./logs/ramp_on_v0
+  log_dir: ./logs/ramps_v1
   tensorboard_dump_csv: false
   enable_file_output: false
   csv_logging: false
