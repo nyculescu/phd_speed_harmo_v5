@@ -1,78 +1,200 @@
-# Algorithm Selection: TQC (Primary) and SAC (Baseline)
+# Algorithm and Objective Selection: Empirical Foundation
 
-## 1. Why the algorithm changed
-
-The v4/early-v5 approach used **QR-DQN** (Dabney et al., 2017) [R2] — a distributional RL algorithm restricted to `gym.spaces.Discrete` action spaces. After 3 years of experimentation on the 4→3 lane-drop topology with a 7-level discrete action set, no configuration produced results that meaningfully outperformed the no-control baseline.
-
-Two independent problems contributed to this failure:
-
-1. **The environment** (4→3 lane-drop) had a microscopic bottleneck mechanism (gap acceptance at the lane drop) that was poorly observable from macroscopic E1 detector readings. This has been addressed by switching to the ramps_v1 topology (see `docs/vsl_placement_reason.md`).
-
-2. **The action space** was discrete and single-dimensional (one uniform speed for all segments). The ramps_v1 topology requires two independent control inputs — mainline VSL and ramp transition VSL — which maps naturally to a 2D continuous action space. DQN-family algorithms cannot handle `Box` action spaces without discretisation, which causes combinatorial explosion (7 mainline levels × 7 ramp levels = 49 actions, each needing independent Q-value estimation).
-
-The switch to **continuous-action algorithms** (SAC, TQC) resolves both issues simultaneously.
+This document records the empirical process that led to the v5 design decisions. Every claim is supported by either (a) baseline simulation data from the ramps_v1 network or (b) published academic references. The data was collected on 2026-03-18 using SUMO 1.21 with the ramps_v1 topology (3L mainline × 4 km → 4L weaving 500 m → 3L downstream 1 km; on-ramp 1 km; off-ramp 1 km).
 
 ---
 
-## 2. Why SAC as the baseline
+## 1. From v4 to v5: why the redesign was necessary
 
-### 2.1 Algorithm summary
+### 1.1 What failed in v4
 
-Soft Actor-Critic (Haarnoja et al., 2018) is an off-policy actor-critic algorithm that maximises a **maximum entropy objective**:
+The v4 system used QR-DQN (Dabney et al., 2018) [R2] with a 7-level discrete action space on a 4→3 lane-drop topology. After 3 years of experimentation, no configuration produced results that meaningfully outperformed the no-control baseline. Two independent root causes were identified:
+
+1. **The environment** (4→3 lane-drop) had a microscopic bottleneck mechanism (forced lane-change gap acceptance) that was poorly observable from macroscopic E1 detector readings. The return distribution was genuinely bimodal (merge success vs. failure), but the agent could not distinguish the two regimes from its observations because the downstream merge point was not instrumented.
+
+2. **The algorithm** (QR-DQN) was restricted to `gym.spaces.Discrete`, limiting the action space to 7 absolute speed levels. The ramps_v1 topology requires two independent control inputs (mainline VSL + ramp VSL), which maps naturally to a 2D continuous action space. Discretising this produces 7 × 7 = 49 actions, each needing independent quantile distribution estimation — computationally prohibitive and sample-inefficient.
+
+### 1.2 What changed in v5
+
+| Decision | v4 | v5 | Reason |
+|---|---|---|---|
+| Topology | 4→3 lane-drop | Ramp-on with weaving zone | Merge point is observable; causal chain is shorter |
+| Action space | Discrete(7) | Box([60, 40], [120, 90]) | 2D continuous: mainline + ramp VSL independently |
+| Algorithm | QR-DQN | TQC (primary), SAC (baseline) | Continuous-action distributional RL |
+| Objective | Speed at merge zone | **Deceleration-acceleration reduction across upstream corridor** | Directly targets emissions; validated empirically below |
+
+---
+
+## 2. Objective selection: what to optimise and why
+
+### 2.1 The academic grounding for deceleration-acceleration as objective
+
+Speed harmonization aims to reduce spatiotemporal speed variations, which directly reduces the frequency and amplitude of vehicle decelerations and accelerations. The emissions connection is well-established:
+
+- Hua & Fan (2023, IET-ITS, Table 2): Dynamic Speed Harmonization (DSH) reduces CO₂ by 5–10% and fuel consumption by 10–15% across CAV penetration rates, measured via cumulative emergency deceleration.
+- Hua & Fan (2024, Physica A, §3.3): Safety-oriented DSH defines the reward as `r = −θ_t` where `θ_t` is the cumulative emergency deceleration above 4.5 m/s². They use this metric explicitly as a proxy for collision risk and emissions.
+- Kušić et al. (2020, Applied Sciences, Table 1): RL-VSL systems achieve 18–51% TTS reduction; the R-MART approach additionally measured 20% CO₂ reduction, *"highlighting the correlation between vehicle speeds influenced by VSL and emissions."*
+- MARVEL (Zhang et al., 2024, IEEE Access, §IV): Defines *adaptability* as the goal that *"recommended speed limits should closely reflect actual traffic speeds"* — i.e., minimise the gap between posted and actual speeds, which is operationally equivalent to minimising deceleration events.
+
+The causal chain is: **high speed variance → frequent deceleration/acceleration → high fuel consumption → high emissions**. The mean absolute acceleration `E[|a(t)|]` over all vehicles is the standard kinematic input to emission models (MOVES, COPERT, HBEFA). Our objective directly targets this quantity.
+
+### 2.2 Why NOT merge-zone speed deviation (the v0 reward)
+
+The initial reward (`r44_reward_v0`) penalized `(seg_0_after_speed − 80 kph)²`. The baseline data revealed this is the wrong location:
+
+| Demand | seg_0_after avg speed | seg_0_before avg speed | Where the problem is |
+|---|---|---|---|
+| 5000 | 110.5 kph | 110.7 kph | Nowhere — free-flow |
+| 6500 | 94.8 kph | 93.4 kph | Mild — but merge zone is fine |
+| 7000 | 91.2 kph | 47.1 kph avg, 30.3 min | **Upstream, not at merge** |
+| 9000 | 78.1 kph | 47.0 kph avg | **Upstream corridor is congested** |
+
+The 4-lane weaving zone (seg_0_after) never breaks down — even at 9000 vph, it maintains 78+ kph. The bottleneck forms upstream at seg_0_before (3 lanes), where the queue from the merge propagates backward. An agent rewarded for merge-zone speed would receive positive feedback while the upstream corridor is gridlocked at 30 kph.
+
+---
+
+## 3. Empirical validation: fixed-VSL diagnostic sweep
+
+### 3.1 Methodology
+
+To determine whether Lagrangian CAV control can reduce deceleration-acceleration activity, we ran a grid of 25 scenarios:
+
+- **VSL levels**: no_control, 50, 70, 90, 110 kph
+- **Demands**: 5000, 6000, 6500, 7000, 7500 vph
+- **Control mechanism**: `traci.vehicle.slowDown(veh_id, target_ms, 30.0)` applied at every simulation second to all CAVs on the 3 upstream segments (seg_0/1/2_before) and on `ramp_on_transition`
+- **CAV penetration**: 50%
+- **Episode duration**: 3600 s; warmup: 150 s excluded from metrics
+- **All 25 scenarios ran in parallel** (32-core machine, ~580 s total wall-clock)
+
+Per-vehicle acceleration was collected via `traci.vehicle.getAcceleration()` at every simulation second for all vehicles on the upstream corridor (seg_0/1/2/3_before) and on the merge-downstream zone (seg_0_after, seg_1_after).
+
+### 3.2 Metrics collected
+
+| Metric | Source | What it measures |
+|---|---|---|
+| `avg\|a\|` (m/s²) | `traci.vehicle.getAcceleration()` | Mean absolute acceleration across all upstream vehicle-seconds. Lower = smoother driving = fewer emissions. |
+| Brake rate (per 1000 veh-s) | Count of a < −0.5 m/s² | Frequency of noticeable braking events |
+| Hard brake rate (per 1000 veh-s) | Count of a < −2.0 m/s² | Frequency of safety-critical braking events |
+| Brake amplitude (m/s²) | Mean \|a\| for a < −0.5 | Severity of braking events |
+| σ_upstream (kph) | std(speed_s2b, speed_s1b, speed_s0b) per E1 window | Inter-segment speed variance (macroscopic harmonization) |
+| Avg upstream speed (kph) | mean(speed_s2b, speed_s1b, speed_s0b) | Throughput proxy — speed must stay above a floor |
+| DS flow (vph) | seg_1_after E1 flow | Downstream throughput |
+| TTS (vehicle-hours) | Sum of all vehicle-seconds / 3600 | Total time spent — measures delay cost |
+
+### 3.3 Results: deceleration-acceleration
+
+**Mean absolute acceleration (avg|a|, m/s²) — lower is better:**
+
+| VSL | 5000 vph | 6000 vph | 6500 vph | 7000 vph | 7500 vph |
+|---|---|---|---|---|---|
+| no_control | 0.510 | 0.691 | 0.780 | 0.838 | 0.869 |
+| 50 kph | 0.400 (−22%) | 0.408 (−41%) | 0.508 (−35%) | 0.557 (−34%) | 0.569 (−35%) |
+| 70 kph | 0.398 (−22%) | 0.412 (−40%) | 0.522 (−33%) | 0.475 (−43%) | 0.582 (−33%) |
+| 90 kph | **0.355 (−30%)** | **0.361 (−48%)** | **0.437 (−44%)** | **0.433 (−48%)** | **0.480 (−45%)** |
+| 110 kph | 0.387 (−24%) | 0.489 (−29%) | 0.454 (−42%) | 0.521 (−38%) | 0.535 (−38%) |
+
+**Every fixed VSL reduces avg|a| compared to no-control. 90 kph is consistently the best, achieving 30–48% reduction across all demands.**
+
+**Hard braking events (< −2.0 m/s², per 1000 vehicle-seconds):**
+
+| VSL | 5000 vph | 6000 vph | 6500 vph | 7000 vph | 7500 vph |
+|---|---|---|---|---|---|
+| no_control | 19.3 | 38.0 | 46.1 | 43.9 | 42.9 |
+| 50 kph | 14.2 (−26%) | 12.6 (−67%) | 19.7 (−57%) | 26.6 (−39%) | 28.3 (−34%) |
+| 70 kph | 17.7 (−8%) | 15.0 (−61%) | 20.9 (−55%) | 16.1 (−63%) | 22.2 (−48%) |
+| 90 kph | 20.2 (+5%) | **14.1 (−63%)** | **15.6 (−66%)** | **14.3 (−67%)** | **15.7 (−63%)** |
+| 110 kph | 18.2 (−6%) | 19.1 (−50%) | 15.8 (−66%) | 20.5 (−53%) | 18.2 (−58%) |
+
+**At 6000–7500 vph, 90 kph VSL reduces hard braking by 63–67%.** This is the safety-relevant metric — hard braking events are the primary contributor to rear-end collision risk.
+
+### 3.4 Results: the cost of constant VSL
+
+**TTS (vehicle-hours) — lower is better:**
+
+| VSL | 5000 vph | 6000 vph | 6500 vph | 7000 vph | 7500 vph |
+|---|---|---|---|---|---|
+| no_control | **183.9** | **233.9** | **268.6** | **429.8** | **549.7** |
+| 50 kph | 296.8 (+61%) | 388.6 (+66%) | 568.2 (+111%) | 643.1 (+50%) | 663.5 (+21%) |
+| 70 kph | 371.9 (+102%) | 987.6 (+322%) | 738.4 (+175%) | 917.1 (+113%) | 782.3 (+42%) |
+| 90 kph | 593.2 (+223%) | 998.0 (+327%) | 962.1 (+258%) | 1009.8 (+135%) | 973.7 (+77%) |
+| 110 kph | 785.7 (+327%) | 842.8 (+260%) | 998.3 (+272%) | 849.0 (+98%) | 918.3 (+67%) |
+
+**Constant VSL destroys TTS at every demand level.** 90 kph at 6000 vph: TTS increases from 234 to 998 vehicle-hours (+327%). The `slowDown()` command applied continuously to 50% of vehicles creates rolling roadblocks that trap HDVs behind decelerating CAVs.
+
+**Downstream flow (vph):**
+
+| VSL | 5000 vph | 6000 vph | 6500 vph | 7000 vph | 7500 vph |
+|---|---|---|---|---|---|
+| no_control | 4515 | **5393** | **5855** | **6026** | **6116** |
+| 90 kph | 4813 | 5116 (−5%) | 4930 (−16%) | 4810 (−20%) | 5256 (−14%) |
+
+Throughput drops 5–20% under constant 90 kph VSL. The road capacity is wasted because the VSL operates during free-flow periods when it adds no value.
+
+### 3.5 The key insight: temporal selectivity is what the RL agent must learn
+
+The data proves that:
+
+1. **The physics works:** Lagrangian CAV control via `slowDown()` CAN reduce deceleration activity by 30–48% and hard braking by 63–67%.
+2. **Constant application destroys throughput:** TTS increases by 77–327% because the VSL operates continuously, including during free-flow when it creates artificial congestion.
+3. **The optimal policy is temporally selective:** Apply VSL only during the transitional regime (onset of congestion), not during free-flow and not during established congestion where it cannot help.
+
+A constant policy cannot achieve this — it is all-or-nothing. The RL agent must learn **when** to activate (regime-dependent), **at what magnitude** (demand-dependent), and **for how long** (congestion-evolution-dependent). This is precisely the temporal and magnitude selectivity that continuous-action RL algorithms (SAC, TQC) are designed to learn.
+
+---
+
+## 4. Why SAC as the non-distributional baseline
+
+### 4.1 Algorithm summary
+
+Soft Actor-Critic (Haarnoja et al., 2018, ICML) is an off-policy actor-critic algorithm that maximises a maximum entropy objective:
 
 ```
 J(π) = Σ_t E[ r_t + α · H(π(·|s_t)) ]
 ```
 
-where `H(π)` is the entropy of the policy and `α` is the temperature parameter (auto-tuned in SB3). The entropy bonus encourages exploration by preventing the policy from collapsing to a deterministic action prematurely.
+where `H(π)` is the entropy of the policy and `α` is the auto-tuned temperature parameter.
 
-### 2.2 Why SAC fits this problem
+### 4.2 Why SAC fits this problem
 
-**Continuous action space.** SAC natively outputs actions from a continuous distribution (squashed Gaussian). The policy network's output layer parameterises `μ(s)` and `σ(s)`; actions are sampled as `a = tanh(μ + σ · ε)`, where `ε ~ N(0,1)`. This maps directly to the `Box([60,40], [130,90])` action space — no discretisation needed.
+**Continuous action space.** SAC natively outputs actions from a squashed Gaussian distribution, mapping directly to `Box([60, 40], [120, 90])`. No discretization is needed.
 
-**Off-policy with replay buffer.** Each SUMO episode is expensive (~10–30 s wall-clock for 3600 s simulation). Off-policy learning reuses past transitions from the replay buffer, achieving higher sample efficiency than on-policy methods (PPO, A2C) that discard data after each update. For traffic control environments where data collection is the bottleneck, sample efficiency is critical. Haarnoja et al. (2018) demonstrate 5–10× sample efficiency improvement over on-policy baselines on continuous control benchmarks.
+**Off-policy replay buffer.** Each SUMO episode costs 5–30 s wall-clock. Off-policy learning reuses past transitions, achieving 5–10× higher sample efficiency than on-policy methods (PPO, A2C) that discard experience after each update (Haarnoja et al., 2018). For traffic environments where data collection is the bottleneck, this is critical.
 
-**Entropy regularisation prevents policy collapse.** In traffic environments, the reward landscape can have flat plateaus (e.g., any speed between 90–110 kph yields similar outcomes during free-flow). Without entropy regularisation, the policy can collapse to an arbitrary point on this plateau and lose the ability to explore when conditions change. SAC's entropy term maintains stochastic exploration throughout training — a property that Hua & Fan (2023) identified as important for DSH: *"DDPG [...] may not learn anything at the beginning, but it still can reach the optimal value in the end"* (p. 2525). SAC avoids this slow-start problem entirely.
+**Entropy regularization prevents policy collapse.** In the free-flow regime (5000 vph), any action between 90–120 kph yields similar outcomes. Without entropy regularization, the policy can collapse to an arbitrary constant and lose the ability to explore when conditions change. SAC's entropy term maintains stochastic exploration throughout training.
 
-**Stability.** SAC uses two independent critic networks (double Q-learning) to mitigate overestimation bias, plus soft target updates (`τ = 0.005`). The SB3 implementation is production-grade and widely validated. Compared to DDPG (used by Hua & Fan 2023, 2024), SAC is strictly more stable: it inherits DDPG's actor-critic structure but adds entropy regularisation, double critics, and automatic temperature tuning — all of which address known DDPG failure modes (brittleness to hyperparameters, deterministic policy collapse, overestimation).
+**Stability.** Double Q-learning mitigates overestimation bias; soft target updates (`τ = 0.005`) prevent oscillation. The Stable-Baselines3 implementation is production-grade.
 
-### 2.3 Why not DDPG or TD3
+### 4.3 Why not DDPG or TD3
 
-**DDPG** (Lillicrap et al., 2016) was used by Hua & Fan (2023, 2024) for dynamic speed harmonisation. However, they note: *"compared with DQN, the DDPG algorithm based on actor-critic architecture is more difficult to converge. It may not learn anything at the beginning"* (p. 2525). SAC resolves this with entropy-driven exploration.
+**DDPG** (Lillicrap et al., 2016): Used by Hua & Fan (2023, 2024) for DSH, but they note: *"DDPG [...] is more difficult to converge. It may not learn anything at the beginning"* (p. 2525). SAC resolves this.
 
-**TD3** (Fujimoto et al., 2018) improves on DDPG with clipped double Q-learning and delayed policy updates, but lacks entropy regularisation. It is a deterministic policy algorithm — it explores only through additive Gaussian noise, which is state-independent and cannot adapt its exploration intensity to the traffic regime.
-
-SAC supersedes both DDPG and TD3 for this application. It serves as the **non-distributional baseline** against which TQC's distributional critics are evaluated.
+**TD3** (Fujimoto et al., 2018): Deterministic policy with state-independent Gaussian noise — cannot adapt exploration to the traffic regime. Superseded by SAC.
 
 ---
 
-## 3. Why TQC as the primary algorithm
+## 5. Why TQC as the primary algorithm
 
-### 3.1 Algorithm summary
+### 5.1 Algorithm summary
 
-Truncated Quantile Critics (Kuznetsov et al., 2020, JMLR) extends SAC with **distributional critic networks**. Instead of learning `Q(s,a) = E[G]` (the mean return), each critic learns `Z(s,a)` — the full quantile function of the return distribution. The key innovation is truncation: when computing the Bellman target, the top quantiles from each critic are dropped, providing a principled mechanism to control overestimation bias without the conservatism of simply taking the minimum of two critics (as SAC does).
+Truncated Quantile Critics (Kuznetsov et al., 2020, JMLR) extends SAC with distributional critic networks. Instead of learning `Q(s,a) = E[G]`, each critic learns the full quantile function `Z(s,a) ∈ ℝ^N`. The top quantiles are truncated before the Bellman target computation to control overestimation bias.
 
 ```
-SAC critic output:  Q(s,a) ∈ ℝ           (scalar — mean return)
-TQC critic output:  Z(s,a) ∈ ℝ^N         (N quantile values — full distribution)
+SAC critic output:  Q(s,a) ∈ ℝ       (scalar mean return)
+TQC critic output:  Z(s,a) ∈ ℝ^25    (25 quantile values — full distribution)
 ```
 
-With `n_critics = 2` and `n_quantiles = 25`, TQC maintains `2 × 25 = 50` quantile estimates per state-action pair, then drops the top `k` quantiles before averaging to form the Bellman target.
+### 5.2 Why distributional critics matter for this specific problem
 
-### 3.2 Why distributional critics matter for traffic control
+The baseline data shows that the **transitional regime (6000–7000 vph) is stochastic**: at the same demand, the onset and severity of congestion varies between episodes due to microscopic vehicle insertion randomness (departure time jitter, lane choice, gap acceptance). This is visible in the no-control data:
 
-The central thesis contribution is that **distributional RL captures the stochastic structure of traffic outcomes at a highway merge bottleneck**.
+- At 6500 vph: seg_0_before oscillates between 62 kph and 108 kph across different 30 s windows within a single episode, with σ_upstream reaching 20.8 kph maximum.
+- At 7000 vph: breakdown occurs at different times (step 17–20, i.e., t=510–600 s) depending on the specific vehicle realization.
 
-At demand levels near capacity (5500–6500 vph in the ramps_v1 baseline), the same agent action can produce qualitatively different outcomes depending on the microscopic vehicle configuration:
+A mean-based critic (SAC) learns `E[G]`, which averages over these outcomes. TQC's quantile critics learn the full shape of `P(G | s, a)` and can distinguish actions that have the same mean return but different tail risks.
 
-- **Favourable outcome:** Ramp vehicles find acceptable gaps, merge smoothly, weaving zone flow is maintained → high return.
-- **Unfavourable outcome:** Gap distribution is unfavourable (short headways in through-lanes exactly when ramp vehicles arrive), merge conflicts occur, queue forms → low return.
+### 5.3 CVaR risk-averse evaluation
 
-This means the return distribution `P(G | s, a)` is **multimodal** in the transitional regime. A mean-based critic (SAC) learns `E[G]`, which may correspond to neither outcome. TQC's quantile critics learn the full shape of `P(G | s, a)` and can distinguish actions that have the same mean but different tail risks.
-
-### 3.3 CVaR risk-averse evaluation
-
-At evaluation time (not during training), the action selection policy can be switched from mean-optimal to risk-averse using Conditional Value-at-Risk (CVaR):
+At evaluation time, the action selection policy can be switched from mean-optimal to risk-averse:
 
 ```python
 # Standard (mean-optimal):
@@ -82,47 +204,228 @@ a* = argmax_a  mean(Z(s, a))
 a* = argmax_a  mean(Z(s, a)[:floor(α × N)])   # bottom 10% of quantiles
 ```
 
-With `N = 25` quantiles and `α = 0.1`, the CVaR policy selects actions that maximise the average of the **worst 2–3 quantiles** — i.e., the actions whose worst-case outcomes are least bad. This is directly relevant to speed harmonisation: the operator cares more about avoiding breakdown (a catastrophic low-return event) than about marginally optimising throughput in the average case.
+With `N = 25` and `α = 0.1`, the CVaR policy maximises the average of the worst 2–3 quantiles. This is operationally meaningful: the traffic operator cares more about avoiding breakdown (a catastrophic low-return event with high deceleration activity) than about marginally optimising the average case.
 
-This CVaR evaluation capability is the specific academic contribution of using TQC over SAC. It is not available from SAC's scalar critics — you cannot compute CVaR from a single expected value.
+### 5.4 TQC inherits all SAC advantages
 
-Dabney et al. (2017) [R2] and Bellemare et al. (2017) [R1] established the theoretical foundations of distributional RL; Kuznetsov et al. (2020) extended it to continuous-action actor-critic architectures via TQC.
-
-### 3.4 TQC inherits all SAC advantages
-
-TQC is architecturally identical to SAC in the actor (policy) network — the same squashed Gaussian, the same entropy regularisation, the same automatic temperature tuning. The only difference is in the critic networks, which output `N` quantile values instead of a scalar. This means:
-
-- Same `Box` action space compatibility
-- Same off-policy replay buffer
-- Same entropy-driven exploration
-- Same hyperparameter structure (learning rate, batch size, τ, γ)
-- Slightly higher compute per update (2 critics × 25 quantiles vs. 2 critics × 1 scalar)
-
-The computational overhead is negligible for a 2D action space with a 38-dim observation — the SUMO simulation dominates wall-clock time by orders of magnitude.
+TQC is architecturally identical to SAC in the actor network. The only difference is in the critic output dimension (N quantile values instead of a scalar). Same entropy regularization, same replay buffer, same hyperparameter structure. The computational overhead is negligible — SUMO simulation dominates wall-clock time.
 
 ---
 
-## 4. What TQC must demonstrate to justify its use
+## 6. Observation space design
 
-The thesis claim is: *TQC's distributional critics provide measurable benefit over SAC for speed harmonisation at a highway merge bottleneck.*
+### 6.1 Available sensors
 
-This will be evaluated through:
+**E1 induction loops** (48 total, 30 s aggregation):
+- 3 positions (entry 5%, mid 50%, exit 95%) × all lanes × 12 segments
+- Per-loop: vehicle count, mean speed (m/s), occupancy (%)
+- Macroscopic: segment-level flow (vph), space-mean speed, occupancy
 
-1. **Mean return comparison:** TQC vs. SAC over 100+ evaluation episodes at each demand level (5000–7000 vph). If TQC's mean return is statistically significantly higher, the distributional critics provide an optimisation benefit.
+**E3 multi-entry-exit zones** (13 total, 30 s aggregation):
+- Per-segment: vehicle sum (throughput), mean travel time (s), mean time loss (s)
+- Corridor-wide: end-to-end travel time and time loss
+- E3 `meanTimeLoss` is a direct measure of delay; E3 `meanTravelTime` captures corridor-level TTS
 
-2. **Tail risk comparison:** Compare the 10th-percentile return (worst 10% of episodes) between TQC and SAC. If TQC's worst-case performance is substantially better, the distributional representation enables risk-aware control.
+### 6.2 Proposed observation vector
 
-3. **CVaR ablation:** Compare TQC with mean evaluation vs. TQC with CVaR(α=0.1) evaluation. If CVaR reduces the frequency of breakdown events (episodes where weaving zone speed drops below 60 kph), the risk-averse inference is practically useful.
+The state must contain enough information for the agent to:
+1. Detect the onset of the transitional regime (speed gradient forming)
+2. Assess the current severity of deceleration activity (speed differences between segments)
+3. Know its own previous action (for smoothness, restoring Markov property)
+4. Observe the ramp merge demand (to anticipate merge-related braking)
 
-4. **Distributional diagnostics:** Visualise the learned quantile distributions `Z(s,a)` for representative states in the free-flow, metastable, and congested regimes. If the distributions are visually multimodal or heavy-tailed in the metastable regime, this confirms the hypothesis that the return structure at a merge bottleneck is genuinely stochastic and not well-captured by a scalar mean.
+**Per-frame features (18 dimensions):**
 
-If TQC does not outperform SAC on criteria 1–3, that is a publishable negative result: *"distributional critics provide marginal improvement in this regime, suggesting that the merge dynamics are sufficiently deterministic for mean-based optimisation at the aggregate observation level."*
+| Index | Feature | Source | Normalization |
+|---|---|---|---|
+| 0 | seg_2_before speed | E1 exit | / 36.1 m/s |
+| 1 | seg_2_before flow | E1 exit | / 8000 vph |
+| 2 | seg_2_before occupancy | E1 exit | / 100% |
+| 3 | seg_1_before speed | E1 exit | / 36.1 m/s |
+| 4 | seg_1_before flow | E1 exit | / 8000 vph |
+| 5 | seg_1_before occupancy | E1 exit | / 100% |
+| 6 | seg_0_before speed | E1 exit | / 36.1 m/s |
+| 7 | seg_0_before flow | E1 exit | / 8000 vph |
+| 8 | seg_0_before occupancy | E1 exit | / 100% |
+| 9 | seg_0_after speed | E1 exit | / 36.1 m/s |
+| 10 | seg_0_after flow | E1 exit | / 8000 vph |
+| 11 | seg_0_after occupancy | E1 exit | / 100% |
+| 12 | ramp_on_approach flow | E1 exit | / 2000 vph |
+| 13 | ramp_on_merge speed | E1 exit | / 25.0 m/s |
+| 14 | seg_1_after flow | E1 exit | / 8000 vph |
+| 15 | regime one-hot: FREE_FLOW | Computed | 0 or 1 |
+| 16 | regime one-hot: METASTABLE | Computed | 0 or 1 |
+| 17 | regime one-hot: CONGESTED | Computed | 0 or 1 |
+
+**Temporal stack:** 3 frames × 18 = 54 dimensions (90 s look-back)
+
+**Static features (2 dimensions):**
+- Previous action[0]: (mainline_vsl − 60) / 60 (normalized to [0, 1])
+- Previous action[1]: (ramp_vsl − 40) / 50 (normalized to [0, 1])
+
+**Total observation: 56 dimensions.**
+
+Including `prev_action` in the state restores the Markov property for the smoothness reward term (Li et al. [R25], p. 3205: *"two previous actions (speed limits)"* included in the state).
+
+### 6.3 What about E3 data?
+
+E3 `meanTimeLoss` per segment is a direct measure of delay and could replace or supplement the E1 speed-based features. However, E3 travel time is only available when vehicles have fully traversed the segment (entry-to-exit), introducing a measurement lag of 30–90 s depending on segment length and speed. For the 30 s control period, E1 data (available at every aggregation boundary) provides more timely feedback. E3 corridor-level `meanTravelTime` may be useful as a secondary reward signal (TTS proxy) but is not needed in the observation for regime detection.
+
+**Decision:** Use E1 for the state; E3 `meanTimeLoss` is optionally available as a reward component if the E1-based reward proves insufficient. The sensor infrastructure supports both.
 
 ---
 
-## 5. SB3 / SB3-Contrib implementation
+## 7. Action space design
 
-| Parameter | SAC (baseline) | TQC (primary) |
+### 7.1 Structure
+
+```python
+action_space = gym.spaces.Box(
+    low=np.array([60.0, 40.0], dtype=np.float32),
+    high=np.array([120.0, 90.0], dtype=np.float32),
+)
+```
+
+- `action[0]`: Mainline VSL (kph), applied uniformly to seg_0/1/2_before via `traci.vehicle.slowDown()` on CAVs
+- `action[1]`: Ramp VSL (kph), applied to `ramp_on_transition` via `traci.vehicle.slowDown()` on CAVs
+
+### 7.2 Why [60, 120] for mainline
+
+**Upper bound (120 kph):** The network speed limit is 130 kph (36.11 m/s). Posting 120 kph is effectively "mild restriction" — the `slowDown()` command at 120 kph only affects CAVs traveling above 120 kph, which is a small fraction. This serves as the agent's "do nothing" action without requiring a special no-op.
+
+**Lower bound (60 kph):** Below 60 kph, the VSL is creating conditions more severe than typical congestion. The baseline data shows that no-control congestion at 7000 vph settles at ~45 kph upstream. Posting a VSL below the natural congestion speed is counterproductive — it means the control is making things worse than doing nothing. If conditions require speeds below 60 kph (accidents, severe weather), those are **non-recurrent scenarios** that require different control logic. The action floor of 60 kph explicitly scopes v5 to recurrent bottleneck management. Non-recurrent scenarios (modeled via SUMO TraCI incident injection) are planned for v5.1, with the action range extended downward at that point.
+
+The agent must be *capable of being aware* of critical situations even in v5: the regime detector in the observation classifies CONGESTED when speed < 45 kph, giving the agent a signal that conditions are beyond its control range. The correct learned behavior is to post 60 kph (the floor) and wait for recovery, rather than posting an even lower limit that would compound the problem.
+
+### 7.3 Why [40, 90] for ramp
+
+The ramp merge curve geometry forces vehicles to ~22–29 kph regardless of VSL (baseline data: ramp_on_merge speed is 20–29 kph at all demands). The ramp VSL on `ramp_on_transition` (200 m upstream of the merge curve) controls the approach speed. At 90 kph, vehicles arrive at the merge curve at the geometric limit — effectively no restriction. At 40 kph, vehicles approach slowly, increasing their time-to-merge and reducing merge conflict severity.
+
+### 7.4 Why 2D continuous rather than 1D or discrete
+
+**Why not 1D (mainline only):** The baseline data shows ramp merge speed is 20–29 kph regardless of demand, suggesting the ramp approach speed is an independent control lever. Li et al. [R25] use mainline-only control; Hua & Fan (2023, 2024) also use mainline-only. Independent ramp control is a novel aspect of this work.
+
+**Why not discrete:** As argued in §1, discretizing a 2D action space creates combinatorial explosion. With 7 levels per dimension: 7 × 7 = 49 actions, each needing independent Q-value estimation. SB3's TQC and SAC handle continuous Box spaces natively.
+
+---
+
+## 8. Reward function design
+
+### 8.1 The objective in mathematical terms
+
+The speed harmonization objective is to minimise the frequency and amplitude of deceleration-acceleration events across the upstream corridor, subject to maintaining acceptable throughput and travel time. Mathematically:
+
+```
+min  E[|a(t)|]  across all vehicles on upstream corridor
+s.t. TTS ≤ (1 + ε) × TTS_no_control
+     throughput ≥ (1 − δ) × throughput_no_control
+```
+
+where ε and δ are acceptable degradation margins (calibrated from the baseline).
+
+### 8.2 Why we cannot directly reward E[|a(t)|]
+
+The per-vehicle acceleration `traci.vehicle.getAcceleration()` is a microscopic measurement available at every simulation second. However:
+
+1. The RL agent acts every 30 s (one E1 window). The acceleration field evolves within those 30 s in response to the VSL but also in response to lane changes, car-following dynamics, and vehicle insertions — all uncontrollable stochastic noise.
+2. Aggregating per-vehicle acceleration over 30 s produces a noisy signal that is hard for the critic to learn from (high variance → slow convergence).
+3. The agent controls macroscopic variables (segment-level speed limits), not microscopic accelerations. The connection between VSL and acceleration is mediated by car-following dynamics and is not directly invertible.
+
+**Therefore, we use macroscopic E1 proxies that correlate with microscopic deceleration activity.** The baseline data validates this correlation: σ_upstream (E1-based) correlates directly with avg|a| (microscopic):
+
+| No-control | σ_upstream | avg\|a\| |
+|---|---|---|
+| 5000 vph | 2.33 | 0.510 |
+| 6000 vph | 5.35 | 0.691 |
+| 6500 vph | 6.08 | 0.780 |
+| 7000 vph | 16.41 | 0.838 |
+| 7500 vph | 8.55 | 0.869 |
+
+The correlation breaks at 7500 vph (σ drops because all segments congest uniformly, but avg|a| remains high due to stop-and-go dynamics within each segment). This motivates the speed floor term.
+
+### 8.3 Proposed reward: 3 terms
+
+```
+r_t = w_h · r_harmo + w_q · r_throughput + w_a · r_smooth
+```
+
+**Term 1 — Speed harmonization (r_harmo):**
+```python
+speeds = [seg_2_before_speed_kph, seg_1_before_speed_kph, seg_0_before_speed_kph]
+sigma = np.std(speeds)
+mean_speed = np.mean(speeds)
+
+# Only penalise variance when mean speed is above the congestion floor.
+# Below the floor, variance reduction is not meaningful (everything is slow).
+if mean_speed >= 50.0:
+    r_harmo = -min(sigma / 30.0, 1.0)    # ∈ [-1, 0]
+else:
+    # Penalise low speed directly — variance is not the issue, congestion is.
+    r_harmo = -1.0 + max(0, mean_speed / 50.0 - 1.0)
+```
+
+This prevents the trivial solution (let everything congest to uniform 30 kph, achieving σ = 0).
+
+**Term 2 — Throughput (r_throughput):**
+```python
+r_throughput = min(seg_1_after_flow_vph / ref_flow_vph, 1.0)    # ∈ [0, 1]
+```
+
+Reference flow calibrated from baseline: ~6000 vph (the saturation flow at the downstream 3-lane section).
+
+**Term 3 — Action smoothness (r_smooth):**
+```python
+delta = (action - prev_action) / action_range
+r_smooth = -min(np.linalg.norm(delta), 1.0)    # ∈ [-1, 0]
+```
+
+Prevents VSL oscillation. SAC's entropy regularization already encourages smooth exploration, but this explicit term penalizes large action jumps that would confuse the traffic flow and create transient deceleration spikes.
+
+**Weights (initial, subject to ablation):**
+
+| Weight | Value | Rationale |
+|---|---|---|
+| w_h | 0.55 | Primary objective: deceleration reduction via speed harmonization |
+| w_q | 0.30 | Must maintain throughput — the fixed-VSL data shows throughput loss is the main risk |
+| w_a | 0.15 | Operational constraint: smooth VSL transitions |
+
+### 8.4 What about TTS as a reward term?
+
+TTS (Total Time Spent) is available via `tts_increment_s` in TrafficMetrics (vehicle count × aggregation time). It could replace or supplement the throughput term. However, TTS conflates two effects:
+
+- Vehicles spending more time because they are traveling slower (the intended harmonization effect — acceptable)
+- Vehicles spending more time because they are queued (the unintended congestion effect — unacceptable)
+
+The throughput term (downstream flow) distinguishes these: if flow is maintained but TTS increases slightly, the agent is slowing vehicles (good). If flow drops AND TTS increases, the agent is creating congestion (bad). TTS alone cannot make this distinction.
+
+**Decision:** Use throughput (flow) rather than TTS as the constraint term. TTS is reported as an evaluation metric but not used in the reward.
+
+---
+
+## 9. Training strategy
+
+### 9.1 Demand sampling
+
+Each episode samples demand uniformly from [3000, 8000] vph. This ensures:
+- The agent sees free-flow episodes (3000–5500) where it must learn to do nothing
+- The agent sees transitional episodes (6000–7000) where it must learn to intervene
+- The agent sees congested episodes (7000–8000) where it must learn to accept partial control
+
+This is consistent with MARVEL [R10] (*"each agent must adapt to the surrounding traffic conditions"*) and Li et al. [R25] (training on both stable and fluctuating demand scenarios).
+
+### 9.2 Algorithm comparison
+
+| Algorithm | Role | Library | Key difference |
+|---|---|---|---|
+| PPO | On-policy baseline | `stable_baselines3.PPO` | No replay buffer; fresh rollouts |
+| SAC | Off-policy non-distributional | `stable_baselines3.SAC` | Scalar critics; mean return |
+| TQC | Off-policy distributional (primary) | `sb3_contrib.TQC` | Quantile critics; full return distribution |
+
+All three use identical hyperparameters where applicable (learning rate, network architecture, γ, τ) to ensure fair comparison. The only difference between SAC and TQC is the critic representation.
+
+### 9.3 SB3 / SB3-Contrib configuration
+
+| Parameter | SAC | TQC |
 |---|---|---|
 | Library | `stable_baselines3.SAC` | `sb3_contrib.TQC` |
 | Policy | `MlpPolicy` | `MlpPolicy` |
@@ -139,33 +442,78 @@ If TQC does not outperform SAC on criteria 1–3, that is a publishable negative
 | `n_quantiles` | — | 25 |
 | `top_quantiles_to_drop_per_net` | — | 2 |
 
-All hyperparameters are identical between SAC and TQC except for the distributional critic parameters (`n_quantiles`, `top_quantiles_to_drop_per_net`). This ensures a fair comparison: any performance difference is attributable to the distributional representation, not to hyperparameter differences.
+---
+
+## 10. What TQC must demonstrate
+
+### 10.1 Success criteria
+
+1. **SAC/TQC > no-control:** The primary agent reduces avg|a| (measured post-hoc via `traci.vehicle.getAcceleration()`) by at least 15% at 6000–7000 vph while limiting TTS increase to < 30%.
+2. **SAC/TQC > fixed-VSL-90:** The agent achieves comparable deceleration reduction (avg|a| ≤ 0.45 m/s²) with less throughput loss (< 10% vs. the 14–20% from constant 90 kph).
+3. **TQC ≠ SAC:** TQC produces measurably different policies (different action distributions, different tail-risk behavior, or different breakdown avoidance rates).
+
+### 10.2 If TQC = SAC (negative distributional result)
+
+If TQC and SAC produce identical policies, the thesis documents this as:
+
+> *"The return distribution at a ramp merge under Lagrangian CAV control is sufficiently unimodal in the transitional regime that distributional critics provide no additional information beyond the mean. This suggests that the stochasticity in merge outcomes is smoothed by the 30 s aggregation window and the 50% CAV penetration rate."*
+
+This is publishable as a characterization of when distributional RL does and does not add value in traffic control.
+
+### 10.3 If neither beats no-control
+
+If no RL agent reduces deceleration activity without destroying throughput:
+
+1. The reward ablation study identifies which terms conflict
+2. The fixed-VSL data proves the physics works — the failure is in the RL formulation, not the control mechanism
+3. The thesis documents the design space exploration as a systematic negative result with clear recommendations for future work (e.g., model-based components, MPC+RL hybrid)
 
 ---
 
-## 6. Why not other algorithms
+## 11. Future extensions (v5.1+)
 
-| Algorithm | Reason for exclusion |
-|---|---|
-| **QR-DQN** [R2] | Discrete actions only; failed in v4 after 3 years |
-| **C51** [R1] | Discrete actions only; fixed support `[V_min, V_max]` requires calibration |
-| **DQN** | Discrete actions only; no distributional component |
-| **PPO** | On-policy — discards data after each update; poor sample efficiency for expensive SUMO episodes |
-| **DDPG** | Superseded by SAC; deterministic policy; known instability (Hua & Fan 2023, p. 2525) |
-| **TD3** | No entropy regularisation; deterministic exploration; superseded by SAC |
-| **DSAC** | Not in SB3; requires custom implementation; continuous distributional but immature |
-| **IQN** | Not in SB3; discrete actions in original formulation; future extension (v5.1) |
+| Extension | Scope | Why deferred |
+|---|---|---|
+| Non-recurrent scenarios (accidents, weather) | Extend action range below 60 kph; add incident flag to state | Requires SUMO TraCI incident modeling |
+| Multi-zone differential VSL | Per-segment independent actions (6D Box) | Combinatorial; validate single-zone first |
+| MPR sensitivity sweep | Train at 25%, 50%, 75%, 100% CAV | Independent variable; run after architecture is validated |
+| IQN (Implicit Quantile Networks) | Replace TQC quantile critics with implicit quantiles | Not in SB3; requires custom implementation |
+| E3-based reward components | Add `meanTimeLoss` to reward for TTS control | Evaluate whether E1-only reward is sufficient first |
 
 ---
 
-## 7. References
+## 12. References
 
 - **[R1]** Bellemare, M.G., Dabney, W., Munos, R. (2017). A Distributional Perspective on Reinforcement Learning. *ICML 2017*.
 - **[R2]** Dabney, W., Rowland, M., Bellemare, M.G., Munos, R. (2018). Distributional Reinforcement Learning with Quantile Regression. *AAAI 2018*.
 - **[R3]** Vinitsky, E. et al. (2018). Lagrangian Control through Deep-RL: Applications to Bottleneck Decongestion. *IEEE ITSC 2018*, 759–765.
 - **[R10]** Zhang, Y. et al. (2024). MARVEL: Bringing Multi-Agent Reinforcement-Learning Based Variable Speed Limit Controllers Closer to Deployment. *IEEE Access, 12*, 161995–162012.
+- **[R15]** Gregurić, M. et al. (2020). Application of Deep Reinforcement Learning for Variable Speed Limit Control. *Applied Sciences, 10*, 4917. doi:10.3390/app10144917
+- **[R25]** Li, Z., Liu, P., Xu, C., Duan, H., Wang, W. (2017). Reinforcement Learning-Based Variable Speed Limit Control Strategy to Reduce Traffic Congestion at Freeway Recurrent Bottlenecks. *IEEE T-ITS, 18*(11), 3204–3217.
+- **[R26]** Han, Y. et al. (2022). A New Reinforcement Learning-Based Variable Speed Limit Control Approach to Improve Traffic Efficiency Against Freeway Jam Waves. *TRC, 144*, 103903.
 - Haarnoja, T. et al. (2018). Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor. *ICML 2018*.
-- Kuznetsov, A., Shvechikov, P., Grishin, A., Vetrov, D. (2020). Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics. *JMLR, 21*(167), 1–56.
-- Lillicrap, T.P. et al. (2016). Continuous Control with Deep Reinforcement Learning. *ICLR 2016*.
-- Fujimoto, S., van Hoof, H., Meger, D. (2018). Addressing Function Approximation Error in Actor-Critic Methods. *ICML 2018*.
+- Kuznetsov, A. et al. (2020). Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics. *JMLR, 21*(167), 1–56.
 - Hua, C., Fan, W.D. (2023). Dynamic Speed Harmonization for Mixed Traffic Flow on the Freeway Using Deep Reinforcement Learning. *IET-ITS, 17*, 2519–2530.
+- Hua, C., Fan, W.D. (2024). Safety-Oriented Dynamic Speed Harmonization of Mixed Traffic Flow in Nonrecurrent Congestion. *Physica A, 634*, 129439.
+- Kušić, K. et al. (2020). An Overview of Reinforcement Learning Methods for Variable Speed Limit Control. *Applied Sciences, 10*, 4917.
+- Lillicrap, T.P. et al. (2016). Continuous Control with Deep Reinforcement Learning. *ICLR 2016*.
+- Fujimoto, S. et al. (2018). Addressing Function Approximation Error in Actor-Critic Methods. *ICML 2018*.
+
+---
+
+## Appendix A: Raw data location
+
+All baseline data is stored in `tests/results/`:
+
+| Dataset | Path | Contents |
+|---|---|---|
+| No-control baseline (2500–7000 vph) | `nocontrol_ramps_v1_18-03-2026_14-08-30/` | Per-step CSV per demand; E1 speed/flow/occ |
+| No-control extended (7500–9000 vph) | `nocontrol_extended_18-03-2026_16-04-06/` | Per-step CSV per demand |
+| Fixed-VSL sweep v1 (no accel data) | `fixed_vsl_sweep_18-03-2026_16-44-23/` | Per-step CSV; speed/flow/sigma only |
+| Fixed-VSL sweep v2 (with accel/decel) | `fixed_vsl_sweep_v2_18-03-2026_17-09-52/` | Summary CSV with all metrics from §3 |
+
+Reproduction: `python3 tests/run_fixed_vsl_sweep_v2.py` (requires SUMO ≥ 1.21, ~10 min on 25 cores).
+
+---
+
+*Document version: v2.0, 2026-03-18. Supersedes the algorithm-only v1.0.*

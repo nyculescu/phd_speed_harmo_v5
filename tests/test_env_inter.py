@@ -1,6 +1,6 @@
 # tests/test_env_inter.py
 """
-Dry-run integration tests for the r44 SAR components on ramps_v1.
+Dry-run integration tests for the r44 v1 SAR components on ramps_v1.
 
 These tests use dry-run mode (sumo_cfg_path=None) — no SUMO installation
 needed. All metrics stay at zero; the tests verify observation shape,
@@ -33,22 +33,22 @@ discover_components()
 _SAR_CONFIG = {
     "max_flow_vph": 8000.0,
     "max_ramp_flow_vph": 2000.0,
-    "ref_flow_vph": 5000.0,
-    "target_speed_kph": 80.0,
-    "reward_weights": {"w_v": 0.50, "w_q": 0.35, "w_a": 0.15},
+    "ref_flow_vph": 6000.0,
+    "speed_floor_kph": 50.0,
+    "reward_weights": {"w_h": 0.55, "w_q": 0.30, "w_a": 0.15},
 }
 
 _EPISODE_DURATION = 300   # seconds → 10 steps at 30s
 _AGGREGATION_TIME = 30
 
-_OBS_DIM = 38
+_OBS_DIM = 56    # 18 features × 3 frames + 2 action features
 _ACTION_DIM = 2
 
 
 def _make_env() -> TrafficEnv:
-    state_repr = create_state_representation("r44_state_v0", _SAR_CONFIG)
-    action_strat = create_action_strategy("r44_action_v0", {})
-    reward_func = create_reward_function("r44_reward_v0", _SAR_CONFIG)
+    state_repr = create_state_representation("r44_state_v1", _SAR_CONFIG)
+    action_strat = create_action_strategy("r44_action_v1", {})
+    reward_func = create_reward_function("r44_reward_v1", _SAR_CONFIG)
 
     return TrafficEnv(
         sumo_cfg_path=None,  # dry-run
@@ -76,7 +76,7 @@ class TestSpaces:
         assert env.action_space.shape == (_ACTION_DIM,)
         assert env.action_space.dtype == np.float32
         np.testing.assert_array_equal(env.action_space.low, [60.0, 40.0])
-        np.testing.assert_array_equal(env.action_space.high, [130.0, 90.0])
+        np.testing.assert_array_equal(env.action_space.high, [120.0, 90.0])
 
 
 class TestReset:
@@ -112,7 +112,7 @@ class TestStep:
         assert isinstance(terminated, bool)
         assert truncated is False
         assert "reward_components" in info
-        for key in ("variance", "throughput", "smoothness"):
+        for key in ("harmonization", "throughput", "smoothness"):
             assert key in info["reward_components"], f"missing component '{key}'"
 
     def test_all_corners(self):
@@ -121,9 +121,9 @@ class TestStep:
         env.reset()
         corners = [
             [60.0, 40.0],   # min, min
-            [130.0, 90.0],  # max, max
+            [120.0, 90.0],  # max, max
             [60.0, 90.0],   # min, max
-            [130.0, 40.0],  # max, min
+            [120.0, 40.0],  # max, min
         ]
         for corner in corners:
             obs, reward, _, _, _ = env.step(np.array(corner, dtype=np.float32))
