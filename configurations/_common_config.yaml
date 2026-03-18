@@ -1,65 +1,31 @@
 # =============================================================================
 # Project-level common configuration — phd_speed_harmo_v5
 # All experiments inherit from this file.
+# Topology: ramp_on_v0 (3-lane mainline + on-ramp, no off-ramp)
 # =============================================================================
 
-training:
-  total_timesteps: 1000000
-  num_train_envs: 500
-  num_eval_envs: 10
-  eval:
-    num_evaluations: 20
-    delay_timesteps: 0
-    timeout_s: 1200
-    disable_timeout_after_failure: false
-  checkpoints:
-    frequency: 999999
-    keep_last: 1
-
-execution:
-  train_exit_mode: best_model
-  stop_on_best_model: false
-  allow_best_model_fallback: true
-  consider_interrupted: false
-  resilient_vecenv: true
-  vecenv_step_timeout_s: 300
-  vecenv_startup_stagger_s: 0.05
-  vecenv_init_timeout_s: 120
-  vecenv_max_restarts_per_env: 1
-  vecenv_restart_cutoff_frac: 0.95
-
 sumo:
-  aggregation_time: 30          # must match freq in loops_detectors_m43_v0.add.xml
+  aggregation_time: 30          # must match freq in detectors_ramp_on_v0.add.xml
+  step_length: 1.0
+  episode_duration_s: 7950      # 265 × 30 s windows
+  warmup_s: 300
   custom_config:
     speed_limit_direct_control_CAV: true
-    regime_gate_enabled: false  # regime encoded as one-hot in state features [14–16]
-
-sar:
-  algorithm: QRDQN_v0
-  state: m43_state_v0
-  action: m43_action_v0
-  reward: m43_reward_v0
-
-sar_config:
-  authority_gate:
-    enabled: false
-  mobility_budget:
-    enabled: false
-  reward_weights:
-    w_v: 0.50
-    w_q: 0.35
-    w_a: 0.15
-  ref_flow_vph: 2520.0    # no-control mean downstream flow (veh/h)
-  max_flow_vph: 4000.0    # flow normaliser
-  max_tts_s: 5000.0       # TTS normaliser for state feature [19]
+    regime_gate_enabled: false  # regime encoded as one-hot in state features
 
 scenario_generation:
-  new_scenarios: true
-  network_topology: merge_4_to_3_v0
+  network_topology: ramp_on_v0
   cavs_percentage: 50.0
 
+# SAR framework: to be defined after Step 1 (no-control baseline) analysis.
+# sar:
+#   algorithm: TQC_v0
+#   state: ramp_on_state_v0
+#   action: ramp_on_action_v0
+#   reward: ramp_on_reward_v0
+
 logging:
-  log_dir: ./logs/m43_v0
+  log_dir: ./logs/ramp_on_v0
   tensorboard_dump_csv: false
   enable_file_output: false
   csv_logging: false

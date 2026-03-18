@@ -50,7 +50,7 @@ The 150s E1 aggregation window equals the physical corridor transit time (3 segm
 
 ### 1.3 The Compliance Problem
 
-Physical VSL signs rely on HDV compliance through the Krauss car-following model. In the SUMO simulations used here, compliance is ~99.9% by construction (the speedFactor/speedDev parameters force it). This is **not representative of real-world conditions** where compliance is 60–80% and highly stochastic ([R9], [R16]). A framework that depends on HDV compliance to generate signal will not transfer to the real world.
+Physical VSL signs rely on HDV compliance through the Krauss car-following model. In the SUMO simulations used here [R27], compliance is ~99.9% by construction (the speedFactor/speedDev parameters force it). This is **not representative of real-world conditions** where compliance is 60–80% and highly stochastic ([R9], [R16]). A framework that depends on HDV compliance to generate signal will not transfer to the real world.
 
 ### 1.4 The Reward Complexity Problem
 
@@ -613,6 +613,7 @@ Papers marked **[LOCAL]** are available in `phd_speed_harmo_v4/docs/academic_pap
 | [R24] | Ko, B., Ryu, S., Park, B.B., Son, S.H. (2020). Speed Harmonisation and Merge Control Using Connected Automated Vehicles on a Highway Lane Closure: A Reinforcement Learning Approach. *IET Intelligent Transport Systems, 14*(8), 947–957. https://doi.org/10.1049/iet-its.2019.0709 | **[LOCAL]** `papers_RL_VSL/Speed harmonisation and merge control using connected automated vehicles on a.pdf` |
 | [R25] | Li, Z., Liu, P., Xu, C., Duan, H., Wang, W. (2017). Reinforcement Learning-Based Variable Speed Limit Control Strategy to Reduce Traffic Congestion at Freeway Recurrent Bottlenecks. *IEEE Transactions on Intelligent Transportation Systems, 18*(11), 3204–3217. https://doi.org/10.1109/TITS.2016.2639361 | **[LOCAL]** `papers_RL_VSL/Reinforcement Learning Based Variable Speed Limit Control Strategy to Reduce Traffic Congestion at Freeway Recurrent Bottlenecks.pdf` |
 | [R26] | Han, Y., Hegyi, A., Zhang, L., He, Z., Chung, E., Liu, P. (2022). A New Reinforcement Learning-Based Variable Speed Limit Control Approach to Improve Traffic Efficiency Against Freeway Jam Waves. *Transportation Research Part C: Emerging Technologies, 144*, 103903. https://doi.org/10.1016/j.trc.2022.103903 | **[LOCAL]** `papers_RL_VSL/A new reinforcement learning-based variable speed limit control approach to improve traffic efficiency against freeway jam waves.pdf` |
+| [R27] | Alvarez Lopez, P., Banse, A., Behrisch, M., Erdmann, J., Flötteröd, Y.-P., Hilbrich, R., Nippold, R., & Wagner, P. (2026). Simulation of Urban Mobility (SUMO) (1.26.0). *Zenodo*. https://doi.org/10.5281/zenodo.18406080 | Web: https://doi.org/10.5281/zenodo.18406080 |
 
 ---
 

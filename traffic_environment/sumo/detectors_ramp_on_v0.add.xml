@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  detectors_ramp_on_v0.add.xml
+  E1 induction loops + E3 travel-time detectors for the ramp_on_v0 topology.
+  Topology: 3-lane mainline with on-ramp (no off-ramp).
+             seg_*_before (3 lanes) → seg_0_after / merge buffer (3 lanes) → seg_1_after (3 lanes)
+             ramp_on_approach → ramp_on_transition → ramp_on_merge → seg_0_after lane 0
+
+  freq="30": aligned with the planned 30 s observation/control window.
+  file="/dev/null": stats consumed via TraCI only (no output files written).
+-->
+<additional>
+    <!-- ========== VSL POIs (visualisation markers) ========== -->
+    <poi id="vsl_seg_2_before"   type="VSL" lane="seg_2_before_0"   pos="1.0"  posLat="13.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_2_before"/>
+    <poi id="vsl_seg_1_before"   type="VSL" lane="seg_1_before_0"   pos="1.0"  posLat="13.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_1_before"/>
+    <poi id="vsl_seg_0_before"   type="VSL" lane="seg_0_before_0"   pos="1.0"  posLat="13.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_0_before"/>
+    <poi id="vsl_seg_0_before_1" type="VSL" lane="seg_0_before_0"   pos="950.0" posLat="13.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL seg_0_before end"/>
+    <poi id="vsl_ramp_on"        type="VSL" lane="ramp_on_transition_0" pos="1.0" posLat="-6.0" layer="100" imgFile="vsl_speed_limit.png" width="6.0" height="6.0" name="VSL ramp_on_transition"/>
+
+    <!-- ========== seg_2_before (3 lanes × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_seg_2_before_0_entry" lane="seg_2_before_0" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_entry" lane="seg_2_before_1" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_entry" lane="seg_2_before_2" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_mid"   lane="seg_2_before_0" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_mid"   lane="seg_2_before_1" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_mid"   lane="seg_2_before_2" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_exit"  lane="seg_2_before_0" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_exit"  lane="seg_2_before_1" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_exit"  lane="seg_2_before_2" pos="999.0"  freq="30" file="/dev/null"/>
+
+    <!-- ========== seg_1_before (3 lanes × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_seg_1_before_0_entry" lane="seg_1_before_0" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_entry" lane="seg_1_before_1" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_entry" lane="seg_1_before_2" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_mid"   lane="seg_1_before_0" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_mid"   lane="seg_1_before_1" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_mid"   lane="seg_1_before_2" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_exit"  lane="seg_1_before_0" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_exit"  lane="seg_1_before_1" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_exit"  lane="seg_1_before_2" pos="999.0"  freq="30" file="/dev/null"/>
+
+    <!-- ========== seg_0_before (3 lanes × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_seg_0_before_0_entry" lane="seg_0_before_0" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_entry" lane="seg_0_before_1" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_entry" lane="seg_0_before_2" pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_mid"   lane="seg_0_before_0" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_mid"   lane="seg_0_before_1" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_mid"   lane="seg_0_before_2" pos="500.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_exit"  lane="seg_0_before_0" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_exit"  lane="seg_0_before_1" pos="999.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_exit"  lane="seg_0_before_2" pos="999.0"  freq="30" file="/dev/null"/>
+
+    <!-- ========== seg_0_after — merge buffer (3 lanes × entry/mid/exit) ========== -->
+    <!-- This is the CRITICAL observation zone: mainline + ramp traffic merge here. -->
+    <inductionLoop id="flow_loop_seg_0_after_0_entry"  lane="seg_0_after_0"  pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_entry"  lane="seg_0_after_1"  pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_entry"  lane="seg_0_after_2"  pos="0.0"    freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_mid"    lane="seg_0_after_0"  pos="125.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_mid"    lane="seg_0_after_1"  pos="125.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_mid"    lane="seg_0_after_2"  pos="125.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_exit"   lane="seg_0_after_0"  pos="249.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_exit"   lane="seg_0_after_1"  pos="249.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_exit"   lane="seg_0_after_2"  pos="249.0"  freq="30" file="/dev/null"/>
+
+    <!-- ========== ramp_on_approach (1 lane × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_ramp_on_approach_0_entry" lane="ramp_on_approach_0" pos="0.0"   freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_approach_0_mid"   lane="ramp_on_approach_0" pos="150.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_approach_0_exit"  lane="ramp_on_approach_0" pos="299.0" freq="30" file="/dev/null"/>
+
+    <!-- ========== ramp_on_transition (1 lane × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_ramp_on_transition_0_entry" lane="ramp_on_transition_0" pos="0.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_transition_0_mid"   lane="ramp_on_transition_0" pos="50.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_transition_0_exit"  lane="ramp_on_transition_0" pos="99.0" freq="30" file="/dev/null"/>
+
+    <!-- ========== ramp_on_merge (1 lane × entry/mid/exit) ========== -->
+    <inductionLoop id="flow_loop_ramp_on_merge_0_entry" lane="ramp_on_merge_0" pos="0.0"  freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_merge_0_mid"   lane="ramp_on_merge_0" pos="50.0" freq="30" file="/dev/null"/>
+    <inductionLoop id="flow_loop_ramp_on_merge_0_exit"  lane="ramp_on_merge_0" pos="99.0" freq="30" file="/dev/null"/>
+
+    <!-- ========== E3 travel-time detectors ========== -->
+    <e3Detector id="e3_seg_2_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_2_before_0" pos="0.0"/> <detEntry lane="seg_2_before_1" pos="0.0"/> <detEntry lane="seg_2_before_2" pos="0.0"/>
+        <detExit  lane="seg_2_before_0" pos="999.0"/> <detExit  lane="seg_2_before_1" pos="999.0"/> <detExit  lane="seg_2_before_2" pos="999.0"/>
+    </e3Detector>
+
+    <e3Detector id="e3_seg_1_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_1_before_0" pos="0.0"/> <detEntry lane="seg_1_before_1" pos="0.0"/> <detEntry lane="seg_1_before_2" pos="0.0"/>
+        <detExit  lane="seg_1_before_0" pos="999.0"/> <detExit  lane="seg_1_before_1" pos="999.0"/> <detExit  lane="seg_1_before_2" pos="999.0"/>
+    </e3Detector>
+
+    <e3Detector id="e3_seg_0_before" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_0_before_0" pos="0.0"/> <detEntry lane="seg_0_before_1" pos="0.0"/> <detEntry lane="seg_0_before_2" pos="0.0"/>
+        <detExit  lane="seg_0_before_0" pos="999.0"/> <detExit  lane="seg_0_before_1" pos="999.0"/> <detExit  lane="seg_0_before_2" pos="999.0"/>
+    </e3Detector>
+
+    <e3Detector id="e3_seg_0_after" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_0_after_0" pos="0.0"/> <detEntry lane="seg_0_after_1" pos="0.0"/> <detEntry lane="seg_0_after_2" pos="0.0"/>
+        <detExit  lane="seg_0_after_0" pos="249.0"/> <detExit  lane="seg_0_after_1" pos="249.0"/> <detExit  lane="seg_0_after_2" pos="249.0"/>
+    </e3Detector>
+
+    <!-- Corridor detector: entry at seg_2_before + ramp_on_merge, exit at seg_0_after end -->
+    <e3Detector id="e3_corridor" freq="30.0" file="/dev/null">
+        <detEntry lane="seg_2_before_0" pos="0.0"/> <detEntry lane="seg_2_before_1" pos="0.0"/> <detEntry lane="seg_2_before_2" pos="0.0"/>
+        <!-- Ramp vehicles do not pass seg_2_before; add ramp entry to avoid "left without entering" warnings -->
+        <detEntry lane="ramp_on_merge_0" pos="0.0"/>
+        <detExit  lane="seg_0_after_0" pos="249.0"/> <detExit  lane="seg_0_after_1" pos="249.0"/> <detExit  lane="seg_0_after_2" pos="249.0"/>
+    </e3Detector>
+</additional>
