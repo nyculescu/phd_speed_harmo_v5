@@ -341,30 +341,70 @@ The per-vehicle acceleration `traci.vehicle.getAcceleration()` is a microscopic 
 | 7000 vph | 16.41 | 0.838 |
 | 7500 vph | 8.55 | 0.869 |
 
-The correlation breaks at 7500 vph (σ drops because all segments congest uniformly, but avg|a| remains high due to stop-and-go dynamics within each segment). This motivates the speed floor term.
+The correlation breaks at 7500 vph (σ drops because all segments congest uniformly, but avg|a| remains high due to stop-and-go dynamics within each segment). This is the **reward proxy gap**: the spatial σ alone is insufficient to capture intra-segment stop-and-go dynamics.
 
-### 8.3 Proposed reward: 3 terms
+### 8.3 The reward proxy gap and how v2 addresses it
+
+**The problem (v1):** `r44_reward_v1` used only inter-segment σ (spatial variance across 3 segments at one point in time). At 7500+ vph, all segments congest uniformly — spatial σ drops to 8.55 kph — but avg|a| stays at 0.869 m/s² because vehicles within each segment undergo stop-and-go oscillation. The agent would receive a mild penalty (`r_harmo ≈ -0.29`) for conditions where the actual driving experience is terrible.
+
+**The fix (v2):** `r44_reward_v2` splits the harmonization term into two sub-components:
+
+1. **r_spatial** — inter-segment speed variance (same as v1's σ). Captures congestion forming unevenly across the corridor (speed gradient: seg_2 is fast, seg_0 is slow).
+2. **r_temporal** — mean absolute speed change between consecutive E1 windows across the 3 upstream segments. Captures within-segment stop-and-go dynamics.
+
+The temporal term computes:
+```python
+delta_v = |speeds_t − speeds_{t-1}|  # per-segment absolute speed change (kph)
+r_temporal = -min(mean(delta_v) / 15.0, 1.0)   # ∈ [-1, 0]
+```
+
+The blended harmonization term:
+```python
+r_harmo = blend × r_spatial + (1 − blend) × r_temporal
+```
+
+with `blend = 0.5` (equal weight, configurable via `harmo_spatial_blend`).
+
+**Why this closes the proxy gap:** The temporal term captures exactly what the spatial term misses. When all segments are at 45 kph but oscillating ±10 kph between windows (stop-and-go), r_spatial ≈ 0 (uniform congestion) but r_temporal ≈ −0.67 (significant speed swings). The blended signal correctly penalizes this condition.
+
+**Academic grounding for the temporal term:**
+
+- The macroscopic speed change `Δv / Δt` (where Δt = 30 s) is the segment-averaged acceleration — the same quantity used by emission models (MOVES, COPERT, HBEFA) at macroscopic granularity [Kušić et al. (2020), Table 1: CO₂ reduction correlates with VSL-influenced speed changes].
+- Hua & Fan (2024, Physica A, §3.1) define their reward directly as `r = −θ_t` where `θ_t` is cumulative emergency deceleration above 4.5 m/s². The temporal term approximates this at macroscopic level: large |Δv| in a 30 s window implies many vehicles decelerated/accelerated during that interval.
+- SPECIALIST (Hegyi et al., 2008) triggers VSL activation when the speed change exceeds a threshold — the temporal derivative of speed is the activation signal. The temporal reward term encodes the same signal as a continuous penalty.
+
+**Normalization:** `_DELTA_V_NORM = 15.0 kph`. From baseline data, per-window speed changes at breakdown onset reach 20–30 kph. Setting the ceiling at 15 kph maps "moderate stop-and-go" (Δv = 15 kph over 30 s ≈ 0.14 m/s² average acceleration) to the maximum penalty. Changes below 5 kph (normal free-flow fluctuation) produce small penalties (−0.33).
+
+### 8.4 Reward structure: 3 terms (v2)
 
 ```
 r_t = w_h · r_harmo + w_q · r_throughput + w_a · r_smooth
 ```
 
-**Term 1 — Speed harmonization (r_harmo):**
+where `r_harmo = blend · r_spatial + (1 − blend) · r_temporal`.
+
+**Term 1a — Spatial harmonization (r_spatial):**
 ```python
 speeds = [seg_2_before_speed_kph, seg_1_before_speed_kph, seg_0_before_speed_kph]
 sigma = np.std(speeds)
 mean_speed = np.mean(speeds)
 
-# Only penalise variance when mean speed is above the congestion floor.
-# Below the floor, variance reduction is not meaningful (everything is slow).
 if mean_speed >= 50.0:
-    r_harmo = -min(sigma / 30.0, 1.0)    # ∈ [-1, 0]
+    r_spatial = -min(sigma / 30.0, 1.0)    # ∈ [-1, 0]
 else:
-    # Penalise low speed directly — variance is not the issue, congestion is.
-    r_harmo = -1.0 + max(0, mean_speed / 50.0 - 1.0)
+    r_spatial = -1.0 + (mean_speed / 50.0)
+    r_spatial = min(r_spatial, -min(sigma / 30.0, 1.0))
 ```
 
-This prevents the trivial solution (let everything congest to uniform 30 kph, achieving σ = 0).
+Prevents the trivial solution (let everything congest to uniform 30 kph, achieving σ = 0).
+
+**Term 1b — Temporal harmonization (r_temporal):**
+```python
+delta_v = abs(speeds_t - speeds_{t-1})   # per-segment kph change
+r_temporal = -min(mean(delta_v) / 15.0, 1.0)   # ∈ [-1, 0]
+```
+
+Captures within-segment stop-and-go. First step after reset returns 0 (no previous window).
 
 **Term 2 — Throughput (r_throughput):**
 ```python
@@ -388,8 +428,23 @@ Prevents VSL oscillation. SAC's entropy regularization already encourages smooth
 | w_h | 0.55 | Primary objective: deceleration reduction via speed harmonization |
 | w_q | 0.30 | Must maintain throughput — the fixed-VSL data shows throughput loss is the main risk |
 | w_a | 0.15 | Operational constraint: smooth VSL transitions |
+| blend | 0.50 | Equal weight spatial + temporal; ablation: 0.3/0.7 and 0.7/0.3 |
 
-### 8.4 What about TTS as a reward term?
+### 8.5 Reward component reporting
+
+`r44_reward_v2` reports 5 components in `RewardSignal.components`:
+
+| Key | Range | Meaning |
+|---|---|---|
+| `harmonization` | [−1, 0] | Blended r_harmo (what enters the total) |
+| `spatial` | [−1, 0] | Inter-segment σ (for monitoring; may equal v1's r_harmo) |
+| `temporal` | [−1, 0] | Inter-window speed change (the new signal) |
+| `throughput` | [0, 1] | Downstream flow fraction |
+| `smoothness` | [−1, 0] | Action delta penalty |
+
+During training, Tensorboard can plot `spatial` and `temporal` separately to verify that the temporal term provides signal when spatial alone is flat (the 7500+ vph regime).
+
+### 8.6 What about TTS as a reward term?
 
 TTS (Total Time Spent) is available via `tts_increment_s` in TrafficMetrics (vehicle count × aggregation time). It could replace or supplement the throughput term. However, TTS conflates two effects:
 

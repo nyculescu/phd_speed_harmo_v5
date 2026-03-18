@@ -35,6 +35,7 @@ _SAR_CONFIG = {
     "max_ramp_flow_vph": 2000.0,
     "ref_flow_vph": 6000.0,
     "speed_floor_kph": 50.0,
+    "harmo_spatial_blend": 0.5,
     "reward_weights": {"w_h": 0.55, "w_q": 0.30, "w_a": 0.15},
 }
 
@@ -48,7 +49,7 @@ _ACTION_DIM = 2
 def _make_env() -> TrafficEnv:
     state_repr = create_state_representation("r44_state_v1", _SAR_CONFIG)
     action_strat = create_action_strategy("r44_action_v1", {})
-    reward_func = create_reward_function("r44_reward_v1", _SAR_CONFIG)
+    reward_func = create_reward_function("r44_reward_v2", _SAR_CONFIG)
 
     return TrafficEnv(
         sumo_cfg_path=None,  # dry-run
@@ -112,7 +113,7 @@ class TestStep:
         assert isinstance(terminated, bool)
         assert truncated is False
         assert "reward_components" in info
-        for key in ("harmonization", "throughput", "smoothness"):
+        for key in ("harmonization", "spatial", "temporal", "throughput", "smoothness"):
             assert key in info["reward_components"], f"missing component '{key}'"
 
     def test_all_corners(self):
