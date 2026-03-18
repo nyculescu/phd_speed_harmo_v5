@@ -142,44 +142,61 @@ def _build_junctions() -> tuple:
 
     ramp_start_y = Y_BASE + RAMP_Y_OFFSET
 
-    # Off-ramp arch waypoints (computed first; on-ramp mirrors reversed)
-    off_total = (SEGMENT_LENGTHS['ramp_off_diverge'] +
-                 SEGMENT_LENGTHS['ramp_off_transition'] +
-                 SEGMENT_LENGTHS['ramp_off_departure'])
-    p1 = SEGMENT_LENGTHS['ramp_off_diverge'] / off_total
-    p2 = (SEGMENT_LENGTHS['ramp_off_diverge'] +
-          SEGMENT_LENGTHS['ramp_off_transition']) / off_total
-    off_mid1_y = diverge_lane0_y + (ramp_start_y - diverge_lane0_y) * p1 * RAMP_PROXIMITY_FACTOR
-    off_mid2_y = diverge_lane0_y + (ramp_start_y - diverge_lane0_y) * p2 * RAMP_PROXIMITY_FACTOR
+    # Ramp waypoint strategy
+    # ──────────────────────────────────────────────────────────────────────────
+    # On-ramp profile (left to right, upstream → merge):
+    #   approach (300 m) : flat at ramp_start_y  — clearly below mainline
+    #   transition (100 m): curve from ramp_start_y to midpoint
+    #   merge (100 m)     : curve from midpoint to merge_lane0_y — joins mainline
+    #
+    # Off-ramp profile (left to right, diverge → departure):
+    #   diverge (100 m)   : curve from diverge_lane0_y to midpoint
+    #   transition (100 m): curve from midpoint to ramp_start_y
+    #   departure (300 m) : flat at ramp_start_y  — clearly below mainline
+    #
+    # This ensures the approach/departure sections are visually well-separated
+    # from the mainline; the curvature is concentrated in the short transition
+    # and merge/diverge sections where drivers expect the angle change.
+    # ──────────────────────────────────────────────────────────────────────────
 
-    # On-ramp: mirror off-ramp geometry (reversed along x)
-    on_mid1_y = off_mid2_y
-    on_mid2_y = off_mid1_y
     total_on_ramp = (SEGMENT_LENGTHS['ramp_on_approach'] +
                      SEGMENT_LENGTHS['ramp_on_transition'] +
                      SEGMENT_LENGTHS['ramp_on_merge'])
+    off_total = (SEGMENT_LENGTHS['ramp_off_diverge'] +
+                 SEGMENT_LENGTHS['ramp_off_transition'] +
+                 SEGMENT_LENGTHS['ramp_off_departure'])
+
+    ramp_mid_y = (ramp_start_y + merge_lane0_y) / 2.0   # halfway between ramp floor and merge
 
     # On-ramp junctions
+    #   J_ramp_on_start : flat start (y = ramp_start_y)
+    #   J_ramp_on_mid1  : end of flat approach (y = ramp_start_y)
+    #   J_ramp_on_mid2  : midpoint of climb (y = ramp_mid_y)
+    #   At J3           : y = merge_lane0_y  (set via lane shape end_y_override)
     junctions['J_ramp_on_start'] = {
         'x': merge_x - total_on_ramp, 'y': ramp_start_y, 'type': 'dead_end',
     }
     junctions['J_ramp_on_mid1'] = {
         'x': merge_x - SEGMENT_LENGTHS['ramp_on_transition'] - SEGMENT_LENGTHS['ramp_on_merge'],
-        'y': on_mid1_y, 'type': 'priority',
+        'y': ramp_start_y, 'type': 'priority',   # end of flat approach
     }
     junctions['J_ramp_on_mid2'] = {
         'x': merge_x - SEGMENT_LENGTHS['ramp_on_merge'],
-        'y': on_mid2_y, 'type': 'priority',
+        'y': ramp_mid_y, 'type': 'priority',      # midpoint of climb
     }
 
     # Off-ramp junctions
+    #   At J4           : y = diverge_lane0_y  (set via lane shape start_y_override)
+    #   J_ramp_off_mid1 : midpoint of descent (y = ramp_mid_y)
+    #   J_ramp_off_mid2 : start of flat departure (y = ramp_start_y)
+    #   J_ramp_off_end  : flat end (y = ramp_start_y)
     junctions['J_ramp_off_mid1'] = {
         'x': diverge_x + SEGMENT_LENGTHS['ramp_off_diverge'],
-        'y': off_mid1_y, 'type': 'priority',
+        'y': ramp_mid_y, 'type': 'priority',      # midpoint of descent
     }
     junctions['J_ramp_off_mid2'] = {
         'x': diverge_x + SEGMENT_LENGTHS['ramp_off_diverge'] + SEGMENT_LENGTHS['ramp_off_transition'],
-        'y': off_mid2_y, 'type': 'priority',
+        'y': ramp_start_y, 'type': 'priority',    # end of descent = start of flat
     }
     junctions['J_ramp_off_end'] = {
         'x': diverge_x + off_total, 'y': ramp_start_y, 'type': 'dead_end',

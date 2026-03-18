@@ -8,10 +8,10 @@
     <junction id="J4" type="priority" x="-750.00" y="60.00" incLanes="" intLanes="" shape=""/>
     <junction id="J5" type="dead_end" x="-250.00" y="60.00" incLanes="" intLanes="" shape=""/>
     <junction id="J_ramp_on_start" type="dead_end" x="-1500.00" y="40.00" incLanes="" intLanes="" shape=""/>
-    <junction id="J_ramp_on_mid1" type="priority" x="-1200.00" y="49.79" incLanes="" intLanes="" shape=""/>
-    <junction id="J_ramp_on_mid2" type="priority" x="-1100.00" y="51.70" incLanes="" intLanes="" shape=""/>
-    <junction id="J_ramp_off_mid1" type="priority" x="-650.00" y="51.70" incLanes="" intLanes="" shape=""/>
-    <junction id="J_ramp_off_mid2" type="priority" x="-550.00" y="49.79" incLanes="" intLanes="" shape=""/>
+    <junction id="J_ramp_on_mid1" type="priority" x="-1200.00" y="40.00" incLanes="" intLanes="" shape=""/>
+    <junction id="J_ramp_on_mid2" type="priority" x="-1100.00" y="46.80" incLanes="" intLanes="" shape=""/>
+    <junction id="J_ramp_off_mid1" type="priority" x="-650.00" y="46.80" incLanes="" intLanes="" shape=""/>
+    <junction id="J_ramp_off_mid2" type="priority" x="-550.00" y="40.00" incLanes="" intLanes="" shape=""/>
     <junction id="J_ramp_off_end" type="dead_end" x="-250.00" y="40.00" incLanes="" intLanes="" shape=""/>
     <edge id="seg_2_before" from="J0" to="J1" priority="-1" length="1000.0">
         <lane id="seg_2_before_0" index="0" speed="33.33" length="1000.0" shape="-3000.00,56.80 -2500.00,56.80"/>
@@ -40,22 +40,22 @@
         <lane id="seg_1_after_2" index="2" speed="33.33" length="1000.0" shape="-750.00,63.20 -250.00,63.20"/>
     </edge>
     <edge id="ramp_on_approach" from="J_ramp_on_start" to="J_ramp_on_mid1" priority="-1" length="300.0">
-        <lane id="ramp_on_approach_0" index="0" speed="25.0" length="300.0" shape="-1500.00,40.00 -1200.00,49.79"/>
+        <lane id="ramp_on_approach_0" index="0" speed="25.0" length="300.0" shape="-1500.00,40.00 -1200.00,40.00"/>
     </edge>
     <edge id="ramp_on_transition" from="J_ramp_on_mid1" to="J_ramp_on_mid2" priority="-1" length="100.0">
-        <lane id="ramp_on_transition_0" index="0" speed="25.0" length="100.0" shape="-1200.00,49.79 -1100.00,51.70"/>
+        <lane id="ramp_on_transition_0" index="0" speed="25.0" length="100.0" shape="-1200.00,40.00 -1100.00,46.80"/>
     </edge>
     <edge id="ramp_on_merge" from="J_ramp_on_mid2" to="J3" priority="-1" length="100.0">
-        <lane id="ramp_on_merge_0" index="0" speed="25.0" length="100.0" shape="-1100.00,51.70 -1000.00,53.60"/>
+        <lane id="ramp_on_merge_0" index="0" speed="25.0" length="100.0" shape="-1100.00,46.80 -1000.00,53.60"/>
     </edge>
     <edge id="ramp_off_diverge" from="J4" to="J_ramp_off_mid1" priority="-1" length="100.0">
-        <lane id="ramp_off_diverge_0" index="0" speed="25.0" length="100.0" shape="-750.00,53.60 -650.00,51.70"/>
+        <lane id="ramp_off_diverge_0" index="0" speed="25.0" length="100.0" shape="-750.00,53.60 -650.00,46.80"/>
     </edge>
     <edge id="ramp_off_transition" from="J_ramp_off_mid1" to="J_ramp_off_mid2" priority="-1" length="100.0">
-        <lane id="ramp_off_transition_0" index="0" speed="25.0" length="100.0" shape="-650.00,51.70 -550.00,49.79"/>
+        <lane id="ramp_off_transition_0" index="0" speed="25.0" length="100.0" shape="-650.00,46.80 -550.00,40.00"/>
     </edge>
     <edge id="ramp_off_departure" from="J_ramp_off_mid2" to="J_ramp_off_end" priority="-1" length="300.0">
-        <lane id="ramp_off_departure_0" index="0" speed="25.0" length="300.0" shape="-550.00,49.79 -250.00,40.00"/>
+        <lane id="ramp_off_departure_0" index="0" speed="25.0" length="300.0" shape="-550.00,40.00 -250.00,40.00"/>
     </edge>
     <connection from="seg_2_before" to="seg_1_before" fromLane="0" toLane="0" dir="s" state="M"/>
     <connection from="seg_2_before" to="seg_1_before" fromLane="1" toLane="1" dir="s" state="M"/>
