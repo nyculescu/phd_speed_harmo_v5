@@ -5,7 +5,7 @@
 # =============================================================================
 
 sumo:
-  aggregation_time: 30          # must match freq in detectors_ramp_on_v0.add.xml
+  aggregation_time: 30          # must match freq in detectors_ramps_v0.add.xml
   step_length: 1.0
   episode_duration_s: 7950      # 265 × 30 s windows
   warmup_s: 300
@@ -14,7 +14,7 @@ sumo:
     regime_gate_enabled: false  # regime encoded as one-hot in state features
 
 scenario_generation:
-  network_topology: ramp_on_v0
+  network_topology: ramps_v0
   cavs_percentage: 50.0
 
 # SAR framework: to be defined after Step 1 (no-control baseline) analysis.
