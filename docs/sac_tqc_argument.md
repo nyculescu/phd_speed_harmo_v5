@@ -331,69 +331,75 @@ The ramp merge curve geometry forces vehicles to ~22–29 kph regardless of VSL 
 
 ### 8.1 The objective in mathematical terms
 
-The speed harmonization objective is to minimise the frequency and amplitude of deceleration-acceleration events across the upstream corridor, subject to maintaining acceptable throughput and travel time. Mathematically:
+The speed harmonization objective is to reduce spatiotemporal speed variance across the upstream corridor, subject to maintaining acceptable throughput and travel time. This definition is consistent with the canonical formulation of speed harmonization in the VSL literature (Kušić et al., 2020; Hua & Fan, 2023; Zhang et al., 2024/MARVEL). Mathematically:
 
 ```
-min  E[|a(t)|]  across all vehicles on upstream corridor
-s.t. TTS ≤ (1 + ε) × TTS_no_control
-     throughput ≥ (1 − δ) × throughput_no_control
+min  spatial_gradient(t) + temporal_instability(t)   across the upstream corridor
+s.t. throughput ≥ (1 − δ) × throughput_no_control
 ```
 
-where ε and δ are acceptable degradation margins (calibrated from the baseline).
+where `spatial_gradient` is the maximum adjacent inter-segment speed difference and `temporal_instability` is the speed change at the downstream observation point between consecutive windows.
 
-### 8.2 Why we cannot directly reward E[|a(t)|]
+The microscopic mean absolute acceleration `avg|a|` (measured via `traci.vehicle.getAcceleration()`) is used as an **independent post-training validation metric** — not as the reward objective — to confirm that macroscopic harmonization translates to vehicle-level driving comfort and emission reduction. This follows the methodology of Hua & Fan (2024, Physica A), who validate their DRL-based DSH using cumulative emergency deceleration as a post-hoc measure of effectiveness.
 
-The per-vehicle acceleration `traci.vehicle.getAcceleration()` is a microscopic measurement available at every simulation second. However:
+### 8.2 Reward design principles and their academic basis
 
-1. The RL agent acts every 30 s (one E1 window). The acceleration field evolves within those 30 s in response to the VSL but also in response to lane changes, car-following dynamics, and vehicle insertions — all uncontrollable stochastic noise.
-2. Aggregating per-vehicle acceleration over 30 s produces a noisy signal that is hard for the critic to learn from (high variance → slow convergence).
-3. The agent controls macroscopic variables (segment-level speed limits), not microscopic accelerations. The connection between VSL and acceleration is mediated by car-following dynamics and is not directly invertible.
+The reward must satisfy four requirements:
 
-**Therefore, we use macroscopic E1 proxies that correlate with microscopic deceleration activity.** The baseline data validates this correlation: σ_upstream (E1-based) correlates directly with avg|a| (microscopic):
+1. **Penalise spatial speed gradients** — the shockwave front steepness between adjacent segments, which directly causes braking as vehicles traverse the corridor. This is the activation signal used by SPECIALIST (Hegyi et al., 2008).
+2. **Penalise temporal speed instability downstream** — measured where the agent has no direct control, so that the signal reflects genuine traffic dynamics (merge conflicts, shockwave arrival), not the agent's own VSL activation.
+3. **Constrain throughput** — penalise flow collapse, but not reward flow above a threshold (throughput is a constraint, not an objective).
+4. **Penalise action oscillation** — smooth VSL transitions for operational acceptability.
 
-| No-control | σ_upstream | avg\|a\| |
-|---|---|---|
-| 5000 vph | 2.33 | 0.510 |
-| 6000 vph | 5.35 | 0.691 |
-| 6500 vph | 6.08 | 0.780 |
-| 7000 vph | 16.41 | 0.838 |
-| 7500 vph | 8.55 | 0.869 |
+### 8.3 Why r_spatial uses max adjacent gradient, not std()
 
-The correlation breaks at 7500 vph (σ drops because all segments congest uniformly, but avg|a| remains high due to stop-and-go dynamics within each segment). This is the **reward proxy gap**: the spatial σ alone is insufficient to capture intra-segment stop-and-go dynamics.
+**The problem with std() over 3 points:** v1 used `np.std([s2, s1, s0])`. With N=3, standard deviation is a degenerate statistic dominated by the single largest outlier. Two fundamentally different traffic conditions get nearly identical penalties:
 
-### 8.3 The reward proxy gap and how v2 addresses it
+- `speeds = [100, 100, 50]` → σ = 23.6 kph (shockwave: seg_0 congested, seg_1/2 free)
+- `speeds = [100, 75, 50]` → σ = 20.4 kph (smooth gradient: a well-functioning VSL creates this)
 
-**The problem (v1):** `r44_reward_v1` used only inter-segment σ (spatial variance across 3 segments at one point in time). At 7500+ vph, all segments congest uniformly — spatial σ drops to 8.55 kph — but avg|a| stays at 0.869 m/s² because vehicles within each segment undergo stop-and-go oscillation. The agent would receive a mild penalty (`r_harmo ≈ -0.29`) for conditions where the actual driving experience is terrible.
+No published RL-VSL paper uses σ over 3 spatial points as the reward. Li et al. [R25] use density at the bottleneck (single-point measurement). Han et al. [R26] use jam length and jam speed. MARVEL [R10] uses the gap between posted and actual speeds. Hegyi et al. (2008/SPECIALIST) use the speed *difference* between adjacent cells as the activation trigger.
 
-**The fix (v2):** `r44_reward_v2` splits the harmonization term into two sub-components:
+**The fix:** Replace σ with `max(|s2−s1|, |s1−s0|)` — the maximum adjacent speed difference. This directly measures the shockwave front steepness: if seg_1 is at 100 kph and seg_0 is at 50 kph, vehicles crossing that boundary must decelerate by 50 kph. The adjacent gradient captures this; the std() does not distinguish it from a smooth transition.
 
-1. **r_spatial** — inter-segment speed variance (same as v1's σ). Captures congestion forming unevenly across the corridor (speed gradient: seg_2 is fast, seg_0 is slow).
-2. **r_temporal** — mean absolute speed change between consecutive E1 windows across the 3 upstream segments. Captures within-segment stop-and-go dynamics.
-
-The temporal term computes:
 ```python
-delta_v = |speeds_t − speeds_{t-1}|  # per-segment absolute speed change (kph)
-r_temporal = -min(mean(delta_v) / 15.0, 1.0)   # ∈ [-1, 0]
+adj_diff_21 = abs(s2_kph - s1_kph)
+adj_diff_10 = abs(s1_kph - s0_kph)
+max_gradient = max(adj_diff_21, adj_diff_10)
+
+r_spatial = -min(max_gradient / 30.0, 1.0)    # ∈ [-1, 0]
 ```
 
-The blended harmonization term:
+Normalization: `_GRADIENT_NORM = 30.0 kph`. From baseline data at 7000 vph: seg_2 = 97 kph, seg_0 = 45 kph → adjacent differences up to ~25 kph. 30 kph maps severe gradients to the maximum penalty.
+
+### 8.4 Why r_temporal measures downstream, not upstream
+
+**The critical flaw in the v2-draft temporal term:** The original design measured speed changes across the 3 upstream segments — the same segments where the agent applies VSL. When the agent activates control (drops VSL from 120 to 85 kph), upstream speeds decrease by design. This beneficial speed change would be penalised identically to a harmful stop-and-go oscillation. The agent would be maximally punished for doing exactly the right thing at the moment of activation.
+
+Concrete example:
+- Step t: agent posts 120 kph, seg_0_before = 100 kph
+- Step t+1: agent posts 85 kph, seg_0_before = 82 kph
+- Old temporal term: |82 − 100| = 18 kph → r_temporal = −1.0 (maximum penalty)
+
+This creates a perverse incentive: the agent learns to either never activate or to activate with tiny changes (conflicting with the need to pre-empt breakdown quickly).
+
+**The fix:** Measure temporal speed stability at `seg_0_after` (the weaving zone), where the agent has **no direct control** — CAVs are released downstream of the merge point and accelerate freely. Speed changes at seg_0_after reflect genuine traffic dynamics: merge conflicts, shockwave arrival from the bottleneck, and flow instability. They do NOT reflect the agent's VSL commands.
+
 ```python
-r_harmo = blend × r_spatial + (1 − blend) × r_temporal
+ds_speed_kph = seg_0_after_speed_ms * 3.6
+
+if prev_ds_speed is not None:
+    ds_delta_v = abs(ds_speed_kph - prev_ds_speed)
+    r_temporal = -min(ds_delta_v / 15.0, 1.0)   # ∈ [-1, 0]
 ```
 
-with `blend = 0.5` (equal weight, configurable via `harmo_spatial_blend`).
+**Academic grounding:**
+- Hua & Fan (2024, Physica A, §3.1): Their reward `r = −θ_t` uses a 4.5 m/s² threshold that explicitly filters out controlled decelerations (VSL-induced slowdown is smooth, ~0.1-0.3 m/s²) and only penalises uncontrolled harsh braking. Measuring downstream achieves the same separation between controlled and uncontrolled speed changes.
+- SPECIALIST (Hegyi et al., 2008): The detection logic monitors speed changes downstream of the control zone to determine whether the VSL is having the intended effect.
 
-**Why this closes the proxy gap:** The temporal term captures exactly what the spatial term misses. When all segments are at 45 kph but oscillating ±10 kph between windows (stop-and-go), r_spatial ≈ 0 (uniform congestion) but r_temporal ≈ −0.67 (significant speed swings). The blended signal correctly penalizes this condition.
+**Normalization:** `_DS_DELTA_V_NORM = 15.0 kph`. seg_0_after at 7000 vph breakdown onset shows per-window speed swings of 15-25 kph. 15 kph maps "moderate instability" to the maximum penalty.
 
-**Academic grounding for the temporal term:**
-
-- The macroscopic speed change `Δv / Δt` (where Δt = 30 s) is the segment-averaged acceleration — the same quantity used by emission models (MOVES, COPERT, HBEFA) at macroscopic granularity [Kušić et al. (2020), Table 1: CO₂ reduction correlates with VSL-influenced speed changes].
-- Hua & Fan (2024, Physica A, §3.1) define their reward directly as `r = −θ_t` where `θ_t` is cumulative emergency deceleration above 4.5 m/s². The temporal term approximates this at macroscopic level: large |Δv| in a 30 s window implies many vehicles decelerated/accelerated during that interval.
-- SPECIALIST (Hegyi et al., 2008) triggers VSL activation when the speed change exceeds a threshold — the temporal derivative of speed is the activation signal. The temporal reward term encodes the same signal as a continuous penalty.
-
-**Normalization:** `_DELTA_V_NORM = 15.0 kph`. From baseline data, per-window speed changes at breakdown onset reach 20–30 kph. Setting the ceiling at 15 kph maps "moderate stop-and-go" (Δv = 15 kph over 30 s ≈ 0.14 m/s² average acceleration) to the maximum penalty. Changes below 5 kph (normal free-flow fluctuation) produce small penalties (−0.33).
-
-### 8.4 Reward structure: 3 terms (v2)
+### 8.5 Reward structure: 3 terms (v2)
 
 ```
 r_t = w_h · r_harmo + w_q · r_throughput + w_a · r_smooth
@@ -403,33 +409,45 @@ where `r_harmo = blend · r_spatial + (1 − blend) · r_temporal`.
 
 **Term 1a — Spatial harmonization (r_spatial):**
 ```python
-speeds = [seg_2_before_speed_kph, seg_1_before_speed_kph, seg_0_before_speed_kph]
-sigma = np.std(speeds)
-mean_speed = np.mean(speeds)
+adj_diff_21 = abs(s2_kph - s1_kph)
+adj_diff_10 = abs(s1_kph - s0_kph)
+max_gradient = max(adj_diff_21, adj_diff_10)
 
 if mean_speed >= 50.0:
-    r_spatial = -min(sigma / 30.0, 1.0)    # ∈ [-1, 0]
+    r_spatial = -min(max_gradient / 30.0, 1.0)    # ∈ [-1, 0]
 else:
-    r_spatial = -1.0 + (mean_speed / 50.0)
-    r_spatial = min(r_spatial, -min(sigma / 30.0, 1.0))
+    # Established congestion regime transition: speed-recovery signal.
+    # Below 50 kph mean upstream speed, harmonization is no longer
+    # actionable.  The reward incentivises the agent to raise speeds
+    # back above the floor.  At mean_speed=0 → r=-1; at floor → r=0.
+    r_speed_recovery = -1.0 + (mean_speed / 50.0)
+    r_gradient_penalty = -min(max_gradient / 30.0, 1.0)
+    r_spatial = min(r_speed_recovery, r_gradient_penalty)
 ```
-
-Prevents the trivial solution (let everything congest to uniform 30 kph, achieving σ = 0).
 
 **Term 1b — Temporal harmonization (r_temporal):**
 ```python
-delta_v = abs(speeds_t - speeds_{t-1})   # per-segment kph change
-r_temporal = -min(mean(delta_v) / 15.0, 1.0)   # ∈ [-1, 0]
+ds_speed_kph = seg_0_after_speed_ms * 3.6   # downstream, uncontrolled
+
+if prev_ds_speed is not None:
+    ds_delta_v = abs(ds_speed_kph - prev_ds_speed)
+    r_temporal = -min(ds_delta_v / 15.0, 1.0)   # ∈ [-1, 0]
 ```
 
-Captures within-segment stop-and-go. First step after reset returns 0 (no previous window).
+Captures merge-zone instability without penalising the agent's own VSL activation. First step after reset returns 0.
 
-**Term 2 — Throughput (r_throughput):**
+**Term 2 — Throughput constraint (r_throughput):**
 ```python
-r_throughput = min(seg_1_after_flow_vph / ref_flow_vph, 1.0)    # ∈ [0, 1]
+flow_ratio = seg_1_after_flow_vph / ref_flow_vph
+threshold = 0.85
+
+if flow_ratio >= threshold:
+    r_throughput = 0.0                                              # acceptable — no penalty
+else:
+    r_throughput = -(threshold - flow_ratio) / threshold            # ∈ [-1, 0]
 ```
 
-Reference flow calibrated from baseline: ~6000 vph (the saturation flow at the downstream 3-lane section).
+Throughput is a **constraint, not a bonus**. When downstream flow is above 85% of the reference (6000 vph), the agent receives no reward and no penalty for throughput. Below 85%, a linear penalty activates proportional to the shortfall. This is consistent with the thesis framing ("subject to maintaining throughput") and with MARVEL [R10] (§IV: *"mobility: speed limits should not substantially compromise traffic flow"*). The threshold-based design avoids rewarding the agent for artificially smoothing flow while destroying TTS — a failure mode observed with the original linear bonus design at 5000 vph.
 
 **Term 3 — Action smoothness (r_smooth):**
 ```python
@@ -443,10 +461,10 @@ Prevents VSL oscillation. SAC's entropy regularization already encourages smooth
 
 | Weight | Value | Rationale |
 |---|---|---|
-| w_h | 0.55 | Primary objective: deceleration reduction via speed harmonization |
-| w_q | 0.30 | Must maintain throughput — the fixed-VSL data shows throughput loss is the main risk |
+| w_h | 0.55 | Primary objective: spatiotemporal speed harmonization |
+| w_q | 0.30 | Throughput constraint — the fixed-VSL data shows throughput loss is the main risk |
 | w_a | 0.15 | Operational constraint: smooth VSL transitions |
-| blend | 0.50 | Equal weight spatial + temporal; ablation: 0.3/0.7 and 0.7/0.3 |
+| blend | 0.50 | Equal weight spatial (gradient) + temporal (downstream stability); ablation: 0.3/0.7 and 0.7/0.3 |
 
 ### 8.5 Reward component reporting
 
@@ -455,12 +473,12 @@ Prevents VSL oscillation. SAC's entropy regularization already encourages smooth
 | Key | Range | Meaning |
 |---|---|---|
 | `harmonization` | [−1, 0] | Blended r_harmo (what enters the total) |
-| `spatial` | [−1, 0] | Inter-segment σ (for monitoring; may equal v1's r_harmo) |
-| `temporal` | [−1, 0] | Inter-window speed change (the new signal) |
-| `throughput` | [0, 1] | Downstream flow fraction |
+| `spatial` | [−1, 0] | Max adjacent speed gradient (shockwave steepness) |
+| `temporal` | [−1, 0] | Downstream (seg_0_after) inter-window speed change |
+| `throughput` | [−1, 0] | Throughput penalty (0 when flow ≥ 85% of ref; linear penalty below) |
 | `smoothness` | [−1, 0] | Action delta penalty |
 
-During training, Tensorboard can plot `spatial` and `temporal` separately to verify that the temporal term provides signal when spatial alone is flat (the 7500+ vph regime).
+During training, Tensorboard can plot `spatial` and `temporal` separately to verify that the temporal term provides signal when spatial alone is flat (the 7500+ vph regime). The throughput component should be near-zero during free-flow and mildly negative during over-restriction.
 
 ### 8.6 What about TTS as a reward term?
 
@@ -523,13 +541,14 @@ SAC's initial policy is a squashed Gaussian centered near the middle of the acti
 
 **Analysis — the reward signal is clear and immediate:**
 
-| Scenario (5000 vph) | Mean speed | σ_upstream | Δv_temporal | DS flow | r_harmo | r_q | Total |
-|---|---|---|---|---|---|---|---|
-| No control | 110.7 kph | 2.33 | 3.36 | 4515 | −0.151 | 0.753 | **+0.143** |
-| 110 kph VSL | 52.4 kph | 21.11 | 5.79 | 4544 | −0.545 | 0.757 | **−0.073** |
-| 90 kph VSL | 63.0 kph | 23.13 | 5.18 | 4813 | −0.558 | 0.802 | **−0.066** |
+With the v2 reward (max adjacent gradient, downstream temporal, threshold-based throughput penalty):
 
-Even the mildest restriction (110 kph) during free-flow produces a reward gap of **+0.143 − (−0.073) = 0.216** compared to no control. This is a strong, unambiguous learning signal: unnecessary restriction is clearly worse than doing nothing.
+| Scenario (5000 vph) | Max gradient | DS flow | r_spatial | r_q (thr=0.85) | r_harmo (approx) | Total (approx) |
+|---|---|---|---|---|---|---|
+| No control | ~2–3 kph | 4515 (0.753) | −0.08 | −0.114 | −0.04 | **−0.056** |
+| 90 kph VSL | ~30 kph | 4813 (0.802) | −1.00 | −0.056 | −0.50 | **−0.292** |
+
+The gap between no-control and 90 kph VSL at free-flow is **−0.056 − (−0.292) = +0.236** in favour of no-control. This is a strong, unambiguous learning signal: unnecessary restriction is clearly worse than doing nothing. The throughput penalty is mild in both cases (flow is near the 85% threshold), so the signal is dominated by the spatial gradient term — the agent learns that creating a large speed gradient at free-flow is costly.
 
 **Why SAC self-corrects within ~50–100 episodes:**
 
@@ -543,7 +562,7 @@ SB3's SAC implementation uses tanh squashing: raw policy output ∈ ℝ → tanh
 - The critic correctly assigns similar Q-values to all actions in the plateau → the actor gradient is small there → the policy naturally moves toward the informative region [60, 100] during transitional episodes.
 - During free-flow episodes, the critic gradient points toward high actions → the policy converges to ~120 kph.
 
-**Conclusion:** No code change needed. The reward signal is strong enough (0.216 gap) and SAC's architecture handles plateaus by design. Monitor the first 100 episodes: if the mean episode reward at 5000 vph is not trending positive by episode 100, the issue is elsewhere (likely reward weights, not action parameterization).
+**Conclusion:** No code change needed. The reward signal is strong enough (0.236 gap) and SAC's architecture handles plateaus by design. Monitor the first 100 episodes: if the mean episode reward at 5000 vph is not trending positive by episode 100, the issue is elsewhere (likely reward weights, not action parameterization).
 
 ---
 

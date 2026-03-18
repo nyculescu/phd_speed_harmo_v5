@@ -46,6 +46,13 @@ from .regime_detector import (
 )
 from .env_interact import TrafficEnv
 
+# Lazy import: monitoring requires stable-baselines3, which may not
+# be installed in the base test environment.
+try:
+    from .monitoring import HarmonizationMonitor
+except ImportError:
+    HarmonizationMonitor = None  # type: ignore[assignment,misc]
+
 __all__ = [
     # constants
     "MAX_SPEED_KPH",
@@ -70,4 +77,6 @@ __all__ = [
     "DEFAULT_THRESHOLDS",
     # environment
     "TrafficEnv",
+    # monitoring
+    "HarmonizationMonitor",
 ]

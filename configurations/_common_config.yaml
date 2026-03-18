@@ -27,7 +27,8 @@ sar_config:
   max_ramp_flow_vph: 2000.0
   ref_flow_vph: 6000.0
   speed_floor_kph: 50.0
-  harmo_spatial_blend: 0.5        # 0.5 = equal weight spatial & temporal
+  harmo_spatial_blend: 0.5        # 0.5 = equal weight spatial (gradient) & temporal (downstream)
+  throughput_threshold: 0.85      # flow above 85% of ref → no penalty; below → linear penalty
   reward_weights:
     w_h: 0.55
     w_q: 0.30
