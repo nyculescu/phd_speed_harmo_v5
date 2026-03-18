@@ -44,7 +44,32 @@ At 50% MPR with random vehicle insertion, some HDVs may find themselves ahead of
 
 At 75% and 100% MPR, the edge case effectively vanishes.
 
-### 3.4 Cleaner experimental design
+### 3.4 CAV release point and controlled zones
+
+CAVs are only held at the VSL speed on **controlled edges**. Once a CAV leaves the controlled zone, it resumes normal car-following behaviour and accelerates back to free-flow speed. The controlled zones are:
+
+```
+Mainline controlled:  seg_2_before → seg_1_before → seg_0_before
+                      (3 km upstream corridor)
+
+Ramp controlled:      ramp_on_approach → ramp_on_transition
+                      (900 m: approach 700 m + transition 200 m)
+
+Release point:        ramp_on_merge (100 m) — geometry dominates (~25 kph)
+                      seg_0_after (500 m weaving zone) — CAVs accelerate
+                      seg_1_after (1 km downstream) — free-flow
+```
+
+**Why release at the start of seg_0_after:** The purpose of the VSL is to shape the inflow upstream of the bottleneck. Once a vehicle has passed the merge junction (J4), its speed no longer affects the merge conflict dynamics — it is downstream of the bottleneck. Holding CAVs at 90 kph in the 4-lane weaving zone would reduce downstream throughput without benefiting the merge. Releasing them immediately allows them to accelerate back to free-flow speed, preserving capacity.
+
+**Why release ramp_on_merge:** The merge curve geometry forces all vehicles (CAVs and HDVs) to ~20–29 kph regardless of the approach speed (baseline data: ramp_on_merge avg speed = 25 kph at all demands from 5000 to 7500 vph). Applying `slowDown()` on the merge curve adds no control authority — the geometric constraint is binding.
+
+**Implementation:** `_apply_cav_slowdown()` in `env_interact.py` uses a 3-zone design:
+- CAVs on `_MAINLINE_CONTROLLED_EDGES` → `slowDown(mainline_limit_ms)`
+- CAVs on `_RAMP_CONTROLLED_EDGES` → `slowDown(ramp_limit_ms)`
+- CAVs on any other edge → no `slowDown()` issued (free-flow)
+
+### 3.5 Cleaner experimental design
 
 With pure Lagrangian control, the experimental comparison is:
 - **No control** (baseline): all vehicles at free-flow speed

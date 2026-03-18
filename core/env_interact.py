@@ -53,9 +53,16 @@ _CONTROLLED_SEGS: Tuple[str, ...] = (
 # E1 detector position to read.
 _DET_POS: str = "exit"
 
-# Ramp edge prefixes (for CAV slowdown routing).
-_RAMP_EDGES: Tuple[str, ...] = (
-    "ramp_on_approach", "ramp_on_transition", "ramp_on_merge",
+# Edges where CAV slowDown() is applied.  CAVs on any other edge drive at
+# free-flow speed — this is the "release point" design:
+#   - Mainline: seg_2/1/0_before only (upstream of merge)
+#   - Ramp: approach + transition only (merge geometry dominates at ramp_on_merge)
+#   - seg_0_after / seg_1_after: FREE — CAVs accelerate back after the merge
+_MAINLINE_CONTROLLED_EDGES: Tuple[str, ...] = (
+    "seg_0_before", "seg_1_before", "seg_2_before",
+)
+_RAMP_CONTROLLED_EDGES: Tuple[str, ...] = (
+    "ramp_on_approach", "ramp_on_transition",
 )
 
 
@@ -275,7 +282,18 @@ class TrafficEnv(gym.Env):
     def _apply_cav_slowdown(
         self, mainline_limit_ms: float, ramp_limit_ms: float
     ) -> None:
-        """Issue slowDown() to all CAV vehicles."""
+        """Issue slowDown() to CAVs on controlled edges only.
+
+        Three zones:
+          - _MAINLINE_CONTROLLED_EDGES → mainline_limit_ms
+          - _RAMP_CONTROLLED_EDGES    → ramp_limit_ms
+          - Everything else           → no slowDown (CAV drives at free-flow)
+
+        This implements the "release point" design: CAVs that have passed
+        the merge (seg_0_after, seg_1_after) or are on the merge curve
+        (ramp_on_merge) are not restricted, allowing them to accelerate
+        back to free-flow speed.
+        """
         import traci
 
         duration = float(self.aggregation_time)
@@ -286,12 +304,16 @@ class TrafficEnv(gym.Env):
                 continue
             if "cav" not in vtype.lower():
                 continue
-            # Determine which limit applies based on which edge the vehicle is on
             try:
                 edge = traci.vehicle.getRoadID(veh_id)
             except Exception:
                 continue
-            limit = ramp_limit_ms if edge in _RAMP_EDGES else mainline_limit_ms
+            if edge in _MAINLINE_CONTROLLED_EDGES:
+                limit = mainline_limit_ms
+            elif edge in _RAMP_CONTROLLED_EDGES:
+                limit = ramp_limit_ms
+            else:
+                continue  # no slowDown — CAV drives at free-flow speed
             try:
                 traci.vehicle.slowDown(veh_id, limit, duration)
             except Exception:
