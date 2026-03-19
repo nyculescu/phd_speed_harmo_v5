@@ -3,7 +3,22 @@
 SB3 training callbacks for speed harmonization monitoring.
 
 Logs per-episode diagnostic metrics to TensorBoard so that early
-convergence problems (Risk 2) can be detected without post-hoc analysis.
+convergence problems can be detected without post-hoc analysis.
+
+Basin detection
+---------------
+The reward landscape has a deceptive basin: a "do-nothing" policy (always
+post ~115-120 kph) scores nearly identically to the optimal temporally
+selective policy (post ~85 kph during METASTABLE only).  The per-step
+reward difference is only ~0.007 — invisible to a noisy critic.
+
+To detect whether the agent is stuck in this basin, we track:
+  - action_gap: mean_action(FREE_FLOW) - mean_action(METASTABLE).
+    A regime-conditional policy has gap > 15 kph.  Gap < 5 kph means
+    the agent treats all regimes identically (stuck in basin).
+  - regime-conditional reward components: r_spatial and r_throughput
+    at METASTABLE steps only.  If r_spatial improves while r_throughput
+    stays near 0, the agent is learning correct temporal selectivity.
 
 Usage with SB3:
     from core.monitoring import HarmonizationMonitor
@@ -38,6 +53,10 @@ _FRAME_SIZE = len(_FRAME_FEATURE_NAMES)  # 18
 _N_FRAMES = 3
 _STATIC_NAMES = ["prev_action_mainline", "prev_action_ramp"]
 
+# Regime one-hot indices within the most recent frame (frame 2).
+# frame 2 starts at index 36; regime features at offsets 15, 16, 17.
+_REGIME_INDICES = (36 + 15, 36 + 16, 36 + 17)  # (51, 52, 53)
+
 
 def _obs_feature_name(idx: int) -> str:
     """Map observation dimension index (0-55) to a human-readable name."""
@@ -59,9 +78,10 @@ class HarmonizationMonitor(BaseCallback):
     Tracks and logs to TensorBoard:
       - Reward components (spatial, temporal, throughput, smoothness, total)
       - Action statistics per regime (FREE_FLOW, METASTABLE, CONGESTED)
+      - Basin detection: action gap between FREE_FLOW and METASTABLE
+      - Per-regime reward components for diagnosing reward conflicts
       - SAC/TQC temperature (alpha) if available
       - Regime distribution per episode
-      - Convergence diagnostics (action drift, reward trend)
       - Dead feature detection (obs dimensions with near-zero variance)
 
     Optionally writes a per-episode CSV for offline analysis.
@@ -127,7 +147,11 @@ class HarmonizationMonitor(BaseCallback):
                 "mean_action_mainline", "mean_action_ramp",
                 "std_action_mainline", "std_action_ramp",
                 "ff_frac", "meta_frac", "cong_frac",
-                "mean_action_mainline_ff", "mean_action_mainline_cong",
+                "mean_action_mainline_ff", "mean_action_mainline_meta",
+                "mean_action_mainline_cong",
+                "mean_action_ramp_ff", "mean_action_ramp_meta",
+                "action_gap_mainline",
+                "mean_spatial_meta", "mean_throughput_meta",
                 "alpha",
             ])
 
@@ -137,6 +161,7 @@ class HarmonizationMonitor(BaseCallback):
         infos = self.locals.get("infos", [])
         actions = self.locals.get("actions")
         rewards = self.locals.get("rewards")
+        new_obs = self.locals.get("new_obs")
 
         for i, info in enumerate(infos):
             reward = float(rewards[i]) if rewards is not None else 0.0
@@ -154,23 +179,17 @@ class HarmonizationMonitor(BaseCallback):
                 self._ep_actions.append(act)
 
             # Regime: infer from the observation.
-            # In r44_state_v1, the regime one-hot is at indices [15, 16, 17]
-            # of the MOST RECENT frame (the last 18 features before the
-            # 2 prev_action features, i.e., obs[36:54] is frame 2).
-            # frame2 regime indices: 36 + 15 = 51, 52, 53
-            if obs is not None:
-                ob = np.asarray(obs[i]).flatten()
+            # In r44_state_v1, the regime one-hot is at indices [51, 52, 53]
+            # of the 56-dim observation (frame 2, offsets 15-17).
+            if new_obs is not None:
+                ob = np.asarray(new_obs[i]).flatten()
                 if len(ob) >= 54:
-                    regime_vec = ob[51:54]  # [FF, META, CONG]
+                    regime_vec = ob[_REGIME_INDICES[0]:_REGIME_INDICES[2] + 1]
                     regime_idx = int(np.argmax(regime_vec))
                     self._ep_regimes.append(regime_idx)
 
-            # Collect observation for dead-feature analysis
-            obs = self.locals.get("new_obs")
-            if obs is not None:
-                self._ep_observations.append(
-                    np.asarray(obs[i], dtype=np.float32).flatten().copy()
-                )
+                # Collect observation for dead-feature analysis
+                self._ep_observations.append(ob.astype(np.float32).copy())
 
             # Check for episode done
             done = self.locals.get("dones", [False])[i]
@@ -192,11 +211,11 @@ class HarmonizationMonitor(BaseCallback):
         total_reward = sum(self._ep_rewards)
         mean_reward = total_reward / n
 
-        comp_means = {}
+        comp_means: Dict[str, float] = {}
         for key in ("spatial", "temporal", "throughput",
                      "smoothness", "harmonization"):
             vals = self._ep_components.get(key, [])
-            comp_means[key] = np.mean(vals) if vals else 0.0
+            comp_means[key] = float(np.mean(vals)) if vals else 0.0
 
         # --- Action statistics ---
         if self._ep_actions:
@@ -206,6 +225,7 @@ class HarmonizationMonitor(BaseCallback):
             std_mainline = float(np.std(actions_arr[:, 0]))
             std_ramp = float(np.std(actions_arr[:, 1]))
         else:
+            actions_arr = np.empty((0, 2))
             mean_mainline = mean_ramp = std_mainline = std_ramp = 0.0
 
         # --- Regime fractions ---
@@ -217,17 +237,49 @@ class HarmonizationMonitor(BaseCallback):
             meta_frac = float(np.sum(r_arr == 1)) / n_r
             cong_frac = float(np.sum(r_arr == 2)) / n_r
 
-        # --- Per-regime action means ---
-        mean_act_ff = mean_act_cong = 0.0
-        if self._ep_actions and self._ep_regimes:
-            actions_arr = np.array(self._ep_actions)
+        # --- Per-regime action means (mainline + ramp) ---
+        mean_act_ff = mean_act_meta = mean_act_cong = 0.0
+        mean_ramp_ff = mean_ramp_meta = 0.0
+        if len(actions_arr) > 0 and self._ep_regimes:
             r_arr = np.array(self._ep_regimes[:len(actions_arr)])
             ff_mask = r_arr == 0
+            meta_mask = r_arr == 1
             cong_mask = r_arr == 2
             if ff_mask.any():
                 mean_act_ff = float(np.mean(actions_arr[ff_mask, 0]))
+                mean_ramp_ff = float(np.mean(actions_arr[ff_mask, 1]))
+            if meta_mask.any():
+                mean_act_meta = float(np.mean(actions_arr[meta_mask, 0]))
+                mean_ramp_meta = float(np.mean(actions_arr[meta_mask, 1]))
             if cong_mask.any():
                 mean_act_cong = float(np.mean(actions_arr[cong_mask, 0]))
+
+        # --- Basin detection: action gap ---
+        # A regime-conditional policy has gap > 15 kph.
+        # Gap < 5 kph means the agent treats all regimes identically.
+        action_gap = mean_act_ff - mean_act_meta if (
+            ff_frac > 0 and meta_frac > 0
+        ) else float("nan")
+
+        # --- Per-regime reward components at METASTABLE ---
+        # If r_spatial improves at METASTABLE while r_throughput stays
+        # near 0, the agent is learning correct temporal selectivity.
+        # If r_throughput is strongly negative at METASTABLE, the agent
+        # is over-restricting and destroying flow.
+        mean_spatial_meta = 0.0
+        mean_throughput_meta = 0.0
+        if self._ep_regimes and self._ep_components.get("spatial"):
+            r_arr = np.array(self._ep_regimes)
+            meta_mask = r_arr == 1
+            n_meta = int(meta_mask.sum())
+            if n_meta > 0:
+                spatial_vals = np.array(self._ep_components["spatial"])
+                throughput_vals = np.array(self._ep_components["throughput"])
+                # Align lengths (regimes may be 1 shorter than components)
+                min_len = min(len(spatial_vals), len(r_arr))
+                meta_mask = meta_mask[:min_len]
+                mean_spatial_meta = float(np.mean(spatial_vals[:min_len][meta_mask]))
+                mean_throughput_meta = float(np.mean(throughput_vals[:min_len][meta_mask]))
 
         # --- SAC/TQC alpha (entropy temperature) ---
         # Alpha controls the exploration-exploitation balance in SAC/TQC.
@@ -254,7 +306,6 @@ class HarmonizationMonitor(BaseCallback):
         # Any dim with std < threshold is "dead": it carries no gradient
         # signal through the first Linear layer and wastes network capacity.
         dead_names: List[str] = []
-        obs_std = np.zeros(0)
         if self._ep_observations:
             obs_arr = np.array(self._ep_observations)  # (n_steps, 56)
             obs_std = np.std(obs_arr, axis=0)           # (56,)
@@ -266,7 +317,6 @@ class HarmonizationMonitor(BaseCallback):
                 ]
 
         # --- Log to TensorBoard ---
-        ep = self._episode_count
         self.logger.record("episode/total_reward", total_reward)
         self.logger.record("episode/mean_reward", mean_reward)
         self.logger.record("episode/n_steps", n)
@@ -287,7 +337,16 @@ class HarmonizationMonitor(BaseCallback):
         self.logger.record("regime/congested_frac", cong_frac)
 
         self.logger.record("action/mainline_at_free_flow", mean_act_ff)
+        self.logger.record("action/mainline_at_metastable", mean_act_meta)
         self.logger.record("action/mainline_at_congested", mean_act_cong)
+        self.logger.record("action/ramp_at_free_flow", mean_ramp_ff)
+        self.logger.record("action/ramp_at_metastable", mean_ramp_meta)
+
+        # Basin detection
+        if not np.isnan(action_gap):
+            self.logger.record("basin/action_gap_mainline", action_gap)
+        self.logger.record("basin/spatial_at_metastable", mean_spatial_meta)
+        self.logger.record("basin/throughput_at_metastable", mean_throughput_meta)
 
         self.logger.record("train/alpha", alpha)
 
@@ -303,19 +362,35 @@ class HarmonizationMonitor(BaseCallback):
             # Alpha label: flag when outside the healthy 0.01–0.1 range.
             if alpha > 0.5:
                 alpha_label = f"α={alpha:.3f} HIGH!"
-            elif alpha < 0.001 and alpha > 0:
+            elif 0 < alpha < 0.001:
                 alpha_label = f"α={alpha:.4f} LOW!"
             else:
                 alpha_label = f"α={alpha:.3f}"
+
+            # Basin label
+            if np.isnan(action_gap):
+                gap_label = "gap=N/A"
+            elif action_gap < 5.0:
+                gap_label = f"gap={action_gap:.0f}kph BASIN!"
+            else:
+                gap_label = f"gap={action_gap:.0f}kph"
+
             print(
-                f"[Ep {ep:4d}] R={total_reward:+.3f} "
+                f"[Ep {self._episode_count:4d}] R={total_reward:+.3f} "
                 f"main={mean_mainline:.0f}kph ramp={mean_ramp:.0f}kph "
                 f"({regime_str}) "
                 f"sp={comp_means['spatial']:+.3f} "
                 f"tp={comp_means['temporal']:+.3f} "
                 f"thr={comp_means['throughput']:+.3f} "
-                f"{alpha_label}"
+                f"{alpha_label} {gap_label}"
             )
+            if self.verbose >= 2 and meta_frac > 0:
+                print(
+                    f"  META: mainline={mean_act_meta:.0f}kph "
+                    f"ramp={mean_ramp_meta:.0f}kph "
+                    f"sp={mean_spatial_meta:+.3f} "
+                    f"thr={mean_throughput_meta:+.3f}"
+                )
             if dead_names:
                 print(
                     f"  WARNING: {len(dead_names)} dead feature(s) "
@@ -325,8 +400,10 @@ class HarmonizationMonitor(BaseCallback):
 
         # --- CSV ---
         if self._csv_writer:
+            gap_str = f"{action_gap:.2f}" if not np.isnan(action_gap) else ""
             self._csv_writer.writerow([
-                ep, n, f"{total_reward:.4f}", f"{mean_reward:.4f}",
+                self._episode_count, n,
+                f"{total_reward:.4f}", f"{mean_reward:.4f}",
                 f"{comp_means['spatial']:.4f}",
                 f"{comp_means['temporal']:.4f}",
                 f"{comp_means['throughput']:.4f}",
@@ -335,7 +412,11 @@ class HarmonizationMonitor(BaseCallback):
                 f"{mean_mainline:.2f}", f"{mean_ramp:.2f}",
                 f"{std_mainline:.2f}", f"{std_ramp:.2f}",
                 f"{ff_frac:.4f}", f"{meta_frac:.4f}", f"{cong_frac:.4f}",
-                f"{mean_act_ff:.2f}", f"{mean_act_cong:.2f}",
+                f"{mean_act_ff:.2f}", f"{mean_act_meta:.2f}",
+                f"{mean_act_cong:.2f}",
+                f"{mean_ramp_ff:.2f}", f"{mean_ramp_meta:.2f}",
+                gap_str,
+                f"{mean_spatial_meta:.4f}", f"{mean_throughput_meta:.4f}",
                 f"{alpha:.6f}",
             ])
             self._csv_file.flush()
