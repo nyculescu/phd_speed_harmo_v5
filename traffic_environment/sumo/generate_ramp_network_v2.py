@@ -9,6 +9,44 @@ Ramp vehicles merge directly onto mainline lane 0 (rightmost),
 forcing weaving conflict with mainline traffic.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHY 3→3 (NO LANE ADDITION) INSTEAD OF 3→4→3 (DEDICATED RAMP LANE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The v1 topology used a 4-lane buffer zone (seg_0_after) where lane 0
+was a dedicated ramp weaving lane with an off-ramp escape valve at
+the downstream end.  A 990-scenario feasibility sweep + per-lane
+diagnostic (tests/results/lane_diagnostic/) proved that:
+
+  1. The dedicated lane ISOLATED ramp traffic from mainline.  Ramp
+     vehicles merged onto their own lane and either lane-changed into
+     lanes 1-3 or exited via the off-ramp — with zero impact on
+     mainline flow.
+
+  2. The actual bottleneck was mainline lane 1 saturation (20-30 vehs)
+     caused by uneven lane distribution, not merge conflict.  VSL had
+     no mechanism to address this.
+
+  3. At every demand level, VSL either did nothing useful (below 6000
+     vph) or collapsed throughput without improving harmonization
+     (above 6500 vph).  Zero scenarios showed VSL benefit.
+
+The 3→3 design (ramps_v2) forces ramp vehicles to compete for lane 0
+with mainline traffic, creating the merge-induced shockwaves that
+VSL-based speed harmonization is designed to mitigate.  This matches:
+
+  - Li et al. (2017): QL-VSL at a recurrent merge bottleneck on I-880
+    where ramp flow directly disrupts mainline (no dedicated lane).
+  - Hua & Fan (2023): DDPG-DSH in a weaving area where ramp vehicles
+    interact with mainline on shared lanes (SUMO, PeMS-calibrated).
+  - Ko et al. (2020): CAV speed harmonization at a lane closure where
+    merging directly disrupts the mainline flow.
+
+The 3→4→3 alternative (with a 4th lane added at merge and dropped
+downstream) would be appropriate for studying auxiliary-lane design,
+but it does not produce the merge shockwaves that are the target of
+this research.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TOPOLOGY OVERVIEW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -47,9 +85,9 @@ CONNECTIONS AT J4 (merge)
 """
 
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
 import argparse
 import os
+import sys
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -104,178 +142,153 @@ def _lane_y_offset(lane_idx: int) -> float:
 
 
 def create_network():
-    root = ET.Element("net")
-    root.set("version", "1.21.0")
-    root.set("junctionCornerDetail", "5")
-    root.set("limitTurnSpeed", "5.50")
-    root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-    root.set("xsi:noNamespaceSchemaLocation", "http://sumo.dlr.de/xsd/net_file.xsd")
+    """Generate ramps_v2 via plain XML files + netconvert."""
+    import subprocess
+    import tempfile
 
-    loc = ET.SubElement(root, "location")
-    loc.set("netOffset", "0.00,0.00")
-    loc.set("convBoundary", "-4000.00,0.00,3000.00,100.00")
-    loc.set("origBoundary", "-10000000000.00,-10000000000.00,10000000000.00,10000000000.00")
-    loc.set("projParameter", "!")
+    ramp_start_y = Y_BASE + RAMP_Y_OFFSET
+    lane_0_y = Y_BASE + _lane_y_offset(0)  # rightmost lane Y
 
-    # --- Junctions (mainline) ---
+    # --- Compute junction positions ---
     junctions = {}
     current_x = -3000.0
-
     for i in range(len(MAIN_SEGMENTS) + 1):
-        j_id = f"J{i}"
-        junctions[j_id] = {"x": current_x, "y": Y_BASE, "id": j_id, "type": "priority"}
+        junctions[f"J{i}"] = (current_x, Y_BASE)
         if i < len(MAIN_SEGMENTS):
-            seg = MAIN_SEGMENTS[i]
-            current_x += SEGMENT_LENGTHS[seg] * SHAPE_MULTIPLIERS[seg]
+            current_x += SEGMENT_LENGTHS[MAIN_SEGMENTS[i]] * SHAPE_MULTIPLIERS[MAIN_SEGMENTS[i]]
 
-    merge_jid = "J4"  # end of seg_0_before / start of seg_0_after
+    merge_x = junctions["J4"][0]
 
-    # Ramp Y
-    ramp_start_y = Y_BASE + RAMP_Y_OFFSET
-    main_road_y = Y_BASE + _lane_y_offset(0)  # lane 0 = rightmost
-
-    # --- On-ramp junctions ---
     on_total = (SEGMENT_LENGTHS["ramp_on_approach"]
                 + SEGMENT_LENGTHS["ramp_on_transition"]
                 + SEGMENT_LENGTHS["ramp_on_merge"])
 
-    on_start_id = "J_ramp_on_start"
-    on_mid1_id = "J_ramp_on_mid1"
-    on_mid2_id = "J_ramp_on_mid2"
-
-    # Y interpolation: smooth approach from ramp_start_y to main_road_y
+    # Ramp waypoints — approach lane 0 (Y=56.8), not junction center (Y=60).
+    # on_mid2 (start of ramp_on_merge) is placed at lane_0_y so that
+    # the 100m merge segment runs parallel to lane 0 before joining it.
     approach_frac = SEGMENT_LENGTHS["ramp_on_approach"] / on_total
-    transition_frac = (SEGMENT_LENGTHS["ramp_on_approach"]
-                       + SEGMENT_LENGTHS["ramp_on_transition"]) / on_total
 
-    on_mid1_y = ramp_start_y + (main_road_y - ramp_start_y) * approach_frac * RAMP_PROXIMITY_FACTOR
-    on_mid2_y = ramp_start_y + (main_road_y - ramp_start_y) * transition_frac * RAMP_PROXIMITY_FACTOR
+    on_mid1_y = ramp_start_y + (lane_0_y - ramp_start_y) * approach_frac * RAMP_PROXIMITY_FACTOR
+    # netconvert centers the 3-lane edge on the node Y, placing lane 0
+    # at node_y - LANE_WIDTH.  For the 1-lane ramp, the lane IS at node Y.
+    # So the ramp must target node_y - LANE_WIDTH = lane_0 absolute Y.
+    on_mid2_y = lane_0_y - LANE_WIDTH
 
-    junctions[on_start_id] = {
-        "x": junctions[merge_jid]["x"] - on_total,
-        "y": ramp_start_y,
-        "id": on_start_id, "type": "dead_end",
-    }
-    junctions[on_mid1_id] = {
-        "x": junctions[merge_jid]["x"] - SEGMENT_LENGTHS["ramp_on_transition"] - SEGMENT_LENGTHS["ramp_on_merge"],
-        "y": on_mid1_y,
-        "id": on_mid1_id, "type": "priority",
-    }
-    junctions[on_mid2_id] = {
-        "x": junctions[merge_jid]["x"] - SEGMENT_LENGTHS["ramp_on_merge"],
-        "y": on_mid2_y,
-        "id": on_mid2_id, "type": "priority",
+    ramp_junctions = {
+        "J_ramp_on_start": (merge_x - on_total, ramp_start_y),
+        "J_ramp_on_mid1":  (merge_x - SEGMENT_LENGTHS["ramp_on_transition"] - SEGMENT_LENGTHS["ramp_on_merge"], on_mid1_y),
+        "J_ramp_on_mid2":  (merge_x - SEGMENT_LENGTHS["ramp_on_merge"], on_mid2_y),
     }
 
-    # --- Write junction elements ---
-    for jd in junctions.values():
-        j = ET.SubElement(root, "junction")
-        j.set("id", jd["id"])
-        j.set("type", jd["type"])
-        j.set("x", f"{jd['x']:.2f}")
-        j.set("y", f"{jd['y']:.2f}")
-        j.set("incLanes", "")
-        j.set("intLanes", "")
-        j.set("shape", "")
+    # --- Write .nod.xml (nodes/junctions) ---
+    nod = ET.Element("nodes")
+    all_junctions = {**junctions, **ramp_junctions}
+    for jid, (x, y) in all_junctions.items():
+        jtype = "dead_end" if jid in ("J0", "J6", "J_ramp_on_start") else "priority"
+        n = ET.SubElement(nod, "node")
+        n.set("id", jid)
+        n.set("x", f"{x:.2f}")
+        n.set("y", f"{y:.2f}")
+        n.set("type", jtype)
 
-    # --- Main road edges (3 lanes everywhere) ---
+    # --- Write .edg.xml (edges) ---
+    edg = ET.Element("edges")
+    # Mainline edges
     for i, seg in enumerate(MAIN_SEGMENTS):
-        edge = ET.SubElement(root, "edge")
-        edge.set("id", seg)
-        edge.set("from", f"J{i}")
-        edge.set("to", f"J{i+1}")
-        edge.set("priority", "-1")
-        edge.set("length", str(SEGMENT_LENGTHS[seg]))
+        e = ET.SubElement(edg, "edge")
+        e.set("id", seg)
+        e.set("from", f"J{i}")
+        e.set("to", f"J{i+1}")
+        e.set("numLanes", str(N_LANES))
+        e.set("speed", f"{MAINLINE_SPEED:.2f}")
+        e.set("length", str(SEGMENT_LENGTHS[seg]))
 
-        j_from = junctions[f"J{i}"]
-        j_to = junctions[f"J{i+1}"]
-
-        for lane_idx in range(N_LANES):
-            lane = ET.SubElement(edge, "lane")
-            lane.set("id", f"{seg}_{lane_idx}")
-            lane.set("index", str(lane_idx))
-            lane.set("speed", f"{MAINLINE_SPEED:.2f}")
-            lane.set("length", str(SEGMENT_LENGTHS[seg]))
-            y_off = _lane_y_offset(lane_idx)
-            lane.set("shape", f"{j_from['x']:.2f},{j_from['y'] + y_off:.2f} "
-                              f"{j_to['x']:.2f},{j_to['y'] + y_off:.2f}")
-
-    # --- On-ramp edges (3 segments) ---
-    ramp_edges = [
-        ("ramp_on_approach",   on_start_id, on_mid1_id),
-        ("ramp_on_transition", on_mid1_id,  on_mid2_id),
-        ("ramp_on_merge",      on_mid2_id,  merge_jid),
+    # On-ramp segments — ramp_on_merge gets an explicit shape so its
+    # endpoint aligns with lane 0 (Y=lane_0_y), not junction center.
+    ramp_edge_defs = [
+        ("ramp_on_approach",   "J_ramp_on_start", "J_ramp_on_mid1", None),
+        ("ramp_on_transition", "J_ramp_on_mid1",  "J_ramp_on_mid2", None),
+        ("ramp_on_merge",      "J_ramp_on_mid2",  "J4",
+         f"{ramp_junctions['J_ramp_on_mid2'][0]:.2f},{on_mid2_y:.2f} "
+         f"{merge_x:.2f},{on_mid2_y:.2f}"),
     ]
-    for seg_id, from_id, to_id in ramp_edges:
-        edge = ET.SubElement(root, "edge")
-        edge.set("id", seg_id)
-        edge.set("from", from_id)
-        edge.set("to", to_id)
-        edge.set("priority", "-1")
-        edge.set("length", str(SEGMENT_LENGTHS[seg_id]))
+    for seg_id, from_id, to_id, shape in ramp_edge_defs:
+        e = ET.SubElement(edg, "edge")
+        e.set("id", seg_id)
+        e.set("from", from_id)
+        e.set("to", to_id)
+        e.set("numLanes", "1")
+        e.set("speed", str(RAMP_SPEED))
+        e.set("length", str(SEGMENT_LENGTHS[seg_id]))
+        if shape:
+            e.set("shape", shape)
 
-        lane = ET.SubElement(edge, "lane")
-        lane.set("id", f"{seg_id}_0")
-        lane.set("index", "0")
-        lane.set("speed", str(RAMP_SPEED))
-        lane.set("length", str(SEGMENT_LENGTHS[seg_id]))
-
-        f = junctions[from_id]
-        t = junctions[to_id]
-        end_y = main_road_y if seg_id == "ramp_on_merge" else t["y"]
-        lane.set("shape", f"{f['x']:.2f},{f['y']:.2f} {t['x']:.2f},{end_y:.2f}")
-
-    # --- Connections: mainline (straight through, same lane count) ---
+    # --- Write .con.xml (explicit connections) ---
+    con = ET.Element("connections")
+    # Mainline straight-through
     for i in range(len(MAIN_SEGMENTS) - 1):
         from_edge = MAIN_SEGMENTS[i]
         to_edge = MAIN_SEGMENTS[i + 1]
         for k in range(N_LANES):
-            c = ET.SubElement(root, "connection")
+            c = ET.SubElement(con, "connection")
             c.set("from", from_edge); c.set("to", to_edge)
             c.set("fromLane", str(k)); c.set("toLane", str(k))
-            c.set("dir", "s"); c.set("state", "M")
-
-    # --- Connections: on-ramp chain ---
+    # On-ramp chain
     for from_e, to_e in [
         ("ramp_on_approach", "ramp_on_transition"),
         ("ramp_on_transition", "ramp_on_merge"),
     ]:
-        c = ET.SubElement(root, "connection")
+        c = ET.SubElement(con, "connection")
         c.set("from", from_e); c.set("to", to_e)
         c.set("fromLane", "0"); c.set("toLane", "0")
-        c.set("dir", "s"); c.set("state", "M")
-
-    # On-ramp merge → seg_0_after lane 0 (YIELD — creates weaving conflict)
-    c = ET.SubElement(root, "connection")
+    # Ramp merge → lane 0 (explicit)
+    c = ET.SubElement(con, "connection")
     c.set("from", "ramp_on_merge"); c.set("to", "seg_0_after")
     c.set("fromLane", "0"); c.set("toLane", "0")
-    c.set("dir", "s"); c.set("state", "m")
 
-    return root
+    # --- Write temp files and run netconvert ---
+    tmpdir = tempfile.mkdtemp(prefix="ramps_v2_gen_")
+    nod_path = os.path.join(tmpdir, "ramps_v2.nod.xml")
+    edg_path = os.path.join(tmpdir, "ramps_v2.edg.xml")
+    con_path = os.path.join(tmpdir, "ramps_v2.con.xml")
 
+    for path, elem in [(nod_path, nod), (edg_path, edg), (con_path, con)]:
+        tree = ET.ElementTree(elem)
+        ET.indent(tree, space="  ")
+        tree.write(path, encoding="unicode", xml_declaration=True)
 
-def prettify_xml(elem):
-    rough = ET.tostring(elem, encoding="unicode")
-    reparsed = minidom.parseString(rough)
-    return reparsed.toprettyxml(indent="    ", encoding="UTF-8")
+    output_path = os.path.join(os.path.dirname(__file__) or ".", "ramps_v2.net.xml")
+    result = subprocess.run([
+        "netconvert",
+        "--node-files", nod_path,
+        "--edge-files", edg_path,
+        "--connection-files", con_path,
+        "--output-file", output_path,
+        "--no-internal-links", "false",
+        "--junctions.internal-link-detail", "5",
+        "--no-turnarounds", "true",
+    ], capture_output=True, text=True)
+
+    import shutil
+    shutil.rmtree(tmpdir, ignore_errors=True)
+
+    if result.returncode != 0:
+        print(f"netconvert STDERR:\n{result.stderr}", file=sys.stderr)
+        raise RuntimeError(f"netconvert failed with code {result.returncode}")
+
+    # Read the generated network back as an Element
+    return ET.parse(output_path).getroot()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate ramps_v2.net.xml")
-    parser.add_argument("-o", "--output", default="ramps_v2.net.xml")
-    args = parser.parse_args()
+    create_network()  # writes ramps_v2.net.xml via netconvert
 
-    root = create_network()
-    output_path = os.path.join(os.path.dirname(__file__), args.output)
-    with open(output_path, "wb") as f:
-        f.write(prettify_xml(root))
-
-    print(f"Network saved to: {args.output}")
+    print(f"Network saved to: ramps_v2.net.xml")
     print(f"\nTopology: 3L mainline (4 × 1000m) → 3L merge zone (500m) → 3L downstream (1000m)")
     print(f"On-ramp: 1000m (700 approach + 200 transition + 100 merge) → lane 0 (yield)")
     print(f"No off-ramp.  All vehicles exit via seg_1_after.")
     print(f"Total mainline: ~5.5 km")
-    print(f"\nOpen in netedit → Processing → Compute Junctions")
+    print(f"Generated via netconvert with explicit .con.xml — no netedit recompute needed.")
 
 
 if __name__ == "__main__":
