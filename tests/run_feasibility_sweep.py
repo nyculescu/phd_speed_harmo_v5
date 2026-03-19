@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive feasibility sweep for the ramps_v1 topology.
+Comprehensive feasibility sweep for the ramps_v2 topology.
 
 Maps the full 2D action space (mainline VSL × ramp VSL) across all
 operationally relevant demand levels.  This produces the dataset needed
@@ -67,8 +67,8 @@ if os.path.join(_SUMO_HOME, "tools") not in sys.path:
     sys.path.insert(0, os.path.join(_SUMO_HOME, "tools"))
 
 _SUMO_DIR = Path(__file__).resolve().parents[1] / "traffic_environment" / "sumo"
-_NET_FILE = _SUMO_DIR / "ramps_v1.net.xml"
-_DET_FILE = _SUMO_DIR / "detectors_ramps_v1.add.xml"
+_NET_FILE = _SUMO_DIR / "ramps_v2.net.xml"
+_DET_FILE = _SUMO_DIR / "detectors_ramps_v2.add.xml"
 _RESULTS_ROOT = Path(__file__).resolve().parent / "results"
 
 # Episode parameters
@@ -102,8 +102,7 @@ _RAMP_VSL_KPH: List[float] = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 
 # Demand routing fractions
 _MAINLINE_THROUGH_FRAC = 0.75
-_RAMP_ON_FRAC = 0.15
-_MAINLINE_TO_OFF_FRAC = 0.10
+_RAMP_ON_FRAC = 0.25
 
 # Segments
 _MAINLINE_SEGS = [
@@ -112,15 +111,13 @@ _MAINLINE_SEGS = [
 ]
 _RAMP_SEGS = [
     "ramp_on_approach", "ramp_on_transition", "ramp_on_merge",
-    "ramp_off_diverge", "ramp_off_transition", "ramp_off_departure",
 ]
 _ALL_SEGS = _MAINLINE_SEGS + _RAMP_SEGS
 
 _LANE_COUNTS: Dict[str, int] = {
     "seg_3_before": 3, "seg_2_before": 3, "seg_1_before": 3, "seg_0_before": 3,
-    "seg_0_after": 4, "seg_1_after": 3,
+    "seg_0_after": 3, "seg_1_after": 3,
     "ramp_on_approach": 1, "ramp_on_transition": 1, "ramp_on_merge": 1,
-    "ramp_off_diverge": 1, "ramp_off_transition": 1, "ramp_off_departure": 1,
 }
 
 _CONTROLLED_EDGES = {"seg_2_before", "seg_1_before", "seg_0_before"}
@@ -154,13 +151,10 @@ def _generate_route_file(
                   edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after")
     ET.SubElement(routes, "route", id="ramp_on_through",
                   edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
-    ET.SubElement(routes, "route", id="mainline_to_off",
-                  edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after ramp_off_diverge ramp_off_transition ramp_off_departure")
 
     total_veh = int(demand_vph * episode_s / 3600)
     n_mainline = int(total_veh * _MAINLINE_THROUGH_FRAC)
-    n_ramp = int(total_veh * _RAMP_ON_FRAC)
-    n_off = total_veh - n_mainline - n_ramp
+    n_ramp = total_veh - n_mainline
     rng = np.random.default_rng(42)
     vehicles: List[Tuple[float, str]] = []
 
@@ -175,7 +169,6 @@ def _generate_route_file(
             vehicles.append((dep, route_id))
 
     _emit(n_mainline, "mainline_through", 0.0, float(episode_s))
-    _emit(n_off, "mainline_to_off", 0.0, float(episode_s))
     _emit(n_ramp, "ramp_on_through", _RAMP_DELAY_S, float(episode_s) - _RAMP_DELAY_S)
     vehicles.sort(key=lambda v: v[0])
 
