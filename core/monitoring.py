@@ -12,10 +12,9 @@ Usage with SB3:
 from __future__ import annotations
 
 import csv
-import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
@@ -231,6 +230,21 @@ class HarmonizationMonitor(BaseCallback):
                 mean_act_cong = float(np.mean(actions_arr[cong_mask, 0]))
 
         # --- SAC/TQC alpha (entropy temperature) ---
+        # Alpha controls the exploration-exploitation balance in SAC/TQC.
+        # The policy objective is: J = E[Σ γ^t (r_t + α * H(π))],
+        # where H(π) is the policy entropy.
+        #
+        # With our reward in [-1, 0] per step:
+        #   α ≈ 0.01–0.1  → healthy: entropy is meaningful relative to reward
+        #   α > 0.5       → TOO HIGH: agent ignores reward and explores randomly.
+        #                    Likely cause: reward is too flat or critic hasn't
+        #                    converged.  The agent will not learn useful behavior.
+        #   α < 0.001     → TOO LOW: policy is near-deterministic.  Risk of
+        #                    premature convergence to a suboptimal action (e.g.,
+        #                    always posting 90 kph regardless of traffic state).
+        #
+        # SB3's ent_coef="auto" auto-tunes α via a learned log_ent_coef
+        # parameter targeting target_entropy = -dim(A) = -2.
         alpha = 0.0
         if hasattr(self.model, "log_ent_coef"):
             alpha = float(self.model.ent_coef)
@@ -286,13 +300,21 @@ class HarmonizationMonitor(BaseCallback):
         # --- Console output ---
         if self.verbose >= 1:
             regime_str = f"FF={ff_frac:.0%} M={meta_frac:.0%} C={cong_frac:.0%}"
+            # Alpha label: flag when outside the healthy 0.01–0.1 range.
+            if alpha > 0.5:
+                alpha_label = f"α={alpha:.3f} HIGH!"
+            elif alpha < 0.001 and alpha > 0:
+                alpha_label = f"α={alpha:.4f} LOW!"
+            else:
+                alpha_label = f"α={alpha:.3f}"
             print(
                 f"[Ep {ep:4d}] R={total_reward:+.3f} "
                 f"main={mean_mainline:.0f}kph ramp={mean_ramp:.0f}kph "
                 f"({regime_str}) "
                 f"sp={comp_means['spatial']:+.3f} "
                 f"tp={comp_means['temporal']:+.3f} "
-                f"thr={comp_means['throughput']:+.3f}"
+                f"thr={comp_means['throughput']:+.3f} "
+                f"{alpha_label}"
             )
             if dead_names:
                 print(
