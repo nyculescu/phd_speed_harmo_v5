@@ -21,6 +21,38 @@ import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 
 
+# ---------------------------------------------------------------------------
+# Observation feature names (must match r44_state_v1.py layout)
+# ---------------------------------------------------------------------------
+# 56-dim = 3 frames × 18 per-frame features + 2 prev_action features.
+
+_FRAME_FEATURE_NAMES = [
+    "seg_2_before_speed", "seg_2_before_flow", "seg_2_before_occ",
+    "seg_1_before_speed", "seg_1_before_flow", "seg_1_before_occ",
+    "seg_0_before_speed", "seg_0_before_flow", "seg_0_before_occ",
+    "seg_0_after_speed",  "seg_0_after_flow",  "seg_0_after_occ",
+    "ramp_approach_flow", "ramp_merge_speed",  "seg_1_after_flow",
+    "regime_FF",          "regime_META",        "regime_CONG",
+]
+
+_FRAME_SIZE = len(_FRAME_FEATURE_NAMES)  # 18
+_N_FRAMES = 3
+_STATIC_NAMES = ["prev_action_mainline", "prev_action_ramp"]
+
+
+def _obs_feature_name(idx: int) -> str:
+    """Map observation dimension index (0-55) to a human-readable name."""
+    frame_total = _FRAME_SIZE * _N_FRAMES  # 54
+    if idx < frame_total:
+        frame_idx = idx // _FRAME_SIZE
+        feat_idx = idx % _FRAME_SIZE
+        return f"f{frame_idx}/{_FRAME_FEATURE_NAMES[feat_idx]}"
+    static_idx = idx - frame_total
+    if static_idx < len(_STATIC_NAMES):
+        return _STATIC_NAMES[static_idx]
+    return f"obs[{idx}]"
+
+
 class HarmonizationMonitor(BaseCallback):
     """
     Per-episode monitoring callback for the speed harmonization environment.
@@ -31,8 +63,26 @@ class HarmonizationMonitor(BaseCallback):
       - SAC/TQC temperature (alpha) if available
       - Regime distribution per episode
       - Convergence diagnostics (action drift, reward trend)
+      - Dead feature detection (obs dimensions with near-zero variance)
 
     Optionally writes a per-episode CSV for offline analysis.
+
+    Dead feature detection
+    ----------------------
+    At each episode end, compute per-dimension std across all observations
+    collected during that episode.  Any dimension with std < 0.01 is flagged
+    as "dead" — it carries no information for the critic/actor networks and
+    wastes capacity in the first Linear layer.
+
+    This catches two failure modes:
+      1. A normalization ceiling is too high (e.g., max_flow=8000 but actual
+         flow never exceeds 2000 → feature stuck near 0.25).  Not dead, but
+         compressed — std will be low.
+      2. A feature is truly constant (e.g., ramp flow = 0 for the entire
+         episode because no ramp vehicles spawned) → std = 0.
+
+    Logged to TensorBoard as obs/dead_feature_count and obs/dead_features
+    (comma-separated names).  See r44_state_v1.py for the feature layout.
 
     Parameters
     ----------
@@ -40,17 +90,26 @@ class HarmonizationMonitor(BaseCallback):
         If provided, write a per-episode CSV with all metrics.
     verbose : int
         0 = silent, 1 = episode summary, 2 = per-step detail.
+    dead_feature_threshold : float
+        Std threshold below which a feature is flagged as dead (default 0.01).
     """
 
-    def __init__(self, csv_path: Optional[str] = None, verbose: int = 0):
+    def __init__(
+        self,
+        csv_path: Optional[str] = None,
+        verbose: int = 0,
+        dead_feature_threshold: float = 0.01,
+    ):
         super().__init__(verbose)
         self._csv_path = Path(csv_path) if csv_path else None
+        self._dead_threshold = float(dead_feature_threshold)
 
         # Per-episode accumulators (reset each episode)
         self._ep_rewards: List[float] = []
         self._ep_components: Dict[str, List[float]] = defaultdict(list)
         self._ep_actions: List[np.ndarray] = []
         self._ep_regimes: List[int] = []  # 0=FF, 1=META, 2=CONG
+        self._ep_observations: List[np.ndarray] = []
 
         # Cross-episode tracking
         self._episode_count = 0
@@ -100,13 +159,19 @@ class HarmonizationMonitor(BaseCallback):
             # of the MOST RECENT frame (the last 18 features before the
             # 2 prev_action features, i.e., obs[36:54] is frame 2).
             # frame2 regime indices: 36 + 15 = 51, 52, 53
-            obs = self.locals.get("new_obs")
             if obs is not None:
                 ob = np.asarray(obs[i]).flatten()
                 if len(ob) >= 54:
                     regime_vec = ob[51:54]  # [FF, META, CONG]
                     regime_idx = int(np.argmax(regime_vec))
                     self._ep_regimes.append(regime_idx)
+
+            # Collect observation for dead-feature analysis
+            obs = self.locals.get("new_obs")
+            if obs is not None:
+                self._ep_observations.append(
+                    np.asarray(obs[i], dtype=np.float32).flatten().copy()
+                )
 
             # Check for episode done
             done = self.locals.get("dones", [False])[i]
@@ -170,6 +235,22 @@ class HarmonizationMonitor(BaseCallback):
         if hasattr(self.model, "log_ent_coef"):
             alpha = float(self.model.ent_coef)
 
+        # --- Dead feature detection ---
+        # Compute per-dimension std across the episode's observations.
+        # Any dim with std < threshold is "dead": it carries no gradient
+        # signal through the first Linear layer and wastes network capacity.
+        dead_names: List[str] = []
+        obs_std = np.zeros(0)
+        if self._ep_observations:
+            obs_arr = np.array(self._ep_observations)  # (n_steps, 56)
+            obs_std = np.std(obs_arr, axis=0)           # (56,)
+            dead_mask = obs_std < self._dead_threshold
+            if dead_mask.any():
+                dead_indices = np.where(dead_mask)[0]
+                dead_names = [
+                    _obs_feature_name(int(idx)) for idx in dead_indices
+                ]
+
         # --- Log to TensorBoard ---
         ep = self._episode_count
         self.logger.record("episode/total_reward", total_reward)
@@ -196,6 +277,12 @@ class HarmonizationMonitor(BaseCallback):
 
         self.logger.record("train/alpha", alpha)
 
+        self.logger.record("obs/dead_feature_count", len(dead_names))
+        if dead_names:
+            self.logger.record(
+                "obs/dead_features", ", ".join(dead_names)
+            )
+
         # --- Console output ---
         if self.verbose >= 1:
             regime_str = f"FF={ff_frac:.0%} M={meta_frac:.0%} C={cong_frac:.0%}"
@@ -207,6 +294,12 @@ class HarmonizationMonitor(BaseCallback):
                 f"tp={comp_means['temporal']:+.3f} "
                 f"thr={comp_means['throughput']:+.3f}"
             )
+            if dead_names:
+                print(
+                    f"  WARNING: {len(dead_names)} dead feature(s) "
+                    f"(std < {self._dead_threshold}): "
+                    + ", ".join(dead_names)
+                )
 
         # --- CSV ---
         if self._csv_writer:
@@ -232,6 +325,7 @@ class HarmonizationMonitor(BaseCallback):
         self._ep_components.clear()
         self._ep_actions.clear()
         self._ep_regimes.clear()
+        self._ep_observations.clear()
 
     def _on_training_end(self) -> None:
         if self._csv_file:
