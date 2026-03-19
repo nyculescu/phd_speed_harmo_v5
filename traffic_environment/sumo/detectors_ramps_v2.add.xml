@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<additional>
+    <inductionLoop id="flow_loop_seg_3_before_0_entry" lane="seg_3_before_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_1_entry" lane="seg_3_before_1" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_2_entry" lane="seg_3_before_2" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_0_mid" lane="seg_3_before_0" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_1_mid" lane="seg_3_before_1" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_2_mid" lane="seg_3_before_2" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_0_exit" lane="seg_3_before_0" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_1_exit" lane="seg_3_before_1" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_3_before_2_exit" lane="seg_3_before_2" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_entry" lane="seg_2_before_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_entry" lane="seg_2_before_1" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_entry" lane="seg_2_before_2" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_mid" lane="seg_2_before_0" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_mid" lane="seg_2_before_1" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_mid" lane="seg_2_before_2" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_0_exit" lane="seg_2_before_0" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_1_exit" lane="seg_2_before_1" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_2_before_2_exit" lane="seg_2_before_2" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_entry" lane="seg_1_before_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_entry" lane="seg_1_before_1" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_entry" lane="seg_1_before_2" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_mid" lane="seg_1_before_0" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_mid" lane="seg_1_before_1" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_mid" lane="seg_1_before_2" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_0_exit" lane="seg_1_before_0" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_1_exit" lane="seg_1_before_1" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_before_2_exit" lane="seg_1_before_2" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_entry" lane="seg_0_before_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_entry" lane="seg_0_before_1" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_entry" lane="seg_0_before_2" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_mid" lane="seg_0_before_0" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_mid" lane="seg_0_before_1" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_mid" lane="seg_0_before_2" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_0_exit" lane="seg_0_before_0" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_1_exit" lane="seg_0_before_1" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_before_2_exit" lane="seg_0_before_2" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_entry" lane="seg_0_after_0" pos="25.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_entry" lane="seg_0_after_1" pos="25.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_entry" lane="seg_0_after_2" pos="25.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_mid" lane="seg_0_after_0" pos="250.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_mid" lane="seg_0_after_1" pos="250.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_mid" lane="seg_0_after_2" pos="250.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_exit" lane="seg_0_after_0" pos="475.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_exit" lane="seg_0_after_1" pos="475.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_exit" lane="seg_0_after_2" pos="475.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_0_entry" lane="seg_1_after_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_1_entry" lane="seg_1_after_1" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_2_entry" lane="seg_1_after_2" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_0_mid" lane="seg_1_after_0" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_1_mid" lane="seg_1_after_1" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_2_mid" lane="seg_1_after_2" pos="500.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_0_exit" lane="seg_1_after_0" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_1_exit" lane="seg_1_after_1" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_1_after_2_exit" lane="seg_1_after_2" pos="950.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_approach_0_entry" lane="ramp_on_approach_0" pos="35.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_approach_0_mid" lane="ramp_on_approach_0" pos="350.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_approach_0_exit" lane="ramp_on_approach_0" pos="665.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_transition_0_entry" lane="ramp_on_transition_0" pos="10.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_transition_0_mid" lane="ramp_on_transition_0" pos="100.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_transition_0_exit" lane="ramp_on_transition_0" pos="190.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_merge_0_entry" lane="ramp_on_merge_0" pos="5.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_merge_0_mid" lane="ramp_on_merge_0" pos="50.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_ramp_on_merge_0_exit" lane="ramp_on_merge_0" pos="95.0" freq="30" file="NUL"/>
+    <entryExitDetector id="e3_seg_3_before" freq="30" file="NUL">
+        <detEntry lane="seg_3_before_0" pos="20.0"/>
+        <detExit lane="seg_3_before_0" pos="980.0"/>
+        <detEntry lane="seg_3_before_1" pos="20.0"/>
+        <detExit lane="seg_3_before_1" pos="980.0"/>
+        <detEntry lane="seg_3_before_2" pos="20.0"/>
+        <detExit lane="seg_3_before_2" pos="980.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_seg_2_before" freq="30" file="NUL">
+        <detEntry lane="seg_2_before_0" pos="20.0"/>
+        <detExit lane="seg_2_before_0" pos="980.0"/>
+        <detEntry lane="seg_2_before_1" pos="20.0"/>
+        <detExit lane="seg_2_before_1" pos="980.0"/>
+        <detEntry lane="seg_2_before_2" pos="20.0"/>
+        <detExit lane="seg_2_before_2" pos="980.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_seg_1_before" freq="30" file="NUL">
+        <detEntry lane="seg_1_before_0" pos="20.0"/>
+        <detExit lane="seg_1_before_0" pos="980.0"/>
+        <detEntry lane="seg_1_before_1" pos="20.0"/>
+        <detExit lane="seg_1_before_1" pos="980.0"/>
+        <detEntry lane="seg_1_before_2" pos="20.0"/>
+        <detExit lane="seg_1_before_2" pos="980.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_seg_0_before" freq="30" file="NUL">
+        <detEntry lane="seg_0_before_0" pos="20.0"/>
+        <detExit lane="seg_0_before_0" pos="980.0"/>
+        <detEntry lane="seg_0_before_1" pos="20.0"/>
+        <detExit lane="seg_0_before_1" pos="980.0"/>
+        <detEntry lane="seg_0_before_2" pos="20.0"/>
+        <detExit lane="seg_0_before_2" pos="980.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_seg_0_after" freq="30" file="NUL">
+        <detEntry lane="seg_0_after_0" pos="10.0"/>
+        <detExit lane="seg_0_after_0" pos="490.0"/>
+        <detEntry lane="seg_0_after_1" pos="10.0"/>
+        <detExit lane="seg_0_after_1" pos="490.0"/>
+        <detEntry lane="seg_0_after_2" pos="10.0"/>
+        <detExit lane="seg_0_after_2" pos="490.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_seg_1_after" freq="30" file="NUL">
+        <detEntry lane="seg_1_after_0" pos="20.0"/>
+        <detExit lane="seg_1_after_0" pos="980.0"/>
+        <detEntry lane="seg_1_after_1" pos="20.0"/>
+        <detExit lane="seg_1_after_1" pos="980.0"/>
+        <detEntry lane="seg_1_after_2" pos="20.0"/>
+        <detExit lane="seg_1_after_2" pos="980.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_ramp_on_approach" freq="30" file="NUL">
+        <detEntry lane="ramp_on_approach_0" pos="14.0"/>
+        <detExit lane="ramp_on_approach_0" pos="686.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_ramp_on_transition" freq="30" file="NUL">
+        <detEntry lane="ramp_on_transition_0" pos="4.0"/>
+        <detExit lane="ramp_on_transition_0" pos="196.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_ramp_on_merge" freq="30" file="NUL">
+        <detEntry lane="ramp_on_merge_0" pos="2.0"/>
+        <detExit lane="ramp_on_merge_0" pos="98.0"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_corridor" freq="30" file="NUL">
+        <detEntry lane="seg_3_before_0" pos="20.0"/>
+        <detEntry lane="seg_3_before_1" pos="20.0"/>
+        <detEntry lane="seg_3_before_2" pos="20.0"/>
+        <detEntry lane="ramp_on_approach_0" pos="14.0"/>
+        <detExit lane="seg_1_after_0" pos="980.0"/>
+        <detExit lane="seg_1_after_1" pos="980.0"/>
+        <detExit lane="seg_1_after_2" pos="980.0"/>
+    </entryExitDetector>
+</additional>

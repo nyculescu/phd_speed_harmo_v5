@@ -1,11 +1,11 @@
 # =============================================================================
 # Project-level common configuration — phd_speed_harmo_v5
 # All experiments inherit from this file.
-# Topology: ramps_v1 (3L mainline + on-ramp + off-ramp, 500m weaving zone)
+# Topology: ramps_v2 (3L mainline + on-ramp, 500m merge zone, no off-ramp)
 # =============================================================================
 
 sumo:
-  aggregation_time: 30          # must match freq in detectors_ramps_v1.add.xml
+  aggregation_time: 30          # must match freq in detectors_ramps_v2.add.xml
   step_length: 1.0
   episode_duration_s: 3600      # 120 × 30 s windows (1 hour)
   warmup_s: 100                 # ramp departure delay
@@ -14,7 +14,7 @@ sumo:
     regime_gate_enabled: false   # regime encoded as one-hot in state features
 
 scenario_generation:
-  network_topology: ramps_v1
+  network_topology: ramps_v2
   cavs_percentage: 50.0
 
 sar:
@@ -35,7 +35,7 @@ sar_config:
     w_a: 0.15
 
 logging:
-  log_dir: ./logs/ramps_v1
+  log_dir: ./logs/ramps_v2
   tensorboard_dump_csv: false
   enable_file_output: false
   csv_logging: false

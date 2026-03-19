@@ -25,8 +25,8 @@ if _SUMO_TOOLS not in sys.path:
 import numpy as np
 
 _SUMO_DIR = Path(__file__).resolve().parents[1] / "traffic_environment" / "sumo"
-NET_FILE = _SUMO_DIR / "ramps_v1.net.xml"
-DET_FILE = _SUMO_DIR / "detectors_ramps_v1.add.xml"
+NET_FILE = _SUMO_DIR / "ramps_v2.net.xml"
+DET_FILE = _SUMO_DIR / "detectors_ramps_v2.add.xml"
 RESULTS_ROOT = Path(__file__).resolve().parent / "results"
 
 DEFAULT_AGG_TIME = 30
@@ -61,13 +61,10 @@ def generate_route_file(
                   edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after")
     ET.SubElement(routes, "route", id="ramp_on_through",
                   edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
-    ET.SubElement(routes, "route", id="mainline_to_off",
-                  edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after ramp_off_diverge ramp_off_transition ramp_off_departure")
 
     total_veh = int(demand_vph * episode_s / 3600)
     n_mainline = int(total_veh * 0.75)
-    n_ramp = int(total_veh * 0.15)
-    n_off = total_veh - n_mainline - n_ramp
+    n_ramp = total_veh - n_mainline
 
     rng = np.random.default_rng(seed)
     vehicles = []
@@ -83,7 +80,6 @@ def generate_route_file(
             vehicles.append((dep, route_id))
 
     _add(n_mainline, "mainline_through", 0.0, float(episode_s))
-    _add(n_off, "mainline_to_off", 0.0, float(episode_s))
     _add(n_ramp, "ramp_on_through", RAMP_DELAY_S, float(episode_s) - RAMP_DELAY_S)
 
     vehicles.sort(key=lambda v: v[0])

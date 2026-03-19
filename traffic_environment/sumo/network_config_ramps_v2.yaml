@@ -1,0 +1,13 @@
+# network_config_ramps_v2.yaml
+# Route definitions for the ramps_v2 topology (no off-ramp).
+
+routes:
+  mainline_through:
+    edges: "seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after"
+    fraction: 0.75
+    depart_offset_s: 0.0
+
+  ramp_on_through:
+    edges: "ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after"
+    fraction: 0.25
+    depart_offset_s: 100.0

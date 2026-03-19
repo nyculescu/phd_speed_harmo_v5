@@ -2,11 +2,10 @@
 """
 Traffic measurement container for a single E1 aggregation window.
 
-Covers all 12 segments of the ramps_v1 topology:
+Covers all 9 segments of the ramps_v2 topology:
   Mainline: seg_3_before, seg_2_before, seg_1_before, seg_0_before,
             seg_0_after, seg_1_after
   On-ramp:  ramp_on_approach, ramp_on_transition, ramp_on_merge
-  Off-ramp: ramp_off_diverge, ramp_off_transition, ramp_off_departure
 """
 from __future__ import annotations
 
@@ -45,7 +44,7 @@ class TrafficMetrics:
     seg_0_before_flow_vph: float = 0.0
     seg_0_before_occ_pct: float = 0.0
 
-    # Weaving zone (4 lanes)
+    # Merge zone (3 lanes)
     seg_0_after_speed_ms: float = 0.0
     seg_0_after_flow_vph: float = 0.0
     seg_0_after_occ_pct: float = 0.0
@@ -67,19 +66,6 @@ class TrafficMetrics:
     ramp_on_merge_speed_ms: float = 0.0
     ramp_on_merge_flow_vph: float = 0.0
     ramp_on_merge_occ_pct: float = 0.0
-
-    # Off-ramp
-    ramp_off_diverge_speed_ms: float = 0.0
-    ramp_off_diverge_flow_vph: float = 0.0
-    ramp_off_diverge_occ_pct: float = 0.0
-
-    ramp_off_transition_speed_ms: float = 0.0
-    ramp_off_transition_flow_vph: float = 0.0
-    ramp_off_transition_occ_pct: float = 0.0
-
-    ramp_off_departure_speed_ms: float = 0.0
-    ramp_off_departure_flow_vph: float = 0.0
-    ramp_off_departure_occ_pct: float = 0.0
 
     # ------------------------------------------------------------------
     # Control state

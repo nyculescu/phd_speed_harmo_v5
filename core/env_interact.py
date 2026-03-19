@@ -1,6 +1,6 @@
 # core/env_interact.py
 """
-Gymnasium environment wrapping a SUMO ramps_v1 simulation.
+Gymnasium environment wrapping a SUMO ramps_v2 simulation.
 
 Design
 ------
@@ -26,7 +26,7 @@ from .sar_frame import ActionStrategy, RewardFunction, StateRepresentation
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# ramps_v1 topology constants
+# ramps_v2 topology constants
 # ---------------------------------------------------------------------------
 
 # All segments with their lane counts.
@@ -35,14 +35,11 @@ _SEGMENT_LANES: Dict[str, int] = {
     "seg_2_before": 3,
     "seg_1_before": 3,
     "seg_0_before": 3,
-    "seg_0_after": 4,
+    "seg_0_after": 3,
     "seg_1_after": 3,
     "ramp_on_approach": 1,
     "ramp_on_transition": 1,
     "ramp_on_merge": 1,
-    "ramp_off_diverge": 1,
-    "ramp_off_transition": 1,
-    "ramp_off_departure": 1,
 }
 
 # Segments that receive posted speed limits from the action.
@@ -82,7 +79,7 @@ def _free_port() -> int:
 
 class TrafficEnv(gym.Env):
     """
-    Gymnasium environment for the ramps_v1 SUMO network.
+    Gymnasium environment for the ramps_v2 SUMO network.
 
     Parameters
     ----------
