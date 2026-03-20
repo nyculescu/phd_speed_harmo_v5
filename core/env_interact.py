@@ -256,40 +256,47 @@ class TrafficEnv(gym.Env):
     def _advance_sumo(self, n_steps: int) -> None:
         import traci
 
-        mainline_limit_ms = self._metrics.current_speed_limits[0] / 3.6
+        # Per-lane limits for seg_0_before (kph → m/s)
+        per_lane_ms = [
+            self._metrics.current_speed_limits[0] / 3.6,  # L0
+            self._metrics.current_speed_limits[1] / 3.6,  # L1
+            self._metrics.current_speed_limits[2] / 3.6,  # L2
+        ]
         ramp_limit_ms = self._metrics.current_speed_limits[3] / 3.6
+
+        # Upstream limit: for seg_1_before and seg_2_before
+        upstream_limit_ms = min(per_lane_ms)
+
+        # Box(5) physical VSL on seg_1_before (if present)
+        use_physical = len(self._metrics.current_speed_limits) > 4
+        if use_physical:
+            seg1_physical_ms = self._metrics.current_speed_limits[4] / 3.6
+            upstream_limit_ms = seg1_physical_ms
+            try:
+                traci.edge.setMaxSpeed("seg_1_before", seg1_physical_ms)
+            except Exception:
+                pass
+
         for _ in range(n_steps):
             traci.simulationStep()
             if self.cav_percent > 0.0:
-                self._apply_cav_slowdown(mainline_limit_ms, ramp_limit_ms)
+                self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
 
     # ------------------------------------------------------------------
     # Speed control
     # ------------------------------------------------------------------
 
-    # _apply_segment_limits() removed — pure Lagrangian control (v5 paradigm).
-    # HDVs slow down via car-following behind decelerating CAVs, not via
-    # lane speed caps. See docs/slowDown_argument.md for rationale.
-    #
-    # TODO (future iteration): re-introduce as a secondary effect for HDVs
-    # with 5 kph granularity rounded up, updated every 5 minutes based on
-    # current traffic state. This would simulate advisory VSL signs for
-    # HDVs that are ahead of all CAVs on their lane.
-
     def _apply_cav_slowdown(
-        self, mainline_limit_ms: float, ramp_limit_ms: float
+        self,
+        per_lane_ms: list,
+        ramp_limit_ms: float,
+        upstream_limit_ms: float,
     ) -> None:
-        """Issue slowDown() to CAVs on controlled edges only.
+        """Issue slowDown() to CAVs on controlled edges.
 
-        Three zones:
-          - _MAINLINE_CONTROLLED_EDGES → mainline_limit_ms
-          - _RAMP_CONTROLLED_EDGES    → ramp_limit_ms
-          - Everything else           → no slowDown (CAV drives at free-flow)
-
-        This implements the "release point" design: CAVs that have passed
-        the merge (seg_0_after, seg_1_after) or are on the merge curve
-        (ramp_on_merge) are not restricted, allowing them to accelerate
-        back to free-flow speed.
+        Per-lane control on seg_0_before; uniform on other controlled edges.
+        Implements the "release point" design: CAVs past the merge drive at
+        free-flow speed.  See docs/slowDown_argument.md.
         """
         import traci
 
@@ -305,12 +312,20 @@ class TrafficEnv(gym.Env):
                 edge = traci.vehicle.getRoadID(veh_id)
             except Exception:
                 continue
-            if edge in _MAINLINE_CONTROLLED_EDGES:
-                limit = mainline_limit_ms
+
+            if edge == "seg_0_before":
+                # Per-lane differential control
+                try:
+                    lane_idx = traci.vehicle.getLaneIndex(veh_id)
+                    limit = per_lane_ms[lane_idx] if lane_idx < len(per_lane_ms) else per_lane_ms[0]
+                except Exception:
+                    limit = per_lane_ms[0]
+            elif edge in ("seg_1_before", "seg_2_before"):
+                limit = upstream_limit_ms
             elif edge in _RAMP_CONTROLLED_EDGES:
                 limit = ramp_limit_ms
             else:
-                continue  # no slowDown — CAV drives at free-flow speed
+                continue  # release point — CAV drives at free-flow
             try:
                 traci.vehicle.slowDown(veh_id, limit, duration)
             except Exception:
