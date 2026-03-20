@@ -68,18 +68,42 @@ class TrafficMetrics:
     ramp_on_merge_occ_pct: float = 0.0
 
     # ------------------------------------------------------------------
+    # Per-lane measurements at seg_0_before (merge approach)
+    # ------------------------------------------------------------------
+
+    seg_0_before_L0_speed_ms: float = 0.0
+    seg_0_before_L0_flow_vph: float = 0.0
+    seg_0_before_L0_occ_pct: float = 0.0
+
+    seg_0_before_L1_speed_ms: float = 0.0
+    seg_0_before_L1_flow_vph: float = 0.0
+    seg_0_before_L1_occ_pct: float = 0.0
+
+    seg_0_before_L2_speed_ms: float = 0.0
+    seg_0_before_L2_flow_vph: float = 0.0
+    seg_0_before_L2_occ_pct: float = 0.0
+
+    # ------------------------------------------------------------------
     # Control state
     # ------------------------------------------------------------------
 
     # Current posted speed limits (kph):
-    # [seg_0_before, seg_1_before, seg_2_before, ramp_on_transition]
+    # Box(4): [seg_0_before_L0, seg_0_before_L1, seg_0_before_L2, ramp_on_transition]
+    # Box(5): [seg_0_before_L0, seg_0_before_L1, seg_0_before_L2, ramp_on_transition, seg_1_before]
     current_speed_limits: List[float] = field(
-        default_factory=lambda: [_DEFAULT_SPEED_LIMIT_KPH] * 4
+        default_factory=lambda: [_DEFAULT_SPEED_LIMIT_KPH] * 5
     )
 
     # Continuous action vectors (written by ActionStrategy, read by RewardFunction)
     action: Optional[np.ndarray] = None
     prev_action: Optional[np.ndarray] = None
+
+    # ------------------------------------------------------------------
+    # Anomaly state
+    # ------------------------------------------------------------------
+
+    anomaly_active: bool = False
+    anomaly_type: str = ""
 
     # ------------------------------------------------------------------
     # Global context

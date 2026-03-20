@@ -364,6 +364,20 @@ class TrafficEnv(gym.Env):
             + m.seg_0_before_flow_vph
         )
 
+        # Per-lane metrics at seg_0_before (merge approach)
+        for lane_idx in range(3):
+            det_id = f"flow_loop_seg_0_before_{lane_idx}_{_DET_POS}"
+            try:
+                cnt = float(traci.inductionloop.getLastIntervalVehicleNumber(det_id))
+                spd = max(0.0, float(traci.inductionloop.getLastIntervalMeanSpeed(det_id)))
+                occ = float(traci.inductionloop.getLastIntervalOccupancy(det_id))
+            except Exception:
+                cnt, spd, occ = 0.0, 0.0, 0.0
+            flow = cnt * (3600.0 / self.aggregation_time)
+            setattr(m, f"seg_0_before_L{lane_idx}_speed_ms", spd)
+            setattr(m, f"seg_0_before_L{lane_idx}_flow_vph", flow)
+            setattr(m, f"seg_0_before_L{lane_idx}_occ_pct", occ)
+
         # TTS increment
         try:
             n_veh = float(traci.vehicle.getIDCount())
