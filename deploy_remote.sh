@@ -127,6 +127,17 @@ pip install --upgrade pip setuptools wheel -q
 info "Installing Python requirements..."
 pip install -r requirements.txt -q
 
+# Install traci/sumolib into the venv (shipped with SUMO but not on pip path)
+info "Installing traci + sumolib..."
+pip install traci sumolib -q 2>/dev/null || {
+    # Fallback: symlink from SUMO_HOME/tools
+    warn "pip install traci failed — symlinking from SUMO_HOME/tools"
+    SITE_PKG=$($PY_CMD -c "import site; print(site.getsitepackages()[0])")
+    ln -sf "$SUMO_HOME_PATH/tools/traci" "$SITE_PKG/traci" 2>/dev/null
+    ln -sf "$SUMO_HOME_PATH/tools/sumolib" "$SITE_PKG/sumolib" 2>/dev/null
+    ln -sf "$SUMO_HOME_PATH/tools/traci" ".venv/lib/python*/site-packages/traci" 2>/dev/null
+}
+
 # ── Step 6: Run smoke test ────────────────────────────────────────────────────
 info "Running smoke test..."
 echo ""
