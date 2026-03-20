@@ -18,6 +18,13 @@ fi
 export SUMO_HOME="${SUMO_HOME:-/usr/share/sumo}"
 export PATH="$SUMO_HOME/bin:$PATH"
 
+# Prevent OpenBLAS/libgomp from spawning 64 threads per process.
+# With 240 SUMO workers, 64 threads each = 15k threads → fork bomb.
+# Our MLP is tiny — 1 thread per process is sufficient.
+export OPENBLAS_NUM_THREADS=1
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
 echo "Python: $($PY --version) at $PY"
 
 $PY -c "import torch; import stable_baselines3; import sb3_contrib; import traci" 2>/dev/null || {
