@@ -128,15 +128,20 @@ info "Installing Python requirements..."
 pip install -r requirements.txt -q
 
 # Install traci/sumolib into the venv (shipped with SUMO but not on pip path)
-info "Installing traci + sumolib..."
-pip install traci sumolib -q 2>/dev/null || {
-    # Fallback: symlink from SUMO_HOME/tools
-    warn "pip install traci failed — symlinking from SUMO_HOME/tools"
-    SITE_PKG=$($PY_CMD -c "import site; print(site.getsitepackages()[0])")
-    ln -sf "$SUMO_HOME_PATH/tools/traci" "$SITE_PKG/traci" 2>/dev/null
-    ln -sf "$SUMO_HOME_PATH/tools/sumolib" "$SITE_PKG/sumolib" 2>/dev/null
-    ln -sf "$SUMO_HOME_PATH/tools/traci" ".venv/lib/python*/site-packages/traci" 2>/dev/null
-}
+info "Installing traci + sumolib into venv..."
+# Method 1: pip (works on SUMO >= 1.20)
+pip install traci sumolib -q 2>/dev/null
+
+# Verify — if pip didn't work, force symlink
+if ! python -c "import traci" 2>/dev/null; then
+    warn "pip install traci did not work — symlinking from SUMO_HOME/tools"
+    SITE_PKG=$(python -c "import site; print(site.getsitepackages()[0])")
+    ln -sf "$SUMO_HOME_PATH/tools/traci" "$SITE_PKG/traci"
+    ln -sf "$SUMO_HOME_PATH/tools/sumolib" "$SITE_PKG/sumolib"
+fi
+
+# Final check — must work or abort
+python -c "import traci; print(f'  traci {traci.__version__}')" || error "traci still not importable after pip + symlink. Check SUMO installation."
 
 # ── Step 6: Run smoke test ────────────────────────────────────────────────────
 info "Running smoke test..."
