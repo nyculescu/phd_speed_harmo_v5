@@ -131,7 +131,7 @@ monitor_progress() {
     if $ALL_DONE; then
       break
     fi
-    sleep 30
+    sleep 5
   done
   echo ""
 }
