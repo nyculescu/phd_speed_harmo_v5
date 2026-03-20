@@ -132,8 +132,49 @@ def _train_single_seed(
 ):
     """Train one seed of SAC or TQC with optional SubprocVecEnv."""
     import torch
-    from stable_baselines3.common.callbacks import EvalCallback
+    from stable_baselines3.common.callbacks import EvalCallback, CallbackList
     from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+
+    from stable_baselines3.common.callbacks import BaseCallback
+
+    try:
+        from stable_baselines3.common.callbacks import ProgressBarCallback
+        has_tqdm = True
+    except ImportError:
+        has_tqdm = False
+
+    class LogProgressCallback(BaseCallback):
+        """Line-based progress for log files (no carriage returns)."""
+
+        def __init__(self, total_timesteps: int, log_every: int = 10000, verbose=0):
+            super().__init__(verbose)
+            self._total = total_timesteps
+            self._log_every = log_every
+            self._t0 = None
+
+        def _on_training_start(self):
+            import time as _time
+            self._t0 = _time.time()
+
+        def _on_step(self) -> bool:
+            import time as _time
+            step = self.num_timesteps
+            if step % self._log_every == 0 or step == self._total:
+                elapsed = _time.time() - self._t0 if self._t0 else 0
+                pct = step / self._total * 100
+                eps = step / 120  # approx episodes
+                rate = step / elapsed if elapsed > 0 else 0
+                eta_s = (self._total - step) / rate if rate > 0 else 0
+                eta_m = eta_s / 60
+
+                bar_len = 30
+                filled = int(bar_len * step / self._total)
+                bar = "█" * filled + "░" * (bar_len - filled)
+                print(f"  |{bar}| {pct:5.1f}% [{step:>8,}/{self._total:,}] "
+                      f"~{eps:,.0f} eps  {rate:,.0f} stp/s  "
+                      f"ETA {eta_m:.0f}m  [{elapsed/60:.0f}m elapsed]",
+                      flush=True)
+            return True
 
     # Set seeds
     np.random.seed(seed)
@@ -220,11 +261,21 @@ def _train_single_seed(
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
 
+    # Build callback list
+    callbacks = [eval_callback]
+    if sys.stdout.isatty() and has_tqdm:
+        # Interactive terminal → tqdm progress bar
+        callbacks.append(ProgressBarCallback())
+    else:
+        # Background / log file → line-based progress
+        callbacks.append(LogProgressCallback(timesteps, log_every=5000))
+    callback = CallbackList(callbacks)
+
     # Train
     try:
         model.learn(
             total_timesteps=timesteps,
-            callback=eval_callback,
+            callback=callback,
             log_interval=10,
             tb_log_name=f"{algo}_s{seed}",
         )
