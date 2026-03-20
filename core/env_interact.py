@@ -16,6 +16,7 @@ import os
 import socket
 import subprocess
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
@@ -112,6 +113,10 @@ class TrafficEnv(gym.Env):
         episode_duration: int,
         cav_percent: float = 0.5,
         aggregation_time: int = 30,
+        *,
+        demand_config: Optional[Dict[str, Any]] = None,
+        anomaly_config: Optional[Dict[str, Any]] = None,
+        env_seed: int = 0,
     ) -> None:
         super().__init__()
 
@@ -130,12 +135,20 @@ class TrafficEnv(gym.Env):
         self.observation_space = self.state_repr.get_observation_space()
         self.action_space = self.action_strat.get_action_space()
 
+        # Stochastic demand: regenerate routes every reset()
+        self._demand_config = demand_config  # None → use fixed sumo_cfg_path
+        self._anomaly_config = anomaly_config
+        self._env_seed = env_seed
+        self._episode_count: int = 0
+        self._tmp_dir: Optional[Path] = None
+
         self._sumo_proc: Optional[subprocess.Popen] = None
         self._port: int = 0
         self._traci_label: str = ""
         self._traci_conn = None  # traci.Connection — unique per instance
         self._step_count: int = 0
         self._metrics: TrafficMetrics = TrafficMetrics()
+        self._anomaly_injector = None
 
     # ------------------------------------------------------------------
     # gymnasium interface
@@ -153,14 +166,84 @@ class TrafficEnv(gym.Env):
         self._metrics = TrafficMetrics()
         self.state_repr.reset()
         self.action_strat.reset()
+        self.reward_func.reset()
+        self._anomaly_injector = None
 
         if not self.dry_run:
+            # Re-generate demand profile and routes every episode
+            if self._demand_config is not None:
+                self._regenerate_routes()
             self._start_sumo()
             self._advance_sumo(self._steps_per_window)
             self._collect_metrics()
 
+        self._episode_count += 1
         obs = self._make_obs()
         return obs, {}
+
+    def _regenerate_routes(self) -> None:
+        """Create a fresh stochastic demand profile + routes for this episode."""
+        from traffic_environment.stochastic_demand import generate_demand_profile
+        from traffic_environment.anomaly_injector import AnomalyInjector
+
+        # Unique seed per episode: env_seed gives worker identity,
+        # episode_count gives temporal diversity
+        ep_seed = self._env_seed * 100_000 + self._episode_count
+
+        dcfg = self._demand_config
+        profile = generate_demand_profile(
+            episode_duration_s=self.episode_duration,
+            peak_demand_range=tuple(dcfg["peak_demand_range"]),
+            base_fraction_range=tuple(dcfg["base_fraction_range"]),
+            ramp_fraction_range=tuple(dcfg["ramp_fraction_range"]),
+            t_peak_frac_range=tuple(dcfg["t_peak_range"]),
+            t_decay_frac_range=tuple(dcfg["t_decay_range"]),
+            noise_std=dcfg["noise_std"],
+            seed=ep_seed,
+        )
+
+        # Anomaly injector (new each episode)
+        acfg = self._anomaly_config or {}
+        if acfg.get("enabled", False):
+            self._anomaly_injector = AnomalyInjector(
+                anomaly_prob=acfg.get("probability", 0.15),
+                seed=ep_seed + 50_000,
+            )
+        else:
+            self._anomaly_injector = None
+
+        # Write routes to temp dir (reuse dir across episodes)
+        if self._tmp_dir is None:
+            import tempfile
+            self._tmp_dir = Path(tempfile.mkdtemp(
+                prefix=f"train_env{self._env_seed}_"
+            ))
+
+        rou_path = self._tmp_dir / "scenario.rou.xml"
+        cfg_path = self._tmp_dir / "scenario.sumocfg"
+
+        from tests._sumo_helpers import (
+            generate_stochastic_route_file, generate_sumocfg,
+        )
+        generate_stochastic_route_file(
+            rou_path, profile,
+            cav_pct=self.cav_percent * 100.0,
+            seed=ep_seed + 10_000,
+        )
+        generate_sumocfg(cfg_path, rou_path, self.episode_duration)
+
+        # Point SUMO at the fresh config
+        self.sumo_cfg_path = str(cfg_path)
+
+        logger.debug(
+            "Episode %d: peak=%.0f vph, ramp_frac=%.2f, anomaly=%s (seed=%d)",
+            self._episode_count, profile.peak_demand_vph,
+            profile.ramp_fraction,
+            self._anomaly_injector.event.anomaly_type if (
+                self._anomaly_injector and self._anomaly_injector.has_anomaly
+            ) else "none",
+            ep_seed,
+        )
 
     def step(
         self,
@@ -206,6 +289,10 @@ class TrafficEnv(gym.Env):
 
     def close(self) -> None:
         self._close_sumo()
+        if self._tmp_dir is not None:
+            import shutil
+            shutil.rmtree(self._tmp_dir, ignore_errors=True)
+            self._tmp_dir = None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -225,6 +312,12 @@ class TrafficEnv(gym.Env):
 
     def _start_sumo(self) -> None:
         import traci
+
+        if not self.sumo_cfg_path:
+            raise RuntimeError(
+                "sumo_cfg_path is None — either pass a .sumocfg or set "
+                "demand_config so routes are generated on reset()"
+            )
 
         # Stagger startup to avoid thundering herd when many workers
         # launch simultaneously via SubprocVecEnv.  The delay is based
@@ -329,6 +422,7 @@ class TrafficEnv(gym.Env):
         # on the next interval.  At 5-step intervals, max delay = 5s — acceptable
         # given the 30s control window.
         _SLOWDOWN_INTERVAL = 5
+        sim_time_base = self._step_count * self.aggregation_time
         for i in range(n_steps):
             try:
                 conn.simulationStep()
@@ -339,6 +433,15 @@ class TrafficEnv(gym.Env):
                 if conn is None:
                     return
                 continue
+
+            # Anomaly injection (if active this episode)
+            if self._anomaly_injector is not None:
+                sim_t = sim_time_base + i
+                self._anomaly_injector.step(float(sim_t), conn)
+                self._metrics.anomaly_active = self._anomaly_injector.is_active
+                if self._anomaly_injector.has_anomaly:
+                    self._metrics.anomaly_type = self._anomaly_injector.event.anomaly_type
+
             if self.cav_percent > 0.0 and i % _SLOWDOWN_INTERVAL == 0:
                 self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
 

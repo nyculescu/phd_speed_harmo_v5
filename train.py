@@ -33,7 +33,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -61,14 +60,11 @@ def _load_config(box5: bool = False) -> dict:
 def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
     """Return a callable that creates a TrafficEnv (for SubprocVecEnv).
 
-    Each call generates a fresh stochastic demand profile so that
-    different workers and different episodes see different traffic.
+    The env regenerates demand + routes every reset(), so each episode
+    sees a different stochastic traffic profile.  Workers are seeded
+    with ``seed * 1000 + worker_idx`` for reproducible diversity.
     """
     def _thunk():
-        from tests._sumo_helpers import (
-            generate_stochastic_route_file, generate_sumocfg,
-        )
-        from traffic_environment.stochastic_demand import generate_demand_profile
         from sar_components.discovery import discover_components
         from core import (
             TrafficEnv,
@@ -90,40 +86,22 @@ def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
         # Each worker gets a unique seed for demand diversity
         env_seed = seed * 1000 + worker_idx
 
-        demand_cfg = scenario_cfg["stochastic_demand"]
-        profile = generate_demand_profile(
-            episode_duration_s=sumo_cfg["episode_duration_s"],
-            peak_demand_range=tuple(demand_cfg["peak_demand_range"]),
-            base_fraction_range=tuple(demand_cfg["base_fraction_range"]),
-            ramp_fraction_range=tuple(demand_cfg["ramp_fraction_range"]),
-            t_peak_frac_range=tuple(demand_cfg["t_peak_range"]),
-            t_decay_frac_range=tuple(demand_cfg["t_decay_range"]),
-            noise_std=demand_cfg["noise_std"],
-            seed=env_seed,
-        )
-
-        tmp_dir = Path(tempfile.mkdtemp(prefix=f"train_s{seed}_w{worker_idx}_"))
-        rou_path = tmp_dir / "scenario.rou.xml"
-        cfg_path = tmp_dir / "scenario.sumocfg"
-
-        generate_stochastic_route_file(
-            rou_path, profile,
-            cav_pct=scenario_cfg["cav_percentage"],
-            seed=env_seed + 10000,
-        )
-        generate_sumocfg(cfg_path, rou_path, sumo_cfg["episode_duration_s"])
-
         from stable_baselines3.common.monitor import Monitor
 
         env = TrafficEnv(
-            sumo_cfg_path=str(cfg_path),
+            sumo_cfg_path=None,  # will be set by _regenerate_routes()
             state_repr=state_repr,
             action_strat=action_strat,
             reward_func=reward_func,
             episode_duration=sumo_cfg["episode_duration_s"],
             cav_percent=scenario_cfg["cav_percentage"] / 100.0,
             aggregation_time=sumo_cfg["aggregation_time"],
+            demand_config=scenario_cfg["stochastic_demand"],
+            anomaly_config=scenario_cfg.get("anomalies"),
+            env_seed=env_seed,
         )
+        # Override dry_run — we have demand_config, routes will be generated
+        env.dry_run = False
         return Monitor(env)
 
     return _thunk
@@ -196,7 +174,8 @@ def _train_single_seed(
     else:
         train_env = DummyVecEnv([_make_env_fn(cfg, seed, worker_idx=0)])
 
-    # Eval env — always single (deterministic evaluation)
+    # Eval env — always single, separate seed space for independence.
+    # Uses stochastic demand too (different profile each eval episode).
     eval_env = DummyVecEnv([_make_env_fn(cfg, seed + 5000, worker_idx=0)])
 
     # Model directory
@@ -204,13 +183,19 @@ def _train_single_seed(
     model_dir.mkdir(parents=True, exist_ok=True)
     tb_dir = model_dir / "tensorboard"
 
-    # Eval callback
+    # Eval callback — eval_freq is in steps *per env*, so divide by n_envs.
+    # With n_envs=16 and eval_freq=50000: eval every 50000/16 ≈ 3125 steps
+    # per env, which is ~26 episodes per env → eval every ~26 episodes.
+    raw_eval_freq = cfg["training"]["eval_freq"]
+    eval_freq_per_env = max(raw_eval_freq // n_envs, 1)
+    n_eval_episodes = max(cfg["training"]["n_eval_episodes"], 10)
+
     eval_callback = EvalCallback(
         eval_env,
         best_model_save_path=str(model_dir / "best_model"),
         log_path=str(model_dir / "eval_logs"),
-        eval_freq=cfg["training"]["eval_freq"],
-        n_eval_episodes=cfg["training"]["n_eval_episodes"],
+        eval_freq=eval_freq_per_env,
+        n_eval_episodes=n_eval_episodes,
         deterministic=True,
         render=False,
     )
