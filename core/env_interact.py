@@ -12,8 +12,10 @@ Design
 from __future__ import annotations
 
 import logging
+import os
 import socket
 import subprocess
+import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
@@ -224,8 +226,15 @@ class TrafficEnv(gym.Env):
     def _start_sumo(self) -> None:
         import traci
 
+        # Stagger startup to avoid thundering herd when many workers
+        # launch simultaneously via SubprocVecEnv.  The delay is based
+        # on the process ID to spread launches across ~2 seconds.
+        stagger_s = (os.getpid() % 20) * 0.1
+        if stagger_s > 0:
+            time.sleep(stagger_s)
+
         self._port = _free_port()
-        self._traci_label = f"env_{id(self)}_{self._port}"
+        self._traci_label = f"env_{os.getpid()}_{self._port}"
         cmd = [
             "sumo",
             "-c", str(self.sumo_cfg_path),
@@ -237,7 +246,9 @@ class TrafficEnv(gym.Env):
         self._sumo_proc = subprocess.Popen(
             cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
-        traci.init(port=self._port, numRetries=10, label=self._traci_label)
+        # Give SUMO time to bind the port before connecting
+        time.sleep(0.5)
+        traci.init(port=self._port, numRetries=20, label=self._traci_label)
         self._traci_conn = traci.getConnection(self._traci_label)
         logger.debug("SUMO started on port %d label=%s", self._port, self._traci_label)
 
