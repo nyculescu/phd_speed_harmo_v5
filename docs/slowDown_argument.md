@@ -79,16 +79,20 @@ This isolates the contribution of Lagrangian control. Adding `setMaxSpeed()` wou
 
 ---
 
-## 4. Future iteration: advisory HDV speed limits (TODO)
+## 4. Implemented: Physical VSL on seg_1_before (Box(5) variant)
 
-In a future project iteration, `lane.setMaxSpeed()` may be re-introduced as a **secondary, advisory effect** for HDVs, simulating low-frequency advisory VMS signs:
+The v5.1 design re-introduces `edge.setMaxSpeed()` on **seg_1_before only**, as a **physical overhead VSL sign with radar speed enforcement**. This is the Box(5) experimental variant; the Box(4) variant retains pure Lagrangian control.
 
-- **Granularity:** 5 kph steps (rounded up to the nearest 5 kph from the agent's continuous action)
-- **Update frequency:** every 5 minutes (10 control windows), not every 30 s — reflecting realistic VMS update rates and MUTCD sign-change interval guidelines [R10]
-- **Purpose:** catch the rare HDVs ahead of all CAVs and provide advisory guidance
-- **Implementation:** a separate method called every 10th `step()`, reading the current mainline action, rounding to 5 kph, and applying `lane.setMaxSpeed()` to controlled segments
+- **Segment:** seg_1_before (1000 m, 1000–1500 m from merge).
+- **Granularity:** Continuous (agent output a[4] in [60, 120] kph), applied via `traci.edge.setMaxSpeed()`.
+- **Update frequency:** Every 30 s (each control step) — justified because the Lagrangian CAV control already updates at 30 s and the physical sign is a digital overhead display (not a fixed plate), consistent with MARVEL [R10] gantry update rates.
+- **HDV compliance:** 92% comply (radar enforcement); 8% retain free-flow speed. Compliance is determined per-vehicle per control step and persisted for the duration of each window.
+- **CAV response:** 100% via `traci.vehicle.slowDown()` — redundant with the sign but ensures instant compliance.
+- **MUTCD constraint:** `a[4] ≥ max(a[0], a[1], a[2]) − 16 kph` (10 mph maximum step-down between adjacent signs).
 
-This would be evaluated as an ablation study: pure Lagrangian vs. Lagrangian + advisory VMS.
+This is **not** the advisory low-frequency VMS originally envisioned in v5.0. It is a full enforcement mechanism that creates **stochastic HDV compliance** as a source of return variance — the key differentiator for TQC vs SAC in the experimental comparison.
+
+The design is evaluated as: **Exp 3 (Box(4) vs Box(5)): does the posted VSL add value beyond Lagrangian-only control?** See `docs/speed_harmo_approach_v1.md` §7.
 
 ---
 

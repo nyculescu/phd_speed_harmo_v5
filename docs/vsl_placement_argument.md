@@ -1,25 +1,30 @@
-# VSL Placement Rationale — ramps_v1 Topology
+# VSL Placement Rationale — ramps_v2 Topology
+
+**Updated:** 2026-03-20 — revised for v5.1 mixed Lagrangian-Eulerian design with per-lane control.
 
 ## 1. The question
 
-Should VSL enforcement points be placed 50–100 m before the merge point (and recursively before each upstream segment boundary), or should they cover entire 1000 m segments as currently implemented?
+Which segments should carry VSL control, what type of VSL (physical sign vs. virtual CAV command), and why are some segments deliberately left uncontrolled?
 
-**Answer: entire-segment application is correct.** Short-range placement (50–100 m) is physically unrealistic, contradicts the VSL mechanism, and is unsupported by any published study. This document provides the full justification.
+**Answer:** The v5.1 design uses a **two-zone control architecture** — physical Eulerian VSL on seg_1_before (pre-conditioning) and virtual Lagrangian per-lane VSL on seg_0_before (merge approach). Upstream segments (seg_2_before, seg_3_before) are uncontrolled free-flow reference zones. Downstream segments are observation-only. This document provides the full justification.
 
 ---
 
 ## 2. Current design
 
-The ramps_v1 topology applies speed limits to four controlled edges via `traci.lane.setMaxSpeed()`:
+The ramps_v2 topology uses two distinct control mechanisms on two segments:
 
-| Controlled edge | Length | Distance from merge (J4) | Lane count |
-|---|---|---|---|
-| `seg_2_before` | 1000 m | 3000–4000 m upstream | 3 |
-| `seg_1_before` | 1000 m | 2000–3000 m upstream | 3 |
-| `seg_0_before` | 1000 m | 1000–2000 m upstream | 3 |
-| `ramp_on_transition` | 200 m | 100–300 m from merge | 1 |
+| Controlled edge | Length | Dist. to merge | Type | Mechanism | Applies to |
+|---|---|---|---|---|---|
+| `seg_1_before` | 1000 m | 1000–1500 m | **Physical VSL** (posted sign + radar) | `traci.edge.setMaxSpeed()` | HDV (92%) + CAV (100%) |
+| `seg_0_before` | 1000 m | 0–1000 m | **Virtual VSL** (per-lane Lagrangian) | `traci.vehicle.slowDown()` per lane | CAV only (50% of traffic) |
+| `ramp_on_transition` | 200 m | 100 m | **Virtual VSL** (Lagrangian) | `traci.vehicle.slowDown()` | CAV only |
 
-All lanes in each segment receive the same speed limit. The three mainline segments form a **3 km graduated deceleration corridor**; the ramp transition provides a separate control input for ramp-on vehicles.
+| Uncontrolled edge | Length | Purpose |
+|---|---|---|
+| `seg_3_before`, `seg_2_before` | 1000 m each | Free-flow reference; incoming demand measurement |
+| `seg_0_after` | 500 m | Merge zone observation (E1/E3 sensors) |
+| `seg_1_after` | 1000 m | Downstream throughput measurement |
 
 ---
 
@@ -95,25 +100,26 @@ A 50 m zone is traversed in 1.5 s. Vehicle headways cannot adjust meaningfully i
 
 ---
 
-## 5. Summary: why the current design is correct
+## 5. Summary: why the current two-zone design is correct
 
-| Criterion | 50–100 m placement | Current 1000 m segments |
-|---|---|---|
-| Deceleration physics | Forced emergency braking | Comfortable 4.4 s deceleration |
-| Flow rate metering | No time for headway adjustment | Sustained speed → adjusted headways |
-| Literature precedent | None | All 5 papers above |
-| SUMO implementation | Requires sub-edge splits | Native `setMaxSpeed()` per lane |
-| Shockwave prevention | Creates new shockwaves | Prevents shockwaves (the VSL purpose) |
-| Action space impact | 6+ sub-zone dimensions | 1 mainline + 1 ramp = 2D (tractable for TQC/SAC) |
+| Criterion | seg_2_before (uncontrolled) | seg_1_before (physical VSL) | seg_0_before (virtual per-lane) |
+|---|---|---|---|
+| Distance to merge | 2000–2500 m (72–90 s transit) | 1000–1500 m (36–54 s transit) | 0–1000 m (0–36 s transit) |
+| Credit assignment | 2.4–3.0 control steps delay | 1.2–1.8 steps — within γ=0.99 horizon | Immediate — direct merge effect |
+| Control type | None (free-flow reference) | Uniform physical sign (MUTCD-compliant) | Per-lane CAV commands (digital) |
+| HDV reach | N/A | 92% compliance via radar enforcement | Indirect via car-following behind CAVs |
+| Literature | Han et al. [R26] Area I (uncontrolled) | Li et al. [R25], MARVEL [R10] (posted VSL) | Wu et al. [R29], Zhao et al. [R6] (per-lane) |
+| Action space impact | 0 dimensions | 1 dimension (Box(5) only) | 3 dimensions (per-lane) |
 
-The 200 m `ramp_on_transition` is the shortest controlled edge and sits at the lower bound of what is physically meaningful — justified because ramp vehicles are already at lower speeds (90 kph ramp limit vs. 120 kph mainline), requiring less deceleration distance.
+The 200 m `ramp_on_transition` is the shortest controlled edge and sits at the lower bound of what is physically meaningful — justified because ramp vehicles are already at lower speeds (90 kph ramp design speed vs. 120 kph mainline), requiring less deceleration distance.
 
 ---
 
-## 6. Open question: CAV slowDown() vs lane.setMaxSpeed()
+## 6. Resolved: CAV slowDown() and lane.setMaxSpeed() coexistence
 
-The analysis above covers `traci.lane.setMaxSpeed()` which primarily affects HDVs (via Krauss car-following response to lane speed limits). A separate investigation is needed for `traci.vehicle.slowDown()` — the direct CAV control command — to determine:
+The v5.0 open question about `slowDown()` vs. `setMaxSpeed()` is resolved in v5.1 by using **both mechanisms on different segments**:
 
-1. Whether `_apply_segment_limits()` (HDV lane limits) is necessary at all when CAVs are the primary control lever and HDVs will be forced to slow down by car-following dynamics behind decelerating CAVs.
-2. Whether `slowDown()` should be applied only to CAVs on specific edges or to all CAVs in the network.
-3. The interaction between lane-level speed limits and vehicle-level slowDown commands when both are active.
+- **seg_0_before**: Pure Lagrangian (`slowDown()` on CAVs only). HDVs follow via car-following. No `setMaxSpeed()` — preserves clean experimental isolation of Lagrangian contribution.
+- **seg_1_before (Box(5))**: Mixed Lagrangian-Eulerian. `setMaxSpeed()` provides the physical sign for HDVs; `slowDown()` provides instant CAV compliance. The two mechanisms reinforce each other — CAVs decelerate immediately, HDVs follow the sign with 92% compliance.
+
+This resolves the interaction concern raised in v5.0: the two mechanisms act on **different segments**, so there is no conflict between lane-level caps and vehicle-level commands on the same edge.
