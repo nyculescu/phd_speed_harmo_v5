@@ -39,9 +39,10 @@ MODE="${1:-test}"
 
 case "$MODE" in
   remote)
-    # 128 cores, 1 TB RAM
-    # 5 seeds × 24 workers = 120 SUMO processes
-    N_ENVS=24
+    # 128 cores, 504 GB RAM
+    # SUMO workers use ~50% core each (idle between traci calls),
+    # so 48 workers/seed × 5 seeds = 240 processes ≈ 120 effective cores
+    N_ENVS=48
     SEEDS="0 1 2 3 4"
     TIMESTEPS=1000000
     echo "=== REMOTE MODE: 5 seeds × ${N_ENVS} workers = $((5 * N_ENVS)) SUMO processes ==="
