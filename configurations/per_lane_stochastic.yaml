@@ -30,7 +30,7 @@ scenario:
 sar:
   state: r44_state_v2
   action: r44_action_v2
-  reward: r44_reward_v3
+  reward: r44_reward_v4
 
 sar_config:
   # State normalization
@@ -44,17 +44,15 @@ sar_config:
   ramp_high_kph: 90.0
   use_box5: false  # Set true for Box(5) experiments
 
-  # Reward
+  # Reward (v4: quadratic penalties, no dead zone, 5× scale)
   ref_flow_vph: 6000.0
-  speed_floor_kph: 50.0
-  harmo_spatial_blend: 0.5
-  throughput_threshold: 0.85
+  reward_scale: 5.0
   reward_weights:
-    w_h: 0.40
+    w_h: 0.35
+    w_t: 0.20
     w_q: 0.25
-    w_a: 0.10
-    w_lg: 0.15
-    w_m: 0.10
+    w_l: 0.15
+    w_s: 0.05
 
 training:
   total_timesteps: 1_000_000
