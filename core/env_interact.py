@@ -266,11 +266,40 @@ class TrafficEnv(gym.Env):
                 self._sumo_proc.terminate()
                 self._sumo_proc.wait(timeout=5)
             except Exception:
-                pass
+                try:
+                    self._sumo_proc.kill()
+                except Exception:
+                    pass
             self._sumo_proc = None
+
+    def _recover_sumo(self) -> None:
+        """Kill the dead SUMO and restart it mid-episode.
+
+        This is a last-resort recovery — the episode continues with
+        zeroed metrics for the current step.  The alternative (crashing
+        the SubprocVecEnv worker) kills the entire training run.
+        """
+        logger.warning("Recovering SUMO (pid=%s port=%s)",
+                       getattr(self._sumo_proc, 'pid', '?'), self._port)
+        self._close_sumo()
+        try:
+            self._start_sumo()
+            # Fast-forward to roughly the right simulation time.
+            # Not exact, but prevents the reward from seeing a fresh-start
+            # state that doesn't match the episode progression.
+            warmup = min(self._step_count * self._steps_per_window, 300)
+            if warmup > 0 and self._traci_conn is not None:
+                for _ in range(warmup):
+                    self._traci_conn.simulationStep()
+            logger.info("SUMO recovered after %d warmup steps", warmup)
+        except Exception as e:
+            logger.error("SUMO recovery failed: %s — env will return zeros", e)
+            self._traci_conn = None
 
     def _advance_sumo(self, n_steps: int) -> None:
         conn = self._traci_conn
+        if conn is None:
+            return
 
         # Per-lane limits for seg_0_before (kph → m/s)
         per_lane_ms = [
@@ -301,7 +330,15 @@ class TrafficEnv(gym.Env):
         # given the 30s control window.
         _SLOWDOWN_INTERVAL = 5
         for i in range(n_steps):
-            conn.simulationStep()
+            try:
+                conn.simulationStep()
+            except Exception as e:
+                logger.warning("SUMO connection lost during step: %s — restarting", e)
+                self._recover_sumo()
+                conn = self._traci_conn
+                if conn is None:
+                    return
+                continue
             if self.cav_percent > 0.0 and i % _SLOWDOWN_INTERVAL == 0:
                 self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
 
@@ -360,6 +397,8 @@ class TrafficEnv(gym.Env):
     def _collect_metrics(self) -> None:
         """Read E1 detector aggregates from SUMO for all 12 segments."""
         conn = self._traci_conn
+        if conn is None:
+            return  # Dead connection — metrics stay at zero
 
         def _read(det_ids_list: List[str]) -> Tuple[float, float, float]:
             """Return (flow_vph, speed_ms, occ_pct)."""

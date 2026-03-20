@@ -134,7 +134,9 @@ def _train_single_seed(
 ):
     """Train one seed of SAC or TQC with optional SubprocVecEnv."""
     import torch
-    from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+    from stable_baselines3.common.callbacks import (
+        EvalCallback, CallbackList, CheckpointCallback,
+    )
     from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
     from stable_baselines3.common.callbacks import BaseCallback
@@ -263,8 +265,17 @@ def _train_single_seed(
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
 
+    # Checkpoint callback — saves every 50k steps so progress is never lost
+    checkpoint_callback = CheckpointCallback(
+        save_freq=max(50_000 // n_envs, 1),
+        save_path=str(model_dir / "checkpoints"),
+        name_prefix=f"{algo}_s{seed}",
+        save_replay_buffer=False,  # Too large; model weights are enough
+        save_vecnormalize=False,
+    )
+
     # Build callback list
-    callbacks = [eval_callback]
+    callbacks = [eval_callback, checkpoint_callback]
     if sys.stdout.isatty() and has_tqdm:
         # Interactive terminal → tqdm progress bar
         callbacks.append(ProgressBarCallback())

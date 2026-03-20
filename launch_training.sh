@@ -37,7 +37,7 @@ MODE="${1:-test}"
 
 case "$MODE" in
   remote)
-    N_ENVS=48; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
+    N_ENVS=32; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
     echo "=== REMOTE: 5 seeds × ${N_ENVS} workers = $((5 * N_ENVS)) SUMO ==="
     ;;
   local)
