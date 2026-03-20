@@ -59,16 +59,22 @@ def _fail(msg: str):
     return False
 
 
-def test_imports():
+def test_imports(fast: bool = False):
     _header("1. Imports")
     try:
         import numpy as np
-        import torch
         import gymnasium as gym
+        print(f"  numpy={np.__version__}, gymnasium={gym.__version__}")
+
+        if fast:
+            print("  [fast mode] Skipping torch/SB3/SB3-Contrib import check")
+            _pass("fast mode — core imports OK")
+            return True
+
+        import torch
         import stable_baselines3 as sb3
         import sb3_contrib
-        print(f"  numpy={np.__version__}, torch={torch.__version__}")
-        print(f"  gymnasium={gym.__version__}")
+        print(f"  torch={torch.__version__}")
         print(f"  stable_baselines3={sb3.__version__}")
         print(f"  sb3_contrib={sb3_contrib.__version__}")
         print(f"  CUDA available: {torch.cuda.is_available()}")
@@ -410,14 +416,14 @@ def main():
     args = parser.parse_args()
 
     tests = [
-        ("Imports", test_imports),
+        ("Imports", lambda: test_imports(fast=args.fast)),
         ("Config", test_config),
         ("Env dry-run", test_env_dry_run),
         ("Env live", test_env_live),
-        ("SubprocVecEnv", test_vecenv),
     ]
     if not args.fast:
         tests += [
+            ("SubprocVecEnv", test_vecenv),
             ("SAC fit", test_sac_fit),
             ("TQC fit", test_tqc_fit),
             ("Save/Load", test_save_load),
