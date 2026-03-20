@@ -70,10 +70,25 @@ def _det_ids(seg: str, n_lanes: int) -> List[str]:
     return [f"flow_loop_{seg}_{i}_{_DET_POS}" for i in range(n_lanes)]
 
 
-def _free_port() -> int:
-    with socket.socket() as s:
-        s.bind(("", 0))
-        return s.getsockname()[1]
+def _free_port(min_port: int = 20000, max_port: int = 60000) -> int:
+    """Pick a random port from a wide range and verify it's bindable.
+
+    Using OS-assigned sequential ports (bind to port 0) causes collisions
+    when 100+ workers start simultaneously — the OS gives nearby ports
+    that collide with SUMO processes still binding.  Random selection
+    from a 40k range effectively eliminates this.
+    Adapted from phd_speed_harmo_v4 which runs 700 workers reliably.
+    """
+    import random
+    for _ in range(200):
+        port = random.randint(min_port, max_port)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            return port
+    raise RuntimeError("Could not find a free port after 200 random attempts")
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +325,13 @@ class TrafficEnv(gym.Env):
     # SUMO lifecycle
     # ------------------------------------------------------------------
 
-    def _start_sumo(self) -> None:
+    def _start_sumo(self, max_attempts: int = 5, backoff: float = 1.0) -> None:
+        """Start SUMO with retry-on-new-port (adapted from v4's robust launch).
+
+        On failure, picks a fresh random port and retries with linear backoff.
+        This handles the rare case where the port was free at bind() time but
+        taken by another worker's SUMO process before our SUMO could bind it.
+        """
         import traci
 
         if not self.sumo_cfg_path:
@@ -319,31 +340,56 @@ class TrafficEnv(gym.Env):
                 "demand_config so routes are generated on reset()"
             )
 
-        # Stagger startup to avoid thundering herd when many workers
-        # launch simultaneously via SubprocVecEnv.  The delay is based
-        # on the process ID to spread launches across ~2 seconds.
-        stagger_s = (os.getpid() % 20) * 0.1
-        if stagger_s > 0:
-            time.sleep(stagger_s)
+        last_exc: Optional[Exception] = None
 
-        self._port = _free_port()
-        self._traci_label = f"env_{os.getpid()}_{self._port}"
-        cmd = [
-            "sumo",
-            "-c", str(self.sumo_cfg_path),
-            "--remote-port", str(self._port),
-            "--no-step-log",
-            "--no-warnings",
-            "--start",
-        ]
-        self._sumo_proc = subprocess.Popen(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        # Give SUMO time to bind the port before connecting
-        time.sleep(0.5)
-        traci.init(port=self._port, numRetries=20, label=self._traci_label)
-        self._traci_conn = traci.getConnection(self._traci_label)
-        logger.debug("SUMO started on port %d label=%s", self._port, self._traci_label)
+        for attempt in range(1, max_attempts + 1):
+            if attempt > 1:
+                delay = backoff * (attempt - 1)
+                logger.warning(
+                    "SUMO launch retry %d/%d (port=%d failed) — waiting %.1fs, new port",
+                    attempt, max_attempts, self._port, delay,
+                )
+                self._close_sumo()
+                time.sleep(delay)
+
+            self._port = _free_port()
+            self._traci_label = f"env_{os.getpid()}_{self._port}"
+
+            try:
+                cmd = [
+                    "sumo",
+                    "-c", str(self.sumo_cfg_path),
+                    "--remote-port", str(self._port),
+                    "--no-step-log",
+                    "--no-warnings",
+                    "--start",
+                ]
+                self._sumo_proc = subprocess.Popen(
+                    cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                # Give SUMO time to bind the port
+                time.sleep(0.75)
+
+                # Check if SUMO died immediately
+                if self._sumo_proc.poll() is not None:
+                    raise RuntimeError(
+                        f"SUMO exited immediately (code={self._sumo_proc.returncode})"
+                    )
+
+                traci.init(port=self._port, numRetries=5, label=self._traci_label)
+                self._traci_conn = traci.getConnection(self._traci_label)
+                logger.debug(
+                    "SUMO started on port %d label=%s (attempt %d)",
+                    self._port, self._traci_label, attempt,
+                )
+                return  # success
+            except Exception as exc:
+                last_exc = exc
+                logger.warning("SUMO attempt %d failed: %s", attempt, exc)
+
+        raise RuntimeError(
+            f"SUMO failed to start after {max_attempts} attempts: {last_exc}"
+        ) from last_exc
 
     def _close_sumo(self) -> None:
         if self.dry_run:
