@@ -199,6 +199,7 @@ def _generate_sumocfg(cfg_path: Path, rou_path: Path) -> None:
 
 
 def _read_e1_segment(conn, seg: str, position: str, n_lanes: int):
+    """Read aggregated (cross-lane) E1 data for a segment."""
     counts, speeds, occs = [], [], []
     for lane_idx in range(n_lanes):
         det_id = f"flow_loop_{seg}_{lane_idx}_{position}"
@@ -218,6 +219,36 @@ def _read_e1_segment(conn, seg: str, position: str, n_lanes: int):
     else:
         speed_ms = float(np.mean(speeds)) if speeds else 0.0
     return flow_vph, speed_ms * 3.6, float(np.mean(occs)) if occs else 0.0
+
+
+def _read_e1_per_lane(conn, seg: str, position: str, n_lanes: int):
+    """Read per-lane E1 data. Returns dict of lane_idx -> (flow_vph, speed_kph, occ_pct)."""
+    result = {}
+    for lane_idx in range(n_lanes):
+        det_id = f"flow_loop_{seg}_{lane_idx}_{position}"
+        try:
+            cnt = float(conn.inductionloop.getLastIntervalVehicleNumber(det_id))
+            spd = float(conn.inductionloop.getLastIntervalMeanSpeed(det_id))
+            occ = float(conn.inductionloop.getLastIntervalOccupancy(det_id))
+            result[lane_idx] = (cnt * 3600.0 / _AGG_TIME, max(0.0, spd) * 3.6, occ)
+        except Exception:
+            result[lane_idx] = (0.0, 0.0, 0.0)
+    return result
+
+
+# Segments where we collect per-lane detail (merge zone + immediate upstream)
+_LANE_DETAIL_SEGS = ["seg_0_before", "seg_0_after", "seg_1_after"]
+
+# E3 detectors to query (travel time, vehicle count, halting count)
+_E3_DETECTORS = [
+    "e3_seg_0_before",       # immediate upstream of merge
+    "e3_seg_0_after",        # merge zone (500m) — travel time = merge delay
+    "e3_seg_1_after",        # downstream — clearance
+    "e3_ramp_on_approach",   # ramp approach
+    "e3_ramp_on_transition", # ramp speed control zone
+    "e3_ramp_on_merge",      # ramp merge — halting = gap-wait
+    "e3_corridor",           # full corridor travel time
+]
 
 
 # ---------------------------------------------------------------------------
@@ -319,7 +350,7 @@ def _run_scenario(
                         if accel < _HARD_BRAKE_THRESHOLD:
                             md_hard_brake_count += 1
 
-            # E1 readings
+            # E1 readings — aggregated per segment
             row = {"step": step_idx + 1, "sim_time_s": (step_idx + 1) * _AGG_TIME}
             for seg in _ALL_SEGS:
                 nl = _LANE_COUNTS.get(seg, 1)
@@ -327,6 +358,30 @@ def _run_scenario(
                 row[f"{seg}_flow_vph"] = round(flow, 1)
                 row[f"{seg}_speed_kph"] = round(speed, 1)
                 row[f"{seg}_occ_pct"] = round(occ, 2)
+
+            # Per-lane detail at merge zone segments
+            for seg in _LANE_DETAIL_SEGS:
+                nl = _LANE_COUNTS.get(seg, 3)
+                lane_data = _read_e1_per_lane(conn, seg, "exit", nl)
+                for li, (lf, ls, lo) in lane_data.items():
+                    row[f"{seg}_L{li}_flow_vph"] = round(lf, 1)
+                    row[f"{seg}_L{li}_speed_kph"] = round(ls, 1)
+                    row[f"{seg}_L{li}_occ_pct"] = round(lo, 2)
+
+            # E3 multi-entry-exit readings
+            for e3_id in _E3_DETECTORS:
+                try:
+                    tt = float(conn.multientryexit.getLastIntervalMeanTravelTime(e3_id))
+                    n_veh = int(conn.multientryexit.getLastIntervalVehicleSum(e3_id))
+                    halt = int(conn.multientryexit.getLastIntervalMeanHaltsPerVehicle(e3_id) * max(n_veh, 1))
+                    row[f"{e3_id}_travel_time_s"] = round(tt, 2) if tt >= 0 else 0
+                    row[f"{e3_id}_veh_count"] = n_veh
+                    row[f"{e3_id}_halts"] = halt
+                except Exception:
+                    row[f"{e3_id}_travel_time_s"] = 0
+                    row[f"{e3_id}_veh_count"] = 0
+                    row[f"{e3_id}_halts"] = 0
+
             row["n_vehicles"] = int(conn.vehicle.getIDCount())
             e1_records.append(row)
 
@@ -418,6 +473,57 @@ def _run_scenario(
 
         "max_veh_in_network": max(r["n_vehicles"] for r in e1_records) if e1_records else 0,
     }
+
+    # E3 summary metrics — travel time, halts, vehicle throughput
+    for e3_id in _E3_DETECTORS:
+        tt_key = f"{e3_id}_travel_time_s"
+        halt_key = f"{e3_id}_halts"
+        veh_key = f"{e3_id}_veh_count"
+
+        tts = [r[tt_key] for r in data if r.get(tt_key, 0) > 0]
+        halts = [r[halt_key] for r in data if halt_key in r]
+        vehs = [r[veh_key] for r in data if r.get(veh_key, 0) > 0]
+
+        summary[f"{e3_id}_avg_tt_s"] = round(float(np.mean(tts)), 2) if tts else 0
+        summary[f"{e3_id}_max_tt_s"] = round(float(max(tts)), 2) if tts else 0
+        summary[f"{e3_id}_p95_tt_s"] = round(float(np.percentile(tts, 95)), 2) if tts else 0
+        summary[f"{e3_id}_total_halts"] = int(sum(halts)) if halts else 0
+        summary[f"{e3_id}_total_vehs"] = int(sum(vehs)) if vehs else 0
+
+    # Per-lane metrics at merge zone (seg_0_after) and immediate upstream (seg_0_before)
+    for seg in _LANE_DETAIL_SEGS:
+        nl = _LANE_COUNTS.get(seg, 3)
+        for li in range(nl):
+            # Speed
+            lane_speeds = [r[f"{seg}_L{li}_speed_kph"] for r in data
+                           if r.get(f"{seg}_L{li}_speed_kph", 0) > 0]
+            summary[f"{seg}_L{li}_avg_speed_kph"] = (
+                round(float(np.mean(lane_speeds)), 1) if lane_speeds else 0)
+            summary[f"{seg}_L{li}_min_speed_kph"] = (
+                round(float(min(lane_speeds)), 1) if lane_speeds else 0)
+            # Flow
+            lane_flows = [r[f"{seg}_L{li}_flow_vph"] for r in data
+                          if r.get(f"{seg}_L{li}_flow_vph", 0) > 0]
+            summary[f"{seg}_L{li}_avg_flow_vph"] = (
+                round(float(np.mean(lane_flows)), 0) if lane_flows else 0)
+            # Occupancy
+            lane_occs = [r[f"{seg}_L{li}_occ_pct"] for r in data
+                         if f"{seg}_L{li}_occ_pct" in r]
+            summary[f"{seg}_L{li}_avg_occ_pct"] = (
+                round(float(np.mean(lane_occs)), 2) if lane_occs else 0)
+
+        # Lane speed variance (how uneven is the flow across lanes at this segment)
+        lane_avgs = [summary[f"{seg}_L{li}_avg_speed_kph"] for li in range(nl)]
+        valid_avgs = [v for v in lane_avgs if v > 0]
+        summary[f"{seg}_lane_speed_sigma_kph"] = (
+            round(float(np.std(valid_avgs)), 2) if len(valid_avgs) > 1 else 0)
+
+        # Speed differential between lane 0 (merge lane) and lanes 1-2
+        l0_spd = summary.get(f"{seg}_L0_avg_speed_kph", 0)
+        l12_spds = [summary.get(f"{seg}_L{li}_avg_speed_kph", 0)
+                    for li in range(1, nl)]
+        l12_avg = float(np.mean([s for s in l12_spds if s > 0])) if any(s > 0 for s in l12_spds) else 0
+        summary[f"{seg}_L0_vs_L12_delta_kph"] = round(l0_spd - l12_avg, 1) if l0_spd > 0 and l12_avg > 0 else 0
 
     return summary
 
