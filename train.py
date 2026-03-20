@@ -15,9 +15,13 @@ Usage:
   # Single seed for debugging
   python train.py --algo sac --seeds 0 --timesteps 50000
 
+  # Parallel SUMO workers (SubprocVecEnv)
+  python train.py --algo tqc --seeds 0 --n-envs 8
+
 The script creates a Gymnasium environment with stochastic demand +
 anomaly injection, trains SAC or TQC (SB3/SB3-Contrib), and logs
-to TensorBoard.
+to TensorBoard.  With --n-envs > 1, uses SubprocVecEnv for parallel
+SUMO data collection (N× throughput).
 
 Remote machine requirements:
   - SUMO >= 1.20 with traci
@@ -54,72 +58,82 @@ def _load_config(box5: bool = False) -> dict:
     return cfg
 
 
-def _make_env(cfg: dict, seed: int):
-    """Create a TrafficEnv with stochastic demand for training."""
-    from tests._sumo_helpers import (
-        generate_stochastic_route_file, generate_sumocfg,
-    )
-    from traffic_environment.stochastic_demand import generate_demand_profile
-    from traffic_environment.anomaly_injector import AnomalyInjector
-    from sar_components.discovery import discover_components
-    from core import (
-        TrafficEnv,
-        create_action_strategy,
-        create_reward_function,
-        create_state_representation,
-    )
+def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
+    """Return a callable that creates a TrafficEnv (for SubprocVecEnv).
 
-    discover_components()
+    Each call generates a fresh stochastic demand profile so that
+    different workers and different episodes see different traffic.
+    """
+    def _thunk():
+        from tests._sumo_helpers import (
+            generate_stochastic_route_file, generate_sumocfg,
+        )
+        from traffic_environment.stochastic_demand import generate_demand_profile
+        from sar_components.discovery import discover_components
+        from core import (
+            TrafficEnv,
+            create_action_strategy,
+            create_reward_function,
+            create_state_representation,
+        )
 
-    sar_config = cfg["sar_config"]
-    sumo_cfg = cfg["sumo"]
-    scenario_cfg = cfg["scenario"]
+        discover_components()
 
-    state_repr = create_state_representation(cfg["sar"]["state"], sar_config)
-    action_strat = create_action_strategy(cfg["sar"]["action"], sar_config)
-    reward_func = create_reward_function(cfg["sar"]["reward"], sar_config)
+        sar_config = cfg["sar_config"]
+        sumo_cfg = cfg["sumo"]
+        scenario_cfg = cfg["scenario"]
 
-    # Generate stochastic scenario
-    demand_cfg = scenario_cfg["stochastic_demand"]
-    profile = generate_demand_profile(
-        episode_duration_s=sumo_cfg["episode_duration_s"],
-        peak_demand_range=tuple(demand_cfg["peak_demand_range"]),
-        base_fraction_range=tuple(demand_cfg["base_fraction_range"]),
-        ramp_fraction_range=tuple(demand_cfg["ramp_fraction_range"]),
-        t_peak_frac_range=tuple(demand_cfg["t_peak_range"]),
-        t_decay_frac_range=tuple(demand_cfg["t_decay_range"]),
-        noise_std=demand_cfg["noise_std"],
-        seed=seed,
-    )
+        state_repr = create_state_representation(cfg["sar"]["state"], sar_config)
+        action_strat = create_action_strategy(cfg["sar"]["action"], sar_config)
+        reward_func = create_reward_function(cfg["sar"]["reward"], sar_config)
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix=f"train_s{seed}_"))
-    rou_path = tmp_dir / "scenario.rou.xml"
-    cfg_path = tmp_dir / "scenario.sumocfg"
+        # Each worker gets a unique seed for demand diversity
+        env_seed = seed * 1000 + worker_idx
 
-    generate_stochastic_route_file(
-        rou_path, profile,
-        cav_pct=scenario_cfg["cav_percentage"],
-        seed=seed + 10000,
-    )
-    generate_sumocfg(cfg_path, rou_path, sumo_cfg["episode_duration_s"])
+        demand_cfg = scenario_cfg["stochastic_demand"]
+        profile = generate_demand_profile(
+            episode_duration_s=sumo_cfg["episode_duration_s"],
+            peak_demand_range=tuple(demand_cfg["peak_demand_range"]),
+            base_fraction_range=tuple(demand_cfg["base_fraction_range"]),
+            ramp_fraction_range=tuple(demand_cfg["ramp_fraction_range"]),
+            t_peak_frac_range=tuple(demand_cfg["t_peak_range"]),
+            t_decay_frac_range=tuple(demand_cfg["t_decay_range"]),
+            noise_std=demand_cfg["noise_std"],
+            seed=env_seed,
+        )
 
-    env = TrafficEnv(
-        sumo_cfg_path=str(cfg_path),
-        state_repr=state_repr,
-        action_strat=action_strat,
-        reward_func=reward_func,
-        episode_duration=sumo_cfg["episode_duration_s"],
-        cav_percent=scenario_cfg["cav_percentage"] / 100.0,
-        aggregation_time=sumo_cfg["aggregation_time"],
-    )
+        tmp_dir = Path(tempfile.mkdtemp(prefix=f"train_s{seed}_w{worker_idx}_"))
+        rou_path = tmp_dir / "scenario.rou.xml"
+        cfg_path = tmp_dir / "scenario.sumocfg"
 
-    return env, tmp_dir
+        generate_stochastic_route_file(
+            rou_path, profile,
+            cav_pct=scenario_cfg["cav_percentage"],
+            seed=env_seed + 10000,
+        )
+        generate_sumocfg(cfg_path, rou_path, sumo_cfg["episode_duration_s"])
+
+        env = TrafficEnv(
+            sumo_cfg_path=str(cfg_path),
+            state_repr=state_repr,
+            action_strat=action_strat,
+            reward_func=reward_func,
+            episode_duration=sumo_cfg["episode_duration_s"],
+            cav_percent=scenario_cfg["cav_percentage"] / 100.0,
+            aggregation_time=sumo_cfg["aggregation_time"],
+        )
+        return env
+
+    return _thunk
 
 
-def _train_single_seed(algo: str, seed: int, cfg: dict, timesteps: int, log_dir: Path):
-    """Train one seed of SAC or TQC."""
+def _train_single_seed(
+    algo: str, seed: int, cfg: dict, timesteps: int, n_envs: int, log_dir: Path
+):
+    """Train one seed of SAC or TQC with optional SubprocVecEnv."""
     import torch
     from stable_baselines3.common.callbacks import EvalCallback
+    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
     # Set seeds
     np.random.seed(seed)
@@ -127,13 +141,18 @@ def _train_single_seed(algo: str, seed: int, cfg: dict, timesteps: int, log_dir:
 
     print(f"\n{'='*60}")
     print(f"Training {algo.upper()} seed={seed} for {timesteps:,} steps")
+    print(f"  Parallel SUMO workers: {n_envs}")
     print(f"{'='*60}")
 
-    # Create training env
-    train_env, train_tmp = _make_env(cfg, seed)
+    # Create vectorized training env
+    if n_envs > 1:
+        env_fns = [_make_env_fn(cfg, seed, worker_idx=i) for i in range(n_envs)]
+        train_env = SubprocVecEnv(env_fns)
+    else:
+        train_env = DummyVecEnv([_make_env_fn(cfg, seed, worker_idx=0)])
 
-    # Create eval env (different seed)
-    eval_env, eval_tmp = _make_env(cfg, seed + 5000)
+    # Eval env — always single (deterministic evaluation)
+    eval_env = DummyVecEnv([_make_env_fn(cfg, seed + 5000, worker_idx=0)])
 
     # Model directory
     model_dir = log_dir / f"{algo}_seed{seed}"
@@ -145,7 +164,7 @@ def _train_single_seed(algo: str, seed: int, cfg: dict, timesteps: int, log_dir:
         eval_env,
         best_model_save_path=str(model_dir / "best_model"),
         log_path=str(model_dir / "eval_logs"),
-        eval_freq=cfg["training"]["eval_freq"],
+        eval_freq=max(cfg["training"]["eval_freq"] // n_envs, 1),
         n_eval_episodes=cfg["training"]["n_eval_episodes"],
         deterministic=True,
         render=False,
@@ -218,10 +237,6 @@ def _train_single_seed(algo: str, seed: int, cfg: dict, timesteps: int, log_dir:
     finally:
         train_env.close()
         eval_env.close()
-        # Clean up temp dirs
-        import shutil
-        shutil.rmtree(train_tmp, ignore_errors=True)
-        shutil.rmtree(eval_tmp, ignore_errors=True)
 
     return str(model_dir)
 
@@ -247,6 +262,12 @@ def main():
         help="Use Box(5) mixed Lagrangian-Eulerian (adds physical VSL on seg_1_before)",
     )
     parser.add_argument(
+        "--n-envs", type=int, default=1,
+        help="Number of parallel SUMO workers (SubprocVecEnv). "
+             "Each worker runs its own SUMO instance with a unique "
+             "stochastic demand profile. Recommended: 4-16.",
+    )
+    parser.add_argument(
         "--log-dir", type=str, default=None,
         help="Output directory (default: training_runs/<timestamp>)",
     )
@@ -266,15 +287,18 @@ def main():
     with open(log_dir / "config.yaml", "w") as f:
         yaml.dump(cfg, f, default_flow_style=False)
 
+    n_envs = args.n_envs
+
     print(f"v5.1 Training — {args.algo.upper()} {box_label}")
     print(f"  Seeds: {args.seeds}")
     print(f"  Timesteps per seed: {timesteps:,}")
+    print(f"  Parallel SUMO workers: {n_envs}")
     print(f"  Output: {log_dir}")
     print(f"  Stochastic demand: peak [{cfg['scenario']['stochastic_demand']['peak_demand_range']}] vph")
     print(f"  Anomaly prob: {cfg['scenario']['anomalies']['probability']}")
 
     for seed in args.seeds:
-        _train_single_seed(args.algo, seed, cfg, timesteps, log_dir)
+        _train_single_seed(args.algo, seed, cfg, timesteps, n_envs, log_dir)
 
     print(f"\n{'='*60}")
     print(f"All seeds complete. Results in {log_dir}")

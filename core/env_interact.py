@@ -130,6 +130,8 @@ class TrafficEnv(gym.Env):
 
         self._sumo_proc: Optional[subprocess.Popen] = None
         self._port: int = 0
+        self._traci_label: str = ""
+        self._traci_conn = None  # traci.Connection — unique per instance
         self._step_count: int = 0
         self._metrics: TrafficMetrics = TrafficMetrics()
 
@@ -223,6 +225,7 @@ class TrafficEnv(gym.Env):
         import traci
 
         self._port = _free_port()
+        self._traci_label = f"env_{id(self)}_{self._port}"
         cmd = [
             "sumo",
             "-c", str(self.sumo_cfg_path),
@@ -234,17 +237,19 @@ class TrafficEnv(gym.Env):
         self._sumo_proc = subprocess.Popen(
             cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
-        traci.init(port=self._port, numRetries=10)
-        logger.debug("SUMO started on port %d", self._port)
+        traci.init(port=self._port, numRetries=10, label=self._traci_label)
+        self._traci_conn = traci.getConnection(self._traci_label)
+        logger.debug("SUMO started on port %d label=%s", self._port, self._traci_label)
 
     def _close_sumo(self) -> None:
         if self.dry_run:
             return
-        try:
-            import traci
-            traci.close()
-        except Exception:
-            pass
+        if self._traci_conn is not None:
+            try:
+                self._traci_conn.close()
+            except Exception:
+                pass
+            self._traci_conn = None
         if self._sumo_proc is not None:
             try:
                 self._sumo_proc.terminate()
@@ -254,7 +259,7 @@ class TrafficEnv(gym.Env):
             self._sumo_proc = None
 
     def _advance_sumo(self, n_steps: int) -> None:
-        import traci
+        conn = self._traci_conn
 
         # Per-lane limits for seg_0_before (kph → m/s)
         per_lane_ms = [
@@ -273,12 +278,12 @@ class TrafficEnv(gym.Env):
             seg1_physical_ms = self._metrics.current_speed_limits[4] / 3.6
             upstream_limit_ms = seg1_physical_ms
             try:
-                traci.edge.setMaxSpeed("seg_1_before", seg1_physical_ms)
+                conn.edge.setMaxSpeed("seg_1_before", seg1_physical_ms)
             except Exception:
                 pass
 
         for _ in range(n_steps):
-            traci.simulationStep()
+            conn.simulationStep()
             if self.cav_percent > 0.0:
                 self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
 
@@ -298,25 +303,24 @@ class TrafficEnv(gym.Env):
         Implements the "release point" design: CAVs past the merge drive at
         free-flow speed.  See docs/slowDown_argument.md.
         """
-        import traci
-
+        conn = self._traci_conn
         duration = float(self.aggregation_time)
-        for veh_id in traci.vehicle.getIDList():
+        for veh_id in conn.vehicle.getIDList():
             try:
-                vtype = traci.vehicle.getTypeID(veh_id)
+                vtype = conn.vehicle.getTypeID(veh_id)
             except Exception:
                 continue
             if "cav" not in vtype.lower():
                 continue
             try:
-                edge = traci.vehicle.getRoadID(veh_id)
+                edge = conn.vehicle.getRoadID(veh_id)
             except Exception:
                 continue
 
             if edge == "seg_0_before":
                 # Per-lane differential control
                 try:
-                    lane_idx = traci.vehicle.getLaneIndex(veh_id)
+                    lane_idx = conn.vehicle.getLaneIndex(veh_id)
                     limit = per_lane_ms[lane_idx] if lane_idx < len(per_lane_ms) else per_lane_ms[0]
                 except Exception:
                     limit = per_lane_ms[0]
@@ -327,7 +331,7 @@ class TrafficEnv(gym.Env):
             else:
                 continue  # release point — CAV drives at free-flow
             try:
-                traci.vehicle.slowDown(veh_id, limit, duration)
+                conn.vehicle.slowDown(veh_id, limit, duration)
             except Exception:
                 pass
 
@@ -337,16 +341,16 @@ class TrafficEnv(gym.Env):
 
     def _collect_metrics(self) -> None:
         """Read E1 detector aggregates from SUMO for all 12 segments."""
-        import traci
+        conn = self._traci_conn
 
         def _read(det_ids_list: List[str]) -> Tuple[float, float, float]:
             """Return (flow_vph, speed_ms, occ_pct)."""
             counts, speeds, occs = [], [], []
             for det in det_ids_list:
                 try:
-                    cnt = float(traci.inductionloop.getLastIntervalVehicleNumber(det))
-                    spd = float(traci.inductionloop.getLastIntervalMeanSpeed(det))
-                    occ = float(traci.inductionloop.getLastIntervalOccupancy(det))
+                    cnt = float(conn.inductionloop.getLastIntervalVehicleNumber(det))
+                    spd = float(conn.inductionloop.getLastIntervalMeanSpeed(det))
+                    occ = float(conn.inductionloop.getLastIntervalOccupancy(det))
                     counts.append(cnt)
                     speeds.append(max(0.0, spd))
                     occs.append(occ)
@@ -383,9 +387,9 @@ class TrafficEnv(gym.Env):
         for lane_idx in range(3):
             det_id = f"flow_loop_seg_0_before_{lane_idx}_{_DET_POS}"
             try:
-                cnt = float(traci.inductionloop.getLastIntervalVehicleNumber(det_id))
-                spd = max(0.0, float(traci.inductionloop.getLastIntervalMeanSpeed(det_id)))
-                occ = float(traci.inductionloop.getLastIntervalOccupancy(det_id))
+                cnt = float(conn.inductionloop.getLastIntervalVehicleNumber(det_id))
+                spd = max(0.0, float(conn.inductionloop.getLastIntervalMeanSpeed(det_id)))
+                occ = float(conn.inductionloop.getLastIntervalOccupancy(det_id))
             except Exception:
                 cnt, spd, occ = 0.0, 0.0, 0.0
             flow = cnt * (3600.0 / self.aggregation_time)
@@ -395,7 +399,7 @@ class TrafficEnv(gym.Env):
 
         # TTS increment
         try:
-            n_veh = float(traci.vehicle.getIDCount())
+            n_veh = float(conn.vehicle.getIDCount())
         except Exception:
             n_veh = 0.0
         m.tts_increment_s = n_veh * self.aggregation_time
