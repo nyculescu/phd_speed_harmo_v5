@@ -207,7 +207,7 @@ def _train_single_seed(
         eval_env,
         best_model_save_path=str(model_dir / "best_model"),
         log_path=str(model_dir / "eval_logs"),
-        eval_freq=max(cfg["training"]["eval_freq"] // n_envs, 1),
+        eval_freq=cfg["training"]["eval_freq"],
         n_eval_episodes=cfg["training"]["n_eval_episodes"],
         deterministic=True,
         render=False,

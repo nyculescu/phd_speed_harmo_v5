@@ -59,8 +59,8 @@ sar_config:
 training:
   total_timesteps: 1_000_000
   n_seeds: 5
-  eval_freq: 10_000
-  n_eval_episodes: 20
+  eval_freq: 50_000
+  n_eval_episodes: 5
 
   sac:
     policy: MlpPolicy
