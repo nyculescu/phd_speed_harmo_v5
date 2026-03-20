@@ -19,6 +19,22 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Activate venv if it exists (remote deploy creates .venv/)
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+    echo "Activated venv: $(which python3)"
+fi
+
+# Ensure SUMO_HOME is set
+export SUMO_HOME="${SUMO_HOME:-/usr/share/sumo}"
+export PATH="$SUMO_HOME/bin:$PATH"
+
+# Quick sanity check
+python3 -c "import torch; import stable_baselines3; import sb3_contrib" 2>/dev/null || {
+    echo "ERROR: Missing Python packages. Run: source .venv/bin/activate && pip install -r requirements.txt"
+    exit 1
+}
+
 MODE="${1:-test}"
 
 case "$MODE" in
