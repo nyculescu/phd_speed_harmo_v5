@@ -22,16 +22,23 @@ cd "$(dirname "$0")"
 # Activate venv if it exists (remote deploy creates .venv/)
 if [ -f ".venv/bin/activate" ]; then
     source .venv/bin/activate
-    echo "Activated venv: $(which python3)"
 fi
 
 # Ensure SUMO_HOME is set
 export SUMO_HOME="${SUMO_HOME:-/usr/share/sumo}"
 export PATH="$SUMO_HOME/bin:$PATH"
 
+# Use the venv python explicitly
+if [ -f ".venv/bin/python3" ]; then
+    PY=".venv/bin/python3"
+else
+    PY="python3"
+fi
+echo "Python: $($PY --version) at $PY"
+
 # Quick sanity check
-python3 -c "import torch; import stable_baselines3; import sb3_contrib" 2>/dev/null || {
-    echo "ERROR: Missing Python packages. Run: source .venv/bin/activate && pip install -r requirements.txt"
+$PY -c "import torch; import stable_baselines3; import sb3_contrib; import traci" 2>/dev/null || {
+    echo "ERROR: Missing Python packages. Run: ./deploy_remote.sh"
     exit 1
 }
 
@@ -80,7 +87,7 @@ echo ">>> Experiment 1: SAC Box(4) — ${SEEDS} seeds × ${N_ENVS} workers"
 for SEED in ${SEEDS}; do
   LOG_DIR="${LOG_BASE}/sac_box4"
   echo "  Starting SAC seed=${SEED}..."
-  python3 train.py \
+  $PY train.py \
     --algo sac \
     --seeds ${SEED} \
     --n-envs ${N_ENVS} \
@@ -141,7 +148,7 @@ echo ">>> Experiment 1: SAC Box(4) — ${SEEDS} seeds × ${N_ENVS} workers"
 for SEED in ${SEEDS}; do
   LOG_DIR="${LOG_BASE}/sac_box4"
   echo "  Starting SAC seed=${SEED}..."
-  python3 train.py \
+  $PY train.py \
     --algo sac \
     --seeds ${SEED} \
     --n-envs ${N_ENVS} \
@@ -160,7 +167,7 @@ echo ">>> Experiment 2: TQC Box(4) — ${SEEDS} seeds × ${N_ENVS} workers"
 for SEED in ${SEEDS}; do
   LOG_DIR="${LOG_BASE}/tqc_box4"
   echo "  Starting TQC seed=${SEED}..."
-  python3 train.py \
+  $PY train.py \
     --algo tqc \
     --seeds ${SEED} \
     --n-envs ${N_ENVS} \
@@ -179,7 +186,7 @@ echo ">>> Experiment 3: TQC Box(5) — ${SEEDS} seeds × ${N_ENVS} workers"
 for SEED in ${SEEDS}; do
   LOG_DIR="${LOG_BASE}/tqc_box5"
   echo "  Starting TQC Box(5) seed=${SEED}..."
-  python3 train.py \
+  $PY train.py \
     --algo tqc \
     --box5 \
     --seeds ${SEED} \
