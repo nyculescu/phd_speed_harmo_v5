@@ -90,7 +90,67 @@ for SEED in ${SEEDS}; do
   # Small delay between seed launches to stagger SubprocVecEnv startup
   sleep 5
 done
-echo "  Waiting for all SAC Box(4) seeds..."
+# --- Progress monitor function ---
+monitor_progress() {
+  local EXP_NAME="$1"
+  local LOG_PREFIX="$2"
+
+  echo "  Monitoring ${EXP_NAME}..."
+  while true; do
+    # Check if any background job is still running
+    if ! jobs -r | grep -q .; then
+      break
+    fi
+
+    # Collect progress from all seed logs
+    local ALL_DONE=true
+    local LINE=""
+    for SEED in ${SEEDS}; do
+      local LOG="${LOG_BASE}/${LOG_PREFIX}_seed${SEED}.log"
+      if [ ! -f "$LOG" ]; then
+        continue
+      fi
+      local STEPS=$(grep -oP 'total_timesteps\s*\|\s*\K[0-9]+' "$LOG" 2>/dev/null | tail -1)
+      local FPS=$(grep -oP 'fps\s*\|\s*\K[0-9]+' "$LOG" 2>/dev/null | tail -1)
+      STEPS=${STEPS:-0}
+      FPS=${FPS:-0}
+      if [ "$STEPS" -lt "$TIMESTEPS" ] 2>/dev/null; then
+        ALL_DONE=false
+      fi
+      local PCT=$((STEPS * 100 / TIMESTEPS))
+      local BAR_FULL=$((PCT * 20 / 100))
+      local BAR_EMPTY=$((20 - BAR_FULL))
+      local BAR=$(printf '█%.0s' $(seq 1 $BAR_FULL 2>/dev/null) 2>/dev/null)$(printf '░%.0s' $(seq 1 $BAR_EMPTY 2>/dev/null) 2>/dev/null)
+      LINE="${LINE}  s${SEED}:|${BAR}|${PCT}%@${FPS}fps"
+    done
+
+    if [ -n "$LINE" ]; then
+      printf "\r  ${EXP_NAME}${LINE}    "
+    fi
+
+    if $ALL_DONE; then
+      break
+    fi
+    sleep 30
+  done
+  echo ""
+}
+
+# --- Experiment 1: SAC Box(4) ---
+echo ">>> Experiment 1: SAC Box(4) — ${SEEDS} seeds × ${N_ENVS} workers"
+for SEED in ${SEEDS}; do
+  LOG_DIR="${LOG_BASE}/sac_box4"
+  echo "  Starting SAC seed=${SEED}..."
+  python3 train.py \
+    --algo sac \
+    --seeds ${SEED} \
+    --n-envs ${N_ENVS} \
+    --timesteps ${TIMESTEPS} \
+    --log-dir "${LOG_DIR}" \
+    > "${LOG_BASE}/sac_box4_seed${SEED}.log" 2>&1 &
+  sleep 5
+done
+monitor_progress "SAC Box(4)" "sac_box4"
 wait
 echo "  SAC Box(4) complete at $(date)"
 echo ""
@@ -109,7 +169,7 @@ for SEED in ${SEEDS}; do
     > "${LOG_BASE}/tqc_box4_seed${SEED}.log" 2>&1 &
   sleep 5
 done
-echo "  Waiting for all TQC Box(4) seeds..."
+monitor_progress "TQC Box(4)" "tqc_box4"
 wait
 echo "  TQC Box(4) complete at $(date)"
 echo ""
@@ -129,7 +189,7 @@ for SEED in ${SEEDS}; do
     > "${LOG_BASE}/tqc_box5_seed${SEED}.log" 2>&1 &
   sleep 5
 done
-echo "  Waiting for all TQC Box(5) seeds..."
+monitor_progress "TQC Box(5)" "tqc_box5"
 wait
 echo "  TQC Box(5) complete at $(date)"
 echo ""
