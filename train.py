@@ -113,6 +113,8 @@ def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
         )
         generate_sumocfg(cfg_path, rou_path, sumo_cfg["episode_duration_s"])
 
+        from stable_baselines3.common.monitor import Monitor
+
         env = TrafficEnv(
             sumo_cfg_path=str(cfg_path),
             state_repr=state_repr,
@@ -122,7 +124,7 @@ def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
             cav_percent=scenario_cfg["cav_percentage"] / 100.0,
             aggregation_time=sumo_cfg["aggregation_time"],
         )
-        return env
+        return Monitor(env)
 
     return _thunk
 

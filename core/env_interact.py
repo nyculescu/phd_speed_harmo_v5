@@ -293,9 +293,16 @@ class TrafficEnv(gym.Env):
             except Exception:
                 pass
 
-        for _ in range(n_steps):
+        # Apply CAV slowDown every _SLOWDOWN_INTERVAL steps (not every step).
+        # The slowDown() duration covers the full aggregation window, so
+        # vehicles already commanded will maintain their target speed.
+        # New vehicles entering the network between intervals get commanded
+        # on the next interval.  At 5-step intervals, max delay = 5s — acceptable
+        # given the 30s control window.
+        _SLOWDOWN_INTERVAL = 5
+        for i in range(n_steps):
             conn.simulationStep()
-            if self.cav_percent > 0.0:
+            if self.cav_percent > 0.0 and i % _SLOWDOWN_INTERVAL == 0:
                 self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
 
     # ------------------------------------------------------------------
