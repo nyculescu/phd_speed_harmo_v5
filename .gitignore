@@ -4,5 +4,6 @@ __pycache__/
 *.pyo
 .pytest_cache/
 tests/results/
+training_runs/
 docs/knowledge_base/*
 docs/llm_prompts/*

@@ -1,0 +1,92 @@
+# configurations/per_lane_stochastic.yaml
+# v5.1 per-lane differential VSL with stochastic demand + anomaly injection.
+#
+# Two variants:
+#   use_box5: false → Box(4) pure Lagrangian
+#   use_box5: true  → Box(5) mixed Lagrangian-Eulerian (physical VSL on seg_1_before)
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 50.0
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v3
+
+sar_config:
+  # State normalization
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  # Action bounds
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false  # Set true for Box(5) experiments
+
+  # Reward
+  ref_flow_vph: 6000.0
+  speed_floor_kph: 50.0
+  harmo_spatial_blend: 0.5
+  throughput_threshold: 0.85
+  reward_weights:
+    w_h: 0.40
+    w_q: 0.25
+    w_a: 0.10
+    w_lg: 0.15
+    w_m: 0.10
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 10_000
+  n_eval_episodes: 20
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]
