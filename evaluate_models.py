@@ -23,6 +23,7 @@ import os
 import sys
 import time
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -245,6 +246,42 @@ def run_episode(env, policy_fn, episode_seed: int):
     return summary, steps
 
 
+def _run_single_task(task):
+    """Worker function: run one (policy, episode) in its own SUMO process."""
+    policy_name = task["policy_name"]
+    policy_type = task["policy_type"]  # "static" or "model"
+    ep = task["episode"]
+    seed_offset = task["seed_offset"]
+    cfg = task["cfg"]
+    model_path = task.get("model_path")
+    static_action = task.get("static_action")
+    save_trajectory = task.get("save_trajectory", False)
+
+    env = _make_env(cfg, env_seed=seed_offset + ep)
+    env._episode_count = 0
+
+    # Build policy function
+    if policy_type == "static":
+        action = np.array(static_action, dtype=np.float32)
+        policy_fn = lambda obs: action
+    else:
+        model = _load_model(model_path, policy_name)
+        policy_fn = lambda obs: model.predict(obs, deterministic=True)[0]
+
+    try:
+        summary, steps = run_episode(env, policy_fn, seed_offset + ep)
+    finally:
+        env.close()
+
+    summary["policy"] = policy_name
+    summary["episode"] = ep
+
+    result = {"summary": summary}
+    if save_trajectory:
+        result["steps"] = steps
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Ground-truth evaluation of trained models vs baselines"
@@ -265,38 +302,43 @@ def main():
         "--best-seed-only", action="store_true",
         help="Only evaluate the best seed per arm (from eval logs)",
     )
+    parser.add_argument(
+        "--workers", type=int, default=20,
+        help="Number of parallel SUMO workers (default: 20)",
+    )
     args = parser.parse_args()
 
     experiment_dir = Path(args.experiment)
     cfg = _load_config(experiment_dir)
     n_episodes = args.episodes
     seed_offset = args.seed_offset
+    n_workers = args.workers
 
     # Output directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir = experiment_dir / f"evaluation_{timestamp}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Ground-truth evaluation")
-    print(f"  Experiment: {experiment_dir}")
-    print(f"  Episodes per policy: {n_episodes}")
-    print(f"  Seed offset: {seed_offset}")
-    print(f"  Output: {out_dir}")
-    print()
+    print(f"Ground-truth evaluation", flush=True)
+    print(f"  Experiment: {experiment_dir}", flush=True)
+    print(f"  Episodes per policy: {n_episodes}", flush=True)
+    print(f"  Seed offset: {seed_offset}", flush=True)
+    print(f"  Workers: {n_workers}", flush=True)
+    print(f"  Output: {out_dir}", flush=True)
+    print(flush=True)
 
     # Find trained models
     models = _find_models(experiment_dir)
-    print(f"  Found {len(models)} trained models:")
+    print(f"  Found {len(models)} trained models:", flush=True)
     for name, path in models.items():
-        print(f"    {name}: {path}")
-    print()
+        print(f"    {name}: {path}", flush=True)
+    print(flush=True)
 
     # If best-seed-only, filter to best seed per arm
     if args.best_seed_only and models:
         best_per_arm = {}
         for arm in set(k.rsplit("_seed", 1)[0] for k in models):
             arm_models = {k: v for k, v in models.items() if k.startswith(arm)}
-            # Load eval logs to find best seed
             best_reward = -float("inf")
             best_key = None
             for key in arm_models:
@@ -311,74 +353,114 @@ def main():
                         best_key = key
             if best_key:
                 best_per_arm[best_key] = arm_models[best_key]
-                print(f"  Best {arm}: {best_key} (eval={best_reward:.1f})")
+                print(f"  Best {arm}: {best_key} (eval={best_reward:.1f})", flush=True)
         models = best_per_arm
-        print()
+        print(flush=True)
 
-    # Build policy list: baselines + trained models
+    # Verify models can load before building tasks
     is_box5 = cfg["sar_config"].get("use_box5", False)
-    policies = {
-        "NC": lambda obs: _nc_action(is_box5),
-        "M110_uniform": lambda obs: _m110_action(is_box5),
-        "diff_mild": lambda obs: _diff_mild_action(is_box5),
-    }
-
-    # Add trained model policies
-    loaded_models = {}
+    verified_models = {}
     for name, path in models.items():
         try:
-            model = _load_model(path, name)
-            loaded_models[name] = model
-            policies[name] = lambda obs, m=model: m.predict(obs, deterministic=True)[0]
-            print(f"  Loaded {name}")
+            _load_model(path, name)
+            verified_models[name] = path
+            print(f"  Verified {name}", flush=True)
         except Exception as e:
-            print(f"  FAILED to load {name}: {e}")
+            print(f"  SKIP {name}: {e}", flush=True)
 
-    print()
-    print(f"  Total policies to evaluate: {len(policies)}")
-    print(f"  Policies: {list(policies.keys())}")
-    print()
+    # Build task list: all (policy, episode) pairs
+    tasks = []
 
-    # Create environment
-    env = _make_env(cfg, env_seed=seed_offset)
+    # Static baselines
+    static_policies = {
+        "NC": _nc_action(is_box5).tolist(),
+        "M110_uniform": _m110_action(is_box5).tolist(),
+        "diff_mild": _diff_mild_action(is_box5).tolist(),
+    }
+    for policy_name, action in static_policies.items():
+        for ep in range(n_episodes):
+            tasks.append({
+                "policy_name": policy_name,
+                "policy_type": "static",
+                "episode": ep,
+                "seed_offset": seed_offset,
+                "cfg": cfg,
+                "static_action": action,
+                "save_trajectory": ep < 3,
+            })
 
-    # Run evaluation
+    # Trained model policies
+    for name, path in verified_models.items():
+        for ep in range(n_episodes):
+            tasks.append({
+                "policy_name": name,
+                "policy_type": "model",
+                "episode": ep,
+                "seed_offset": seed_offset,
+                "cfg": cfg,
+                "model_path": path,
+                "save_trajectory": ep < 3,
+            })
+
+    policy_names = list(static_policies.keys()) + list(verified_models.keys())
+    n_total = len(tasks)
+    print(flush=True)
+    print(f"  Total policies: {len(policy_names)}: {policy_names}", flush=True)
+    print(f"  Total tasks: {n_total} ({len(policy_names)} policies × {n_episodes} episodes)", flush=True)
+    print(f"  Submitting to {n_workers} workers...", flush=True)
+    print(flush=True)
+
+    # Run all tasks in parallel
     all_summaries = []
     all_steps = {}
+    completed = 0
+    failed = 0
     t0 = time.time()
 
-    for policy_idx, (policy_name, policy_fn) in enumerate(policies.items()):
-        print(f">>> [{policy_idx+1}/{len(policies)}] {policy_name}", flush=True)
-        ep_rewards = []
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+        futures = {pool.submit(_run_single_task, t): t for t in tasks}
 
-        for ep in range(n_episodes):
-            ep_t0 = time.time()
-            # Set env seed for this episode — same across all policies
-            env._env_seed = seed_offset + ep
-            env._episode_count = 0  # Force same episode seed derivation
-
-            summary, steps = run_episode(env, policy_fn, seed_offset + ep)
-            summary["policy"] = policy_name
-            summary["episode"] = ep
-            all_summaries.append(summary)
-            ep_rewards.append(summary["total_reward"])
-
-            # Save per-step data for first 3 episodes (for trajectory analysis)
-            if ep < 3:
-                key = f"{policy_name}_ep{ep}"
-                all_steps[key] = steps
-
-            ep_elapsed = time.time() - ep_t0
+        for future in as_completed(futures):
+            task = futures[future]
+            completed += 1
             elapsed = time.time() - t0
-            mean_r = np.mean(ep_rewards)
-            anom_tag = f" [{summary['anomaly_type']}]" if summary["anomaly_type"] != "none" else ""
-            print(f"    ep {ep+1:>2}/{n_episodes} reward={summary['total_reward']:>7.1f} "
-                  f"(mean={mean_r:>7.1f}) peak={summary['peak_demand_vph']:>5.0f}vph "
-                  f"{ep_elapsed:.0f}s{anom_tag} [{elapsed:.0f}s total]", flush=True)
 
-        print()
+            try:
+                result = future.result()
+                summary = result["summary"]
+                all_summaries.append(summary)
 
-    env.close()
+                # Save trajectory data
+                if "steps" in result:
+                    key = f"{summary['policy']}_ep{summary['episode']}"
+                    all_steps[key] = result["steps"]
+
+                anom_tag = f" [{summary['anomaly_type']}]" if summary["anomaly_type"] != "none" else ""
+                remaining = n_total - completed
+                rate = completed / elapsed if elapsed > 0 else 0
+                eta_m = (remaining / rate / 60) if rate > 0 else 0
+
+                pct = completed / n_total * 100
+                bar_len = 30
+                filled = int(bar_len * completed / n_total)
+                bar = "█" * filled + "░" * (bar_len - filled)
+
+                print(f"  |{bar}| {pct:>5.1f}% [{completed:>3}/{n_total}] "
+                      f"{summary['policy']:>20} ep{summary['episode']:>2} "
+                      f"reward={summary['total_reward']:>7.1f} "
+                      f"peak={summary['peak_demand_vph']:>5.0f}vph"
+                      f"{anom_tag} "
+                      f"[{elapsed:.0f}s, ~{eta_m:.0f}m left]", flush=True)
+
+            except Exception as e:
+                failed += 1
+                print(f"  FAILED {task['policy_name']} ep{task['episode']}: {e}", flush=True)
+
+    elapsed_total = time.time() - t0
+    print(flush=True)
+    print(f"  Completed: {completed - failed}/{n_total} in {elapsed_total:.0f}s "
+          f"({failed} failed)", flush=True)
+    print(flush=True)
 
     # Write summary CSV
     summary_path = out_dir / "evaluation_summary.csv"

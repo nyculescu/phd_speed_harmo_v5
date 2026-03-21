@@ -26,6 +26,7 @@ echo "Python: $($PY --version) at $PY"
 # ── Argument parsing ─────────────────────────────────────────────────────────
 EXPERIMENT=""
 EPISODES=30
+WORKERS=20
 BEST_SEED_ONLY=""
 
 while [[ $# -gt 0 ]]; do
@@ -36,11 +37,14 @@ while [[ $# -gt 0 ]]; do
         --episodes)
             if [[ $# -lt 2 ]]; then echo "ERROR: --episodes requires a number"; exit 1; fi
             EPISODES="$2"; shift 2 ;;
+        --workers)
+            if [[ $# -lt 2 ]]; then echo "ERROR: --workers requires a number"; exit 1; fi
+            WORKERS="$2"; shift 2 ;;
         --best_seed_only)
             BEST_SEED_ONLY="--best-seed-only"; shift ;;
         *)
             echo "Unknown argument: $1"
-            echo "Usage: $0 --experiment <path> [--episodes N] [--best_seed_only]"
+            echo "Usage: $0 --experiment <path> [--episodes N] [--workers N] [--best_seed_only]"
             exit 1 ;;
     esac
 done
@@ -63,6 +67,7 @@ LOG_FILE="${EXPERIMENT}/evaluation_${TIMESTAMP}.log"
 echo "=== Ground-truth evaluation ==="
 echo "  Experiment: $EXPERIMENT"
 echo "  Episodes:   $EPISODES"
+echo "  Workers:    $WORKERS"
 echo "  Best seed:  ${BEST_SEED_ONLY:-all seeds}"
 echo "  Log:        $LOG_FILE"
 echo "  Started:    $(date)"
@@ -71,6 +76,7 @@ echo ""
 PYTHONUNBUFFERED=1 $PY evaluate_models.py \
     --experiment "$EXPERIMENT" \
     --episodes "$EPISODES" \
+    --workers "$WORKERS" \
     $BEST_SEED_ONLY \
     2>&1 | tee "$LOG_FILE"
 
