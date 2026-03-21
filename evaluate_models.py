@@ -496,7 +496,7 @@ def main():
     print("-" * 120)
 
     nc_reward = None
-    for policy_name in policies:
+    for policy_name in policy_names:
         eps = by_policy[policy_name]
         rewards = [e["total_reward"] for e in eps]
         mean_r = np.mean(rewards)
@@ -533,7 +533,7 @@ def main():
     print("=" * 80)
     print("ANOMALY vs NON-ANOMALY BREAKDOWN")
     print("=" * 80)
-    for policy_name in policies:
+    for policy_name in policy_names:
         eps = by_policy[policy_name]
         normal = [e["total_reward"] for e in eps if e["anomaly_type"] == "none"]
         anomaly = [e["total_reward"] for e in eps if e["anomaly_type"] != "none"]
@@ -556,7 +556,7 @@ def main():
             short = k.replace("avg_rc_", "")[:12]
             header += f" | {short:>12}"
         print(header)
-        for policy_name in policies:
+        for policy_name in policy_names:
             eps = by_policy[policy_name]
             line = f"{policy_name:>20}"
             for k in rc_keys_available:
