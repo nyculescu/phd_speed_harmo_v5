@@ -176,7 +176,7 @@ def run_episode(env, policy_fn, episode_seed: int):
         m = env._metrics
         step_data = {
             "step": step_idx,
-            "sim_time_s": (step_idx + 1) * env._aggregation_time,
+            "sim_time_s": (step_idx + 1) * env.aggregation_time,
             "reward": float(reward),
             "action_L0": float(action[0]),
             "action_L1": float(action[1]),
