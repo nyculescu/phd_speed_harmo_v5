@@ -155,12 +155,10 @@ def run_episode(env, policy_fn, episode_seed: int):
         anomaly_type = env._anomaly_injector.event.anomaly_type
         anomaly_start = env._anomaly_injector.event.start_time_s
 
-    # Record demand info
+    # Record demand info — profile is local to _regenerate_routes(),
+    # so we estimate peak demand from observed upstream flow during the episode
     peak_demand = 0
     ramp_frac = 0
-    if hasattr(env, "_demand_profile") and env._demand_profile is not None:
-        peak_demand = env._demand_profile.peak_demand_vph
-        ramp_frac = env._demand_profile.ramp_fraction
 
     steps = []
     total_reward = 0.0
@@ -208,10 +206,14 @@ def run_episode(env, policy_fn, episode_seed: int):
     actions_L2 = [s["action_L2"] for s in steps]
     actions_ramp = [s["action_ramp"] for s in steps]
 
+    # Estimate peak demand from max observed downstream flow
+    all_flows = [s["seg_1_after_flow_vph"] for s in steps]
+    observed_peak_flow = max(all_flows) if all_flows else 0
+
     summary = {
         "total_reward": total_reward,
         "n_steps": step_idx,
-        "peak_demand_vph": peak_demand,
+        "peak_demand_vph": observed_peak_flow,
         "ramp_fraction": ramp_frac,
         "anomaly_type": anomaly_type,
         "anomaly_start_s": anomaly_start,
