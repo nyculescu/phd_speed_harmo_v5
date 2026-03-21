@@ -117,23 +117,42 @@ def _load_model(model_path: str, arm_name: str):
         return SAC.load(model_path)
 
 
-# Static baseline policies
+# ── Static baseline policies ─────────────────────────────────────────────────
+# These fixed-action baselines answer the question: "does the RL agent learn
+# anything beyond what a hand-tuned constant policy achieves?"
+#
+#   NC (no control):   The null hypothesis — free-flow limits everywhere.
+#                      Any agent that cannot beat NC has learned nothing useful.
+#
+#   M110_uniform:      Best uniform VSL from the feasibility sweep (§6.1 of
+#                      speed_harmo_approach_v1.md). A single speed limit
+#                      applied identically to all 3 mainline lanes. Tests
+#                      whether per-lane differentiation adds value over
+#                      a uniform restriction.
+#
+#   diff_mild:         Best hand-designed per-lane differential from Phase 3
+#                      validation: L0=105, L1=110, L2=115 (slower near merge
+#                      lane). This is the "smart engineer" baseline — the
+#                      agent must beat this to justify the RL approach.
+#
+# Action format: [L0_kph, L1_kph, L2_kph, ramp_kph, (seg1_kph for Box5)]
+
 def _nc_action(box5: bool = False) -> np.ndarray:
-    """No control: all speeds at maximum."""
+    """No control: all speeds at maximum (free-flow limits)."""
     if box5:
         return np.array([120.0, 120.0, 120.0, 90.0, 120.0], dtype=np.float32)
     return np.array([120.0, 120.0, 120.0, 90.0], dtype=np.float32)
 
 
 def _m110_action(box5: bool = False) -> np.ndarray:
-    """Uniform M110 on mainline, 75 on ramp."""
+    """Uniform M110 on mainline, 75 on ramp — best fixed uniform from sweep."""
     if box5:
         return np.array([110.0, 110.0, 110.0, 75.0, 115.0], dtype=np.float32)
     return np.array([110.0, 110.0, 110.0, 75.0], dtype=np.float32)
 
 
 def _diff_mild_action(box5: bool = False) -> np.ndarray:
-    """Differential mild: L0=105, L1=110, L2=115, ramp=70."""
+    """Differential mild: L0=105, L1=110, L2=115, ramp=70 — best hand-tuned."""
     if box5:
         return np.array([105.0, 110.0, 115.0, 70.0, 115.0], dtype=np.float32)
     return np.array([105.0, 110.0, 115.0, 70.0], dtype=np.float32)
@@ -171,28 +190,50 @@ def run_episode(env, policy_fn, episode_seed: int):
         obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
 
-        # Collect per-step data
+        # ── Per-step data collection ──────────────────────────────────────
+        # Each step = one 30s E1 aggregation window in SUMO.
+        # We record three categories:
+        #
+        # A. ACTIONS — what the policy commanded this step.
+        #    Answers Q3: "Are per-lane actions differentiated?"
+        #    and Q4: "Does the agent adapt across the episode?"
+        #    If L0≈L1≈L2 throughout, Box(4) collapsed to Box(1).
+        #
+        # B. TRAFFIC METRICS — what actually happened in SUMO.
+        #    seg_0_before per-lane speeds: the direct effect of VSL.
+        #    seg_0_after speed: merge zone outcome (harmonization target).
+        #    seg_1_after flow: downstream throughput (mobility target).
+        #    ramp merge speed: speed mismatch at merge point.
+        #    The L0-L2 speed gap at seg_0_before is the core harmonization
+        #    metric — NC shows -13 kph gap; a good agent reduces this.
+        #
+        # C. REWARD COMPONENTS — why the agent got this reward.
+        #    Decomposition into the 5 v4 terms (harmonization, temporal,
+        #    throughput, lane_equalisation, smoothness) reveals which
+        #    terms drive the agent's behavior and which are irreducible.
         m = env._metrics
         step_data = {
             "step": step_idx,
             "sim_time_s": (step_idx + 1) * env.aggregation_time,
             "reward": float(reward),
-            "action_L0": float(action[0]),
-            "action_L1": float(action[1]),
-            "action_L2": float(action[2]),
-            "action_ramp": float(action[3]),
-            "seg_0_before_speed_kph": float(m.seg_0_before_speed_ms * 3.6),
-            "seg_0_before_L0_speed_kph": float(m.seg_0_before_L0_speed_ms * 3.6),
-            "seg_0_before_L1_speed_kph": float(m.seg_0_before_L1_speed_ms * 3.6),
-            "seg_0_before_L2_speed_kph": float(m.seg_0_before_L2_speed_ms * 3.6),
-            "seg_0_after_speed_kph": float(m.seg_0_after_speed_ms * 3.6),
-            "seg_1_after_flow_vph": float(m.seg_1_after_flow_vph),
-            "seg_1_after_speed_kph": float(m.seg_1_after_speed_ms * 3.6),
-            "ramp_merge_speed_kph": float(m.ramp_on_merge_speed_ms * 3.6),
-            "anomaly_active": bool(m.anomaly_active),
+            # A. Actions commanded
+            "action_L0": float(action[0]),   # seg_0_before lane 0 (merge lane) VSL [kph]
+            "action_L1": float(action[1]),   # seg_0_before lane 1 (middle) VSL [kph]
+            "action_L2": float(action[2]),   # seg_0_before lane 2 (fast lane) VSL [kph]
+            "action_ramp": float(action[3]), # ramp_on_transition VSL [kph]
+            # B. Traffic outcomes
+            "seg_0_before_speed_kph": float(m.seg_0_before_speed_ms * 3.6),      # aggregate upstream speed
+            "seg_0_before_L0_speed_kph": float(m.seg_0_before_L0_speed_ms * 3.6),  # merge lane actual speed
+            "seg_0_before_L1_speed_kph": float(m.seg_0_before_L1_speed_ms * 3.6),  # middle lane actual speed
+            "seg_0_before_L2_speed_kph": float(m.seg_0_before_L2_speed_ms * 3.6),  # fast lane actual speed
+            "seg_0_after_speed_kph": float(m.seg_0_after_speed_ms * 3.6),          # merge zone outcome speed
+            "seg_1_after_flow_vph": float(m.seg_1_after_flow_vph),                  # downstream throughput
+            "seg_1_after_speed_kph": float(m.seg_1_after_speed_ms * 3.6),          # downstream speed
+            "ramp_merge_speed_kph": float(m.ramp_on_merge_speed_ms * 3.6),         # ramp vehicle speed at merge
+            "anomaly_active": bool(m.anomaly_active),                               # disruption flag
         }
 
-        # Add reward components if available
+        # C. Reward components — per-step decomposition from r44_reward_v4
         rc = info.get("reward_components", {})
         for k, v in rc.items():
             step_data[f"rc_{k}"] = float(v)
@@ -211,6 +252,26 @@ def run_episode(env, policy_fn, episode_seed: int):
     all_flows = [s["seg_1_after_flow_vph"] for s in steps]
     observed_peak_flow = max(all_flows) if all_flows else 0
 
+    # ── Episode summary ────────────────────────────────────────────────
+    # Aggregates the per-step data into one row per episode. This is
+    # what gets written to evaluation_summary.csv and used for the
+    # cross-policy comparison tables.
+    #
+    # Action statistics answer Q3 (per-lane differentiation) and Q4
+    # (temporal adaptation):
+    #   - action_L*_mean: what speed the agent posted on average.
+    #     If L0≈L1≈L2, the agent collapsed to uniform control.
+    #   - action_L*_std: how much the action varied across the episode.
+    #     std > 0 means the agent adapts to demand phases; std ≈ 0
+    #     means it learned a fixed policy (no temporal adaptation).
+    #   - action_L0_L2_mean_diff: the per-lane gradient direction.
+    #     Negative = agent slows L2 more (fast-lane calming).
+    #     Positive = agent slows L0 more (merge-lane calming).
+    #
+    # Traffic metrics answer Q1 (NC baseline) and Q5 (signal strength):
+    #   - avg_ds_flow_vph: downstream throughput — must not collapse.
+    #   - L0_L2_speed_delta: the inter-lane speed gap at the merge
+    #     approach. NC baseline is -13 kph; a good agent reduces this.
     summary = {
         "total_reward": total_reward,
         "n_steps": step_idx,
@@ -218,17 +279,17 @@ def run_episode(env, policy_fn, episode_seed: int):
         "ramp_fraction": ramp_frac,
         "anomaly_type": anomaly_type,
         "anomaly_start_s": anomaly_start,
-        # Action statistics
+        # Action statistics (Q3: differentiation, Q4: temporal adaptation)
         "action_L0_mean": float(np.mean(actions_L0)),
         "action_L1_mean": float(np.mean(actions_L1)),
         "action_L2_mean": float(np.mean(actions_L2)),
         "action_ramp_mean": float(np.mean(actions_ramp)),
-        "action_L0_std": float(np.std(actions_L0)),
+        "action_L0_std": float(np.std(actions_L0)),   # >0 = adapts over time
         "action_L1_std": float(np.std(actions_L1)),
         "action_L2_std": float(np.std(actions_L2)),
         "action_ramp_std": float(np.std(actions_ramp)),
         "action_L0_L2_mean_diff": float(np.mean(actions_L0)) - float(np.mean(actions_L2)),
-        # Traffic metrics
+        # Traffic outcomes (Q1: NC baseline, Q5: signal strength)
         "avg_ds_flow_vph": float(np.mean([s["seg_1_after_flow_vph"] for s in steps])),
         "avg_merge_speed_kph": float(np.mean([s["seg_0_after_speed_kph"] for s in steps])),
         "avg_L0_speed_kph": float(np.mean([s["seg_0_before_L0_speed_kph"] for s in steps])),
@@ -237,7 +298,7 @@ def run_episode(env, policy_fn, episode_seed: int):
                              float(np.mean([s["seg_0_before_L2_speed_kph"] for s in steps])),
     }
 
-    # Reward component averages
+    # Reward component averages (Q5: which terms drive improvement)
     rc_keys = [k for k in steps[0] if k.startswith("rc_")]
     for k in rc_keys:
         vals = [s[k] for s in steps if k in s]
