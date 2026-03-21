@@ -2,9 +2,16 @@
 # launch_training.sh — Run full experimental suite.
 #
 # Usage:
-#   ./launch_training.sh remote   # 128+ cores
-#   ./launch_training.sh local    # 30 cores
-#   ./launch_training.sh test     # quick sanity (1 seed, 50k steps)
+#   ./launch_training.sh --machine remote                        # all algorithms, 128+ cores
+#   ./launch_training.sh --machine remote --single_algo sac_5    # SAC Box(5) only
+#   ./launch_training.sh --machine local                         # all algorithms, 30 cores
+#   ./launch_training.sh --machine test                          # quick sanity (1 seed, 50k steps)
+#
+# Available --single_algo values:
+#   sac_4   — SAC Box(4)
+#   sac_5   — SAC Box(5)
+#   tqc_4   — TQC Box(4)
+#   tqc_5   — TQC Box(5)
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -32,24 +39,46 @@ $PY -c "import torch; import stable_baselines3; import sb3_contrib; import traci
     exit 1
 }
 
-# ── Mode selection ───────────────────────────────────────────────────────────
-MODE="${1:-test}"
+# ── Argument parsing ─────────────────────────────────────────────────────────
+MODE=""
+SINGLE_ALGO=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --machine)
+            if [[ $# -lt 2 ]]; then
+                echo "ERROR: --machine requires a value (remote, local, test)"
+                exit 1
+            fi
+            MODE="$2"; shift 2 ;;
+        --single_algo)
+            if [[ $# -lt 2 ]]; then
+                echo "ERROR: --single_algo requires a value (sac_4, sac_5, tqc_4, tqc_5)"
+                exit 1
+            fi
+            SINGLE_ALGO="$2"; shift 2 ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 --machine {remote|local|test} [--single_algo {sac_4|sac_5|tqc_4|tqc_5}]"
+            exit 1 ;;
+    esac
+done
+
+MODE="${MODE:-test}"
 
 case "$MODE" in
   remote)
     N_ENVS=48; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
-    echo "=== REMOTE: 5 seeds × ${N_ENVS} workers = $((5 * N_ENVS)) SUMO ==="
+    echo "=== REMOTE: 5 seeds × ${N_ENVS} workers ==="
     ;;
   local)
     N_ENVS=8; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
-    echo "=== LOCAL: 5 seeds × ${N_ENVS} workers = $((5 * N_ENVS)) SUMO ==="
+    echo "=== LOCAL: 5 seeds × ${N_ENVS} workers ==="
     ;;
   test)
     N_ENVS=2; SEEDS="0"; TIMESTEPS=50000
     echo "=== TEST: 1 seed × ${N_ENVS} workers ==="
     ;;
-  *)
-    echo "Usage: $0 {remote|local|test}"; exit 1 ;;
 esac
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -57,6 +86,9 @@ LOG_BASE="training_runs/experiment_${TIMESTAMP}"
 mkdir -p "${LOG_BASE}"
 echo "Output: ${LOG_BASE}"
 echo "Started: $(date)"
+if [ -n "${SINGLE_ALGO}" ]; then
+    echo "Single algorithm: ${SINGLE_ALGO}"
+fi
 echo ""
 
 # ── Progress monitor ─────────────────────────────────────────────────────────
@@ -78,7 +110,6 @@ monitor_progress() {
             local PCT=$((STEPS * 100 / TIMESTEPS))
             LINE="${LINE} s${SEED}:${PCT}%%@${FPS}fps"
         done
-        # Use echo -ne for safe in-place update (no printf % issues)
         echo -ne "\r  ${EXP_NAME} |${LINE} |   "
         sleep 5
     done
@@ -96,8 +127,6 @@ run_experiment() {
     echo ">>> ${EXP_NAME} — seeds [${SEEDS}] × ${N_ENVS} workers"
 
     for SEED in ${SEEDS}; do
-        local LOG_DIR="${LOG_BASE}/${LOG_PREFIX%%_seed*}"
-        [ -n "${LOG_PREFIX}" ] && LOG_DIR="${LOG_BASE}/${ALGO}_$(echo $EXTRA_ARGS | tr ' ' '_' | tr -d '-')"
         LOG_DIR="${LOG_BASE}/${LOG_PREFIX}"
         echo "  Starting ${ALGO} seed=${SEED}..."
         $PY train.py \
@@ -117,10 +146,34 @@ run_experiment() {
     echo ""
 }
 
+# ── Determine which experiments to run ───────────────────────────────────────
+should_run() {
+    local ALGO_KEY="$1"
+    if [ -z "${SINGLE_ALGO}" ]; then
+        return 0  # no filter → run all
+    fi
+    if [ "${SINGLE_ALGO}" = "${ALGO_KEY}" ]; then
+        return 0  # matches filter
+    fi
+    return 1  # skip
+}
+
 # ── Experiments ──────────────────────────────────────────────────────────────
-run_experiment "Exp 1: SAC Box(4)"  sac  sac_box4  ""
-run_experiment "Exp 2: TQC Box(4)"  tqc  tqc_box4  ""
-run_experiment "Exp 3: TQC Box(5)"  tqc  tqc_box5  "--box5"
+if should_run "sac_4"; then
+    run_experiment "Exp: SAC Box(4)"  sac  sac_box4  ""
+fi
+
+if should_run "tqc_4"; then
+    run_experiment "Exp: TQC Box(4)"  tqc  tqc_box4  ""
+fi
+
+if should_run "sac_5"; then
+    run_experiment "Exp: SAC Box(5)"  sac  sac_box5  "--box5"
+fi
+
+if should_run "tqc_5"; then
+    run_experiment "Exp: TQC Box(5)"  tqc  tqc_box5  "--box5"
+fi
 
 echo "=== ALL EXPERIMENTS COMPLETE ==="
 echo "Results: ${LOG_BASE}"
