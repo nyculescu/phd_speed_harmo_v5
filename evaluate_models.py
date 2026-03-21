@@ -346,10 +346,11 @@ def main():
     t0 = time.time()
 
     for policy_idx, (policy_name, policy_fn) in enumerate(policies.items()):
-        print(f">>> [{policy_idx+1}/{len(policies)}] {policy_name}")
+        print(f">>> [{policy_idx+1}/{len(policies)}] {policy_name}", flush=True)
         ep_rewards = []
 
         for ep in range(n_episodes):
+            ep_t0 = time.time()
             # Set env seed for this episode — same across all policies
             env._env_seed = seed_offset + ep
             env._episode_count = 0  # Force same episode seed derivation
@@ -365,11 +366,13 @@ def main():
                 key = f"{policy_name}_ep{ep}"
                 all_steps[key] = steps
 
-            if (ep + 1) % 10 == 0 or ep == n_episodes - 1:
-                elapsed = time.time() - t0
-                mean_r = np.mean(ep_rewards)
-                std_r = np.std(ep_rewards) if len(ep_rewards) > 1 else 0
-                print(f"    ep {ep+1}/{n_episodes}: mean_reward={mean_r:.1f} ± {std_r:.1f} [{elapsed:.0f}s]")
+            ep_elapsed = time.time() - ep_t0
+            elapsed = time.time() - t0
+            mean_r = np.mean(ep_rewards)
+            anom_tag = f" [{summary['anomaly_type']}]" if summary["anomaly_type"] != "none" else ""
+            print(f"    ep {ep+1:>2}/{n_episodes} reward={summary['total_reward']:>7.1f} "
+                  f"(mean={mean_r:>7.1f}) peak={summary['peak_demand_vph']:>5.0f}vph "
+                  f"{ep_elapsed:.0f}s{anom_tag} [{elapsed:.0f}s total]", flush=True)
 
         print()
 

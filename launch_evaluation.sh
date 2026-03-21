@@ -68,7 +68,7 @@ echo "  Log:        $LOG_FILE"
 echo "  Started:    $(date)"
 echo ""
 
-$PY evaluate_models.py \
+PYTHONUNBUFFERED=1 $PY evaluate_models.py \
     --experiment "$EXPERIMENT" \
     --episodes "$EPISODES" \
     $BEST_SEED_ONLY \
