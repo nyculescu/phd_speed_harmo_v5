@@ -41,32 +41,26 @@ def generate_route_file(
     cav_pct: float = DEFAULT_CAV_PCT,
     seed: int = 42,
 ) -> None:
-    """Write a .rou.xml with 3 routes and 100s ramp delay."""
-    routes = ET.Element("routes")
+    """Write a .rou.xml with diversified fleet, 2 routes, 100s ramp delay."""
+    from traffic_environment.vehicle_fleet import (
+        generate_fleet_xml, pick_vehicle_type,
+    )
 
-    ET.SubElement(routes, "vType",
-                  id="HDV", carFollowModel="Krauss",
-                  vClass="passenger", color="1,1,0",
-                  length="4.50", minGap="2.50", accel="2.60",
-                  decel="4.50", sigma="0.50", maxSpeed="36.11",
-                  tau="1.40", speedFactor="1.00", speedDev="0.10")
-    ET.SubElement(routes, "vType",
-                  id="CAV", carFollowModel="Krauss",
-                  vClass="passenger", color="0,1,0",
-                  length="4.50", minGap="1.25", accel="2.86",
-                  decel="4.73", sigma="0.00", maxSpeed="36.11",
-                  tau="1.00", speedFactor="1.00", speedDev="0.00")
+    fleet_xml = generate_fleet_xml(seed=seed)
 
-    ET.SubElement(routes, "route", id="mainline_through",
-                  edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after")
-    ET.SubElement(routes, "route", id="ramp_on_through",
-                  edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append("<routes>")
+    lines.append(fleet_xml)
+    lines.append('  <route id="mainline_through" '
+                 'edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after"/>')
+    lines.append('  <route id="ramp_on_through" '
+                 'edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after"/>')
 
     total_veh = int(demand_vph * episode_s / 3600)
     n_mainline = int(total_veh * 0.75)
     n_ramp = total_veh - n_mainline
 
-    rng = np.random.default_rng(seed)
+    rng = np.random.RandomState(seed + 1000)
     vehicles = []
 
     def _add(count, route_id, t_offset, t_span):
@@ -86,16 +80,16 @@ def generate_route_file(
 
     for veh_id, (depart, route_id) in enumerate(vehicles):
         is_cav = rng.random() * 100.0 < cav_pct
-        vtype = "CAV" if is_cav else "HDV"
-        ET.SubElement(routes, "vehicle",
-                      id=f"veh_{veh_id}", type=vtype,
-                      route=route_id, depart=f"{depart:.2f}",
-                      departPos="last", departLane="best",
-                      departSpeed="desired", insertionChecks="none")
+        vtype = pick_vehicle_type(rng, is_cav=is_cav)
+        lines.append(f'  <vehicle id="veh_{veh_id}" type="{vtype}" '
+                     f'route="{route_id}" depart="{depart:.2f}" '
+                     f'departPos="last" departLane="best" '
+                     f'departSpeed="desired" insertionChecks="none"/>')
 
-    tree = ET.ElementTree(routes)
-    ET.indent(tree, space="  ")
-    tree.write(str(output_path), encoding="unicode", xml_declaration=True)
+    lines.append("</routes>")
+
+    with open(output_path, "w") as f:
+        f.write("\n".join(lines))
 
 
 def generate_stochastic_route_file(
@@ -104,44 +98,24 @@ def generate_stochastic_route_file(
     cav_pct: float = DEFAULT_CAV_PCT,
     seed: int = 42,
 ) -> None:
-    """Write a .rou.xml from a stochastic DemandProfile (per-second rates)."""
-    routes = ET.Element("routes")
+    """Write a .rou.xml with diversified fleet from a stochastic DemandProfile."""
+    from traffic_environment.vehicle_fleet import (
+        generate_fleet_xml, pick_vehicle_type,
+    )
 
-    ET.SubElement(routes, "vType",
-                  id="HDV", carFollowModel="Krauss",
-                  vClass="passenger", color="1,1,0",
-                  length="4.50", minGap="2.50", accel="2.60",
-                  decel="4.50", sigma="0.50", maxSpeed="36.11",
-                  tau="1.40", speedFactor="1.00", speedDev="0.10")
-    ET.SubElement(routes, "vType",
-                  id="CAV", carFollowModel="Krauss",
-                  vClass="passenger", color="0,1,0",
-                  length="4.50", minGap="1.25", accel="2.86",
-                  decel="4.73", sigma="0.00", maxSpeed="36.11",
-                  tau="1.00", speedFactor="1.00", speedDev="0.00")
+    fleet_xml = generate_fleet_xml(seed=seed)
 
-    ET.SubElement(routes, "route", id="mainline_through",
-                  edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after")
-    ET.SubElement(routes, "route", id="ramp_on_through",
-                  edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
-    # Route needed for anomaly ramp_spike injection
-    ET.SubElement(routes, "route", id="ramp_route",
-                  edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
-
-    rng = np.random.default_rng(seed)
+    rng = np.random.RandomState(seed + 1000)
     vehicles = []
     veh_id = 0
 
     T = len(profile.mainline_rates)
-    # Use Poisson process: for each second, sample departures from rate
     for t in range(T):
-        # Mainline (skip first RAMP_DELAY_S for ramp only)
         m_rate = float(profile.mainline_rates[t])
         if m_rate > 0 and rng.random() < m_rate:
             vehicles.append((float(t), "mainline_through", veh_id))
             veh_id += 1
 
-        # Ramp (delayed start)
         if t >= RAMP_DELAY_S:
             r_rate = float(profile.ramp_rates[t])
             if r_rate > 0 and rng.random() < r_rate:
@@ -150,18 +124,29 @@ def generate_stochastic_route_file(
 
     vehicles.sort(key=lambda v: v[0])
 
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append("<routes>")
+    lines.append(fleet_xml)
+    lines.append('  <route id="mainline_through" '
+                 'edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after"/>')
+    lines.append('  <route id="ramp_on_through" '
+                 'edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after"/>')
+    # Route needed for anomaly ramp_spike injection
+    lines.append('  <route id="ramp_route" '
+                 'edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after"/>')
+
     for depart, route_id, vid in vehicles:
         is_cav = rng.random() * 100.0 < cav_pct
-        vtype = "CAV" if is_cav else "HDV"
-        ET.SubElement(routes, "vehicle",
-                      id=f"veh_{vid}", type=vtype,
-                      route=route_id, depart=f"{depart:.2f}",
-                      departPos="last", departLane="best",
-                      departSpeed="desired", insertionChecks="none")
+        vtype = pick_vehicle_type(rng, is_cav=is_cav)
+        lines.append(f'  <vehicle id="veh_{vid}" type="{vtype}" '
+                     f'route="{route_id}" depart="{depart:.2f}" '
+                     f'departPos="last" departLane="best" '
+                     f'departSpeed="desired" insertionChecks="none"/>')
 
-    tree = ET.ElementTree(routes)
-    ET.indent(tree, space="  ")
-    tree.write(str(output_path), encoding="unicode", xml_declaration=True)
+    lines.append("</routes>")
+
+    with open(output_path, "w") as f:
+        f.write("\n".join(lines))
 
 
 def generate_sumocfg(
