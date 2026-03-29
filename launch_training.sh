@@ -57,14 +57,21 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             SINGLE_ALGO="$2"; shift 2 ;;
+        --pool)
+            if [[ $# -lt 2 ]]; then
+                echo "ERROR: --pool requires a path to an existing scenario pool directory"
+                exit 1
+            fi
+            POOL_OVERRIDE="$2"; shift 2 ;;
         *)
             echo "Unknown argument: $1"
-            echo "Usage: $0 --machine {remote|local|test} [--single_algo {sac_4|sac_5|tqc_4|tqc_5}]"
+            echo "Usage: $0 --machine {remote|local|test} [--single_algo ...] [--pool <dir>]"
             exit 1 ;;
     esac
 done
 
 MODE="${MODE:-test}"
+POOL_OVERRIDE=""
 
 case "$MODE" in
   remote)
@@ -91,18 +98,28 @@ if [ -n "${SINGLE_ALGO}" ]; then
 fi
 echo ""
 
-# ── Pre-generate scenario pool ──────────────────────────────────────────────
-POOL_DIR="scenario_pools/focused_${TIMESTAMP}"
-N_SCENARIOS=200
-echo ">>> Generating ${N_SCENARIOS} scenarios (focused band 5500-7250 vph)..."
-$PY generate_scenarios.py focused \
-    --n ${N_SCENARIOS} \
-    --band 5500 7250 \
-    --noise 200 \
-    --cav 50.0 \
-    --weather "clear:0.7,rain:0.2,fog:0.1" \
-    -o "${POOL_DIR}" 2>&1 | tail -3
-echo "  Pool: ${POOL_DIR} ($(ls ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l) scenarios)"
+# ── Pre-generate scenario pool (or use existing via --pool) ─────────────────
+if [ -n "${POOL_OVERRIDE}" ]; then
+    POOL_DIR="${POOL_OVERRIDE}"
+    if [ ! -d "${POOL_DIR}" ]; then
+        echo "ERROR: Pool directory does not exist: ${POOL_DIR}"
+        exit 1
+    fi
+    echo ">>> Using existing scenario pool: ${POOL_DIR}"
+    echo "  Pool: ${POOL_DIR} ($(ls ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l) scenarios)"
+else
+    POOL_DIR="scenario_pools/focused_${TIMESTAMP}"
+    N_SCENARIOS=200
+    echo ">>> Generating ${N_SCENARIOS} scenarios (focused band 5500-7250 vph)..."
+    $PY generate_scenarios.py focused \
+        --n ${N_SCENARIOS} \
+        --band 5500 7250 \
+        --noise 200 \
+        --cav 50.0 \
+        --weather "clear:0.7,rain:0.2,fog:0.1" \
+        -o "${POOL_DIR}" 2>&1 | tail -3
+    echo "  Pool: ${POOL_DIR} ($(ls ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l) scenarios)"
+fi
 echo ""
 
 # ── Progress monitor ─────────────────────────────────────────────────────────
