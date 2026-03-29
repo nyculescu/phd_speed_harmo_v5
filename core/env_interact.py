@@ -38,7 +38,7 @@ _SEGMENT_LANES: Dict[str, int] = {
     "seg_2_before": 3,
     "seg_1_before": 3,
     "seg_0_before": 3,
-    "seg_0_after": 3,
+    "seg_0_after": 4,  # 3 through + 1 acceleration lane (L0)
     "seg_1_after": 3,
     "ramp_on_approach": 1,
     "ramp_on_transition": 1,
@@ -377,6 +377,9 @@ class TrafficEnv(gym.Env):
                     "sumo",
                     "-c", str(self.sumo_cfg_path),
                     "--remote-port", str(self._port),
+                    "--step-method.ballistic",
+                    "--collision.action", "warn",
+                    "--time-to-teleport", "-1",
                     "--no-step-log",
                     "--no-warnings",
                     "--start",

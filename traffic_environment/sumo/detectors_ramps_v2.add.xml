@@ -36,15 +36,19 @@
     <inductionLoop id="flow_loop_seg_0_before_0_exit" lane="seg_0_before_0" pos="950.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_seg_0_before_1_exit" lane="seg_0_before_1" pos="950.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_seg_0_before_2_exit" lane="seg_0_before_2" pos="950.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_0_entry" lane="seg_0_after_0" pos="25.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_1_entry" lane="seg_0_after_1" pos="25.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_2_entry" lane="seg_0_after_2" pos="25.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_0_mid" lane="seg_0_after_0" pos="250.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_1_mid" lane="seg_0_after_1" pos="250.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_2_mid" lane="seg_0_after_2" pos="250.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_0_exit" lane="seg_0_after_0" pos="475.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_1_exit" lane="seg_0_after_1" pos="475.0" freq="30" file="NUL"/>
-    <inductionLoop id="flow_loop_seg_0_after_2_exit" lane="seg_0_after_2" pos="475.0" freq="30" file="NUL"/>
+    <!-- seg_0_after: 4 lanes (L0=accel, L1-L3=through), 250m -->
+    <inductionLoop id="flow_loop_seg_0_after_0_entry" lane="seg_0_after_0" pos="10.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_entry" lane="seg_0_after_1" pos="10.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_entry" lane="seg_0_after_2" pos="10.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_3_entry" lane="seg_0_after_3" pos="10.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_mid" lane="seg_0_after_0" pos="125.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_mid" lane="seg_0_after_1" pos="125.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_mid" lane="seg_0_after_2" pos="125.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_3_mid" lane="seg_0_after_3" pos="125.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_0_exit" lane="seg_0_after_0" pos="240.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_1_exit" lane="seg_0_after_1" pos="240.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_2_exit" lane="seg_0_after_2" pos="240.0" freq="30" file="NUL"/>
+    <inductionLoop id="flow_loop_seg_0_after_3_exit" lane="seg_0_after_3" pos="240.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_seg_1_after_0_entry" lane="seg_1_after_0" pos="50.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_seg_1_after_1_entry" lane="seg_1_after_1" pos="50.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_seg_1_after_2_entry" lane="seg_1_after_2" pos="50.0" freq="30" file="NUL"/>
@@ -63,14 +67,8 @@
     <inductionLoop id="flow_loop_ramp_on_merge_0_entry" lane="ramp_on_merge_0" pos="5.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_ramp_on_merge_0_mid" lane="ramp_on_merge_0" pos="50.0" freq="30" file="NUL"/>
     <inductionLoop id="flow_loop_ramp_on_merge_0_exit" lane="ramp_on_merge_0" pos="95.0" freq="30" file="NUL"/>
-    <entryExitDetector id="e3_seg_3_before" freq="30" file="NUL">
-        <detEntry lane="seg_3_before_0" pos="20.0"/>
-        <detExit lane="seg_3_before_0" pos="980.0"/>
-        <detEntry lane="seg_3_before_1" pos="20.0"/>
-        <detExit lane="seg_3_before_1" pos="980.0"/>
-        <detEntry lane="seg_3_before_2" pos="20.0"/>
-        <detExit lane="seg_3_before_2" pos="980.0"/>
-    </entryExitDetector>
+    <!-- E3 on seg_3_before removed: spawning edge — vehicles appear past any
+         entry detector position. Use E1 loops instead (flow_loop_seg_3_before_*). -->
     <entryExitDetector id="e3_seg_2_before" freq="30" file="NUL">
         <detEntry lane="seg_2_before_0" pos="20.0"/>
         <detExit lane="seg_2_before_0" pos="980.0"/>
@@ -96,12 +94,14 @@
         <detExit lane="seg_0_before_2" pos="980.0"/>
     </entryExitDetector>
     <entryExitDetector id="e3_seg_0_after" freq="30" file="NUL">
-        <detEntry lane="seg_0_after_0" pos="10.0"/>
-        <detExit lane="seg_0_after_0" pos="490.0"/>
-        <detEntry lane="seg_0_after_1" pos="10.0"/>
-        <detExit lane="seg_0_after_1" pos="490.0"/>
-        <detEntry lane="seg_0_after_2" pos="10.0"/>
-        <detExit lane="seg_0_after_2" pos="490.0"/>
+        <detEntry lane="seg_0_after_0" pos="5.0"/>
+        <detExit lane="seg_0_after_0" pos="245.0"/>
+        <detEntry lane="seg_0_after_1" pos="5.0"/>
+        <detExit lane="seg_0_after_1" pos="245.0"/>
+        <detEntry lane="seg_0_after_2" pos="5.0"/>
+        <detExit lane="seg_0_after_2" pos="245.0"/>
+        <detEntry lane="seg_0_after_3" pos="5.0"/>
+        <detExit lane="seg_0_after_3" pos="245.0"/>
     </entryExitDetector>
     <entryExitDetector id="e3_seg_1_after" freq="30" file="NUL">
         <detEntry lane="seg_1_after_0" pos="20.0"/>
@@ -111,10 +111,7 @@
         <detEntry lane="seg_1_after_2" pos="20.0"/>
         <detExit lane="seg_1_after_2" pos="980.0"/>
     </entryExitDetector>
-    <entryExitDetector id="e3_ramp_on_approach" freq="30" file="NUL">
-        <detEntry lane="ramp_on_approach_0" pos="14.0"/>
-        <detExit lane="ramp_on_approach_0" pos="686.0"/>
-    </entryExitDetector>
+    <!-- E3 on ramp_on_approach removed: spawning edge — same issue as seg_3_before. -->
     <entryExitDetector id="e3_ramp_on_transition" freq="30" file="NUL">
         <detEntry lane="ramp_on_transition_0" pos="4.0"/>
         <detExit lane="ramp_on_transition_0" pos="196.0"/>
@@ -123,11 +120,13 @@
         <detEntry lane="ramp_on_merge_0" pos="2.0"/>
         <detExit lane="ramp_on_merge_0" pos="98.0"/>
     </entryExitDetector>
+    <!-- Corridor E3: entries on first non-spawning edges to avoid
+         "left without entering" warnings from departPos="last". -->
     <entryExitDetector id="e3_corridor" freq="30" file="NUL">
-        <detEntry lane="seg_3_before_0" pos="20.0"/>
-        <detEntry lane="seg_3_before_1" pos="20.0"/>
-        <detEntry lane="seg_3_before_2" pos="20.0"/>
-        <detEntry lane="ramp_on_approach_0" pos="14.0"/>
+        <detEntry lane="seg_2_before_0" pos="5.0"/>
+        <detEntry lane="seg_2_before_1" pos="5.0"/>
+        <detEntry lane="seg_2_before_2" pos="5.0"/>
+        <detEntry lane="ramp_on_transition_0" pos="2.0"/>
         <detExit lane="seg_1_after_0" pos="980.0"/>
         <detExit lane="seg_1_after_1" pos="980.0"/>
         <detExit lane="seg_1_after_2" pos="980.0"/>

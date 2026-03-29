@@ -6,7 +6,7 @@ E1 induction loops: entry/mid/exit × all lanes for every segment.
 E3 multi-entry-exit zones: one per segment + one corridor-wide.
 
 Changes from v1:
-  - seg_0_after: 3 lanes (was 4)
+  - seg_0_after: 4 lanes (3 through + 1 acceleration lane)
   - No off-ramp segments
   - Corridor E3 exits only at seg_1_after (no ramp_off_departure)
 """
@@ -22,7 +22,7 @@ SEGMENTS = {
     "seg_2_before":        (1000.0, 3),
     "seg_1_before":        (1000.0, 3),
     "seg_0_before":        (1000.0, 3),
-    "seg_0_after":          (500.0, 3),   # was 4 in v1
+    "seg_0_after":          (250.0, 4),   # 3 through + 1 accel lane (L0)
     "seg_1_after":         (1000.0, 3),
     "ramp_on_approach":     (700.0, 1),
     "ramp_on_transition":   (200.0, 1),

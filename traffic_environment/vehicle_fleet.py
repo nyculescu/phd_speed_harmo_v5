@@ -124,12 +124,14 @@ NORMAL_HDV: Dict[str, Any] = {
 }
 
 RECKLESS_HDV: Dict[str, Any] = {
-    "sigma": 0.60,
-    "tau_range": (0.6, 0.9),
-    "min_gap_scale_range": (0.5, 0.7),   # tailgating
-    "speed_factor_range": (1.15, 1.25),   # 15-25% over limit
-    "speed_dev": 0.10,
-    "share": 0.04,  # 4% of HDVs are reckless
+    "sigma": 0.50,
+    "tau_range": (1.0, 1.2),             # slightly faster than normal (1.2-2.0)
+    "min_gap_scale_range": (0.75, 0.90),  # slightly closer than normal (0.9-1.1)
+    "speed_factor_range": (1.08, 1.15),   # 8-15% over limit
+    "speed_dev": 0.06,
+    "share": 0.02,  # 2% of HDVs — realistic outlier fraction
+    # Calibration target: ~1 collision per 72-120 episodes (3-5 days at 24h/day)
+    # EU motorway: 5-10 crashes per 100M veh-km (Eurostat 2022)
 }
 
 # ── CAV configuration ───────────────────────────────────────────────────────
@@ -254,9 +256,12 @@ def generate_fleet_xml(
                 accel, decel, gap, tau, sigma, speed_factor, weather,
             )
 
-            # Action step from tau
-            max_steps = max(1, int(tau / max(step_length, 1e-6)))
-            action_step = max(1, rng.randint(1, max_steps + 1)) * step_length
+            # actionStepLength must be a positive multiple of step_length AND ≤ tau.
+            # If tau < step_length, clamp tau up to step_length (SUMO minimum).
+            if tau < step_length:
+                tau = step_length
+            n_multiples = max(1, int(tau / step_length))
+            action_step = n_multiples * step_length
 
             lc = LC_RANGES_NORMAL
             lines.append(
@@ -294,7 +299,12 @@ def generate_fleet_xml(
                 accel, decel, gap, tau, sigma, speed_factor, weather,
             )
 
-            action_step = max(1, int(tau / max(step_length, 1e-6))) * step_length
+            # actionStepLength must be a positive multiple of step_length AND ≤ tau.
+            # If tau < step_length, clamp tau up to step_length (SUMO minimum).
+            if tau < step_length:
+                tau = step_length
+            n_multiples = max(1, int(tau / step_length))
+            action_step = n_multiples * step_length
 
             lc = LC_RANGES_RECKLESS
             lines.append(

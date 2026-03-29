@@ -125,7 +125,7 @@ _ALL_SEGS = _MAINLINE_SEGS + _RAMP_SEGS
 
 _LANE_COUNTS: Dict[str, int] = {
     "seg_3_before": 3, "seg_2_before": 3, "seg_1_before": 3, "seg_0_before": 3,
-    "seg_0_after": 3, "seg_1_after": 3,
+    "seg_0_after": 4, "seg_1_after": 3,
     "ramp_on_approach": 1, "ramp_on_transition": 1, "ramp_on_merge": 1,
 }
 
