@@ -8,3 +8,4 @@ training_runs/
 docs/knowledge_base/*
 docs/llm_prompts/*
 .tmp_sumo/
+scenario_pools/

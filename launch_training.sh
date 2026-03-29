@@ -91,6 +91,20 @@ if [ -n "${SINGLE_ALGO}" ]; then
 fi
 echo ""
 
+# ── Pre-generate scenario pool ──────────────────────────────────────────────
+POOL_DIR="scenario_pools/focused_${TIMESTAMP}"
+N_SCENARIOS=200
+echo ">>> Generating ${N_SCENARIOS} scenarios (focused band 5500-7250 vph)..."
+$PY generate_scenarios.py focused \
+    --n ${N_SCENARIOS} \
+    --band 5500 7250 \
+    --noise 200 \
+    --cav 50.0 \
+    --weather "clear:0.7,rain:0.2,fog:0.1" \
+    -o "${POOL_DIR}" 2>&1 | tail -3
+echo "  Pool: ${POOL_DIR} ($(ls ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l) scenarios)"
+echo ""
+
 # ── Progress monitor ─────────────────────────────────────────────────────────
 monitor_progress() {
     local EXP_NAME="$1"
@@ -135,6 +149,7 @@ run_experiment() {
             --n-envs ${N_ENVS} \
             --timesteps ${TIMESTEPS} \
             --log-dir "${LOG_DIR}" \
+            --scenario-pool "${POOL_DIR}" \
             ${EXTRA_ARGS} \
             > "${LOG_BASE}/${LOG_PREFIX}_seed${SEED}.log" 2>&1 &
         sleep 5

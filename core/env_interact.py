@@ -156,6 +156,7 @@ class TrafficEnv(gym.Env):
         self._env_seed = env_seed
         self._episode_count: int = 0
         self._tmp_dir: Optional[Path] = None
+        self._scenario_manager = None  # set via set_scenario_manager()
 
         self._sumo_proc: Optional[subprocess.Popen] = None
         self._port: int = 0
@@ -168,6 +169,10 @@ class TrafficEnv(gym.Env):
     # ------------------------------------------------------------------
     # gymnasium interface
     # ------------------------------------------------------------------
+
+    def set_scenario_manager(self, manager) -> None:
+        """Attach a ScenarioManager for pre-generated scenario cycling."""
+        self._scenario_manager = manager
 
     def reset(
         self,
@@ -185,8 +190,20 @@ class TrafficEnv(gym.Env):
         self._anomaly_injector = None
 
         if not self.dry_run:
-            # Re-generate demand profile and routes every episode
-            if self._demand_config is not None:
+            if self._scenario_manager is not None:
+                # Use pre-generated scenario from pool
+                self.sumo_cfg_path = self._scenario_manager.get_next_scenario()
+                # Anomaly injector for this episode
+                ep_seed = self._env_seed * 100_000 + self._episode_count
+                acfg = self._anomaly_config or {}
+                if acfg.get("enabled", False):
+                    from traffic_environment.anomaly_injector import AnomalyInjector
+                    self._anomaly_injector = AnomalyInjector(
+                        anomaly_prob=acfg.get("probability", 0.15),
+                        seed=ep_seed + 50_000,
+                    )
+            elif self._demand_config is not None:
+                # Fallback: generate on-the-fly
                 self._regenerate_routes()
             self._start_sumo()
             self._advance_sumo(self._steps_per_window)

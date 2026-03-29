@@ -57,12 +57,17 @@ def _load_config(box5: bool = False) -> dict:
     return cfg
 
 
-def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
+def _make_env_fn(
+    cfg: dict,
+    seed: int,
+    worker_idx: int = 0,
+    scenario_pool_dir: str = "",
+):
     """Return a callable that creates a TrafficEnv (for SubprocVecEnv).
 
-    The env regenerates demand + routes every reset(), so each episode
-    sees a different stochastic traffic profile.  Workers are seeded
-    with ``seed * 1000 + worker_idx`` for reproducible diversity.
+    If ``scenario_pool_dir`` is set, the env loads pre-generated scenarios
+    from disk via ScenarioManager (fast, reproducible, portable).
+    Otherwise falls back to on-the-fly route generation (slower).
     """
     def _thunk():
         from sar_components.discovery import discover_components
@@ -88,27 +93,47 @@ def _make_env_fn(cfg: dict, seed: int, worker_idx: int = 0):
 
         from stable_baselines3.common.monitor import Monitor
 
-        env = TrafficEnv(
-            sumo_cfg_path=None,  # will be set by _regenerate_routes()
-            state_repr=state_repr,
-            action_strat=action_strat,
-            reward_func=reward_func,
-            episode_duration=sumo_cfg["episode_duration_s"],
-            cav_percent=scenario_cfg["cav_percentage"] / 100.0,
-            aggregation_time=sumo_cfg["aggregation_time"],
-            demand_config=scenario_cfg["stochastic_demand"],
-            anomaly_config=scenario_cfg.get("anomalies"),
-            env_seed=env_seed,
-        )
-        # Override dry_run — we have demand_config, routes will be generated
-        env.dry_run = False
+        if scenario_pool_dir:
+            # Pre-generated scenarios — fast, portable
+            from traffic_environment.scenario_pool import ScenarioManager
+            env = TrafficEnv(
+                sumo_cfg_path=None,
+                state_repr=state_repr,
+                action_strat=action_strat,
+                reward_func=reward_func,
+                episode_duration=sumo_cfg["episode_duration_s"],
+                cav_percent=scenario_cfg["cav_percentage"] / 100.0,
+                aggregation_time=sumo_cfg["aggregation_time"],
+                anomaly_config=scenario_cfg.get("anomalies"),
+                env_seed=env_seed,
+            )
+            env.dry_run = False
+            mgr = ScenarioManager(scenario_pool_dir, worker_seed=env_seed)
+            env.set_scenario_manager(mgr)
+        else:
+            # On-the-fly generation (legacy fallback)
+            env = TrafficEnv(
+                sumo_cfg_path=None,
+                state_repr=state_repr,
+                action_strat=action_strat,
+                reward_func=reward_func,
+                episode_duration=sumo_cfg["episode_duration_s"],
+                cav_percent=scenario_cfg["cav_percentage"] / 100.0,
+                aggregation_time=sumo_cfg["aggregation_time"],
+                demand_config=scenario_cfg["stochastic_demand"],
+                anomaly_config=scenario_cfg.get("anomalies"),
+                env_seed=env_seed,
+            )
+            env.dry_run = False
+
         return Monitor(env)
 
     return _thunk
 
 
 def _train_single_seed(
-    algo: str, seed: int, cfg: dict, timesteps: int, n_envs: int, log_dir: Path
+    algo: str, seed: int, cfg: dict, timesteps: int, n_envs: int, log_dir: Path,
+    scenario_pool_dir: str = "",
 ):
     """Train one seed of SAC or TQC with optional SubprocVecEnv."""
     import torch
@@ -168,15 +193,22 @@ def _train_single_seed(
     print(f"{'='*60}")
 
     # Create vectorized training env
+    pool = scenario_pool_dir
     if n_envs > 1:
-        env_fns = [_make_env_fn(cfg, seed, worker_idx=i) for i in range(n_envs)]
+        env_fns = [
+            _make_env_fn(cfg, seed, worker_idx=i, scenario_pool_dir=pool)
+            for i in range(n_envs)
+        ]
         train_env = SubprocVecEnv(env_fns)
     else:
-        train_env = DummyVecEnv([_make_env_fn(cfg, seed, worker_idx=0)])
+        train_env = DummyVecEnv([
+            _make_env_fn(cfg, seed, worker_idx=0, scenario_pool_dir=pool)
+        ])
 
     # Eval env — always single, separate seed space for independence.
-    # Uses stochastic demand too (different profile each eval episode).
-    eval_env = DummyVecEnv([_make_env_fn(cfg, seed + 5000, worker_idx=0)])
+    eval_env = DummyVecEnv([
+        _make_env_fn(cfg, seed + 5000, worker_idx=0, scenario_pool_dir=pool)
+    ])
 
     # Model directory
     model_dir = log_dir / f"{algo}_seed{seed}"
@@ -320,6 +352,12 @@ def main():
         "--log-dir", type=str, default=None,
         help="Output directory (default: training_runs/<timestamp>)",
     )
+    parser.add_argument(
+        "--scenario-pool", type=str, default="",
+        help="Path to pre-generated scenario pool directory. "
+             "If set, loads .sumocfg files from this directory instead of "
+             "generating routes on-the-fly. Use generate_scenarios.py to create.",
+    )
     args = parser.parse_args()
 
     cfg = _load_config(box5=args.box5)
@@ -346,8 +384,17 @@ def main():
     print(f"  Stochastic demand: peak [{cfg['scenario']['stochastic_demand']['peak_demand_range']}] vph")
     print(f"  Anomaly prob: {cfg['scenario']['anomalies']['probability']}")
 
+    pool_dir = args.scenario_pool
+    if pool_dir:
+        print(f"  Scenario pool: {pool_dir}")
+    else:
+        print(f"  Scenario pool: (on-the-fly generation)")
+
     for seed in args.seeds:
-        _train_single_seed(args.algo, seed, cfg, timesteps, n_envs, log_dir)
+        _train_single_seed(
+            args.algo, seed, cfg, timesteps, n_envs, log_dir,
+            scenario_pool_dir=pool_dir,
+        )
 
     print(f"\n{'='*60}")
     print(f"All seeds complete. Results in {log_dir}")

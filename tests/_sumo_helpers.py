@@ -154,13 +154,29 @@ def generate_sumocfg(
     rou_path: Path,
     episode_s: int = 3600,
 ) -> None:
-    """Write a .sumocfg pointing at the ramps_v1 network."""
+    """Write a .sumocfg with paths relative to the .sumocfg location.
+
+    This ensures scenario pools are portable across machines — the
+    .sumocfg uses relative paths to the network/detector files and
+    the route file, so the pool directory can be copied anywhere as
+    long as the repo structure is preserved.
+    """
+    cfg_dir = Path(cfg_path).resolve().parent
+
+    # Route file: always relative (typically in same directory)
+    rou_rel = os.path.relpath(Path(rou_path).resolve(), cfg_dir)
+
+    # Net/det files: use absolute paths to ensure portability
+    # regardless of where the scenario pool is stored
+    net_abs = str(NET_FILE.resolve())
+    det_abs = str(DET_FILE.resolve())
+
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <input>
-        <net-file value="{NET_FILE.resolve()}"/>
-        <route-files value="{rou_path.resolve()}"/>
-        <additional-files value="{DET_FILE.resolve()}"/>
+        <net-file value="{net_abs}"/>
+        <route-files value="{rou_rel}"/>
+        <additional-files value="{det_abs}"/>
     </input>
     <time>
         <begin value="0"/>
