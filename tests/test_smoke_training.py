@@ -141,7 +141,7 @@ def test_env_dry_run():
         sar_config = {"max_flow_vph": 8000, "max_ramp_flow_vph": 2000}
         s = create_state_representation("r44_state_v2", sar_config)
         a = create_action_strategy("r44_action_v2", sar_config)
-        r = create_reward_function("r44_reward_v3", sar_config)
+        r = create_reward_function("r44_reward_v4", sar_config)
 
         env = TrafficEnv(None, s, a, r, SMOKE_EPISODE_S)
         obs, info = env.reset()
@@ -178,7 +178,7 @@ def _make_smoke_env():
 
     s = create_state_representation("r44_state_v2", sar_config)
     a = create_action_strategy("r44_action_v2", sar_config)
-    r = create_reward_function("r44_reward_v3", sar_config)
+    r = create_reward_function("r44_reward_v4", sar_config)
 
     profile = generate_demand_profile(
         episode_duration_s=SMOKE_EPISODE_S, seed=42,
