@@ -62,11 +62,20 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[1])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 _SUMO_HOME = os.environ.get("SUMO_HOME", "/usr/share/sumo")
 if os.path.join(_SUMO_HOME, "tools") not in sys.path:
     sys.path.insert(0, os.path.join(_SUMO_HOME, "tools"))
 
 _SUMO_DIR = Path(__file__).resolve().parents[1] / "traffic_environment" / "sumo"
+
+# Use external drive for temp files if /tmp is on a small root partition.
+_EXT_TMP = Path(__file__).resolve().parents[1] / ".tmp_sumo"
+_EXT_TMP.mkdir(exist_ok=True)
+tempfile.tempdir = str(_EXT_TMP)
 _NET_FILE = _SUMO_DIR / "ramps_v2.net.xml"
 _DET_FILE = _SUMO_DIR / "detectors_ramps_v2.add.xml"
 _RESULTS_ROOT = Path(__file__).resolve().parent / "results"
@@ -138,24 +147,14 @@ _ACCEL_THRESHOLD = 0.5
 def _generate_route_file(
     output_path: Path, demand_vph: int, episode_s: int, cav_pct: float,
 ) -> None:
-    routes = ET.Element("routes")
-    ET.SubElement(routes, "vType", id="HDV", carFollowModel="Krauss",
-                  vClass="passenger", color="1,1,0", length="4.50", minGap="2.50",
-                  accel="2.60", decel="4.50", sigma="0.50", maxSpeed="36.11",
-                  tau="1.40", speedFactor="1.00", speedDev="0.10")
-    ET.SubElement(routes, "vType", id="CAV", carFollowModel="Krauss",
-                  vClass="passenger", color="0,1,0", length="4.50", minGap="1.25",
-                  accel="2.86", decel="4.73", sigma="0.00", maxSpeed="36.11",
-                  tau="1.00", speedFactor="1.00", speedDev="0.00")
-    ET.SubElement(routes, "route", id="mainline_through",
-                  edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after")
-    ET.SubElement(routes, "route", id="ramp_on_through",
-                  edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after")
+    from traffic_environment.vehicle_fleet import generate_fleet_xml, pick_vehicle_type
+
+    fleet_xml = generate_fleet_xml(seed=42)
 
     total_veh = int(demand_vph * episode_s / 3600)
     n_mainline = int(total_veh * _MAINLINE_THROUGH_FRAC)
     n_ramp = total_veh - n_mainline
-    rng = np.random.default_rng(42)
+    rng = np.random.RandomState(43)
     vehicles: List[Tuple[float, str]] = []
 
     def _emit(count, route_id, t_offset, t_span):
@@ -172,14 +171,25 @@ def _generate_route_file(
     _emit(n_ramp, "ramp_on_through", _RAMP_DELAY_S, float(episode_s) - _RAMP_DELAY_S)
     vehicles.sort(key=lambda v: v[0])
 
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append("<routes>")
+    lines.append(fleet_xml)
+    lines.append('  <route id="mainline_through" '
+                 'edges="seg_3_before seg_2_before seg_1_before seg_0_before seg_0_after seg_1_after"/>')
+    lines.append('  <route id="ramp_on_through" '
+                 'edges="ramp_on_approach ramp_on_transition ramp_on_merge seg_0_after seg_1_after"/>')
+
     for vid, (dep, rid) in enumerate(vehicles):
         is_cav = rng.random() * 100.0 < cav_pct
-        ET.SubElement(routes, "vehicle", id=f"veh_{vid}", type="CAV" if is_cav else "HDV",
-                      route=rid, depart=f"{dep:.2f}", departPos="last", departLane="best",
-                      departSpeed="desired", insertionChecks="none")
-    tree = ET.ElementTree(routes)
-    ET.indent(tree, space="  ")
-    tree.write(str(output_path), encoding="unicode", xml_declaration=True)
+        vtype = pick_vehicle_type(rng, is_cav=is_cav)
+        lines.append(f'  <vehicle id="veh_{vid}" type="{vtype}" '
+                     f'route="{rid}" depart="{dep:.2f}" '
+                     f'departPos="last" departLane="best" '
+                     f'departSpeed="desired" insertionChecks="none"/>')
+
+    lines.append("</routes>")
+    with open(output_path, "w") as f:
+        f.write("\n".join(lines))
 
 
 def _generate_sumocfg(cfg_path: Path, rou_path: Path) -> None:
@@ -296,6 +306,12 @@ def _run_scenario(
     md_hard_brake_count = 0
     md_veh_seconds = 0
 
+    # Collision / teleport / emergency stop tracking
+    total_collisions = 0
+    total_teleports = 0
+    total_emergency_stops = 0
+    max_vehs_in_network = 0
+
     e1_records: List[Dict] = []
     max_steps = _EPISODE_S // _AGG_TIME
     tts_veh_seconds = 0
@@ -306,7 +322,7 @@ def _run_scenario(
                 # Apply VSL
                 if mainline_vsl_ms is not None:
                     for veh_id in conn.vehicle.getIDList():
-                        if conn.vehicle.getTypeID(veh_id) != "CAV":
+                        if not conn.vehicle.getTypeID(veh_id).startswith("CAV"):
                             continue
                         edge = conn.vehicle.getRoadID(veh_id)
                         if edge in _CONTROLLED_EDGES:
@@ -315,6 +331,17 @@ def _run_scenario(
                             conn.vehicle.slowDown(veh_id, ramp_vsl_ms, float(_AGG_TIME))
 
                 conn.simulationStep()
+
+                # Track collisions, teleports, emergency stops
+                try:
+                    total_collisions += conn.simulation.getCollidingVehiclesNumber()
+                    total_teleports += conn.simulation.getStartingTeleportNumber()
+                    total_emergency_stops += conn.simulation.getEmergencyStoppingVehiclesNumber()
+                    n_vehs = conn.vehicle.getIDCount()
+                    if n_vehs > max_vehs_in_network:
+                        max_vehs_in_network = n_vehs
+                except Exception:
+                    pass
 
                 sim_time = step_idx * _AGG_TIME + sub_step + 1
                 if sim_time <= _WARMUP_S:
@@ -454,6 +481,12 @@ def _run_scenario(
         # TTS
         "tts_veh_seconds": tts_veh_seconds,
         "tts_veh_hours": round(tts_veh_seconds / 3600, 1),
+
+        # Safety / stability
+        "total_collisions": total_collisions,
+        "total_teleports": total_teleports,
+        "total_emergency_stops": total_emergency_stops,
+        "max_vehs_in_network": max_vehs_in_network,
 
         # Upstream accel/decel
         "up_veh_seconds": up_veh_seconds,
@@ -611,6 +644,14 @@ def main():
                 rate = done / elapsed if elapsed > 0 else 0
                 remaining = (n_tasks - done) / rate if rate > 0 else 0
 
+                col_tag = ""
+                if s.get("total_collisions", 0) > 0:
+                    col_tag += f" COL={s['total_collisions']}"
+                if s.get("total_teleports", 0) > 0:
+                    col_tag += f" TP={s['total_teleports']}"
+                if s.get("total_emergency_stops", 0) > 0:
+                    col_tag += f" ES={s['total_emergency_stops']}"
+
                 print(
                     f"  {_progress_bar(done, n_tasks)} "
                     f"[{done:>4}/{n_tasks}] "
@@ -618,6 +659,8 @@ def main():
                     f"avg|a|={s['up_mean_abs_accel_ms2']:>6} "
                     f"flow={s['avg_ds_flow_vph']:>5} "
                     f"TTS={s['tts_veh_hours']:>6}vh "
+                    f"maxV={s.get('max_vehs_in_network', 0):>4}"
+                    f"{col_tag} "
                     f"[{elapsed:>5.0f}s, ~{remaining/60:.0f}m left, "
                     f"{active_count} active]"
                 )
