@@ -42,6 +42,7 @@ $PY -c "import torch; import stable_baselines3; import sb3_contrib; import traci
 # ── Argument parsing ─────────────────────────────────────────────────────────
 MODE=""
 SINGLE_ALGO=""
+POOL_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -71,12 +72,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 MODE="${MODE:-test}"
-POOL_OVERRIDE=""
 
 case "$MODE" in
   remote)
     N_ENVS=48; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
-    echo "=== REMOTE: 5 seeds × ${N_ENVS} workers ==="
+    echo "=== REMOTE VM: 5 seeds × ${N_ENVS} workers ==="
+    echo "  ⚠  VM will shut down automatically when training completes (or fails)."
     ;;
   local)
     N_ENVS=8; SEEDS="0 1 2 3 4"; TIMESTEPS=1000000
@@ -87,6 +88,34 @@ case "$MODE" in
     echo "=== TEST: 1 seed × ${N_ENVS} workers ==="
     ;;
 esac
+
+# ── Auto-shutdown for remote VMs ─────────────────────────────────────────────
+# When --machine remote, the VM shuts down after training to avoid idle costs.
+# The trap fires on EXIT (covers success, failure, and signals).
+# A 2-minute grace period allows log sync and any post-training hooks.
+if [ "$MODE" = "remote" ]; then
+    _shutdown_vm() {
+        local EXIT_CODE=$?
+        echo ""
+        echo "========================================"
+        if [ $EXIT_CODE -eq 0 ]; then
+            echo "Training completed successfully."
+        else
+            echo "Training exited with code $EXIT_CODE."
+        fi
+        echo "Shutting down VM in 120 seconds..."
+        echo "  (Ctrl+C within 120s to cancel shutdown)"
+        echo "  Finished: $(date)"
+        echo "========================================"
+        # sync logs to disk before shutdown
+        sync
+        # Schedule shutdown with 2-min grace period.
+        # Using 'shutdown' instead of 'poweroff' to allow cancellation.
+        sudo shutdown +2 "Training script finished (exit=$EXIT_CODE). Auto-shutdown." 2>/dev/null \
+            || echo "WARNING: 'sudo shutdown' failed. VM will NOT auto-shutdown."
+    }
+    trap _shutdown_vm EXIT
+fi
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_BASE="training_runs/experiment_${TIMESTAMP}"

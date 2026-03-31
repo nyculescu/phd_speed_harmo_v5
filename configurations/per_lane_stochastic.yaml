@@ -43,6 +43,7 @@ sar_config:
   ramp_low_kph: 40.0
   ramp_high_kph: 90.0
   use_box5: false  # Set true for Box(5) experiments
+  use_box7: false  # Set true for Box(7) per-lane on seg_1 + seg_0 + ramp
 
   # Reward (v4: quadratic penalties, no dead zone, 5× scale)
   ref_flow_vph: 6000.0

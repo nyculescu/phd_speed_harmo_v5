@@ -295,11 +295,17 @@ class TrafficEnv(gym.Env):
         else:
             self._metrics.action = np.array([action], dtype=np.float32)
 
+        # Store raw speed_limits dict for _advance_sumo to use directly
+        self._current_speed_limits_ms = speed_limits_ms
+
+        # Also update metrics.current_speed_limits for backward compat
+        # (state repr and reward may read it)
         for i, seg in enumerate(_CONTROLLED_SEGS):
             limit_ms = speed_limits_ms.get(seg, MAX_SPEED_KPH / 3.6)
-            self._metrics.current_speed_limits[i] = limit_ms * 3.6  # kph
+            if i < len(self._metrics.current_speed_limits):
+                self._metrics.current_speed_limits[i] = limit_ms * 3.6  # kph
 
-        # 3. Advance simulation (pure Lagrangian: only CAV slowDown, no lane setMaxSpeed)
+        # 3. Advance simulation
         if not self.dry_run:
             self._advance_sumo(self._steps_per_window)
             self._collect_metrics()
@@ -460,26 +466,37 @@ class TrafficEnv(gym.Env):
         if conn is None:
             return
 
-        # Per-lane limits for seg_0_before (kph → m/s)
-        per_lane_ms = [
-            self._metrics.current_speed_limits[0] / 3.6,  # L0
-            self._metrics.current_speed_limits[1] / 3.6,  # L1
-            self._metrics.current_speed_limits[2] / 3.6,  # L2
+        sl = getattr(self, "_current_speed_limits_ms", {})
+
+        # Per-lane limits for seg_0_before
+        seg0_per_lane_ms = [
+            sl.get("seg_0_before_L0", MAX_SPEED_KPH / 3.6),
+            sl.get("seg_0_before_L1", MAX_SPEED_KPH / 3.6),
+            sl.get("seg_0_before_L2", MAX_SPEED_KPH / 3.6),
         ]
-        ramp_limit_ms = self._metrics.current_speed_limits[3] / 3.6
+        ramp_limit_ms = sl.get("ramp_on_transition", MAX_SPEED_KPH / 3.6)
 
-        # Upstream limit: for seg_1_before and seg_2_before
-        upstream_limit_ms = min(per_lane_ms)
+        # Per-lane limits for seg_1_before (Box(7)) or uniform
+        has_seg1_per_lane = "seg_1_before_L0" in sl
+        if has_seg1_per_lane:
+            seg1_per_lane_ms = [
+                sl.get("seg_1_before_L0", MAX_SPEED_KPH / 3.6),
+                sl.get("seg_1_before_L1", MAX_SPEED_KPH / 3.6),
+                sl.get("seg_1_before_L2", MAX_SPEED_KPH / 3.6),
+            ]
+            upstream_limit_ms = min(seg1_per_lane_ms)
+        else:
+            seg1_per_lane_ms = None
+            upstream_limit_ms = sl.get("seg_1_before", min(seg0_per_lane_ms))
 
-        # Box(5) physical VSL on seg_1_before (if present)
-        use_physical = len(self._metrics.current_speed_limits) > 4
-        if use_physical:
-            seg1_physical_ms = self._metrics.current_speed_limits[4] / 3.6
-            upstream_limit_ms = seg1_physical_ms
+        # Box(5) physical VSL on seg_1_before (edge-wide speed limit for HDVs)
+        if "seg_1_before_physical" in sl:
             try:
-                conn.edge.setMaxSpeed("seg_1_before", seg1_physical_ms)
+                conn.edge.setMaxSpeed("seg_1_before", sl["seg_1_before_physical"])
             except Exception:
                 pass
+
+        seg2_limit_ms = sl.get("seg_2_before", upstream_limit_ms)
 
         # Apply CAV slowDown every _SLOWDOWN_INTERVAL steps (not every step).
         # The slowDown() duration covers the full aggregation window, so
@@ -509,7 +526,11 @@ class TrafficEnv(gym.Env):
                     self._metrics.anomaly_type = self._anomaly_injector.event.anomaly_type
 
             if self.cav_percent > 0.0 and i % _SLOWDOWN_INTERVAL == 0:
-                self._apply_cav_slowdown(per_lane_ms, ramp_limit_ms, upstream_limit_ms)
+                self._apply_cav_slowdown(
+                    seg0_per_lane_ms, ramp_limit_ms, upstream_limit_ms,
+                    seg1_per_lane_ms=seg1_per_lane_ms,
+                    seg2_limit_ms=seg2_limit_ms,
+                )
 
     # ------------------------------------------------------------------
     # Speed control
@@ -517,18 +538,21 @@ class TrafficEnv(gym.Env):
 
     def _apply_cav_slowdown(
         self,
-        per_lane_ms: list,
+        seg0_per_lane_ms: list,
         ramp_limit_ms: float,
         upstream_limit_ms: float,
+        seg1_per_lane_ms: list = None,
+        seg2_limit_ms: float = None,
     ) -> None:
         """Issue slowDown() to CAVs on controlled edges.
 
-        Per-lane control on seg_0_before; uniform on other controlled edges.
-        Implements the "release point" design: CAVs past the merge drive at
-        free-flow speed.  See docs/slowDown_argument.md.
+        Per-lane control on seg_0_before (always) and seg_1_before (Box(7)).
+        Uniform on seg_2_before. Implements "release point" design.
         """
         conn = self._traci_conn
         duration = float(self.aggregation_time)
+        _seg2_ms = seg2_limit_ms if seg2_limit_ms is not None else upstream_limit_ms
+
         for veh_id in conn.vehicle.getIDList():
             try:
                 vtype = conn.vehicle.getTypeID(veh_id)
@@ -545,11 +569,21 @@ class TrafficEnv(gym.Env):
                 # Per-lane differential control
                 try:
                     lane_idx = conn.vehicle.getLaneIndex(veh_id)
-                    limit = per_lane_ms[lane_idx] if lane_idx < len(per_lane_ms) else per_lane_ms[0]
+                    limit = seg0_per_lane_ms[lane_idx] if lane_idx < len(seg0_per_lane_ms) else seg0_per_lane_ms[0]
                 except Exception:
-                    limit = per_lane_ms[0]
-            elif edge in ("seg_1_before", "seg_2_before"):
-                limit = upstream_limit_ms
+                    limit = seg0_per_lane_ms[0]
+            elif edge == "seg_1_before":
+                if seg1_per_lane_ms is not None:
+                    # Box(7): per-lane on seg_1_before too
+                    try:
+                        lane_idx = conn.vehicle.getLaneIndex(veh_id)
+                        limit = seg1_per_lane_ms[lane_idx] if lane_idx < len(seg1_per_lane_ms) else seg1_per_lane_ms[0]
+                    except Exception:
+                        limit = seg1_per_lane_ms[0]
+                else:
+                    limit = upstream_limit_ms
+            elif edge == "seg_2_before":
+                limit = _seg2_ms
             elif edge in _RAMP_CONTROLLED_EDGES:
                 limit = ramp_limit_ms
             else:
