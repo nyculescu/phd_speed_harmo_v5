@@ -46,6 +46,12 @@ os.chdir(_PROJECT)
 
 _SUMO_HOME = os.environ.get("SUMO_HOME", "/usr/share/sumo")
 sys.path.insert(0, os.path.join(_SUMO_HOME, "tools"))
+_SEED_MOD = 2 ** 32
+
+
+def _seed_u32(seed: int, offset: int = 0) -> int:
+    """Fold any integer seed into NumPy RandomState's valid [0, 2**32-1] range."""
+    return int((int(seed) + int(offset)) % _SEED_MOD)
 
 
 def _load_config(box5: bool = False) -> dict:
@@ -89,7 +95,7 @@ def _make_env_fn(
         reward_func = create_reward_function(cfg["sar"]["reward"], sar_config)
 
         # Each worker gets a unique seed for demand diversity
-        env_seed = seed * 1000 + worker_idx
+        env_seed = _seed_u32(seed * 1000, worker_idx)
 
         from stable_baselines3.common.monitor import Monitor
 

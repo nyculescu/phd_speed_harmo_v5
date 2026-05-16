@@ -27,6 +27,7 @@ from .env_metrics import TrafficMetrics
 from .sar_frame import ActionStrategy, RewardFunction, StateRepresentation
 
 logger = logging.getLogger(__name__)
+_SEED_MOD = 2 ** 32
 
 # ---------------------------------------------------------------------------
 # ramps_v2 topology constants
@@ -91,6 +92,11 @@ def _free_port(min_port: int = 20000, max_port: int = 60000) -> int:
     raise RuntimeError("Could not find a free port after 200 random attempts")
 
 
+def _seed_u32(seed: int, offset: int = 0) -> int:
+    """Fold any integer seed into NumPy RandomState's valid [0, 2**32-1] range."""
+    return int((int(seed) + int(offset)) % _SEED_MOD)
+
+
 # ---------------------------------------------------------------------------
 # TrafficEnv
 # ---------------------------------------------------------------------------
@@ -153,7 +159,7 @@ class TrafficEnv(gym.Env):
         # Stochastic demand: regenerate routes every reset()
         self._demand_config = demand_config  # None → use fixed sumo_cfg_path
         self._anomaly_config = anomaly_config
-        self._env_seed = env_seed
+        self._env_seed = _seed_u32(env_seed)
         self._episode_count: int = 0
         self._tmp_dir: Optional[Path] = None
         self._scenario_manager = None  # set via set_scenario_manager()
@@ -194,13 +200,13 @@ class TrafficEnv(gym.Env):
                 # Use pre-generated scenario from pool
                 self.sumo_cfg_path = self._scenario_manager.get_next_scenario()
                 # Anomaly injector for this episode
-                ep_seed = self._env_seed * 100_000 + self._episode_count
+                ep_seed = _seed_u32(self._env_seed * 100_000, self._episode_count)
                 acfg = self._anomaly_config or {}
                 if acfg.get("enabled", False):
                     from traffic_environment.anomaly_injector import AnomalyInjector
                     self._anomaly_injector = AnomalyInjector(
                         anomaly_prob=acfg.get("probability", 0.15),
-                        seed=ep_seed + 50_000,
+                        seed=_seed_u32(ep_seed, 50_000),
                     )
             elif self._demand_config is not None:
                 # Fallback: generate on-the-fly
@@ -220,7 +226,7 @@ class TrafficEnv(gym.Env):
 
         # Unique seed per episode: env_seed gives worker identity,
         # episode_count gives temporal diversity
-        ep_seed = self._env_seed * 100_000 + self._episode_count
+        ep_seed = _seed_u32(self._env_seed * 100_000, self._episode_count)
 
         dcfg = self._demand_config
         profile = generate_demand_profile(
@@ -239,7 +245,7 @@ class TrafficEnv(gym.Env):
         if acfg.get("enabled", False):
             self._anomaly_injector = AnomalyInjector(
                 anomaly_prob=acfg.get("probability", 0.15),
-                seed=ep_seed + 50_000,
+                seed=_seed_u32(ep_seed, 50_000),
             )
         else:
             self._anomaly_injector = None
@@ -260,7 +266,7 @@ class TrafficEnv(gym.Env):
         generate_stochastic_route_file(
             rou_path, profile,
             cav_pct=self.cav_percent * 100.0,
-            seed=ep_seed + 10_000,
+            seed=_seed_u32(ep_seed, 10_000),
         )
         generate_sumocfg(cfg_path, rou_path, self.episode_duration)
 

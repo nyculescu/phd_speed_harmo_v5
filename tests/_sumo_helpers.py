@@ -32,6 +32,12 @@ RESULTS_ROOT = Path(__file__).resolve().parent / "results"
 DEFAULT_AGG_TIME = 30
 DEFAULT_CAV_PCT = 50.0
 RAMP_DELAY_S = 100.0
+_SEED_MOD = 2 ** 32
+
+
+def _seed_u32(seed: int, offset: int = 0) -> int:
+    """Fold any integer seed into NumPy RandomState's valid [0, 2**32-1] range."""
+    return int((int(seed) + int(offset)) % _SEED_MOD)
 
 
 def generate_route_file(
@@ -46,6 +52,7 @@ def generate_route_file(
         generate_fleet_xml, pick_vehicle_type,
     )
 
+    seed = _seed_u32(seed)
     fleet_xml = generate_fleet_xml(seed=seed)
 
     lines = ['<?xml version="1.0" encoding="UTF-8"?>']
@@ -60,7 +67,7 @@ def generate_route_file(
     n_mainline = int(total_veh * 0.75)
     n_ramp = total_veh - n_mainline
 
-    rng = np.random.RandomState(seed + 1000)
+    rng = np.random.RandomState(_seed_u32(seed, 1000))
     vehicles = []
 
     def _add(count, route_id, t_offset, t_span):
@@ -103,9 +110,10 @@ def generate_stochastic_route_file(
         generate_fleet_xml, pick_vehicle_type,
     )
 
+    seed = _seed_u32(seed)
     fleet_xml = generate_fleet_xml(seed=seed)
 
-    rng = np.random.RandomState(seed + 1000)
+    rng = np.random.RandomState(_seed_u32(seed, 1000))
     vehicles = []
     veh_id = 0
 

@@ -22,9 +22,23 @@ warn()  { echo -e "${YELLOW}[WARN]${NC_COL} $*"; }
 error() { echo -e "${RED}[ERROR]${NC_COL} $*"; exit 1; }
 
 # ── Configuration ────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_URL="git@github.com:nyculescu/phd_speed_harmo_v5.git"
+REPO_HTTPS_URL="https://github.com/nyculescu/phd_speed_harmo_v5.git"
 BRANCH="main"
-INSTALL_DIR="${INSTALL_DIR:-/workspace/phd_speed_harmo_v5}"
+
+# Pick an install dir that works both on cloud (/workspace) and local machines.
+if [ -n "${INSTALL_DIR:-}" ]; then
+    INSTALL_DIR="$INSTALL_DIR"
+elif [ -d "$SCRIPT_DIR/.git" ]; then
+    INSTALL_DIR="$SCRIPT_DIR"
+elif [ -w "/workspace" ]; then
+    INSTALL_DIR="/workspace/phd_speed_harmo_v5"
+else
+    INSTALL_DIR="$HOME/phd_speed_harmo_v5"
+    warn "/workspace is not writable. Falling back to INSTALL_DIR=$INSTALL_DIR"
+fi
+
 PYTHON_VERSION="3.12"
 
 # ── Step 1: System packages ──────────────────────────────────────────────────
@@ -106,7 +120,10 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     git pull origin "$BRANCH"
 else
     info "Cloning repository..."
-    git clone -b "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
+    if ! git clone -b "$BRANCH" "$REPO_URL" "$INSTALL_DIR"; then
+        warn "SSH clone failed, retrying with HTTPS..."
+        git clone -b "$BRANCH" "$REPO_HTTPS_URL" "$INSTALL_DIR"
+    fi
     cd "$INSTALL_DIR"
 fi
 
@@ -122,7 +139,7 @@ source .venv/bin/activate
 
 # ── Step 5: Install Python dependencies ───────────────────────────────────────
 info "Upgrading pip..."
-pip install --upgrade pip setuptools wheel -q
+pip install --upgrade pip "setuptools<82" wheel -q
 
 info "Installing Python requirements..."
 pip install -r requirements.txt -q

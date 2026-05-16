@@ -42,6 +42,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+_SEED_MOD = 2 ** 32
+
+
+def _seed_u32(seed: int, offset: int = 0) -> int:
+    """Fold any integer seed into NumPy RandomState's valid [0, 2**32-1] range."""
+    return int((int(seed) + int(offset)) % _SEED_MOD)
+
 
 # ── Base vehicle specifications ──────────────────────────────────────────────
 
@@ -226,7 +233,7 @@ def generate_fleet_xml(
       Reckless HDV: len(BASE_SPECS) × n_variants_hdv
       CAV:          len(BASE_SPECS) × n_variants_cav
     """
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(_seed_u32(seed))
     lines = []
 
     for vtype_name, specs in BASE_SPECS.items():
