@@ -1,107 +1,60 @@
 #!/usr/bin/env bash
-# deploy_4vm.sh — Deploy one experiment per VM (4 VMs total).
+# deploy_4vm.sh — Run ON each VM with an integer 1-4 selecting the experiment.
 #
-# Usage:
-#   ./deploy_4vm.sh vm1-host vm2-host vm3-host vm4-host
-#   ./deploy_4vm.sh user@10.0.0.1 user@10.0.0.2 user@10.0.0.3 user@10.0.0.4
+# Usage (after deploy_remote.sh has bootstrapped this VM):
+#   ./deploy_4vm.sh <N>
+#     1 → SAC Box(4)    2 → TQC Box(4)    3 → SAC Box(5)    4 → TQC Box(5)
 #
-# Each VM runs one Box variant:
-#   VM1: SAC Box(4)    VM2: TQC Box(4)    VM3: SAC Box(5)    VM4: TQC Box(5)
+# Generates a deterministic shared scenario pool (seed=42) so all 4 VMs
+# train on identical demand distributions — fair cross-algorithm comparison.
 #
-# Prerequisites on each VM:
-#   - git clone <repo> ~/phd_speed_harmo_v5
-#   - pip install -r requirements.txt
-#   - SUMO installed (apt install sumo sumo-tools)
-#
-# The script:
-#   1. Pushes latest code to all 4 VMs (git pull)
-#   2. Generates identical scenario pools on each VM (same --seed)
-#   3. Launches training in tmux sessions (detached, survives SSH disconnect)
-#   4. Shows how to monitor progress
+# Run inside tmux so SSH drops don't kill the trainer or block auto-shutdown:
+#   tmux new -s v5
+#   ./deploy_4vm.sh 2
+#   # Ctrl-B, D to detach; tmux attach -t v5 to reattach
 
 set -euo pipefail
+cd "$(dirname "$0")"
 
-if [ $# -ne 4 ]; then
-    echo "Usage: $0 <vm1-host> <vm2-host> <vm3-host> <vm4-host>"
-    echo "  Each host is an SSH target, e.g. user@10.0.0.1"
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <1|2|3|4>"
+    echo "  1 → SAC Box(4)    2 → TQC Box(4)    3 → SAC Box(5)    4 → TQC Box(5)"
     exit 1
 fi
 
-VM1="$1"  # SAC Box(4)
-VM2="$2"  # TQC Box(4)
-VM3="$3"  # SAC Box(5)
-VM4="$4"  # TQC Box(5)
+case "$1" in
+  1) ALGO="sac_4"; LABEL="SAC Box(4)" ;;
+  2) ALGO="tqc_4"; LABEL="TQC Box(4)" ;;
+  3) ALGO="sac_5"; LABEL="SAC Box(5)" ;;
+  4) ALGO="tqc_5"; LABEL="TQC Box(5)" ;;
+  *) echo "ERROR: arg must be 1, 2, 3, or 4 (got: $1)"; exit 1 ;;
+esac
 
-REPO_DIR="phd_speed_harmo_v5"
-POOL_DIR="scenario_pools/shared"
+# Pre-flight: refuse to run if the VM hasn't been bootstrapped.
+[ -x .venv/bin/python3 ] || { echo "ERROR: .venv missing — run deploy_remote.sh first."; exit 1; }
+[ -x launch_training.sh ] || { echo "ERROR: launch_training.sh missing or not executable."; exit 1; }
+command -v sumo >/dev/null || { echo "ERROR: SUMO not on PATH (check SUMO_HOME / deploy_remote.sh)."; exit 1; }
+
 POOL_SEED=42
 POOL_N=200
+POOL_DIR="scenario_pools/shared_seed${POOL_SEED}_n${POOL_N}"
 
-declare -A ALGO_MAP
-ALGO_MAP[$VM1]="sac_4"
-ALGO_MAP[$VM2]="tqc_4"
-ALGO_MAP[$VM3]="sac_5"
-ALGO_MAP[$VM4]="tqc_5"
-
-echo "=== 4-VM Deployment ==="
-echo "  VM1 ($VM1): SAC Box(4)"
-echo "  VM2 ($VM2): TQC Box(4)"
-echo "  VM3 ($VM3): SAC Box(5)"
-echo "  VM4 ($VM4): TQC Box(5)"
-echo ""
-
-# Step 1: Update code on all VMs
-echo ">>> Step 1: Pulling latest code on all VMs..."
-for VM in "$VM1" "$VM2" "$VM3" "$VM4"; do
-    echo "  $VM..."
-    ssh "$VM" "cd ~/${REPO_DIR} && git pull --ff-only" &
-done
-wait
-echo "  Done."
-echo ""
-
-# Step 2: Generate identical scenario pools
-echo ">>> Step 2: Generating scenario pools (seed=${POOL_SEED}, n=${POOL_N})..."
-for VM in "$VM1" "$VM2" "$VM3" "$VM4"; do
-    echo "  $VM..."
-    ssh "$VM" "cd ~/${REPO_DIR} && python3 generate_scenarios.py focused \
+if [ ! -d "${POOL_DIR}" ] || [ "$(ls -1 ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l)" -lt "${POOL_N}" ]; then
+    echo ">>> Generating shared pool (seed=${POOL_SEED}, n=${POOL_N})..."
+    .venv/bin/python3 generate_scenarios.py focused \
         --n ${POOL_N} --band 5500 7250 --noise 200 --seed ${POOL_SEED} \
         --weather 'clear:0.7,rain:0.2,fog:0.1' \
-        -o ${POOL_DIR}" &
-done
-wait
-echo "  Done."
+        -o "${POOL_DIR}"
+else
+    echo ">>> Reusing existing pool: ${POOL_DIR} ($(ls -1 ${POOL_DIR}/*.sumocfg | wc -l) scenarios)"
+fi
+
+echo ""
+echo "=========================================="
+echo "  This VM → ${LABEL} (${ALGO})"
+echo "  Auto-shutdown ON. VM dies ~2 min after training finishes."
+echo "  Started: $(date)"
+echo "=========================================="
 echo ""
 
-# Step 3: Launch training in tmux (survives SSH disconnect)
-echo ">>> Step 3: Launching training..."
-for VM in "$VM1" "$VM2" "$VM3" "$VM4"; do
-    ALGO="${ALGO_MAP[$VM]}"
-    echo "  $VM → ${ALGO}..."
-    ssh "$VM" "cd ~/${REPO_DIR} && \
-        tmux new-session -d -s train_${ALGO} \
-        './launch_training.sh --machine remote --single_algo ${ALGO} --pool ${POOL_DIR}'"
-done
-echo "  All 4 experiments launched."
-echo ""
-
-# Step 4: Monitoring instructions
-echo "=== MONITORING ==="
-echo ""
-echo "Attach to a running experiment:"
-for VM in "$VM1" "$VM2" "$VM3" "$VM4"; do
-    ALGO="${ALGO_MAP[$VM]}"
-    echo "  ssh ${VM} -t 'tmux attach -t train_${ALGO}'"
-done
-echo ""
-echo "Quick status check (all VMs):"
-echo "  for VM in ${VM1} ${VM2} ${VM3} ${VM4}; do"
-echo "    echo \"=== \$VM ===\""
-echo "    ssh \$VM 'tail -5 ~/${REPO_DIR}/training_runs/experiment_*/sac_box*_seed0.log ~/${REPO_DIR}/training_runs/experiment_*/tqc_box*_seed0.log 2>/dev/null | tail -10'"
-echo "  done"
-echo ""
-echo "Collect results when done:"
-echo "  mkdir -p results_4vm"
-echo "  for VM in ${VM1} ${VM2} ${VM3} ${VM4}; do"
-echo "    scp -r \${VM}:~/${REPO_DIR}/training_runs/experiment_* results_4vm/"
-echo "  done"
+exec ./launch_training.sh --machine remote --single_algo "${ALGO}" --pool "${POOL_DIR}"
