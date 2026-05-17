@@ -158,6 +158,52 @@ def _diff_mild_action(box5: bool = False) -> np.ndarray:
     return np.array([105.0, 110.0, 115.0, 70.0], dtype=np.float32)
 
 
+# ── Regime-aware (SPECIALIST-style) policy helpers ─────────────────────────────
+#
+# Per the fundamental flow-density diagram (and core/regime_detector.py):
+#
+#   FREE_FLOW   (speed ≥ 75 kph): below critical density — VSL has no leverage,
+#               drivers travel at desired speeds; posting a lower limit just
+#               annoys without benefit.
+#   METASTABLE  (45 ≤ speed < 75): the operating point where VSL CAN prevent
+#               capacity drop. A reduced limit here suppresses jam-wave
+#               formation (Hegyi et al. SPECIALIST; Ko et al.). This is the
+#               ONLY regime where a fixed-limit baseline should actually fire.
+#   CONGESTED   (speed < 45): beyond critical — flow has already collapsed.
+#               VSL is non-binding because vehicles can't reach the posted
+#               limit anyway. Posting a low limit gains nothing.
+#
+# A regime-aware fixed policy switches between an "active" action (posted only
+# during METASTABLE) and a "free" action (NC equivalent, no intervention).
+# The DRL agent has the same regime one-hot in its 77-d observation at indices
+# 69 (FREE_FLOW), 70 (METASTABLE), 71 (CONGESTED) of the newest stacked frame.
+# This gives an apples-to-apples comparison: the rule-based policy and the
+# learned policy both see the regime signal.
+
+# Obs indices for the latest (newest) frame's regime one-hot. r44_state_v2
+# stacks 3 frames of 24 features (= 72) + 5 static; newest frame is the last
+# block, so its in-frame indices 21/22/23 land at 48+21, 48+22, 48+23 = 69, 70, 71.
+_OBS_REGIME_FREE = 69
+_OBS_REGIME_META = 70
+_OBS_REGIME_CONG = 71
+
+
+def _make_uniform_active(main_kph: float, ramp_kph: float, box5: bool = False) -> np.ndarray:
+    """Uniform mainline + scaled ramp for a regime-aware policy's ACTIVE state."""
+    if box5:
+        return np.array([main_kph, main_kph, main_kph, ramp_kph,
+                         min(main_kph + 5.0, 120.0)], dtype=np.float32)
+    return np.array([main_kph, main_kph, main_kph, ramp_kph], dtype=np.float32)
+
+
+def _make_differential_active(L0: float, L1: float, L2: float, ramp: float,
+                              box5: bool = False) -> np.ndarray:
+    """Per-lane differential for a regime-aware policy's ACTIVE state."""
+    if box5:
+        return np.array([L0, L1, L2, ramp, max(L0, L1, L2) + 5.0], dtype=np.float32)
+    return np.array([L0, L1, L2, ramp], dtype=np.float32)
+
+
 def run_episode(env, policy_fn, episode_seed: int):
     """
     Run one episode with a given policy function.
@@ -325,6 +371,14 @@ def _run_single_task(task):
     if policy_type == "static":
         action = np.array(static_action, dtype=np.float32)
         policy_fn = lambda obs: action
+    elif policy_type == "regime_aware":
+        # Conditional fixed-limit: post `active_action` ONLY when the regime
+        # detector says METASTABLE; otherwise post `free_action` (= NC).
+        # Matches SPECIALIST activation logic (Hegyi et al.). The regime
+        # one-hot lives at obs[70] for the latest frame.
+        active = np.array(task["active_action"], dtype=np.float32)
+        free = np.array(task["free_action"], dtype=np.float32)
+        policy_fn = lambda obs: active if obs[_OBS_REGIME_META] > 0.5 else free
     else:
         model = _load_model(model_path, policy_name)
         policy_fn = lambda obs: model.predict(obs, deterministic=True)[0]
@@ -432,7 +486,9 @@ def main():
     # Build task list: all (policy, episode) pairs
     tasks = []
 
-    # Static baselines
+    # ── Static baselines (always-on, regime-unaware) ─────────────────────────
+    # These post the same action every step. Used as a sanity baseline; not
+    # competitive against an agent that can react to traffic state.
     static_policies = {
         "NC": _nc_action(is_box5).tolist(),
         "M110_uniform": _m110_action(is_box5).tolist(),
@@ -450,6 +506,38 @@ def main():
                 "save_trajectory": ep < 3,
             })
 
+    # ── Regime-aware sweep (SPECIALIST-style, regime-conditioned) ───────────
+    # Active limit fires ONLY in METASTABLE regime; outside that band the
+    # policy falls back to NC (free flow). This is the strongest rule-based
+    # comparison: a trained DRL agent must beat the BEST of these to justify
+    # the learning approach. Sweep covers the action-bound feasible range
+    # (lane ∈ [60, 120], ramp ∈ [40, 90]). Below 60 kph mainline / 40 kph ramp
+    # the action layer would clip, so we don't sweep below those.
+    nc_free = _nc_action(is_box5).tolist()
+    regime_aware_policies = {
+        # (active_action, free_action). free_action is always NC.
+        "M110_active":     (_make_uniform_active(110, 75, is_box5).tolist(), nc_free),
+        "M100_active":     (_make_uniform_active(100, 70, is_box5).tolist(), nc_free),
+        "M90_active":      (_make_uniform_active( 90, 65, is_box5).tolist(), nc_free),
+        "M80_active":      (_make_uniform_active( 80, 60, is_box5).tolist(), nc_free),
+        "M70_active":      (_make_uniform_active( 70, 55, is_box5).tolist(), nc_free),
+        "M60_active":      (_make_uniform_active( 60, 50, is_box5).tolist(), nc_free),
+        "diff_mild_active":       (_make_differential_active(105, 110, 115, 70, is_box5).tolist(), nc_free),
+        "diff_aggressive_active": (_make_differential_active( 80,  90, 100, 55, is_box5).tolist(), nc_free),
+    }
+    for policy_name, (active_action, free_action) in regime_aware_policies.items():
+        for ep in range(n_episodes):
+            tasks.append({
+                "policy_name": policy_name,
+                "policy_type": "regime_aware",
+                "episode": ep,
+                "seed_offset": seed_offset,
+                "cfg": cfg,
+                "active_action": active_action,
+                "free_action": free_action,
+                "save_trajectory": ep < 3,
+            })
+
     # Trained model policies
     for name, path in verified_models.items():
         for ep in range(n_episodes):
@@ -463,7 +551,9 @@ def main():
                 "save_trajectory": ep < 3,
             })
 
-    policy_names = list(static_policies.keys()) + list(verified_models.keys())
+    policy_names = (list(static_policies.keys())
+                    + list(regime_aware_policies.keys())
+                    + list(verified_models.keys()))
     n_total = len(tasks)
     print(flush=True)
     print(f"  Total policies: {len(policy_names)}: {policy_names}", flush=True)
