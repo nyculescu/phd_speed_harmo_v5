@@ -8,8 +8,13 @@ docs/knowledge_base/*
 docs/llm_prompts/*
 .tmp_sumo/
 scenario_pools/
+artifacts/*
 
 # IDE and editor related artifacts
 .vscode/
 .venv/
 .codex
+
+# Per-developer Claude Code settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

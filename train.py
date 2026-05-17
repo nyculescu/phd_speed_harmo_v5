@@ -156,6 +156,28 @@ def _train_single_seed(
     except ImportError:
         has_tqdm = False
 
+    class RewardComponentsCallback(BaseCallback):
+        """Push env info['reward_components'] to TensorBoard.
+
+        SB3 only auto-logs total reward; this surfaces per-term breakdown
+        (harmonization, throughput, lane_eq, smoothness, temporal, etc.) so
+        you can see in TensorBoard which terms actually drive the policy's
+        improvement, not just the aggregate rollout/ep_rew_mean curve.
+
+        Uses record_mean — values accumulate across vec-env workers and
+        across steps within a logger dump interval, then SB3 writes the
+        mean to TB at every logger.dump().
+        """
+
+        def _on_step(self) -> bool:
+            for info in self.locals.get("infos", []):
+                rc = info.get("reward_components")
+                if not rc:
+                    continue
+                for k, v in rc.items():
+                    self.logger.record_mean(f"reward_components/{k}", float(v))
+            return True
+
     class LogProgressCallback(BaseCallback):
         """Line-based progress for log files (no carriage returns)."""
 
@@ -298,7 +320,7 @@ def _train_single_seed(
     )
 
     # Build callback list
-    callbacks = [eval_callback, checkpoint_callback]
+    callbacks = [eval_callback, checkpoint_callback, RewardComponentsCallback()]
     if sys.stdout.isatty() and has_tqdm:
         # Interactive terminal → tqdm progress bar
         callbacks.append(ProgressBarCallback())

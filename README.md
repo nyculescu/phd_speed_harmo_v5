@@ -139,3 +139,45 @@ Segments covered: `seg_2_before`, `seg_1_before`, `seg_0_before`,
 | Absolute action space (Markov-preserving) | Vinitsky et al. (2018); Sutton & Barto (2018) |
 | TQC for continuous distributional RL | Kuznetsov et al. (2020) |
 | Ramp VSL + on-ramp merge | Ko et al. (2020); Zhang et al. (2024) — MARVEL |
+
+---
+
+## Remote VM bootstrap
+
+Reproducible 8-step sequence to take a clean PyTorch VM (Ubuntu, sudo, internet) from zero to a running experiment. Run **on the VM** after SSH-ing in.
+
+```bash
+# 1. Generate an SSH keypair on the VM
+ssh-keygen -t ed25519 -C "phd-vm-$(hostname)" -f ~/.ssh/id_ed25519 -N ""
+
+# 2. Print the public key
+cat ~/.ssh/id_ed25519.pub
+
+# 3. Paste it into GitHub as a *deploy key* on this repo
+#    https://github.com/nyculescu/phd_speed_harmo_v5/settings/keys
+#    (Add deploy key → leave "Allow write access" unchecked → Add key)
+
+# 4. Verify SSH auth to GitHub
+ssh -T git@github.com
+#    Expected: "Hi nyculescu/phd_speed_harmo_v5! You've successfully authenticated..."
+
+# 5. Clone the repo
+git clone git@github.com:nyculescu/phd_speed_harmo_v5.git ~/phd_speed_harmo_v5
+
+# 6. Enter it
+cd ~/phd_speed_harmo_v5
+
+# 7. Bootstrap (system pkgs, SUMO, venv, deps, smoke test) — ~5 min
+bash deploy_remote.sh
+
+# 8. Launch the assigned experiment inside tmux (N ∈ {1,2,3,4})
+tmux new -s v5
+./deploy_4vm.sh N      # 1=SAC Box(4) · 2=TQC Box(4) · 3=SAC Box(5) · 4=TQC Box(5)
+#    Ctrl-B, D to detach.  tmux attach -t v5 to reattach.
+```
+
+**Result collection** must run *while* the VM is alive — `deploy_4vm.sh` triggers auto-shutdown ~2 min after the experiment exits. From your laptop, against each VM:
+
+```bash
+rsync -avz --partial user@vm_N:~/phd_speed_harmo_v5/training_runs/ ./training_runs_vm_N/
+```
