@@ -137,7 +137,7 @@ class TrafficEnv(gym.Env):
         *,
         demand_config: Optional[Dict[str, Any]] = None,
         anomaly_config: Optional[Dict[str, Any]] = None,
-        env_seed: int = 0,
+        env_seed: Optional[int] = 0,
     ) -> None:
         super().__init__()
 
@@ -159,7 +159,11 @@ class TrafficEnv(gym.Env):
         # Stochastic demand: regenerate routes every reset()
         self._demand_config = demand_config  # None → use fixed sumo_cfg_path
         self._anomaly_config = anomaly_config
-        self._env_seed = _seed_u32(env_seed)
+        # env_seed=None → truly random scenarios (fresh entropy each reset).
+        # env_seed=int → deterministic chain: env_seed → episode_count → ep_seed.
+        self._env_seed: Optional[int] = (
+            _seed_u32(env_seed) if env_seed is not None else None
+        )
         self._episode_count: int = 0
         self._tmp_dir: Optional[Path] = None
         self._scenario_manager = None  # set via set_scenario_manager()
@@ -169,6 +173,7 @@ class TrafficEnv(gym.Env):
         self._traci_label: str = ""
         self._traci_conn = None  # traci.Connection — unique per instance
         self._step_count: int = 0
+        self._sumo_seed: int = 0  # set each reset; threaded into `sumo --seed`
         self._metrics: TrafficMetrics = TrafficMetrics()
         self._anomaly_injector = None
 
@@ -179,6 +184,17 @@ class TrafficEnv(gym.Env):
     def set_scenario_manager(self, manager) -> None:
         """Attach a ScenarioManager for pre-generated scenario cycling."""
         self._scenario_manager = manager
+
+    def _compute_ep_seed(self) -> int:
+        """Return a 31-bit episode seed used by demand/route/anomaly generators
+        and by `sumo --seed`.
+
+        - env_seed is None  → fresh entropy each call (truly random scenarios).
+        - env_seed is int   → deterministic: env_seed * 100_000 + episode_count.
+        """
+        if self._env_seed is None:
+            return int.from_bytes(os.urandom(4), "big") & 0x7FFFFFFF
+        return _seed_u32(self._env_seed * 100_000, self._episode_count) & 0x7FFFFFFF
 
     def reset(
         self,
@@ -195,12 +211,17 @@ class TrafficEnv(gym.Env):
         self.reward_func.reset()
         self._anomaly_injector = None
 
+        # Compute episode seed ONCE here, thread it everywhere: route file
+        # generation, anomaly injector, AND `sumo --seed`. This ties SUMO's
+        # internal RNG to the same deterministic chain as Python-side RNG.
+        ep_seed = self._compute_ep_seed()
+        self._sumo_seed = ep_seed
+
         if not self.dry_run:
             if self._scenario_manager is not None:
                 # Use pre-generated scenario from pool
                 self.sumo_cfg_path = self._scenario_manager.get_next_scenario()
                 # Anomaly injector for this episode
-                ep_seed = _seed_u32(self._env_seed * 100_000, self._episode_count)
                 acfg = self._anomaly_config or {}
                 if acfg.get("enabled", False):
                     from traffic_environment.anomaly_injector import AnomalyInjector
@@ -210,7 +231,7 @@ class TrafficEnv(gym.Env):
                     )
             elif self._demand_config is not None:
                 # Fallback: generate on-the-fly
-                self._regenerate_routes()
+                self._regenerate_routes(ep_seed=ep_seed)
             self._start_sumo()
             self._advance_sumo(self._steps_per_window)
             self._collect_metrics()
@@ -219,14 +240,15 @@ class TrafficEnv(gym.Env):
         obs = self._make_obs()
         return obs, {}
 
-    def _regenerate_routes(self) -> None:
-        """Create a fresh stochastic demand profile + routes for this episode."""
+    def _regenerate_routes(self, ep_seed: int) -> None:
+        """Create a fresh stochastic demand profile + routes for this episode.
+
+        ep_seed is computed by reset() and threaded in (also used as SUMO --seed)
+        so the entire stochastic chain — demand profile, fleet, anomalies, and
+        SUMO's internal RNG — derives from one number.
+        """
         from traffic_environment.stochastic_demand import generate_demand_profile
         from traffic_environment.anomaly_injector import AnomalyInjector
-
-        # Unique seed per episode: env_seed gives worker identity,
-        # episode_count gives temporal diversity
-        ep_seed = _seed_u32(self._env_seed * 100_000, self._episode_count)
 
         dcfg = self._demand_config
         profile = generate_demand_profile(
@@ -389,6 +411,7 @@ class TrafficEnv(gym.Env):
                     "sumo",
                     "-c", str(self.sumo_cfg_path),
                     "--remote-port", str(self._port),
+                    "--seed", str(self._sumo_seed),
                     "--step-method.ballistic",
                     "--collision.action", "warn",
                     "--time-to-teleport", "-1",
