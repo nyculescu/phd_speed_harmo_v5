@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import multiprocessing
 import os
 import sys
 import time
@@ -26,6 +27,19 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
+
+# Worker hygiene — applied before any torch / SB3 import so children inherit them.
+#   CUDA_VISIBLE_DEVICES="" : hide the GPU; tiny MLPs run faster on CPU and we
+#                             avoid the "Cannot re-initialize CUDA in forked
+#                             subprocess" error entirely.
+#   *_NUM_THREADS=1         : prevent each worker's torch/openblas from spawning
+#                             a thread per core — with N workers, that's N²
+#                             threads, contention destroys throughput.
+# setdefault means an explicit user override (e.g. running on GPU) still wins.
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
 
 import numpy as np
 import yaml
@@ -568,7 +582,13 @@ def main():
     failed = 0
     t0 = time.time()
 
-    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+    # Use 'spawn' context, not the default 'fork' on Linux. fork inherits the
+    # parent's CUDA state, which torch refuses to re-initialize in the child —
+    # causing all trained-model tasks to silently fail (we hit this exact bug
+    # last run). spawn starts each worker as a fresh Python process: a fresh
+    # torch import, no inherited CUDA context, no fork bomb.
+    mp_ctx = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=n_workers, mp_context=mp_ctx) as pool:
         futures = {pool.submit(_run_single_task, t): t for t in tasks}
 
         for future in as_completed(futures):
@@ -679,21 +699,31 @@ def main():
               f"{avg_l0s:>5.1f} {avg_l2s:>5.1f} {avg_l0l2:>+5.1f} | "
               f"{avg_act_std:>6.2f} | {n_anom:>4}{marker}")
 
-    # Anomaly vs non-anomaly breakdown
+    # Per-anomaly-type breakdown
+    # Splits rewards by the specific disruption (ramp_spike / speed_reduction /
+    # lane_closure) instead of lumping all anomalies together. Lets you claim
+    # "policy X is robust to type Y" with receipts.
     print()
-    print("=" * 80)
-    print("ANOMALY vs NON-ANOMALY BREAKDOWN")
-    print("=" * 80)
+    print("=" * 100)
+    print("PER-ANOMALY-TYPE BREAKDOWN  (mean ± σ, n in parentheses)")
+    print("=" * 100)
+    anomaly_types = ["none", "ramp_spike", "speed_reduction", "lane_closure"]
+    header = f"{'Policy':>22} |"
+    for at in anomaly_types:
+        header += f" {at:>20} |"
+    print(header)
+    print("-" * 100)
     for policy_name in policy_names:
         eps = by_policy[policy_name]
-        normal = [e["total_reward"] for e in eps if e["anomaly_type"] == "none"]
-        anomaly = [e["total_reward"] for e in eps if e["anomaly_type"] != "none"]
-        if normal and anomaly:
-            print(f"  {policy_name:>20}: normal={np.mean(normal):.1f}±{np.std(normal):.1f}"
-                  f"  anomaly={np.mean(anomaly):.1f}±{np.std(anomaly):.1f}"
-                  f"  Δ={np.mean(anomaly)-np.mean(normal):.1f}")
-        elif normal:
-            print(f"  {policy_name:>20}: normal={np.mean(normal):.1f}±{np.std(normal):.1f}  (no anomalies)")
+        line = f"{policy_name:>22} |"
+        for at in anomaly_types:
+            rewards = [e["total_reward"] for e in eps if e["anomaly_type"] == at]
+            if rewards:
+                cell = f"{np.mean(rewards):>+8.1f} ± {np.std(rewards):>4.1f} (n={len(rewards):>2})"
+            else:
+                cell = f"{'—':>20}"
+            line += f" {cell:>20} |"
+        print(line)
 
     # Per-reward-component breakdown
     print()

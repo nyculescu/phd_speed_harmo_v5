@@ -109,10 +109,26 @@ if [ "$MODE" = "remote" ]; then
         echo "========================================"
         # sync logs to disk before shutdown
         sync
-        # Schedule shutdown with 2-min grace period.
-        # Using 'shutdown' instead of 'poweroff' to allow cancellation.
-        sudo shutdown +2 "Training script finished (exit=$EXIT_CODE). Auto-shutdown." 2>/dev/null \
-            || echo "WARNING: 'sudo shutdown' failed. VM will NOT auto-shutdown."
+
+        # Pick the shutdown method that works on THIS host:
+        #   1. vastai CLI + VAST_CONTAINERLABEL → vast.ai container (preferred)
+        #   2. passwordless sudo → traditional VM with init/systemd
+        #   3. neither → leave the box up, warn the user
+        # vast.ai containers don't honor `sudo shutdown` (no systemd), so we
+        # must call the vast.ai API from inside the container instead.
+        if command -v vastai >/dev/null 2>&1 && [ -n "${VAST_CONTAINERLABEL:-}" ]; then
+            INSTANCE_ID="${VAST_CONTAINERLABEL#C.}"
+            echo "Stopping vast.ai instance ${INSTANCE_ID} via vastai CLI in 30s..."
+            sleep 30  # last-chance sync window
+            vastai stop instance "$INSTANCE_ID" 2>&1 \
+                || echo "WARNING: 'vastai stop instance ${INSTANCE_ID}' failed — stop manually via dashboard."
+        elif sudo -n true 2>/dev/null; then
+            sudo shutdown +2 "Training script finished (exit=$EXIT_CODE). Auto-shutdown." 2>/dev/null \
+                || echo "WARNING: 'sudo shutdown' failed. VM will NOT auto-shutdown."
+        else
+            echo "WARNING: no shutdown method available (no vastai CLI + VAST_CONTAINERLABEL,"
+            echo "         and no passwordless sudo). Stop the VM manually via the cloud dashboard."
+        fi
     }
     trap _shutdown_vm EXIT
 fi
