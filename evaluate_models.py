@@ -240,6 +240,12 @@ def run_episode(env, policy_fn, episode_seed: int):
     peak_demand = 0
     ramp_frac = 0
 
+    # Tier-A collector: safety + system-perf + macroscopic metrics. Polls TraCI
+    # at the env-step boundary (every aggregation_time s). Eval-only — never
+    # called during training.
+    from core.eval_metrics import EvalMetricsCollector
+    eval_collector = EvalMetricsCollector(aggregation_time_s=env.aggregation_time)
+
     steps = []
     total_reward = 0.0
     done = False
@@ -249,6 +255,10 @@ def run_episode(env, policy_fn, episode_seed: int):
         action = policy_fn(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
+
+        # Tier-A per-step poll (after env.step has advanced SUMO and refreshed metrics)
+        sim_time_s = (step_idx + 1) * env.aggregation_time
+        eval_collector.step(env._traci_conn, sim_time_s, env._metrics)
 
         # ── Per-step data collection ──────────────────────────────────────
         # Each step = one 30s E1 aggregation window in SUMO.
@@ -363,6 +373,9 @@ def run_episode(env, policy_fn, episode_seed: int):
     for k in rc_keys:
         vals = [s[k] for s in steps if k in s]
         summary[f"avg_{k}"] = float(np.mean(vals)) if vals else 0
+
+    # Tier-A metrics — safety, system performance, macroscopic regime
+    summary.update(eval_collector.summary())
 
     return summary, steps
 
@@ -724,6 +737,50 @@ def main():
                 cell = f"{'—':>20}"
             line += f" {cell:>20} |"
         print(line)
+
+    # Tier-A: safety + system performance + macroscopic regime table
+    # These metrics are what reviewers in traffic-engineering journals look
+    # for first. Higher (less negative) reward isn't enough; you also need
+    # to show the policy doesn't sacrifice safety or user experience.
+    print()
+    print("=" * 130)
+    print("TIER-A METRICS  (safety / system-perf / macroscopic regime)")
+    print("=" * 130)
+    header = (f"{'Policy':>22} | "
+              f"{'HardBrake':>9} {'meanTTC':>8} {'TTC<1s':>7} | "
+              f"{'LC/v/km':>8} {'TTS(vh)':>8} {'meanTT':>7} {'p95TT':>7} | "
+              f"{'FF%':>5} {'MS%':>5} {'CG%':>5} | "
+              f"{'k_seg0':>7} {'k_after':>7}")
+    print(header)
+    print("-" * 130)
+    for policy_name in policy_names:
+        eps = by_policy[policy_name]
+
+        def m(key, default=0.0):
+            vals = [e.get(key, default) for e in eps]
+            # Filter inf out of TTC means (no-near-miss episodes report inf)
+            vals = [v for v in vals if v != float("inf")]
+            return float(np.mean(vals)) if vals else (float("inf") if "ttc" in key else default)
+
+        hbc = m("hard_brake_count")
+        mean_ttc = m("mean_ttc_s")  # filtered for gap >= 2m + follower_speed >= 1 m/s
+        ttc_crit = m("n_ttc_critical")
+        lc_norm = m("lc_per_veh_per_km")
+        tts = m("total_tts_veh_h")
+        mtt = m("mean_travel_time_s")
+        p95 = m("p95_travel_time_s")
+        ff = m("regime_free_flow_pct")
+        ms = m("regime_metastable_pct")
+        cg = m("regime_congested_pct")
+        k0 = m("density_seg_0_before_veh_per_km_lane")
+        k_a = m("density_seg_0_after_veh_per_km_lane")
+
+        ttc_str = f"{mean_ttc:>6.2f}s" if mean_ttc != float("inf") else "  —    "
+        print(f"{policy_name:>22} | "
+              f"{hbc:>9.1f} {ttc_str:>8} {ttc_crit:>7.1f} | "
+              f"{lc_norm:>8.2f} {tts:>8.1f} {mtt:>7.0f} {p95:>7.0f} | "
+              f"{ff:>5.1f} {ms:>5.1f} {cg:>5.1f} | "
+              f"{k0:>7.1f} {k_a:>7.1f}")
 
     # Per-reward-component breakdown
     print()
