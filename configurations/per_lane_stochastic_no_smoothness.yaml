@@ -1,0 +1,104 @@
+# configurations/per_lane_stochastic_no_smoothness.yaml
+#
+# REWARD-WEIGHT ABLATION (variant i from the plan v0.5 decision matrix):
+# "No smoothness" — drops the smallest-weight term (w_s = 0.05) and
+# redistributes its mass proportionally across the four kept terms so the
+# sum still equals 1.0. Tests whether the smoothness penalty does meaningful
+# work, or whether it's a decorative term that can be removed in future
+# formulations without hurting performance.
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.37   (proportional redistribution +0.018 share)
+#   w_t: 0.20 → 0.21   (proportional redistribution +0.011 share)
+#   w_q: 0.25 → 0.26   (proportional redistribution +0.013 share)
+#   w_l: 0.15 → 0.16   (proportional redistribution +0.008 share)
+#   w_s: 0.05 → 0.00   (DISABLED for ablation)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# Expected outcome: if mean episode reward stays within ~5 points of the
+# headline (current 5-term) run, smoothness is decorative and the paper
+# can defend a simpler 4-term reward. If degradation > 10 points (e.g.,
+# action variance explodes and harms downstream stability), smoothness
+# is load-bearing despite its small weight — also a publishable finding.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.37
+    w_t: 0.21
+    w_q: 0.26
+    w_l: 0.16
+    w_s: 0.00   # DISABLED for ablation
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]
