@@ -120,7 +120,7 @@ tmux new -s v5
 # 8a — headline run (default reward weights, 100% CAV)
 ./deploy_4vm.sh N      # 1=SAC Box(4) · 2=TQC Box(4) · 3=SAC Box(5) · 4=TQC Box(5)
 
-# 8b — reward-weight ablation runs (same algorithm slot + a --config override)
+# 8b — reward-weight ablation runs for TQC Box(4) - same algorithm slot + a --config override
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_harmo_pure.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_smoothness.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_throughput.yaml
