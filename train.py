@@ -54,8 +54,26 @@ def _seed_u32(seed: int, offset: int = 0) -> int:
     return int((int(seed) + int(offset)) % _SEED_MOD)
 
 
-def _load_config(box5: bool = False) -> dict:
-    cfg_path = _PROJECT / "configurations" / "per_lane_stochastic.yaml"
+def _load_config(box5: bool = False, config_path: str = "") -> dict:
+    """Load the YAML config. Default: configurations/per_lane_stochastic.yaml.
+
+    Use ``config_path`` to point at an ablation variant (e.g.
+    configurations/per_lane_stochastic_harmo_pure.yaml). Path may be absolute,
+    project-relative, or just the filename inside configurations/.
+    """
+    if config_path:
+        candidate = Path(config_path)
+        if not candidate.is_absolute() and not candidate.exists():
+            # Try project-relative and configurations/-relative.
+            project_rel = _PROJECT / candidate
+            configs_rel = _PROJECT / "configurations" / candidate.name
+            if project_rel.exists():
+                candidate = project_rel
+            elif configs_rel.exists():
+                candidate = configs_rel
+        cfg_path = candidate
+    else:
+        cfg_path = _PROJECT / "configurations" / "per_lane_stochastic.yaml"
     with open(cfg_path) as f:
         cfg = yaml.safe_load(f)
     if box5:
@@ -386,15 +404,29 @@ def main():
              "If set, loads .sumocfg files from this directory instead of "
              "generating routes on-the-fly. Use generate_scenarios.py to create.",
     )
+    parser.add_argument(
+        "--config", type=str, default="",
+        help="Path to a YAML config file (overrides the default "
+             "configurations/per_lane_stochastic.yaml). Use for reward-weight "
+             "ablations, e.g. configurations/per_lane_stochastic_harmo_pure.yaml.",
+    )
     args = parser.parse_args()
 
-    cfg = _load_config(box5=args.box5)
+    cfg = _load_config(box5=args.box5, config_path=args.config)
     timesteps = args.timesteps or cfg["training"]["total_timesteps"]
+
+    # Slug for log-dir naming: take the config stem when not the default, so
+    # parallel ablation runs land in distinct training_runs/* directories.
+    if args.config:
+        cfg_slug = Path(args.config).stem.replace("per_lane_stochastic_", "")
+        cfg_label = f"_{cfg_slug}"
+    else:
+        cfg_label = ""
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     box_label = "box5" if args.box5 else "box4"
     log_dir = Path(args.log_dir) if args.log_dir else (
-        _PROJECT / "training_runs" / f"{args.algo}_{box_label}_{timestamp}"
+        _PROJECT / "training_runs" / f"{args.algo}_{box_label}{cfg_label}_{timestamp}"
     )
     log_dir.mkdir(parents=True, exist_ok=True)
 

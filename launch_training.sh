@@ -43,6 +43,7 @@ $PY -c "import torch; import stable_baselines3; import sb3_contrib; import traci
 MODE=""
 SINGLE_ALGO=""
 POOL_OVERRIDE=""
+CONFIG_PATH=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -64,9 +65,15 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             POOL_OVERRIDE="$2"; shift 2 ;;
+        --config)
+            if [[ $# -lt 2 ]]; then
+                echo "ERROR: --config requires a path to a YAML config (e.g. configurations/per_lane_stochastic_harmo_pure.yaml)"
+                exit 1
+            fi
+            CONFIG_PATH="$2"; shift 2 ;;
         *)
             echo "Unknown argument: $1"
-            echo "Usage: $0 --machine {remote|local|test} [--single_algo ...] [--pool <dir>]"
+            echo "Usage: $0 --machine {remote|local|test} [--single_algo ...] [--pool <dir>] [--config <yaml>]"
             exit 1 ;;
     esac
 done
@@ -202,6 +209,11 @@ run_experiment() {
 
     echo ">>> ${EXP_NAME} — seeds [${SEEDS}] × ${N_ENVS} workers"
 
+    local CFG_FLAG=""
+    if [ -n "${CONFIG_PATH}" ]; then
+        CFG_FLAG="--config ${CONFIG_PATH}"
+    fi
+
     for SEED in ${SEEDS}; do
         LOG_DIR="${LOG_BASE}/${LOG_PREFIX}"
         echo "  Starting ${ALGO} seed=${SEED}..."
@@ -212,6 +224,7 @@ run_experiment() {
             --timesteps ${TIMESTEPS} \
             --log-dir "${LOG_DIR}" \
             --scenario-pool "${POOL_DIR}" \
+            ${CFG_FLAG} \
             ${EXTRA_ARGS} \
             > "${LOG_BASE}/${LOG_PREFIX}_seed${SEED}.log" 2>&1 &
         sleep 5

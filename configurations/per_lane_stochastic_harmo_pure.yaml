@@ -1,0 +1,101 @@
+# configurations/per_lane_stochastic_harmo_pure.yaml
+#
+# REWARD-WEIGHT ABLATION (variant ii from the plan v0.5 decision matrix):
+# "Harmonization-pure" — isolates the harmonization mechanism by zeroing the
+# temporal stability, throughput, and smoothness terms. Tests whether the
+# agent's gain over baselines comes purely from lane-variance suppression
+# (RQ1 mechanism claim) or whether the other terms do meaningful work.
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.70   (harmonization, ×2 weight)
+#   w_t: 0.20 → 0.00   (temporal stability — disabled)
+#   w_q: 0.25 → 0.00   (throughput — disabled)
+#   w_l: 0.15 → 0.30   (lane equalization — kept, paired with harmonization)
+#   w_s: 0.05 → 0.00   (smoothness — disabled)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# Hypothesis: if this run beats baselines by roughly the same margin as the
+# base config, harmonization+lane-eq are doing all the work. If it degrades
+# significantly, the other terms (especially throughput) are load-bearing.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.70   # harmonization — primary signal (×2 base weight)
+    w_t: 0.00   # temporal stability — DISABLED for ablation
+    w_q: 0.00   # throughput — DISABLED for ablation
+    w_l: 0.30   # lane equalization — paired with harmonization (×2 base weight)
+    w_s: 0.00   # smoothness — DISABLED for ablation
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]
