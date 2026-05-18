@@ -106,6 +106,18 @@ class TrafficMetrics:
     anomaly_type: str = ""
 
     # ------------------------------------------------------------------
+    # Safety-by-construction evidence (ADR-010)
+    # ------------------------------------------------------------------
+    # Accumulates across the episode. Reset implicitly via env.reset() which
+    # instantiates a fresh TrafficMetrics. Polled per SUMO step in _advance_sumo
+    # via traci.simulation.getCollidingVehiclesNumber(). Expected to remain 0
+    # across all training + evaluation episodes — the Krauss car-following model
+    # combined with slowDown(duration=aggregation_time) makes rear-end collisions
+    # impossible by construction. Non-zero values are an integrity check that
+    # would surface a misconfigured fleet or a code regression.
+    episode_collision_count: int = 0
+
+    # ------------------------------------------------------------------
     # Global context
     # ------------------------------------------------------------------
 

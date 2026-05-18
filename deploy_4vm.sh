@@ -37,12 +37,15 @@ command -v sumo >/dev/null || { echo "ERROR: SUMO not on PATH (check SUMO_HOME /
 
 POOL_SEED=42
 POOL_N=200
-POOL_DIR="scenario_pools/shared_seed${POOL_SEED}_n${POOL_N}"
+POOL_CAV=100   # ADR-008: paper headline experiment uses 100% CAV. Must match
+               # configurations/per_lane_stochastic.yaml::cav_percentage.
+POOL_DIR="scenario_pools/shared_seed${POOL_SEED}_n${POOL_N}_cav${POOL_CAV}"
 
 if [ ! -d "${POOL_DIR}" ] || [ "$(ls -1 ${POOL_DIR}/*.sumocfg 2>/dev/null | wc -l)" -lt "${POOL_N}" ]; then
-    echo ">>> Generating shared pool (seed=${POOL_SEED}, n=${POOL_N})..."
+    echo ">>> Generating shared pool (seed=${POOL_SEED}, n=${POOL_N}, cav=${POOL_CAV}%)..."
     .venv/bin/python3 generate_scenarios.py focused \
         --n ${POOL_N} --band 5500 7250 --noise 200 --seed ${POOL_SEED} \
+        --cav ${POOL_CAV} \
         --weather 'clear:0.7,rain:0.2,fog:0.1' \
         -o "${POOL_DIR}"
 else

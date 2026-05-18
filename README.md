@@ -1,40 +1,14 @@
 # phd_speed_harmo_v5
 
 Speed harmonization at a highway **on-ramp / off-ramp interchange** using Lagrangian CAV direct control
-(`traci.vehicle.slowDown()`) and distributional RL (TQC / SAC / RecurrentPPO).
+(`traci.vehicle.slowDown()`) and distributional RL (TQC primary; SAC baseline).
 
-Single topology: **ramps_v0** — 3-lane mainline → 4-lane weaving buffer → 3-lane downstream,
-with on-ramp and off-ramp flanking a 250 m weaving section.
+Single topology: **ramps_v0** — 3-lane mainline → 4-lane weaving buffer (250 m) → 3-lane downstream,
+with on-ramp and off-ramp flanking the weave.
 
 Run all commands from the project root (`phd_speed_harmo_v5/`).
 
----
-
-## Research pipeline
-
-```
-Step 1 (current): No-control baseline diagnostic
-    → "At what demand level does seg_0_after break down, and is it predictable?"
-    → python3 -m tools.no_control_baseline
-
-Step 2 (next):    SAR framework design (state / action / reward)
-    → informed by breakdown characterisation from Step 1
-
-Step 3 (next):    Algorithm selection and training
-    → TQC (primary) · SAC (baseline) · RecurrentPPO (POMDP-safe)
-```
-
----
-
-## v4 → v5 paradigm shift
-
-| | v4 | v5 |
-|---|---|---|
-| Topology | 4→3 lane-drop (forced merge, stochastic gap-acceptance) | Ramp-on + ramp-off interchange (3L→4L buffer→3L; CAVs + ramp VSL) |
-| Control | Eulerian VSL → sign → wait for HDV compliance | Lagrangian → `slowDown()` on CAVs directly |
-| Observation window | 150 s | 30 s (5× finer; 5-frame stack gives 150 s temporal context) |
-| Algorithm family | DQN / QR-DQN (discrete only) | TQC · SAC · RecurrentPPO (continuous) |
-| State of SAR design | Fixed 3 years, no positive result | From scratch, data-informed |
+> **Research design, ADRs, system architecture, evaluation methodology, and literature positioning live in [`docs/plans/phd_thesis_plan_v0.md`](docs/plans/phd_thesis_plan_v0.md).** This README is purely operational — how to install, run, deploy, and collect results.
 
 ---
 
@@ -42,44 +16,27 @@ Step 3 (next):    Algorithm selection and training
 
 ```
 phd_speed_harmo_v5/
-├── core/                                   lightweight SUMO/RL interface
-│   ├── constants.py                        MAX_SPEED_KPH and step/action limits
-│   ├── env_metrics.py                      TrafficMetrics dataclass
-│   ├── env_interact.py                     TrafficEnv (gymnasium.Env)
-│   ├── regime_detector.py                  free-flow / metastable / congested classifier
-│   └── sar_frame.py                        SAR ABCs + factory functions
-├── sar_components/                         isolated SAR registry (to be populated)
-│   ├── states/
-│   ├── actions/
-│   └── rewards/
-├── tools/                                  standalone diagnostic utilities
-│   ├── no_control_baseline.py              Step 1: breakdown characterisation
-│   └── results/                            CSV + PNG outputs (gitignored)
-├── traffic_environment/
-│   ├── scenario_generator.py               scenario pair generation (rou + sumocfg)
-│   ├── rou_writer.py                       SUMO route file builder
-│   ├── demand_profiles.py                  demand curve utilities
-│   └── sumo/
-│       ├── generate_ramp_network.py        generates ramps_v0.net.xml
-│       ├── ramps_v0.net.xml                highway network (3L→4L buffer→3L, on+off ramp)
-│       ├── detectors_ramps_v0.add.xml      E1 induction loops + E3 travel-time detectors (freq=30 s)
-│       └── colored.view.xml                SUMO-GUI settings
-├── configurations/
-│   └── _common_config.yaml                 project-level defaults
-├── tests/
-│   ├── test_env_inter.py                   integration tests (no SUMO needed)
-│   ├── test_traf_env.py                    full single-episode SUMO smoke test
-│   └── test_env_metr.py                    E1/E3 sensor metric tests
-├── docs/speed_harmo_approach_v0.md
-├── pytest.ini
-└── .gitignore
+├── core/                              SUMO/RL interface (env, regime detector, SAR ABCs)
+├── sar_components/                    pluggable state/action/reward registry
+├── tools/                             diagnostic utilities (no_control_baseline, status checker)
+├── traffic_environment/               SUMO network + scenario + fleet + demand + anomaly generators
+├── train.py                           SAC/TQC training entrypoint
+├── evaluate_models.py                 held-out 30-ep evaluation vs 11 baselines
+├── generate_scenarios.py              CLI for scenario pool generation
+├── deploy_remote.sh                   bootstrap one vast.ai VM
+├── deploy_4vm.sh                      per-VM dispatcher (1/2/3/4 → SAC/TQC × Box(4)/Box(5))
+├── launch_training.sh                 config-aware training entrypoint
+├── launch_evaluation.sh               config-aware evaluation entrypoint
+├── configurations/                    YAML configs
+├── tests/                             pytest + test_smoke_training.py
+└── docs/
+    ├── plans/phd_thesis_plan_v0.md    ← research design, ADRs, architecture
+    └── knowledge_base/                literature corpus (gitignored)
 ```
 
 ---
 
-## Step 1: No-control baseline
-
-Characterises merge breakdown across 5 demand levels **without any control intervention**.
+## Step 1: No-control baseline (diagnostic)
 
 ```bash
 # Run all 5 scenarios (requires SUMO 1.21+ and TraCI)
@@ -92,25 +49,14 @@ python3 -m tools.no_control_baseline --gui
 python3 -m tools.no_control_baseline --scenarios 0
 ```
 
-**Demand scenarios** (off-ramp = 15 % of mainline)
-
-| # | Mainline (veh/h) | Ramp-on (veh/h) | Ramp-off (veh/h) | Weaving flow (veh/h) |
-|---|---|---|---|---|
-| 0 | 1 200 | 200 | 180 | 1 400 |
-| 1 | 1 800 | 300 | 270 | 2 100 |
-| 2 | 2 400 | 400 | 360 | 2 800 |
-| 3 | 3 000 | 500 | 450 | 3 500 |
-| 4 | 3 600 | 600 | 540 | 4 200 |
-
-**Outputs** → `tools/results/`
+Outputs → `tools/results/`:
 - `baseline_<main>_<ramp>.csv` — per 30-s window: flow, space-mean speed, breakdown flag
 - `baseline_summary.csv` — breakdown time, min/mean speed, throughput per scenario
 - `baseline_<main>_<ramp>.png` — speed + flow time-series (requires matplotlib)
 
-**Breakdown criterion**: harmonic-mean speed across all 4 lanes of `seg_0_after` entry drops
-below **60 km/h** for at least one 30-s window with ≥ 1 vehicle detected.
+Breakdown criterion: harmonic-mean speed across all 4 lanes of `seg_0_after` entry drops below **60 km/h** for at least one 30-s window with ≥ 1 vehicle detected.
 
-> ⚠ `ramps_v0.net.xml` must exist before running.  If missing, run
+> ⚠ `ramps_v0.net.xml` must exist before running. If missing, run
 > `python3 traffic_environment/sumo/generate_ramp_network.py` and then open the file
 > in **netedit → Processing → Compute Junctions** to generate internal edges.
 
@@ -130,15 +76,13 @@ Segments covered: `seg_2_before`, `seg_1_before`, `seg_0_before`,
 
 ---
 
-## Academic grounding
+## Local smoke test (verify before remote deploy)
 
-| Decision | Reference |
-|---|---|
-| Lagrangian CAV control (30 s action frequency) | Vinitsky et al. (2018); Ko et al. (2020) |
-| Regime embedded in observation | Li et al. (2017); Han et al. (2022) |
-| Absolute action space (Markov-preserving) | Vinitsky et al. (2018); Sutton & Barto (2018) |
-| TQC for continuous distributional RL | Kuznetsov et al. (2020) |
-| Ramp VSL + on-ramp merge | Ko et al. (2020); Zhang et al. (2024) — MARVEL |
+```bash
+.venv/bin/python tests/test_smoke_training.py
+# 8-test suite: imports → config → env dry-run → env live → SubprocVecEnv → SAC fit → TQC fit → save/load
+# Expected: all 8 pass in < 30 s
+```
 
 ---
 
@@ -176,8 +120,117 @@ tmux new -s v5
 #    Ctrl-B, D to detach.  tmux attach -t v5 to reattach.
 ```
 
-**Result collection** must run *while* the VM is alive — `deploy_4vm.sh` triggers auto-shutdown ~2 min after the experiment exits. From your laptop, against each VM:
+> ⚠ **vast.ai shutdown gotcha:** `sudo shutdown` does NOT work inside vast.ai containers (no systemd init). The auto-shutdown trap will print `WARNING: 'sudo shutdown' failed`. Either stop each VM manually from the vast.ai web console after `.done_SUCCESS` is touched, OR install vastai CLI on the VM (`pip install vastai`, set `VAST_API_KEY`) and run `vastai stop instance $VAST_CONTAINERLABEL` from a completion hook.
+
+---
+
+## Result collection (rsync from your laptop)
+
+Run from the project root (`cd ~/work/phd/phd_speed_harmo_v5/`) so the relative `./artifacts/...` path lands inside the repo.
 
 ```bash
-rsync -avz --partial user@vm_N:~/phd_speed_harmo_v5/training_runs/ ./training_runs_vm_N/
+# Generic pattern — replace PORT, IP, and KEY (one of vm1_sac_4 / vm2_tqc_4 / vm3_sac_5 / vm4_tqc_5)
+rsync -avz --partial --mkpath -e "ssh -p <PORT>" \
+    root@<IP>:~/phd_speed_harmo_v5/training_runs/ \
+    ./artifacts/<KEY>/training_runs/
+
+# Concrete example — vast.ai gives you:
+#   ssh -p 46704 root@108.197.217.16 -L 8080:localhost:8080
+# Drop the -L tunnel (not needed for rsync). For VM 3 (sac_5):
+rsync -avz --partial --mkpath -e "ssh -p 46704" \
+    root@108.197.217.16:~/phd_speed_harmo_v5/training_runs/ \
+    ./artifacts/vm3_sac_5/training_runs/
+```
+
+Notes:
+- `-e "ssh -p <PORT>"` is mandatory — vast.ai uses non-standard SSH ports per container.
+- `--mkpath` (rsync ≥ 3.2.3) auto-creates the destination's parent directories. Without it you'd need `mkdir -p ./artifacts/<KEY>/training_runs/` first.
+- VM keys are exactly: `vm1_sac_4`, `vm2_tqc_4`, `vm3_sac_5`, `vm4_tqc_5` (matching `deploy_4vm.sh N` mapping).
+
+### Checking training status from your laptop
+
+To run [tools/check_training_status.sh](tools/check_training_status.sh) on a VM in one shot:
+
+```bash
+# Generic
+ssh -p <PORT> root@<IP> 'cd ~/phd_speed_harmo_v5 && git pull -q && ./tools/check_training_status.sh'
+
+# Concrete — vast.ai gave you `ssh -p 46704 root@108.197.217.16 -L 8080:localhost:8080`:
+ssh -p 46704 root@108.197.217.16 'cd ~/phd_speed_harmo_v5 && git pull -q && ./tools/check_training_status.sh'
+```
+
+> ⚠ **Don't copy the SSH fragment out of the rsync line above.** The rsync uses `-e "ssh -p <PORT>"` and the `"` is the closing quote of that argument — for a direct `ssh` command, drop the surrounding quotes: just `ssh -p <PORT> root@<IP>`. If you see bash sitting at a `>` continuation prompt, that's the unclosed quote — Ctrl-C and retype.
+
+Interactive form if you want a shell on the VM (then run commands by hand):
+```bash
+ssh -p <PORT> root@<IP>
+# you're now on the VM
+cd ~/phd_speed_harmo_v5 && git pull && ./tools/check_training_status.sh
+```
+
+Exit codes: `0` = DONE (5/5 final_model.zip) · `1` = still TRAINING · `2` = STOPPED incomplete. Useful for chaining:
+```bash
+ssh -p <PORT> root@<IP> 'cd ~/phd_speed_harmo_v5 && ./tools/check_training_status.sh' \
+  && echo "VM done — safe to stop"
+```
+
+---
+
+## Hardware spec for vast.ai (next deploy)
+
+Per VM, `deploy_4vm.sh N` runs **5 seeds × 48 SUMO workers = 240 SUMO processes** training a tiny MLP for 1M timesteps. **CPU-bound. Not GPU-bound. Not I/O-bound.**
+
+### CPU preference order (algorithm-normalised throughput, 2026-05-16 measurements)
+
+| Rank | CPU model | Why |
+|---|---|---|
+| 1 | **AMD EPYC 7B13** (Google custom Milan) | Best observed normalised fps. Common on vast.ai, cheap. |
+| 2 (tied) | AMD EPYC 7V13 (Azure custom Milan) | Equivalent silicon, widely listed |
+| 2 (tied) | AMD EPYC 7773X (Milan-X, 3D V-Cache) | 3D V-Cache buys **nothing** here — working set doesn't fit L3. Take only if cheaper than 7B13. |
+| — (untested) | AMD EPYC 9xxx (Genoa / Bergamo) | Newer arch; should beat Milan, often similar price |
+| AVOID | AMD EPYC 7742 / 7763 / 7702 (Rome) | ~25 % slower than Milan for this workload |
+
+### Min vs optimal spec
+
+| Resource | Minimum | Optimal | Notes |
+|---|---|---|---|
+| CPU cores | 96 dedicated | **128 dedicated** | 240 SUMO procs; below 96 thrashes. More than 128 buys nothing. |
+| CPU gen | Milan | Milan or Genoa | See ranking above |
+| RAM | 96 GB | **128 GB** | Peak observed use: 94 GB. Don't pay for 256/512 GB tiers — wasted. |
+| Disk | 16 GB NVMe | **20 GB NVMe** | Actual use: 8 GB. Disk speed (2.8 → 7.1 GB/s) did NOT correlate with fps. Cheapest NVMe is fine. |
+| GPU | None | None | Pure CPU workload. Renting GPU = pure waste. |
+| Network | 100 Mbit | 100 Mbit | rsync pulls ~1 GB/VM total |
+| Reliability | ≥ 95 % | ≥ 95 % | Standard vast.ai filter |
+
+### Anti-patterns (paid for, didn't use, in the 2026-05-16 run)
+
+- **256 / 515 GB RAM tiers** — peak was 94 GB → ~80 % RAM cost wasted
+- **64 GB disk** — used 8 GB → 8× over-provisioned
+- **Shared CPU** (128/256) — noisy-neighbor risk
+- **Rome silicon** (7742) — 25 % slower than Milan
+- **Pairing heaviest algo with slowest VM** — TQC Box(5) on Rome trailed the other three by ~3 h, kept the slot billed-but-finished VMs idle
+
+### Algo-to-VM pairing (balance finish times)
+
+Assign the **heaviest algorithm to the FASTEST VM**, not whichever happens to be `N=4`:
+
+| `deploy_4vm.sh N` | Algorithm | Hardware tier |
+|---|---|---|
+| 1 | SAC Box(4) — lightest | cheapest acceptable |
+| 2 | TQC Box(4) | mid-tier |
+| 3 | SAC Box(5) | mid-tier |
+| 4 | TQC Box(5) — **heaviest** | **best CPU available** (Genoa or 7773X) |
+
+That keeps all four VMs finishing within ~1 h of each other instead of vm4 trailing by ~3 h.
+
+### vast.ai search filter recipe
+
+```
+CPU cores ≥ 128
+CPU model contains "EPYC 7B" OR "7V" OR "7773" OR "9"   ← avoids 7742/7763 Rome
+RAM ≥ 128 GB AND ≤ 160 GB                               ← dodges wasteful 256+ GB tiers
+Disk space ≥ 20 GB AND ≤ 64 GB
+GPU: disable / cheapest
+Bandwidth ≥ 100 Mbit
+Reliability ≥ 95 %
 ```

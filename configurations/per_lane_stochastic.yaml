@@ -13,7 +13,9 @@ sumo:
 
 scenario:
   network_topology: ramps_v2
-  cav_percentage: 50.0
+  cav_percentage: 100.0   # ADR-008: paper headline experiment uses 100% CAV. The
+                          # 50% data remains as historical / robustness reference in
+                          # training_runs/experiment_20260516_* and 20260517_174654.
   stochastic_demand:
     enabled: true
     peak_demand_range: [5500, 8000]

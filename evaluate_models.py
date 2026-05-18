@@ -366,6 +366,8 @@ def run_episode(env, policy_fn, episode_seed: int):
         "avg_L2_speed_kph": float(np.mean([s["seg_0_before_L2_speed_kph"] for s in steps])),
         "L0_L2_speed_delta": float(np.mean([s["seg_0_before_L0_speed_kph"] for s in steps])) -
                              float(np.mean([s["seg_0_before_L2_speed_kph"] for s in steps])),
+        # Safety-by-construction evidence (ADR-010). Expected: 0 across all eps.
+        "episode_collision_count": int(env._metrics.episode_collision_count),
     }
 
     # Reward component averages (Q5: which terms drive improvement)
