@@ -116,9 +116,28 @@ bash deploy_remote.sh
 
 # 8. Launch the assigned experiment inside tmux (N ∈ {1,2,3,4})
 tmux new -s v5
+
+# 8a — headline run (default reward weights, 100% CAV)
 ./deploy_4vm.sh N      # 1=SAC Box(4) · 2=TQC Box(4) · 3=SAC Box(5) · 4=TQC Box(5)
+
+# 8b — reward-weight ablation runs (same algorithm slot + a --config override)
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_harmo_pure.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_smoothness.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_throughput.yaml
+
 #    Ctrl-B, D to detach.  tmux attach -t v5 to reattach.
 ```
+
+Available reward configs (rationale + ADR linkage in [docs/plans/phd_thesis_plan_v0.md §4](docs/plans/phd_thesis_plan_v0.md)):
+
+| Config file | Weights `(w_h, w_t, w_q, w_l, w_s)` | Output dir suffix |
+|---|---|---|
+| `per_lane_stochastic.yaml` (default) | `(0.35, 0.20, 0.25, 0.15, 0.05)` | `tqc_box4_<ts>/` |
+| `per_lane_stochastic_harmo_pure.yaml` | `(0.70, 0.00, 0.00, 0.30, 0.00)` | `tqc_box4_harmo_pure_<ts>/` |
+| `per_lane_stochastic_no_smoothness.yaml` | `(0.37, 0.21, 0.26, 0.16, 0.00)` | `tqc_box4_no_smoothness_<ts>/` |
+| `per_lane_stochastic_no_throughput.yaml` | `(0.47, 0.27, 0.00, 0.20, 0.06)` | `tqc_box4_no_throughput_<ts>/` |
+
+Use a distinct VM per config — each one is a separate 1M-step training run (~9.5 h wallclock on EPYC 7B13). The output dir suffix lets you rsync them into non-overlapping `artifacts/` subdirectories.
 
 > ⚠ **vast.ai shutdown gotcha:** `sudo shutdown` does NOT work inside vast.ai containers (no systemd init). The auto-shutdown trap will print `WARNING: 'sudo shutdown' failed`. Either stop each VM manually from the vast.ai web console after `.done_SUCCESS` is touched, OR install vastai CLI on the VM (`pip install vastai`, set `VAST_API_KEY`) and run `vastai stop instance $VAST_CONTAINERLABEL` from a completion hook.
 
