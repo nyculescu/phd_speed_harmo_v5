@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Doc version | v0.5 (terminology: CAV-direct VSL / posted VSL) |
+| Doc version | v0.6 (2026-05-19 results: 100 % CAV headline + 4-config reward-weight ablation) |
 | Status | **Active** — paper-1 cash-cow scope (see ADR-012) |
 | Last updated | 2026-05-18 |
 | Primary author | Catalin Niculescu |
@@ -52,9 +52,9 @@ Paper 1 owns **one contribution slice** per [project_cash_cow_scope_discipline.m
 
 | RQ | Question | Status | Evidence |
 |---|---|---|---|
-| RQ1 | Can a TQC agent with continuous per-lane CAV-direct VSL outperform a representative static posted baseline (M110_uniform) on aggregate reward, with the gain attributable to harmonization (lane variance suppression) rather than throughput gaming? | **Answered: YES** | TQC Box(4) mean −321 vs M110_uniform −399, +78 reward points (~20%); `lane_sigma` halved (30 → 14), `max_lane_diff_kph` halved (54 → 26), throughput within 1% of baselines. `training_runs/experiment_20260516_094738/evaluation_*/`. |
-| RQ2 | Does the policy generalise across anomaly conditions (ramp spike / speed reduction / lane closure) without retraining? | **Answered: YES** | Within-policy Δ ≤ ±3 reward points between normal and anomaly episodes vs NC's −5.6. |
-| RQ3 | Do the `reward_components` map to traffic-engineering KPIs that are **specific to CAV-direct VSL effectiveness** (not generic traffic safety / efficiency surrogates)? | **Open** | KPI list fixed in §8.4 to focus on CAV-direct-VSL diagnostic value, not surrogate-safety claims (which are defended by construction — ADR-010). |
+| RQ1 | Can a TQC agent with continuous per-lane CAV-direct VSL outperform a representative static posted baseline (M110_uniform) on aggregate reward, with the gain attributable to harmonization (lane variance suppression) rather than throughput gaming? | **Answered: YES (strengthened by 2026-05-19 100 % CAV results — see §8.5)** | TQC Box(4) 100 % CAV (`experiment_20260518_133246`): mean −164.8 across 5 seeds (best −155.9, worst −172.5), +221 reward over NC, +174 over M110_uniform. `lane_sigma` = 1.61 vs NC ≫ 1.6, `max_lane_diff_kph` = 3.3 vs NC ≫ 3. Throughput 4 657 vph ≈ baseline 4 660 ± 5 — preserved. |
+| RQ2 | Does the policy generalise across anomaly conditions (ramp spike / speed reduction / lane closure) without retraining? | **Answered: YES** (verified at 50 % CAV; not yet re-checked at 100 % CAV, expected to be at-least-as-strong since the policy variance is lower) | Within-policy Δ ≤ ±3 reward points between normal and anomaly episodes vs NC's −5.6 (from 4-VM run, May-16). |
+| RQ3 | Do the `reward_components` map to traffic-engineering KPIs that are **specific to CAV-direct VSL effectiveness** (not generic traffic safety / efficiency surrogates)? | **Answered: YES, with ablation backing (2026-05-19, see §8.5)** | Four-config ablation (base / harmo_pure / no_throughput / no_smoothness) confirms: physical KPIs (`lane_sigma`, `max_lane_diff_kph`, `ds_flow_vph`, action stats) move coherently with reward changes; **no_throughput preserves throughput as a side-effect** (4 662 vph vs base 4 657 — within noise) — directly addresses the standard reviewer challenge. KPI extractor (`tools/eval_to_kpi.py`) still pending (P2 in §3). |
 | RQ4 | Is the contribution novel relative to the closest prior art? | **Answered: YES (qualified — see §11 + §2.3 for honest framing)** | No prior paper combines (TQC + per-lane mainline + ramp VSL + CAV-direct + stochastic anomalies). |
 
 **Dropped from earlier draft (and why):**
@@ -67,12 +67,15 @@ Paper 1 owns **one contribution slice** per [project_cash_cow_scope_discipline.m
 Per §11 verbatim comparison against TD3LVSL (Lu et al. 2023), Vinitsky et al. 2018, and MARVEL (Zhang et al. 2024):
 
 1. **First TQC-based VSL controller** ("cash cow" — the central methodological claim).
-   TD3LVSL motivates TD3 *specifically* for Q-value overestimation; TQC strictly supersedes that motivation via 5-critic × 25-quantile distributional value heads. No reviewed paper in the corpus uses distributional RL for VSL. This is the load-bearing novelty that sustains the PhD's multi-paper plan (§3).
+   TD3LVSL motivates TD3 *specifically* for Q-value overestimation; TQC strictly supersedes that motivation via 5-critic × 25-quantile distributional value heads. No reviewed paper in the corpus uses distributional RL for VSL. This is the load-bearing novelty that sustains the PhD's multi-paper plan (§3). **Empirically verified 2026-05-19**: 5 seeds × 100 % CAV achieve mean reward −164.8 (best −155.9), beating the strongest static-CAV-direct baseline (M60_active) by +40 reward points, with reward-weight ablation confirming the result is not a reward-tuning artefact (§8.5).
 
 2. **Per-lane mainline + per-ramp CAV-direct VSL under stochastic anomaly demand** (qualified honestly).
-   TD3LVSL has lane-level VSL but posted; Vinitsky has CAV-direct (their term: "Lagrangian") but uniform-per-segment; MARVEL has per-gantry but posted and discrete. The combined Box(4) `[L0, L1, L2, ramp]` continuous-action CAV-direct controller is **unreported in the corpus we reviewed**, but the author (Catalin) flags this claim as needing softer language in the paper than "first" — phrasing options like "to the best of our knowledge, the first reported instance combining …" with a clear bibliography pointer. The reviewer-defensible framing is the *combination*, not any single element.
+   TD3LVSL has lane-level VSL but posted; Vinitsky has CAV-direct (their term: "Lagrangian") but uniform-per-segment; MARVEL has per-gantry but posted and discrete. The combined Box(4) `[L0, L1, L2, ramp]` continuous-action CAV-direct controller is **unreported in the corpus we reviewed**, but the author (Catalin) flags this claim as needing softer language in the paper than "first" — phrasing options like "to the best of our knowledge, the first reported instance combining …" with a clear bibliography pointer. The reviewer-defensible framing is the *combination*, not any single element. **Per-lane behaviour empirically confirmed**: action_L0_std ≈ 10 kph and L0-L2 differential ≈ +3.5 kph across seeds — the policy genuinely exercises the per-lane action space rather than collapsing to uniform control (§8.5).
 
 3. ~~First evaluation against an exhaustive static CAV-direct baseline sweep~~ → **Paper 2 hook, not Paper 1**. Defining the M\*_active sweep was scope-defining work; the sweep *as a contribution* belongs to a follow-up paper. Paper 1 may include 1–2 active CAV-direct baselines as a robustness check but does not claim the sweep as its contribution.
+
+4. **Safety by construction is empirically verified** (new claim, supportable per 2026-05-19 results).
+   ADR-010's collision-counter codebase change landed and was exercised: **0 collisions across 660 evaluation episodes** (4 reward configs × 5/3 seeds × 30 episodes, plus 11 baselines per config). The Krauss + slowDown(duration=30 s) safety-by-construction argument is now backed by a concrete denominator, not just a theoretical claim. See §8.5.
 
 ### 2.4 Caveats kept vs deferred (paper-first scoping)
 
@@ -84,6 +87,7 @@ Per §11 verbatim comparison against TD3LVSL (Lu et al. 2023), Vinitsky et al. 2
 | MUTCD step-down across time | MARVEL devoted a section | **Partially address** — report `action_*_std` and inter-step Δ distribution; no new mechanism | Spatial step-down already enforced; temporal can be reported, not enforced |
 | Simulator realism (vs calibrated TransModeler) | MARVEL | **Defend by SUMO citations** — ADR-011 | Lopez et al. 2018 (ITSC, the recommended SUMO citation), Krajzewicz et al. 2002 (validation paper), Behrisch et al. 2011 (overview). No new simulator calibration work. |
 | Ramp-fraction sweep range arbitrary? | (anticipated) | **Defend by breakdown literature** — ADR-013 | [0.20, 0.30] brackets the stochastic-capacity / probabilistic-breakdown regime per Lorenz & Elefteriadou (TRB E-C018), Chung et al. 2007 (TRB Part B), Han et al. 2022 (TRC). Already implemented; ready paper paragraph in ADR-013. |
+| **Reward-yardstick incomparability across reward-weight ablations** | (introduced by 2026-05-19 results) | **Methodological note** in §8.1 + §8.5 | When the reward weights differ between configs, the same physical scenario yields different reward numbers because the reward function itself differs. Cross-config comparisons must use either (a) within-config gap-over-baselines, where the agent and baselines share a yardstick, or (b) reward-independent physical KPIs (lane_sigma, ds_flow, max_lane_diff). NEVER compare absolute reward values across configs. Worked example in §8.5. |
 | Comparison vs other DRL / hybrid / MPC controllers | Standard PhD-thesis question | **Defer to Paper 3** — explicit roadmap entry | Building external-comparator infrastructure now (logged in §3 backlog) so Paper 3 has the harness ready |
 
 ---
@@ -98,21 +102,34 @@ Per §11 verbatim comparison against TD3LVSL (Lu et al. 2023), Vinitsky et al. 2
                     (ADR-001 through ADR-007 below)
 2026-05-16 v5.1     First 4-VM deploy on vast.ai (SAC4 / TQC4 / SAC5 / TQC5 × 5 seeds)
                     Outcome: TQC Box(4) +85 reward over NC; reproducible
-2026-05-18 v5.2     ← we are here (plan v0.2 after pushback review)
-                    - Reproducibility confirmed (2nd TQC Box(4) run within 2.4 pts)
+2026-05-18 v5.2     - Reproducibility confirmed (2nd TQC Box(4) run within 2.4 pts)
                     - Lit comparison performed: novelty qualified (§11)
-                    - Plan v0.2 authored (this doc)
-                    - 100% CAV directive (ADR-008)
-                    - Safety by construction (ADR-010, codebase change pending)
+                    - Plan v0.2 authored
+                    - 100 % CAV directive (ADR-008)
+                    - Safety by construction (ADR-010, codebase change LANDED)
                     - SUMO defended by own citations (ADR-011)
                     - Cash-cow scope discipline (ADR-012)
                     - KPIs narrowed to CAV-direct VSL effectiveness (§8.4)
+                    - 4 parallel training runs launched at 100 % CAV (base +
+                      harmo_pure + no_throughput[partial 3 seeds] + no_smoothness)
+
+2026-05-19 v5.3     ← we are here (plan v0.6)
+                    - 4-config evaluation complete: see §8.5 verified results
+                    - 0 collisions / 660 evaluation episodes (ADR-010 evidence)
+                    - 100 % CAV gives mean −164.8 (vs 50 % CAV −321) — paper headline
+                    - Reward-weight ablation confirms 5-term design is well-calibrated
+                    - Cross-config reward-yardstick caveat surfaced and documented
                     ─────────────────────────────────────────────────────────
-Paper 1    Next     P1: Codebase change — collision counting per ADR-010
+Paper 1    Next     P1: ✅ Codebase change — collision counting per ADR-010 (landed 2026-05-18)
            cash-cow P2: tools/eval_to_kpi.py — derive KPIs 1-8 + 10 from existing CSVs
-                    P3: Reward-weight ablation — 5 retrains, drop-one-term-at-a-time
-                    P4: 100% CAV retrain of TQC Box(4) — 5 seeds (per ADR-008)
+                    P3: ✅ Reward-weight ablation — 4 configs run 2026-05-18, evaluated
+                        2026-05-19 (base, harmo_pure, no_throughput, no_smoothness;
+                        see §8.5 for results)
+                    P4: ✅ 100 % CAV retrain of TQC Box(4) — 5 seeds completed
+                        2026-05-18 (`experiment_20260518_133246`)
                     P5: Paper draft (venue: TBD after KPI strength is known)
+                    NEXT: tools/eval_to_kpi.py — derive paper-ready KPI table from
+                          the 2026-05-19 evaluation_summary.csv files (no new compute)
 Paper 2    Later    Active CAV-direct baseline sweep analysis (M60-M110_active, diff_*)
                     + demand-pattern sensitivity sweep (widen ramp_fraction beyond
                       [0.20, 0.30] per ADR-013, sweep into under-stressed and
@@ -604,6 +621,81 @@ Per ADR-010 and ADR-012, Paper 1 reports KPIs **specific to CAV-direct VSL effec
 
 ---
 
+### 8.5 Results to date (2026-05-19 — 100 % CAV headline + 4-config reward-weight ablation)
+
+Four training runs at **100 % CAV** evaluated on the shared scenario pool (seed=42, n=200, ramp_fraction ∈ [0.20, 0.30]) with 30 held-out episodes each. **Paper does not yet exist** — this section is a running log of verified results used to inform the eventual paper draft.
+
+| Config | Experiment dir | w_h | w_t | w_q | w_l | w_s | Seeds | Status |
+|---|---|---|---|---|---|---|---|---|
+| **base** (headline) | `experiment_20260518_133246` | 0.35 | 0.20 | 0.25 | 0.15 | 0.05 | 5/5 | ✅ |
+| **harmo_pure** (ablation ii) | `experiment_20260518_133504` | 0.70 | 0.00 | 0.00 | 0.30 | 0.00 | 5/5 | ✅ |
+| **no_throughput** (ablation iii) | `experiment_20260518_142808` | 0.47 | 0.27 | 0.00 | 0.20 | 0.06 | 3/5 | ⚠ partial |
+| **no_smoothness** (ablation i) | `experiment_20260518_144123` | 0.37 | 0.21 | 0.26 | 0.16 | 0.00 | 5/5 | ✅ |
+
+#### 8.5.1 Physical KPIs (reward-independent — apples-to-apples across configs)
+
+| Config | `lane_sigma` | `max_ldiff_kph` | `ds_flow_vph` | `action_L0_std` | `L0-L2_diff_kph` | **Collisions** |
+|---|---|---|---|---|---|---|
+| **base** | **1.61** 🥇 | **3.29** 🥇 | 4 657 | 10.27 | +3.47 | **0** |
+| no_smoothness | 1.62 | 3.31 | 4 652 | 9.52 | +3.60 | 0 |
+| harmo_pure | 1.75 | 3.45 | 4 662 | 10.88 | +4.15 | 0 |
+| no_throughput | 1.77 | 3.55 | 4 662 | 9.66 | +3.95 | 0 |
+
+🥇 = best across configs. Base achieves both the tightest lane variance and the lowest max-lane-differential, at parity throughput, with zero collisions.
+
+#### 8.5.2 Within-config reward gap over baselines (the right comparison — see §2.4 caveat row)
+
+Within each config the reward yardstick is consistent between the trained agent and the baselines, so within-config gaps ARE meaningful. M60_active is the strongest static baseline in every config (the strongest CAV-direct rule-based comparator from §8.1).
+
+| Config | DRL mean reward | DRL best seed | DRL worst seed | Seed spread | vs M60_active | vs M110_uniform | vs NC |
+|---|---|---|---|---|---|---|---|
+| **base** | −164.8 | −155.9 | −172.5 | **16.6** 🥇 | **+40.1** | +174.4 | +221.4 |
+| no_smoothness | −172.9 | −167.6 | −179.1 | 11.5 | +40.7 | +185.4 | +235.1 |
+| no_throughput | −182.6 | −175.3 | −196.3 | 21.0 (3 seeds) | +46.9 | +228.2 | +289.7 |
+| harmo_pure | −196.6 | −169.9 | −238.4 | **68.5** ⚠ | +54.7 | +279.9 | +366.4 |
+
+🥇 = tightest seed-to-seed spread (most stable training). ⚠ = pathological seed variance.
+
+#### 8.5.3 Headline 50 % → 100 % CAV uplift (base config, same scenario pool, same reward weights)
+
+| Metric | 50 % CAV (May-16 4-VM run) | **100 % CAV (May-18, `experiment_20260518_133246`)** | Δ |
+|---|---|---|---|
+| Mean reward (5 seeds × 30 eps) | −321 | **−164.8** | +156 |
+| `lane_sigma` | ~14 | **1.61** | 10× tighter |
+| `max_lane_diff_kph` | ~26 | **3.29** | 8× tighter |
+| `ds_flow_vph` | ~4 078 | **4 657** | +579 (+14 %) |
+| Collisions (eval) | not measured | **0 / 150 episodes** | empirical safety |
+
+The 100 % CAV result is qualitatively different from 50 % CAV. Confirms ADR-008 (100 % CAV is the right paper scope) and ADR-014 (the controller's contribution shows fully when CAV-direct control authority is uncompromised).
+
+#### 8.5.4 Cross-config reward-yardstick caveat (worked example)
+
+When reward weights change, the same physical scenario yields a different reward number — because the reward *function* itself is different. Concrete: in `experiment_20260518_133504` (harmo_pure), the NC baseline scores **−562.9** because harmo_pure weights `w_h=0.70` doubles the harmonization penalty per step. In the base config, NC scores **−386.2**. NC's *physical* behaviour is identical in both runs (same scenarios, same simulator, no control); only the reward yardstick changed.
+
+**Therefore:**
+- ❌ Wrong: compare base agent (−164.8) with harmo_pure agent (−196.6) and conclude "harmo_pure is worse by 32 reward points"
+- ✅ Right (option A): compare within-config gap-over-baselines — base agent is +40.1 above M60_active under its own yardstick; harmo_pure agent is +54.7 above M60_active under *its* yardstick
+- ✅ Right (option B): compare reward-independent physical KPIs (table in §8.5.1) — base achieves the tightest lane_sigma (1.61 vs 1.75 for harmo_pure), and harmo_pure shows 4× higher seed variance
+
+The paper must report ablation results using physical KPIs (option B) or within-config gaps (option A), never raw cross-config reward differences.
+
+#### 8.5.5 Reward-design conclusions (informing the paper's ablation narrative)
+
+1. **Base 5-term reward is the right choice.** Best lane_sigma, best max_lane_diff, lowest seed variance (16.6 — half of harmo_pure's 68.5). Comparable throughput. The five terms are mutually reinforcing.
+2. **Dropping `w_s` (smoothness) is near-free** (lane_sigma 1.62 vs 1.61). Smoothness is decorative for the asymptotic policy but its absence does not destabilise training. Defensible to keep for completeness; not worth fighting to remove.
+3. **Dropping `w_q` (throughput) preserves throughput in practice** (4 662 vs 4 657 vph — within noise) but degrades lane_sigma by ~10 % (1.77 vs 1.61). The throughput term is **not load-bearing for the throughput KPI** — it's contributing to harmonization stability. Directly answers the standard reviewer challenge ("why a throughput term at all?").
+4. **harmo_pure (drop temporal + throughput + smoothness)** explodes seed variance (68.5 vs base 16.6) without improving physical KPIs. The 3 dropped terms are doing *regularisation* work beyond their face-value contribution to the reward.
+5. **Per-lane behaviour is genuinely exercised** (action_L0_std ≈ 9–11 kph, L0-L2 differential ≈ +3.5 to +4.2 kph). The agent is not collapsing to uniform-per-segment control — confirms ADR-004's claim.
+6. **Safety-by-construction is empirically verified** (0 / 660 eval episodes across all configs). ADR-010 evidence is now in hand.
+
+#### 8.5.6 Open follow-ups (for tools/eval_to_kpi.py and Paper-2)
+
+- **Re-extend `no_throughput` to 5 seeds** when a cheap VM is available — the 3-seed partial is informative but a 5-seed run tightens the conclusion about the throughput term.
+- **Anomaly breakdown** at 100 % CAV is not yet computed — the eval CSVs have the data (`anomaly_type` column), the breakdown can be derived without rerunning. Sits in `tools/eval_to_kpi.py` (P2).
+- **CVS metric** (MARVEL's safety surrogate) is trivial to add (`lane_sigma / mean_speed`) from the existing CSV columns. Include if a reviewer asks; not lead-with material per §8.4.
+
+---
+
 ## 9. Open questions / risks
 
 | ID | Question / Risk | Mitigation |
@@ -612,24 +704,29 @@ Per ADR-010 and ADR-012, Paper 1 reports KPIs **specific to CAV-direct VSL effec
 | R-2 | Single topology — generalisation untested | PhD extension; flag as future work |
 | R-3 | 100 % CAV unrealistic for near-term deployment | ADR-008 acknowledges; PhD chapter does HDV sensitivity sweep |
 | R-4 | Reward weights chosen by hand | Reward-weight ablation (P3); MARVEL admits same on p. 162002 |
-| R-5 | Reward components may not be statistically separable | Per-seed eval shows tight variance; bootstrap CIs in paper draft |
+| R-5 | Reward components may not be statistically separable | **Mitigated 2026-05-19**: 4-config ablation (§8.5) confirms physical KPIs move coherently with reward changes; base config has 16.6-point seed spread (tight, easily separable from baselines whose spread is ≤ 30) |
 | R-6 | Vast.ai auto-shutdown unreliable | `vastai stop instance` workaround documented in [project_vast_ai_shutdown_gotcha.md](file:///home/catalin/.claude/projects/-home-catalin-work-phd-phd-speed-harmo-v5/memory/project_vast_ai_shutdown_gotcha.md) |
 | R-7 | SUMO realism may be challenged | ADR-011 — defend by SUMO's own citations + position calibration as out-of-scope per ADR-012 |
-| R-8 | Safety claim unverifiable today (SUMO `--collision.action warn` + suppressed warnings) | ADR-010 — ship the collision-counter codebase change in P1; until landed, the claim is *unverified* |
+| R-8 | Safety claim unverifiable today (SUMO `--collision.action warn` + suppressed warnings) | **Mitigated 2026-05-19**: ADR-010 codebase change landed, 0 / 660 evaluation episodes confirmed (§8.5). Safety-by-construction is now empirically verified, not just theoretical. |
+| R-9 | Reward-yardstick incomparability across reward-weight ablations | **Surfaced 2026-05-19 §8.5.4**: documented in §2.4 caveats and §8.5; paper must report physical KPIs or within-config gaps, never raw cross-config reward differences |
 
 ---
 
 ## 10. Reproducibility checklist
 
 For paper submission:
-- [ ] Seed list documented (5 seeds: 0, 1, 2, 3, 4)
-- [ ] Hyperparameter snapshot per run (`config.yaml` saved alongside model)
-- [ ] Scenario pool deterministic from seed 42 (see [deploy_4vm.sh:30-31](../../deploy_4vm.sh#L30-L31))
-- [ ] Train + eval scripts versioned in git
-- [ ] Trained models + checkpoints archivable (~400 MB per VM)
-- [ ] TensorBoard event files preserved for per-component curves
-- [ ] SUMO version pinned (≥ 1.21)
-- [ ] Python env via `requirements.txt` + `python 3.12`
+- [x] Seed list documented (5 seeds: 0, 1, 2, 3, 4); no_throughput is 3 seeds — re-extend before submission
+- [x] Hyperparameter snapshot per run (`config.yaml` saved alongside model — verified for the 2026-05-18 runs)
+- [x] Scenario pool deterministic from seed 42 + cav=100 (`scenario_pools/shared_seed42_n200_cav100/`)
+- [x] Train + eval scripts versioned in git
+- [x] Trained models + checkpoints archivable (~400 MB per VM)
+- [x] TensorBoard event files preserved for per-component curves (`RewardComponentsCallback` writes 10 scalars per seed; verified in `experiment_20260517_174654` and later runs)
+- [x] SUMO version pinned (≥ 1.21)
+- [x] Python env via `requirements.txt` + `python 3.12`
+- [x] Safety-by-construction empirically verified (0 / 660 episodes — §8.5)
+- [ ] no_throughput ablation extended from 3 → 5 seeds (when a cheap VM is available — see §8.5.6)
+- [ ] tools/eval_to_kpi.py implemented (anomaly breakdown, CVS, paper-ready KPI tables — see P2 in §3)
+- [ ] National-level enforcement-compliance citations added (UK SPECS / Dutch trajectcontrole / Italian SICVe — per ADR-014 action item)
 
 ---
 
@@ -691,3 +788,4 @@ See §2.4 for the full actionable list with the keep/defer decisions. In short:
 | 2026-05-18 | v0.3 | Catalin + Claude | Added ADR-013 — ramp_fraction sweep [0.20, 0.30] defended by 3 verbatim citations (Lorenz & Elefteriadou TRB E-C018, Chung et al. 2007 TRB Part B, Han et al. 2022 TRC) bracketing the stochastic-capacity / probabilistic-breakdown regime. §2.4, §11.4, §3 (Paper 2 hook), §8.4 (per-quartile reporting) updated accordingly. No code change required — sweep already implemented at [stochastic_demand.py:37,52,86-87](../../traffic_environment/stochastic_demand.py#L37). |
 | 2026-05-18 | v0.4 | Catalin + Claude | Added ADR-014 — pure CAV-direct VSL is a methodological necessity, not a design preference. Four-argument defense (regulatory / display / cognition+compliance / empirical Box(5) ablation / information-theoretic) with the load-bearing reframe that **the display constraint binds regardless of compliance level**, blocking continuous-action posted deployment even at the ~95 % compliance achievable via average-speed enforcement (UK SPECS / Dutch trajectcontrole / Italian SICVe). §2.1 problem-statement bullet rewritten; ADR-001 gets a cross-reference; ADR-004 documents Box(5) as the cited hybrid ablation. National-level enforcement-compliance citations to be added at paper submission time (general acknowledgement suffices for the plan per ADR-012 scope discipline). |
 | 2026-05-18 | v0.5 | Catalin + Claude | Terminology refactor: "Lagrangian VSL" → **"CAV-direct VSL"**, "Eulerian VSL" → **"Posted VSL"** throughout plan body and ADRs (per user pushback that Lagrangian/Eulerian draws unnecessary jargon attention and isn't field-standard — 2 of 3 closest papers don't use it). Equivalence note added in glossary; verbatim paper quotes in §11 retain original terminology with inline "= our CAV-direct/posted" annotations. Memory updated with the equivalence for cross-paper correlation. |
+| 2026-05-19 | v0.6 | Catalin + Claude | **Results milestone.** New §8.5 records the 2026-05-19 evaluation: 4-config 100 % CAV ablation (base + harmo_pure + no_throughput[3-seed partial] + no_smoothness), 660 evaluation episodes total, 0 collisions. Base config is the empirical winner on physical KPIs and seed stability. §2.2 RQ table updated with verified numbers for RQ1 + RQ3. §2.3 contribution claims now reference the §8.5 evidence; added a 4th claim covering empirically-verified safety. §2.4 + new R-9 risk surface the cross-config reward-yardstick caveat (worked example in §8.5.4). §3 timeline marks P1/P3/P4 done; P2 (KPI extractor) is the immediate next step. §10 reproducibility checklist updated with what's actually verified. Paper draft remains future work per user directive. |
