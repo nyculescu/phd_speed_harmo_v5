@@ -1,0 +1,141 @@
+# configurations/per_lane_stochastic_uniform_weights.yaml
+#
+# REWARD-WEIGHT ABLATION (variant viii — naive uniform baseline):
+# "Uniform weights" — every reward term gets the same weight (0.20).
+# This is the canonical "no design knowledge" alternative against which
+# the hand-tuned 5-term reward must justify itself. Closes the most
+# common Paper-1 reviewer question: "did you tune the weights at all,
+# or could uniform weights have done the same job?"
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.20   (down — harmonization no longer dominant)
+#   w_t: 0.20 → 0.20   (unchanged)
+#   w_q: 0.25 → 0.20   (down — throughput no longer second-largest)
+#   w_l: 0.15 → 0.20   (up — lane_eq promoted)
+#   w_s: 0.05 → 0.20   (UP — smoothness 4× its base weight)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# ACADEMIC GROUNDING (for the paper's "we beat the naive baseline" defense):
+#   * Ng A. Y., Harada D. & Russell S. (1999). "Policy Invariance Under
+#     Reward Transformations." ICML. — establishes the framework where
+#     ANY weighted sum of reward components is a valid candidate; the
+#     burden of proof is on the designed weights to outperform uniform.
+#   * Henderson P. et al. (2018). "Deep Reinforcement Learning that
+#     Matters." AAAI. — explicitly recommends a uniform-weight baseline
+#     as part of any rigorous reward-shaping ablation.
+#   * Eschmann J. (2021). "Reward Function Design in Reinforcement
+#     Learning." Survey. — frames "uniform vs designed" as the
+#     foundational comparison in reward-shaping methodology. Without
+#     this baseline, claims about "designed weights" are unfalsifiable.
+#
+# Position in the ablation matrix:
+#   This variant is structurally different from the drop-one-out family
+#   and the extreme variants:
+#     * drop-one-out (no_smoothness/no_throughput/no_temporal/no_lane_eq/
+#       no_harmonization): each removes ONE term, redistributes
+#       proportionally. Tests "is term X load-bearing?"
+#     * extremes (harmo_pure, throughput_heavy, no_harmonization): each
+#       amplifies or zeroes a single term by a large amount. Tests
+#       "what does the policy do at the bounds of term X?"
+#     * uniform_weights (THIS VARIANT): preserves all 5 terms but
+#       removes all weight asymmetry. Tests "does the WEIGHTING design
+#       matter, or just the term selection?"
+#   The three families together form a complete characterization of the
+#   reward-weight design space.
+#
+# Hypothesis (two outcomes, both publishable):
+#   * Uniform ≈ base on physical KPIs (lane_sigma within ~0.3, throughput
+#     within ~50 vph) → the weight tuning is decorative. Paper's
+#     contribution narrows to "the per-lane action space + the network
+#     dynamics carry the result; weight choice is secondary." This
+#     simplifies the paper but slightly weakens the reward-design story.
+#   * Uniform degrades vs base (lane_sigma > 3, or seed variance > 30) →
+#     the weight tuning IS load-bearing. Paper's contribution gains a
+#     second dimension: "both per-lane action space AND principled
+#     reward design matter." Strongest possible defense.
+#   * Either result is publishable and reviewer-defensible. The most
+#     likely outcome based on §8.5 (where no_smoothness ≈ base, showing
+#     smoothness amplification to 0.20 here may slightly hurt) is
+#     mild degradation — confirming weight tuning matters at the margin.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.20   # all terms equal — the naive baseline
+    w_t: 0.20
+    w_q: 0.20
+    w_l: 0.20
+    w_s: 0.20
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]

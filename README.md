@@ -128,6 +128,7 @@ tmux new -s v5
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_lane_eq.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_throughput_heavy.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_harmonization.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_uniform_weights.yaml
 
 #    Ctrl-B, D to detach.  tmux attach -t v5 to reattach.
 ```
@@ -144,6 +145,7 @@ Available reward configs (rationale + ADR linkage in [docs/plans/phd_thesis_plan
 | `per_lane_stochastic_harmo_pure.yaml` | `(0.70, 0.00, 0.00, 0.30, 0.00)` | `tqc_box4_harmo_pure_<ts>/` | extreme: only `w_h + w_l` |
 | `per_lane_stochastic_throughput_heavy.yaml` | `(0.20, 0.10, 0.55, 0.10, 0.05)` | `tqc_box4_throughput_heavy_<ts>/` | reverse-weighting: throughput dominant |
 | `per_lane_stochastic_no_harmonization.yaml` | `(0.00, 0.31, 0.38, 0.23, 0.08)` | `tqc_box4_no_harmonization_<ts>/` | drop-one-out: `w_h = 0` — closes the matrix |
+| `per_lane_stochastic_uniform_weights.yaml` | `(0.20, 0.20, 0.20, 0.20, 0.20)` | `tqc_box4_uniform_weights_<ts>/` | naive baseline: are designed weights better than uniform? |
 
 Use a distinct VM per config — each one is a separate 1M-step training run (~9.5 h wallclock on EPYC 7B13). The output dir suffix lets you rsync them into non-overlapping `artifacts/` subdirectories.
 
