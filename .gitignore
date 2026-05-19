@@ -18,3 +18,6 @@ artifacts/*
 # Per-developer Claude Code settings
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Generated KPI reports — local only, regenerable from training_runs/
+reports/
