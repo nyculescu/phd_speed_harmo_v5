@@ -1,0 +1,122 @@
+# configurations/per_lane_stochastic_throughput_heavy.yaml
+#
+# REWARD-WEIGHT ABLATION (variant vi — reverse-weighting, NOT drop-one-out):
+# "Throughput-heavy" — flips the weighting so throughput is the dominant
+# term and harmonization+temporal+lane_eq are demoted. Tests the reverse
+# direction of the base design intent: would an agent that primarily
+# optimizes for flow ALSO end up harmonizing (as a side-effect, the way
+# no_throughput preserved flow as a side-effect in §8.5)?
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.20   (down — harmonization demoted from dominant to minor)
+#   w_t: 0.20 → 0.10   (down — temporal halved)
+#   w_q: 0.25 → 0.55   (UP — throughput more than doubled, now dominant)
+#   w_l: 0.15 → 0.10   (down — lane-eq reduced)
+#   w_s: 0.05 → 0.05   (unchanged — smoothness already minor)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# Why this matters (paper-defensibility):
+#   This is the canonical "you tuned the reward weights to make
+#   harmonization look like the winner" reviewer attack. If a throughput-
+#   prioritising weighting STILL produces low lane_sigma (≤ 2.5, say),
+#   the harmonization gain is robust to the weight scheme — it's coming
+#   from the per-lane action space + the network dynamics, not from us
+#   picking a reward function that incentivizes the metric we report.
+#
+# Hypothesis:
+#   * If `lane_sigma` stays ≤ 2.5 AND `ds_flow_vph` ≥ 4 650 →
+#     the harmonization story is ROBUST to weight choice. Strong evidence
+#     that the per-lane controller's contribution is structural.
+#   * If `lane_sigma` blows out (> 4) while throughput improves →
+#     the base config's harmonization gain IS partly a reward-tuning
+#     artifact. Paper must qualify the contribution.
+#   * If throughput doesn't actually improve much (still ~4 660) →
+#     the reward function has limited control over the throughput axis;
+#     the agent hits a physical ceiling. Useful caveat for the paper.
+#
+# This variant complements no_throughput cleanly:
+#   * no_throughput: w_q=0 → "does removing throughput hurt?"
+#   * throughput_heavy: w_q=0.55 → "does prioritising throughput help?"
+#   * Together they probe the throughput-axis sensitivity from both sides.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.20   # demoted: harmonization minor
+    w_t: 0.10
+    w_q: 0.55   # PROMOTED: throughput dominant — the reverse weighting
+    w_l: 0.10
+    w_s: 0.05
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]

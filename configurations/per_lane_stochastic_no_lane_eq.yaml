@@ -1,0 +1,109 @@
+# configurations/per_lane_stochastic_no_lane_eq.yaml
+#
+# REWARD-WEIGHT ABLATION (variant v — drops the lane-equalisation term):
+# "No lane_eq" — drops the inter-lane gap term (w_l = 0.15) and
+# redistributes its mass proportionally across the four kept terms so the
+# sum still equals 1.0. Tests whether `w_l` is doing work distinct from
+# `w_h` — both penalize harmonization-related quantities (`w_h` is upstream
+# σ across segments + per-lane variance at seg_0_before; `w_l` is the
+# max inter-lane gap at seg_0_before). They overlap conceptually.
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.41   (proportional redistribution +0.062 share)
+#   w_t: 0.20 → 0.24   (proportional redistribution +0.035 share)
+#   w_q: 0.25 → 0.29   (proportional redistribution +0.044 share)
+#   w_l: 0.15 → 0.00   (DISABLED for ablation — the hypothesis)
+#   w_s: 0.05 → 0.06   (proportional redistribution +0.009 share)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# Hypothesis (informed by 2026-05-19 §8.5 results):
+#   * If `max_lane_diff_kph` stays ≈ 3.3 AND `lane_sigma` stays ≈ 1.6 →
+#     `w_l` is redundant with `w_h`; paper can defend a simpler 4-term
+#     reward (and we report the redundancy as a finding).
+#   * If max_lane_diff degrades (say > 6 kph) while lane_sigma holds →
+#     `w_l` was load-bearing for the inter-lane-gap KPI specifically.
+#     Keep the 5-term reward; paper notes the distinction.
+#   * Either result is publishable. This is the cleanest "is this term
+#     redundant?" ablation in the matrix.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.41
+    w_t: 0.24
+    w_q: 0.29
+    w_l: 0.00   # DISABLED for ablation
+    w_s: 0.06
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]

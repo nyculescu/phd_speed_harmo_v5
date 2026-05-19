@@ -124,18 +124,24 @@ tmux new -s v5
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_harmo_pure.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_smoothness.yaml
 ./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_throughput.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_temporal.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_no_lane_eq.yaml
+./deploy_4vm.sh 2 --config configurations/per_lane_stochastic_throughput_heavy.yaml
 
 #    Ctrl-B, D to detach.  tmux attach -t v5 to reattach.
 ```
 
-Available reward configs (rationale + ADR linkage in [docs/plans/phd_thesis_plan_v0.md §4](docs/plans/phd_thesis_plan_v0.md)):
+Available reward configs (rationale + ADR linkage in [docs/plans/phd_thesis_plan_v0.md §4](docs/plans/phd_thesis_plan_v0.md), §8.5 for results):
 
-| Config file | Weights `(w_h, w_t, w_q, w_l, w_s)` | Output dir suffix |
-|---|---|---|
-| `per_lane_stochastic.yaml` (default) | `(0.35, 0.20, 0.25, 0.15, 0.05)` | `tqc_box4_<ts>/` |
-| `per_lane_stochastic_harmo_pure.yaml` | `(0.70, 0.00, 0.00, 0.30, 0.00)` | `tqc_box4_harmo_pure_<ts>/` |
-| `per_lane_stochastic_no_smoothness.yaml` | `(0.37, 0.21, 0.26, 0.16, 0.00)` | `tqc_box4_no_smoothness_<ts>/` |
-| `per_lane_stochastic_no_throughput.yaml` | `(0.47, 0.27, 0.00, 0.20, 0.06)` | `tqc_box4_no_throughput_<ts>/` |
+| Config file | Weights `(w_h, w_t, w_q, w_l, w_s)` | Output dir suffix | Ablation role |
+|---|---|---|---|
+| `per_lane_stochastic.yaml` (default) | `(0.35, 0.20, 0.25, 0.15, 0.05)` | `tqc_box4_<ts>/` | **headline** — base 5-term reward |
+| `per_lane_stochastic_no_smoothness.yaml` | `(0.37, 0.21, 0.26, 0.16, 0.00)` | `tqc_box4_no_smoothness_<ts>/` | drop-one-out: `w_s = 0` |
+| `per_lane_stochastic_no_throughput.yaml` | `(0.47, 0.27, 0.00, 0.20, 0.06)` | `tqc_box4_no_throughput_<ts>/` | drop-one-out: `w_q = 0` |
+| `per_lane_stochastic_no_temporal.yaml` | `(0.44, 0.00, 0.31, 0.19, 0.06)` | `tqc_box4_no_temporal_<ts>/` | drop-one-out: `w_t = 0` |
+| `per_lane_stochastic_no_lane_eq.yaml` | `(0.41, 0.24, 0.29, 0.00, 0.06)` | `tqc_box4_no_lane_eq_<ts>/` | drop-one-out: `w_l = 0` |
+| `per_lane_stochastic_harmo_pure.yaml` | `(0.70, 0.00, 0.00, 0.30, 0.00)` | `tqc_box4_harmo_pure_<ts>/` | extreme: only `w_h + w_l` |
+| `per_lane_stochastic_throughput_heavy.yaml` | `(0.20, 0.10, 0.55, 0.10, 0.05)` | `tqc_box4_throughput_heavy_<ts>/` | reverse-weighting: throughput dominant |
 
 Use a distinct VM per config — each one is a separate 1M-step training run (~9.5 h wallclock on EPYC 7B13). The output dir suffix lets you rsync them into non-overlapping `artifacts/` subdirectories.
 

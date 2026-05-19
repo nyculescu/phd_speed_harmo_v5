@@ -1,0 +1,108 @@
+# configurations/per_lane_stochastic_no_temporal.yaml
+#
+# REWARD-WEIGHT ABLATION (variant iv — drops the temporal-stability term):
+# "No temporal" — drops the downstream temporal-stability term (w_t = 0.20)
+# and redistributes its mass proportionally across the four kept terms so
+# the sum still equals 1.0. Tests whether the temporal term provides the
+# regularization that harmo_pure (which drops w_t + w_q + w_s simultaneously)
+# was missing — i.e., is temporal stability ALONE the reason harmo_pure has
+# 4× the seed variance of base?
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.44   (proportional redistribution +0.087 share)
+#   w_t: 0.20 → 0.00   (DISABLED for ablation — the hypothesis)
+#   w_q: 0.25 → 0.31   (proportional redistribution +0.063 share)
+#   w_l: 0.15 → 0.19   (proportional redistribution +0.038 share)
+#   w_s: 0.05 → 0.06   (proportional redistribution +0.013 share)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# Hypothesis (informed by 2026-05-19 §8.5 results):
+#   * If lane_sigma stays ≈ 1.6 AND seed variance stays ≤ 20 → temporal term
+#     is decorative; harmo_pure's instability came from the combined absence
+#     of all three secondary terms.
+#   * If seed variance ≥ 30 → temporal alone is the regularizer; throughput
+#     and smoothness contribute via that mechanism. Strong paper finding.
+#   * If lane_sigma > 2.0 → temporal stability directly contributes to
+#     harmonization (which is non-obvious given the math separates them).
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.44
+    w_t: 0.00   # DISABLED for ablation
+    w_q: 0.31
+    w_l: 0.19
+    w_s: 0.06
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]
