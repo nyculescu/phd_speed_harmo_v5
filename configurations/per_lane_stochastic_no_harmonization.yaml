@@ -1,0 +1,141 @@
+# configurations/per_lane_stochastic_no_harmonization.yaml
+#
+# REWARD-WEIGHT ABLATION (variant vii — drop-one-out completion):
+# "No harmonization" — drops the harmonization term (w_h = 0.35, the
+# largest single weight) and redistributes its mass proportionally
+# across the four kept terms so the sum still equals 1.0. This is the
+# load-bearing-term ablation: harmonization is the term the entire
+# paper argues is the central mechanism. Dropping it tests the causal
+# claim directly.
+#
+# DIFF vs configurations/per_lane_stochastic.yaml — only reward_weights:
+#   w_h: 0.35 → 0.00   (DISABLED for ablation — the hypothesis)
+#   w_t: 0.20 → 0.31   (proportional redistribution +0.108 share)
+#   w_q: 0.25 → 0.38   (proportional redistribution +0.135 share)
+#   w_l: 0.15 → 0.23   (proportional redistribution +0.081 share)
+#   w_s: 0.05 → 0.08   (proportional redistribution +0.027 share)
+# Sum still = 1.0; reward_scale unchanged.
+#
+# ACADEMIC GROUNDING (for the paper's "we ablated every term" defense):
+#   * Ng A. Y., Harada D. & Russell S. (1999). "Policy Invariance Under
+#     Reward Transformations." ICML. — foundational paper on reward-
+#     shaping ablation. Every reward-shaping component should be
+#     independently ablatable to show its causal contribution; drop-one-
+#     out is the standard test for this.
+#   * Henderson P. et al. (2018). "Deep Reinforcement Learning that
+#     Matters." AAAI. — explicit recommendation that rigorous ablations
+#     must cover every design choice, especially the load-bearing ones.
+#   * Eschmann J. (2021). "Reward Function Design in Reinforcement
+#     Learning." Survey. — recommends pairing each "drop-X" with an
+#     "amplify-X" variant to bracket the term's effect. This ablation
+#     pairs symmetrically with the existing harmo_pure variant (which
+#     amplifies w_h to 0.70 and zeros the other 3 secondary terms):
+#       - harmo_pure: maximal harmonization weighting (extreme presence)
+#       - no_harmonization: zero harmonization weighting (extreme absence)
+#     The two extremes bracket the term's effect.
+#
+# Hypothesis (two outcomes, both publishable):
+#   * Collapse — `lane_sigma` > 10, `max_lane_diff_kph` > 20, mean
+#     reward < -400 → confirms w_h is the load-bearing term. The paper's
+#     causal claim (harmonization is the mechanism) is supported by the
+#     ablation. This is the EXPECTED outcome based on §8.5 results: the
+#     harmo_pure variant retains w_h+w_l and is still competitive, so
+#     removing w_h entirely should hurt significantly.
+#   * Surprising robustness — `lane_sigma` stays ≤ 4, `max_lane_diff` ≤ 8
+#     → the other terms (temporal, throughput, lane_eq, smoothness)
+#     compensate for the missing harmonization term. The paper must
+#     reframe: harmonization is NOT a load-bearing single term but
+#     an emergent property of the multi-term reward. This would be a
+#     surprising and publishable finding requiring careful framing.
+#
+# This variant CLOSES the drop-one-out matrix:
+#   * no_temporal  (variant iv) — drops w_t
+#   * no_throughput (variant iii) — drops w_q
+#   * no_lane_eq    (variant v)  — drops w_l
+#   * no_smoothness (variant i)  — drops w_s
+#   * no_harmonization (THIS VARIANT, vii) — drops w_h
+# Together with base (all five) and the two extremes (harmo_pure,
+# throughput_heavy), this is the canonical full ablation matrix for
+# the paper's reward-design section.
+
+sumo:
+  aggregation_time: 30
+  step_length: 1.0
+  episode_duration_s: 3600
+  warmup_s: 100
+
+scenario:
+  network_topology: ramps_v2
+  cav_percentage: 100.0   # ADR-008
+  stochastic_demand:
+    enabled: true
+    peak_demand_range: [5500, 8000]
+    base_fraction_range: [0.4, 0.6]
+    ramp_fraction_range: [0.20, 0.30]
+    t_peak_range: [0.15, 0.30]
+    t_decay_range: [0.65, 0.80]
+    noise_std: 0.05
+  anomalies:
+    enabled: true
+    probability: 0.15
+    types: [ramp_spike, speed_reduction, lane_closure]
+
+sar:
+  state: r44_state_v2
+  action: r44_action_v2
+  reward: r44_reward_v4
+
+sar_config:
+  max_flow_vph: 8000.0
+  max_ramp_flow_vph: 2000.0
+
+  lane_low_kph: 60.0
+  lane_high_kph: 120.0
+  ramp_low_kph: 40.0
+  ramp_high_kph: 90.0
+  use_box5: false
+  use_box7: false
+
+  ref_flow_vph: 6000.0
+  reward_scale: 5.0
+  reward_weights:
+    w_h: 0.00   # DISABLED for ablation — the load-bearing-term test
+    w_t: 0.31
+    w_q: 0.38
+    w_l: 0.23
+    w_s: 0.08
+
+training:
+  total_timesteps: 1_000_000
+  n_seeds: 5
+  eval_freq: 50_000
+  n_eval_episodes: 10
+
+  sac:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    policy_kwargs:
+      net_arch: [256, 256]
+
+  tqc:
+    policy: MlpPolicy
+    learning_rate: 0.0003
+    buffer_size: 500_000
+    learning_starts: 10_000
+    batch_size: 256
+    tau: 0.005
+    gamma: 0.99
+    ent_coef: auto
+    target_entropy: auto
+    n_quantiles: 25
+    n_critics: 5
+    top_quantiles_to_drop_per_net: 2
+    policy_kwargs:
+      net_arch: [256, 256]
