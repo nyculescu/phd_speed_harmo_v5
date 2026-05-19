@@ -197,59 +197,20 @@ ssh -p <PORT> root@<IP> 'cd ~/phd_speed_harmo_v5 && ./tools/check_training_statu
 
 ## Hardware spec for vast.ai (next deploy)
 
-Per VM, `deploy_4vm.sh N` runs **5 seeds × 48 SUMO workers = 240 SUMO processes** training a tiny MLP for 1M timesteps. **CPU-bound. Not GPU-bound. Not I/O-bound.**
+Per VM, `deploy_4vm.sh N` runs 5 seeds × 48 SUMO workers (≈240 processes), 1M timesteps. **Workload profile:** CPU-bound · peak RAM ≈ 94 GB · peak disk ≈ 8 GB · no GPU needed.
 
-### CPU preference order (algorithm-normalised throughput, 2026-05-16 measurements)
+### CPU ranking — fastest first (TQC Box(4) reference)
 
-| Rank | CPU model | Why |
-|---|---|---|
-| 1 | **AMD EPYC 7B13** (Google custom Milan) | Best observed normalised fps. Common on vast.ai, cheap. |
-| 2 (tied) | AMD EPYC 7V13 (Azure custom Milan) | Equivalent silicon, widely listed |
-| 2 (tied) | AMD EPYC 7773X (Milan-X, 3D V-Cache) | 3D V-Cache buys **nothing** here — working set doesn't fit L3. Take only if cheaper than 7B13. |
-| — (untested) | AMD EPYC 9xxx (Genoa / Bergamo) | Newer arch; should beat Milan, often similar price |
-| AVOID | AMD EPYC 7742 / 7763 / 7702 (Rome) | ~25 % slower than Milan for this workload |
-
-### Min vs optimal spec
-
-| Resource | Minimum | Optimal | Notes |
+| CPU model | Silicon | fps | Source |
 |---|---|---|---|
-| CPU cores | 96 dedicated | **128 dedicated** | 240 SUMO procs; below 96 thrashes. More than 128 buys nothing. |
-| CPU gen | Milan | Milan or Genoa | See ranking above |
-| RAM | 96 GB | **128 GB** | Peak observed use: 94 GB. Don't pay for 256/512 GB tiers — wasted. |
-| Disk | 16 GB NVMe | **20 GB NVMe** | Actual use: 8 GB. Disk speed (2.8 → 7.1 GB/s) did NOT correlate with fps. Cheapest NVMe is fine. |
-| GPU | None | None | Pure CPU workload. Renting GPU = pure waste. |
-| Network | 100 Mbit | 100 Mbit | rsync pulls ~1 GB/VM total |
-| Reliability | ≥ 95 % | ≥ 95 % | Standard vast.ai filter |
+| AMD EPYC 9xxx | Genoa / Bergamo (Zen 4) | likely > 32 | untested |
+| AMD EPYC 7B13 | Milan (Zen 3, Google custom) | 32 | measured, 1-socket dedicated, 2026-05-16 |
+| AMD EPYC 7J13 | Milan (Zen 3, Google custom) | 32 | measured, 1-socket dedicated, 2026-05-18 |
+| AMD EPYC 7V13 | Milan (Zen 3, Azure custom) | ~30 | normalized from 2026-05-16 (was shared 128/256) |
+| AMD EPYC 7773X | Milan-X (Zen 3 + V-Cache) | ~30 | normalized from 2026-05-16; extra L3 unused here |
+| AMD EPYC 7B12 | **Rome** (Zen 2, Google custom) | 27–29 | measured, 1-socket dedicated, 2026-05-18 |
+| AMD EPYC 7742 / 7763 / 7702 | **Rome** (Zen 2) | ~24–28 | extrapolated from 7742 measurement |
 
-### Anti-patterns (paid for, didn't use, in the 2026-05-16 run)
+**Generation flag in the model number:** the trailing digit is what changes Zen generation, not the letter. `…X3` = Milan (Zen 3, fast), `…X2` = Rome (Zen 2, slower), `…X4` = Genoa (Zen 4, expected faster). Letter prefix (`B`/`J`/`V`/none) is just the customer (Google/Google/Azure/retail).
 
-- **256 / 515 GB RAM tiers** — peak was 94 GB → ~80 % RAM cost wasted
-- **64 GB disk** — used 8 GB → 8× over-provisioned
-- **Shared CPU** (128/256) — noisy-neighbor risk
-- **Rome silicon** (7742) — 25 % slower than Milan
-- **Pairing heaviest algo with slowest VM** — TQC Box(5) on Rome trailed the other three by ~3 h, kept the slot billed-but-finished VMs idle
-
-### Algo-to-VM pairing (balance finish times)
-
-Assign the **heaviest algorithm to the FASTEST VM**, not whichever happens to be `N=4`:
-
-| `deploy_4vm.sh N` | Algorithm | Hardware tier |
-|---|---|---|
-| 1 | SAC Box(4) — lightest | cheapest acceptable |
-| 2 | TQC Box(4) | mid-tier |
-| 3 | SAC Box(5) | mid-tier |
-| 4 | TQC Box(5) — **heaviest** | **best CPU available** (Genoa or 7773X) |
-
-That keeps all four VMs finishing within ~1 h of each other instead of vm4 trailing by ~3 h.
-
-### vast.ai search filter recipe
-
-```
-CPU cores ≥ 128
-CPU model contains "EPYC 7B" OR "7V" OR "7773" OR "9"   ← avoids 7742/7763 Rome
-RAM ≥ 128 GB AND ≤ 160 GB                               ← dodges wasteful 256+ GB tiers
-Disk space ≥ 20 GB AND ≤ 64 GB
-GPU: disable / cheapest
-Bandwidth ≥ 100 Mbit
-Reliability ≥ 95 %
-```
+**Variables beyond model number that change observed fps:** sockets (1 vs 2 → NUMA), CPU allocation (dedicated `128/128` vs shared `128/256` → noisy neighbor), and per-listing boost state. The numbers above are from 1-socket dedicated instances. Dual-socket and shared variants are untested.
