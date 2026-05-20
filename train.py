@@ -233,8 +233,11 @@ def _train_single_seed(
     np.random.seed(seed)
     torch.manual_seed(seed)
 
+    _rw = cfg["sar_config"]["reward_weights"]
     print(f"\n{'='*60}")
     print(f"Training {algo.upper()} seed={seed} for {timesteps:,} steps")
+    print(f"  Reward weights: w_h={_rw['w_h']} w_t={_rw['w_t']} w_q={_rw['w_q']} "
+          f"w_l={_rw['w_l']} w_s={_rw['w_s']}")
     print(f"  Parallel SUMO workers: {n_envs}")
     print(f"{'='*60}")
 
@@ -415,12 +418,15 @@ def main():
     cfg = _load_config(box5=args.box5, config_path=args.config)
     timesteps = args.timesteps or cfg["training"]["total_timesteps"]
 
-    # Slug for log-dir naming: take the config stem when not the default, so
-    # parallel ablation runs land in distinct training_runs/* directories.
+    # Ablation slug — the human-readable identity of the reward config.
+    # Used both for log-dir naming and for stamping into every seed log so
+    # an experiment's ablation can be identified from its log alone (no
+    # config.yaml fingerprinting required).
     if args.config:
         cfg_slug = Path(args.config).stem.replace("per_lane_stochastic_", "")
         cfg_label = f"_{cfg_slug}"
     else:
+        cfg_slug = "base"
         cfg_label = ""
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -436,7 +442,12 @@ def main():
 
     n_envs = args.n_envs
 
+    _rw = cfg["sar_config"]["reward_weights"]
     print(f"v5.1 Training — {args.algo.upper()} {box_label}")
+    print(f"  ABLATION: {cfg_slug}")
+    print(f"  Config file: {args.config or 'configurations/per_lane_stochastic.yaml (default)'}")
+    print(f"  Reward weights: w_h={_rw['w_h']} w_t={_rw['w_t']} w_q={_rw['w_q']} "
+          f"w_l={_rw['w_l']} w_s={_rw['w_s']}")
     print(f"  Seeds: {args.seeds}")
     print(f"  Timesteps per seed: {timesteps:,}")
     print(f"  Parallel SUMO workers: {n_envs}")
