@@ -115,9 +115,12 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             if raw == raw:
                 window.append(raw)
                 slow.append(raw)
-            temp = sum(window) / len(window) if window else raw       # fast mean (excursion cap)
+            filled = len(window) == window.maxlen
+            # until the 10 s window is filled, single raw spikes (up to ~98 C at idle on this CPU) must not count
+            temp = (sum(window) / len(window)) if filled else min(sum(window) / max(len(window), 1), TEMP_HARD_C - 1.5)
             temp_slow = sum(slow) / len(slow) if slow else raw        # slow mean (pause / resume)
-            temps.append(temp)
+            if filled:
+                temps.append(temp)
             event = ""
             # finished jobs
             for job in list(running):
