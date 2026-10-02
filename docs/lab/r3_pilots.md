@@ -175,3 +175,13 @@ References on the same validation seeds (mean_val_speed): no control 3.579283333
 | seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | 600 | 3.8500845384554023 | 3.549239861016535 | 3.573212342440088 (25) | False | True | False | False | False | 0 | **FAIL** |
+
+## p6_bn4av25 (t1) · 2026-10-02 11:24
+
+References on the same validation seeds (mean_val_outflow): no control 977.7777777777778, best constant 981.3333333333334, tuned classical 1368.4444444444443.
+
+![p6_bn4av25](figs/p6_bn4av25.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 966.6666666666666 | 982.6666666666666 | 1033.3333333333333 (425) | True | True | True | True | False | 0 | **PASS** |
