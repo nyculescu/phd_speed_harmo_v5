@@ -16,5 +16,6 @@ taskset -c 16-31 $P -m vsl_lab.jobs.bn4_eval --ctrl avfb:1:6 --inflow 1600 --see
 $P -m vsl_lab.jobs.round2 a_t0 --gate-ok > $R/t1/round2_a_t0.log 2>&1
 $P -m vsl_lab.jobs.round2 a_r2 --gate-ok > $R/t1/round2_a_r2.log 2>&1
 $P -m vsl_lab.jobs.round2 b_r2 --gate-ok > $R/t1/round2_b_r2.log 2>&1
+taskset -c 16-31 $P -m vsl_lab.jobs.mrg3_diag > $R/t2/diag_v2.log 2>&1
 rm -f $L/round2.pid
 echo round2 batches done
