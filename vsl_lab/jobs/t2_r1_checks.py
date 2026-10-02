@@ -68,6 +68,12 @@ def main(argv=None) -> int:
     else:
         cal = json.loads((REPO_ROOT / f"docs/lab/t2_mrg3_calibration{suffix}.json").read_text())
         cell = cal["selected_cell"]
+    if cell is None:   # never fail silently: no calibration cell had 0 teleports and 0 FAIL -> R1 cannot run
+        print(json.dumps({"skipped": "no eligible calibration cell (teleports/FAIL in every cell)", "plant": a.plant,
+                          "driver": a.driver}))
+        ledger.append("T2", "R1", "S", f"mrg3{a.plant}{a.driver or ''}_r1", {"cell": None}, "-", 0, {},
+                      {"T1": False, "skipped": "no eligible calibration cell"}, notes="calibration: teleports in every cell")
+        return 0
     m, r = (int(x) for x in cell.split("/"))
     root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r1{suffix}_{int(time.time())}"
     if not a.analyse_only:

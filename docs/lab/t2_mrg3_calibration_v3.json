@@ -1,0 +1,99 @@
+{
+ "table": {
+  "4800/600": {
+   "n": 10,
+   "breakdown_share": 0.8,
+   "median_ratio": 1.0416823469911543,
+   "share_ratio_le_095": 0.0,
+   "teleports": 6,
+   "fail": 5,
+   "median_time_s": 256.61617533964716
+  },
+  "4800/900": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 1.0208798622743345,
+   "share_ratio_le_095": 0.4,
+   "teleports": 5,
+   "fail": 5,
+   "median_time_s": 285.51977315028125
+  },
+  "5100/600": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 0.9613948634103875,
+   "share_ratio_le_095": 0.2,
+   "teleports": 5,
+   "fail": 5,
+   "median_time_s": 294.4884126892399
+  },
+  "5100/900": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 0.9832591819272631,
+   "share_ratio_le_095": 0.5,
+   "teleports": 5,
+   "fail": 4,
+   "median_time_s": 319.4162099620521
+  },
+  "5400/600": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 1.015068781613035,
+   "share_ratio_le_095": 0.3,
+   "teleports": 5,
+   "fail": 4,
+   "median_time_s": 325.9616491575391
+  },
+  "5400/900": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 1.0183029886030837,
+   "share_ratio_le_095": 0.1,
+   "teleports": 6,
+   "fail": 5,
+   "median_time_s": 351.0951603779938
+  },
+  "5700/600": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 0.946367149382584,
+   "share_ratio_le_095": 0.6,
+   "teleports": 4,
+   "fail": 4,
+   "median_time_s": 354.90329380181004
+  },
+  "5700/900": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 0.9798523223866389,
+   "share_ratio_le_095": 0.3,
+   "teleports": 8,
+   "fail": 6,
+   "median_time_s": 421.07879933431445
+  },
+  "6000/600": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 1.012817970673728,
+   "share_ratio_le_095": 0.3,
+   "teleports": 8,
+   "fail": 6,
+   "median_time_s": 403.09511984971965
+  },
+  "6000/900": {
+   "n": 10,
+   "breakdown_share": 1.0,
+   "median_ratio": 0.9686191615960051,
+   "share_ratio_le_095": 0.3,
+   "teleports": 6,
+   "fail": 4,
+   "median_time_s": 474.5502912850597
+  }
+ },
+ "selected_cell": null,
+ "rule": "closest breakdown share to 0.5 among cells with 0 teleports and 0 FAIL; ties -> lower demand",
+ "n_runs": 100,
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/t2/calib_v3_1790957369",
+ "plant": "v3"
+}

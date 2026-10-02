@@ -44,7 +44,13 @@ def main(argv=None) -> int:
         SEEDS = list(range(7120240, 7120260))   # T2 tuning range; to be pre-registered before use
     suffix = ("" if a.plant == "v1" else f"_{a.plant}") + (a.driver or "")
     pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else f"r1{suffix}_[0-9]*/analysis.json"
-    r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob(pat))[-1]).read_text())
+    r1_files = sorted((RUNS_ROOT / "t2").glob(pat))
+    if not r1_files:   # never fail silently
+        print(json.dumps({"skipped": f"no R1 analysis for {a.plant}{a.driver or ''}"}))
+        ledger.append("T2", "R2", "S", f"mrg3{a.plant}{a.driver or ''}_r2", {}, "-", 0, {}, {"skipped": "no R1"},
+                      notes="R1 missing (not run)")
+        return 0
+    r1 = json.loads(r1_files[-1].read_text())
     t1 = r1.get("T1", {})
     if a.plant == "v3":   # realism Addendum A: T1's ratio part is replaced by realism R-a (checked below via the H0 verdict)
         t1_ok = (t1.get("breakdown_share") or 0) >= 0.3 and t1.get("teleports") == 0 and t1.get("fail") == 0

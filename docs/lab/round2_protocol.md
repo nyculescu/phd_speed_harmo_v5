@@ -113,3 +113,17 @@ One batch at a time. Thermal guard per `CLAUDE.md`.
 1. R1 T0 PASS;
 2. R1 T1's share, teleport and FAIL parts;
 3. an H0 PASS in the plant-realism gate (`t2_realism_protocol.md`, Addendum A). Its R-a replaces T1's confounded max-based ratio.
+
+## D-2 result: MRG3-v3 calibration (2026-10-02 09:18)
+
+**No eligible cell.** Every grid cell (4,800–6,000 / 600–900) had teleports (4–8 per 10 runs) and health FAILs (`t2_mrg3_calibration_v3.json`). Breakdown occurred at every cell (share 0.8–1.0).
+
+**Cause.** All 58 teleports in the 100 runs are **on-ramp vehicles stuck at the end of the acceleration lane** (`merge_0`, "waited too long (wrong lane)", > 300 s). With IDM and the default LC2013 lane-change model, ramp drivers neither find a gap nor force one.
+- The `departSpeed="avg"` insertion fix did not cause this. It exposed it, because the plant now receives its full demand.
+- D-1 (v2) had already shown up to 3 vehicles stopped at the acceleration-lane end.
+
+**Consequences:**
+- R1, D-check and R2 for v3 did not run.
+- The chain scripts crashed on the missing cell instead of skipping. This was fixed after the crash: `t2_r1_checks` and `t2_r2_baselines` now print a skip JSON and write a ledger row.
+
+**Next.** The realism gate (running) reports this per driver variant through R-c. A lane-change / merge repair would be a new plant variant, pre-registered as D-3 after the gate. Raising `time-to-teleport` would only hide the artefact, so it is excluded.
