@@ -28,6 +28,8 @@ from vsl_lab.sim.runner import SumoSim
 SPEED = 23.0
 V_MIN = 1.0
 OBS_PIECES = {"1": 1, "2": 3, "3": 3, "4": 3, "5": 1}
+VSL_GANTRIES = ("2", "3")          # posted VSL gantries (edge 2 = application area, edge 3 = acceleration area)
+METER_GRID = ((10.0, 6.0), (10.0, 8.0), (20.0, 6.0), (20.0, 8.0), (40.0, 6.0), (40.0, 8.0))   # (K_F, n_crit)
 ACT_PIECES = {"2": 2, "3": 2, "4": 3}
 
 
@@ -65,7 +67,8 @@ class BN4Env(gym.Env):
                  control_s: float = 900.0, decision_s: float = 1.0, reward: str = "out",
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
-                 quiet: bool = True, check_actuator: bool = True, action_map: str = "linear"):
+                 quiet: bool = True, check_actuator: bool = True, action_map: str = "linear",
+                 actuator: str = "av_caps"):
         super().__init__()
         if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
             try:
@@ -89,6 +92,9 @@ class BN4Env(gym.Env):
         self.drain_after = drain_after
         self.meter_on = meter
         self.action_map = action_map
+        # actuator: "av_caps" (Lagrangian, Vinitsky) | "posted_vsl" (TM20: posted limit for ALL vehicles on gantries
+        # at edges 2 and 3) | "meter_sched" (hybrid: DRL switches/schedules the tuned feedback meter)
+        self.actuator = actuator
         self.check_actuator = check_actuator
         self.t_drain_max = t_drain_max
         self.meter = None
@@ -98,12 +104,23 @@ class BN4Env(gym.Env):
                           for p in range(k)]
         self.act_slots = [(e, ln, p) for e, k in ACT_PIECES.items() for ln in range(bn4.net.EDGE_LANES[e])
                           for p in range(k)]
-        n_obs = 4 * len(self.obs_slots) + 1 + len(self.act_slots)
+        if actuator == "av_caps":
+            self.action_space = gym.spaces.Box(-1.0, 1.0, shape=(len(self.act_slots),), dtype=np.float32)
+            n_prev = len(self.act_slots)
+        elif actuator == "posted_vsl":
+            self.action_space = gym.spaces.Box(-1.0, 1.0, shape=(len(VSL_GANTRIES),), dtype=np.float32)
+            n_prev = len(VSL_GANTRIES)
+        elif actuator == "meter_sched":
+            self.action_space = gym.spaces.Discrete(1 + len(METER_GRID))
+            n_prev = 1 + len(METER_GRID)
+        else:
+            raise ValueError(actuator)
+        self.n_prev = n_prev
+        n_obs = 4 * len(self.obs_slots) + 1 + n_prev
         self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_obs,), dtype=np.float32)
-        self.action_space = gym.spaces.Box(-1.0, 1.0, shape=(len(self.act_slots),), dtype=np.float32)
         self.sim = None
         self.rng = np.random.default_rng()
-        self.prev_action = np.zeros(len(self.act_slots), dtype=np.float32)
+        self.prev_action = np.zeros(n_prev, dtype=np.float32)
         self.arrivals_20s = deque()
         self.ep_info = {}
 
@@ -168,6 +185,32 @@ class BN4Env(gym.Env):
                 else:
                     ls.vehicle.setMaxSpeed(vid, 30.0)
 
+    def apply_vsl_rates(self, b_target) -> None:
+        """Posted VSL for ALL vehicles on gantries VSL_GANTRIES: rate b in [0.2, 1] x 23 m/s, |delta b| <= 0.2 per
+        decision (Carlson-style sign constraint). Used by DRL and by the classical controllers alike."""
+        bt = np.clip(np.asarray(b_target, dtype=np.float64), 0.2, 1.0)
+        self.vsl_b = np.clip(bt, self.vsl_b - 0.2, self.vsl_b + 0.2)
+        for e, b in zip(VSL_GANTRIES, self.vsl_b):
+            for i in range(bn4.net.EDGE_LANES[e]):
+                ls.lane.setMaxSpeed(f"{e}_{i}", float(b) * SPEED)
+
+    def assert_vsl(self, t: float):
+        bad = [e for e, b in zip(VSL_GANTRIES, self.vsl_b)
+               if abs(ls.lane.getMaxSpeed(f"{e}_0") - float(b) * SPEED) > 1e-6]
+        return (not bad, "H-R7", f"posted VSL not applied on {bad}")
+
+    def set_meter_mode(self, k: int) -> None:
+        """meter_sched: k = 0 -> meter off (all-green); k >= 1 -> meter on with METER_GRID[k-1]."""
+        if k == 0:
+            self.meter_active = False
+            bn4.set_all_green()
+        else:
+            kf, nc = METER_GRID[k - 1]
+            if self.meter is None:
+                self.meter = FBMeter()
+            self.meter.K_F, self.meter.n_crit = kf, nc
+            self.meter_active = True
+
     def _check_actuator(self) -> None:
         bad = 0
         capmap = {sl: float(c) for sl, c in zip(self.act_slots, self.slot_caps)}
@@ -224,24 +267,42 @@ class BN4Env(gym.Env):
         self.prev_action = np.zeros(len(self.act_slots), dtype=np.float32)
         self.slot_caps = np.full(len(self.act_slots), SPEED, dtype=np.float64)
         self.n_actuator_checks = 0
+        self.vsl_b = np.ones(len(VSL_GANTRIES), dtype=np.float64)
+        self.meter_active = False
         self.ep_info = {"seed": ep_seed, "inflow": q, "ret": 0.0}
-        self.meter = FBMeter() if self.meter_on else None
+        self.meter = FBMeter() if (self.meter_on or self.actuator == "meter_sched") else None
+        self.meter_active = bool(self.meter_on)
         if self.meter is not None:   # the TLS is now driven by the meter, not held at all-green
             self.sim.asserts.remove(bn4.assert_all_green)
+        if self.actuator == "posted_vsl":
+            self.sim.asserts.append(self.assert_vsl)
         self._advance(self.warmup_s)   # uncontrolled warm-up (AVs follow IDM)
         self._t_ctrl0 = self.sim.t
         self._arr_ctrl0 = self.sim.arrived
         return self._observe(), {}
 
     def step(self, action):
-        if self.meter is not None:
-            self.meter.step(self.sim.t)
-        self._apply(np.asarray(action, dtype=np.float32))
-        if self.check_actuator and int(self.sim.t) % 60 == 0:
-            self._check_actuator()
-        self.prev_action = np.clip(np.asarray(action, dtype=np.float32), -1, 1)
+        if self.actuator == "av_caps":
+            self._apply(np.asarray(action, dtype=np.float32))
+            if self.check_actuator and int(self.sim.t) % 60 == 0:
+                self._check_actuator()
+            self.prev_action = np.clip(np.asarray(action, dtype=np.float32), -1, 1)
+        elif self.actuator == "posted_vsl":
+            a = np.clip(np.asarray(action, dtype=np.float32).reshape(-1), -1.0, 1.0)
+            b = np.where(a >= 0.0, 1.0, 1.0 + 0.8 * a) if self.action_map == "nocap_center" else 0.6 + 0.4 * a
+            self.apply_vsl_rates(b)
+            self.prev_action = a
+        else:  # meter_sched
+            k = int(np.asarray(action).reshape(-1)[0])
+            self.set_meter_mode(k)
+            self.prev_action = np.zeros(self.n_prev, dtype=np.float32)
+            self.prev_action[k] = 1.0
         n0_tts = self.sim.tts_system
-        self._advance(self.decision_s)
+        n_sub = max(int(round(self.decision_s)), 1)
+        for _ in range(n_sub):
+            if self.meter is not None and self.meter_active:
+                self.meter.step(self.sim.t)
+            self._advance(self.decision_s / n_sub)
         if self.reward_kind == "out":
             r = self._outflow_20s() / 2000.0
         elif self.reward_kind == "tts":
@@ -273,6 +334,11 @@ class BN4Env(gym.Env):
                 if self.meter is not None:
                     bn4.set_all_green()
                     self.meter = None
+                if self.actuator == "posted_vsl":
+                    for e in VSL_GANTRIES:
+                        for i in range(bn4.net.EDGE_LANES[e]):
+                            ls.lane.setMaxSpeed(f"{e}_{i}", SPEED)
+                    self.sim.asserts.remove(self.assert_vsl)
                 self.sim.demand_end_t = self.sim.t
                 drained = self.sim.drain(self.t_drain_max)
                 gen = self.sim._total
