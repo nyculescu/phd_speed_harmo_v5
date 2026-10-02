@@ -180,3 +180,7 @@ The adaptive rule is the required non-learning adaptive scheduler: every 60 s, i
 P1's q5 (6,100 veh/h for 3 lanes) exceeds the capacity downstream of the 3 → 2 drop. P1 p.831 says to lower q5 when there is a bottleneck downstream. **It is kept at P1's value**, so as not to tune; a disclosed limitation.
 
 Both variants are reported. Their family best enters the screening references.
+
+**R2-H result and a correction (2026-10-02 13:15, before any screening).**
+- **Tuned classical** = `const:0.75` (90 km/h on up1 + up0a), with J score 287.3 against 380.5 for NC. At 4,500 it cuts delay by 25 % and stops by 55 % against NC (tuning seeds). See `round4_r2.md`.
+- **Correction:** Addendum A said every constant controller lies inside the P-H policy space. **That is false for b = 0.75, 0.85 and 0.95.** The pilot's grid is {0.2, …, 1.0} in steps of 0.1, so it can only approximate 0.75 by alternating 0.7 and 0.8. The pilot was already training when this was noticed, so it is disclosed here and not changed. A follow-up pilot, if any, will use a grid that contains the tuned classical value.
