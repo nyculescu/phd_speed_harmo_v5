@@ -98,7 +98,8 @@ def main(argv=None) -> int:
     for name, v in (("no control", nc), ("best constant", const), ("tuned classical", cls)):
         if v is not None:
             ax.axhline(v, color=INK2, lw=1, ls="--", zorder=0)
-            ax.text(xmax, v, f" {name} {v:.3g}", color=INK2, fontsize=8, va="center", ha="left", clip_on=False)
+            lab = f"{v:,.0f}" if abs(v) >= 100 else f"{v:.3g}"
+            ax.text(xmax, v, f" {name} {lab}", color=INK2, fontsize=8, va="center", ha="left", clip_on=False)
     ax.set_xlabel("PPO update", color=INK2, fontsize=9)
     ax.set_ylabel(a.metric_label, color=INK2, fontsize=9)
     ax.set_title(f"{a.tag}: validation {a.metric_label}", color=INK, fontsize=10, loc="left")

@@ -6,7 +6,7 @@ P=/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314/bin/python
 R=/home/catalin/work/phd/vsl_lab_runs
 cd /run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v5
 unset SUMO_HOME; export OMP_NUM_THREADS=1
-while pgrep -f "[r]un_chain2.sh|[r]un_chain3.sh|[r]un_chain4.sh" > /dev/null; do sleep 30; done
+while pgrep -f "[r]un_chain2.sh|[r]un_chain3.sh|[r]un_chain4.sh|[r]un_chain6.sh" > /dev/null; do sleep 30; done
 $P -m vsl_lab.jobs.ring_shield_verify > $R/t3/shield_verify.log 2>&1
 if $P -c "import json,sys; sys.exit(0 if json.load(open('docs/lab/t3_shield_verify.json'))['PASS'] else 1)"; then
   FS=$($P -c "import json; print(json.load(open('docs/lab/t3_ring_baselines_frozen.json'))['tuned']['fs']['ctrl'])")

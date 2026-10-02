@@ -31,3 +31,23 @@ References on the same validation seeds (mean_val_speed): no control 3.579283333
 | seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | 13 | 3.8769198255967487 | 3.556864546016508 | None (None) | False | False | False | False | False | 55 | **FAIL** |
+
+## p1b_bn4 (t1) · 2026-10-02 00:12
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![p1b_bn4](figs/p1b_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 960.6666666666666 | 956.0 | 986.0 (525) | False | True | False | False | False | 0 | **FAIL** |
+
+## p1c_bn4 (t1) · 2026-10-02 00:12
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![p1c_bn4](figs/p1c_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 992.0 | 1095.3333333333333 | 1158.6666666666667 (475) | True | True | True | True | False | 0 | **PASS** |

@@ -92,3 +92,16 @@ A pilot that meets C1 + C3 + C2 goes to an **F-class** run: ≥ 500 updates, 3 l
 | P3b | direct acceleration **with the shield**, reward = mean speed only | 600 |
 
 **Expectation unchanged:** at best DRL ≈ PI-with-saturation (≈ 100 % of v_e); H ≈ 0 on the ring.
+
+## Addendum C (2026-10-02, after P1b/P1c screening; before F1 runs)
+
+**Screening results.**
+- **P1b** (PPO, log_std −1): FAIL, with validation flat at about 950–985.
+- **P1c** (PPO, `nocap_center`, log_std −0.5): **screening PASS**. Final 1,095 veh/h against NC 992 (+10.4 %) and the best constant 1,054; best validation 1,159 at update 475; 0 health FAIL. The validation curve is non-monotonic (6 episodes, noisy).
+
+**F1 (F class, pre-registered).**
+- **Configuration:** P1c exactly (PPO, `nocap_center`, log_std −0.5, lr 3e-4, γ 0.99, GAE 0.95, 8 envs × 225 steps, batch 300, 10 epochs, MLP 128×128 tanh, R-OUT).
+- **Learner seeds:** 0, 1 and 2. **1,000 updates each.**
+- **Validation:** every 25 updates on q ∈ {1,600, 2,000, 2,400} × seeds 7,110,300–7,110,302 (9 episodes).
+- **Convergence check C1 (roadmap §9), reported as is.** The noise makes a FAIL plausible, and a FAIL is reported as such.
+- **R5 test-seed head-to-head** follows on the **final** policies, exactly per `docs/lab/t1_bn4_r5_protocol.md` (test seeds 7,110,500–7,110,529; NC, `cap:18`, `avfb:2:10`, `meter:10:6`). The best-validation checkpoints are evaluated as a secondary result.
