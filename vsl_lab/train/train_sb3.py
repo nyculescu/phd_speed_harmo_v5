@@ -137,6 +137,7 @@ def main(argv=None) -> int:
     ap.add_argument("--gae", type=float, default=0.95)
     ap.add_argument("--ent", type=float, default=0.0)
     ap.add_argument("--net", type=int, nargs="+", default=[128, 128])
+    ap.add_argument("--log-std-init", type=float, default=0.0)
     ap.add_argument("--seed", type=int, default=0, help="learner seed index (0-4)")
     ap.add_argument("--val-every", type=int, default=25)
     ap.add_argument("--val-conds", type=float, nargs="+", default=None,
@@ -201,6 +202,8 @@ def main(argv=None) -> int:
     wd.start()
 
     policy_kwargs = dict(net_arch=dict(pi=a.net, vf=a.net), activation_fn=torch.nn.Tanh)
+    if a.log_std_init != 0.0:
+        policy_kwargs["log_std_init"] = a.log_std_init
     recurrent = a.algo == "recurrentppo"
     if a.algo == "ppo":
         from stable_baselines3 import PPO
@@ -211,7 +214,8 @@ def main(argv=None) -> int:
         from sb3_contrib import RecurrentPPO
         model = RecurrentPPO("MlpLstmPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs,
                              learning_rate=a.lr, gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, seed=a.seed,
-                             policy_kwargs=dict(net_arch=dict(pi=a.net, vf=a.net), lstm_hidden_size=64),
+                             policy_kwargs=dict(net_arch=dict(pi=a.net, vf=a.net), lstm_hidden_size=64,
+                                                **({"log_std_init": a.log_std_init} if a.log_std_init != 0.0 else {})),
                              verbose=0, device="cpu")
     elif a.algo == "trpo":
         from sb3_contrib import TRPO

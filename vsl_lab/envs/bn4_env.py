@@ -65,7 +65,7 @@ class BN4Env(gym.Env):
                  control_s: float = 900.0, decision_s: float = 1.0, reward: str = "out",
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
-                 quiet: bool = True, check_actuator: bool = True):
+                 quiet: bool = True, check_actuator: bool = True, action_map: str = "linear"):
         super().__init__()
         if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
             try:
@@ -88,6 +88,7 @@ class BN4Env(gym.Env):
         self.tag = tag
         self.drain_after = drain_after
         self.meter_on = meter
+        self.action_map = action_map
         self.check_actuator = check_actuator
         self.t_drain_max = t_drain_max
         self.meter = None
@@ -148,7 +149,11 @@ class BN4Env(gym.Env):
         -1.5 m/s^2 * dt / +1.0 m/s^2 * dt per decision, and no AV is asked to brake harder than 1.5 m/s^2
         (applied cap >= v_current - 1.5 dt). Avoids the emergency braking caught in the first smoke run."""
         a = np.clip(action, -1.0, 1.0)
-        target = V_MIN + (a + 1.0) * 0.5 * (SPEED - V_MIN)
+        if self.action_map == "nocap_center":
+            # a >= 0 -> no cap (23 m/s); a < 0 -> cap 23 + a (23 - V_MIN): a zero-mean policy starts near no-control
+            target = np.where(a >= 0.0, SPEED, SPEED + a * (SPEED - V_MIN))
+        else:
+            target = V_MIN + (a + 1.0) * 0.5 * (SPEED - V_MIN)
         dt = self.decision_s
         self.slot_caps = np.clip(target, self.slot_caps - 1.5 * dt, self.slot_caps + 1.0 * dt)
         capmap = {s: float(c) for s, c in zip(self.act_slots, self.slot_caps)}

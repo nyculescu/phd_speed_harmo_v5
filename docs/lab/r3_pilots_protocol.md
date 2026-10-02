@@ -51,3 +51,23 @@ A pilot that meets C1 + C3 + C2 goes to an **F-class** run: ≥ 500 updates, 3 l
 - **P1:** Vinitsky's RL "matches" tuned feedback metering above the critical inflow. T0b shows the paper meter brings outflow to about the plant capacity. So the realistic best outcome is DRL ≈ meter, which is better than NC and than constant caps, but **not** better than the tuned meter.
 - **P2 / P3:** PI-with-saturation already reaches the ring's equilibrium speed in the calibration run. The realistic best outcome is DRL ≈ PI and better than NC. **No beat over the tuned classical controller is expected on the ring.**
 - Both are pipeline validations. The thesis-relevant search for a real DRL edge starts with T2 (merge with tuned MTFC), with the niches in roadmap §6.
+
+## Addendum A (2026-10-02, after P1 failed screening; before any variant runs)
+
+**P1 result.** Screening FAIL:
+- C1 PASS: validation outflow 961 → 976, best 1,026; training reward rising;
+- C3 and C2 FAIL against no control 992 and the best constant 1,054.
+
+**Diagnosis.** After 150 updates the 22-D Gaussian exploration noise had barely shrunk (entropy −31.2 → −29.9). The policy still posts random caps, and random caps are harmful (R2: every constant cap below 18 m/s is worse than NC).
+
+**Pre-registered P1 variants.** Same plant, same validation seeds and conditions, same screening criteria. Each is logged whatever its outcome.
+
+| ID | Change from P1 | Updates |
+|---|---|---|
+| P1b | PPO, `log_std_init` −1.0 | 600 |
+| P1c | PPO, action map `nocap_center` (a ≥ 0 → no cap; a < 0 → cap 23 + a·22), `log_std_init` −0.5 | 600 |
+| P1d | TRPO (Vinitsky's algorithm family), linear map, default noise | 400 |
+| P1e | RecurrentPPO (LSTM 64), `nocap_center`, `log_std_init` −0.5 | 400 |
+| P1f | PPO, `nocap_center`, `log_std_init` −0.5, **reward R-TTS** | 600 |
+
+**Run class.** They remain pilots (1 learner seed). The best screening PASS, if any, goes to F class (3 learner seeds) with test-seed evaluation.
