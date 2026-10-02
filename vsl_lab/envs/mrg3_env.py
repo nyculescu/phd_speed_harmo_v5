@@ -45,8 +45,10 @@ class MRG3Env(gym.Env):
             except OSError:
                 pass
         if quiet:
-            try:
-                os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
+            try:   # stderr to a per-process file, NOT /dev/null: Python tracebacks must stay visible
+                d = RUNS_ROOT / "stderr"
+                d.mkdir(parents=True, exist_ok=True)
+                os.dup2(os.open(str(d / f"stderr_pid{os.getpid()}.log"), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644), 2)
             except OSError:
                 pass
         self.mode, self.main_peak, self.ramp_peak = mode, main_peak, ramp_peak

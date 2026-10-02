@@ -71,8 +71,10 @@ class BN4Env(gym.Env):
                  actuator: str = "av_caps"):
         super().__init__()
         if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
-            try:
-                fd = os.open(os.devnull, os.O_WRONLY)
+            try:   # stderr to a per-process file, NOT /dev/null: Python tracebacks must stay visible
+                d = RUNS_ROOT / "stderr"
+                d.mkdir(parents=True, exist_ok=True)
+                fd = os.open(str(d / f"stderr_pid{os.getpid()}.log"), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
                 os.dup2(fd, 2)
             except OSError:
                 pass

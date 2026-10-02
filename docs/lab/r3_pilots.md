@@ -155,3 +155,23 @@ References on the same validation seeds (mean_val_outflow): no control 992.0, be
 | 2 | 1000 | 984.0 | 1024.888888888889 | 1044.888888888889 (950) | True | False | True | False | False | 0 | **FAIL** |
 | 1 | 1000 | 984.4444444444445 | 964.8888888888889 | 1037.7777777777778 (400) | False | True | False | False | False | 0 | **FAIL** |
 | 0 | 1000 | 984.4444444444445 | 1003.5555555555555 | 1042.6666666666667 (300) | True | True | True | False | False | 0 | **FAIL** |
+
+## p2c_ring_hyb (t3) · 2026-10-02 07:59
+
+References on the same validation seeds (mean_val_speed): no control 3.579283333333333, best constant 3.847716666666667, tuned classical 4.1594500000000005.
+
+![p2c_ring_hyb](figs/p2c_ring_hyb.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 3.8500986831571633 | 3.549239861016535 | 3.5960468093157565 (50) | False | True | False | False | False | 0 | **FAIL** |
+
+## p2d_ring_hyb (t3) · 2026-10-02 07:59
+
+References on the same validation seeds (mean_val_speed): no control 3.579283333333333, best constant 3.847716666666667, tuned classical 4.1594500000000005.
+
+![p2d_ring_hyb](figs/p2d_ring_hyb.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 3.8500845384554023 | 3.549239861016535 | 3.573212342440088 (25) | False | True | False | False | False | 0 | **FAIL** |

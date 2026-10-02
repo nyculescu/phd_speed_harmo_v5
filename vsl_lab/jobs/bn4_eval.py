@@ -53,7 +53,7 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
         else:
             from stable_baselines3 import PPO as A
         model = A.load(path, device="cpu")
-    n_act = env.action_space.shape[0]
+    n_act = env.action_space.shape[0] if env.action_space.shape else 1   # Discrete (meter_sched) has shape ()
     if ctrl == "nc" or meter:
         const = np.ones(n_act, dtype=np.float32)            # cap = 23 m/s = no cap
     elif ctrl.startswith("cap:"):
@@ -143,6 +143,15 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
 
 
 def main(argv=None) -> int:
+    try:
+        return _main(argv)
+    except Exception as exc:   # never fail silently: the scheduler reads the last JSON line of stdout
+        import traceback
+        print(json.dumps({"error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()[-1500:]}))
+        return 2
+
+
+def _main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ctrl", required=True)
     ap.add_argument("--inflow", type=float, required=True)
