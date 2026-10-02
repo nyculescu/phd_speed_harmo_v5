@@ -1,6 +1,6 @@
 # DRL lab: status (living document)
 
-*Last update 2026-10-02 13:50 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · roadmap `docs/plans/vsl_drl_run_roadmap_v0.md`*
+*Last update 2026-10-02 16:10 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · roadmap `docs/plans/vsl_drl_run_roadmap_v0.md`*
 
 ## Bottom line so far (honest)
 
@@ -17,7 +17,7 @@
 |---|---|---|
 | **T1 BN4 bottleneck, 10 % AVs** | done | DRL ≈ NC on test seeds (F1, F2). The infrastructure meter gives −45 %. |
 | **T1-A posted VSL on BN4** | stopped | Does not bind (A-T0 FAIL); A-R2 = NC. |
-| **T1-B 25 % AVs** | **B-F running** | B-R2: no classical AV controller beats NC by more than about 1.5 %. B-P6 passed screening only on its best checkpoint (final = NC + 0.5 %). F class (3 × 1,000 updates) then R5 on 7,110,560–7,110,589. |
+| **T1-B 25 % AVs** | **done: no DRL win** | B-R5 (test seeds 7,110,560–7,110,589): DRL beats the tuned constant cap `cap:18` in **0 of 3** congested cells under the pre-registered rule. Against NC it wins only at q = 1,600 (−2.3 %), and it is worse at q = 1,200 (+4.4 %). The meter is 50–72 % better than DRL. The screening pass was a false positive again (B-F validation finals: 980 / 1,050 / 959 against NC 978). |
 | **T1-C DRL meter scheduling** | killed | G = 4.1 % < 10 % |
 | **T3 ring** | done | PI-with-saturation is at the ceiling (H ≈ 0). |
 | **T2 merge (MRG3)** | **closed by the realism gate** | See below. |
