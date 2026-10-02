@@ -51,3 +51,75 @@ References on the same validation seeds (mean_val_outflow): no control 992.0, be
 | seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | 600 | 992.0 | 1095.3333333333333 | 1158.6666666666667 (475) | True | True | True | True | False | 0 | **PASS** |
+
+## p1d_bn4 (t1) · 2026-10-02 00:42
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![p1d_bn4](figs/p1d_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 400 | 960.6666666666666 | 1014.6666666666666 | 1155.3333333333333 (275) | True | True | True | True | False | 0 | **PASS** |
+
+## p1e_bn4 (t1) · 2026-10-02 00:42
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![p1e_bn4](figs/p1e_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 400 | 992.0 | 986.0 | 1054.6666666666667 (200) | False | True | True | True | False | 0 | **FAIL** |
+
+## p1f_bn4 (t1) · 2026-10-02 00:55
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![p1f_bn4](figs/p1f_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 992.0 | 914.6666666666666 | 1068.0 (325) | False | True | True | True | False | 0 | **FAIL** |
+
+## f1_bn4 (t1) · 2026-10-02 01:18
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![f1_bn4](figs/f1_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 1000 | 984.4444444444445 | 972.4444444444445 | 1062.6666666666667 (575) | False | True | True | True | False | 0 | **FAIL** |
+| 2 | 1000 | 984.0 | 984.0 | 1053.7777777777778 (975) | False | False | True | False | False | 0 | **FAIL** |
+| 0 | 1000 | 984.4444444444445 | 1000.4444444444445 | 1113.7777777777778 (475) | True | False | True | True | False | 0 | **FAIL** |
+
+## F1 (F class) and R5 on test seeds: conclusion for Track 1 (2026-10-02)
+
+**F1**, the P1c configuration with 3 learner seeds × 1,000 updates, validated on 9 episodes:
+
+| Seed | Final | Best validation | Screening |
+|---|---|---|---|
+| 0 | 1,000 | 1,114 | FAIL |
+| 1 | 972 | 1,063 | FAIL |
+| 2 | 984 | 1,054 | FAIL |
+
+NC on this set is ≈ 984.
+
+**R5 on fresh test seeds** (7,110,500–7,110,529; door-to-door time incl. origin queue; final policies, pooled; vs NC):
+
+| q (veh/h) | DRL − NC | Reading |
+|---|---|---|
+| 1,200 | **+8.6 %** | worse; CI excludes 0 |
+| 1,600 | +0.8 % | n.s. |
+| 2,000 | 0.0 % | n.s. |
+| 2,400 | −0.2 % | n.s. |
+
+The best-validation checkpoints behave the same: ≈ NC when congested and +5 % worse at q = 1,200.
+
+**Pre-registered reading: FAIL.**
+- With 10 % AVs on BN4, the learned AV-cap policies do not beat NC or the best constant cap on test seeds.
+- No tuned classical controller on this actuator beats NC either.
+- The infrastructure meter beats everything by 45 %.
+
+**P1c's single-seed screening pass was a false positive.** Two things produced it: 6-episode validation noise, and selection over 5 variants. The multi-seed F class and the test-seed R5 caught it, as designed.
