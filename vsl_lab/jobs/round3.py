@@ -35,8 +35,11 @@ STEP = 0.2       # author decision 2026-10-02 (Round 3 Addendum A)
 ROUTE_KM = {"main": 5.25, "ramp": 1.53}          # approx. route lengths (veh-km normalisation)
 
 
+VERDICT = None    # --verdict override (D-3: docs/lab/t2_realism_verdict_d3.json)
+
+
 def plant() -> tuple:
-    v = json.loads((REPO_ROOT / f"docs/lab/t2_realism_verdict_step{STEP:g}.json").read_text())
+    v = json.loads(Path(VERDICT or REPO_ROOT / f"docs/lab/t2_realism_verdict_step{STEP:g}.json").read_text())
     drv = v["primary"]
     if drv is None:
         raise SystemExit("no realism-gate variant passed: Round 3 does not run (protocol)")
@@ -99,7 +102,10 @@ def main(argv=None) -> int:
     ap.add_argument("what", choices=["tcav0", "tx", "t0", "t1c"])
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--verdict", default=None)
     a = ap.parse_args(argv)
+    global VERDICT
+    VERDICT = a.verdict
     drv, cell = plant()
     st = state()
     root = RUNS_ROOT / "t2" / f"round3_{a.what}_{int(time.time())}"

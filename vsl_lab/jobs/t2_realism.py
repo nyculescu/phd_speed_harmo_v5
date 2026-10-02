@@ -22,6 +22,7 @@ from vsl_lab.plants import mrg3 as P
 
 VARIANTS = ["H0", "H1", "H2", "H3", "H4", "H5"]
 PREFERENCE = ["H4", "H5", "H2", "H1", "H3", "H0"]   # Addendum A
+PREFERENCE += ["H5a", "H5b", "H3a", "H3b"]          # D-3 (only these run in the D-3 gate; milder repair preferred)
 MAIN = [4200, 4500, 4800, 5100, 5400, 5700, 6000]
 RAMP = [600, 900]
 CAL_SEEDS = list(range(7120170, 7120180))
@@ -210,12 +211,15 @@ def main(argv=None) -> int:
     ap.add_argument("--variants", default=None, help="comma list (re-check), e.g. H3,H5")
     ap.add_argument("--cal-seeds", default=None, help="a-b inclusive")
     ap.add_argument("--chk-seeds", default=None, help="a-b inclusive")
+    ap.add_argument("--suffix", default=None, help="output-file suffix override (e.g. _d3)")
     a = ap.parse_args(argv)
     global STEP, SUFFIX, VARIANTS, CAL_SEEDS, CHK_SEEDS
     if a.step:
         STEP, SUFFIX = a.step, f"_step{a.step:g}"
     if a.variants:
         VARIANTS = [v for v in a.variants.split(",") if v]
+    if a.suffix:
+        SUFFIX = a.suffix
     rng_ = lambda txt: list(range(int(txt.split("-")[0]), int(txt.split("-")[1]) + 1))
     if a.cal_seeds:
         CAL_SEEDS = rng_(a.cal_seeds)

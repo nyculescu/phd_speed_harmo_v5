@@ -127,3 +127,37 @@ One batch at a time. Thermal guard per `CLAUDE.md`.
 - The chain scripts crashed on the missing cell instead of skipping. This was fixed after the crash: `t2_r1_checks` and `t2_r2_baselines` now print a skip JSON and write a ledger row.
 
 **Next.** The realism gate (running) reports this per driver variant through R-c. A lane-change / merge repair would be a new plant variant, pre-registered as D-3 after the gate. Raising `time-to-teleport` would only hide the artefact, so it is excluded.
+
+## D-3: merge repair (author decision 2026-10-02), pre-registered before any D-3 run
+
+**Why.** The 0.2 s realism re-check failed every variant (`t2_realism_step0.2.md`):
+- IDM strands ramp vehicles at the acceleration-lane end, which causes teleports;
+- W99 and EIDM merge without any capacity drop.
+
+The capacity drop at merges is attributed in the literature to merging and lane-changing behaviour [VERIFY: e.g. Laval & Daganzo 2006; Leclercq, Laval & Chiabaut 2011]. SUMO's default gap acceptance is the documented gap.
+
+**Repair: LC2013 `lcAssertive`.** SUMO's vType docs say: "willingness to accept lower front and rear gaps on the target lane. The required gap is divided by this value"; the default is 1. `lcImpatience` exists only in SL2015, so it is not used.
+
+**Variants** (values ad hoc; the milder value is preferred):
+
+| ID | Base driver model | `lcAssertive` |
+|---|---|---|
+| **H5a** | EIDM, SUMO defaults (H5) | 1.5 |
+| **H5b** | EIDM, SUMO defaults (H5) | 3.0 |
+| **H3a** | W99 (H3) | 1.5 |
+| **H3b** | W99 (H3) | 3.0 |
+
+The setting applies to every human vType.
+
+**Seeds** (block 7,160,000–7,160,999, approved by the author on 2026-10-02):
+- calibration: 7,160,000–7,160,009 (throw-away);
+- checks: 7,160,100–7,160,119;
+- determinism re-run: 7,160,100.
+
+**Gate.** The same realism gate as before (`t2_realism_protocol.md`, with Addenda A and B), at a 0.2 s step:
+- **smoke first:** the 4 variants on throw-away seed 7,120,050 at 5,400 / 900. A variant whose hash equals its base's 0.2 s smoke hash is INERT and dropped. A run that is not drained means COLLAPSED, and the variant is dropped.
+- **outputs:** `t2_realism_verdict_d3.json` and `t2_realism_d3.md`.
+
+**Primary plant for Round 3** = the first PASS in the order H5a, H5b, H3a, H3b. Round 3 then runs at 0.2 s on that variant.
+
+**If all four fail:** build a lane-drop plant. It gets its own pre-registration, and its seeds come from the same block.

@@ -40,6 +40,12 @@ DRIVERS = {
     # Addendum A: EIDM with every EIDM-specific parameter at its SUMO default (errors included per the SUMO vType table)
     "H5": {"car": _IDM_CAR.replace('"IDM"', '"EIDM"'), "trk": _IDM_TRK.replace('"IDM"', '"EIDM"'), "args": []},
 }
+# D-3 merge repair (round2_protocol.md, 2026-10-02): LC2013 lcAssertive ("the required gap is divided by this value",
+# SUMO vType docs; default 1) on every human vType, applied to H5 (EIDM defaults) and H3 (W99). Values are ad hoc.
+for _base in ("H5", "H3"):
+    for _suf, _a in (("a", "1.5"), ("b", "3.0")):
+        DRIVERS[_base + _suf] = {"car": DRIVERS[_base]["car"] + f' lcAssertive="{_a}"',
+                                 "trk": DRIVERS[_base]["trk"] + f' lcAssertive="{_a}"', "args": []}
 
 
 def cav_vtype_xml(cav_model: str = "CACC") -> str:
