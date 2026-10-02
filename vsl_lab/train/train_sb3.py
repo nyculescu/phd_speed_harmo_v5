@@ -138,6 +138,7 @@ def main(argv=None) -> int:
     ap.add_argument("--ent", type=float, default=0.0)
     ap.add_argument("--net", type=int, nargs="+", default=[128, 128])
     ap.add_argument("--log-std-init", type=float, default=0.0)
+    ap.add_argument("--lr-decay", action="store_true", help="linear learning-rate decay to 0 over the run")
     ap.add_argument("--seed", type=int, default=0, help="learner seed index (0-4)")
     ap.add_argument("--val-every", type=int, default=25)
     ap.add_argument("--val-conds", type=float, nargs="+", default=None,
@@ -202,12 +203,17 @@ def main(argv=None) -> int:
     wd.start()
 
     policy_kwargs = dict(net_arch=dict(pi=a.net, vf=a.net), activation_fn=torch.nn.Tanh)
+    lr = a.lr
+    if a.lr_decay:
+        # model.learn() is called once per update, so SB3's progress_remaining is per-call; use our own counter
+        _upd = {"n": 0}
+        lr = lambda _pr, _a=a, _u=_upd: _a.lr * max(0.0, 1.0 - _u["n"] / max(_a.updates, 1))
     if a.log_std_init != 0.0:
         policy_kwargs["log_std_init"] = a.log_std_init
     recurrent = a.algo == "recurrentppo"
     if a.algo == "ppo":
         from stable_baselines3 import PPO
-        model = PPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs, learning_rate=a.lr,
+        model = PPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs, learning_rate=lr,
                     gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, policy_kwargs=policy_kwargs, seed=a.seed,
                     verbose=0, device="cpu")
     elif a.algo == "recurrentppo":
@@ -292,6 +298,8 @@ def main(argv=None) -> int:
     try:
         ev0 = cb.validate(0)
         for u in range(1, a.updates + 1):
+            if a.lr_decay:
+                _upd["n"] = u - 1
             model.learn(total_timesteps=steps_per_update, reset_num_timesteps=False, callback=cb,
                         progress_bar=False)
             cb.log_update()

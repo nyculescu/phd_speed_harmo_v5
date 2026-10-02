@@ -105,3 +105,21 @@ A pilot that meets C1 + C3 + C2 goes to an **F-class** run: ≥ 500 updates, 3 l
 - **Validation:** every 25 updates on q ∈ {1,600, 2,000, 2,400} × seeds 7,110,300–7,110,302 (9 episodes).
 - **Convergence check C1 (roadmap §9), reported as is.** The noise makes a FAIL plausible, and a FAIL is reported as such.
 - **R5 test-seed head-to-head** follows on the **final** policies, exactly per `docs/lab/t1_bn4_r5_protocol.md` (test seeds 7,110,500–7,110,529; NC, `cap:18`, `avfb:2:10`, `meter:10:6`). The best-validation checkpoints are evaluated as a secondary result.
+
+## Addendum D (2026-10-02, after F1/R5; before F2 runs)
+
+**F1 and R5 outcome.** FAIL, recorded in `docs/lab/r3_pilots.md`: DRL is ≈ NC on fresh test seeds and harmful at low inflow.
+
+**Two competing explanations:**
+1. **Optimisation:** tiny PPO batches (1,800 samples per update) give noisy, unstable learning.
+2. **Authority:** 10 % AVs with lane changing disabled cannot meter this SUMO bottleneck.
+
+**F2 tests (1).**
+- **Configuration:** P1c's (PPO, `nocap_center`, log_std −0.5, MLP 128×128, R-OUT), with **16 envs × 450 steps = 7,200 samples per update** (4×), batch 900, 10 epochs, **linear learning-rate decay 3e-4 → 0**.
+- **Run:** 1,000 updates; learner seeds 0, 1, 2, run sequentially (thermal).
+- **Validation:** q ∈ {1,600, 2,000, 2,400} × seeds 7,110,300–7,110,302.
+- **Then:** R5 on the final policies, exactly per the R5 protocol.
+
+**Decision.**
+- If F2 also stays ≈ NC on test seeds, explanation (2) is favoured, and the next pre-registration is the AV-penetration axis (25 % AVs, with baselines re-evaluated at that share).
+- If F2 beats NC and the best constant per the R5 reading, the BN4 result is reported with all variants listed.
