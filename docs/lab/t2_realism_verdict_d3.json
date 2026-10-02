@@ -1,0 +1,678 @@
+{
+ "protocol": "docs/lab/t2_realism_protocol.md",
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/t2/realism_d3_1790962961",
+ "variants": {
+  "H5a": {
+   "calibration": {
+    "table": {
+     "4200/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4200/900": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/900": {
+      "n": 10,
+      "breakdown_share": 0.1,
+      "breakdown_share_capdrop": 0.1,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/900": {
+      "n": 10,
+      "breakdown_share": 0.3,
+      "breakdown_share_capdrop": 0.6,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/600": {
+      "n": 10,
+      "breakdown_share": 0.1,
+      "breakdown_share_capdrop": 0.2,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/900": {
+      "n": 10,
+      "breakdown_share": 0.8,
+      "breakdown_share_capdrop": 0.9,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/600": {
+      "n": 10,
+      "breakdown_share": 0.2,
+      "breakdown_share_capdrop": 0.3,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/600": {
+      "n": 10,
+      "breakdown_share": 0.4,
+      "breakdown_share_capdrop": 0.4,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "6000/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 0.9,
+      "teleports": 0,
+      "fail": 0
+     },
+     "6000/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": "5700/600",
+    "max_share": 1.0
+   },
+   "cell": "5700/600",
+   "R-a": {
+    "n": 20,
+    "breakdown_share": 0.25,
+    "breakdown_share_capdrop": 0.3,
+    "n_discharge": 2,
+    "n_free": 15,
+    "Q_dis_vphpl": 1833.4117647058824,
+    "Q_ff_vphpl": 1787.4074074074074,
+    "ratio": null,
+    "ratio_ci95": null,
+    "reported_ratio_within_ramp_corrected": 1.0887749595250944,
+    "reported_ratio_original_10min": 1.102106643041877,
+    "reported_ratio_r1_max_based": 0.957199852761319,
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 17,
+    "n_valid": 17,
+    "median_c_kmh": -16.36,
+    "pairs_used": {
+     "up0a->up1": 4,
+     "up0b->up0a": 9,
+     "up1->up2": 4
+    },
+    "status": "PASS"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 0,
+    "median_discharge_vphpl": 1833.4117647058824,
+    "determinism": true,
+    "PASS": true,
+    "PASS_original_rule": true
+   },
+   "R-d": {
+    "n_congested_runs": 39,
+    "share_bottleneck_origin": 0.5384615384615384,
+    "origins": {
+     "up3": 9,
+     "up2": 9,
+     "up0b": 21
+    },
+    "PASS": false
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.09171383837167289,
+    "cells": [
+     "5700/600",
+     "6000/900"
+    ],
+    "median_wall_s": 72.605
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  },
+  "H5b": {
+   "calibration": {
+    "table": {
+     "4200/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4200/900": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.1,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/900": {
+      "n": 10,
+      "breakdown_share": 0.3,
+      "breakdown_share_capdrop": 0.4,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/600": {
+      "n": 10,
+      "breakdown_share": 0.9,
+      "breakdown_share_capdrop": 0.8,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "6000/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "6000/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": "4500/900",
+    "max_share": 1.0
+   },
+   "cell": "4500/900",
+   "R-a": {
+    "n": 20,
+    "breakdown_share": 0.25,
+    "breakdown_share_capdrop": 0.3,
+    "n_discharge": 3,
+    "n_free": 15,
+    "Q_dis_vphpl": 1552.857142857143,
+    "Q_ff_vphpl": 1536.2962962962963,
+    "ratio": 1.0107797217247554,
+    "ratio_ci95": [
+     1.0000598372426999,
+     1.026833976833977
+    ],
+    "reported_ratio_within_ramp_corrected": 1.0051020408163265,
+    "reported_ratio_original_10min": 0.9987325728770595,
+    "reported_ratio_r1_max_based": 0.9269555500931751,
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 20,
+    "n_valid": 20,
+    "median_c_kmh": -16.36,
+    "pairs_used": {
+     "up1->up2": 20
+    },
+    "status": "PASS"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 0,
+    "median_discharge_vphpl": 1552.857142857143,
+    "determinism": true,
+    "PASS": false,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 40,
+    "share_bottleneck_origin": 0.15,
+    "origins": {
+     "up3": 33,
+     "up2": 1,
+     "up0a": 1,
+     "up0b": 5
+    },
+    "PASS": false
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.08837733419188668,
+    "cells": [
+     "4500/900",
+     "6000/900"
+    ],
+    "median_wall_s": 78.33500000000001
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  },
+  "H3a": {
+   "calibration": {
+    "table": {
+     "4200/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4200/900": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.1,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/600": {
+      "n": 10,
+      "breakdown_share": 0.0,
+      "breakdown_share_capdrop": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/900": {
+      "n": 10,
+      "breakdown_share": 0.3,
+      "breakdown_share_capdrop": 0.5,
+      "teleports": 0,
+      "fail": 1
+     },
+     "4800/600": {
+      "n": 10,
+      "breakdown_share": 0.2,
+      "breakdown_share_capdrop": 0.3,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "5100/600": {
+      "n": 10,
+      "breakdown_share": 0.9,
+      "breakdown_share_capdrop": 0.7,
+      "teleports": 0,
+      "fail": 1
+     },
+     "5100/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "5400/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 5
+     },
+     "6000/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "6000/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": "4800/600",
+    "max_share": 1.0
+   },
+   "cell": "4800/600",
+   "R-a": {
+    "n": 20,
+    "breakdown_share": 0.1,
+    "breakdown_share_capdrop": 0.15,
+    "n_discharge": 2,
+    "n_free": 18,
+    "Q_dis_vphpl": 1608.2417582417584,
+    "Q_ff_vphpl": 1561.4814814814815,
+    "ratio": null,
+    "ratio_ci95": null,
+    "reported_ratio_within_ramp_corrected": 1.008984261789748,
+    "reported_ratio_original_10min": 1.003270530839024,
+    "reported_ratio_r1_max_based": 0.9836716681376875,
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 20,
+    "n_valid": 20,
+    "median_c_kmh": -18.95,
+    "pairs_used": {
+     "up1->up2": 20
+    },
+    "status": "PASS"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 1,
+    "median_discharge_vphpl": 1608.2417582417584,
+    "determinism": true,
+    "PASS": true,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 24,
+    "share_bottleneck_origin": 0.5,
+    "origins": {
+     "up3": 11,
+     "up2": 1,
+     "up0b": 12
+    },
+    "PASS": false
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.01782987735802591,
+    "cells": [
+     "4800/600",
+     "6000/900"
+    ],
+    "median_wall_s": 53.300000000000004
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  },
+  "H3b": {
+   "calibration": {
+    "table": {
+     "4200/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4200/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4500/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "4800/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5100/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "5400/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5400/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "5700/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "5700/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "6000/600": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     },
+     "6000/900": {
+      "n": 10,
+      "breakdown_share": 1.0,
+      "breakdown_share_capdrop": 1.0,
+      "teleports": 0,
+      "fail": 1
+     }
+    },
+    "selected": "4200/600",
+    "max_share": 1.0
+   },
+   "cell": "4200/600",
+   "R-a": {
+    "n": 20,
+    "breakdown_share": 0.95,
+    "breakdown_share_capdrop": 0.95,
+    "n_discharge": 15,
+    "n_free": 1,
+    "Q_dis_vphpl": 1432.7272727272727,
+    "Q_ff_vphpl": 1353.3333333333333,
+    "ratio": null,
+    "ratio_ci95": null,
+    "reported_ratio_within_ramp_corrected": 1.0705318420451952,
+    "reported_ratio_original_10min": 1.08641975308642,
+    "reported_ratio_r1_max_based": 1.0139530902242766,
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 20,
+    "n_valid": 20,
+    "median_c_kmh": -18.95,
+    "pairs_used": {
+     "up1->up2": 20
+    },
+    "status": "PASS"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 2,
+    "median_discharge_vphpl": 1432.7272727272727,
+    "determinism": true,
+    "PASS": false,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 40,
+    "share_bottleneck_origin": 0.0,
+    "origins": {
+     "up3": 39,
+     "up2": 1
+    },
+    "PASS": false
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.06258111487448957,
+    "cells": [
+     "4200/600",
+     "6000/900"
+    ],
+    "median_wall_s": 48.894999999999996
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  }
+ },
+ "probe_x": {
+  "up3": 500.0,
+  "up2": 1500.0,
+  "up1": 2500.0,
+  "up0a": 3250.0,
+  "up0b": 3733.0
+ },
+ "verdict": {
+  "H5a": "FAIL",
+  "H5b": "FAIL",
+  "H3a": "FAIL",
+  "H3b": "FAIL"
+ },
+ "primary": null,
+ "step": 0.2
+}

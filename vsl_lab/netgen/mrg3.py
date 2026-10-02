@@ -24,6 +24,9 @@ SPEC = {
     "merge": ("merge", 4000.0, 4250.0), "down": ("down", 4250.0, 5250.0), "ramp_len": 300.0,
     "loop_period": 30.0, "e2_down_len": 300.0,
 }
+# D-4 lane-drop geometry (round2_protocol.md): same mainline, edge `merge` has 3 lanes whose lane 0 ends (a 3 -> 2
+# lane drop, no ramp demand; the ramp edge is kept, unused, so detector ids stay valid), `down` has 2 lanes.
+LD_SPEC = dict(SPEC, name="LD3", geom="lanedrop")
 VSL_AREA = ("up1", "up0a")
 ACC_AREA = ("up0b",)
 MAIN_ROUTE = "up3 up2 up1 up0a up0b merge down"
@@ -35,7 +38,7 @@ def spec_hash(spec=SPEC) -> str:
 
 
 def build(spec=SPEC, force=False) -> Path:
-    d = NET_CACHE / f"mrg3_{spec_hash(spec)}"
+    d = NET_CACHE / f"{'ld3' if spec.get('geom') == 'lanedrop' else 'mrg3'}_{spec_hash(spec)}"
     net = d / "mrg3.net.xml"
     if net.exists() and (d / "mrg3.det.add.xml").exists() and not force:
         return d
@@ -50,14 +53,16 @@ def build(spec=SPEC, force=False) -> Path:
     nodes.append("</nodes>")
     (d / "mrg3.nod.xml").write_text("\n".join(nodes) + "\n")
     vm, vr = spec["v_main"], spec["v_ramp"]
+    ld = spec.get("geom") == "lanedrop"
+    n_merge, n_down = (3, 2) if ld else (4, 3)
     edges = ["<edges>",
              f'  <edge id="up3" from="n0" to="n1" numLanes="3" speed="{vm}"/>',
              f'  <edge id="up2" from="n1" to="n2" numLanes="3" speed="{vm}"/>',
              f'  <edge id="up1" from="n2" to="n3" numLanes="3" speed="{vm}"/>',
              f'  <edge id="up0a" from="n3" to="n3b" numLanes="3" speed="{vm}"/>',
              f'  <edge id="up0b" from="n3b" to="n4" numLanes="3" speed="{vm}"/>',
-             f'  <edge id="merge" from="n4" to="n5" numLanes="4" speed="{vm}"/>',
-             f'  <edge id="down" from="n5" to="n6" numLanes="3" speed="{vm}"/>',
+             f'  <edge id="merge" from="n4" to="n5" numLanes="{n_merge}" speed="{vm}"/>',
+             f'  <edge id="down" from="n5" to="n6" numLanes="{n_down}" speed="{vm}"/>',
              f'  <edge id="ramp" from="r0" to="n4" numLanes="1" speed="{vr}"/>',
              "</edges>"]
     (d / "mrg3.edg.xml").write_text("\n".join(edges) + "\n")
@@ -66,7 +71,8 @@ def build(spec=SPEC, force=False) -> Path:
         for i in range(3):
             con.append(f'  <connection from="{a}" to="{b}" fromLane="{i}" toLane="{i}"/>')
     for i in range(3):
-        con.append(f'  <connection from="up0b" to="merge" fromLane="{i}" toLane="{i + 1}"/>')
+        con.append(f'  <connection from="up0b" to="merge" fromLane="{i}" toLane="{i if ld else i + 1}"/>')
+    for i in range(n_down):
         con.append(f'  <connection from="merge" to="down" fromLane="{i + 1}" toLane="{i}"/>')
     con.append('  <connection from="ramp" to="merge" fromLane="0" toLane="0"/>')
     con.append("</connections>")
@@ -83,14 +89,14 @@ def build(spec=SPEC, force=False) -> Path:
     per = spec["loop_period"]
     add = ["<additional>"]
     for e in ("up3", "up2", "up1", "up0a", "up0b", "down"):
-        for i in range(3):
+        for i in range(n_down if e == "down" else 3):
             L = lanes[f"{e}_{i}"]
             add.append(f'  <inductionLoop id="e1_{e}_{i}" lane="{e}_{i}" pos="{L - 5.0:.2f}" period="{per}" file="NUL"/>')
     add.append(f'  <inductionLoop id="e1_ramp_0" lane="ramp_0" pos="{lanes["ramp_0"] - 5.0:.2f}" period="{per}" file="NUL"/>')
-    for i in range(4):
+    for i in range(n_merge):
         add.append(f'  <laneAreaDetector id="e2_merge_{i}" lane="merge_{i}" pos="0" length="{lanes[f"merge_{i}"]:.2f}" '
                    f'period="{per}" file="NUL"/>')
-    for i in range(3):
+    for i in range(n_down):
         add.append(f'  <laneAreaDetector id="e2_down_{i}" lane="down_{i}" pos="0" length="{spec["e2_down_len"]:.2f}" '
                    f'period="{per}" file="NUL"/>')
     add.append("</additional>")

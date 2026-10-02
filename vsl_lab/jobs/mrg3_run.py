@@ -60,7 +60,7 @@ def capacity_drop(ts: list) -> dict:
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
         t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1",
         driver: str | None = None, cav_share: float = 0.0, cav_model: str = "CACC", cav_arm: str = "none",
-        cav_x: float = 1.0, step: float | None = None) -> dict:
+        cav_x: float = 1.0, step: float | None = None, geom: str = "merge") -> dict:
     """Round 3 (round3_tm21_protocol.md): cav_share > 0 adds ACC/CACC CAVs. cav_arm 'B' = CAVs staircase toward the
     posted limit of their lane; 'C' = posted VSL untouched, CAVs on up1/up0a staircase toward b x 120 km/h (pre-zone:
     up2 min(1, b+0.2), up3 min(1, b+0.4)); controllers for C: nc | cavconst:<b> | cavmtfc[:rho:kp:ki:ki2] |
@@ -69,13 +69,16 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     dt = step or P.STEP_LENGTH          # Round 3 Addendum A: the author chose 0.2 s for Round 3 (default plant 0.5 s)
     cav_tag = f"_cav{cav_share:g}{cav_arm}{cav_model}x{cav_x:g}" if cav_share > 0 else ""
     cav_tag += f"_dt{dt:g}" if abs(dt - P.STEP_LENGTH) > 1e-9 else ""
+    if geom == "lanedrop":
+        cav_tag += "_ld"
     run_id = (f"mrg3{plant}{'' if driver is None else driver}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}"
               f"_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}{cav_tag}_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    f = P.files()
+    f = P.files(geom)
+    nd = f["n_lanes"]["down"]
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
-    rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end)
+    rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end) if geom == "merge" else []
     dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed,
                    driver=driver, cav_share=cav_share, cav_model=cav_model, step_length=dt)
     cav_ids = {v[1] for v in dem.vehicles if v[3] == "cav"}
@@ -156,15 +159,16 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
             probes.append(row)
             next_samp += 10.0
         if sim.t >= next_loop - 1e-9:
-            q_exit = sum(ls.inductionloop.getLastIntervalVehicleNumber(f"e1_down_{i}") for i in range(3)) * 120.0
+            q_exit = sum(ls.inductionloop.getLastIntervalVehicleNumber(f"e1_down_{i}") for i in range(nd)) * 120.0
             ts.append((sim.t, q_exit, P.Sensors.speed_kmh("up0b")))
             qc_hist.append(P.Sensors.flow_vph_per_lane("up0a"))
             # D-check feature table (30 s): per-edge flow/lane, speed, per-lane speed spread, densities, ramp flow, b
             row = [round(sim.t, 1)]
             for e in ("up3", "up2", "up1", "up0a", "up0b", "down"):
-                lane_v = [ls.inductionloop.getLastIntervalMeanSpeed(f"e1_{e}_{i}") for i in range(3)]
+                ne = nd if e == "down" else 3
+                lane_v = [ls.inductionloop.getLastIntervalMeanSpeed(f"e1_{e}_{i}") for i in range(ne)]
                 lane_v = [v for v in lane_v if v >= 0]
-                row += [round(P.Sensors.flow_vph_per_lane(e), 1), round(P.Sensors.speed_kmh(e), 2),
+                row += [round(P.Sensors.flow_vph_per_lane(e, ne), 1), round(P.Sensors.speed_kmh(e, ne), 2),
                         round(float(np.std(lane_v)) * 3.6, 2) if len(lane_v) > 1 else 0.0]
             row += [round(sens.density_merge_vkl(), 2), round(sens.density_down_vkl(), 2),
                     ls.inductionloop.getLastIntervalVehicleNumber("e1_ramp_0") * 120, round(b_app, 2)]
@@ -211,7 +215,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         "capdrop": capacity_drop(ts), "b_trace": bs[::5], "min_b": min((b for _, b in bs), default=1.0),
         "cav_share": cav_share, "cav_arm": cav_arm, "cav_model": cav_model, "cav_x": cav_x, "n_cav": len(cav_ids),
         "cav_steps": stair.n_steps if stair else 0, "cav_max_excess_ms": round(stair.max_excess, 3) if stair else None,
-        "emergency_braking": (out.get("sumo_stats") or {}).get("emergencyBraking"), "step_length": dt,
+        "emergency_braking": (out.get("sumo_stats") or {}).get("emergencyBraking"), "step_length": dt, "geom": geom,
     })
     try:   # emergency braking attributed to CAVs vs humans, per 1,000 veh-km (Round 3 Addendum A); never fatal
         import re as _re
@@ -263,12 +267,13 @@ def main(argv=None) -> int:
     ap.add_argument("--cav-arm", default="none", choices=["none", "B", "C"])
     ap.add_argument("--cav-x", type=float, default=1.0)
     ap.add_argument("--step", type=float, default=None, help="simulation step (default plant 0.5 s)")
+    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)
     out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant,
               driver=a.driver, cav_share=a.cav_share, cav_model=a.cav_model, cav_arm=a.cav_arm, cav_x=a.cav_x,
-              step=a.step)
+              step=a.step, geom=a.geom)
     keys = ("run_id", "mean_time_in_system_s", "time_main_s", "time_ramp_s", "capdrop", "min_b", "teleports", "drained",
             "wall_s")
     print(json.dumps({k: out.get(k) for k in keys} | {"health": out["health"]["status"],

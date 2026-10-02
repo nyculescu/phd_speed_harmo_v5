@@ -120,10 +120,13 @@ def profile(q_base: float, q_peak: float, t_rise: float, t_peak: float, t_fall: 
     return out
 
 
-def files() -> dict:
-    d = net.build()
-    return {"net": d / "mrg3.net.xml", "add": d / "mrg3.det.add.xml", "dir": d,
-            "lanes": json.loads((d / "lanes.json").read_text())}
+def files(geom: str = "merge") -> dict:
+    """geom 'merge' = MRG3 (default); 'lanedrop' = LD3 (D-4: 3 -> 2 lane drop, no ramp demand)."""
+    d = net.build(net.LD_SPEC if geom == "lanedrop" else net.SPEC)
+    lanes = json.loads((d / "lanes.json").read_text())
+    n = {e: sum(1 for k in lanes if k.rsplit("_", 1)[0] == e) for e in ("merge", "down")}
+    return {"net": d / "mrg3.net.xml", "add": d / "mrg3.det.add.xml", "dir": d, "lanes": lanes, "n_lanes": n,
+            "geom": geom}
 
 
 class Sensors:
@@ -131,6 +134,8 @@ class Sensors:
 
     def __init__(self, lanes: dict):
         self.lanes = lanes
+        self.n_merge = sum(1 for k in lanes if k.startswith("merge_"))     # 4 (MRG3) or 3 (LD3)
+        self.n_down = sum(1 for k in lanes if k.startswith("down_"))       # 3 (MRG3) or 2 (LD3)
 
     @staticmethod
     def flow_vph_per_lane(edge: str, n_lanes: int = 3) -> float:
@@ -146,13 +151,13 @@ class Sensors:
 
     def density_merge_vkl(self) -> float:
         """Bottleneck density (veh/km/lane) from current vehicle counts on the merge lanes 1-3 (+ acc. lane)."""
-        n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_merge_{i}") for i in range(4))
+        n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_merge_{i}") for i in range(self.n_merge))
         L = self.lanes["merge_1"] / 1000.0
-        return n / (L * 3.0)
+        return n / (L * (self.n_merge - 1))
 
     def density_down_vkl(self) -> float:
-        n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_down_{i}") for i in range(3))
-        return n / (0.3 * 3.0)
+        n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_down_{i}") for i in range(self.n_down))
+        return n / (0.3 * self.n_down)
 
 
 def set_vsl(edges, v_ms: float) -> None:

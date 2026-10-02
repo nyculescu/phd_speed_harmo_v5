@@ -36,10 +36,13 @@ ROUTE_KM = {"main": 5.25, "ramp": 1.53}          # approx. route lengths (veh-km
 
 
 VERDICT = None    # --verdict override (D-3: docs/lab/t2_realism_verdict_d3.json)
+GEOM = "merge"    # taken from the verdict file (D-4 lane drop: "lanedrop")
 
 
 def plant() -> tuple:
     v = json.loads(Path(VERDICT or REPO_ROOT / f"docs/lab/t2_realism_verdict_step{STEP:g}.json").read_text())
+    global GEOM
+    GEOM = v.get("geom", "merge")
     drv = v["primary"]
     if drv is None:
         raise SystemExit("no realism-gate variant passed: Round 3 does not run (protocol)")
@@ -51,7 +54,8 @@ def job(tag, ctrl, s, p, arm, drv, cell, root, model="CACC", x=1.0) -> Job:
     return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_p{p:g}{arm}{model}x{x:g}_s{s}",
                argv=["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", m, "--ramp-peak", r,
                      "--tag", tag, "--out-root", str(root), "--plant", "v3", "--driver", drv, "--cav-share", str(p),
-                     "--cav-arm", arm, "--cav-model", model, "--cav-x", str(x), "--step", str(STEP)])
+                     "--cav-arm", arm, "--cav-model", model, "--cav-x", str(x), "--step", str(STEP)]
+               + (["--geom", GEOM] if GEOM != "merge" else []))
 
 
 def load(root: Path, tag: str) -> list:
@@ -159,6 +163,8 @@ def main(argv=None) -> int:
         if x is None:
             raise SystemExit("no X selected by T-X: stop and report to the author (protocol)")
         jobs = []
+        for s in T0_SEEDS[0.10]:   # arm A (posted VSL, no CAVs) vs NC-human on the same plant (added for D-4)
+            jobs += [job("t0", "nc", s, 0.0, "none", drv, cell, root, x=x), job("t0", "const:0.4", s, 0.0, "none", drv, cell, root, x=x)]
         for p in PS:
             for s in T0_SEEDS[p]:
                 jobs += [job("t0", "nc", s, p, "C", drv, cell, root, x=x), job("t0", "cavconst:0.4", s, p, "C", drv, cell, root, x=x),
@@ -172,7 +178,9 @@ def main(argv=None) -> int:
             b = paired(nc, bk.get(("const:0.4", round(p, 2), "B", "CACC", x), {}), up0a_q, 7150039)
             per[f"{p:g}"] = {"C": c | {"PASS": bool(c["rel"] is not None and c["rel"] <= -0.10 and c["excludes_0"])},
                              "B": b | {"PASS": bool(b["rel"] is not None and b["rel"] <= -0.10 and b["excludes_0"])}}
-        res.update(per_p=per)
+        nch = bk.get(("nc", 0.0, "none", "CACC", x), {})
+        aa = paired(nch, bk.get(("const:0.4", 0.0, "none", "CACC", x), {}), up0a_q, 7150039)
+        res.update(per_p=per, A=aa | {"PASS": bool(aa["rel"] is not None and aa["rel"] <= -0.10 and aa["excludes_0"])})
         st["t0_C_pass"] = [p for p in PS if per[f"{p:g}"]["C"]["PASS"]]
     else:
         x = st.get("X")

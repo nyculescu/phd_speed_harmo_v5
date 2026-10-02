@@ -161,3 +161,29 @@ The setting applies to every human vType.
 **Primary plant for Round 3** = the first PASS in the order H5a, H5b, H3a, H3b. Round 3 then runs at 0.2 s on that variant.
 
 **If all four fail:** build a lane-drop plant. It gets its own pre-registration, and its seeds come from the same block.
+
+## D-3 result and D-4: lane-drop plant (pre-registered 2026-10-02, before any D-4 gate run)
+
+**D-3 result** (`t2_realism_d3.md`): all four variants FAIL.
+- Assertive merging (`lcAssertive` 1.5 or 3.0) did **not** create a capacity drop. H5b: Q_dis/Q_ff = 1.011 [1.000, 1.027].
+- It moved breakdown onsets to the **network entry** (`up3`), so the share of runs whose congestion starts at the bottleneck fell to 0–0.54. That is the "waves from nowhere" artefact, and R-d caught it.
+- Merge plant: closed, as pre-registered. Next: the lane-drop fallback.
+
+**D-4 plant LD3** (`netgen/mrg3.py` `LD_SPEC`, `--geom lanedrop`):
+- the same 4 km three-lane approach, VSL areas and probes as MRG3;
+- the `merge` edge becomes a 263 m three-lane zone whose lane 0 ends (a **3 → 2 lane drop**), followed by a two-lane `down` edge;
+- no ramp demand. The ramp edge is kept unused, so detector IDs stay valid.
+
+**Lane-drop smoke** (throw-away seed 7,120,050, 0.2 s, main 3,900 and 4,500, a code check only):
+- H0 (IDM): stranded vehicles at the end of the dropping lane, with teleports at both demands;
+- H5 (EIDM defaults) and H3 (W99): clean, with no teleports.
+
+**Gate:** the realism gate as amended (Addenda A and B), at 0.2 s, with these changes for the main-only geometry:
+- **variants:** H5, H3 and H0 (H0 for the record);
+- **grid:** main peak ∈ {3,300, 3,600, 3,900, 4,200, 4,500, 4,800, 5,100}, ramp 0, 10 seeds each;
+- **stress cell:** 5,100 / 0;
+- **seeds:** calibration 7,160,010–7,160,019 (throw-away); checks 7,160,120–7,160,139; determinism re-run 7,160,120;
+- **primary plant** = the first PASS in the order H5, H3, H0;
+- **outputs:** `t2_realism_verdict_ld3.json` and `t2_realism_ld3.md`.
+
+**Then Round 3 runs on the primary LD3 variant**, with its seeds, X rule and criteria unchanged. Its T0 stage additionally runs **arm A** (posted VSL `const:0.4`, no CAVs) against NC-human on seeds 7,150,010–7,150,019, with the same rule (≤ −10 % application-area outflow, CI excluding 0). All three arms are therefore tested for authority on the same plant.

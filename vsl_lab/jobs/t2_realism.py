@@ -29,6 +29,7 @@ CAL_SEEDS = list(range(7120170, 7120180))
 CHK_SEEDS = list(range(7120180, 7120200))
 STRESS = "6000/900"
 SMOKE_SEED = 7120050
+GEOM = "merge"   # D-4: "lanedrop" (LD3, main-only demand)
 STEP = None      # simulation step override (Round 3 Addendum A: 0.2 s re-check); None = plant default 0.5 s
 SUFFIX = ""      # output-file suffix for a re-check (e.g. "_step0.2")
 
@@ -38,7 +39,7 @@ def job(tag: str, drv: str, s: int, cell: str, root: Path) -> Job:
     return Job(jid=f"{tag}_{drv}_m{m}_r{r}_s{s}",
                argv=["vsl_lab.jobs.mrg3_run", "--ctrl", "nc", "--seed", str(s), "--main-peak", m, "--ramp-peak", r,
                      "--tag", f"{tag}_{drv}", "--out-root", str(root), "--plant", "v3", "--driver", drv]
-               + (["--step", str(STEP)] if STEP else []))
+               + (["--step", str(STEP)] if STEP else []) + (["--geom", GEOM] if GEOM != "merge" else []))
 
 
 def load(root: Path, tag: str, drv: str) -> list:
@@ -196,6 +197,7 @@ def analyse(root: Path) -> dict:
     res["verdict"] = {d: res["variants"][d]["verdict"] for d in VARIANTS}
     res["primary"] = next((d for d in PREFERENCE if res["verdict"].get(d) == "PASS"), None)
     res["step"] = STEP or P.STEP_LENGTH
+    res["geom"] = GEOM
     (REPO_ROOT / "docs" / "lab" / f"t2_realism_verdict{SUFFIX}.json").write_text(json.dumps(res, indent=1, default=str))
     write_report(res, root)
     return res
@@ -212,7 +214,19 @@ def main(argv=None) -> int:
     ap.add_argument("--cal-seeds", default=None, help="a-b inclusive")
     ap.add_argument("--chk-seeds", default=None, help="a-b inclusive")
     ap.add_argument("--suffix", default=None, help="output-file suffix override (e.g. _d3)")
+    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
+    ap.add_argument("--main", default=None, help="comma list of main peaks (grid override)")
+    ap.add_argument("--ramp", default=None, help="comma list of ramp peaks (grid override)")
+    ap.add_argument("--stress", default=None, help="stress cell override, e.g. 5100/0")
     a = ap.parse_args(argv)
+    global GEOM, MAIN, RAMP, STRESS
+    GEOM = a.geom
+    if a.main:
+        MAIN = [int(x) for x in a.main.split(",")]
+    if a.ramp:
+        RAMP = [int(x) for x in a.ramp.split(",")]
+    if a.stress:
+        STRESS = a.stress
     global STEP, SUFFIX, VARIANTS, CAL_SEEDS, CHK_SEEDS
     if a.step:
         STEP, SUFFIX = a.step, f"_step{a.step:g}"
