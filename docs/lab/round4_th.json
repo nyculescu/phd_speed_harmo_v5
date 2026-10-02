@@ -1,0 +1,610 @@
+{
+ "cells": {
+  "3900/0": {
+   "per_ctrl": {
+    "cavconst:0.6@cav0.25C": {
+     "delay": {
+      "rel": 0.07488812985694134,
+      "ci": [
+       17.16805026445539,
+       47.84773105792328
+      ],
+      "excl0": true,
+      "ref_median": 368.6071098810923
+     },
+     "stops": {
+      "rel": 0.08880340872551266,
+      "ci": [
+       0.08556240568715379,
+       0.6697833290544175
+      ],
+      "excl0": true,
+      "ref_median": 3.988345518335419
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 22.5,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "cavpi@cav0.25P": {
+     "delay": {
+      "rel": 1.8015258170601418,
+      "ci": [
+       628.2663741396766,
+       700.5998385921047
+      ],
+      "excl0": true,
+      "ref_median": 368.6071098810923
+     },
+     "stops": {
+      "rel": 1.1123569610990092,
+      "ci": [
+       3.7919606958507366,
+       4.778641184893591
+      ],
+      "excl0": true,
+      "ref_median": 3.988345518335419
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 6.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.5": {
+     "delay": {
+      "rel": 0.3058152367294743,
+      "ci": [
+       54.08096851713785,
+       88.69292551467737
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": -0.3776777048582932,
+      "ci": [
+       -0.1429525756137352,
+       0.5130212682219781
+      ],
+      "excl0": false,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.6": {
+     "delay": {
+      "rel": 0.1688500631972011,
+      "ci": [
+       30.18859380692166,
+       38.63128445424476
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": -0.43014391665158885,
+      "ci": [
+       -0.13569203863966708,
+       -0.05016538037486218
+      ],
+      "excl0": true,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.7": {
+     "delay": {
+      "rel": 0.07958120897494916,
+      "ci": [
+       13.885519729796528,
+       16.621974990511035
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": -0.5914592942544348,
+      "ci": [
+       -0.1337192392406079,
+       -0.09602044599013605
+      ],
+      "excl0": true,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.8": {
+     "delay": {
+      "rel": 0.02096082276178319,
+      "ci": [
+       1.6794634872733099,
+       5.9409403733253185
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": -0.6336041753651119,
+      "ci": [
+       -0.14918143227208547,
+       -0.08187709676068529
+      ],
+      "excl0": true,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:20:38:9:0.0015": {
+     "delay": {
+      "rel": 0.6297331151023614,
+      "ci": [
+       107.7068544109417,
+       133.89055784942212
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": 2.679073714846646,
+      "ci": [
+       0.30597747186296037,
+       0.5960877817559048
+      ],
+      "excl0": true,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:25:38:9:0.0015": {
+     "delay": {
+      "rel": 0.2898625281398156,
+      "ci": [
+       41.212625507802244,
+       68.44641073264614
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": 0.6537995899361282,
+      "ci": [
+       0.08009713271691415,
+       0.16669386704485406
+      ],
+      "excl0": true,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:32:38:9:0.0015": {
+     "delay": {
+      "rel": 0.012855784620987028,
+      "ci": [
+       0.10121278941566914,
+       4.614397170836384
+      ],
+      "excl0": true,
+      "ref_median": 191.18142930585157
+     },
+     "stops": {
+      "rel": 0.0,
+      "ci": [
+       -0.018629981410279287,
+       0.011282911120489403
+      ],
+      "excl0": false,
+      "ref_median": 0.18652647172723058
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 3637.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    }
+   },
+   "T_H0": true,
+   "nc_human": {
+    "delay": 191.18142930585157,
+    "stops": 0.18652647172723058
+   },
+   "nc_cav25_vs_human_delay_rel": 0.9302256003502263,
+   "specialist_isolated_jam_minutes_median": 3.0
+  },
+  "4500/0": {
+   "per_ctrl": {
+    "cavconst:0.6@cav0.25C": {
+     "delay": {
+      "rel": 0.037768407343411324,
+      "ci": [
+       11.692876007835878,
+       33.30038828122312
+      ],
+      "excl0": true,
+      "ref_median": 599.6102456793461
+     },
+     "stops": {
+      "rel": 0.05159794678848584,
+      "ci": [
+       -0.07139097615044321,
+       0.7052606321659489
+      ],
+      "excl0": false,
+      "ref_median": 8.10200871044791
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 24.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "cavpi@cav0.25P": {
+     "delay": {
+      "rel": 1.1870358218013348,
+      "ci": [
+       634.2143343780722,
+       765.8979787980147
+      ],
+      "excl0": true,
+      "ref_median": 599.6102456793461
+     },
+     "stops": {
+      "rel": 0.15462582242028888,
+      "ci": [
+       0.6947622934354429,
+       1.8532164775675168
+      ],
+      "excl0": true,
+      "ref_median": 8.10200871044791
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 7.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.5": {
+     "delay": {
+      "rel": 0.3393490571622469,
+      "ci": [
+       121.37750798722033,
+       153.98493083003945
+      ],
+      "excl0": true,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": 0.4358164546371354,
+      "ci": [
+       1.3296490899963347,
+       2.4403566342285634
+      ],
+      "excl0": true,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.6": {
+     "delay": {
+      "rel": 0.22422207777687497,
+      "ci": [
+       44.030715058928536,
+       126.17700826770985
+      ],
+      "excl0": true,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": 0.26459737239361514,
+      "ci": [
+       0.27303533168023475,
+       1.8661467734867394
+      ],
+      "excl0": true,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.7": {
+     "delay": {
+      "rel": -0.03585259028819642,
+      "ci": [
+       -39.95203403197027,
+       9.465907287468468
+      ],
+      "excl0": false,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": -0.00976286736399061,
+      "ci": [
+       -0.8642120047651993,
+       0.1513338006827274
+      ],
+      "excl0": false,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "const:0.8": {
+     "delay": {
+      "rel": -0.0764404829801707,
+      "ci": [
+       -43.16085079663199,
+       13.953139189428697
+      ],
+      "excl0": false,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": -0.12703685250129268,
+      "ci": [
+       -0.8934373323608611,
+       0.18581883679597766
+      ],
+      "excl0": false,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:20:38:9:0.0015": {
+     "delay": {
+      "rel": 0.28972673457395876,
+      "ci": [
+       98.20315792054896,
+       127.28241278808102
+      ],
+      "excl0": true,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": -0.0940688753106465,
+      "ci": [
+       -0.6700609549134868,
+       0.07384385877672794
+      ],
+      "excl0": false,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:25:38:9:0.0015": {
+     "delay": {
+      "rel": 0.24894433287189313,
+      "ci": [
+       45.184562312837386,
+       111.71145189426292
+      ],
+      "excl0": true,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": -0.14461565892203515,
+      "ci": [
+       -1.205126223792564,
+       0.07175377967523033
+      ],
+      "excl0": false,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    },
+    "mtfc:32:38:9:0.0015": {
+     "delay": {
+      "rel": 0.09511672431760203,
+      "ci": [
+       14.981415407754241,
+       62.69617843572718
+      ],
+      "excl0": true,
+      "ref_median": 392.7696516627374
+     },
+     "stops": {
+      "rel": -0.1925679106487054,
+      "ci": [
+       -1.2788216330296287,
+       -0.09589417439194126
+      ],
+      "excl0": true,
+      "ref_median": 3.996139441159044
+     },
+     "throughput": {
+      "rel": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "excl0": false,
+      "ref_median": 4054.0
+     },
+     "eb_events_median": 0.0,
+     "harmonises_for_free": false,
+     "n": 30
+    }
+   },
+   "T_H0": false,
+   "nc_human": {
+    "delay": 392.7696516627374,
+    "stops": 3.996139441159044
+   },
+   "nc_cav25_vs_human_delay_rel": 0.45741093714840375,
+   "specialist_isolated_jam_minutes_median": 10.5
+  }
+ },
+ "n_runs": 660,
+ "health": {
+  "PASS": 425,
+  "WARN": 234,
+  "FAIL": 1
+ },
+ "T_H0_PASS": true,
+ "specialist_applicable": true
+}
