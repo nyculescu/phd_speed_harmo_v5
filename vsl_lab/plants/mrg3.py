@@ -77,14 +77,15 @@ def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str
 
 def demand(seed: int, main_profile: list, ramp_profile: list, p_noncompliant: float = 0.3,
            truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max", driver: str | None = None,
-           cav_share: float = 0.0, cav_model: str = "CACC") -> Demand:
+           cav_share: float = 0.0, cav_model: str = "CACC", step_length: float | None = None) -> Demand:
     # av_share draws one rng.random() per vehicle whatever its value, so arrival times are identical across cav_share
     d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model, driver, cav_share, cav_model),
                routes=[Route("main", net.MAIN_ROUTE, main_profile, av_share=cav_share, depart_lane="best",
                              depart_speed=depart_speed),
                        Route("ramp", net.RAMP_ROUTE, ramp_profile, av_share=cav_share, depart_lane="0",
                              depart_speed=depart_speed)],
-               step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="cav" if cav_share > 0 else "mix")
+               step_length=step_length or STEP_LENGTH, seed=seed, human_type="mix",
+               av_type="cav" if cav_share > 0 else "mix")
     d.generate()
     return d
 

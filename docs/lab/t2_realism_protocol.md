@@ -169,3 +169,18 @@ SUMO silently ignores unknown vType attributes. So, on the 140 calibration pairs
 - R1's T1 ratio (`capacity_drop()`: maximum 5-min flow in the 15 min before the onset) is confounded in the same way. When breakdown starts during the demand ramp, the "pre" flow is demand-limited, which biases the ratio towards 1. When it starts on the plateau, the maximum of noisy 5-min flows biases it the other way. The v1 T1 result (0.976) may therefore be distorted; this is noted and not re-litigated.
 - **For MRG3-v3**, the T1 gate before R2 keeps its share part (≥ 0.3), its teleport part and its FAIL part from R1. Its ratio part is replaced by realism R-a, through the H0 verdict.
 - The R1 T1 max-based values are still reported.
+
+---
+
+## Addendum B (2026-10-02): re-check at a 0.2 s step, pre-registered before the 0.5 s verdict is known
+
+**Reason.** On 2026-10-02 the author chose a 0.2 s step for Round 3 (TM21 vs TM20; `round3_tm21_protocol.md` Addendum A), because SUMO's ACC/CACC CAVs brake hard at 0.5 s. The step also changes the human plant. In the throw-away diagnostics, IDM's door-to-door time went from 356 to 392 s, and a ramp teleport disappeared. So the 0.5 s realism verdict does not carry over to 0.2 s.
+
+**Re-check design:**
+1. **Smoke** (throw-away seed 7,120,050, 5,400 / 900, all six variants at 0.2 s). A variant whose smoke run is **not drained** within t_max (H-E1) is classed **COLLAPSED**: excluded, and reported. The cost of collapsed EIDM runs (about 5 min each at 0.5 s) would make a full re-check take hours.
+2. **Scope:** every variant that is neither INERT (at 0.5 s) nor COLLAPSED.
+3. **Seeds:** calibration 7,120,260–7,120,269 (throw-away); checks 7,120,270–7,120,289; the determinism re-run uses 7,120,270. These come from the T2 tuning range, reassigned and disclosed.
+4. **Same as at 0.5 s:** grid, cell rule, criteria and Addendum A estimators. R-0 is not repeated, since inertness is a property of the parameters, already tested at 0.5 s.
+5. **Primary plant for Round 3** = the first 0.2 s PASS in the order H4, H5, H2, H1, H3, H0.
+6. **Outputs:** `t2_realism_verdict_step0.2.json` and `t2_realism_step0.2.md`.
+7. **Both verdicts (0.5 s and 0.2 s) are reported.**

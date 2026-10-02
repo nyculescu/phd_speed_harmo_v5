@@ -28,13 +28,16 @@ CAL_SEEDS = list(range(7120170, 7120180))
 CHK_SEEDS = list(range(7120180, 7120200))
 STRESS = "6000/900"
 SMOKE_SEED = 7120050
+STEP = None      # simulation step override (Round 3 Addendum A: 0.2 s re-check); None = plant default 0.5 s
+SUFFIX = ""      # output-file suffix for a re-check (e.g. "_step0.2")
 
 
 def job(tag: str, drv: str, s: int, cell: str, root: Path) -> Job:
     m, r = cell.split("/")
     return Job(jid=f"{tag}_{drv}_m{m}_r{r}_s{s}",
                argv=["vsl_lab.jobs.mrg3_run", "--ctrl", "nc", "--seed", str(s), "--main-peak", m, "--ramp-peak", r,
-                     "--tag", f"{tag}_{drv}", "--out-root", str(root), "--plant", "v3", "--driver", drv])
+                     "--tag", f"{tag}_{drv}", "--out-root", str(root), "--plant", "v3", "--driver", drv]
+               + (["--step", str(STEP)] if STEP else []))
 
 
 def load(root: Path, tag: str, drv: str) -> list:
@@ -166,7 +169,7 @@ def write_report(res: dict, root: Path) -> None:
                  f"{fmt(v['reported']['stopped_share_in_congestion'], '{:.2f}')} |")
     L += ["", f"Primary plant for DRL (preference H4 > H5 > H2 > H1 > H3 > H0, Addendum A): **{res['primary']}**", "",
           "Calibration tables and per-check details: `docs/lab/t2_realism_verdict.json`."]
-    (REPO_ROOT / "docs" / "lab" / "t2_realism.md").write_text("\n".join(L) + "\n")
+    (REPO_ROOT / "docs" / "lab" / f"t2_realism{SUFFIX}.md").write_text("\n".join(L) + "\n")
 
 
 def analyse(root: Path) -> dict:
@@ -176,7 +179,7 @@ def analyse(root: Path) -> dict:
     for drv in VARIANTS:
         sc = select_cell(cal[drv])
         v = {"calibration": sc, "cell": sc["selected"]}
-        if drv != "H0":
+        if drv != "H0" and "H0" in VARIANTS:
             v["R-0"] = inert(cal[drv], cal["H0"])
         if v.get("R-0", {}).get("INERT"):
             v["verdict"] = "INERT"
@@ -191,7 +194,8 @@ def analyse(root: Path) -> dict:
         res["variants"][drv] = v
     res["verdict"] = {d: res["variants"][d]["verdict"] for d in VARIANTS}
     res["primary"] = next((d for d in PREFERENCE if res["verdict"][d] == "PASS"), None)
-    (REPO_ROOT / "docs" / "lab" / "t2_realism_verdict.json").write_text(json.dumps(res, indent=1, default=str))
+    res["step"] = STEP or P.STEP_LENGTH
+    (REPO_ROOT / "docs" / "lab" / f"t2_realism_verdict{SUFFIX}.json").write_text(json.dumps(res, indent=1, default=str))
     write_report(res, root)
     return res
 
@@ -202,7 +206,21 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--root", default=None)
+    ap.add_argument("--step", type=float, default=None)
+    ap.add_argument("--variants", default=None, help="comma list (re-check), e.g. H3,H5")
+    ap.add_argument("--cal-seeds", default=None, help="a-b inclusive")
+    ap.add_argument("--chk-seeds", default=None, help="a-b inclusive")
     a = ap.parse_args(argv)
+    global STEP, SUFFIX, VARIANTS, CAL_SEEDS, CHK_SEEDS
+    if a.step:
+        STEP, SUFFIX = a.step, f"_step{a.step:g}"
+    if a.variants:
+        VARIANTS = [v for v in a.variants.split(",") if v]
+    rng_ = lambda txt: list(range(int(txt.split("-")[0]), int(txt.split("-")[1]) + 1))
+    if a.cal_seeds:
+        CAL_SEEDS = rng_(a.cal_seeds)
+    if a.chk_seeds:
+        CHK_SEEDS = rng_(a.chk_seeds)
     if a.what == "smoke":
         root = RUNS_ROOT / "t2" / f"realism_smoke_{int(time.time())}"
         run_batch([job("smoke", d, SMOKE_SEED, "5400/900", root) for d in VARIANTS], root / "batch", max_workers=5,
@@ -226,7 +244,7 @@ def main(argv=None) -> int:
         res = analyse(Path(a.root))
         print(json.dumps({"verdict": res["verdict"], "primary": res["primary"]}))
         return 0
-    root = RUNS_ROOT / "t2" / f"realism_{int(time.time())}"
+    root = RUNS_ROOT / "t2" / f"realism{SUFFIX}_{int(time.time())}"
     cells = [f"{m}/{r}" for m in MAIN for r in RAMP]
     jobs = [job("cal", d, s, c, root) for d in VARIANTS for c in cells for s in CAL_SEEDS]
     run_batch(jobs, root / "batch_cal", max_workers=a.workers, gate_ok=a.gate_ok)
@@ -234,7 +252,7 @@ def main(argv=None) -> int:
     for d in VARIANTS:
         rows = load(root, "cal", d)
         sc = select_cell(rows)
-        if d != "H0" and inert(rows, load(root, "cal", "H0"))["INERT"]:
+        if d != "H0" and "H0" in VARIANTS and inert(rows, load(root, "cal", "H0"))["INERT"]:
             continue
         if sc["selected"] is None or sc["max_share"] < 0.2:
             continue
@@ -244,7 +262,8 @@ def main(argv=None) -> int:
     run_batch(cjobs, root / "batch_chk", max_workers=a.workers, gate_ok=True)
     res = analyse(root)
     n = sum(len(list((root).glob(f"{t}_*/*/summary.json"))) for t in ("cal", "chk", "det"))
-    ledger.append("T2", "realism", "S", "mrg3v3_realism_gate", {"variants": VARIANTS, "grid": [MAIN, RAMP]},
+    ledger.append("T2", "realism", "S", f"mrg3v3_realism_gate{SUFFIX}", {"variants": VARIANTS, "grid": [MAIN, RAMP],
+                                                                     "step": STEP or P.STEP_LENGTH},
                   f"{CAL_SEEDS[0]}-{CAL_SEEDS[-1]} (throw-away), {CHK_SEEDS[0]}-{CHK_SEEDS[-1]}", n,
                   {d: res["variants"][d].get("R-c", {}).get("fail") for d in VARIANTS},
                   {"verdict": res["verdict"], "primary": res["primary"]}, notes=str(root))

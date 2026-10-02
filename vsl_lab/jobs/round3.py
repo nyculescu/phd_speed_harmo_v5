@@ -31,11 +31,12 @@ TX_SEEDS = list(range(7150070, 7150090))
 X_GRID = [0.5, 1.0, 2.0]
 T1C_CTRLS = ["cavconst:0.6", "cavconst:0.8", "cavmtfc:20:38:9:0.0015", "cavmtfc:25:38:9:0.0015", "cavmtfc:32:38:9:0.0015"]
 STATE = REPO_ROOT / "docs" / "lab" / "round3_state.json"
+STEP = 0.2       # author decision 2026-10-02 (Round 3 Addendum A)
 ROUTE_KM = {"main": 5.25, "ramp": 1.53}          # approx. route lengths (veh-km normalisation)
 
 
 def plant() -> tuple:
-    v = json.loads((REPO_ROOT / "docs/lab/t2_realism_verdict.json").read_text())
+    v = json.loads((REPO_ROOT / f"docs/lab/t2_realism_verdict_step{STEP:g}.json").read_text())
     drv = v["primary"]
     if drv is None:
         raise SystemExit("no realism-gate variant passed: Round 3 does not run (protocol)")
@@ -47,7 +48,7 @@ def job(tag, ctrl, s, p, arm, drv, cell, root, model="CACC", x=1.0) -> Job:
     return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_p{p:g}{arm}{model}x{x:g}_s{s}",
                argv=["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", m, "--ramp-peak", r,
                      "--tag", tag, "--out-root", str(root), "--plant", "v3", "--driver", drv, "--cav-share", str(p),
-                     "--cav-arm", arm, "--cav-model", model, "--cav-x", str(x)])
+                     "--cav-arm", arm, "--cav-model", model, "--cav-x", str(x), "--step", str(STEP)])
 
 
 def load(root: Path, tag: str) -> list:
