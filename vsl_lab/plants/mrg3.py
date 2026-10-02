@@ -21,21 +21,28 @@ STEP_LENGTH = 0.5
 V_LIMIT = 33.33
 
 
-def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1) -> str:
+def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str = "krauss") -> str:
+    """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2 (Treiber-style IDM, pre-registered 2026-10-02)."""
     pc = (1.0 - p_noncompliant) * (1.0 - truck_share)
     pn = p_noncompliant * (1.0 - truck_share)
+    if model == "idm":
+        car = 'carFollowModel="IDM" accel="1.0" decel="1.5" tau="1.0" minGap="2.0" delta="4" length="5" '
+        trk = 'carFollowModel="IDM" accel="0.6" decel="1.5" tau="1.5" minGap="2.5" delta="4" length="12" maxSpeed="25" '
+    else:
+        car = ""
+        trk = 'length="12" accel="1.3" decel="4.0" maxSpeed="25" '
     return (
         '  <vTypeDistribution id="mix">\n'
-        f'    <vType id="car_c" probability="{pc:.4f}" speedFactor="normc(1.0,0.05,0.8,1.2)"/>\n'
-        f'    <vType id="car_n" probability="{pn:.4f}" speedFactor="normc(1.15,0.05,0.95,1.4)"/>\n'
-        f'    <vType id="truck" vClass="truck" probability="{truck_share:.4f}" length="12" accel="1.3" decel="4.0" '
-        'maxSpeed="25" speedFactor="normc(1.0,0.05,0.8,1.2)"/>\n'
+        f'    <vType id="car_c" probability="{pc:.4f}" {car}speedFactor="normc(1.0,0.05,0.8,1.2)"/>\n'
+        f'    <vType id="car_n" probability="{pn:.4f}" {car}speedFactor="normc(1.15,0.05,0.95,1.4)"/>\n'
+        f'    <vType id="truck" vClass="truck" probability="{truck_share:.4f}" {trk}'
+        'speedFactor="normc(1.0,0.05,0.8,1.2)"/>\n'
         '  </vTypeDistribution>')
 
 
 def demand(seed: int, main_profile: list, ramp_profile: list, p_noncompliant: float = 0.3,
-           truck_share: float = 0.1) -> Demand:
-    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share),
+           truck_share: float = 0.1, model: str = "krauss") -> Demand:
+    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model),
                routes=[Route("main", net.MAIN_ROUTE, main_profile, depart_lane="best", depart_speed="max"),
                        Route("ramp", net.RAMP_ROUTE, ramp_profile, depart_lane="0", depart_speed="max")],
                step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="mix")

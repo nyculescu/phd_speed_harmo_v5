@@ -33,17 +33,20 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--batch-root", default=None)
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
     a = ap.parse_args(argv)
-    r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob("r1_*/analysis.json"))[-1]).read_text())
+    suffix = "" if a.plant == "v1" else "_v2"
+    pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else "r1_v2_[0-9]*/analysis.json"
+    r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob(pat))[-1]).read_text())
     if not (r1.get("T1", {}).get("PASS") and r1.get("T0", {}).get("PASS")):
         print(json.dumps({"skipped": "T2 R1 T1/T0 did not pass", "r1": {k: r1.get(k, {}).get("PASS") for k in ("T1", "T0")}}))
         return 0
     m, r = (int(x) for x in r1["cell"].split("/"))
-    root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r2_{int(time.time())}"
+    root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r2{suffix}_{int(time.time())}"
     if not a.analyse_only:
         jobs = [Job(jid=f"r2_{c.replace(':', '_')}_nc{p}_s{s}",
                     argv=["vsl_lab.jobs.mrg3_run", "--ctrl", c, "--seed", str(s), "--main-peak", str(m), "--ramp-peak", str(r),
-                          "--p-nc", str(p), "--tag", "r2", "--out-root", str(root)])
+                          "--p-nc", str(p), "--tag", "r2", "--out-root", str(root), "--plant", a.plant])
                 for p in PNC for s in SEEDS for c in controllers()]
         run_batch(jobs, root / "batch", max_workers=a.workers, gate_ok=a.gate_ok)
     rows = [json.loads(p.read_text()) for p in (root / "r2").glob("*/summary.json")]
@@ -82,7 +85,7 @@ def main(argv=None) -> int:
     out = {"n_runs": len(rows), "health": {h: sum(o["health"]["status"] == h for o in rows) for h in ("PASS", "WARN", "FAIL")},
            "table": table, "tuned": tuned, "per_class_best_mtfc": per_class, "G": G, "T2_PASS": bool(G >= 0.10)}
     (root / "analysis.json").write_text(json.dumps(out, indent=1, default=str))
-    (REPO_ROOT / "docs/lab/t2_mrg3_baselines_frozen.json").write_text(json.dumps(
+    (REPO_ROOT / f"docs/lab/t2_mrg3_baselines_frozen{suffix}.json").write_text(json.dumps(
         {"protocol": "docs/lab/t2_mrg3_r2_protocol.md", "cell": r1["cell"], "tuned": tuned, "per_class_best_mtfc": per_class,
          "G": G, "raw_root": str(root), "frozen_at": time.strftime("%Y-%m-%d %H:%M")}, indent=1))
     L = ["# Track 2 (MRG3), R2 tuned baselines and T2 mechanism", "",
@@ -93,7 +96,7 @@ def main(argv=None) -> int:
         L.append(f"| {c} | " + " | ".join(f"{table[c][p]['median_time_s']:.1f}" if p in table[c] else "-" for p in PNC) +
                  f" | {table[c]['score']:.1f} | {ramp_ok(c)} |")
     L += ["", f"- Tuned: {json.dumps(tuned)}", f"- Per-class best MTFC (I): {per_class}"]
-    (REPO_ROOT / "docs/lab/t2_mrg3_r2.md").write_text("\n".join(L) + "\n")
+    (REPO_ROOT / f"docs/lab/t2_mrg3_r2{suffix}.md").write_text("\n".join(L) + "\n")
     ledger.append("T2", "R2", "S", "mrg3_baselines_T2", {"protocol": "t2_mrg3_r2_protocol.md"}, "7120100-7120119", len(rows),
                   out["health"], {"tuned": tuned, "G": G, "T2_PASS": out["T2_PASS"]}, notes=str(root))
     print(json.dumps({"tuned": tuned, "G": G, "T2_PASS": out["T2_PASS"]}, default=str))

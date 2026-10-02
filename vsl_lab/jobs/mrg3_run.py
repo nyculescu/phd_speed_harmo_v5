@@ -52,14 +52,16 @@ def capacity_drop(ts: list) -> dict:
 
 
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
-        t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0) -> dict:
-    run_id = f"mrg3_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}_pid{os.getpid()}"
+        t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1") -> dict:
+    model = {"v1": "krauss", "v2": "idm"}[plant]
+    run_id = (f"mrg3{plant}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}"
+              f"_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     f = P.files()
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
     rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end)
-    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck)
+    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model)
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=P.STEP_LENGTH, checkpoint_s=300.0,
@@ -125,7 +127,8 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     out = sim.close(drained=drained)
     n = out["generated"]
     out.update({
-        "job": "mrg3_run", "run_id": run_id, "ctrl": ctrl, "seed": seed, "main_peak": main_peak, "ramp_peak": ramp_peak,
+        "job": "mrg3_run", "plant": plant, "run_id": run_id, "ctrl": ctrl, "seed": seed, "main_peak": main_peak,
+        "ramp_peak": ramp_peak,
         "p_noncompliant": p_nc, "truck_share": truck,
         "mean_time_in_system_s": out["tts_system_vehh"] * 3600.0 / max(n, 1),
         "time_main_s": by_route.get("main", {}).get("mean_s"), "time_ramp_s": by_route.get("ramp", {}).get("mean_s"),
@@ -155,10 +158,11 @@ def main(argv=None) -> int:
     ap.add_argument("--ramp-peak", type=float, default=900.0)
     ap.add_argument("--p-nc", type=float, default=0.3)
     ap.add_argument("--truck", type=float, default=0.1)
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)
-    out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root))
+    out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant)
     keys = ("run_id", "mean_time_in_system_s", "time_main_s", "time_ramp_s", "capdrop", "min_b", "teleports", "drained",
             "wall_s")
     print(json.dumps({k: out.get(k) for k in keys} | {"health": out["health"]["status"],

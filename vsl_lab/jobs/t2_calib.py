@@ -24,12 +24,16 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--seed0", type=int, default=7120000)
     a = ap.parse_args(argv)
-    root = RUNS_ROOT / "t2" / f"calib_{int(time.time())}"
+    seeds = list(range(a.seed0, a.seed0 + 10))
+    suffix = "" if a.plant == "v1" else "_v2"
+    root = RUNS_ROOT / "t2" / f"calib{suffix}_{int(time.time())}"
     jobs = [Job(jid=f"cal_m{m}_r{r}_s{s}", argv=["vsl_lab.jobs.mrg3_run", "--ctrl", "nc", "--seed", str(s),
                                                   "--main-peak", str(m), "--ramp-peak", str(r), "--tag", "calib",
-                                                  "--out-root", str(root)])
-            for m in MAIN for r in RAMP for s in SEEDS]
+                                                  "--out-root", str(root), "--plant", a.plant])
+            for m in MAIN for r in RAMP for s in seeds]
     rep = run_batch(jobs, root / "batch", max_workers=a.workers, gate_ok=a.gate_ok)
     rows = [json.loads(p.read_text()) for p in (root / "calib").glob("*/summary.json")]
     cells = {}
@@ -58,8 +62,10 @@ def main(argv=None) -> int:
     out = {"table": table, "selected_cell": sel,
            "rule": "closest breakdown share to 0.5 among cells with 0 teleports and 0 FAIL; ties -> lower demand",
            "n_runs": len(rows), "raw": str(root)}
-    (REPO_ROOT / "docs" / "lab" / "t2_mrg3_calibration.json").write_text(json.dumps(out, indent=1))
-    ledger.append("T2", "R1-calib", "S", "mrg3_calibration", {"main": MAIN, "ramp": RAMP}, "7120000-7120009 (throw-away)",
+    out["plant"] = a.plant
+    (REPO_ROOT / "docs" / "lab" / f"t2_mrg3_calibration{suffix}.json").write_text(json.dumps(out, indent=1))
+    ledger.append("T2", "R1-calib", "S", f"mrg3{a.plant}_calibration", {"main": MAIN, "ramp": RAMP},
+                  f"{seeds[0]}-{seeds[-1]} (throw-away)",
                   len(rows), {"PASS": rep.n_ok}, {"selected": sel, "table": table}, notes=str(root))
     print(json.dumps({"selected": sel, "table": table}))
     return 0
