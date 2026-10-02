@@ -61,7 +61,7 @@ class MRG3Env(gym.Env):
         self.eval_p_nc = eval_p_nc
         self._eval_i = 0
         self.drain_after, self.tag, self.reward_kind = drain_after, tag, reward
-        self.model = {"v1": "krauss", "v2": "idm"}[plant]
+        self.model, self.depart_speed = P.PLANTS[plant]
         self.files = P.files()
         self.sens = P.Sensors(self.files["lanes"])
         n_snap = 2 * len(EDGES) + 4
@@ -124,7 +124,8 @@ class MRG3Env(gym.Env):
         rp = float(rng.uniform(*self.ramp_peak))
         mprof = P.profile(2500.0, mp, 600.0, 1200.0, 3000.0, self.t_end)
         rprof = P.profile(300.0, rp, 600.0, 1200.0, 3000.0, self.t_end)
-        dem = P.demand(ep_seed, mprof, rprof, p_noncompliant=self.p_nc, truck_share=self.truck, model=self.model)
+        dem = P.demand(ep_seed, mprof, rprof, p_noncompliant=self.p_nc, truck_share=self.truck, model=self.model,
+                       depart_speed=self.depart_speed)
         run_dir = RUNS_ROOT / "t2" / "envs" / self.tag / f"pid{os.getpid()}"
         run_dir.mkdir(parents=True, exist_ok=True)
         rou = run_dir / f"routes_s{ep_seed}_pid{os.getpid()}.rou.xml"

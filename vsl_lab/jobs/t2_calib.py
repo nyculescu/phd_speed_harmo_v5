@@ -24,11 +24,11 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
-    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
     ap.add_argument("--seed0", type=int, default=7120000)
     a = ap.parse_args(argv)
     seeds = list(range(a.seed0, a.seed0 + 10))
-    suffix = "" if a.plant == "v1" else "_v2"
+    suffix = "" if a.plant == "v1" else f"_{a.plant}"
     root = RUNS_ROOT / "t2" / f"calib{suffix}_{int(time.time())}"
     jobs = [Job(jid=f"cal_m{m}_r{r}_s{s}", argv=["vsl_lab.jobs.mrg3_run", "--ctrl", "nc", "--seed", str(s),
                                                   "--main-peak", str(m), "--ramp-peak", str(r), "--tag", "calib",

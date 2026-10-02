@@ -70,3 +70,29 @@ The av_share is 0.25 for **every** controller (NC included).
 8. R5
 
 One batch at a time. Thermal guard per `CLAUDE.md`.
+
+---
+
+## D-1 result and D-2 pre-registration (2026-10-02, before any v3 run)
+
+**D-1 diagnosis** (seed 7,120,050, NC, 5,400 / 900; `docs/lab/t2_mrg3v2_diag.json`). It is **not** a ramp deadlock: 1 teleport, at most 3 vehicles stopped at the acceleration-lane end. It is an **insertion failure**: the origin queue grows to 1,955 vehicles. With IDM (b = 1.5 m/s²), SUMO's insertion check at `departSpeed="max"` (33 m/s) needs very large gaps, so the mainline never receives its demand. The merge lanes 0–1 do congest locally.
+
+**Insertion test** (same throw-away seed; pending vehicles at 1,500 s):
+
+| `departSpeed` | Pending at 1,500 s |
+|---|---|
+| `max` | 440 |
+| `desired` | 380 |
+| `random` | 444 |
+| `0` | 546 |
+| **`avg`** | **0** (all 1,716 due vehicles inserted; up0b congested at 11 m/s) |
+
+**D-2: MRG3-v3 = MRG3-v2 (IDM) + `departSpeed="avg"` on both routes.**
+- This changes only how demand enters, not the vehicle dynamics or the geometry.
+- **v3 calibration:** throw-away seeds 7,120,100–7,120,109; the same grid and cell-selection rule as v1.
+- **v3 R1:**
+  - T1 and T1c on 7,120,110–7,120,139; T0 on 7,120,140–7,120,149; 5 T3 re-runs;
+  - the v1 criteria;
+  - T1c gets one MTFC set-point grid adapted to IDM densities: ρ̂ ∈ {20, 25, 32} with the paper gains, plus const 0.6 / 0.8.
+- **v3 R2** (only if T1 and T0 pass): tuning seeds 7,120,150–7,120,169, with the R2 protocol grid and compliance classes.
+- Seeds 7,120,100–7,120,169 were never used before; their reassignment from the unused T2 R2 range is disclosed.

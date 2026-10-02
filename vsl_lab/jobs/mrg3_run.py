@@ -53,7 +53,7 @@ def capacity_drop(ts: list) -> dict:
 
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
         t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1") -> dict:
-    model = {"v1": "krauss", "v2": "idm"}[plant]
+    model, dspeed = P.PLANTS[plant]
     run_id = (f"mrg3{plant}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}"
               f"_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
@@ -61,7 +61,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     f = P.files()
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
     rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end)
-    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model)
+    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed)
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=P.STEP_LENGTH, checkpoint_s=300.0,
@@ -158,7 +158,7 @@ def main(argv=None) -> int:
     ap.add_argument("--ramp-peak", type=float, default=900.0)
     ap.add_argument("--p-nc", type=float, default=0.3)
     ap.add_argument("--truck", type=float, default=0.1)
-    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)

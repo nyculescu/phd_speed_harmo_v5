@@ -21,6 +21,8 @@ T1_SEEDS = list(range(7120010, 7120040))
 T0_SEEDS = list(range(7120040, 7120050))
 V2_T1_SEEDS = list(range(7120060, 7120090))
 V2_T0_SEEDS = list(range(7120090, 7120100))
+V3_T1_SEEDS = list(range(7120110, 7120140))
+V3_T0_SEEDS = list(range(7120140, 7120150))
 PLANT = "v1"
 T1C = ["const:0.6", "const:0.8", "mtfc:32:38:9:0.0015", "mtfc:25:38:9:0.0015", "mtfc:20:38:9:0.0015"]
 
@@ -45,13 +47,15 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--batch-root", default=None)
-    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
     a = ap.parse_args(argv)
     global PLANT, T1_SEEDS, T0_SEEDS
     PLANT = a.plant
-    suffix = "" if a.plant == "v1" else "_v2"
+    suffix = "" if a.plant == "v1" else f"_{a.plant}"
     if a.plant == "v2":
         T1_SEEDS, T0_SEEDS = V2_T1_SEEDS, V2_T0_SEEDS
+    if a.plant == "v3":
+        T1_SEEDS, T0_SEEDS = V3_T1_SEEDS, V3_T0_SEEDS
     cal = json.loads((REPO_ROOT / f"docs/lab/t2_mrg3_calibration{suffix}.json").read_text())
     cell = cal["selected_cell"]
     m, r = (int(x) for x in cell.split("/"))

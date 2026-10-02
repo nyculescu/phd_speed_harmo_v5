@@ -21,6 +21,9 @@ STEP_LENGTH = 0.5
 V_LIMIT = 33.33
 
 
+PLANTS = {"v1": ("krauss", "max"), "v2": ("idm", "max"), "v3": ("idm", "avg")}   # (car model, departSpeed)
+
+
 def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str = "krauss") -> str:
     """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2 (Treiber-style IDM, pre-registered 2026-10-02)."""
     pc = (1.0 - p_noncompliant) * (1.0 - truck_share)
@@ -41,10 +44,10 @@ def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str
 
 
 def demand(seed: int, main_profile: list, ramp_profile: list, p_noncompliant: float = 0.3,
-           truck_share: float = 0.1, model: str = "krauss") -> Demand:
+           truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max") -> Demand:
     d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model),
-               routes=[Route("main", net.MAIN_ROUTE, main_profile, depart_lane="best", depart_speed="max"),
-                       Route("ramp", net.RAMP_ROUTE, ramp_profile, depart_lane="0", depart_speed="max")],
+               routes=[Route("main", net.MAIN_ROUTE, main_profile, depart_lane="best", depart_speed=depart_speed),
+                       Route("ramp", net.RAMP_ROUTE, ramp_profile, depart_lane="0", depart_speed=depart_speed)],
                step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="mix")
     d.generate()
     return d
