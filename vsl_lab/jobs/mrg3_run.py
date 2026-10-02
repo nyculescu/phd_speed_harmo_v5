@@ -75,7 +75,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         mt = MTFC(**dict(zip(names, vals)))
     elif ctrl.startswith("const:"):
         b_const = float(ctrl.split(":")[1])
-    ts, bs = [], []
+    ts, bs, feats = [], [], []
     dens_samples, qc_hist = [], []
     b_app, b_acc = 1.0, 1.0
     next_loop, next_ctrl, next_samp = 30.0, t_ctrl0 + 60.0, 10.0
@@ -96,6 +96,16 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
             q_exit = sum(ls.inductionloop.getLastIntervalVehicleNumber(f"e1_down_{i}") for i in range(3)) * 120.0
             ts.append((sim.t, q_exit, P.Sensors.speed_kmh("up0b")))
             qc_hist.append(P.Sensors.flow_vph_per_lane("up0a"))
+            # D-check feature table (30 s): per-edge flow/lane, speed, per-lane speed spread, densities, ramp flow, b
+            row = [round(sim.t, 1)]
+            for e in ("up3", "up2", "up1", "up0a", "up0b", "down"):
+                lane_v = [ls.inductionloop.getLastIntervalMeanSpeed(f"e1_{e}_{i}") for i in range(3)]
+                lane_v = [v for v in lane_v if v >= 0]
+                row += [round(P.Sensors.flow_vph_per_lane(e), 1), round(P.Sensors.speed_kmh(e), 2),
+                        round(float(np.std(lane_v)) * 3.6, 2) if len(lane_v) > 1 else 0.0]
+            row += [round(sens.density_merge_vkl(), 2), round(sens.density_down_vkl(), 2),
+                    ls.inductionloop.getLastIntervalVehicleNumber("e1_ramp_0") * 120, round(b_app, 2)]
+            feats.append(row)
             next_loop += 30.0
         if sim.t >= next_ctrl - 1e-9 and sim.t >= t_ctrl0:
             if mt is not None:
@@ -124,6 +134,12 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     })
     out.pop("arrivals_bins", None)
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1, default=str))
+    hdr = ["t"] + [f"{e}_{k}" for e in ("up3", "up2", "up1", "up0a", "up0b", "down") for k in ("q", "v", "vspread")] \
+        + ["rho_merge", "rho_down", "q_ramp", "b"]
+    with open(run_dir / "features.csv", "w") as fh:
+        fh.write(",".join(hdr) + "\n")
+        for r in feats:
+            fh.write(",".join(str(x) for x in r) + "\n")
     try:
         rou.unlink()
     except OSError:

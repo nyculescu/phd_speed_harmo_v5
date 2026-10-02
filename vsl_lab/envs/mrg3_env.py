@@ -1,0 +1,199 @@
+"""MRG3 gymnasium environment (Track 2): posted VSL at an on-ramp merge (TM20), decisions every 60 s.
+
+Action modes (same posted-VSL actuator and staircase as the classical MTFC job, so comparisons are fair):
+  direct    Discrete(9): b in {0.2, 0.3, ..., 1.0} (|delta b| <= 0.2 per period enforced, as for MTFC)
+  hybrid    Discrete(len(RHO_GRID)): MTFC density set-point rho_hat chosen every `hybrid_every` periods;
+            Carlson's MTFC computes b every 60 s (the validated controller stays in the loop)
+  residual  Discrete(5): b = MTFC b + {-0.2, -0.1, 0, +0.1, +0.2}, then the MTFC constraints
+Observation (S-HIST): last `hist` snapshots of [per-edge 30 s flow/lane / 2400, speed / 120 km/h for up3, up2,
+up1, up0a, up0b, down], merge density / 60, ramp flow / 1200, current b, time fraction; plus (optional
+S-ORACLE) the hidden non-compliant share.
+Reward R-TTS: -(vehicles in network + waiting to enter) averaged over the period / 500 (sums to -TTS incl. queue).
+Hidden condition: non-compliant share p_nc drawn per episode from `p_nc_choices` (not observed unless oracle).
+"""
+from __future__ import annotations
+
+import os
+from collections import deque
+
+import gymnasium as gym
+import libsumo as ls
+import numpy as np
+
+from vsl_lab.config import E_CORES, RUNS_ROOT
+from vsl_lab.controllers.mtfc import MTFC
+from vsl_lab.plants import mrg3 as P
+from vsl_lab.sim.runner import SumoSim
+
+EDGES = ("up3", "up2", "up1", "up0a", "up0b", "down")
+RHO_GRID = (14.0, 17.0, 20.0, 23.0, 26.0, 29.0, 32.0)
+
+
+class MRG3Env(gym.Env):
+    metadata = {"render_modes": []}
+
+    def __init__(self, mode: str = "direct", main_peak=(5400.0, 5400.0), ramp_peak=(900.0, 900.0),
+                 p_nc_choices=(0.1, 0.3, 0.5), truck: float = 0.1, t_ctrl0: float = 300.0, t_end: float = 3900.0,
+                 hist: int = 4, oracle: bool = False, hybrid_every: int = 5, mtfc_kwargs: dict | None = None,
+                 seed_pool=(7220000, 7229999), eval_seeds=None, eval_p_nc=None, drain_after: bool = False,
+                 tag: str = "train", pin_ecores: bool = True, quiet: bool = True, reward: str = "tts"):
+        super().__init__()
+        if pin_ecores:
+            try:
+                os.sched_setaffinity(0, set(E_CORES))
+            except OSError:
+                pass
+        if quiet:
+            try:
+                os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
+            except OSError:
+                pass
+        self.mode, self.main_peak, self.ramp_peak = mode, main_peak, ramp_peak
+        self.p_nc_choices, self.truck = tuple(p_nc_choices), truck
+        self.t_ctrl0, self.t_end, self.hist_n, self.oracle = t_ctrl0, t_end, hist, oracle
+        self.hybrid_every = hybrid_every
+        self.mtfc_kwargs = mtfc_kwargs or {}
+        self.seed_pool = seed_pool
+        self.eval_seeds = list(eval_seeds) if eval_seeds is not None else None
+        self.eval_p_nc = eval_p_nc
+        self._eval_i = 0
+        self.drain_after, self.tag, self.reward_kind = drain_after, tag, reward
+        self.files = P.files()
+        self.sens = P.Sensors(self.files["lanes"])
+        n_snap = 2 * len(EDGES) + 4
+        self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_snap * hist + (1 if oracle else 0),), dtype=np.float32)
+        self.action_space = {"direct": gym.spaces.Discrete(9), "hybrid": gym.spaces.Discrete(len(RHO_GRID)),
+                             "residual": gym.spaces.Discrete(5)}[mode]
+        self.sim = None
+
+    # --------------------------------------------------------------- helpers
+    def _post(self, b_app: float, b_acc: float) -> None:
+        v = P.V_LIMIT
+        P.set_vsl(("up1", "up0a"), b_app * v)
+        P.set_vsl(("up2",), min(1.0, b_app + 0.2) * v)
+        P.set_vsl(("up3",), min(1.0, b_app + 0.4) * v)
+        P.set_vsl(("up0b",), b_acc * v)
+
+    def _snapshot(self) -> list:
+        s = []
+        for e in EDGES:
+            s.append(P.Sensors.flow_vph_per_lane(e) / 2400.0)
+            sp = P.Sensors.speed_kmh(e)
+            s.append((sp if sp >= 0 else 120.0) / 120.0)
+        s.append(self.sens.density_merge_vkl() / 60.0)
+        s.append(ls.inductionloop.getLastIntervalVehicleNumber("e1_ramp_0") * 120.0 / 1200.0)
+        s.append(self.b)
+        s.append((self.sim.t - self.t_ctrl0) / (self.t_end - self.t_ctrl0))
+        return s
+
+    def _obs(self) -> np.ndarray:
+        o = [x for snap in self.hist for x in snap]
+        if self.oracle:
+            o.append(self.p_nc)
+        return np.asarray(o, dtype=np.float32)
+
+    def _period(self) -> float:
+        """Advance 60 s; return mean number of vehicles in system (network + origin queue)."""
+        n0 = self.sim.tts_system
+        dens = []
+        for _ in range(6):
+            self.sim.run_until(self.sim.t + 10.0)
+            dens.append(self.sens.density_merge_vkl())
+        self.rho_avg = float(np.mean(dens))
+        return (self.sim.tts_system - n0) / 60.0
+
+    # --------------------------------------------------------------- gym API
+    def reset(self, *, seed=None, options=None):
+        super().reset(seed=seed)
+        if self.sim is not None:
+            self.sim.close()
+            self.sim = None
+        if self.eval_seeds is not None:
+            ep_seed = self.eval_seeds[self._eval_i % len(self.eval_seeds)]
+            self._eval_i += 1
+            self.p_nc = self.eval_p_nc if self.eval_p_nc is not None else self.p_nc_choices[0]
+        else:
+            ep_seed = int(self.np_random.integers(self.seed_pool[0], self.seed_pool[1] + 1))
+            self.p_nc = float(self.p_nc_choices[int(self.np_random.integers(0, len(self.p_nc_choices)))])
+        rng = np.random.default_rng(ep_seed)
+        mp = float(rng.uniform(*self.main_peak))
+        rp = float(rng.uniform(*self.ramp_peak))
+        mprof = P.profile(2500.0, mp, 600.0, 1200.0, 3000.0, self.t_end)
+        rprof = P.profile(300.0, rp, 600.0, 1200.0, 3000.0, self.t_end)
+        dem = P.demand(ep_seed, mprof, rprof, p_noncompliant=self.p_nc, truck_share=self.truck)
+        run_dir = RUNS_ROOT / "t2" / "envs" / self.tag / f"pid{os.getpid()}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        rou = run_dir / f"routes_s{ep_seed}_pid{os.getpid()}.rou.xml"
+        dem.write(rou)
+        self._rou = rou
+        self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
+                           step_length=P.STEP_LENGTH, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0)
+        self.sim.start()
+        self.b = 1.0
+        self.mtfc = MTFC(**self.mtfc_kwargs)
+        self.k = 0
+        self.ep = {"seed": ep_seed, "p_nc": self.p_nc, "main_peak": mp, "ramp_peak": rp, "ret": 0.0, "min_b": 1.0}
+        self.sim.run_until(self.t_ctrl0)
+        snap = self._snapshot()
+        self.hist = deque([snap] * self.hist_n, maxlen=self.hist_n)
+        self.rho_avg = self.sens.density_merge_vkl()
+        return self._obs(), {}
+
+    def step(self, action):
+        a = int(np.asarray(action).reshape(-1)[0])
+        qc = P.Sensors.flow_vph_per_lane("up0a")
+        if self.mode == "direct":
+            target = 0.2 + 0.1 * a
+            self.b = float(np.clip(target, self.b - 0.2, self.b + 0.2))
+            b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
+        elif self.mode == "hybrid":
+            if self.k % self.hybrid_every == 0:
+                self.mtfc.rho_set = RHO_GRID[a]
+            self.b, b_acc = self.mtfc.step(self.rho_avg, qc)
+        else:  # residual
+            b_m, _ = self.mtfc.step(self.rho_avg, qc)
+            target = round((b_m + (a - 2) * 0.1) * 10.0) / 10.0
+            self.b = float(np.clip(target, max(0.2, self.b - 0.2), min(1.0, self.b + 0.2)))
+            b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
+        self._post(self.b, b_acc)
+        self.ep["min_b"] = min(self.ep["min_b"], self.b)
+        n_sys = self._period()
+        r = -n_sys / 500.0
+        self.k += 1
+        self.hist.append(self._snapshot())
+        obs = self._obs()
+        if not np.all(np.isfinite(obs)):
+            self.sim.health.add("FAIL", "H-R6", self.sim.t, "non-finite observation")
+            obs = np.nan_to_num(obs)
+        self.ep["ret"] += r
+        done = self.sim.t >= self.t_end - 1e-9
+        info = {}
+        if done:
+            self._post(1.0, 1.0)
+            m = {"tts_ctrl_vehh": self.sim.tts_system / 3600.0, "seed": self.ep["seed"], "p_nc": self.ep["p_nc"],
+                 "main_peak": self.ep["main_peak"], "return": self.ep["ret"], "min_b": self.ep["min_b"]}
+            drained = None
+            if self.drain_after:
+                drained = self.sim.drain(10800.0)
+                br = self.sim.time_in_system_by_route()
+                m.update({"mean_time_in_system_s": self.sim.tts_system / max(self.sim._total, 1),
+                          "time_main_s": br.get("main", {}).get("mean_s"), "time_ramp_s": br.get("ramp", {}).get("mean_s"),
+                          "drained": drained})
+            res = self.sim.close(drained=drained)
+            self.sim = None
+            try:
+                self._rou.unlink()
+            except OSError:
+                pass
+            info["episode_metrics"] = m
+            info["health"] = res["health"]["status"]
+            info["health_codes"] = list(res["health"]["by_code"].keys())
+        return obs, float(r), bool(done), False, info
+
+    def close(self):
+        if self.sim is not None:
+            try:
+                self.sim.close()
+            except Exception:
+                pass
+            self.sim = None

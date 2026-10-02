@@ -40,6 +40,9 @@ def make_env_fn(env_name: str, env_kwargs: dict, rank: int):
         elif env_name == "ring":
             from vsl_lab.envs.ring_env import RingEnv
             env = RingEnv(**kw)
+        elif env_name == "mrg3":
+            from vsl_lab.envs.mrg3_env import MRG3Env
+            env = MRG3Env(**kw)
         else:
             raise ValueError(env_name)
         # Episode seeds come from env.np_random, which SB3 seeds per rank via VecEnv.seed(seed + rank).
@@ -150,8 +153,9 @@ def main(argv=None) -> int:
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
     env_kwargs = json.loads(a.env_kwargs)
-    track = {"bn4": "t1", "ring": "t3"}[a.env]
+    track = {"bn4": "t1", "ring": "t3", "mrg3": "t2"}[a.env]
     seed_pool = {"t1": (7210000 + a.seed * 2000, 7210000 + a.seed * 2000 + 1999),
+                 "t2": (7220000 + a.seed * 2000, 7220000 + a.seed * 2000 + 1999),
                  "t3": (7230000 + a.seed * 2000, 7230000 + a.seed * 2000 + 1999)}[track]
     run_id = f"{a.env}_{a.algo}_{a.reward}_u{a.updates}_e{a.n_envs}_s{a.seed}_{int(time.time())}_pid{os.getpid()}"
     run_dir = RUNS_ROOT / track / "train" / a.tag / run_id
@@ -161,9 +165,10 @@ def main(argv=None) -> int:
 
     train_kwargs = dict(env_kwargs, reward=a.reward, seed_pool=seed_pool, tag=f"{a.tag}_train_s{a.seed}",
                         rank_seed=a.seed)
-    conds = a.val_conds or ({"bn4": [1600.0, 2000.0, 2400.0], "ring": [230.0, 260.0]}[a.env])
-    seed0 = a.val_seed0 or {"t1": 7110300, "t3": 7130300}[track]
-    val_metric = a.val_metric or {"bn4": "outflow_ctrl_vph", "ring": "mean_speed"}[a.env]
+    conds = a.val_conds or ({"bn4": [1600.0, 2000.0, 2400.0], "ring": [230.0, 260.0], "mrg3": [0.1, 0.3, 0.5]}[a.env])
+    seed0 = a.val_seed0 or {"t1": 7110300, "t2": 7120300, "t3": 7130300}[track]
+    val_metric = a.val_metric or {"bn4": "outflow_ctrl_vph", "ring": "mean_speed", "mrg3": "tts_ctrl_vehh"}[a.env]
+    val_sign = -1.0 if val_metric in ("tts_ctrl_vehh", "mean_time_in_system_s") else 1.0
     a.val_n = len(conds) * a.val_seeds_per
     val_specs = [(conds[i % len(conds)], seed0 + i // len(conds)) for i in range(a.val_n)]
     val_seeds = [sd for _, sd in val_specs]
@@ -180,8 +185,10 @@ def main(argv=None) -> int:
         kw = dict(val_kwargs, eval_seeds=[sd])
         if a.env == "bn4":
             kw["inflow"] = (c, c)
-        else:
+        elif a.env == "ring":
             kw["eval_L"] = c
+        else:
+            kw["eval_p_nc"] = c
         return make_env_fn(a.env, kw, i)
     vval = SubprocVecEnv([val_env_fn(i) for i in range(a.val_n)], start_method="forkserver")
 
@@ -269,7 +276,7 @@ def main(argv=None) -> int:
                                  json.dumps(ev["health"]),
                                  json.dumps([round(m.get(val_metric, float("nan")), 3) for m in ev["per_episode"]])])
             self.f_val.flush()
-            score = ev.get(val_metric, -np.inf)
+            score = val_sign * ev.get(val_metric, -val_sign * np.inf)
             if label not in ("final", 0) and score > self.best:
                 self.best = score
                 model.save(run_dir / "best_val_model.zip")
