@@ -10,11 +10,11 @@ cd /run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v5
 unset SUMO_HOME; export OMP_NUM_THREADS=1
 echo $$ > $L/bf.pid
 ENV='{"inflow":[1000,2000],"warmup_s":40,"control_s":900,"action_map":"nocap_center","av_share":0.25}'
-tr() { $P -m vsl_lab.train.train_sb3 --env bn4 --algo ppo --reward out --updates 1000 --n-envs 16 --n-steps 450 --batch 900 \
+train_one() { $P -m vsl_lab.train.train_sb3 --env bn4 --algo ppo --reward out --updates 1000 --n-envs 16 --n-steps 450 --batch 900 \
   --epochs 10 --lr 3e-4 --lr-decay --gamma 0.99 --gae 0.95 --net 128 128 --log-std-init -0.5 --seed $1 --val-every 25 \
   --val-seeds-per 3 --val-seed0 7110310 --env-kwargs "$ENV" --tag bf_bn4av25 > $R/t1/bf_s$1.log 2>&1; }
-tr 0 & tr 1 & wait
-tr 2
+train_one 0 & train_one 1 & wait
+train_one 2
 RUNS=$(ls -td $R/t1/train/bf_bn4av25/*/ | head -3 | tr '\n' ' ')
 $P -m vsl_lab.eval.pilot_report --tag bf_bn4av25 --track t1 --run-dirs $RUNS --refs docs/lab/t1av25_val_refs.json --nc-key nc \
   --const-key cap:18 --classical-key meter:10:6 --higher-better --metric-label "outflow over control window (veh/h)" > $R/t1/bf_report.log 2>&1

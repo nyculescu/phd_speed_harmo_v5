@@ -185,3 +185,15 @@ References on the same validation seeds (mean_val_outflow): no control 977.77777
 | seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | 600 | 966.6666666666666 | 982.6666666666666 | 1033.3333333333333 (425) | True | True | True | True | False | 0 | **PASS** |
+
+## bf_bn4av25 (t1) · 2026-10-02 13:41
+
+References on the same validation seeds (mean_val_outflow): no control 977.7777777777778, best constant 981.3333333333334, tuned classical 1368.4444444444443.
+
+![bf_bn4av25](figs/bf_bn4av25.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2 | 1000 | 967.1111111111111 | 958.6666666666666 | 1036.4444444444443 (800) | False | True | True | True | False | 0 | **FAIL** |
+| 1 | 1000 | 966.6666666666666 | 1049.7777777777778 | 1066.6666666666667 (975) | True | True | True | True | False | 0 | **PASS** |
+| 0 | 1000 | 966.6666666666666 | 980.4444444444445 | 1021.3333333333334 (550) | True | True | False | True | False | 0 | **FAIL** |
