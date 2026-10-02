@@ -47,3 +47,15 @@ That is 27 controllers × 4 cells × 20 seeds = 2,160 runs.
 
 - **Below critical** (q = 1,200), no controller should beat NC by much, and some will harm. Any harm is reported.
 - **If the tuned meter or a constant cap reaches peak capacity** (outflow ≈ 1,087 veh/h; R1 v2 numbers are informational only until R1 v3 is analysed), then the DRL headroom over tuned baselines on BN4 is small. That must be stated before any DRL claim.
+
+## Addendum (before any R2 run, 2026-10-01): AV actuator rate limits
+
+The DRL smoke test found SUMO emergency braking (9 m/s²) when AV caps dropped abruptly. Vinitsky et al. bounded the speed-limit change so that "unphysical accelerations are not commanded" (−1.5 / +1.0 m/s²).
+
+So, for every controller that uses the AV actuator (constant caps and DRL alike), the following now hold:
+- each lane-piece cap moves by at most −1.5·Δt and +1.0·Δt per decision;
+- no AV is asked to brake harder than 1.5 m/s² (applied cap ≥ v − 1.5·Δt).
+
+Emergency-braking warnings are counted as health WARN H-R4b.
+
+T0b (already run) used the earlier abrupt caps. Its finding that the AV actuator has authority stands. Its exact cap numbers are not reused.

@@ -245,6 +245,9 @@ class SumoSim:
         warn_cats, n_err = self._parse_log()
         if n_err:
             self.health.add("FAIL", "H-E4", t_end, f"{n_err} SUMO errors in log")
+        n_eb = sum(v for k, v in warn_cats.items() if "emergency braking" in k)
+        if n_eb:
+            self.health.add("WARN", "H-R4b", t_end, f"{n_eb} emergency-braking warnings (actuator abuse?)")
         out = {
             "sim_time_end": t_end, "wall_s": round(wall, 2), "sim_per_wall": round(t_end / max(wall, 1e-6), 1),
             "generated": self._total, "loaded": self.loaded, "departed": self.departed, "arrived": self.arrived,
@@ -300,7 +303,7 @@ class SumoSim:
                 key = re.sub(r"'[^']*'", "'*'", line)
                 key = re.sub(r"[-+]?\d+(\.\d+)?", "#", key)[:120]
                 cats[key] = cats.get(key, 0) + 1
-        return dict(sorted(cats.items(), key=lambda kv: -kv[1])[:15]), n_err
+        return dict(sorted(cats.items(), key=lambda kv: -kv[1])[:25]), n_err
 
 
 def outflow_vph(out: dict, t0: float, t1: float) -> float:

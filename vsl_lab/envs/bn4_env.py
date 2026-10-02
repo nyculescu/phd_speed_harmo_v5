@@ -64,8 +64,15 @@ class BN4Env(gym.Env):
     def __init__(self, inflow=(2300.0, 2300.0), av_share: float = 0.1, warmup_s: float = 40.0,
                  control_s: float = 900.0, decision_s: float = 1.0, reward: str = "out",
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
-                 eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0):
+                 eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
+                 quiet: bool = True):
         super().__init__()
+        if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
+            try:
+                fd = os.open(os.devnull, os.O_WRONLY)
+                os.dup2(fd, 2)
+            except OSError:
+                pass
         if pin_ecores:
             try:
                 os.sched_setaffinity(0, set(E_CORES))
@@ -136,16 +143,22 @@ class BN4Env(gym.Env):
         return sum(n for _, n in self.arrivals_20s) * 3600.0 / 20.0
 
     def _apply(self, action: np.ndarray) -> None:
+        """AV caps per lane-piece with Vinitsky's physical bounds: each slot's cap moves by at most
+        -1.5 m/s^2 * dt / +1.0 m/s^2 * dt per decision, and no AV is asked to brake harder than 1.5 m/s^2
+        (applied cap >= v_current - 1.5 dt). Avoids the emergency braking caught in the first smoke run."""
         a = np.clip(action, -1.0, 1.0)
-        caps = V_MIN + (a + 1.0) * 0.5 * (SPEED - V_MIN)
-        capmap = {s: float(c) for s, c in zip(self.act_slots, caps)}
+        target = V_MIN + (a + 1.0) * 0.5 * (SPEED - V_MIN)
+        dt = self.decision_s
+        self.slot_caps = np.clip(target, self.slot_caps - 1.5 * dt, self.slot_caps + 1.0 * dt)
+        capmap = {s: float(c) for s, c in zip(self.act_slots, self.slot_caps)}
         for e in ("1", "2", "3", "4", "5"):
             for vid in ls.edge.getLastStepVehicleIDs(e):
                 if ls.vehicle.getTypeID(vid) != "av":
                     continue
                 if e in ACT_PIECES:
                     s = (e, ls.vehicle.getLaneIndex(vid), self._piece(e, ls.vehicle.getLanePosition(vid), ACT_PIECES[e]))
-                    ls.vehicle.setMaxSpeed(vid, capmap[s])
+                    v = ls.vehicle.getSpeed(vid)
+                    ls.vehicle.setMaxSpeed(vid, max(capmap[s], v - 1.5 * dt, 0.5))
                 else:
                     ls.vehicle.setMaxSpeed(vid, 30.0)
 
@@ -184,6 +197,7 @@ class BN4Env(gym.Env):
         self.sim.asserts.append(bn4.assert_all_green)
         self.arrivals_20s.clear()
         self.prev_action = np.zeros(len(self.act_slots), dtype=np.float32)
+        self.slot_caps = np.full(len(self.act_slots), SPEED, dtype=np.float64)
         self.ep_info = {"seed": ep_seed, "inflow": q, "ret": 0.0}
         self.meter = FBMeter() if self.meter_on else None
         if self.meter is not None:   # the TLS is now driven by the meter, not held at all-green

@@ -253,9 +253,9 @@ def main(argv=None) -> int:
             pass
 
         def log_update(self):
-            lg = self.model.logger.name_to_value
+            lg = model.logger.name_to_value
             rec = list(self.recent)
-            self.w_prog.writerow([self.n_upd, self.num_timesteps, round(time.time() - self.t0, 1),
+            self.w_prog.writerow([self.n_upd, model.num_timesteps, round(time.time() - self.t0, 1),
                                   np.mean([r["return"] for r in rec]) if rec else "",
                                   np.mean([r["outflow_ctrl_vph"] for r in rec]) if rec and "outflow_ctrl_vph" in rec[0] else "",
                                   self.health["PASS"], self.health["WARN"], self.health["FAIL"], wd.n_pauses,
@@ -264,15 +264,15 @@ def main(argv=None) -> int:
             self.f_prog.flush()
 
         def validate(self, label):
-            ev = evaluate(self.model, vval, a.val_n, recurrent=recurrent)
-            self.w_val.writerow([label, self.num_timesteps, ev.get("return"), val_metric, ev.get(val_metric),
+            ev = evaluate(model, vval, a.val_n, recurrent=recurrent)
+            self.w_val.writerow([label, model.num_timesteps, ev.get("return"), val_metric, ev.get(val_metric),
                                  json.dumps(ev["health"]),
                                  json.dumps([round(m.get(val_metric, float("nan")), 3) for m in ev["per_episode"]])])
             self.f_val.flush()
             score = ev.get(val_metric, -np.inf)
             if label not in ("final", 0) and score > self.best:
                 self.best = score
-                self.model.save(run_dir / "best_val_model.zip")
+                model.save(run_dir / "best_val_model.zip")
             return ev
 
     cb = CB()
