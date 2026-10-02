@@ -33,10 +33,13 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--batch-root", default=None)
-    ap.add_argument("--plant", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
     a = ap.parse_args(argv)
-    suffix = "" if a.plant == "v1" else "_v2"
-    pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else "r1_v2_[0-9]*/analysis.json"
+    global SEEDS
+    if a.plant == "v3":
+        SEEDS = list(range(7120150, 7120170))   # round2_protocol.md D-2 (never used before; disclosed reassignment)
+    suffix = "" if a.plant == "v1" else f"_{a.plant}"
+    pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else f"r1_{a.plant}_[0-9]*/analysis.json"
     r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob(pat))[-1]).read_text())
     if not (r1.get("T1", {}).get("PASS") and r1.get("T0", {}).get("PASS")):
         print(json.dumps({"skipped": "T2 R1 T1/T0 did not pass", "r1": {k: r1.get(k, {}).get("PASS") for k in ("T1", "T0")}}))
