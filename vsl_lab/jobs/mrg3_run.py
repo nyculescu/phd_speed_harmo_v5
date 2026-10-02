@@ -213,6 +213,22 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         "cav_steps": stair.n_steps if stair else 0, "cav_max_excess_ms": round(stair.max_excess, 3) if stair else None,
         "emergency_braking": (out.get("sumo_stats") or {}).get("emergencyBraking"), "step_length": dt,
     })
+    try:   # emergency braking attributed to CAVs vs humans, per 1,000 veh-km (Round 3 Addendum A); never fatal
+        import re as _re
+        km = {"main": 5.25, "ramp": 1.53}
+        eb = {"cav": 0, "human": 0}
+        for line in sim.log_file.read_text(errors="replace").splitlines():
+            m_ = _re.search(r"Vehicle '([^']*)' performs emergency braking", line)
+            if m_:
+                eb["cav" if m_.group(1) in cav_ids else "human"] += 1
+        vkm = {"cav": 0.0, "human": 0.0}
+        for v in dem.vehicles:
+            vkm["cav" if v[1] in cav_ids else "human"] += km[v[2]]
+        out["eb_cav"], out["eb_human"] = eb["cav"], eb["human"]
+        out["eb_cav_per_1000vkm"] = 1000.0 * eb["cav"] / vkm["cav"] if vkm["cav"] else None
+        out["eb_human_per_1000vkm"] = 1000.0 * eb["human"] / vkm["human"] if vkm["human"] else None
+    except Exception as exc:   # noqa: BLE001
+        out["eb_attribution_error"] = repr(exc)
     out.pop("arrivals_bins", None)
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1, default=str))
     with open(run_dir / "probes10.csv", "w") as fh:

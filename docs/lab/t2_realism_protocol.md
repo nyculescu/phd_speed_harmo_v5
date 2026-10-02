@@ -184,3 +184,16 @@ SUMO silently ignores unknown vType attributes. So, on the 140 calibration pairs
 5. **Primary plant for Round 3** = the first 0.2 s PASS in the order H4, H5, H2, H1, H3, H0.
 6. **Outputs:** `t2_realism_verdict_step0.2.json` and `t2_realism_step0.2.md`.
 7. **Both verdicts (0.5 s and 0.2 s) are reported.**
+
+**Addendum B smoke result** (seed 7,120,050, 5,400 / 900, 0.2 s; code check only):
+
+| Variant | Door-to-door (s) | Teleports | Health | Drained |
+|---|---|---|---|---|
+| H0 | 392 | 0 | WARN | yes |
+| H1 | 496 | 1 | FAIL | yes |
+| H2 | 693 | 0 | WARN | yes |
+| H3 | 314 | 0 | WARN | yes |
+| **H4** | **5,784** | 0 | WARN (H-E1) | **no → COLLAPSED, excluded** |
+| H5 | 291 | 0 | PASS | yes |
+
+**0.2 s re-check scope: H0, H1, H2, H3, H5.**

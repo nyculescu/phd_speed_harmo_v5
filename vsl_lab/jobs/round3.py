@@ -112,11 +112,14 @@ def main(argv=None) -> int:
         per = {}
         for o in rows:
             k = f"{o['cav_share']:g}_{o['cav_model']}"
-            d = per.setdefault(k, {"n": 0, "collisions": 0, "fail": 0, "teleports": 0, "eb_rate": []})
+            d = per.setdefault(k, {"n": 0, "collisions": 0, "fail": 0, "teleports": 0, "eb_rate": [], "cav": [], "hum": []})
             d["n"] += 1; d["collisions"] += o["collisions"]; d["teleports"] += o["teleports"]
             d["fail"] += o["health"]["status"] == "FAIL"; d["eb_rate"].append(eb_rate(o))
-        for d in per.values():
+            d["cav"].append(o.get("eb_cav_per_1000vkm") or 0.0); d["hum"].append(o.get("eb_human_per_1000vkm") or 0.0)
+        for d in per.values():   # Addendum A: CAV vs human emergency-braking rates (reported)
             d["eb_rate_median"] = float(np.median(d.pop("eb_rate")))
+            d["eb_cav_per_1000vkm_median"] = float(np.median(d.pop("cav")))
+            d["eb_human_per_1000vkm_median"] = float(np.median(d.pop("hum")))
         bk = by_key(rows)
         cacc, acc = bk.get(("nc", 0.5, "C", "CACC", 1.0), {}), bk.get(("nc", 0.5, "C", "ACC", 1.0), {})
         same = [cacc[s]["hash"] == acc[s]["hash"] for s in set(cacc) & set(acc)]
