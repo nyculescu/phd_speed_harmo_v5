@@ -24,6 +24,7 @@ from vsl_lab.config import RUNS_ROOT
 from vsl_lab.controllers.cav_staircase import CavStaircase
 from vsl_lab.controllers.mtfc import MTFC
 from vsl_lab.controllers.pi_saturation import PISaturation
+from vsl_lab.controllers.specialist import Specialist
 from vsl_lab.plants import mrg3 as P
 from vsl_lab.sim.runner import SumoSim
 
@@ -96,6 +97,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     mt = None
     b_const = None
     vslad = None
+    spec = None
     cav_mode = None                                   # arm C controller kind
     if ctrl.startswith("cavmtfc"):
         parts = ctrl.split(":")
@@ -107,6 +109,17 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         cav_mode = "const"
     elif ctrl == "cavstress":
         cav_mode = "stress"
+    elif ctrl == "spec" or ctrl.startswith("spec:"):
+        # SPECIALIST (Hegyi et al. 2008; controllers/specialist.py): P1 parameters; "spec:<m_t_km>" = P1 with a different
+        # tail margin (round4 Addendum B). Detectors = e1 loops at the edge ends; one VSL segment per approach edge.
+        import xml.etree.ElementTree as _ET
+        shp = {ln.get("id"): ln.get("shape") for ln in _ET.parse(f["net"]).getroot().iter("lane")}
+        det_edges = ("up3", "up2", "up1", "up0a", "up0b", "down")
+        det_x = [float(shp[f"{e}_0"].split()[0].split(",")[0]) + f["lanes"][f"{e}_0"] - 5.0 for e in det_edges]
+        spec = Specialist(det_x, [(0.0, 1000.0), (1000.0, 2000.0), (2000.0, 3000.0), (3000.0, 3500.0), (3500.0, 4000.0)],
+                          m_t_km=float(ctrl.split(":")[1]) if ":" in ctrl else 1.5, det_lanes=[3, 3, 3, 3, 3, nd])
+        spec_edges = ("up3", "up2", "up1", "up0a", "up0b")
+        spec_reasons = {}
     elif ctrl.startswith("vslad:"):
         # Round 4 non-learning adaptive scheduler (CLAUDE.md "best non-learning"): every 60 s, if the 1-min speed at the
         # drop (up0b end loops) < theta km/h, post b on up1/up0a (Carlson staircase upstream, acceleration area 0.9);
@@ -188,6 +201,9 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
                 row.append(round(float(np.mean(vs)), 3) if vs else "")
             probes.append(row)
             next_samp += 10.0
+        if spec is not None and sim.t >= t_ctrl0:     # re-post the moving SPECIALIST area every 10 s
+            for e_, b_ in zip(spec_edges, spec.factors_at(sim.t)):
+                P.set_vsl((e_,), b_ * vmax)
         if sim.t >= next_loop - 1e-9:
             q_exit = sum(ls.inductionloop.getLastIntervalVehicleNumber(f"e1_down_{i}") for i in range(nd)) * 120.0
             ts.append((sim.t, q_exit, P.Sensors.speed_kmh("up0b")))
@@ -222,6 +238,15 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
             elif b_const is not None:
                 b_app, b_acc = b_const, (0.9 if b_const < 1.0 else 1.0)
                 post(b_app, b_acc)
+            elif spec is not None:
+                q1m = [float(np.mean([r_[1 + 3 * i] for r_ in feats[-2:]])) for i in range(6)]
+                v1m = [float(np.mean([r_[2 + 3 * i] for r_ in feats[-2:] if r_[2 + 3 * i] >= 0] or [-1.0])) for i in range(6)]
+                bs_ = spec.step(sim.t, q1m, v1m)
+                for e_, b_ in zip(spec_edges, bs_):
+                    P.set_vsl((e_,), b_ * vmax)
+                b_app = min(bs_)
+                rk_ = spec.last_reason.split(":")[0]
+                spec_reasons[rk_] = spec_reasons.get(rk_, 0) + 1
             elif vslad is not None:
                 vs = [r_[2] for r_ in ts[-2:] if r_[2] >= 0]
                 v1 = float(np.mean(vs)) if vs else 120.0
@@ -257,6 +282,8 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         "cav_share": cav_share, "cav_arm": cav_arm, "cav_model": cav_model, "cav_x": cav_x, "n_cav": len(cav_ids),
         "cav_steps": stair.n_steps if stair else 0, "cav_max_excess_ms": round(stair.max_excess, 3) if stair else None,
         "emergency_braking": (out.get("sumo_stats") or {}).get("emergencyBraking"), "step_length": dt, "geom": geom,
+        "specialist": ({"n_detected": spec.n_detected, "n_solvable": spec.n_solvable, "n_unsolvable": spec.n_unsolvable,
+                        "reasons": spec_reasons} if spec is not None else None),
     })
     try:   # emergency braking attributed to CAVs vs humans, per 1,000 veh-km (Round 3 Addendum A); never fatal
         import re as _re

@@ -148,3 +148,35 @@ The adaptive rule is the required non-learning adaptive scheduler: every 60 s, i
 - **C-H3:** 0 health FAIL.
 
 **Passers** go to the F class (3 seeds × 1,000 updates) and to R5-H on the shared T2 test seeds 7,120,500–7,120,529 against the tuned classical and the per-family bests.
+
+---
+
+## Addendum B (2026-10-02, before any SPECIALIST tuning run): SPECIALIST implementation and variants
+
+**Implementation:** `vsl_lab/controllers/specialist.py`, with 6 unit tests in `tests/test_specialist.py`. It follows Hegyi et al. 2008 (P1, ITSC, pp. 827–832) and 2009 (P2, ECC, pp. 1770–1774), read in full.
+
+**Fronts.** The papers do not print the front equations (P1 p.830; P2 p.1773). They are derived from the stated rule w_ab = (q_a − q_b)/(ρ_a − ρ_b), and documented in the module docstring:
+- the length of area 3 makes it vanish exactly where the jam is resolved ("exactly resolves", P1 p.828);
+- the limits cover areas 2–4 (P1 p.830).
+
+**Interpretations, all disclosed:**
+- q2 = the mean flow of the jam detectors.
+- Tail margin x̂_t = x_t − |m_t|. P1 p.831 prints m_t = −1.5 km, and its sign contradicts "on the safe side" on the same page.
+- Missing detectors (v < 0) are dropped.
+- With several jam clusters, the first solvable one from downstream is activated.
+- "Fits the signs" means areas 3 and 4 lie within the VSL segments.
+
+**Plant mapping:**
+- detectors = the e1 loops at the edge ends (up3, up2, up1, up0a, up0b, down); `down` is rescaled from 2 to 3 lanes;
+- VSL segments = the five approach edges (0–4 km);
+- decisions every 60 s on 1-min data; the moving area is re-posted every 10 s.
+
+**Feasibility on this plant.** With P1's tail margin (1.5 km), the required limit stretch (about 7.3 × the jam length) mostly extends beyond the 4 km of signs. In the throw-away smoke run at 4,500, faithful SPECIALIST activated once (1 solvable event in 37), and with a 0.25 km margin it activated 4 times in 33.
+
+**Variants in R2-H** (no further tuning):
+- `spec`: P1 parameters;
+- `spec:0.25`: P1 with a 0.25 km tail margin. **This departs from P1**, disclosed, so that SPECIALIST can act within the 4 km of signs.
+
+P1's q5 (6,100 veh/h for 3 lanes) exceeds the capacity downstream of the 3 → 2 drop. P1 p.831 says to lower q5 when there is a bottleneck downstream. **It is kept at P1's value**, so as not to tune; a disclosed limitation.
+
+Both variants are reported. Their family best enters the screening references.

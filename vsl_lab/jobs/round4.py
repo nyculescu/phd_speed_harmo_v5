@@ -30,7 +30,7 @@ W_STOP = 40.0                                               # s per stop (Addend
 R2_SEEDS = list(range(7160300, 7160320))
 R2_CTRLS = (["nc"] + [f"const:{b}" for b in (0.75, 0.8, 0.85, 0.9, 0.95)]
             + [f"vslad:{th}:{b}" for th in (50, 70, 90) for b in (0.7, 0.8, 0.9)]
-            + [f"mtfc:{r}:38:9:0.0015" for r in (28, 32, 36, 40)] + ["spec"])
+            + [f"mtfc:{r}:38:9:0.0015" for r in (28, 32, 36, 40)] + ["spec", "spec:0.25"])   # Addendum B
 VAL_SPECS = [(m, s) for s in (7120300, 7120301, 7120302) for m in (3900, 4500)]
 FROZEN = REPO_ROOT / "docs" / "lab" / "round4_baselines_frozen.json"
 
