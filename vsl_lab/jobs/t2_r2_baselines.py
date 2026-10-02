@@ -34,12 +34,16 @@ def main(argv=None) -> int:
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--batch-root", default=None)
     ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
+    ap.add_argument("--driver", default=None, help="realism variant H1-H5 (plant v3)")
     a = ap.parse_args(argv)
     global SEEDS
     if a.plant == "v3":
         SEEDS = list(range(7120150, 7120170))   # round2_protocol.md D-2 (never used before; disclosed reassignment)
-    suffix = "" if a.plant == "v1" else f"_{a.plant}"
-    pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else f"r1_{a.plant}_[0-9]*/analysis.json"
+    if a.driver:
+        assert a.plant == "v3" and a.driver != "H0"
+        SEEDS = list(range(7120240, 7120260))   # T2 tuning range; to be pre-registered before use
+    suffix = ("" if a.plant == "v1" else f"_{a.plant}") + (a.driver or "")
+    pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else f"r1{suffix}_[0-9]*/analysis.json"
     r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob(pat))[-1]).read_text())
     t1 = r1.get("T1", {})
     if a.plant == "v3":   # realism Addendum A: T1's ratio part is replaced by realism R-a (checked below via the H0 verdict)
@@ -49,20 +53,22 @@ def main(argv=None) -> int:
     if not (t1_ok and r1.get("T0", {}).get("PASS")):
         print(json.dumps({"skipped": "T2 R1 T1/T0 did not pass", "r1": {k: r1.get(k, {}).get("PASS") for k in ("T1", "T0")}}))
         return 0
-    if a.plant == "v3":   # MRG3-v3 = realism variant H0 (docs/lab/t2_realism_protocol.md): R2 only after an H0 PASS
+    if a.plant == "v3":   # MRG3-v3 = realism variant H0 (docs/lab/t2_realism_protocol.md): R2 only after a PASS
+        drv = a.driver or "H0"
         vp = REPO_ROOT / "docs" / "lab" / "t2_realism_verdict.json"
-        verdict = json.loads(vp.read_text()).get("verdict", {}).get("H0") if vp.exists() else None
+        verdict = json.loads(vp.read_text()).get("verdict", {}).get(drv) if vp.exists() else None
         if verdict != "PASS":
-            print(json.dumps({"skipped": "realism gate: H0 has no PASS", "H0": verdict}))
-            ledger.append("T2", "R2", "S", "mrg3v3_r2", {"gate": "realism"}, "-", 0, {}, {"skipped": f"H0 {verdict}"},
-                          notes="blocked by docs/lab/t2_realism_protocol.md")
+            print(json.dumps({"skipped": f"realism gate: {drv} has no PASS", drv: verdict}))
+            ledger.append("T2", "R2", "S", f"mrg3v3{a.driver or ''}_r2", {"gate": "realism"}, "-", 0, {},
+                          {"skipped": f"{drv} {verdict}"}, notes="blocked by docs/lab/t2_realism_protocol.md")
             return 0
     m, r = (int(x) for x in r1["cell"].split("/"))
     root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r2{suffix}_{int(time.time())}"
     if not a.analyse_only:
         jobs = [Job(jid=f"r2_{c.replace(':', '_')}_nc{p}_s{s}",
                     argv=["vsl_lab.jobs.mrg3_run", "--ctrl", c, "--seed", str(s), "--main-peak", str(m), "--ramp-peak", str(r),
-                          "--p-nc", str(p), "--tag", "r2", "--out-root", str(root), "--plant", a.plant])
+                          "--p-nc", str(p), "--tag", "r2", "--out-root", str(root), "--plant", a.plant]
+                    + (["--driver", a.driver] if a.driver else []))
                 for p in PNC for s in SEEDS for c in controllers()]
         run_batch(jobs, root / "batch", max_workers=a.workers, gate_ok=a.gate_ok)
     rows = [json.loads(p.read_text()) for p in (root / "r2").glob("*/summary.json")]

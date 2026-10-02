@@ -23,14 +23,18 @@ V2_T1_SEEDS = list(range(7120060, 7120090))
 V2_T0_SEEDS = list(range(7120090, 7120100))
 V3_T1_SEEDS = list(range(7120110, 7120140))
 V3_T0_SEEDS = list(range(7120140, 7120150))
+# realism-gate variants other than H0 (seeds from the T2 tuning range; to be pre-registered before use)
+DRV_T1_SEEDS = list(range(7120200, 7120230))
+DRV_T0_SEEDS = list(range(7120230, 7120240))
 PLANT = "v1"
+DRIVER = None
 T1C = ["const:0.6", "const:0.8", "mtfc:32:38:9:0.0015", "mtfc:25:38:9:0.0015", "mtfc:20:38:9:0.0015"]
 
 
 def job(tag, ctrl, s, m, r, root):
     return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_s{s}",
                argv=["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", str(m), "--ramp-peak", str(r),
-                     "--tag", tag, "--out-root", str(root), "--plant", PLANT])
+                     "--tag", tag, "--out-root", str(root), "--plant", PLANT] + (["--driver", DRIVER] if DRIVER else []))
 
 
 def load(root: Path, tag: str) -> dict:
@@ -48,16 +52,22 @@ def main(argv=None) -> int:
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--batch-root", default=None)
     ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
+    ap.add_argument("--driver", default=None, help="realism variant H1-H5 (plant v3); cell from the realism verdict")
     a = ap.parse_args(argv)
-    global PLANT, T1_SEEDS, T0_SEEDS
-    PLANT = a.plant
-    suffix = "" if a.plant == "v1" else f"_{a.plant}"
+    global PLANT, T1_SEEDS, T0_SEEDS, DRIVER
+    PLANT, DRIVER = a.plant, a.driver
+    suffix = ("" if a.plant == "v1" else f"_{a.plant}") + (a.driver or "")
     if a.plant == "v2":
         T1_SEEDS, T0_SEEDS = V2_T1_SEEDS, V2_T0_SEEDS
     if a.plant == "v3":
         T1_SEEDS, T0_SEEDS = V3_T1_SEEDS, V3_T0_SEEDS
-    cal = json.loads((REPO_ROOT / f"docs/lab/t2_mrg3_calibration{suffix}.json").read_text())
-    cell = cal["selected_cell"]
+    if a.driver:
+        assert a.plant == "v3" and a.driver != "H0"
+        T1_SEEDS, T0_SEEDS = DRV_T1_SEEDS, DRV_T0_SEEDS
+        cell = json.loads((REPO_ROOT / "docs/lab/t2_realism_verdict.json").read_text())["variants"][a.driver]["cell"]
+    else:
+        cal = json.loads((REPO_ROOT / f"docs/lab/t2_mrg3_calibration{suffix}.json").read_text())
+        cell = cal["selected_cell"]
     m, r = (int(x) for x in cell.split("/"))
     root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r1{suffix}_{int(time.time())}"
     if not a.analyse_only:
@@ -131,7 +141,7 @@ def main(argv=None) -> int:
     if "T3" in res:
         L += ["", f"## T3 determinism: **{'PASS' if res['T3']['PASS'] else 'FAIL'}**"]
     (REPO_ROOT / "docs" / "lab" / f"t2_mrg3_r1{suffix}.md").write_text("\n".join(L) + "\n")
-    ledger.append("T2", "R1", "S", f"mrg3{a.plant}_r1", {"cell": cell}, f"{T1_SEEDS[0]}-{T0_SEEDS[-1]}",
+    ledger.append("T2", "R1", "S", f"mrg3{a.plant}{a.driver or ''}_r1", {"cell": cell}, f"{T1_SEEDS[0]}-{T0_SEEDS[-1]}",
                   len(nc) + sum(len(v) for v in t1c.values()) + len(ss) * 2,
                   {"FAIL": fails}, {k: res[k].get("PASS") for k in ("T1", "T1c", "T0", "T3") if k in res}, notes=str(root))
     print(json.dumps({k: res[k].get("PASS") for k in ("T1", "T1c", "T0", "T3") if k in res}))

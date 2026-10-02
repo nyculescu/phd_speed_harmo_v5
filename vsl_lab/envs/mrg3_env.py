@@ -37,7 +37,7 @@ class MRG3Env(gym.Env):
                  hist: int = 4, oracle: bool = False, hybrid_every: int = 5, mtfc_kwargs: dict | None = None,
                  seed_pool=(7220000, 7229999), eval_seeds=None, eval_p_nc=None, drain_after: bool = False,
                  tag: str = "train", pin_ecores: bool = True, quiet: bool = True, reward: str = "tts",
-                 plant: str = "v1"):
+                 plant: str = "v1", driver: str | None = None):
         super().__init__()
         if pin_ecores:
             try:
@@ -62,6 +62,7 @@ class MRG3Env(gym.Env):
         self._eval_i = 0
         self.drain_after, self.tag, self.reward_kind = drain_after, tag, reward
         self.model, self.depart_speed = P.PLANTS[plant]
+        self.driver = driver   # realism-gate variant (docs/lab/t2_realism_protocol.md); None = plant default
         self.files = P.files()
         self.sens = P.Sensors(self.files["lanes"])
         n_snap = 2 * len(EDGES) + 4
@@ -125,14 +126,15 @@ class MRG3Env(gym.Env):
         mprof = P.profile(2500.0, mp, 600.0, 1200.0, 3000.0, self.t_end)
         rprof = P.profile(300.0, rp, 600.0, 1200.0, 3000.0, self.t_end)
         dem = P.demand(ep_seed, mprof, rprof, p_noncompliant=self.p_nc, truck_share=self.truck, model=self.model,
-                       depart_speed=self.depart_speed)
+                       depart_speed=self.depart_speed, driver=self.driver)
         run_dir = RUNS_ROOT / "t2" / "envs" / self.tag / f"pid{os.getpid()}"
         run_dir.mkdir(parents=True, exist_ok=True)
         rou = run_dir / f"routes_s{ep_seed}_pid{os.getpid()}.rou.xml"
         dem.write(rou)
         self._rou = rou
         self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
-                           step_length=P.STEP_LENGTH, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0)
+                           step_length=P.STEP_LENGTH, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0,
+                           extra_args=P.DRIVERS[self.driver]["args"] if self.driver else [])
         self.sim.start()
         self.b = 1.0
         self.mtfc = MTFC(**self.mtfc_kwargs)
