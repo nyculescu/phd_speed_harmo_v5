@@ -60,7 +60,7 @@ def capacity_drop(ts: list) -> dict:
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
         t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1",
         driver: str | None = None, cav_share: float = 0.0, cav_model: str = "CACC", cav_arm: str = "none",
-        cav_x: float = 1.0, step: float | None = None, geom: str = "merge") -> dict:
+        cav_x: float = 1.0, step: float | None = None, geom: str = "merge", stops: bool = False) -> dict:
     """Round 3 (round3_tm21_protocol.md): cav_share > 0 adds ACC/CACC CAVs. cav_arm 'B' = CAVs staircase toward the
     posted limit of their lane; 'C' = posted VSL untouched, CAVs on up1/up0a staircase toward b x 120 km/h (pre-zone:
     up2 min(1, b+0.2), up3 min(1, b+0.4)); controllers for C: nc | cavconst:<b> | cavmtfc[:rho:kp:ki:ki2] |
@@ -84,8 +84,12 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     cav_ids = {v[1] for v in dem.vehicles if v[3] == "cav"}
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
+    trip_file = run_dir / f"tripinfo_pid{os.getpid()}.xml"
+    extra = list(P.DRIVERS[driver]["args"] if driver else [])
+    if stops:   # Round 4 co-primary stop metric: SUMO tripinfo waitingCount (speed <= 0.1 m/s episodes per vehicle)
+        extra += ["--tripinfo-output", str(trip_file)]
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=dt, checkpoint_s=300.0,
-                  seed=seed, stuck_wait_s=180.0, extra_args=(P.DRIVERS[driver]["args"] if driver else []))
+                  seed=seed, stuck_wait_s=180.0, extra_args=extra)
     sim.start()
     sens = P.Sensors(f["lanes"])
     mt = None
@@ -233,6 +237,23 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         out["eb_human_per_1000vkm"] = 1000.0 * eb["human"] / vkm["human"] if vkm["human"] else None
     except Exception as exc:   # noqa: BLE001
         out["eb_attribution_error"] = repr(exc)
+    if stops:
+        try:
+            import xml.etree.ElementTree as _ET
+            wc, wt, tl, n = [], [], [], 0
+            for _, el in _ET.iterparse(trip_file):
+                if el.tag == "tripinfo":
+                    wc.append(int(el.get("waitingCount", 0))); wt.append(float(el.get("waitingTime", 0.0)))
+                    tl.append(float(el.get("timeLoss", 0.0))); n += 1
+                    el.clear()
+            out["stops_per_veh"] = float(np.mean(wc)) if wc else None
+            out["share_stopped_veh"] = float(np.mean([c > 0 for c in wc])) if wc else None
+            out["stop_time_per_veh_s"] = float(np.mean(wt)) if wt else None
+            out["time_loss_per_veh_s"] = float(np.mean(tl)) if tl else None
+            out["n_tripinfo"] = n
+            trip_file.unlink()
+        except Exception as exc:   # noqa: BLE001
+            out["stops_error"] = repr(exc)
     out.pop("arrivals_bins", None)
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1, default=str))
     with open(run_dir / "probes10.csv", "w") as fh:
@@ -268,12 +289,13 @@ def main(argv=None) -> int:
     ap.add_argument("--cav-x", type=float, default=1.0)
     ap.add_argument("--step", type=float, default=None, help="simulation step (default plant 0.5 s)")
     ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
+    ap.add_argument("--stops", action="store_true", help="tripinfo stop metrics (Round 4)")
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)
     out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant,
               driver=a.driver, cav_share=a.cav_share, cav_model=a.cav_model, cav_arm=a.cav_arm, cav_x=a.cav_x,
-              step=a.step, geom=a.geom)
+              step=a.step, geom=a.geom, stops=a.stops)
     keys = ("run_id", "mean_time_in_system_s", "time_main_s", "time_ramp_s", "capdrop", "min_b", "teleports", "drained",
             "wall_s")
     print(json.dumps({k: out.get(k) for k in keys} | {"health": out["health"]["status"],
