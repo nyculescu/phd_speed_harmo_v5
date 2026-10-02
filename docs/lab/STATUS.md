@@ -1,6 +1,6 @@
 # DRL lab: status (living document)
 
-*Last update 2026-10-02 09:00 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · plan: `docs/plans/vsl_drl_run_roadmap_v0.md` · Round 2: `docs/lab/round2_protocol.md` · realism gate: `docs/lab/t2_realism_protocol.md`*
+*Last update 2026-10-02 09:15 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · plan: `docs/plans/vsl_drl_run_roadmap_v0.md` · Round 2: `docs/lab/round2_protocol.md` · realism gate: `docs/lab/t2_realism_protocol.md`*
 
 ## Bottom line so far (honest)
 
@@ -18,14 +18,14 @@
 |---|---|---|---|
 | T1 | BN4: Vinitsky/Flow zipper 4 → 2 → 1, IDM, 10 % AVs | **Done for 10 % AVs: DRL ≈ NC** | <ul><li>Capacity drop PASS (1,044 → 900 veh/h); determinism PASS.</li><li>Tuned door-to-door (4 cells): NC 412 s · constant AV cap ≈ NC · AV feedback worse · **infrastructure meter 225 s (−45 %)**.</li><li>P1c passed screening.</li><li>F1 (3 seeds × 1,000 updates) and F2 (4× batch, learning-rate decay) on test seeds: **DRL ≈ NC** (e.g. F2 at q = 2,000: −1.7 s [−4.1, 0.0]). The screening pass was a false positive.</li><li>Limit: the actuator's authority.</li></ul> |
 | T1-A | BN4 + posted VSL (all vehicles) | **Stopped** | <ul><li>A-T0 FAIL: posted VSL does not bind (outflow −0.8 % / +3.5 %, CIs include 0).</li><li>A-R2: every VSL / MTFC setting scores 427–430 s vs NC 430 s; meter 270 s.</li><li>A-P5 not run (`round2_protocol.md`, A-track stop).</li></ul> |
-| T1-B | BN4 + 25 % AVs | **B-R2 running**; B-P6 (DRL pilot, F2 configuration) queued | — |
+| T1-B | BN4 + 25 % AVs | **B-R2 done**; B-P6 (DRL pilot, F2 configuration) queued after the realism gate | <ul><li>Tuned door-to-door (4 cells): meter 226 s · best constant AV cap (`cap:18`) 408 s · NC 414 s · AV feedback 624 s.</li><li>0 FAIL in 1,360 runs.</li><li>**Even at 25 % AVs, no classical AV-actuator controller beats NC by more than about 1.5 %.**</li></ul> |
 | T1-C | DRL scheduling the tuned meter | **Killed by the hybrid gate** | G = 4.1 % < 10 % (biased upwards) |
 | T3 | RING22 (Stern / Flow), 1 AV | **Done: H ≈ 0** | <ul><li>PI-with-saturation reaches 100.2 % of v_e.</li><li>All DRL ring pilots collapse to U = 10 (lag / needle problem).</li></ul> |
 | T2 | MRG3 merge, posted VSL vs tuned MTFC (thesis core) | <ul><li>v1 (Krauss): no capacity drop, R1 FAIL.</li><li>v2 (IDM): insertion failure (D-1).</li><li>**v3 (IDM + `departSpeed="avg"`)**: calibration → R1 → D-check queued (`run_v3.sh`).</li><li>**Realism gate** (5 driver variants) queued after it.</li><li>v3 R2 runs only if H0 passes the gate.</li></ul> | v3 insertion test: 0 pending vehicles at 1,500 s (vs 440 with `max`) |
 
 ## Queue (one batch at a time, thermal guard on)
 
-1. `run_round2.sh`: B-R2 (25 % AVs tuning) → D-1 duplicate diagnosis (1 run).
+1. `run_round2.sh`: B-R2 done → D-1 duplicate diagnosis (1 run; its output must reproduce the committed JSON).
 2. `run_v3.sh`: MRG3-v3 calibration → R1 (T1, T1c, T0, T3) → D-check → R2. R2 now skips unless H0 passed the realism gate.
 3. `run_realism_p6.sh`:
    - the realism gate (700 calibration runs + up to 205 check runs);
