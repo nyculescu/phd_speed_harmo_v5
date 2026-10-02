@@ -193,7 +193,7 @@ def analyse(root: Path) -> dict:
             v.update(analyse_variant(drv, sc["selected"], chk, det, xs))
         res["variants"][drv] = v
     res["verdict"] = {d: res["variants"][d]["verdict"] for d in VARIANTS}
-    res["primary"] = next((d for d in PREFERENCE if res["verdict"][d] == "PASS"), None)
+    res["primary"] = next((d for d in PREFERENCE if res["verdict"].get(d) == "PASS"), None)
     res["step"] = STEP or P.STEP_LENGTH
     (REPO_ROOT / "docs" / "lab" / f"t2_realism_verdict{SUFFIX}.json").write_text(json.dumps(res, indent=1, default=str))
     write_report(res, root)
