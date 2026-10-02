@@ -21,13 +21,14 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--out-root", required=True)
     ap.add_argument("--tag", required=True)
+    ap.add_argument("--mode", default="direct_fine", help="env action mode the policy was trained with (P-H2: direct_fine)")
     a = ap.parse_args(argv)
     try:
         from stable_baselines3 import PPO
         from vsl_lab.envs.mrg3_env import MRG3Env
         import torch
         torch.set_num_threads(1)
-        env = MRG3Env(mode="direct", plant="v3", driver="H5", geom="lanedrop", step=0.2, stop_weight=40.0,
+        env = MRG3Env(mode=a.mode, plant="v3", driver="H5", geom="lanedrop", step=0.2, stop_weight=40.0,
                       main_peak=(a.main_peak, a.main_peak), ramp_peak=(0.0, 0.0), eval_seeds=[a.seed], eval_p_nc=0.3,
                       drain_after=True, trip_stops=True, tag=f"r4eval_{a.tag}")
         model = PPO.load(a.model, device="cpu")

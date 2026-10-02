@@ -184,3 +184,16 @@ Both variants are reported. Their family best enters the screening references.
 **R2-H result and a correction (2026-10-02 13:15, before any screening).**
 - **Tuned classical** = `const:0.75` (90 km/h on up1 + up0a), with J score 287.3 against 380.5 for NC. At 4,500 it cuts delay by 25 % and stops by 55 % against NC (tuning seeds). See `round4_r2.md`.
 - **Correction:** Addendum A said every constant controller lies inside the P-H policy space. **That is false for b = 0.75, 0.85 and 0.95.** The pilot's grid is {0.2, …, 1.0} in steps of 0.1, so it can only approximate 0.75 by alternating 0.7 and 0.8. The pilot was already training when this was noticed, so it is disclosed here and not changed. A follow-up pilot, if any, will use a grid that contains the tuned classical value.
+
+## Addendum C (2026-10-02 13:25): P-H stopped, replaced by P-H2 before any screening data
+
+**Why P-H was stopped:**
+- After 10 of 500 updates it ran at about 260 s per update, which projects to more than 36 h.
+- Two causes: CPU oversubscription during R2-H, and per-step (0.2 s) stop counting across all vehicles.
+- Only its update-0 validation exists; no screening was run. It is logged as abandoned.
+
+**P-H2 = P-H with exactly two changes, both made before any DRL screening result:**
+1. **Action grid** `direct_fine`: b ∈ {0.5, 0.55, …, 1.0} (11 levels), with the same |Δb| ≤ 0.2 per 60-s decision and the same staircase and acceleration area. **The tuned classical `const:0.75` and every constant controller tuned in R2-H now lie inside the policy space.** The grid's lower bound (0.5) follows T-H and R2-H: b < 0.75 never improved J in any cell.
+2. **Training-reward stop counting** samples every 1 s instead of every 0.2 s. Evaluation is unchanged: SUMO tripinfo `waitingCount`, via `r4_eval_rl --mode direct_fine`.
+
+Everything else is as in Addendum A: reward weight, PPO configuration (minibatch 480), training and validation seeds, screening criteria and comparators. The comparators are the tuned classical `const:0.75` and the family bests `vslad:90:0.8`, `mtfc:36:38:9:0.0015`, `spec` and `nc`.

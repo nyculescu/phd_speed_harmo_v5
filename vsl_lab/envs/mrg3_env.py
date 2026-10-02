@@ -76,7 +76,7 @@ class MRG3Env(gym.Env):
         n_snap = 2 * len(EDGES) + 4
         self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_snap * hist + (1 if oracle else 0),), dtype=np.float32)
         self.action_space = {"direct": gym.spaces.Discrete(9), "hybrid": gym.spaces.Discrete(len(RHO_GRID)),
-                             "residual": gym.spaces.Discrete(5)}[mode]
+                             "residual": gym.spaces.Discrete(5), "direct_fine": gym.spaces.Discrete(11)}[mode]
         self.sim = None
 
     # --------------------------------------------------------------- helpers
@@ -114,8 +114,9 @@ class MRG3Env(gym.Env):
         for _ in range(6):
             if self.stop_weight > 0:   # count new stops (speed <= 0.1 m/s, as SUMO tripinfo waitingCount) per step
                 t_next = self.sim.t + 10.0
+                n_sub = max(1, int(round(1.0 / self.dt)))   # sample stops every 1 s (P-H2; training reward only)
                 while self.sim.t < t_next - 1e-9:
-                    self.sim.step()
+                    self.sim.step(n_sub)
                     ids = ls.vehicle.getIDList()
                     halting = {v for v in ids if ls.vehicle.getSpeed(v) <= 0.1}
                     self.new_stops += len(halting - self._halting)
@@ -177,7 +178,11 @@ class MRG3Env(gym.Env):
     def step(self, action):
         a = int(np.asarray(action).reshape(-1)[0])
         qc = P.Sensors.flow_vph_per_lane("up0a")
-        if self.mode == "direct":
+        if self.mode == "direct_fine":   # P-H2: b in {0.5, 0.55, ..., 1.0}, |delta b| <= 0.2 per period
+            target = 0.5 + 0.05 * a
+            self.b = float(np.clip(target, self.b - 0.2, self.b + 0.2))
+            b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
+        elif self.mode == "direct":
             target = 0.2 + 0.1 * a
             self.b = float(np.clip(target, self.b - 0.2, self.b + 0.2))
             b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
