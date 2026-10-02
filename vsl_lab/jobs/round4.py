@@ -138,9 +138,10 @@ def J(o) -> float:
     return o["mean_time_in_system_s"] + W_STOP * o["stops_per_veh"]
 
 
-def r2(root: Path, workers: int, gate_ok: bool, analyse_only: bool) -> dict:
+def r2(root: Path, workers: int, gate_ok: bool, analyse_only: bool, only: list | None = None, skip: list | None = None) -> dict:
     if not analyse_only:
-        jobs = [job(c, s, cell, root, tag="r2") for cell in CELLS for s in R2_SEEDS for c in R2_CTRLS]
+        ctrls = [c for c in R2_CTRLS if (not only or c in only) and c not in (skip or [])]
+        jobs = [job(c, s, cell, root, tag="r2") for cell in CELLS for s in R2_SEEDS for c in ctrls]
         run_batch(jobs, root / "batch", workers, gate_ok=gate_ok)
     by = {}
     for p in (root / "r2").glob("*/summary.json"):
@@ -226,6 +227,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["th", "r2", "screen"])
     ap.add_argument("--run-dir", default=None)
+    ap.add_argument("--only", default=None, help="comma list of controllers (r2)")
+    ap.add_argument("--skip", default=None, help="comma list of controllers (r2)")
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", action="store_true")
@@ -233,7 +236,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     root = Path(a.root) if a.root else RUNS_ROOT / "t2" / f"round4_{a.what}_{int(time.time())}"
     if a.what == "r2":
-        out = r2(root, a.workers, a.gate_ok, a.analyse_only)
+        out = r2(root, a.workers, a.gate_ok, a.analyse_only, only=a.only.split(",") if a.only else None,
+                 skip=a.skip.split(",") if a.skip else None)
         print(json.dumps({"tuned": out["tuned_classical"], "family_best": out["family_best"]}))
         return 0
     if a.what == "screen":
