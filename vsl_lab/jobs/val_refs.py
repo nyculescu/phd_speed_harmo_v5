@@ -59,6 +59,7 @@ def main(argv=None) -> int:
         except Exception:
             continue
         if "job" in o:
+            o["_is_I"] = "valrefs_I" in str(p)
             rows.append(o)
     summ = {}
     if a.track == "t1":
@@ -67,8 +68,12 @@ def main(argv=None) -> int:
         out = {c: {"mean_val_outflow": float(np.mean(v)), "n": len(v)} for c, v in summ.items()}
     else:
         for o in rows:
-            k = "nc" if o["ctrl"] == "nc" else (f"fs:{o['U']:g}" + ("(I)" if "valrefs_I" in o["run_id"] or False else "")
-                                                if o["ctrl"] == "fs" else f"pi:{o['vcatch']:g}:{o['window']:g}")
+            if o["ctrl"] == "nc":
+                k = "nc"
+            elif o["ctrl"] == "fs":
+                k = "fs_I_per_L" if o["_is_I"] else f"fs:{o['U']:g}"
+            else:
+                k = f"pi:{o['vcatch']:g}:{o['window']:g}"
             summ.setdefault(k, []).append(o["mean_speed"])
         out = {c: {"mean_val_speed": float(np.mean(v)), "n": len(v)} for c, v in summ.items()}
     (root / "val_refs.json").write_text(json.dumps(out, indent=1))
