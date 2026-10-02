@@ -23,6 +23,7 @@ import numpy as np
 from vsl_lab.config import RUNS_ROOT
 from vsl_lab.controllers.cav_staircase import CavStaircase
 from vsl_lab.controllers.mtfc import MTFC
+from vsl_lab.controllers.pi_saturation import PISaturation
 from vsl_lab.plants import mrg3 as P
 from vsl_lab.sim.runner import SumoSim
 
@@ -124,7 +125,10 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         P.set_vsl(("up3",), min(1.0, b_app + 0.4) * vmax)
         P.set_vsl(("up0b",), b_acc * vmax)
 
-    stair = CavStaircase(cav_x) if cav_share > 0 and cav_arm in ("B", "C") else None
+    # arm P (Round 4): every CAV runs PI-with-saturation onboard (Stern et al. 2018) on the approach and the drop zone;
+    # the staircase object only keeps CAV set speeds equal to the lane limit (targets None)
+    stair = CavStaircase(cav_x) if cav_share > 0 and cav_arm in ("B", "C", "P") else None
+    pis = {}
     b_cav = 1.0                                       # arm C rate (1.0 = no command)
     zone_b = {"up1": 1.0, "up0a": 1.0, "up2": 1.0, "up3": 1.0}
 
@@ -140,6 +144,21 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
                 continue
             edge = lane.rsplit("_", 1)[0]
             lim = ls.lane.getMaxSpeed(lane)
+            if cav_arm == "P":
+                stair.update(sim.t, vid, None, lim)
+                if ctrl == "cavpi" and sim.t >= t_ctrl0 and edge in ("up3", "up2", "up1", "up0a", "up0b", "merge"):
+                    pi = pis.setdefault(vid, PISaturation(dt))
+                    lead = ls.vehicle.getLeader(vid, 100.0)
+                    v = ls.vehicle.getSpeed(vid)
+                    if lead and lead[0]:
+                        v_lead, gap = ls.vehicle.getSpeed(lead[0]), max(lead[1], 0.0)
+                    else:
+                        v_lead, gap = lim, 100.0
+                    ls.vehicle.setSpeed(vid, min(max(pi.v_cmd(v, v_lead, gap), 0.0), lim))
+                elif vid in pis:
+                    ls.vehicle.setSpeed(vid, -1.0)
+                    pis.pop(vid)
+                continue
             if cav_arm == "B":
                 tgt = lim if edge in ("up3", "up2", "up1", "up0a", "up0b") else None
             else:
@@ -202,6 +221,8 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     post(1.0, 1.0)
     if stair is not None:   # like the posted VSL, CAV commands are released at once for the uncontrolled drain
         for vid in ls.vehicle.getIDList():
+            if vid in pis:
+                ls.vehicle.setSpeed(vid, -1.0)
             if vid in cav_ids:
                 ln = ls.vehicle.getLaneID(vid)
                 ls.vehicle.setMaxSpeed(vid, vmax if ln.startswith(":") else ls.lane.getMaxSpeed(ln))
@@ -285,7 +306,7 @@ def main(argv=None) -> int:
     ap.add_argument("--driver", default=None, choices=sorted(P.DRIVERS))
     ap.add_argument("--cav-share", type=float, default=0.0)
     ap.add_argument("--cav-model", default="CACC", choices=["CACC", "ACC"])
-    ap.add_argument("--cav-arm", default="none", choices=["none", "B", "C"])
+    ap.add_argument("--cav-arm", default="none", choices=["none", "B", "C", "P"])
     ap.add_argument("--cav-x", type=float, default=1.0)
     ap.add_argument("--step", type=float, default=None, help="simulation step (default plant 0.5 s)")
     ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
