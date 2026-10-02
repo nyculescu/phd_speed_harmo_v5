@@ -30,7 +30,7 @@ def main(argv=None) -> int:
     jobs = []
     if a.track == "t1":
         fz = json.loads((REPO_ROOT / "docs/lab/t1_bn4_baselines_frozen.json").read_text())
-        ctrls = sorted({"nc", fz["tuned"]["cap"]["ctrl"], fz["tuned"]["meter"]["ctrl"]})
+        ctrls = sorted({"nc"} | {fz["tuned"][f]["ctrl"] for f in ("cap", "meter", "avfb") if f in fz["tuned"]})
         for q, s in T1_SPECS:
             for c in ctrls:
                 jobs.append(Job(jid=f"vr_{c.replace(':', '_')}_{int(q)}_{s}",
