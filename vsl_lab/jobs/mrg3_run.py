@@ -21,6 +21,7 @@ import libsumo as ls
 import numpy as np
 
 from vsl_lab.config import RUNS_ROOT
+from vsl_lab.controllers.cav_staircase import CavStaircase
 from vsl_lab.controllers.mtfc import MTFC
 from vsl_lab.plants import mrg3 as P
 from vsl_lab.sim.runner import SumoSim
@@ -58,17 +59,24 @@ def capacity_drop(ts: list) -> dict:
 
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
         t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1",
-        driver: str | None = None) -> dict:
+        driver: str | None = None, cav_share: float = 0.0, cav_model: str = "CACC", cav_arm: str = "none",
+        cav_x: float = 1.0) -> dict:
+    """Round 3 (round3_tm21_protocol.md): cav_share > 0 adds ACC/CACC CAVs. cav_arm 'B' = CAVs staircase toward the
+    posted limit of their lane; 'C' = posted VSL untouched, CAVs on up1/up0a staircase toward b x 120 km/h (pre-zone:
+    up2 min(1, b+0.2), up3 min(1, b+0.4)); controllers for C: nc | cavconst:<b> | cavmtfc[:rho:kp:ki:ki2] |
+    cavstress (b alternates 0.4 / 1.0 every 300 s in the control window; the T-X safety schedule)."""
     model, dspeed = P.PLANTS[plant]
+    cav_tag = f"_cav{cav_share:g}{cav_arm}{cav_model}x{cav_x:g}" if cav_share > 0 else ""
     run_id = (f"mrg3{plant}{'' if driver is None else driver}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}"
-              f"_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}_pid{os.getpid()}")
+              f"_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}{cav_tag}_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     f = P.files()
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
     rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end)
     dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed,
-                   driver=driver)
+                   driver=driver, cav_share=cav_share, cav_model=cav_model)
+    cav_ids = {v[1] for v in dem.vehicles if v[3] == "cav"}
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=P.STEP_LENGTH, checkpoint_s=300.0,
@@ -77,7 +85,18 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     sens = P.Sensors(f["lanes"])
     mt = None
     b_const = None
-    if ctrl.startswith("mtfc"):
+    cav_mode = None                                   # arm C controller kind
+    if ctrl.startswith("cavmtfc"):
+        parts = ctrl.split(":")
+        vals = [float(x) for x in parts[1:]] if len(parts) > 1 else []
+        mt = MTFC(**dict(zip(["rho_set", "kp", "ki", "ki2"], vals)))
+        cav_mode = "mtfc"
+    elif ctrl.startswith("cavconst:"):
+        b_const = float(ctrl.split(":")[1])
+        cav_mode = "const"
+    elif ctrl == "cavstress":
+        cav_mode = "stress"
+    elif ctrl.startswith("mtfc"):
         parts = ctrl.split(":")
         vals = [float(x) for x in parts[1:]] if len(parts) > 1 else []
         names = ["rho_set", "kp", "ki", "ki2"]
@@ -96,8 +115,35 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         P.set_vsl(("up3",), min(1.0, b_app + 0.4) * vmax)
         P.set_vsl(("up0b",), b_acc * vmax)
 
+    stair = CavStaircase(cav_x) if cav_share > 0 and cav_arm in ("B", "C") else None
+    b_cav = 1.0                                       # arm C rate (1.0 = no command)
+    zone_b = {"up1": 1.0, "up0a": 1.0, "up2": 1.0, "up3": 1.0}
+
+    def cav_control():
+        if sim.t >= t_ctrl0 and cav_mode == "stress":
+            nonlocal_b = 0.4 if int((sim.t - t_ctrl0) // 300.0) % 2 == 0 else 1.0
+            zone_b.update(up1=nonlocal_b, up0a=nonlocal_b, up2=min(1.0, nonlocal_b + 0.2), up3=min(1.0, nonlocal_b + 0.4))
+        for vid in ls.vehicle.getIDList():
+            if vid not in cav_ids:
+                continue
+            lane = ls.vehicle.getLaneID(vid)
+            if lane.startswith(":"):
+                continue
+            edge = lane.rsplit("_", 1)[0]
+            lim = ls.lane.getMaxSpeed(lane)
+            if cav_arm == "B":
+                tgt = lim if edge in ("up3", "up2", "up1", "up0a", "up0b") else None
+            else:
+                b = zone_b.get(edge, 1.0)
+                tgt = b * vmax if b < 1.0 - 1e-9 else None
+            stair.update(sim.t, vid, tgt, lim)
+
     while sim.t < t_end - 1e-9:
-        sim.run_until(sim.t + 10.0)
+        if stair is None:
+            sim.run_until(sim.t + 10.0)
+        else:
+            sim.run_until(sim.t + P.STEP_LENGTH)
+            cav_control()
         if sim.t >= next_samp - 1e-9:
             dens_samples.append(sens.density_merge_vkl())
             row = [round(sim.t, 1)]
@@ -123,7 +169,16 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
             feats.append(row)
             next_loop += 30.0
         if sim.t >= next_ctrl - 1e-9 and sim.t >= t_ctrl0:
-            if mt is not None:
+            if cav_mode in ("mtfc", "const"):
+                if cav_mode == "mtfc":
+                    rho = float(np.mean(dens_samples[-6:])) if dens_samples else 0.0
+                    qc = float(np.mean(qc_hist[-2:])) if qc_hist else 0.0
+                    b_cav, _ = mt.step(rho, qc)
+                else:
+                    b_cav = b_const
+                zone_b.update(up1=b_cav, up0a=b_cav, up2=min(1.0, b_cav + 0.2), up3=min(1.0, b_cav + 0.4))
+                b_app = b_cav
+            elif mt is not None:
                 rho = float(np.mean(dens_samples[-6:])) if dens_samples else 0.0
                 qc = float(np.mean(qc_hist[-2:])) if qc_hist else 0.0
                 b_app, b_acc = mt.step(rho, qc)
@@ -133,8 +188,13 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
                 post(b_app, b_acc)
             bs.append((sim.t, b_app))
             next_ctrl += 60.0
-    # demand over: release VSL, drain uncontrolled
+    # demand over: release VSL / CAV commands, drain uncontrolled
     post(1.0, 1.0)
+    if stair is not None:   # like the posted VSL, CAV commands are released at once for the uncontrolled drain
+        for vid in ls.vehicle.getIDList():
+            if vid in cav_ids:
+                ln = ls.vehicle.getLaneID(vid)
+                ls.vehicle.setMaxSpeed(vid, vmax if ln.startswith(":") else ls.lane.getMaxSpeed(ln))
     drained = sim.drain(t_max)
     by_route = sim.time_in_system_by_route()
     out = sim.close(drained=drained)
@@ -147,6 +207,9 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         "time_main_s": by_route.get("main", {}).get("mean_s"), "time_ramp_s": by_route.get("ramp", {}).get("mean_s"),
         "n_main": by_route.get("main", {}).get("n"), "n_ramp": by_route.get("ramp", {}).get("n"),
         "capdrop": capacity_drop(ts), "b_trace": bs[::5], "min_b": min((b for _, b in bs), default=1.0),
+        "cav_share": cav_share, "cav_arm": cav_arm, "cav_model": cav_model, "cav_x": cav_x, "n_cav": len(cav_ids),
+        "cav_steps": stair.n_steps if stair else 0, "cav_max_excess_ms": round(stair.max_excess, 3) if stair else None,
+        "emergency_braking": (out.get("sumo_stats") or {}).get("emergencyBraking"),
     })
     out.pop("arrivals_bins", None)
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1, default=str))
@@ -177,11 +240,15 @@ def main(argv=None) -> int:
     ap.add_argument("--truck", type=float, default=0.1)
     ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
     ap.add_argument("--driver", default=None, choices=sorted(P.DRIVERS))
+    ap.add_argument("--cav-share", type=float, default=0.0)
+    ap.add_argument("--cav-model", default="CACC", choices=["CACC", "ACC"])
+    ap.add_argument("--cav-arm", default="none", choices=["none", "B", "C"])
+    ap.add_argument("--cav-x", type=float, default=1.0)
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)
     out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant,
-              driver=a.driver)
+              driver=a.driver, cav_share=a.cav_share, cav_model=a.cav_model, cav_arm=a.cav_arm, cav_x=a.cav_x)
     keys = ("run_id", "mean_time_in_system_s", "time_main_s", "time_ramp_s", "capdrop", "min_b", "teleports", "drained",
             "wall_s")
     print(json.dumps({k: out.get(k) for k in keys} | {"health": out["health"]["status"],

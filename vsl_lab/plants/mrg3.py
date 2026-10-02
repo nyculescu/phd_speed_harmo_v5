@@ -42,10 +42,21 @@ DRIVERS = {
 }
 
 
+def cav_vtype_xml(cav_model: str = "CACC") -> str:
+    """Round 3 CAV (round3_tm21_protocol.md): SUMO ACC/CACC with every model parameter at its default. maxSpeed = the
+    120 km/h limit and speedFactor 1.5, so the lane limit never binds: the set speed (setMaxSpeed, managed by
+    controllers/cav_staircase.py) alone sets the desired speed (exact compliance when it equals the posted limit)."""
+    return (f'  <vType id="cav" carFollowModel="{cav_model}" length="5" maxSpeed="{V_LIMIT}" speedFactor="1.5" '
+            'speedDev="0"/>')
+
+
 def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str = "krauss",
-               driver: str | None = None) -> str:
-    """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2/v3 (Treiber-style IDM). driver=H0..H4
-    overrides the car/truck models with a realism-gate variant (DRIVERS)."""
+               driver: str | None = None, cav_share: float = 0.0, cav_model: str = "CACC") -> str:
+    """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2/v3 (Treiber-style IDM). driver=H0..H5
+    overrides the car/truck models with a realism-gate variant (DRIVERS). cav_share > 0 adds the `cav` vType; the
+    human mix's truck weight is rescaled so that trucks stay `truck_share` of ALL vehicles."""
+    if cav_share > 0:
+        truck_share = truck_share / (1.0 - cav_share)
     pc = (1.0 - p_noncompliant) * (1.0 - truck_share)
     pn = p_noncompliant * (1.0 - truck_share)
     if driver is not None:
@@ -61,15 +72,19 @@ def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str
         f'    <vType id="car_n" probability="{pn:.4f}" {car}speedFactor="normc(1.15,0.05,0.95,1.4)"/>\n'
         f'    <vType id="truck" vClass="truck" probability="{truck_share:.4f}" {trk}'
         'speedFactor="normc(1.0,0.05,0.8,1.2)"/>\n'
-        '  </vTypeDistribution>')
+        '  </vTypeDistribution>' + ("\n" + cav_vtype_xml(cav_model) if cav_share > 0 else ""))
 
 
 def demand(seed: int, main_profile: list, ramp_profile: list, p_noncompliant: float = 0.3,
-           truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max", driver: str | None = None) -> Demand:
-    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model, driver),
-               routes=[Route("main", net.MAIN_ROUTE, main_profile, depart_lane="best", depart_speed=depart_speed),
-                       Route("ramp", net.RAMP_ROUTE, ramp_profile, depart_lane="0", depart_speed=depart_speed)],
-               step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="mix")
+           truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max", driver: str | None = None,
+           cav_share: float = 0.0, cav_model: str = "CACC") -> Demand:
+    # av_share draws one rng.random() per vehicle whatever its value, so arrival times are identical across cav_share
+    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model, driver, cav_share, cav_model),
+               routes=[Route("main", net.MAIN_ROUTE, main_profile, av_share=cav_share, depart_lane="best",
+                             depart_speed=depart_speed),
+                       Route("ramp", net.RAMP_ROUTE, ramp_profile, av_share=cav_share, depart_lane="0",
+                             depart_speed=depart_speed)],
+               step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="cav" if cav_share > 0 else "mix")
     d.generate()
     return d
 

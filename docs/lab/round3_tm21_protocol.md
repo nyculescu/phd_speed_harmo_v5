@@ -101,3 +101,35 @@
 BN4's AV caps (10 % and 25 % AVs) were a coarse, discrete version of arm C. There, constant caps gained at most −1.5 % vs NC and AV feedback was worse. Sparse AVs on a multilane road slow only their own lane.
 
 Arm C differs in three ways: per-lane coordinated targets, a penetration sweep, and a merge mechanism. A T0-C FAIL at 10 % and 25 % is a plausible, cheap outcome, and it would be reported as a result about TM21 at low penetration.
+
+---
+
+## Addendum A (2026-10-02): CAV smoke and step-length diagnostics, before any T-CAV0 run
+
+All runs below use the D-1 throw-away seed 7,120,050 at 5,400 / 900, with H0 (IDM) humans and 25 % CACC CAVs unless stated. They test the code; they are not evidence for any criterion. Raw data: `round3_smoke/`.
+
+**Code smoke.** Arm C (`cavstress`, X = 1 s) and arm B (`const:0.4`) run, with 0 teleports and 0 collisions.
+
+**CAV emergency braking: a SUMO artefact at the plant's 0.5 s step.**
+
+| Run (NC-p unless stated) | Step | Emergency-braking events (CAV / human) | Collisions | Teleports | Door-to-door (s) | Wall time (s) |
+|---|---|---|---|---|---|---|
+| CACC 25 % | 0.5 | 23 / 1 | 0 | 0 | 427 | 27 |
+| ACC 25 % | 0.5 | 79 / 2 | 0 | 0 | 326 | 22 |
+| arm C `cavstress`, CACC 25 % | 0.5 | 31 / 1 | 0 | 0 | 390 | 25 |
+| arm B `const:0.4`, CACC 25 % | 0.5 | 43 / 16 | 0 | 0 | 548 | 32 |
+| human only (realism smoke H0) | 0.5 | 0 | 0 | **1** | 356 | 19 |
+| CACC 25 % | 0.2 | 9 (total) | 0 | 0 | 367 | 57 |
+| human only | 0.2 | 0 | 0 | 0 | 392 | 47 |
+| CACC 25 % | 0.1 | 8 (total) | 0 | 0 | 394 | 122 |
+| human only | 0.1 | 0 | 0 | 0 | 403 | 97 |
+
+**What the diagnostics show:**
+- At 0.5 s, SUMO's ACC/CACC CAVs brake at 9 m/s² tens of times per run, with no command at all. Human IDM drivers almost never do. This matches SUMO's documented caveat for these models at coarse steps.
+- At 0.2 s and 0.1 s, the braking falls to 8–9 events per run.
+- **The step length changes the human plant too:** IDM's door-to-door time moves from 356 s to 392 s to 403 s, and the one ramp teleport at 0.5 s disappears. So a realism verdict obtained at 0.5 s does not transfer to another step.
+
+**Rule (pre-registered here, before T-CAV0):**
+1. T-CAV0 additionally reports the CAV emergency-braking rate per 1,000 CAV-km against the human rate.
+2. **The step length for Round 3 is an author decision.** It is not changed unilaterally (main protocol, T-CAV0 row).
+3. If the step changes, the realism checks of the primary variant are re-run at that step on fresh seeds, pre-registered before use, before any Round 3 check.
