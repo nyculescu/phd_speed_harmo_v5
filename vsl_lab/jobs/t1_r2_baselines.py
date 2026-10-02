@@ -21,10 +21,12 @@ CELLS = [1200, 1600, 2000, 2400]
 SEEDS = list(range(7110100, 7110120))
 CAPS = [3, 5, 7, 9, 11, 13, 15, 18]
 METER = [(kf, nc) for kf in (10, 20, 40) for nc in (4, 6, 8, 10, 12, 14)]
+AVFB = [(k, nc) for k in (0.5, 1.0, 2.0) for nc in (4, 6, 8, 10)]   # addendum 2 (before R2 v2 ran)
 
 
 def controllers() -> list:
-    return ["nc"] + [f"cap:{c}" for c in CAPS] + [f"meter:{kf}:{nc}" for kf, nc in METER]
+    return (["nc"] + [f"cap:{c}" for c in CAPS] + [f"meter:{kf}:{nc}" for kf, nc in METER]
+            + [f"avfb:{k:g}:{nc}" for k, nc in AVFB])
 
 
 def load(root: Path) -> list:
@@ -60,7 +62,8 @@ def analyse(root: Path) -> dict:
             row["score"] = float(np.mean([row[q]["median_time_s"] for q in CELLS if q in row]))
             table[ctrl] = row
     fams = {"nc": ["nc"], "cap": [c for c in table if c.startswith("cap:")],
-            "meter": [c for c in table if c.startswith("meter:")]}
+            "meter": [c for c in table if c.startswith("meter:")],
+            "avfb": [c for c in table if c.startswith("avfb:")]}
     tuned = {}
     for fam, cs in fams.items():
         if not cs:

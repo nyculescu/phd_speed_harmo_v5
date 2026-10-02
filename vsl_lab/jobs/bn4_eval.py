@@ -54,14 +54,29 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
         const = np.full(n_act, 2.0 * (c - V_MIN) / (SPEED - V_MIN) - 1.0, dtype=np.float32)
     else:
         const = None
+    avfb = None
+    if ctrl.startswith("avfb:"):
+        # Lagrangian analogue of Vinitsky's feedback meter, on the SAME AV actuator as the DRL policy:
+        # every T = 30 s, cap <- clip(cap + K (n_crit - n_hat), V_MIN, 23), n_hat = vehicles on segment 4;
+        # one uniform cap for all controlled lane-pieces (the env applies its rate limits).
+        _, k_v, n_c = ctrl.split(":")
+        avfb = {"K": float(k_v), "n_crit": float(n_c), "cap": SPEED, "t_last": None}
     t0 = time.time()
     obs, _ = env.reset()
     if env_meter_params is not None:
         env.meter.K_F, env.meter.n_crit = env_meter_params
     state, start = None, np.ones((1,), dtype=bool)
     done, info = False, {}
+    import libsumo as _ls
     while not done:
-        if model is None:
+        if avfb is not None:
+            t_now = env.sim.t
+            if avfb["t_last"] is None or t_now - avfb["t_last"] >= 30.0 - 1e-9:
+                n_hat = _ls.edge.getLastStepVehicleNumber("4")
+                avfb["cap"] = float(np.clip(avfb["cap"] + avfb["K"] * (avfb["n_crit"] - n_hat), V_MIN, SPEED))
+                avfb["t_last"] = t_now
+            act = np.full(n_act, 2.0 * (avfb["cap"] - V_MIN) / (SPEED - V_MIN) - 1.0, dtype=np.float32)
+        elif model is None:
             act = const
         elif recurrent:
             act, state = model.predict(obs, state=state, episode_start=start, deterministic=True)

@@ -59,3 +59,13 @@ So, for every controller that uses the AV actuator (constant caps and DRL alike)
 Emergency-braking warnings are counted as health WARN H-R4b.
 
 T0b (already run) used the earlier abrupt caps. Its finding that the AV actuator has authority stands. Its exact cap numbers are not reused.
+
+## Addendum 2 (2026-10-01, before R2 v2 runs): classical feedback on the AV actuator
+
+DRL in Track 1 acts through the **AV** caps. The only tuned classical controller on that actuator was the constant cap; the meter uses a different actuator (a signal). For a fair yardstick, the family **AV feedback (`avfb`)** is added. It is the Lagrangian analogue of Vinitsky's meter:
+- every 30 s, the uniform AV cap ← clip(cap + K·(n_crit − n̂), 1, 23) m/s, with n̂ = the vehicles on segment 4;
+- the env's rate limits apply.
+
+The grid is K ∈ {0.5, 1, 2} m/s per vehicle × n_crit ∈ {4, 6, 8, 10}, i.e. 12 controllers × 4 cells × 20 seeds = 960 extra runs. The same selection rule applies.
+
+R2 v2 is the full re-run after the actuator fix (commit 5706380).
