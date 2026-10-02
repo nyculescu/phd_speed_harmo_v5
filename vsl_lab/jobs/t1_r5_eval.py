@@ -27,8 +27,14 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--env-kwargs", default="{}")
+    ap.add_argument("--seeds", default=None, help="a-b inclusive test seeds (default 7110500-7110529)")
+    ap.add_argument("--frozen", default="docs/lab/t1_bn4_baselines_frozen.json")
+    ap.add_argument("--plant-kwargs", default="{}", help="env kwargs for EVERY controller (e.g. av_share 0.25, B-R5)")
     a = ap.parse_args(argv)
-    fz = json.loads((REPO_ROOT / "docs/lab/t1_bn4_baselines_frozen.json").read_text())
+    global SEEDS
+    if a.seeds:
+        SEEDS = list(range(int(a.seeds.split("-")[0]), int(a.seeds.split("-")[1]) + 1))
+    fz = json.loads((REPO_ROOT / a.frozen).read_text())
     comps = ["nc"] + [fz["tuned"][f]["ctrl"] for f in ("cap", "avfb", "meter") if f in fz["tuned"]]
     drl = [f"rl:{m}" if ":" in m else f"rl:{m}:ppo" for m in a.models]
     root = RUNS_ROOT / "t1" / f"{a.tag}_{int(time.time())}"
@@ -40,7 +46,8 @@ def main(argv=None) -> int:
                 jobs.append(Job(jid=f"r5_{lab.replace(':', '_')}_q{q}_s{s}",
                                 argv=["vsl_lab.jobs.bn4_eval", "--ctrl", c, "--inflow", str(q), "--seed", str(s),
                                       "--tag", lab.replace(":", "_"), "--out-root", str(root),
-                                      "--env-kwargs", a.env_kwargs if c.startswith("rl:") else "{}"]))
+                                      "--env-kwargs", json.dumps(json.loads(a.plant_kwargs)
+                                                                 | (json.loads(a.env_kwargs) if c.startswith("rl:") else {}))]))
     rep = run_batch(jobs, root / "batch", max_workers=a.workers, gate_ok=a.gate_ok)
     data = {}
     for p in root.glob("*/*.json"):
@@ -78,7 +85,7 @@ def main(argv=None) -> int:
         out["cells"][q] = cell
     (root / "r5_analysis.json").write_text(json.dumps(out, indent=1, default=str))
     L = [f"# T1 R5 head-to-head: {a.tag}", "", f"*{time.strftime('%Y-%m-%d %H:%M')} · protocol "
-         f"`docs/lab/t1_bn4_r5_protocol.md` · test seeds 7110500-7110529 · raw `{root}`*", "",
+         f"`docs/lab/t1_bn4_r5_protocol.md` · test seeds {SEEDS[0]}-{SEEDS[-1]} · raw `{root}`*", "",
          "Median of paired differences in door-to-door time (DRL − comparator, s; negative = DRL better) [95 % CI].", ""]
     for q in CELLS:
         L += [f"## q = {q} veh/h", "", "| comparator | " + " | ".join(drl_labels + ["drl_pooled"]) + " |",
@@ -91,7 +98,7 @@ def main(argv=None) -> int:
         L.append("")
     L += ["## Health", "", json.dumps(out["health"])]
     (REPO_ROOT / "docs" / "lab" / f"{a.tag}.md").write_text("\n".join(L) + "\n")
-    ledger.append("T1", "R5", "S", a.tag, {"models": a.models, "comps": comps}, "7110500-7110529", rep.n_jobs,
+    ledger.append("T1", "R5", "S", a.tag, {"models": a.models, "comps": comps, "plant_kwargs": a.plant_kwargs}, f"{SEEDS[0]}-{SEEDS[-1]}", rep.n_jobs,
                   {k: sum(v[k] for v in out["health"].values()) for k in ("PASS", "WARN", "FAIL")},
                   {str(q): {c: {d: round(v["rel"], 4) for d, v in r.items()} for c, r in cell.items()}
                    for q, cell in out["cells"].items()}, notes=str(root))
