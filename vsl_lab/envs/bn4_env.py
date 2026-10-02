@@ -21,7 +21,7 @@ import gymnasium as gym
 import libsumo as ls
 import numpy as np
 
-from vsl_lab.config import E_CORES, RUNS_ROOT
+from vsl_lab.config import WORKER_CPUS, RUNS_ROOT
 from vsl_lab.plants import bn4
 from vsl_lab.sim.runner import SumoSim
 
@@ -80,7 +80,7 @@ class BN4Env(gym.Env):
                 pass
         if pin_ecores:
             try:
-                os.sched_setaffinity(0, set(E_CORES))
+                os.sched_setaffinity(0, set(WORKER_CPUS))
             except OSError:
                 pass
         self.inflow = inflow

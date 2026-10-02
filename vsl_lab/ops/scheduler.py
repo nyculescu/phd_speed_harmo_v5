@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv
 import json
 import signal
+import statistics
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -19,7 +20,7 @@ from pathlib import Path
 import collections
 import os
 
-from vsl_lab.config import (E_CORES, MAX_LAUNCH_PER_S, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C,
+from vsl_lab.config import (WORKER_CPUS, MAX_LAUNCH_PER_S, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C,
                             TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S, TEMP_SMOOTH_S, TEMP_STEP_S, clean_sumo_env)
 from vsl_lab.ops.thermal import load_fraction, package_temp_c
 
@@ -66,7 +67,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
     max_workers = min(max_workers, MAX_WORKERS)
     sim_start_gate(gate_ok)
     try:  # the scheduler itself (fork/exec, polling) also stays off the P-cores
-        os.sched_setaffinity(0, set(E_CORES))
+        os.sched_setaffinity(0, set(WORKER_CPUS))
     except OSError:
         pass
     last_launch = time.time()
@@ -97,7 +98,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
         job.proc = subprocess.Popen([PYTHON_BIN, "-m", *job.argv], stdout=fh, stderr=subprocess.STDOUT,
                                     env=env, cwd=str(Path(__file__).resolve().parents[2]))
         try:
-            os.sched_setaffinity(job.proc.pid, set(E_CORES))
+            os.sched_setaffinity(job.proc.pid, set(WORKER_CPUS))
         except OSError:
             pass
         job.t_start = time.time()
@@ -118,7 +119,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             filled = len(window) == window.maxlen
             # until the 10 s window is filled, single raw spikes (up to ~98 C at idle on this CPU) must not count
             temp = (sum(window) / len(window)) if filled else min(sum(window) / max(len(window), 1), TEMP_HARD_C - 1.5)
-            temp_slow = sum(slow) / len(slow) if slow else raw        # slow mean (pause / resume)
+            temp_slow = statistics.median(slow) if slow else raw      # slow 5-min MEDIAN (pause / resume)
             if filled:
                 temps.append(temp)
             event = ""
@@ -132,8 +133,8 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
                     job.result = _last_json_line(job.log)
                     done.append(job)
             n_paused = sum(j.paused for j in running)
-            # thermal control: slow loop (10 min mean, 90 / 87 C, one action per TEMP_STEP_S) plus a fast
-            # excursion cap (10 s mean >= 93 C pauses the newest active job every poll)
+            # thermal control: slow loop (5-min median, 99 / 96 C, one action per TEMP_STEP_S); the fast cap
+            # (TEMP_HARD_C) is effectively off since 2026-10-02
             active = [j for j in running if not j.paused]
             paused_jobs = [j for j in running if j.paused]
             if temp >= TEMP_HARD_C and active:

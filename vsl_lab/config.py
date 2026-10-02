@@ -20,23 +20,25 @@ NET_CACHE = RUNS_ROOT / "_netcache"
 # Committed, small artefacts.
 LEDGER_PATH = REPO_ROOT / "vsl_lab" / "runs" / "ledger.csv"
 
-# Compute limits (CLAUDE.md, 2026-10-01).
+# Compute limits. Thermal guard (author, 2026-10-02; replaces the 90/87/93 guard of 2026-10-01): concern only when
+# the 5-minute MEDIAN of the package temperature (coretemp "Package id 0", the sensor btop shows; TjMax = 100 C) is
+# >= 99 C. Pause one job per step period at >= 99, resume one per step period below 96 (3 C hysteresis).
 MAX_WORKERS = 100
-TEMP_HARD_C = 93.0      # excursion cap on the FAST (10 s) mean: pause every poll while >= 93
-TEMP_PAUSE_C = 90.0     # SLOW (10 min) mean >= 90 -> pause one job per step period (author, 2026-10-01)
-TEMP_RESUME_C = 87.0    # SLOW (10 min) mean < 87 -> resume one job per step period
+TEMP_PAUSE_C = 99.0     # SLOW (5 min) median >= 99 -> pause one job per step period
+TEMP_RESUME_C = 96.0    # SLOW (5 min) median < 96 -> resume one job per step period
+TEMP_HARD_C = 101.0     # fast cap effectively off: the CPU throttles itself at TjMax 100 C (kept for sensor anomalies)
 MAX_LAUNCH_PER_S = 5.0  # token bucket; 3.0 + one-launch-per-poll throttled short-job batches to ~2 jobs/s at 63-79 C
 SIM_START_MAX_LOAD = 0.15  # fraction of logical CPUs (sim-start gate fallback)
 
-# Thermal finding (2026-10-01, vsl_lab/ops/ecore_probe.py): ONE simulation on a P-core (5.4-5.6 GHz turbo)
-# already holds the package at mean 90.3 C (72 % of samples >= 90 C) in the 'performance' profile, so
-# throttling the worker count alone cannot meet < 90 C. Pinned to the 16 E-cores (CPUs 16-31, 4.0 GHz):
-# 1 job mean 64 C, 8 jobs mean 73 C (max 78), 16 jobs mean 86 C (max 90). All lab workers are therefore
-# pinned to E-cores (our own process affinity; no system setting is changed); see N_MAX_DEFAULT below.
+# Thermal history (2026-10-01, vsl_lab/ops/ecore_probe.py): under the old < 90 C limit, one P-core simulation already
+# held the package at ~90 C, so workers were pinned to the 16 E-cores (CPUs 16-31). With the 99 C median guard
+# (author, 2026-10-02: "speed up the research") workers use every hardware thread; the v6 benchmark
+# (parallel_sweet_spot_20261001.md) measured 32 workers (one per thread) as the throughput sweet spot for libsumo runs.
 E_CORES = tuple(range(16, 32))
-N_MAX_DEFAULT = 10  # with the 89.5/86.5 guard; 10-12 sustained E-core BN4 jobs reached 89.4-90.6 C smoothed
-TEMP_SMOOTH_S = 10.0       # FAST window (excursion cap)
-TEMP_SLOW_S = 600.0        # SLOW window: 10-minute mean, 'a more rounded hysteresis' (author)
+WORKER_CPUS = tuple(range(os.cpu_count() or 32))
+N_MAX_DEFAULT = 32
+TEMP_SMOOTH_S = 10.0       # FAST window (logging; cap effectively off)
+TEMP_SLOW_S = 300.0        # SLOW window: 5-minute MEDIAN (author, 2026-10-02)
 TEMP_STEP_S = 30.0         # at most one pause or resume per step period on the slow loop
 
 

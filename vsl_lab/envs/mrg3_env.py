@@ -20,7 +20,7 @@ import gymnasium as gym
 import libsumo as ls
 import numpy as np
 
-from vsl_lab.config import E_CORES, RUNS_ROOT
+from vsl_lab.config import WORKER_CPUS, RUNS_ROOT
 from vsl_lab.controllers.mtfc import MTFC
 from vsl_lab.plants import mrg3 as P
 from vsl_lab.sim.runner import SumoSim
@@ -41,7 +41,7 @@ class MRG3Env(gym.Env):
         super().__init__()
         if pin_ecores:
             try:
-                os.sched_setaffinity(0, set(E_CORES))
+                os.sched_setaffinity(0, set(WORKER_CPUS))
             except OSError:
                 pass
         if quiet:

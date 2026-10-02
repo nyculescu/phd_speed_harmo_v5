@@ -16,7 +16,7 @@ from collections import deque
 import gymnasium as gym
 import numpy as np
 
-from vsl_lab.config import E_CORES, RUNS_ROOT
+from vsl_lab.config import WORKER_CPUS, RUNS_ROOT
 from vsl_lab.plants import ring as R
 
 
@@ -29,7 +29,7 @@ class RingEnv(gym.Env):
         super().__init__()
         if pin_ecores:
             try:
-                os.sched_setaffinity(0, set(E_CORES))
+                os.sched_setaffinity(0, set(WORKER_CPUS))
             except OSError:
                 pass
         self.mode, self.L_range, self.decision_s = mode, L_range, decision_s

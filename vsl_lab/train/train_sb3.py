@@ -18,6 +18,7 @@ import csv
 import json
 import os
 import signal
+import statistics
 import threading
 import time
 from pathlib import Path
@@ -25,7 +26,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from vsl_lab.config import (E_CORES, RUNS_ROOT, TEMP_HARD_C, TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S,
+from vsl_lab.config import (WORKER_CPUS, RUNS_ROOT, TEMP_HARD_C, TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S,
                             TEMP_SMOOTH_S)
 from vsl_lab.ops import ledger
 from vsl_lab.ops.thermal import package_temp_c
@@ -51,8 +52,8 @@ def make_env_fn(env_name: str, env_kwargs: dict, rank: int):
 
 
 class Watchdog(threading.Thread):
-    """Two-timescale thermal guard for training: the slow 10-min mean >= TEMP_PAUSE_C pauses all env workers,
-    < TEMP_RESUME_C resumes them; the fast 10 s mean >= TEMP_HARD_C pauses them immediately (excursion cap)."""
+    """Thermal guard for training: the slow 5-min median >= TEMP_PAUSE_C pauses all env workers, < TEMP_RESUME_C
+    resumes them; the fast 10 s mean >= TEMP_HARD_C (effectively off since 2026-10-02) pauses them immediately."""
 
     def __init__(self, pids_fn, poll_s=0.5):
         super().__init__(daemon=True)
@@ -81,7 +82,7 @@ class Watchdog(threading.Thread):
                 self.win.append(t)
                 self.slow.append(t)
             fast = sum(self.win) / len(self.win) if self.win else 0.0
-            slow = sum(self.slow) / len(self.slow) if self.slow else 0.0
+            slow = statistics.median(self.slow) if self.slow else 0.0   # 5-min median (author, 2026-10-02)
             self.max_smoothed = max(self.max_smoothed, fast)
             self.max_slow = max(self.max_slow, slow)
             if not self.paused and (slow >= TEMP_PAUSE_C or fast >= TEMP_HARD_C):
@@ -150,7 +151,7 @@ def main(argv=None) -> int:
     ap.add_argument("--tag", default="pilot")
     a = ap.parse_args(argv)
 
-    os.sched_setaffinity(0, set(E_CORES))
+    os.sched_setaffinity(0, set(WORKER_CPUS))
     torch.set_num_threads(1)
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 

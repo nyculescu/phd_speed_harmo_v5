@@ -72,11 +72,10 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Environment:** `/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314` (CPU torch; SUMO / libsumo 1.27.1, SB3 2.8.0), unless this repo's own env is confirmed working. Before runs: `unset SUMO_HOME; export OMP_NUM_THREADS=1`.
 - **libsumo,** one simulation per process, unique file names that include every varying parameter and the PID.
   - v5 used socket TraCI. That is why ~140 workers paid off; with libsumo they do not.
-- **Limits (author, 2026-10-01; replace the earlier 32 / 120 defaults):**
-  - **≤ 100 worker processes and CPU package (`coretemp` "Package id 0") < 90 °C.**
+- **Limits (author, 2026-10-02; replace the 2026-10-01 limits):**
+  - **≤ 100 worker processes.** Plain runs use **32 workers on all hardware threads** (the v6 sweet spot); E-core pinning is no longer used.
+  - **Thermal guard:** worry only when the **5-minute median** of the CPU package temperature (coretemp "Package id 0", the sensor btop shows; TjMax 100 °C) is **≥ 99 °C**. The guard pauses one job per 30 s at ≥ 99 °C and resumes one below 96 °C; the fast cap is off.
   - Temperature is controlled **by worker throttling only.** No power-profile, fan or other system changes.
-  - The thermal guard (author, 2026-10-01, later message) has two timescales: the smoothed 10-min mean pauses launches at ≥ 90 °C and resumes them below 87 °C, and the fast 10-s mean caps excursions at 93 °C.
-  - The v6 benchmark hit 96–100 °C at 32+ saturated workers, so expect N_max ≈ 16–24, measured by the calibration in roadmap R0.4.
 - **DRL training:** L learners × E SubprocVecEnv envs ≤ N_max, with `torch.set_num_threads(1)`. Torch's default threads made training 7–50× slower.
 - **CUDA** (`venv314cu`) only for large GNN/LSTM policies.
 - **Do not overlap heavy simulations with v6 runs.** The CPU is the bottleneck and runs at its thermal limit.
