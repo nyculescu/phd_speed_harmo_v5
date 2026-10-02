@@ -2,7 +2,8 @@
 # Author decisions 2026-10-02: Round 3 before B-P6; 0.2 s step. Chain: realism re-check at 0.2 s (t2_realism_protocol.md
 # Addendum B) -> Round 3 T-CAV0 -> T-X -> T0 -> T1c (round3_tm21_protocol.md; each stage stops itself if its gate
 # failed) -> B-P6 (round2_protocol.md). Waits on the running 0.5 s realism batch by PID (no pattern matching).
-# Usage: run_round3.sh <pid of the 0.5 s t2_realism run> <comma list of variants in the 0.2 s scope>
+# Usage: run_round3.sh <pid to wait for, or "none"> <comma list of variants in the 0.2 s scope> [workers for the re-check]
+# (2026-10-02: with the author's 99 C / 32-worker guard the re-check runs alongside the tail of the 0.5 s gate.)
 set -u
 P=/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314/bin/python
 R=/home/catalin/work/phd/vsl_lab_runs
@@ -10,13 +11,13 @@ L=$R/locks
 cd /run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v5
 unset SUMO_HOME; export OMP_NUM_THREADS=1
 echo $$ > $L/round3.pid
-while kill -0 "$1" 2>/dev/null; do sleep 30; done
+[ "$1" != "none" ] && while kill -0 "$1" 2>/dev/null; do sleep 30; done
 $P -m vsl_lab.jobs.t2_realism run --gate-ok --step 0.2 --variants "$2" --cal-seeds 7120260-7120269 \
-  --chk-seeds 7120270-7120289 > $R/t2/realism_step0.2_driver.log 2>&1
+  --chk-seeds 7120270-7120289 --workers "${3:-32}" > $R/t2/realism_step0.2_driver.log 2>&1
 for S in tcav0 tx t0 t1c; do
   $P -m vsl_lab.jobs.round3 $S --gate-ok > $R/t2/round3_$S.log 2>&1
 done
-$P -m vsl_lab.jobs.val_refs --track t1av25 --workers 10 --gate-ok > $R/t1/valrefs_av25.log 2>&1
+$P -m vsl_lab.jobs.val_refs --track t1av25 --gate-ok > $R/t1/valrefs_av25.log 2>&1
 ENV='{"inflow":[1000,2000],"warmup_s":40,"control_s":900,"action_map":"nocap_center","av_share":0.25}'
 $P -m vsl_lab.train.train_sb3 --env bn4 --algo ppo --reward out --updates 600 --n-envs 16 --n-steps 450 --batch 900 \
   --epochs 10 --lr 3e-4 --lr-decay --gamma 0.99 --gae 0.95 --net 128 128 --log-std-init -0.5 --seed 0 --val-every 25 \
