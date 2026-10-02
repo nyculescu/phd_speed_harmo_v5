@@ -1,0 +1,26 @@
+{
+ "protocol": "docs/lab/round2_protocol.md",
+ "frozen_at": "2026-10-02 09:09",
+ "tuned": {
+  "nc": {
+   "ctrl": "nc",
+   "score": 414.4190273206834
+  },
+  "cap": {
+   "ctrl": "cap:18",
+   "score": 408.2617847069243
+  },
+  "avfb": {
+   "ctrl": "avfb:2:10",
+   "score": 624.1384677068557
+  },
+  "meter": {
+   "ctrl": "meter:10:6",
+   "score": 226.09105604012808
+  }
+ },
+ "env_kwargs": {
+  "av_share": 0.25
+ },
+ "raw_root": "/home/catalin/work/phd/vsl_lab_runs/t1/round2_b_r2_1790955144"
+}
