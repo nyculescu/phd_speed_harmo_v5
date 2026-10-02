@@ -150,7 +150,10 @@ class SumoSim:
                 self._next_cp += self.checkpoint_s
 
     def due(self, t: float) -> int:
-        return bisect.bisect_right(self._dep_times, t + 1e-9)
+        """Vehicles SUMO must have processed by time t: depart < t. A vehicle with depart == t is inserted
+        in the step that starts at t, i.e. after getTime() == t is reported (R1 v1 counted it one step early:
+        448 false H-R1 FAILs of +1..+3 in 500 runs; end-of-run identities held in all 500)."""
+        return bisect.bisect_left(self._dep_times, t - 1e-9)
 
     # ---------------------------------------------------------------- health
     def _identities(self, running: int, npend: int) -> dict:
@@ -208,7 +211,7 @@ class SumoSim:
         """Run (with whatever controller state is active) until empty or t_max."""
         while self.t < t_max - 1e-9:
             if self.due(self.t) == self._total and ls.vehicle.getIDCount() == 0 and \
-                    len(ls.simulation.getPendingVehicles()) == 0:
+                    len(ls.simulation.getPendingVehicles()) == 0 and self.departed == self._total:
                 return True
             self.step(int(round(10.0 / self.dt)))
         return self.due(self.t) == self._total and ls.vehicle.getIDCount() == 0 and \

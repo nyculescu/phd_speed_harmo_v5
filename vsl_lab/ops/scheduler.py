@@ -19,8 +19,8 @@ from pathlib import Path
 import collections
 import os
 
-from vsl_lab.config import (E_CORES, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C, TEMP_PAUSE_C,
-                            TEMP_RESUME_C, TEMP_SMOOTH_S, clean_sumo_env)
+from vsl_lab.config import (E_CORES, MAX_LAUNCH_PER_S, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C,
+                            TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S, TEMP_SMOOTH_S, TEMP_STEP_S, clean_sumo_env)
 from vsl_lab.ops.thermal import load_fraction, package_temp_c
 
 
@@ -60,11 +60,16 @@ def sim_start_gate(gate_ok: bool) -> None:
 
 
 def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool = False,
-              poll_s: float = 0.5, hold_s: float = 10.0, verbose_every_s: float = 60.0,
+              poll_s: float = 0.5, hold_s: float = 5.0, verbose_every_s: float = 60.0,
               time_budget_s: float | None = None, job_factory=None) -> BatchReport:
     """Run jobs; if job_factory is given, keep generating jobs until time_budget_s (thermal calibration)."""
     max_workers = min(max_workers, MAX_WORKERS)
     sim_start_gate(gate_ok)
+    try:  # the scheduler itself (fork/exec, polling) also stays off the P-cores
+        os.sched_setaffinity(0, set(E_CORES))
+    except OSError:
+        pass
+    last_launch = 0.0
     batch_dir.mkdir(parents=True, exist_ok=True)
     logs = batch_dir / "job_logs"
     logs.mkdir(exist_ok=True)
@@ -79,9 +84,11 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
     last_verbose = t0
     tf = open(batch_dir / "thermal.csv", "w", newline="")
     tw = csv.writer(tf)
-    tw.writerow(["wall_s", "temp_c", "running", "paused", "done", "queued", "event", "raw_c"])
+    tw.writerow(["wall_s", "temp_c", "running", "paused", "done", "queued", "event", "raw_c", "slow_c"])
     k_factory = 0
-    window = collections.deque(maxlen=max(int(TEMP_SMOOTH_S / poll_s), 1))
+    window = collections.deque(maxlen=max(int(TEMP_SMOOTH_S / poll_s), 1))     # fast (10 s)
+    slow = collections.deque(maxlen=max(int(TEMP_SLOW_S / poll_s), 1))         # slow (10 min)
+    last_thermal_action = 0.0
 
     def launch(job: Job) -> None:
         job.log = logs / f"{job.jid}.log"
@@ -106,7 +113,9 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             raw = package_temp_c()
             if raw == raw:
                 window.append(raw)
-            temp = sum(window) / len(window) if window else raw   # smoothed; the sensor spikes per sample
+                slow.append(raw)
+            temp = sum(window) / len(window) if window else raw       # fast mean (excursion cap)
+            temp_slow = sum(slow) / len(slow) if slow else raw        # slow mean (pause / resume)
             temps.append(temp)
             event = ""
             # finished jobs
@@ -119,35 +128,42 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
                     job.result = _last_json_line(job.log)
                     done.append(job)
             n_paused = sum(j.paused for j in running)
-            # thermal control
-            if temp >= TEMP_PAUSE_C:
-                hot_since = hot_since or now
-                if now - hot_since >= hold_s or temp >= TEMP_HARD_C:
-                    active = [j for j in running if not j.paused]
-                    if active:
-                        j = max(active, key=lambda x: x.t_start)
-                        j.proc.send_signal(signal.SIGSTOP)
-                        j.paused = True
-                        n_pauses += 1
-                        event = f"pause {j.jid}"
-                        hot_since = now
-            else:
-                hot_since = None
-                if temp < TEMP_RESUME_C:
-                    paused = [j for j in running if j.paused]
-                    if paused:
-                        j = min(paused, key=lambda x: x.t_start)
-                        j.proc.send_signal(signal.SIGCONT)
-                        j.paused = False
-                        event = f"resume {j.jid}"
+            # thermal control: slow loop (10 min mean, 90 / 87 C, one action per TEMP_STEP_S) plus a fast
+            # excursion cap (10 s mean >= 93 C pauses the newest active job every poll)
+            active = [j for j in running if not j.paused]
+            paused_jobs = [j for j in running if j.paused]
+            if temp >= TEMP_HARD_C and active:
+                j = max(active, key=lambda x: x.t_start)
+                j.proc.send_signal(signal.SIGSTOP)
+                j.paused = True
+                n_pauses += 1
+                event = f"cap-pause {j.jid}"
+                last_thermal_action = now
+            elif now - last_thermal_action >= TEMP_STEP_S:
+                if temp_slow >= TEMP_PAUSE_C and active:
+                    j = max(active, key=lambda x: x.t_start)
+                    j.proc.send_signal(signal.SIGSTOP)
+                    j.paused = True
+                    n_pauses += 1
+                    event = f"pause {j.jid}"
+                    last_thermal_action = now
+                elif temp_slow < TEMP_RESUME_C and temp < TEMP_HARD_C - 1.0 and paused_jobs:
+                    j = min(paused_jobs, key=lambda x: x.t_start)
+                    j.proc.send_signal(signal.SIGCONT)
+                    j.paused = False
+                    event = f"resume {j.jid}"
+                    last_thermal_action = now
             # launches (only when cool enough and nothing is paused)
             n_paused = sum(j.paused for j in running)
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
-            while queue and len(running) < max_workers and temp < TEMP_PAUSE_C and n_paused == 0 \
-                    and not stop_launch:
+            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C - 1.0 \
+                    and n_paused == 0 \
+                    and not stop_launch and time.time() - last_launch >= 1.0 / MAX_LAUNCH_PER_S:
                 launch(queue.pop(0))
+                last_launch = time.time()
                 event = event or "launch"
-            tw.writerow([round(now - t0, 1), round(temp, 2), len(running), n_paused, len(done), len(queue), event, raw])
+            tw.writerow([round(now - t0, 1), round(temp, 2), len(running), n_paused, len(done), len(queue), event, raw,
+                         round(temp_slow, 2)])
             if now - last_verbose >= verbose_every_s:
                 tf.flush()
                 last_verbose = now
