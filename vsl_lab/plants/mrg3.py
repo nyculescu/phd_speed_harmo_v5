@@ -23,14 +23,33 @@ V_LIMIT = 33.33
 
 PLANTS = {"v1": ("krauss", "max"), "v2": ("idm", "max"), "v3": ("idm", "avg")}   # (car model, departSpeed)
 
+# Plant-realism gate driver variants (docs/lab/t2_realism_protocol.md). Values are vType attributes (cars, trucks)
+# plus extra SUMO options. SUMO silently ignores unknown vType attributes, so every variant is also checked
+# behaviourally (its NC run must differ from H0's).
+_IDM_CAR = 'carFollowModel="IDM" accel="1.0" decel="1.5" tau="1.0" minGap="2.0" delta="4" length="5"'
+_IDM_TRK = 'carFollowModel="IDM" accel="0.6" decel="1.5" tau="1.5" minGap="2.5" delta="4" length="12" maxSpeed="25"'
+_EIDM_IMP = 'sigmaleader="0.2" sigmagap="0.2" sigmaerror="0.3" treaction="0.6"'
+DRIVERS = {
+    "H0": {"car": _IDM_CAR, "trk": _IDM_TRK, "args": []},
+    "H1": {"car": _IDM_CAR + ' actionStepLength="1.0"', "trk": _IDM_TRK + ' actionStepLength="1.0"', "args": []},
+    "H2": {"car": _IDM_CAR, "trk": _IDM_TRK,
+           "args": ["--device.driverstate.probability", "1.0", "--device.driverstate.initialAwareness", "0.7"]},
+    "H3": {"car": 'carFollowModel="W99" length="5"', "trk": 'carFollowModel="W99" length="12" maxSpeed="25"', "args": []},
+    "H4": {"car": _IDM_CAR.replace('"IDM"', '"EIDM"') + " " + _EIDM_IMP,
+           "trk": _IDM_TRK.replace('"IDM"', '"EIDM"') + " " + _EIDM_IMP, "args": []},
+}
 
-def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str = "krauss") -> str:
-    """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2 (Treiber-style IDM, pre-registered 2026-10-02)."""
+
+def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str = "krauss",
+               driver: str | None = None) -> str:
+    """model='krauss' = MRG3-v1 (SUMO defaults); model='idm' = MRG3-v2/v3 (Treiber-style IDM). driver=H0..H4
+    overrides the car/truck models with a realism-gate variant (DRIVERS)."""
     pc = (1.0 - p_noncompliant) * (1.0 - truck_share)
     pn = p_noncompliant * (1.0 - truck_share)
-    if model == "idm":
-        car = 'carFollowModel="IDM" accel="1.0" decel="1.5" tau="1.0" minGap="2.0" delta="4" length="5" '
-        trk = 'carFollowModel="IDM" accel="0.6" decel="1.5" tau="1.5" minGap="2.5" delta="4" length="12" maxSpeed="25" '
+    if driver is not None:
+        car, trk = DRIVERS[driver]["car"] + " ", DRIVERS[driver]["trk"] + " "
+    elif model == "idm":
+        car, trk = _IDM_CAR + " ", _IDM_TRK + " "
     else:
         car = ""
         trk = 'length="12" accel="1.3" decel="4.0" maxSpeed="25" '
@@ -44,8 +63,8 @@ def vtypes_xml(p_noncompliant: float = 0.3, truck_share: float = 0.1, model: str
 
 
 def demand(seed: int, main_profile: list, ramp_profile: list, p_noncompliant: float = 0.3,
-           truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max") -> Demand:
-    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model),
+           truck_share: float = 0.1, model: str = "krauss", depart_speed: str = "max", driver: str | None = None) -> Demand:
+    d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, model, driver),
                routes=[Route("main", net.MAIN_ROUTE, main_profile, depart_lane="best", depart_speed=depart_speed),
                        Route("ramp", net.RAMP_ROUTE, ramp_profile, depart_lane="0", depart_speed=depart_speed)],
                step_length=STEP_LENGTH, seed=seed, human_type="mix", av_type="mix")

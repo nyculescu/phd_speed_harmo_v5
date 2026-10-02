@@ -26,6 +26,11 @@ from vsl_lab.plants import mrg3 as P
 from vsl_lab.sim.runner import SumoSim
 
 
+# 10 s speed probes (edge, lane position; mean speed of vehicles within +-50 m): x ~ 500, 1500, 2500, 3250, 3735 m
+# (merge starts at x = 4000). Used by the realism gate (docs/lab/t2_realism_protocol.md).
+PROBES = (("up3", 500.0), ("up2", 500.0), ("up1", 500.0), ("up0a", 250.0), ("up0b", 233.0))
+
+
 def capacity_drop(ts: list) -> dict:
     """ts rows: (t, exit_flow_vph_total, speed_up0b_kmh). 5-min (10 x 30 s) rolling means."""
     if len(ts) < 20:
@@ -52,20 +57,22 @@ def capacity_drop(ts: list) -> dict:
 
 
 def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, truck: float, tag: str, out_root: Path,
-        t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1") -> dict:
+        t_end: float = 3900.0, t_ctrl0: float = 300.0, t_max: float = 10800.0, plant: str = "v1",
+        driver: str | None = None) -> dict:
     model, dspeed = P.PLANTS[plant]
-    run_id = (f"mrg3{plant}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}"
-              f"_pid{os.getpid()}")
+    run_id = (f"mrg3{plant}{'' if driver is None else driver}_{ctrl.replace(':', '_')}_s{seed}_m{int(main_peak)}"
+              f"_r{int(ramp_peak)}_nc{p_nc:g}_tr{truck:g}_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     f = P.files()
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
     rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end)
-    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed)
+    dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed,
+                   driver=driver)
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=P.STEP_LENGTH, checkpoint_s=300.0,
-                  seed=seed, stuck_wait_s=180.0)
+                  seed=seed, stuck_wait_s=180.0, extra_args=(P.DRIVERS[driver]["args"] if driver else []))
     sim.start()
     sens = P.Sensors(f["lanes"])
     mt = None
@@ -77,7 +84,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         mt = MTFC(**dict(zip(names, vals)))
     elif ctrl.startswith("const:"):
         b_const = float(ctrl.split(":")[1])
-    ts, bs, feats = [], [], []
+    ts, bs, feats, probes = [], [], [], []
     dens_samples, qc_hist = [], []
     b_app, b_acc = 1.0, 1.0
     next_loop, next_ctrl, next_samp = 30.0, t_ctrl0 + 60.0, 10.0
@@ -93,6 +100,12 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         sim.run_until(sim.t + 10.0)
         if sim.t >= next_samp - 1e-9:
             dens_samples.append(sens.density_merge_vkl())
+            row = [round(sim.t, 1)]
+            for e, x in PROBES:
+                vs = [ls.vehicle.getSpeed(v) for v in ls.edge.getLastStepVehicleIDs(e)
+                      if abs(ls.vehicle.getLanePosition(v) - x) <= 50.0]
+                row.append(round(float(np.mean(vs)), 3) if vs else "")
+            probes.append(row)
             next_samp += 10.0
         if sim.t >= next_loop - 1e-9:
             q_exit = sum(ls.inductionloop.getLastIntervalVehicleNumber(f"e1_down_{i}") for i in range(3)) * 120.0
@@ -137,6 +150,10 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     })
     out.pop("arrivals_bins", None)
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1, default=str))
+    with open(run_dir / "probes10.csv", "w") as fh:
+        fh.write("t," + ",".join(f"{e}@{int(x)}" for e, x in PROBES) + "\n")
+        for r in probes:
+            fh.write(",".join(str(x) for x in r) + "\n")
     hdr = ["t"] + [f"{e}_{k}" for e in ("up3", "up2", "up1", "up0a", "up0b", "down") for k in ("q", "v", "vspread")] \
         + ["rho_merge", "rho_down", "q_ramp", "b"]
     with open(run_dir / "features.csv", "w") as fh:
@@ -159,10 +176,12 @@ def main(argv=None) -> int:
     ap.add_argument("--p-nc", type=float, default=0.3)
     ap.add_argument("--truck", type=float, default=0.1)
     ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
+    ap.add_argument("--driver", default=None, choices=["H0", "H1", "H2", "H3", "H4"])
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)
-    out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant)
+    out = run(a.ctrl, a.seed, a.main_peak, a.ramp_peak, a.p_nc, a.truck, a.tag, Path(a.out_root), plant=a.plant,
+              driver=a.driver)
     keys = ("run_id", "mean_time_in_system_s", "time_main_s", "time_ramp_s", "capdrop", "min_b", "teleports", "drained",
             "wall_s")
     print(json.dumps({k: out.get(k) for k in keys} | {"health": out["health"]["status"],

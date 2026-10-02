@@ -44,6 +44,14 @@ def main(argv=None) -> int:
     if not (r1.get("T1", {}).get("PASS") and r1.get("T0", {}).get("PASS")):
         print(json.dumps({"skipped": "T2 R1 T1/T0 did not pass", "r1": {k: r1.get(k, {}).get("PASS") for k in ("T1", "T0")}}))
         return 0
+    if a.plant == "v3":   # MRG3-v3 = realism variant H0 (docs/lab/t2_realism_protocol.md): R2 only after an H0 PASS
+        vp = REPO_ROOT / "docs" / "lab" / "t2_realism_verdict.json"
+        verdict = json.loads(vp.read_text()).get("verdict", {}).get("H0") if vp.exists() else None
+        if verdict != "PASS":
+            print(json.dumps({"skipped": "realism gate: H0 has no PASS", "H0": verdict}))
+            ledger.append("T2", "R2", "S", "mrg3v3_r2", {"gate": "realism"}, "-", 0, {}, {"skipped": f"H0 {verdict}"},
+                          notes="blocked by docs/lab/t2_realism_protocol.md")
+            return 0
     m, r = (int(x) for x in r1["cell"].split("/"))
     root = Path(a.batch_root) if a.batch_root else RUNS_ROOT / "t2" / f"r2{suffix}_{int(time.time())}"
     if not a.analyse_only:

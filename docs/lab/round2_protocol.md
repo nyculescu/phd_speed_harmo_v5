@@ -96,3 +96,15 @@ One batch at a time. Thermal guard per `CLAUDE.md`.
   - T1c gets one MTFC set-point grid adapted to IDM densities: ρ̂ ∈ {20, 25, 32} with the paper gains, plus const 0.6 / 0.8.
 - **v3 R2** (only if T1 and T0 pass): tuning seeds 7,120,150–7,120,169, with the R2 protocol grid and compliance classes.
 - Seeds 7,120,100–7,120,169 were never used before; their reassignment from the unused T2 R2 range is disclosed.
+
+---
+
+## A-track stop after A-T0 / A-R2 (2026-10-02, logged before any A-P5 run)
+
+**A-T0 FAILED.** Posted VSL does not bind on BN4: the outflow changes by −0.8 % and +3.5 %, and both CIs include 0 (`round2_a_t0.md`).
+
+**A-R2 confirms it** (`round2_a_r2.md`). Every posted-VSL and MTFC setting scores 427–430 s, against 430 s for NC. The tuned meter scores 270 s.
+
+**Why the actuator cannot work here.** BN4's 4 → 2 → 1 zipper is a lane-drop bottleneck. Four lanes, even at very low speed limits, still feed more than the bottleneck can discharge.
+
+**A-P5 (DRL on posted VSL) is therefore not run.** A policy limited to an actuator that does not bind cannot beat NC through that actuator. The decision follows the A-T0 gate's logic, but was taken after seeing A-R2, and is disclosed as such. Posted VSL stays the thesis core on the **merge** plant (Track 2), where T0 is checked separately.
