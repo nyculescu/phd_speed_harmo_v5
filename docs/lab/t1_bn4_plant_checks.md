@@ -1,68 +1,53 @@
 # Track 1 (BN4), R1 plant checks: results
 
-*2026-10-01 22:27 · protocol `docs/lab/t1_bn4_plant_checks_protocol.md` · raw runs `/home/catalin/work/phd/vsl_lab_runs/t1/r1_1790918463` · workers 10*
+*2026-10-01 23:12 · protocol `docs/lab/t1_bn4_plant_checks_protocol.md` · raw runs `/home/catalin/work/phd/vsl_lab_runs/t1/r1_1790920729` · workers 10*
 
 ## T1 capacity drop (lane changing off): **PASS**
 
-- 220 runs; health {'PASS': 144, 'WARN': 76, 'FAIL': 0}; runs with codes {'H-R2': 76}; teleports 0.
-- Peak median outflow **1087 veh/h** at q = 1200; mean median outflow at q = 2,200–2,500 **900 veh/h**; ratio **0.828** (PASS needs ≤ 0.95).
+- 220 runs; health {'PASS': 136, 'WARN': 84, 'FAIL': 0}; runs with codes {'H-R2': 77, 'H-R4b': 9}; teleports 0.
+- Peak median outflow **1044 veh/h** at q = 1300; mean median outflow at q = 2,200–2,500 **900 veh/h**; ratio **0.862** (PASS needs ≤ 0.95).
 
 | q (veh/h) | median outflow | min | max |
 |---|---|---|---|
-| 400 | 410 | 317 | 468 |
-| 500 | 500 | 410 | 612 |
-| 600 | 634 | 526 | 677 |
-| 700 | 680 | 626 | 878 |
-| 800 | 796 | 684 | 922 |
-| 900 | 893 | 792 | 1051 |
-| 1000 | 990 | 878 | 1152 |
-| 1100 | 1004 | 900 | 1123 |
-| 1200 | 1087 | 900 | 1260 |
-| 1300 | 904 | 893 | 1174 |
-| 1400 | 900 | 900 | 958 |
-| 1500 | 900 | 900 | 950 |
-| 1600 | 900 | 900 | 907 |
-| 1700 | 900 | 893 | 907 |
-| 1800 | 900 | 900 | 900 |
+| 400 | 414 | 302 | 446 |
+| 500 | 493 | 410 | 605 |
+| 600 | 626 | 490 | 691 |
+| 700 | 680 | 634 | 878 |
+| 800 | 803 | 677 | 929 |
+| 900 | 900 | 785 | 1073 |
+| 1000 | 972 | 850 | 1130 |
+| 1100 | 1030 | 900 | 1274 |
+| 1200 | 1033 | 893 | 1109 |
+| 1300 | 1044 | 900 | 1267 |
+| 1400 | 900 | 893 | 1354 |
+| 1500 | 900 | 893 | 1267 |
+| 1600 | 900 | 900 | 900 |
+| 1700 | 900 | 900 | 907 |
+| 1800 | 900 | 893 | 900 |
 | 1900 | 900 | 893 | 907 |
-| 2000 | 900 | 893 | 900 |
-| 2100 | 900 | 900 | 907 |
-| 2200 | 900 | 900 | 907 |
-| 2300 | 900 | 893 | 900 |
+| 2000 | 900 | 893 | 907 |
+| 2100 | 900 | 893 | 907 |
+| 2200 | 900 | 893 | 900 |
+| 2300 | 900 | 893 | 907 |
 | 2400 | 900 | 893 | 900 |
-| 2500 | 900 | 900 | 900 |
+| 2500 | 900 | 893 | 907 |
 
 ## T1-L (lane changing on; exploratory)
 
-- 220 runs; health {'PASS': 145, 'WARN': 75, 'FAIL': 0}; teleports 0; peak 1141 veh/h at q = 1200; high mean 900; ratio 0.789.
+- 220 runs; health {'PASS': 129, 'WARN': 91, 'FAIL': 0}; teleports 0; peak 1289 veh/h at q = 1400; high mean 900; ratio 0.698.
 
 ## T0 actuator (AV cap): **FAIL**
 
-- 60 runs; health {'PASS': 28, 'WARN': 32, 'FAIL': 0}.
+- 60 runs; health {'PASS': 10, 'WARN': 50, 'FAIL': 0}.
 
 | cell | none median | median Δ (cap − none) | 95 % CI | rel. | binds | median lag (s) |
 |---|---|---|---|---|---|---|
-| q1200_cap10 | 900 | +0 | [-166, +7] | +0.0% | False | 25.0 |
-| q1200_cap5 | 900 | -11 | [-158, +18] | -1.2% | False | 0.0 |
-| q2000_cap10 | 900 | +0 | [+0, +0] | +0.0% | False | 210.0 |
-| q2000_cap5 | 900 | +0 | [-32, +4] | +0.0% | False | 0.0 |
+| q1200_cap10 | 972 | -4 | [-198, +86] | -0.4% | False | 10.0 |
+| q1200_cap5 | 972 | -61 | [-238, +7] | -6.3% | False | 5.0 |
+| q2000_cap10 | 900 | +0 | [+0, +0] | +0.0% | False | 120.0 |
+| q2000_cap5 | 900 | +14 | [-14, +25] | +1.6% | False | 0.0 |
 
 ## T3 determinism: **PASS**
 
 - 10/10 identical hashes.
 
-
-## T0b (preventive actuator authority): results
-
-*2026-10-01 22:29 · 160 runs · health {'WARN': 39, 'PASS': 121} · raw `/home/catalin/work/phd/vsl_lab_runs/t1/t0b_1790918900`*
-
-**AV cap family: PASS · meter: PASS**
-
-| cell | nc median outflow | arm median outflow | Δ outflow [95 % CI] | rel. | Δ time in system (s) [95 % CI] |
-|---|---|---|---|---|---|
-| q1600_cap:5 | 1012 | 884 | -86 [-188, -42] | -8.5% | +81.1 [+41.3, +155.6] |
-| q1600_cap:10 | 1012 | 936 | +0 [-50, +0] | +0.0% | +0.5 [+0.1, +49.3] |
-| q1600_meter:20:8 | 1012 | 1292 | +224 [+124, +358] | +22.1% | -150.9 [-179.3, -82.1] |
-| q2000_cap:5 | 968 | 892 | -68 [-124, -36] | -7.0% | +68.1 [+33.0, +117.3] |
-| q2000_cap:10 | 968 | 920 | -4 [-54, +0] | -0.4% | +3.1 [+0.1, +50.7] |
-| q2000_meter:20:8 | 968 | 1218 | +238 [+130, +446] | +24.6% | -190.4 [-267.6, -138.9] |

@@ -108,9 +108,9 @@ class RingPlant:
         order = list(ringnet.EDGES)
         lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<routes>",
                  '  <vType id="human" length="5" minGap="0" accel="5" decel="9" emergencyDecel="9" sigma="0" '
-                 'speedFactor="1" maxSpeed="30"/>',
+                 'speedFactor="1" speedDev="0" maxSpeed="30"/>',
                  '  <vType id="av" length="5" minGap="0" accel="5" decel="9" emergencyDecel="9" sigma="0" '
-                 'speedFactor="1" maxSpeed="30" color="1,0,0"/>']
+                 'speedFactor="1" speedDev="0" maxSpeed="30" color="1,0,0"/>']
         spacing = self.L / N_VEH
         cum = np.cumsum([0.0] + [self.elen[e] for e in order])
         for i in range(N_VEH):
@@ -121,7 +121,10 @@ class RingPlant:
             route = " ".join(order[(k + j) % 4] for j in range(4 * 400))
             vid = AV_ID if i == 0 else f"h_{i}"
             vt = "av" if i == 0 else "human"
-            dpos = min(max(pos, VEH_LEN + 0.01), self.elen[order[k]] - 0.01)   # front bumper inside the edge
+            # Front bumper position. SUMO accepts departPos < vehicle length (the back hangs over the previous
+            # edge); the earlier clamp to >= 5.01 m pushed cars onto their neighbours on short rings and SUMO then
+            # refused to insert one of them (21 vehicles; caught by health H-R1 in ring R1/R2 v1).
+            dpos = min(max(pos, 0.01), self.elen[order[k]] - 0.01)
             lines.append(f'  <vehicle id="{vid}" type="{vt}" depart="0" departPos="{dpos:.3f}" '
                          f'departSpeed="0">\n    <route edges="{route}"/>\n  </vehicle>')
         lines.append("</routes>")
