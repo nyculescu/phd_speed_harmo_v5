@@ -86,6 +86,7 @@ class SumoSim:
         self.max_pending = 0
         self.arrivals_bins = {}    # bin index -> arrivals
         self.arrived_by_route = {}
+        self.arrival_t = {}        # vid -> arrival time (door-to-door per route at the end)
         self._next_cp = checkpoint_s
         self._started = False
         self._wall0 = None
@@ -128,6 +129,7 @@ class SumoSim:
                 for vid in arr_ids:
                     rid = vid.rsplit(".", 1)[0]
                     self.arrived_by_route[rid] = self.arrived_by_route.get(rid, 0) + 1
+                    self.arrival_t[vid] = self.t
             self.tele_start += ls.simulation.getStartingTeleportNumber()
             self.tele_end += ls.simulation.getEndingTeleportNumber()
             self.collisions += ls.simulation.getCollidingVehiclesNumber()
@@ -148,6 +150,17 @@ class SumoSim:
             if self.t >= self._next_cp - 1e-9:
                 self.checkpoint(running, npend)
                 self._next_cp += self.checkpoint_s
+
+    def time_in_system_by_route(self, t_censor: float | None = None) -> dict:
+        """Door-to-door time per route: arrival (or censor time) minus DESIRED departure, incl. origin queue."""
+        tc = self.t if t_censor is None else t_censor
+        out = {}
+        for dep, vid, rid, _ in self.demand.vehicles:
+            a = self.arrival_t.get(vid, tc)
+            o = out.setdefault(rid, [0.0, 0])
+            o[0] += a - dep
+            o[1] += 1
+        return {r: {"mean_s": v[0] / max(v[1], 1), "n": v[1]} for r, v in out.items()}
 
     def due(self, t: float) -> int:
         """Vehicles SUMO must have processed by time t: depart < t. A vehicle with depart == t is inserted
