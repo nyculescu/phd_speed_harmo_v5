@@ -162,7 +162,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
             tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
             last_launch = now
-            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C - 1.0 \
+            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
                     and n_paused == 0 and not stop_launch and tokens >= 1.0:
                 launch(queue.pop(0))
                 tokens -= 1.0
