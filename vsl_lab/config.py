@@ -25,7 +25,7 @@ MAX_WORKERS = 100
 TEMP_HARD_C = 93.0      # excursion cap on the FAST (10 s) mean: pause every poll while >= 93
 TEMP_PAUSE_C = 90.0     # SLOW (10 min) mean >= 90 -> pause one job per step period (author, 2026-10-01)
 TEMP_RESUME_C = 87.0    # SLOW (10 min) mean < 87 -> resume one job per step period
-MAX_LAUNCH_PER_S = 3.0  # job-start churn heats the package even when few jobs run
+MAX_LAUNCH_PER_S = 5.0  # token bucket; 3.0 + one-launch-per-poll throttled short-job batches to ~2 jobs/s at 63-79 C
 SIM_START_MAX_LOAD = 0.15  # fraction of logical CPUs (sim-start gate fallback)
 
 # Thermal finding (2026-10-01, vsl_lab/ops/ecore_probe.py): ONE simulation on a P-core (5.4-5.6 GHz turbo)

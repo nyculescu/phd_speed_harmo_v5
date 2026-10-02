@@ -31,6 +31,7 @@ def run(inflow: float, seed: int, t_demand: float, t_max: float, av_share: float
     dem.write(rou)
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=bn4.STEP_LENGTH,
                   checkpoint_s=300.0, seed=seed)
+    av_ids = {vid for _, vid, _, vt in dem.vehicles if vt == "av"}
     sim.start()
     bn4.set_all_green()
     sim.asserts.append(bn4.assert_all_green)
@@ -49,7 +50,7 @@ def run(inflow: float, seed: int, t_demand: float, t_max: float, av_share: float
         if capped:  # T0 step test: cap every AV currently on edges 2-4
             for e in ("2", "3", "4"):
                 for vid in ls.edge.getLastStepVehicleIDs(e):
-                    if ls.vehicle.getTypeID(vid) == "av":
+                    if vid in av_ids:
                         ls.vehicle.setMaxSpeed(vid, av_cap)
     drained = sim.drain(t_max)
     # final loop reading only if a full period just closed

@@ -69,7 +69,8 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
         os.sched_setaffinity(0, set(E_CORES))
     except OSError:
         pass
-    last_launch = 0.0
+    last_launch = time.time()
+    tokens = 1.0
     batch_dir.mkdir(parents=True, exist_ok=True)
     logs = batch_dir / "job_logs"
     logs.mkdir(exist_ok=True)
@@ -156,11 +157,12 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             # launches (only when cool enough and nothing is paused)
             n_paused = sum(j.paused for j in running)
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
+            tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
+            last_launch = now
             while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C - 1.0 \
-                    and n_paused == 0 \
-                    and not stop_launch and time.time() - last_launch >= 1.0 / MAX_LAUNCH_PER_S:
+                    and n_paused == 0 and not stop_launch and tokens >= 1.0:
                 launch(queue.pop(0))
-                last_launch = time.time()
+                tokens -= 1.0
                 event = event or "launch"
             tw.writerow([round(now - t0, 1), round(temp, 2), len(running), n_paused, len(done), len(queue), event, raw,
                          round(temp_slow, 2)])

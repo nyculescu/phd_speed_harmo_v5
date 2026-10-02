@@ -1,0 +1,25 @@
+{
+ "protocol": "docs/lab/t1_bn4_r2_baselines_protocol.md",
+ "frozen_at": "2026-10-01 22:56",
+ "tuned": {
+  "nc": {
+   "ctrl": "nc",
+   "score": 414.17303578572404
+  },
+  "cap": {
+   "ctrl": "cap:3",
+   "score": 414.17441580989356
+  },
+  "meter": {
+   "ctrl": "meter:10:6",
+   "score": 227.3476947724336
+  }
+ },
+ "per_cell_best": {
+  "1200": "nc",
+  "1600": "meter:20:6",
+  "2000": "meter:10:6",
+  "2400": "meter:10:6"
+ },
+ "raw_root": "/home/catalin/work/phd/vsl_lab_runs/t1/r2_1790919086"
+}

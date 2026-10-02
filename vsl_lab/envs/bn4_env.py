@@ -65,7 +65,7 @@ class BN4Env(gym.Env):
                  control_s: float = 900.0, decision_s: float = 1.0, reward: str = "out",
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
-                 quiet: bool = True):
+                 quiet: bool = True, check_actuator: bool = True):
         super().__init__()
         if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
             try:
@@ -88,6 +88,7 @@ class BN4Env(gym.Env):
         self.tag = tag
         self.drain_after = drain_after
         self.meter_on = meter
+        self.check_actuator = check_actuator
         self.t_drain_max = t_drain_max
         self.meter = None
         self.files = bn4.files()
@@ -121,7 +122,7 @@ class BN4Env(gym.Env):
                 p = self._piece(e, ls.vehicle.getLanePosition(vid), k)
                 s = (e, ln, p)
                 v = ls.vehicle.getSpeed(vid)
-                if ls.vehicle.getTypeID(vid) == "av":
+                if vid in self.av_ids:
                     na[s] += 1
                     va[s] += v
                 else:
@@ -153,7 +154,7 @@ class BN4Env(gym.Env):
         capmap = {s: float(c) for s, c in zip(self.act_slots, self.slot_caps)}
         for e in ("1", "2", "3", "4", "5"):
             for vid in ls.edge.getLastStepVehicleIDs(e):
-                if ls.vehicle.getTypeID(vid) != "av":
+                if vid not in self.av_ids:
                     continue
                 if e in ACT_PIECES:
                     s = (e, ls.vehicle.getLaneIndex(vid), self._piece(e, ls.vehicle.getLanePosition(vid), ACT_PIECES[e]))
@@ -161,6 +162,22 @@ class BN4Env(gym.Env):
                     ls.vehicle.setMaxSpeed(vid, max(capmap[s], v - 1.5 * dt, 0.5))
                 else:
                     ls.vehicle.setMaxSpeed(vid, 30.0)
+
+    def _check_actuator(self) -> None:
+        bad = 0
+        capmap = {sl: float(c) for sl, c in zip(self.act_slots, self.slot_caps)}
+        for e, k in ACT_PIECES.items():
+            for vid in ls.edge.getLastStepVehicleIDs(e):
+                if vid not in self.av_ids:
+                    continue
+                sl = (e, ls.vehicle.getLaneIndex(vid), self._piece(e, ls.vehicle.getLanePosition(vid), k))
+                ms = ls.vehicle.getMaxSpeed(vid)
+                # applied cap = max(slot cap, v - 1.5 dt, 0.5) at the last decision; allow 2 m/s slack for motion
+                if ms > max(capmap[sl], ls.vehicle.getSpeed(vid) + 2.0, 0.5) + 1e-6:
+                    bad += 1
+        self.n_actuator_checks += 1
+        if bad:
+            self.sim.health.add("FAIL", "H-R7", self.sim.t, f"{bad} AVs on controlled edges without their cap")
 
     def _advance(self, seconds: float) -> int:
         a0 = self.sim.arrived
@@ -190,6 +207,9 @@ class BN4Env(gym.Env):
         rou = run_dir / f"routes_q{int(q)}_s{ep_seed}_pid{os.getpid()}.rou.xml"
         run_dir.mkdir(parents=True, exist_ok=True)
         dem.write(rou)
+        # AVs by id: after the first setMaxSpeed SUMO gives a vehicle its own type 'av@<vid>', so getTypeID
+        # cannot identify AVs (this silently disabled the actuator in R2 v1)
+        self.av_ids = {vid for _, vid, _, vt in dem.vehicles if vt == "av"}
         self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
                            step_length=bn4.STEP_LENGTH, checkpoint_s=300.0, seed=ep_seed)
         self.sim.start()
@@ -198,6 +218,7 @@ class BN4Env(gym.Env):
         self.arrivals_20s.clear()
         self.prev_action = np.zeros(len(self.act_slots), dtype=np.float32)
         self.slot_caps = np.full(len(self.act_slots), SPEED, dtype=np.float64)
+        self.n_actuator_checks = 0
         self.ep_info = {"seed": ep_seed, "inflow": q, "ret": 0.0}
         self.meter = FBMeter() if self.meter_on else None
         if self.meter is not None:   # the TLS is now driven by the meter, not held at all-green
@@ -211,6 +232,8 @@ class BN4Env(gym.Env):
         if self.meter is not None:
             self.meter.step(self.sim.t)
         self._apply(np.asarray(action, dtype=np.float32))
+        if self.check_actuator and int(self.sim.t) % 60 == 0:
+            self._check_actuator()
         self.prev_action = np.clip(np.asarray(action, dtype=np.float32), -1, 1)
         n0_tts = self.sim.tts_system
         self._advance(self.decision_s)
@@ -240,7 +263,7 @@ class BN4Env(gym.Env):
             drained = None
             if self.drain_after:   # uncontrolled drain: release AV caps, all-green, run until empty
                 for vid in ls.vehicle.getIDList():
-                    if ls.vehicle.getTypeID(vid) == "av":
+                    if vid in self.av_ids:
                         ls.vehicle.setMaxSpeed(vid, 30.0)
                 if self.meter is not None:
                     bn4.set_all_green()
