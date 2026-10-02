@@ -123,3 +123,35 @@ The best-validation checkpoints behave the same: ≈ NC when congested and +5 % 
 - The infrastructure meter beats everything by 45 %.
 
 **P1c's single-seed screening pass was a false positive.** Two things produced it: 6-episode validation noise, and selection over 5 variants. The multi-seed F class and the test-seed R5 caught it, as designed.
+
+## p2b_ring_hyb (t3) · 2026-10-02 03:10
+
+References on the same validation seeds (mean_val_speed): no control 3.579283333333333, best constant 3.847716666666667, tuned classical 4.1594500000000005.
+
+![p2b_ring_hyb](figs/p2b_ring_hyb.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 3.850058112795961 | 3.5488276141006914 | 3.549251481661047 (400) | False | True | False | False | False | 0 | **FAIL** |
+
+## p3b_ring_dir (t3) · 2026-10-02 03:20
+
+References on the same validation seeds (mean_val_speed): no control 3.579283333333333, best constant 3.847716666666667, tuned classical 4.1594500000000005.
+
+![p3b_ring_dir](figs/p3b_ring_dir.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 600 | 3.8707829608026816 | 3.6061642264100287 | 3.6061642264100287 (100) | False | True | False | False | False | 0 | **FAIL** |
+
+## f2_bn4 (t1) · 2026-10-02 05:43
+
+References on the same validation seeds (mean_val_outflow): no control 992.0, best constant 1054.0, tuned classical 1343.3333333333333.
+
+![f2_bn4](figs/f2_bn4.png)
+
+| seed | updates | initial | final | best val (update) | C1 val | C1 reward | C3 ≥ NC+5% | C2 > const | beats tuned classical | health FAIL | screening |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2 | 1000 | 984.0 | 1024.888888888889 | 1044.888888888889 (950) | True | False | True | False | False | 0 | **FAIL** |
+| 1 | 1000 | 984.4444444444445 | 964.8888888888889 | 1037.7777777777778 (400) | False | True | False | False | False | 0 | **FAIL** |
+| 0 | 1000 | 984.4444444444445 | 1003.5555555555555 | 1042.6666666666667 (300) | True | True | True | False | False | 0 | **FAIL** |

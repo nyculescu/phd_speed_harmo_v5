@@ -1,0 +1,8 @@
+{
+ "n_runs": 30,
+ "n_seeds": 30,
+ "horizon_s": 300.0,
+ "results": {},
+ "auc_gain_F2_minus_F0": NaN,
+ "precursors_informative": false
+}

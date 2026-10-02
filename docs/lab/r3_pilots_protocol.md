@@ -123,3 +123,18 @@ A pilot that meets C1 + C3 + C2 goes to an **F-class** run: ≥ 500 updates, 3 l
 **Decision.**
 - If F2 also stays ≈ NC on test seeds, explanation (2) is favoured, and the next pre-registration is the AV-penetration axis (25 % AVs, with baselines re-evaluated at that share).
 - If F2 beats NC and the best constant per the R5 reading, the BN4 result is reported with all variants listed.
+
+## Addendum E (2026-10-02 07:45, after P2b/P3b and F2; before P2c/P2d run)
+
+**F2.** The stability fix (4× batch, learning-rate decay) gives a stable policy that stays ≈ NC on test seeds: within ±0.3 % when congested, +1.5 % at q = 1,200. Per addendum D, explanation (2), **authority**, is favoured for BN4 with 10 % AVs.
+
+**P2b and P3b (ring, speed-only reward).** Both FAIL; validation worsened during training.
+- Inspection of P2b's final deterministic policy: it sets U to 7.5–8.3 m/s on average (range 5.1–10), well above v_e (3.45 at L = 230; 4.82 at L = 260).
+- **Diagnosis: action→effect lag.** Raising U pays immediately in the per-step mean-speed reward, while the stop-and-go wave it triggers costs speed 30–60 s later. With γ 0.99 and GAE λ 0.95 at 1 s decisions, the effective credit horizon is ≈ 20 s.
+
+**Pre-registered lag fixes.** Hybrid ring, speed-only reward, shield; same validation seeds and criteria.
+
+| ID | Change | Updates |
+|---|---|---|
+| P2c | γ 0.995, GAE λ 0.99, decision (U hold) 2 s, 8 envs × 150 steps | 600 |
+| P2d | γ 0.995, GAE λ 0.99, decision (U hold) 5 s, 8 envs × 60 steps | 600 |
