@@ -1,10 +1,10 @@
 # Track 1 (BN4), R1 plant checks: results
 
-*2026-10-01 22:19 · protocol `docs/lab/t1_bn4_plant_checks_protocol.md` · raw runs `/home/catalin/work/phd/vsl_lab_runs/t1/r1_1790917936` · workers 12*
+*2026-10-01 22:27 · protocol `docs/lab/t1_bn4_plant_checks_protocol.md` · raw runs `/home/catalin/work/phd/vsl_lab_runs/t1/r1_1790918463` · workers 10*
 
-## T1 capacity drop (lane changing off): **FAIL**
+## T1 capacity drop (lane changing off): **PASS**
 
-- 220 runs; health {'PASS': 81, 'WARN': 16, 'FAIL': 123}; runs with codes {'H-R1': 123, 'H-R2': 76}; teleports 0.
+- 220 runs; health {'PASS': 144, 'WARN': 76, 'FAIL': 0}; runs with codes {'H-R2': 76}; teleports 0.
 - Peak median outflow **1087 veh/h** at q = 1200; mean median outflow at q = 2,200–2,500 **900 veh/h**; ratio **0.828** (PASS needs ≤ 0.95).
 
 | q (veh/h) | median outflow | min | max |
@@ -34,11 +34,11 @@
 
 ## T1-L (lane changing on; exploratory)
 
-- 220 runs; health {'PASS': 81, 'WARN': 16, 'FAIL': 123}; teleports 0; peak 1141 veh/h at q = 1200; high mean 900; ratio 0.789.
+- 220 runs; health {'PASS': 145, 'WARN': 75, 'FAIL': 0}; teleports 0; peak 1141 veh/h at q = 1200; high mean 900; ratio 0.789.
 
 ## T0 actuator (AV cap): **FAIL**
 
-- 60 runs; health {'PASS': 11, 'WARN': 4, 'FAIL': 45}.
+- 60 runs; health {'PASS': 28, 'WARN': 32, 'FAIL': 0}.
 
 | cell | none median | median Δ (cap − none) | 95 % CI | rel. | binds | median lag (s) |
 |---|---|---|---|---|---|---|

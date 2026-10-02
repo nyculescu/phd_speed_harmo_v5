@@ -70,3 +70,29 @@ The thermal calibration (R0.4) runs BN4 at q = 2,000 on seeds 7,110,000–7,110,
 - **T1 PASS:** Track 1 proceeds to R2 (tuned baselines) and R3 (DRL reproduction).
 - **T1 FAIL:** BN4 in SUMO 1.27 does not reproduce the paper's capacity drop. That is recorded as a finding. T1 stops and T3 (ring) continues.
 - **T0 FAIL:** the AV cap has no authority. DRL with this actuator is pointless, and T1 stops.
+
+---
+
+## Addendum (2026-10-01, written after R1 v3 and before T0b runs): T0 v1 design error and T0b pre-registration
+
+**T0 v1 (as committed) FAILED.** No cell changed the outflow by ≥ 5 %. The design was wrong for the question:
+- the cap was applied at t = 600 s, after the bottleneck had already broken down in those seeds (even at q = 1,200, the "none" median outflow over [900, 1,500) was 900 veh/h);
+- so T0 v1 tested whether 10 % capped AVs can *dissolve* an established jam. They cannot, consistent with Vinitsky: "once the congestion forms … it does not dissolve".
+
+The question that matters for Track 1 is whether the actuators can **prevent** breakdown. That is a new check: it gets a new pre-registration and fresh seeds, and T0 v1 stays FAIL in the ledger.
+
+### T0b: preventive actuator authority
+
+- **Path:** the R2 evaluation path (`vsl_lab/jobs/bn4_eval.py`): 40 s warm-up, then 900 s of control, then an uncontrolled drain.
+- **Seeds:** 7,110,030–7,110,049 (20 fresh plant-check seeds).
+- **Cells:** q ∈ {1,600, 2,000} veh/h.
+- **Arms:**
+  - `nc`;
+  - `cap:5` and `cap:10` (all AVs on edges 2–4 capped from t = 40 s);
+  - `meter:20:8` (Vinitsky's feedback meter, paper values).
+  - That is 160 runs.
+- **Measure:** outflow over the control window [40, 940) s. Δ = the median of paired differences (arm − nc), with a 95 % bootstrap CI.
+- **PASS per actuator family** (AV cap; meter): in at least one cell, |Δ| ≥ 5 % of the nc median **and** the CI excludes 0.
+- **Decision:**
+  - If the AV-cap family FAILs T0b, the Lagrangian actuator has no preventive authority in this plant, and the Vinitsky reproduction (DRL v1) is stopped.
+  - If only the meter passes, the meter is the only working actuator here. That is reported.
