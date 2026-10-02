@@ -2,6 +2,7 @@
 
 python -m vsl_lab.jobs.val_refs --track t1 --gate-ok   # NC, best constant cap, tuned meter on BN4 validation specs
 python -m vsl_lab.jobs.val_refs --track t3 --gate-ok   # NC, tuned FS, per-L best FS (I), tuned PI on ring validation specs
+python -m vsl_lab.jobs.val_refs --track t1av25 --gate-ok   # B-P6 (round2_protocol.md): BN4 at 25 % AVs, B-R2 tuned set
 """
 from __future__ import annotations
 
@@ -18,24 +19,28 @@ from vsl_lab.ops.scheduler import Job, run_batch
 
 T1_SPECS = [(q, s) for s in (7110300, 7110301) for q in (1600.0, 2000.0, 2400.0)]
 T3_SPECS = [(L, s) for s in (7130300, 7130301, 7130302) for L in (230.0, 260.0)]
+T1AV25_SPECS = [(q, s) for s in (7110310, 7110311, 7110312) for q in (1600.0, 2000.0, 2400.0)]   # A/B validation seeds
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--track", choices=["t1", "t3"], required=True)
+    ap.add_argument("--track", choices=["t1", "t3", "t1av25"], required=True)
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     a = ap.parse_args(argv)
-    root = RUNS_ROOT / a.track / f"valrefs_{int(time.time())}"
+    root = RUNS_ROOT / a.track[:2] / f"valrefs{a.track[2:]}_{int(time.time())}"
     jobs = []
-    if a.track == "t1":
-        fz = json.loads((REPO_ROOT / "docs/lab/t1_bn4_baselines_frozen.json").read_text())
+    if a.track in ("t1", "t1av25"):
+        frozen, specs, extra = (("docs/lab/t1_bn4_baselines_frozen.json", T1_SPECS, []) if a.track == "t1" else
+                                ("docs/lab/t1_bn4av25_baselines_frozen.json", T1AV25_SPECS,
+                                 ["--env-kwargs", json.dumps({"av_share": 0.25})]))
+        fz = json.loads((REPO_ROOT / frozen).read_text())
         ctrls = sorted({"nc"} | {fz["tuned"][f]["ctrl"] for f in ("cap", "meter", "avfb") if f in fz["tuned"]})
-        for q, s in T1_SPECS:
+        for q, s in specs:
             for c in ctrls:
                 jobs.append(Job(jid=f"vr_{c.replace(':', '_')}_{int(q)}_{s}",
                                 argv=["vsl_lab.jobs.bn4_eval", "--ctrl", c, "--inflow", str(q), "--seed", str(s),
-                                      "--tag", "valrefs", "--out-root", str(root)]))
+                                      "--tag", "valrefs", "--out-root", str(root)] + extra))
     else:
         fz = json.loads((REPO_ROOT / "docs/lab/t3_ring_baselines_frozen.json").read_text())
         fs_u = float(fz["tuned"]["fs"]["ctrl"].split(":")[1])
@@ -62,7 +67,7 @@ def main(argv=None) -> int:
             o["_is_I"] = "valrefs_I" in str(p)
             rows.append(o)
     summ = {}
-    if a.track == "t1":
+    if a.track in ("t1", "t1av25"):
         for o in rows:
             summ.setdefault(o["ctrl"], []).append(o["outflow_ctrl_vph"])
         out = {c: {"mean_val_outflow": float(np.mean(v)), "n": len(v)} for c, v in summ.items()}
@@ -78,8 +83,9 @@ def main(argv=None) -> int:
         out = {c: {"mean_val_speed": float(np.mean(v)), "n": len(v)} for c, v in summ.items()}
     (root / "val_refs.json").write_text(json.dumps(out, indent=1))
     dst = REPO_ROOT / "docs" / "lab" / f"{a.track}_val_refs.json"
-    dst.write_text(json.dumps({"specs": T1_SPECS if a.track == "t1" else T3_SPECS, "refs": out, "raw": str(root)}, indent=1))
-    ledger.append(a.track.upper(), "R3", "S", "val_refs", {"specs": "pilot validation"}, "validation seeds", len(rows),
+    specs_used = {"t1": T1_SPECS, "t1av25": T1AV25_SPECS, "t3": T3_SPECS}[a.track]
+    dst.write_text(json.dumps({"specs": specs_used, "refs": out, "raw": str(root)}, indent=1))
+    ledger.append(a.track[:2].upper(), "R3", "S", f"val_refs{a.track[2:]}", {"specs": "pilot validation"}, "validation seeds", len(rows),
                   {"PASS": rep.n_ok}, out, notes=str(root))
     print(json.dumps(out))
     return 0
