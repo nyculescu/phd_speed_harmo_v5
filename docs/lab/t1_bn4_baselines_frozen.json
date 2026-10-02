@@ -1,25 +1,29 @@
 {
  "protocol": "docs/lab/t1_bn4_r2_baselines_protocol.md",
- "frozen_at": "2026-10-01 22:56",
+ "frozen_at": "2026-10-01 23:36",
  "tuned": {
   "nc": {
    "ctrl": "nc",
-   "score": 414.17303578572404
+   "score": 412.2637922079938
   },
   "cap": {
-   "ctrl": "cap:3",
-   "score": 414.17441580989356
+   "ctrl": "cap:18",
+   "score": 412.81892583555066
   },
   "meter": {
    "ctrl": "meter:10:6",
-   "score": 227.3476947724336
+   "score": 224.79182747659723
+  },
+  "avfb": {
+   "ctrl": "avfb:2:10",
+   "score": 566.0770099374206
   }
  },
  "per_cell_best": {
-  "1200": "nc",
+  "1200": "avfb:1:8",
   "1600": "meter:20:6",
   "2000": "meter:10:6",
   "2400": "meter:10:6"
  },
- "raw_root": "/home/catalin/work/phd/vsl_lab_runs/t1/r2_1790919086"
+ "raw_root": "/home/catalin/work/phd/vsl_lab_runs/t1/r2_1790921664"
 }

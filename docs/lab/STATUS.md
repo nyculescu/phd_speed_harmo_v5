@@ -1,12 +1,12 @@
 # DRL lab: status (living document)
 
-*Last update 2026-10-01 23:25 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · plan: `docs/plans/vsl_drl_run_roadmap_v0.md`*
+*Last update 2026-10-02 00:15 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · plan: `docs/plans/vsl_drl_run_roadmap_v0.md`*
 
 ## Where we are
 
 | Track | Plant | Phase | State |
 |---|---|---|---|
-| T1 | BN4: Vinitsky/Flow zipper bottleneck, 10 % AVs | R1 done (v4); T0b v2 and R2 v2 running | **Capacity drop PASS**: peak median outflow 1,044 veh/h, congested 900 (ratio 0.86); determinism PASS. Vinitsky's feedback meter adds +22–25 % outflow (T0b v1). Constant AV caps hurt. |
+| T1 | BN4: Vinitsky/Flow zipper bottleneck, 10 % AVs | R1 v4, T0b v2 and R2 v2 done; **P1 (PPO) running** | **Capacity drop PASS** (1,044 → 900 veh/h, ratio 0.86); determinism PASS. **Tuned baselines** (mean door-to-door s, 4 cells): NC 412.3 · best constant AV cap 412.8 (≈ NC) · **tuned meter 224.8 (−45 %)** · tuned AV feedback 566.1 (+37 %, worse than NC). **No tuned classical controller on the AV actuator beats NC.** One FAIL in 3,120 runs: a teleport at a long red phase with an untuned meter setting. |
 | T3 | RING22: Stern/Flow ring, 1 AV | R1/R2 v1 **invalid** at L ≤ 240 (placement bug); re-run queued | At L ≥ 250, where all 22 cars were present, PI-with-saturation reached ≈ 100 % of the IDM equilibrium speed, i.e. the uniform-flow ceiling. **No headroom over the classical controller on the closed ring.** |
 | T2 | MRG3: merge, posted VSL, tuned MTFC (thesis core) | Code and protocol committed; calibration next | — |
 | T4 | Corridor, SPECIALIST | Not started | — |
