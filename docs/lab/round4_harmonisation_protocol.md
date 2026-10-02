@@ -79,3 +79,72 @@ ARC-IT is used as a source of ideas and citations, not as a specification (autho
 - constant VSL already cuts stops but costs delay (smoke run);
 - SPECIALIST resolved only about 6 % of 407 real waves in its field evaluation (P2 p.1775);
 - a Pareto improvement by DRL is plausible but far from certain.
+
+---
+
+## Addendum A (2026-10-02, after T-H, before any tuning or DRL run)
+
+**T-H result** (`round4_th.md`):
+- T-H0 PASSES.
+- No classical controller harmonises for free:
+  - at 3,900: `const:0.8` gives −63 % stops and +2.1 % delay;
+  - at 4,500: MTFC (ρ̂ 32) gives −19 % stops and +9.5 % delay, while `const:0.8` gives −13 % stops and −7.6 % delay (both not significant).
+- SPECIALIST is applicable: 3 and 10.5 isolated-jam minutes per run (median).
+- SUMO's default CACC at 25 % worsens delay by 46–93 % vs humans, and the CAV arms show no authority. **The TM21 arms are parked** and reported as is.
+
+### One scalar score: J = delay + w · stops, with w = 40 s per stop
+
+- **Why one score:** it selects the tuned classical baseline. The co-primary measures are still reported separately.
+- **Where w comes from:** the T-H frontier slopes (seconds of delay traded per stop avoided):
+  - `const:0.8` at 3,900: about 33 s per stop;
+  - MTFC ρ̂ 32 at 4,500: about 48 s per stop;
+  - w = 40 is the rounded midpoint.
+- **w is fixed now and is not tuned on DRL results.**
+
+### R2-H: tuning the classical controllers
+
+**Setup:**
+- seeds 7,160,300–7,160,319 (20, from the approved block);
+- cells 3,900 / 0 and 4,500 / 0;
+- LD3, H5, 0.2 s, with tripinfo stops.
+
+**Controllers** (20 in total; 800 runs):
+
+| Family | Settings |
+|---|---|
+| no control | `nc` |
+| constant posted VSL | `const:b`, b ∈ {0.75, 0.8, 0.85, 0.9, 0.95} |
+| adaptive rule | `vslad:θ:b`, θ ∈ {50, 70, 90} km/h, b ∈ {0.7, 0.8, 0.9} |
+| Carlson MTFC | `mtfc:ρ̂:38:9:0.0015`, ρ̂ ∈ {28, 32, 36, 40} |
+| SPECIALIST | `spec`, P1 parameters, front equations derived from the stated rule (see the implementation notes when it is committed) |
+
+The adaptive rule is the required non-learning adaptive scheduler: every 60 s, if the 1-min speed at the drop is < θ, it posts b on up1 and up0a (with the Carlson staircase upstream); it releases above θ + 10 km/h after at least 120 s on.
+
+**Selection:**
+- **tuned classical** = the controller with the lowest mean over the two cells of median J;
+- **per-family best** = the same rule within each family;
+- frozen in `docs/lab/round4_baselines_frozen.json`.
+
+### DRL pilot P-H (exploratory)
+
+**Environment:** MRG3Env in `direct` mode on LD3 / H5 / 0.2 s.
+- **Actions:** b ∈ {0.2, …, 1.0}, with |Δb| ≤ 0.2 per 60-s decision, on the same actuator and staircase as `const:b`. So every constant controller lies inside the policy space.
+- **Reward:** −(veh-s in system + 40 · new stops) / 30,000 per decision.
+- **Observations:** S-HIST, 4 snapshots.
+
+**Training:**
+- main peak ~ U(3,600, 4,800), ramp 0; p_nc drawn from {0.1, 0.3, 0.5} (hidden);
+- PPO, 16 envs × 120 steps, batch 1,920, 500 updates, γ 0.99, learning rate 3e-4 with decay, log-std n/a (discrete);
+- training seed pool 7,220,000+ (approved T2 DRL range).
+
+**Validation:**
+- main peak ∈ {3,900, 4,500} × seeds 7,120,300–7,120,302 (T2 validation range);
+- metric `score_h` = control-window veh-s + 40 · stops, lower is better;
+- validation every 25 updates; the checkpoint is chosen on validation only.
+
+**Screening** (on the validation specs, final policy; the best checkpoint is reported):
+- **C-H1:** J(DRL) ≤ 0.95 × J(tuned classical), means over the specs;
+- **C-H2:** DRL is no worse than the tuned classical by more than +2 % on delay **and** on stops;
+- **C-H3:** 0 health FAIL.
+
+**Passers** go to the F class (3 seeds × 1,000 updates) and to R5-H on the shared T2 test seeds 7,120,500–7,120,529 against the tuned classical and the per-family bests.

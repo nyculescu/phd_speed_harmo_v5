@@ -95,6 +95,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     sens = P.Sensors(f["lanes"])
     mt = None
     b_const = None
+    vslad = None
     cav_mode = None                                   # arm C controller kind
     if ctrl.startswith("cavmtfc"):
         parts = ctrl.split(":")
@@ -106,6 +107,12 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         cav_mode = "const"
     elif ctrl == "cavstress":
         cav_mode = "stress"
+    elif ctrl.startswith("vslad:"):
+        # Round 4 non-learning adaptive scheduler (CLAUDE.md "best non-learning"): every 60 s, if the 1-min speed at the
+        # drop (up0b end loops) < theta km/h, post b on up1/up0a (Carlson staircase upstream, acceleration area 0.9);
+        # release when > theta + 10 km/h and on for >= 120 s
+        _, th, bb = ctrl.split(":")
+        vslad = {"theta": float(th), "b": float(bb), "on": False, "t_on": None}
     elif ctrl.startswith("mtfc"):
         parts = ctrl.split(":")
         vals = [float(x) for x in parts[1:]] if len(parts) > 1 else []
@@ -214,6 +221,15 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
                 post(b_app, b_acc)
             elif b_const is not None:
                 b_app, b_acc = b_const, (0.9 if b_const < 1.0 else 1.0)
+                post(b_app, b_acc)
+            elif vslad is not None:
+                vs = [r_[2] for r_ in ts[-2:] if r_[2] >= 0]
+                v1 = float(np.mean(vs)) if vs else 120.0
+                if not vslad["on"] and v1 < vslad["theta"]:
+                    vslad["on"], vslad["t_on"] = True, sim.t
+                elif vslad["on"] and v1 > vslad["theta"] + 10.0 and sim.t - vslad["t_on"] >= 120.0 - 1e-9:
+                    vslad["on"] = False
+                b_app, b_acc = (vslad["b"], 0.9) if vslad["on"] else (1.0, 1.0)
                 post(b_app, b_acc)
             bs.append((sim.t, b_app))
             next_ctrl += 60.0

@@ -37,7 +37,11 @@ class MRG3Env(gym.Env):
                  hist: int = 4, oracle: bool = False, hybrid_every: int = 5, mtfc_kwargs: dict | None = None,
                  seed_pool=(7220000, 7229999), eval_seeds=None, eval_p_nc=None, drain_after: bool = False,
                  tag: str = "train", pin_ecores: bool = True, quiet: bool = True, reward: str = "tts",
-                 plant: str = "v1", driver: str | None = None):
+                 plant: str = "v1", driver: str | None = None, geom: str = "merge", step: float | None = None,
+                 stop_weight: float = 0.0, val_cond: str = "p_nc"):
+        """Round 4 (round4_harmonisation_protocol.md): geom 'lanedrop' (LD3, no ramp demand), step (e.g. 0.2 s),
+        stop_weight w (s per new stop) -> reward -(veh-s in system + w * new stops) / (60 * 500); val_cond 'main_peak'
+        makes eval_p_nc carry the validation main-peak instead of the compliance share."""
         super().__init__()
         if pin_ecores:
             try:
@@ -63,8 +67,11 @@ class MRG3Env(gym.Env):
         self.drain_after, self.tag, self.reward_kind = drain_after, tag, reward
         self.model, self.depart_speed = P.PLANTS[plant]
         self.driver = driver   # realism-gate variant (docs/lab/t2_realism_protocol.md); None = plant default
-        self.files = P.files()
+        self.geom, self.dt, self.stop_weight, self.val_cond = geom, (step or P.STEP_LENGTH), float(stop_weight), val_cond
+        self.files = P.files(geom)
+        self.nd = self.files["n_lanes"]["down"]
         self.sens = P.Sensors(self.files["lanes"])
+        self._halting, self.new_stops, self.ep_stops = set(), 0, 0
         n_snap = 2 * len(EDGES) + 4
         self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_snap * hist + (1 if oracle else 0),), dtype=np.float32)
         self.action_space = {"direct": gym.spaces.Discrete(9), "hybrid": gym.spaces.Discrete(len(RHO_GRID)),
@@ -82,8 +89,9 @@ class MRG3Env(gym.Env):
     def _snapshot(self) -> list:
         s = []
         for e in EDGES:
-            s.append(P.Sensors.flow_vph_per_lane(e) / 2400.0)
-            sp = P.Sensors.speed_kmh(e)
+            ne = self.nd if e == "down" else 3
+            s.append(P.Sensors.flow_vph_per_lane(e, ne) / 2400.0)
+            sp = P.Sensors.speed_kmh(e, ne)
             s.append((sp if sp >= 0 else 120.0) / 120.0)
         s.append(self.sens.density_merge_vkl() / 60.0)
         s.append(ls.inductionloop.getLastIntervalVehicleNumber("e1_ramp_0") * 120.0 / 1200.0)
@@ -101,10 +109,21 @@ class MRG3Env(gym.Env):
         """Advance 60 s; return mean number of vehicles in system (network + origin queue)."""
         n0 = self.sim.tts_system
         dens = []
+        self.new_stops = 0
         for _ in range(6):
-            self.sim.run_until(self.sim.t + 10.0)
+            if self.stop_weight > 0:   # count new stops (speed <= 0.1 m/s, as SUMO tripinfo waitingCount) per step
+                t_next = self.sim.t + 10.0
+                while self.sim.t < t_next - 1e-9:
+                    self.sim.step()
+                    ids = ls.vehicle.getIDList()
+                    halting = {v for v in ids if ls.vehicle.getSpeed(v) <= 0.1}
+                    self.new_stops += len(halting - self._halting)
+                    self._halting = halting
+            else:
+                self.sim.run_until(self.sim.t + 10.0)
             dens.append(self.sens.density_merge_vkl())
         self.rho_avg = float(np.mean(dens))
+        self.ep_stops += self.new_stops
         return (self.sim.tts_system - n0) / 60.0
 
     # --------------------------------------------------------------- gym API
@@ -116,7 +135,11 @@ class MRG3Env(gym.Env):
         if self.eval_seeds is not None:
             ep_seed = self.eval_seeds[self._eval_i % len(self.eval_seeds)]
             self._eval_i += 1
-            self.p_nc = self.eval_p_nc if self.eval_p_nc is not None else self.p_nc_choices[0]
+            if self.val_cond == "main_peak" and self.eval_p_nc is not None:
+                self.main_peak = (float(self.eval_p_nc), float(self.eval_p_nc))
+                self.p_nc = self.p_nc_choices[0]
+            else:
+                self.p_nc = self.eval_p_nc if self.eval_p_nc is not None else self.p_nc_choices[0]
         else:
             ep_seed = int(self.np_random.integers(self.seed_pool[0], self.seed_pool[1] + 1))
             self.p_nc = float(self.p_nc_choices[int(self.np_random.integers(0, len(self.p_nc_choices)))])
@@ -124,21 +147,22 @@ class MRG3Env(gym.Env):
         mp = float(rng.uniform(*self.main_peak))
         rp = float(rng.uniform(*self.ramp_peak))
         mprof = P.profile(2500.0, mp, 600.0, 1200.0, 3000.0, self.t_end)
-        rprof = P.profile(300.0, rp, 600.0, 1200.0, 3000.0, self.t_end)
+        rprof = P.profile(300.0, rp, 600.0, 1200.0, 3000.0, self.t_end) if self.geom == "merge" else []
         dem = P.demand(ep_seed, mprof, rprof, p_noncompliant=self.p_nc, truck_share=self.truck, model=self.model,
-                       depart_speed=self.depart_speed, driver=self.driver)
+                       depart_speed=self.depart_speed, driver=self.driver, step_length=self.dt)
         run_dir = RUNS_ROOT / "t2" / "envs" / self.tag / f"pid{os.getpid()}"
         run_dir.mkdir(parents=True, exist_ok=True)
         rou = run_dir / f"routes_s{ep_seed}_pid{os.getpid()}.rou.xml"
         dem.write(rou)
         self._rou = rou
         self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
-                           step_length=P.STEP_LENGTH, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0,
+                           step_length=self.dt, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0,
                            extra_args=P.DRIVERS[self.driver]["args"] if self.driver else [])
         self.sim.start()
         self.b = 1.0
         self.mtfc = MTFC(**self.mtfc_kwargs)
         self.k = 0
+        self._halting, self.new_stops, self.ep_stops = set(), 0, 0
         self.ep = {"seed": ep_seed, "p_nc": self.p_nc, "main_peak": mp, "ramp_peak": rp, "ret": 0.0, "min_b": 1.0}
         self.sim.run_until(self.t_ctrl0)
         snap = self._snapshot()
@@ -165,7 +189,7 @@ class MRG3Env(gym.Env):
         self._post(self.b, b_acc)
         self.ep["min_b"] = min(self.ep["min_b"], self.b)
         n_sys = self._period()
-        r = -n_sys / 500.0
+        r = -(n_sys * 60.0 + self.stop_weight * self.new_stops) / (60.0 * 500.0)
         self.k += 1
         self.hist.append(self._snapshot())
         obs = self._obs()
@@ -178,7 +202,9 @@ class MRG3Env(gym.Env):
         if done:
             self._post(1.0, 1.0)
             m = {"tts_ctrl_vehh": self.sim.tts_system / 3600.0, "seed": self.ep["seed"], "p_nc": self.ep["p_nc"],
-                 "main_peak": self.ep["main_peak"], "return": self.ep["ret"], "min_b": self.ep["min_b"]}
+                 "main_peak": self.ep["main_peak"], "return": self.ep["ret"], "min_b": self.ep["min_b"],
+                 "stops_ctrl": self.ep_stops,
+                 "score_h": self.sim.tts_system + self.stop_weight * self.ep_stops}   # s; lower is better
             drained = None
             if self.drain_after:
                 drained = self.sim.drain(10800.0)
