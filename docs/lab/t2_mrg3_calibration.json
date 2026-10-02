@@ -1,0 +1,98 @@
+{
+ "table": {
+  "4800/600": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 167.70684858295473
+  },
+  "4800/900": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 163.60768416014156
+  },
+  "5100/600": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 171.28171497642182
+  },
+  "5100/900": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 166.8467837335725
+  },
+  "5400/600": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 174.3828718438972
+  },
+  "5400/900": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 172.37967506683037
+  },
+  "5700/600": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 177.23737087107196
+  },
+  "5700/900": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 175.0501188515109
+  },
+  "6000/600": {
+   "n": 10,
+   "breakdown_share": 0.0,
+   "median_ratio": null,
+   "share_ratio_le_095": null,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 191.85243004953696
+  },
+  "6000/900": {
+   "n": 10,
+   "breakdown_share": 0.2,
+   "median_ratio": 0.9762140575911005,
+   "share_ratio_le_095": 0.0,
+   "teleports": 0,
+   "fail": 0,
+   "median_time_s": 193.49775556208152
+  }
+ },
+ "selected_cell": "6000/900",
+ "rule": "closest breakdown share to 0.5 among cells with 0 teleports and 0 FAIL; ties -> lower demand",
+ "n_runs": 100,
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/t2/calib_1790924254"
+}

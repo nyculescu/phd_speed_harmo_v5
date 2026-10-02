@@ -71,3 +71,24 @@ A pilot that meets C1 + C3 + C2 goes to an **F-class** run: ≥ 500 updates, 3 l
 | P1f | PPO, `nocap_center`, `log_std_init` −0.5, **reward R-TTS** | 600 |
 
 **Run class.** They remain pilots (1 learner seed). The best screening PASS, if any, goes to F class (3 learner seeds) with test-seed evaluation.
+
+## Addendum B (2026-10-02, after P2/P3 screening; before any ring variant runs)
+
+**P2 (hybrid).** Screening FAIL. The validation mean speed fell 3.85 → 3.55 m/s while the training reward rose. The reward's AV-acceleration penalty (α = 0.1·|a|, Flow's form) was traded against mean speed: a reward–metric misalignment (`docs/lessons_metric_gameability.md`).
+
+**P3 (direct).** Stopped by the health rule after 13 updates: 55 FAIL episodes, all AV–leader collisions. The ±1 m/s² action plus an instant-stop rule clipped by SUMO's 9 m/s² decel limit could not prevent rear-ending.
+
+**Fix: AV safety shield** (Flow-style failsafe), applied to *every* AV controller. The commanded speed is capped at the speed from which the AV can stop behind the leader's stopping point with 4.5 m/s². The shield is inactive whenever gaps are safe.
+
+**Verification before reuse:** 12 ring R2 runs (FS U = 5 and PI 1.5/20, at L ∈ {220, 260}, seeds 7,130,100–7,130,102) are re-run with the shield.
+- If all hashes equal the R2 v2 outputs, the frozen ring baselines stand.
+- Otherwise ring R2 is re-run.
+
+**Pre-registered ring variants.** Same validation seeds and criteria as P2/P3.
+
+| ID | Change | Updates |
+|---|---|---|
+| P2b | hybrid (DRL sets FollowerStopper U), **reward = mean speed only** (α = 0) | 600 |
+| P3b | direct acceleration **with the shield**, reward = mean speed only | 600 |
+
+**Expectation unchanged:** at best DRL ≈ PI-with-saturation (≈ 100 % of v_e); H ≈ 0 on the ring.

@@ -70,3 +70,25 @@
 |---|---|
 | T1 and T0 PASS | R2 tunes MTFC and constant VSL on the tuning seeds 7,120,100–7,120,299. |
 | T1 FAIL | Report the measured capacity-drop status of this SUMO merge. Do not build DRL for mainstream VSL here. The re-scoped options are a moving-jam corridor (Track 4) or a hidden-compliance niche, which needs a new pre-registration. |
+
+---
+
+## Addendum (2026-10-02): MRG3-v2 plant variant, pre-registered before any v2 run
+
+**Calibration v1 outcome** (throw-away seeds 7,120,000–7,120,009):
+- NC broke down in **no cell** up to main 6,000 / ramp 600.
+- At 6,000 / 900 it broke down in 2 of 10 seeds, with a discharge ratio of 0.976 (a 2.4 % drop). With SUMO-default Krauss/LC2013 cars, this merge shows almost no capacity drop, echoing v5 (ramps_v1: −0.4 %).
+- The R1 checks still run at the selected cell 6,000 / 900 as committed (chain 4). The expected outcome is T1 FAIL.
+
+**MRG3-v2** is a separate plant variant with the same geometry and detectors. Only the vehicle models change, to Treiber-style IDM, the model under which BN4 showed a 14 % drop:
+- cars: IDM a = 1.0, b = 1.5, T = 1.0 s, s0 = 2.0 m, δ = 4, length 5;
+- trucks: IDM a = 0.6, b = 1.5, T = 1.5 s, s0 = 2.5 m, length 12, maxSpeed 25.
+
+The compliance groups, LC2013 and demand shapes are unchanged.
+
+| Step | Seeds | Content |
+|---|---|---|
+| v2 calibration | 7,120,050–7,120,059 | the same grid and cell-selection rule as v1 |
+| v2 R1 checks | 7,120,060–7,120,089 (T1 and T1c) and 7,120,090–7,120,099 (T0); 5 T3 re-runs | the same criteria as v1 |
+
+Both outcomes, v1 and v2, are reported. Choosing v2 because v1 had no capacity drop is disclosed as a plant-design decision made after seeing v1. It is not evidence of anything.

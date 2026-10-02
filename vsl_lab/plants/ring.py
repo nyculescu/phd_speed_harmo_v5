@@ -31,6 +31,7 @@ from vsl_lab.netgen import ring as ringnet
 
 DT = 0.1
 N_VEH = 22
+B_SAFE = 4.5   # m/s^2, AV shield braking (SUMO default decel)
 AV_ID = "av_0"
 IDM = dict(v0=30.0, T=1.0, a=1.0, b=1.5, delta=4.0, s0=2.0)
 VEH_LEN = 5.0
@@ -102,6 +103,7 @@ class RingPlant:
         self.teleports = 0
         self.estops = 0
         self.safe_stops = 0
+        self.shield_hits = 0
         self.ids = []
 
     def _route_file(self) -> Path:
@@ -172,8 +174,18 @@ class RingPlant:
                 eps = self.rng.normal(0.0, self.noise_std)
                 a += math.sqrt(DT) * eps if self.noise == "sqrt_dt" else eps
             v_next = max(0.0, v + a * DT)
-            # safe-following rule: predicted next-step gap must stay >= 0.5 m
-            if gap + (vl - v_next) * DT < 0.5:
+            if vid == AV_ID and av_accel is not None:
+                # AV safety shield (Flow-style failsafe), for every AV controller: never exceed the speed from which
+                # the AV can stop behind the leader's stopping point with B_SAFE, and never ask for more braking than
+                # the vehicle can do in one step. Inactive whenever the gap is safe (FS / PI keep large gaps).
+                d_free = max(0.0, gap - 1.0) + vl * vl / (2.0 * B_SAFE)
+                v_safe = max(0.0, math.sqrt(2.0 * B_SAFE * d_free + (B_SAFE * DT) ** 2) - B_SAFE * DT)
+                if v_next > v_safe:
+                    v_next = v_safe
+                    self.shield_hits += 1
+                v_next = max(v_next, v - 9.0 * DT)
+            # safe-following rule (humans): predicted next-step gap must stay >= 0.5 m
+            elif gap + (vl - v_next) * DT < 0.5:
                 v_next = 0.0
                 self.safe_stops += 1
             ls.vehicle.setSpeed(vid, v_next)
@@ -209,4 +221,5 @@ class RingPlant:
         if n_err:
             issues.append(("FAIL", "H-E4", f"{n_err} SUMO errors"))
         status = "FAIL" if any(i[0] == "FAIL" for i in issues) else "PASS"
-        return {"status": status, "issues": issues, "safe_stops": self.safe_stops, "estops": self.estops}
+        return {"status": status, "issues": issues, "safe_stops": self.safe_stops, "estops": self.estops,
+                "shield_hits": self.shield_hits}
