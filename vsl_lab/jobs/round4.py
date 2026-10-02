@@ -2,6 +2,8 @@
 LD3 (3 -> 2 lane drop) with H5 drivers (EIDM SUMO defaults) at a 0.2 s step.
 
 python -m vsl_lab.jobs.round4 th --gate-ok [--workers 16]
+python -m vsl_lab.jobs.round4 r2 --gate-ok        # Addendum A tuning (J = delay + 40 s/stop), freezes the baselines
+python -m vsl_lab.jobs.round4 screen --gate-ok --run-dir <train run dir>   # P-H screening on the validation specs
 python -m vsl_lab.jobs.round4 th --analyse-only --root <batch root>
 """
 from __future__ import annotations
@@ -24,15 +26,22 @@ SEEDS = list(range(7160200, 7160230))
 HUMAN = ["nc"] + [f"const:{b}" for b in (0.5, 0.6, 0.7, 0.8)] + [f"mtfc:{r}:38:9:0.0015" for r in (20, 25, 32)]
 CAV = [("nc", "C"), ("cavconst:0.6", "C"), ("cavpi", "P")]
 DETS = ("up3", "up2", "up1", "up0a", "up0b", "down")      # upstream -> downstream
+W_STOP = 40.0                                               # s per stop (Addendum A)
+R2_SEEDS = list(range(7160300, 7160320))
+R2_CTRLS = (["nc"] + [f"const:{b}" for b in (0.75, 0.8, 0.85, 0.9, 0.95)]
+            + [f"vslad:{th}:{b}" for th in (50, 70, 90) for b in (0.7, 0.8, 0.9)]
+            + [f"mtfc:{r}:38:9:0.0015" for r in (28, 32, 36, 40)] + ["spec"])
+VAL_SPECS = [(m, s) for s in (7120300, 7120301, 7120302) for m in (3900, 4500)]
+FROZEN = REPO_ROOT / "docs" / "lab" / "round4_baselines_frozen.json"
 
 
-def job(ctrl, s, cell, root, p=0.0, arm="none") -> Job:
+def job(ctrl, s, cell, root, p=0.0, arm="none", tag="th") -> Job:
     m, r = cell.split("/")
-    argv = ["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", m, "--ramp-peak", r, "--tag", "th",
+    argv = ["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", m, "--ramp-peak", r, "--tag", tag,
             "--out-root", str(root), "--plant", "v3", "--driver", "H5", "--step", "0.2", "--geom", "lanedrop", "--stops"]
     if p > 0:
         argv += ["--cav-share", str(p), "--cav-arm", arm, "--cav-x", "1.0"]
-    return Job(jid=f"th_{ctrl.replace(':', '_')}_p{p:g}{arm}_m{m}_s{s}", argv=argv)
+    return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_p{p:g}{arm}_m{m}_s{s}", argv=argv)
 
 
 def label(o) -> str:
@@ -125,15 +134,112 @@ def report(res: dict, root: Path) -> None:
     (REPO_ROOT / "docs" / "lab" / "round4_th.md").write_text("\n".join(L) + "\n")
 
 
+def J(o) -> float:
+    return o["mean_time_in_system_s"] + W_STOP * o["stops_per_veh"]
+
+
+def r2(root: Path, workers: int, gate_ok: bool, analyse_only: bool) -> dict:
+    if not analyse_only:
+        jobs = [job(c, s, cell, root, tag="r2") for cell in CELLS for s in R2_SEEDS for c in R2_CTRLS]
+        run_batch(jobs, root / "batch", workers, gate_ok=gate_ok)
+    by = {}
+    for p in (root / "r2").glob("*/summary.json"):
+        o = json.loads(p.read_text())
+        by.setdefault(o["ctrl"], {}).setdefault(f"{int(o['main_peak'])}/{int(o['ramp_peak'])}", []).append(o)
+    table = {}
+    for c, cells in by.items():
+        if all(cell in cells for cell in CELLS):
+            row = {cell: {"J": float(np.median([J(o) for o in cells[cell]])),
+                          "delay": float(np.median([o["mean_time_in_system_s"] for o in cells[cell]])),
+                          "stops": float(np.median([o["stops_per_veh"] for o in cells[cell]])), "n": len(cells[cell]),
+                          "fail": sum(o["health"]["status"] == "FAIL" for o in cells[cell])} for cell in CELLS}
+            row["score"] = float(np.mean([row[cell]["J"] for cell in CELLS]))
+            table[c] = row
+    fam = lambda c: c.split(":")[0]
+    best = {f: min((c for c in table if fam(c) == f), key=lambda c: table[c]["score"]) for f in {fam(c) for c in table}}
+    learnfree = [c for c in table if c != "nc"]
+    tuned = min(learnfree, key=lambda c: table[c]["score"]) if learnfree else None
+    out = {"protocol": "docs/lab/round4_harmonisation_protocol.md (Addendum A)", "w_stop": W_STOP, "table": table,
+           "family_best": best, "tuned_classical": tuned, "raw": str(root), "frozen_at": time.strftime("%Y-%m-%d %H:%M")}
+    FROZEN.write_text(json.dumps(out, indent=1))
+    L = ["# Round 4 R2-H (tuning, J = delay + 40 s per stop): results", "",
+         f"*{out['frozen_at']} · raw `{root}`* · tuned classical: **{tuned}** · family bests: {best}", "",
+         "| controller | J 3900 | delay 3900 | stops 3900 | J 4500 | delay 4500 | stops 4500 | score | FAIL |",
+         "|---|---|---|---|---|---|---|---|---|"]
+    for c in sorted(table, key=lambda c: table[c]["score"]):
+        r = table[c]
+        L.append(f"| {c} | {r['3900/0']['J']:.1f} | {r['3900/0']['delay']:.1f} | {r['3900/0']['stops']:.2f} | "
+                 f"{r['4500/0']['J']:.1f} | {r['4500/0']['delay']:.1f} | {r['4500/0']['stops']:.2f} | {r['score']:.1f} | "
+                 f"{r['3900/0']['fail'] + r['4500/0']['fail']} |")
+    (REPO_ROOT / "docs" / "lab" / "round4_r2.md").write_text("\n".join(L) + "\n")
+    ledger.append("T2", "R4-R2", "S", "round4_r2", {"ctrls": R2_CTRLS, "w_stop": W_STOP}, f"{R2_SEEDS[0]}-{R2_SEEDS[-1]}",
+                  sum(len(v) for c in by.values() for v in c.values()), {}, {"tuned": tuned, "family_best": best},
+                  notes=str(root))
+    return out
+
+
+def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool) -> dict:
+    fz = json.loads(FROZEN.read_text())
+    refs = sorted({fz["tuned_classical"], *fz["family_best"].values(), "nc"})
+    jobs = [job(c, s, f"{m}/0", root, tag="val") for m, s in VAL_SPECS for c in refs]
+    models = {"final": run_dir / "final_model.zip", "best": run_dir / "best_val_model.zip"}
+    for lab, mp in models.items():
+        if mp.exists():
+            jobs += [Job(jid=f"val_rl{lab}_m{m}_s{s}", argv=["vsl_lab.jobs.r4_eval_rl", "--model", str(mp), "--main-peak", str(m),
+                                                            "--seed", str(s), "--out-root", str(root), "--tag", f"rl_{lab}"])
+                     for m, s in VAL_SPECS]
+    run_batch(jobs, root / "batch", workers, gate_ok=gate_ok)
+    res = {}
+    for p in (root / "val").glob("*/summary.json"):
+        o = json.loads(p.read_text()); res.setdefault(o["ctrl"], []).append(o)
+    for lab in models:
+        for p in (root / f"rl_{lab}").glob("*.json"):
+            res.setdefault(f"rl_{lab}", []).append(json.loads(p.read_text()))
+    summ = {c: {"J": float(np.mean([J(o) for o in v])), "delay": float(np.mean([o["mean_time_in_system_s"] for o in v])),
+                "stops": float(np.mean([o["stops_per_veh"] for o in v])), "n": len(v),
+                "fail": sum((o.get("health") if isinstance(o.get("health"), str) else o["health"]["status"]) == "FAIL" for o in v)}
+            for c, v in res.items()}
+    t = summ.get(fz["tuned_classical"])
+    crit = {}
+    for lab in ("rl_final", "rl_best"):
+        d = summ.get(lab)
+        if d and t:
+            crit[lab] = {"C_H1": d["J"] <= 0.95 * t["J"], "C_H2": d["delay"] <= 1.02 * t["delay"] and d["stops"] <= 1.02 * t["stops"],
+                         "C_H3": d["fail"] == 0}
+            crit[lab]["PASS"] = all(crit[lab].values())
+    out = {"tuned_classical": fz["tuned_classical"], "summary": summ, "criteria": crit, "raw": str(root), "run_dir": str(run_dir)}
+    (root / "screen.json").write_text(json.dumps(out, indent=1))
+    L = [f"## P-H screening ({time.strftime('%Y-%m-%d %H:%M')}) · run `{run_dir}`", "",
+         "| controller | J (mean, s) | delay (s) | stops/veh | n | FAIL |", "|---|---|---|---|---|---|"]
+    for c in sorted(summ, key=lambda c: summ[c]["J"]):
+        r = summ[c]
+        L.append(f"| {c} | {r['J']:.1f} | {r['delay']:.1f} | {r['stops']:.2f} | {r['n']} | {r['fail']} |")
+    L += ["", f"Criteria vs tuned classical `{fz['tuned_classical']}`: {json.dumps(crit)}", ""]
+    rp = REPO_ROOT / "docs" / "lab" / "round4_pilots.md"
+    rp.write_text((rp.read_text() if rp.exists() else "# Round 4 DRL pilots: screening (exploratory)\n\n") + "\n".join(L) + "\n")
+    ledger.append("T2", "R4-P", "S", "round4_screen", {"run_dir": str(run_dir)}, "7120300-7120302", sum(v["n"] for v in summ.values()),
+                  {}, crit, notes=str(root))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["th"])
+    ap.add_argument("what", choices=["th", "r2", "screen"])
+    ap.add_argument("--run-dir", default=None)
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", action="store_true")
     ap.add_argument("--root", default=None)
     a = ap.parse_args(argv)
-    root = Path(a.root) if a.root else RUNS_ROOT / "t2" / f"round4_th_{int(time.time())}"
+    root = Path(a.root) if a.root else RUNS_ROOT / "t2" / f"round4_{a.what}_{int(time.time())}"
+    if a.what == "r2":
+        out = r2(root, a.workers, a.gate_ok, a.analyse_only)
+        print(json.dumps({"tuned": out["tuned_classical"], "family_best": out["family_best"]}))
+        return 0
+    if a.what == "screen":
+        out = screen(root, Path(a.run_dir), a.workers, a.gate_ok)
+        print(json.dumps(out["criteria"]))
+        return 0
     if not a.analyse_only:
         jobs = [job(c, s, cell, root) for cell in CELLS for s in SEEDS for c in HUMAN]
         jobs += [job(c, s, cell, root, p=0.25, arm=arm) for cell in CELLS for s in SEEDS for c, arm in CAV]

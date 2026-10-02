@@ -38,7 +38,7 @@ class MRG3Env(gym.Env):
                  seed_pool=(7220000, 7229999), eval_seeds=None, eval_p_nc=None, drain_after: bool = False,
                  tag: str = "train", pin_ecores: bool = True, quiet: bool = True, reward: str = "tts",
                  plant: str = "v1", driver: str | None = None, geom: str = "merge", step: float | None = None,
-                 stop_weight: float = 0.0, val_cond: str = "p_nc"):
+                 stop_weight: float = 0.0, val_cond: str = "p_nc", trip_stops: bool = False):
         """Round 4 (round4_harmonisation_protocol.md): geom 'lanedrop' (LD3, no ramp demand), step (e.g. 0.2 s),
         stop_weight w (s per new stop) -> reward -(veh-s in system + w * new stops) / (60 * 500); val_cond 'main_peak'
         makes eval_p_nc carry the validation main-peak instead of the compliance share."""
@@ -72,6 +72,7 @@ class MRG3Env(gym.Env):
         self.nd = self.files["n_lanes"]["down"]
         self.sens = P.Sensors(self.files["lanes"])
         self._halting, self.new_stops, self.ep_stops = set(), 0, 0
+        self.trip_stops, self._trip = trip_stops, None   # evaluation: SUMO tripinfo stops, as in jobs/mrg3_run.py
         n_snap = 2 * len(EDGES) + 4
         self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_snap * hist + (1 if oracle else 0),), dtype=np.float32)
         self.action_space = {"direct": gym.spaces.Discrete(9), "hybrid": gym.spaces.Discrete(len(RHO_GRID)),
@@ -155,9 +156,12 @@ class MRG3Env(gym.Env):
         rou = run_dir / f"routes_s{ep_seed}_pid{os.getpid()}.rou.xml"
         dem.write(rou)
         self._rou = rou
+        extra = list(P.DRIVERS[self.driver]["args"] if self.driver else [])
+        self._trip = run_dir / f"tripinfo_s{ep_seed}_pid{os.getpid()}.xml" if self.trip_stops else None
+        if self._trip is not None:
+            extra += ["--tripinfo-output", str(self._trip)]
         self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
-                           step_length=self.dt, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0,
-                           extra_args=P.DRIVERS[self.driver]["args"] if self.driver else [])
+                           step_length=self.dt, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0, extra_args=extra)
         self.sim.start()
         self.b = 1.0
         self.mtfc = MTFC(**self.mtfc_kwargs)
@@ -214,6 +218,12 @@ class MRG3Env(gym.Env):
                           "drained": drained})
             res = self.sim.close(drained=drained)
             self.sim = None
+            if self._trip is not None and self._trip.exists():
+                import xml.etree.ElementTree as _ET
+                wc = [int(el.get("waitingCount", 0)) for _, el in _ET.iterparse(self._trip) if el.tag == "tripinfo"]
+                m["stops_per_veh"] = float(np.mean(wc)) if wc else None
+                m["n_tripinfo"] = len(wc)
+                self._trip.unlink()
             try:
                 self._rou.unlink()
             except OSError:
