@@ -113,3 +113,59 @@ SUMO silently ignores unknown vType attributes. So, on the 140 calibration pairs
 - **If no variant passes:** Track 2 stops at this gate, and the author decides.
 
 **Interaction with the queued v3 chain.** `run_v3.sh` (calibration → R1 → D-check → R2 on MRG3-v3 ≡ H0) was queued before this gate. Its R2 step now requires an H0 PASS in `docs/lab/t2_realism_verdict.json`, otherwise it skips. Its calibration and R1 run as queued. No running process was stopped.
+
+---
+
+## Addendum A (2026-10-02, after the smoke test, before any calibration or check run)
+
+### What the smoke test showed
+
+**Setup:** one NC run per variant at 5,400 / 900 on the throw-away seed 7,120,050, raw in `realism_smoke_*`.
+
+**Every variant runs, and none is INERT:** all 5 result hashes differ.
+
+| Variant | Wave speed (km/h) | Congestion origin | Notes |
+|---|---|---|---|
+| H0 | −19.0 | up0b | 1 teleport |
+| H1 | −14.4 | up0b | 1 teleport |
+| H2 | none (no 15-min jointly congested window) | up0b | — |
+| H3 | −20.0 | up0b | — |
+| H4 | −7.2 | **up1** | discharge 185 veh/h/lane; not drained at 3 h (H-E1); a run takes about 5 min instead of 15–25 s |
+
+**The H4 cause.** Its error magnitudes are far above SUMO's documented EIDM defaults. The SUMO vType table gives sigmaleader 0.02, sigmagap 0.10, sigmaerror 0.10 and treaction 0.50; H4 uses 0.2, 0.2, 0.3 and 0.6.
+
+### Fixes, pre-registered now
+
+**1. Bug fix in the R-a estimator.**
+- **Symptom:** every smoke breakdown began at t ≈ 1,210 s, exactly when peak demand arrives. The "10 min before onset" window therefore measured the demand ramp-up, not the pre-queue capacity, and the ratios came out at 1.2–1.5.
+- **New estimator (between runs, same cell):**
+  - Q_ff = median, over the selected-cell runs **without** a sustained onset, of the mean exit flow per lane over the demand plateau as seen at the exit, (1,400, 3,000] s;
+  - Q_dis = median, over the runs **with** a sustained onset, of the mean exit flow per lane over [t_b + 5 min, min(t_b + 20 min, t_rec, 3,900 s)), with a window of at least 5 min;
+  - **ratio = Q_dis / Q_ff.**
+- **Why this is conservative:** the bottleneck demonstrably carried Q_ff without breaking down, so Q_ff is a lower bound on free-flow capacity, and the ratio understates the drop.
+- **R-a PASS** if all hold: sustained-onset share ≥ 0.3; ≥ 3 runs with and ≥ 3 runs without an onset; ratio in [0.82, 0.97]. If it cannot be computed, R-a FAILS.
+- **Reported, not gated:**
+  - a 95 % percentile-bootstrap CI of the ratio (runs resampled within the two groups, 2,000 resamples);
+  - a field-style within-run ratio, ramp-corrected (pre-window (t_b − 5 min, t_b] only when t_b ≥ 1,700 s);
+  - the original 10-min estimator, as values only;
+  - the R1 max-based ratio.
+
+**2. One breakdown definition.** "Breakdown" now means a sustained probe onset t_b exists (definition above) in every place: cell selection, the early outcomes and R-a. The R1 `capdrop` flag is reported. In the smoke test the two definitions disagreed once: H2 had an onset at 1,380 s, but the `capdrop` flag was false.
+
+**3. R-c teleport scope.**
+- Teleports and health FAILs are gated on the selected-cell check runs and the determinism re-run, i.e. the operating point.
+- Teleports at the 6,000 / 900 stress cell are reported and flagged, not gated. That cell exists to measure waves and origins at high demand.
+- **This change is informed by the smoke test** (one teleport each for H0 and H1 at 5,400 / 900). The verdict under the **original** rule (teleports over all check runs) is reported next to the amended one.
+
+**4. New variant H5:** EIDM with the H0 IDM-shared parameters, and every EIDM-specific parameter left at its SUMO default (estimation and driving errors included, per the SUMO vType documentation table). No value is chosen by me.
+- It is added because H4's ad hoc magnitudes collapsed the plant.
+- It gets the same grid, seeds and checks.
+- H4 stays as pre-registered and will be reported, whatever its outcome.
+- **Preference order for the primary plant:** H4, H5, H2, H1, H3, H0.
+
+**Run counts:** 840 calibration runs, plus up to 6 × 41 check runs.
+
+**5. The same flaw in R1 T1 (MRG3-v3), pre-registered before the v3 R1 runs.**
+- R1's T1 ratio (`capacity_drop()`: maximum 5-min flow in the 15 min before the onset) is confounded in the same way. When breakdown starts during the demand ramp, the "pre" flow is demand-limited, which biases the ratio towards 1. When it starts on the plateau, the maximum of noisy 5-min flows biases it the other way. The v1 T1 result (0.976) may therefore be distorted; this is noted and not re-litigated.
+- **For MRG3-v3**, the T1 gate before R2 keeps its share part (≥ 0.3), its teleport part and its FAIL part from R1. Its ratio part is replaced by realism R-a, through the H0 verdict.
+- The R1 T1 max-based values are still reported.

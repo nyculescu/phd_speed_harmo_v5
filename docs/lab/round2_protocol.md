@@ -108,3 +108,8 @@ One batch at a time. Thermal guard per `CLAUDE.md`.
 **Why the actuator cannot work here.** BN4's 4 → 2 → 1 zipper is a lane-drop bottleneck. Four lanes, even at very low speed limits, still feed more than the bottleneck can discharge.
 
 **A-P5 (DRL on posted VSL) is therefore not run.** A policy limited to an actuator that does not bind cannot beat NC through that actuator. The decision follows the A-T0 gate's logic, but was taken after seeing A-R2, and is disclosed as such. Posted VSL stays the thesis core on the **merge** plant (Track 2), where T0 is checked separately.
+
+**MRG3-v3 R2 gate (2026-10-02, before the v3 R1 runs).** R2 needs all of the following:
+1. R1 T0 PASS;
+2. R1 T1's share, teleport and FAIL parts;
+3. an H0 PASS in the plant-realism gate (`t2_realism_protocol.md`, Addendum A). Its R-a replaces T1's confounded max-based ratio.

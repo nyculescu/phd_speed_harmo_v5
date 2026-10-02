@@ -176,7 +176,7 @@ def main(argv=None) -> int:
     ap.add_argument("--p-nc", type=float, default=0.3)
     ap.add_argument("--truck", type=float, default=0.1)
     ap.add_argument("--plant", default="v1", choices=["v1", "v2", "v3"])
-    ap.add_argument("--driver", default=None, choices=["H0", "H1", "H2", "H3", "H4"])
+    ap.add_argument("--driver", default=None, choices=sorted(P.DRIVERS))
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t2"))
     a = ap.parse_args(argv)

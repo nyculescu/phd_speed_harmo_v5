@@ -41,7 +41,12 @@ def main(argv=None) -> int:
     suffix = "" if a.plant == "v1" else f"_{a.plant}"
     pat = "r1_[0-9]*/analysis.json" if a.plant == "v1" else f"r1_{a.plant}_[0-9]*/analysis.json"
     r1 = json.loads(Path(sorted((RUNS_ROOT / "t2").glob(pat))[-1]).read_text())
-    if not (r1.get("T1", {}).get("PASS") and r1.get("T0", {}).get("PASS")):
+    t1 = r1.get("T1", {})
+    if a.plant == "v3":   # realism Addendum A: T1's ratio part is replaced by realism R-a (checked below via the H0 verdict)
+        t1_ok = (t1.get("breakdown_share") or 0) >= 0.3 and t1.get("teleports") == 0 and t1.get("fail") == 0
+    else:
+        t1_ok = t1.get("PASS")
+    if not (t1_ok and r1.get("T0", {}).get("PASS")):
         print(json.dumps({"skipped": "T2 R1 T1/T0 did not pass", "r1": {k: r1.get(k, {}).get("PASS") for k in ("T1", "T0")}}))
         return 0
     if a.plant == "v3":   # MRG3-v3 = realism variant H0 (docs/lab/t2_realism_protocol.md): R2 only after an H0 PASS

@@ -37,6 +37,8 @@ DRIVERS = {
     "H3": {"car": 'carFollowModel="W99" length="5"', "trk": 'carFollowModel="W99" length="12" maxSpeed="25"', "args": []},
     "H4": {"car": _IDM_CAR.replace('"IDM"', '"EIDM"') + " " + _EIDM_IMP,
            "trk": _IDM_TRK.replace('"IDM"', '"EIDM"') + " " + _EIDM_IMP, "args": []},
+    # Addendum A: EIDM with every EIDM-specific parameter at its SUMO default (errors included per the SUMO vType table)
+    "H5": {"car": _IDM_CAR.replace('"IDM"', '"EIDM"'), "trk": _IDM_TRK.replace('"IDM"', '"EIDM"'), "args": []},
 }
 
 

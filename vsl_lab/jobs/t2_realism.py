@@ -1,4 +1,4 @@
-"""Plant-realism gate on MRG3-v3 driver variants H0-H4 (docs/lab/t2_realism_protocol.md).
+"""Plant-realism gate on MRG3-v3 driver variants H0-H5 (docs/lab/t2_realism_protocol.md, incl. Addendum A).
 
 python -m vsl_lab.jobs.t2_realism smoke --gate-ok             # tool check: 1 NC run per variant, throw-away seed 7,120,050
 python -m vsl_lab.jobs.t2_realism run --gate-ok               # calibration -> cell selection -> checks -> verdict
@@ -20,8 +20,8 @@ from vsl_lab.ops import ledger
 from vsl_lab.ops.scheduler import Job, run_batch
 from vsl_lab.plants import mrg3 as P
 
-VARIANTS = ["H0", "H1", "H2", "H3", "H4"]
-PREFERENCE = ["H4", "H2", "H1", "H3", "H0"]
+VARIANTS = ["H0", "H1", "H2", "H3", "H4", "H5"]
+PREFERENCE = ["H4", "H5", "H2", "H1", "H3", "H0"]   # Addendum A
 MAIN = [4200, 4500, 4800, 5100, 5400, 5700, 6000]
 RAMP = [600, 900]
 CAL_SEEDS = list(range(7120170, 7120180))
@@ -48,15 +48,18 @@ def load(root: Path, tag: str, drv: str) -> list:
 
 
 def select_cell(rows: list) -> dict:
+    """Addendum A: breakdown = a sustained probe onset exists (R1 capdrop flag reported alongside)."""
     cells = {}
     for o in rows:
-        c = cells.setdefault(o["_cell"], {"n": 0, "bd": 0, "tele": 0, "fail": 0})
+        c = cells.setdefault(o["_cell"], {"n": 0, "bd": 0, "bd_capdrop": 0, "tele": 0, "fail": 0})
         c["n"] += 1
-        c["bd"] += bool((o.get("capdrop") or {}).get("breakdown"))
+        c["bd"] += R.sustained_onset(Path(o["_dir"])) is not None
+        c["bd_capdrop"] += bool((o.get("capdrop") or {}).get("breakdown"))
         c["tele"] += o["teleports"]
         c["fail"] += o["health"]["status"] == "FAIL"
-    table = {k: {"n": c["n"], "breakdown_share": c["bd"] / max(c["n"], 1), "teleports": c["tele"], "fail": c["fail"]}
-             for k, c in cells.items()}
+    table = {k: {"n": c["n"], "breakdown_share": c["bd"] / max(c["n"], 1),
+                 "breakdown_share_capdrop": c["bd_capdrop"] / max(c["n"], 1), "teleports": c["tele"], "fail": c["fail"]}
+             for k, c in sorted(cells.items())}
     ok = {k: v for k, v in table.items() if v["teleports"] == 0 and v["fail"] == 0}
     sel = min(ok, key=lambda k: (abs(ok[k]["breakdown_share"] - 0.5), sum(int(x) for x in k.split("/")))) if ok else None
     max_share = max((v["breakdown_share"] for v in table.values()), default=0.0)
@@ -70,37 +73,57 @@ def inert(rows: list, base: list) -> dict:
     return {"pairs": len(pairs), "identical": same, "INERT": bool(pairs) and same == len(pairs)}
 
 
+def _boot_ratio(dis: list, ff: list, n: int = 2000, seed: int = 7120199) -> tuple:
+    rng = np.random.default_rng(seed)
+    r = [np.median(rng.choice(dis, len(dis))) / np.median(rng.choice(ff, len(ff))) for _ in range(n)]
+    return float(np.percentile(r, 2.5)), float(np.percentile(r, 97.5))
+
+
 def analyse_variant(drv: str, sel: str, chk: list, det: list, xs: dict) -> dict:
     sigs = {(o["_cell"], o["seed"]): (o, R.run_signatures(Path(o["_dir"]), xs)) for o in chk}
     at_sel = [v for k, v in sigs.items() if k[0] == sel]
-    cells_used = sorted({k[0] for k in sigs})
-    # R-a
-    bd = [(o, s) for o, s in at_sel if (o.get("capdrop") or {}).get("breakdown")]
-    ratios = [s["cap"]["ratio"] for o, s in bd if s["cap"] and s["cap"]["ratio"] is not None]
+    # R-a (Addendum A: between-run Q_dis / Q_ff at the selected cell)
+    bd = [(o, s) for o, s in at_sel if s["t_b"] is not None]
+    nbd = [(o, s) for o, s in at_sel if s["t_b"] is None]
+    dis = [s["cap"]["discharge_vphpl"] for _, s in bd if s["cap"]["discharge_vphpl"] is not None]
+    ff = [s["plateau_vphpl"] for _, s in nbd if s["plateau_vphpl"] is not None]
     share = len(bd) / max(len(at_sel), 1)
-    ra = {"n": len(at_sel), "breakdown_share": share, "n_ratios": len(ratios),
-          "median_ratio_mean_based": float(np.median(ratios)) if ratios else None,
-          "median_ratio_r1_max_based": float(np.median([o["capdrop"]["ratio"] for o, _ in bd
-                                                         if o["capdrop"].get("ratio") == o["capdrop"].get("ratio")]))
-          if bd else None}
-    ra["PASS"] = bool(share >= 0.3 and len(ratios) >= 5 and 0.82 <= ra["median_ratio_mean_based"] <= 0.97)
+    ok_n = len(dis) >= 3 and len(ff) >= 3
+    ratio = float(np.median(dis) / np.median(ff)) if ok_n else None
+    med = lambda xs_: float(np.median(xs_)) if xs_ else None
+    ra = {"n": len(at_sel), "breakdown_share": share,
+          "breakdown_share_capdrop": float(np.mean([bool((o.get("capdrop") or {}).get("breakdown")) for o, _ in at_sel]))
+          if at_sel else None,
+          "n_discharge": len(dis), "n_free": len(ff), "Q_dis_vphpl": med(dis), "Q_ff_vphpl": med(ff), "ratio": ratio,
+          "ratio_ci95": _boot_ratio(dis, ff) if ok_n else None,
+          "reported_ratio_within_ramp_corrected": med([s["cap"]["ratio_within_ramp_corrected"] for _, s in bd
+                                                       if s["cap"]["ratio_within_ramp_corrected"] is not None]),
+          "reported_ratio_original_10min": med([s["cap"]["ratio_original_10min"] for _, s in bd
+                                                if s["cap"]["ratio_original_10min"] is not None]),
+          "reported_ratio_r1_max_based": med([o["capdrop"]["ratio"] for o, _ in at_sel
+                                              if (o.get("capdrop") or {}).get("breakdown")
+                                              and o["capdrop"].get("ratio") == o["capdrop"].get("ratio")])}
+    ra["PASS"] = bool(share >= 0.3 and ok_n and 0.82 <= ratio <= 0.97)
     # R-b
     waves = [s["wave"] for _, s in sigs.values() if s["wave"]]
     cs = [w["c_kmh"] for w in waves if w["valid"]]
-    rb = {"n_runs": len(sigs), "n_windows": len(waves), "n_valid": len(cs),
-          "median_c_kmh": float(np.median(cs)) if cs else None,
-          "pairs_used": {p: sum(w["pair"] == p for w in waves) for p in {w["pair"] for w in waves}}}
+    rb = {"n_runs": len(sigs), "n_windows": len(waves), "n_valid": len(cs), "median_c_kmh": med(cs),
+          "pairs_used": {p: sum(w["pair"] == p for w in waves) for p in sorted({w["pair"] for w in waves})}}
     rb["status"] = "n/a" if len(cs) < 5 else ("PASS" if -25.0 <= rb["median_c_kmh"] <= -10.0 else "FAIL")
-    # R-c
-    all_runs = chk + det
-    tele = sum(o["teleports"] for o in all_runs)
-    fails = sum(o["health"]["status"] == "FAIL" for o in all_runs)
-    dis = [s["cap"]["discharge_vphpl"] for o, s in bd if s["cap"] and s["cap"]["discharge_vphpl"] is not None]
-    ref = next((o for o in chk if o["_cell"] == sel and o["seed"] == CHK_SEEDS[0]), None)
+    # R-c (Addendum A: teleports / FAIL gated at the operating point = selected cell + determinism re-run)
+    op = [o for o, _ in at_sel] + det
+    stress = [o for (c, _), (o, _) in sigs.items() if c != sel]
+    tele_op = sum(o["teleports"] for o in op)
+    fail_op = sum(o["health"]["status"] == "FAIL" for o in op)
+    tele_st = sum(o["teleports"] for o in stress)
+    fail_st = sum(o["health"]["status"] == "FAIL" for o in stress)
+    ref = next((o for o, _ in at_sel if o["seed"] == CHK_SEEDS[0]), None)
     det_ok = bool(det) and ref is not None and all(d["hash"] == ref["hash"] for d in det)
-    rc = {"teleports": tele, "fail": fails, "median_discharge_vphpl": float(np.median(dis)) if dis else None,
-          "determinism": det_ok}
-    rc["PASS"] = bool(tele == 0 and fails == 0 and dis and 1600.0 <= rc["median_discharge_vphpl"] <= 2400.0 and det_ok)
+    q_ok = bool(dis) and 1600.0 <= float(np.median(dis)) <= 2400.0
+    rc = {"teleports_operating": tele_op, "fail_operating": fail_op, "teleports_stress": tele_st, "fail_stress": fail_st,
+          "median_discharge_vphpl": med(dis), "determinism": det_ok}
+    rc["PASS"] = bool(tele_op == 0 and fail_op == 0 and q_ok and det_ok)
+    rc["PASS_original_rule"] = bool(rc["PASS"] and tele_st == 0 and fail_st == 0)
     # R-d
     orig = [s["origin"] for _, s in sigs.values() if s["origin"] is not None]
     down = sum(x in R.DOWNSTREAM_ORIGINS for x in orig)
@@ -109,17 +132,21 @@ def analyse_variant(drv: str, sel: str, chk: list, det: list, xs: dict) -> dict:
     rd["PASS"] = bool(orig and rd["share_bottleneck_origin"] >= 0.8)
     n_cong = sum(s["n_cong_samples"] for _, s in sigs.values())
     n_stop = sum(s["n_stop_samples"] for _, s in sigs.values())
-    rep = {"stopped_share_in_congestion": n_stop / n_cong if n_cong else None, "cells": cells_used}
-    ok = ra["PASS"] and rc["PASS"] and rd["PASS"] and rb["status"] != "FAIL"
-    return {"R-a": ra, "R-b": rb, "R-c": rc, "R-d": rd, "reported": rep, "verdict": "PASS" if ok else "FAIL",
+    rep = {"stopped_share_in_congestion": n_stop / n_cong if n_cong else None, "cells": sorted({k[0] for k in sigs}),
+           "median_wall_s": med([o.get("wall_s") for o in chk if o.get("wall_s")])}
+    ok = ra["PASS"] and rd["PASS"] and rb["status"] != "FAIL"
+    return {"R-a": ra, "R-b": rb, "R-c": rc, "R-d": rd, "reported": rep,
+            "verdict": "PASS" if ok and rc["PASS"] else "FAIL",
+            "verdict_original_rc_rule": "PASS" if ok and rc["PASS_original_rule"] else "FAIL",
             "flag_wave_na": rb["status"] == "n/a"}
 
 
 def write_report(res: dict, root: Path) -> None:
     L = ["# Track 2 (MRG3-v3): plant-realism gate, results", "",
-         f"*{time.strftime('%Y-%m-%d %H:%M')} · protocol `docs/lab/t2_realism_protocol.md` · raw `{root}`*", "",
-         "| variant | verdict | cell | R-a share / ratio (mean-based) | R-b wave km/h (valid) | R-c tele / FAIL / discharge / det | "
-         "R-d bottleneck origin | stopped share |", "|---|---|---|---|---|---|---|---|"]
+         f"*{time.strftime('%Y-%m-%d %H:%M')} · protocol `docs/lab/t2_realism_protocol.md` (incl. Addendum A) · raw `{root}`*",
+         "", "| variant | verdict (original R-c rule) | cell | R-a onset share / Q_dis÷Q_ff [95 % CI] | R-b wave km/h "
+         "(valid/runs) | R-c tele op / stress · FAIL op · discharge · det | R-d bottleneck origin (n) | stopped share |",
+         "|---|---|---|---|---|---|---|---|"]
     for drv in VARIANTS:
         v = res["variants"][drv]
         if v["verdict"] in ("INERT",) or "R-a" not in v:
@@ -127,13 +154,17 @@ def write_report(res: dict, root: Path) -> None:
             continue
         a, b, c, d = v["R-a"], v["R-b"], v["R-c"], v["R-d"]
         fmt = lambda x, f: (f.format(x) if x is not None else "–")
-        L.append(f"| {drv} | **{v['verdict']}**{' (R-b n/a)' if v['flag_wave_na'] else ''} | {v['cell']} | "
-                 f"{a['breakdown_share']:.2f} / {fmt(a['median_ratio_mean_based'], '{:.3f}')} (n={a['n_ratios']}) | "
+        ci = a["ratio_ci95"]
+        L.append(f"| {drv} | **{v['verdict']}**{' (R-b n/a)' if v['flag_wave_na'] else ''} "
+                 f"({v['verdict_original_rc_rule']}) | {v['cell']} | "
+                 f"{a['breakdown_share']:.2f} / {fmt(a['ratio'], '{:.3f}')}"
+                 f"{f' [{ci[0]:.3f}, {ci[1]:.3f}]' if ci else ''} (n={a['n_discharge']}+{a['n_free']}) | "
                  f"{fmt(b['median_c_kmh'], '{:.1f}')} ({b['n_valid']}/{b['n_runs']}) | "
-                 f"{c['teleports']} / {c['fail']} / {fmt(c['median_discharge_vphpl'], '{:.0f}')} / {c['determinism']} | "
+                 f"{c['teleports_operating']} / {c['teleports_stress']} · {c['fail_operating']} · "
+                 f"{fmt(c['median_discharge_vphpl'], '{:.0f}')} · {c['determinism']} | "
                  f"{fmt(d['share_bottleneck_origin'], '{:.2f}')} ({d['n_congested_runs']}) | "
                  f"{fmt(v['reported']['stopped_share_in_congestion'], '{:.2f}')} |")
-    L += ["", f"Primary plant for DRL (pre-registered preference H4 > H2 > H1 > H3 > H0): **{res['primary']}**", "",
+    L += ["", f"Primary plant for DRL (preference H4 > H5 > H2 > H1 > H3 > H0, Addendum A): **{res['primary']}**", "",
           "Calibration tables and per-check details: `docs/lab/t2_realism_verdict.json`."]
     (REPO_ROOT / "docs" / "lab" / "t2_realism.md").write_text("\n".join(L) + "\n")
 

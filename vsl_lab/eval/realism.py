@@ -88,15 +88,29 @@ def onset_recovery(t: np.ndarray, v_up0b: np.ndarray) -> tuple:
     return float(t[tb]), (float(t[rec]) if rec is not None else None)
 
 
+PLATEAU_EXIT = (1400.0, 3000.0)   # demand plateau as seen at the exit loops (Addendum A)
+
+
+def _mean_in(tq: np.ndarray, q: np.ndarray, a: float, b: float):
+    v = q[(tq > a) & (tq <= b)]
+    return float(np.mean(v)) if len(v) else None
+
+
 def capacity_ratio(tq: np.ndarray, q: np.ndarray, t_b: float, t_rec, t_end: float = 3900.0) -> dict:
-    pre = q[(tq > t_b - 600.0) & (tq <= t_b)]
+    """Discharge flow after a sustained onset; the original (10 min, pre-registered) and the ramp-corrected within-run
+    ratios are reported only (Addendum A: the gated R-a ratio is between runs, see plateau_flow)."""
     d0 = t_b + 300.0
     d1 = min(t_b + 1200.0, t_rec if t_rec is not None else np.inf, t_end)
-    dis = q[(tq > d0) & (tq <= d1)]
-    if d1 - d0 < 300.0 or len(pre) == 0 or len(dis) == 0:
-        return {"ratio": None, "discharge_vphpl": None, "window_s": max(0.0, d1 - d0)}
-    return {"ratio": float(np.mean(dis) / np.mean(pre)) if np.mean(pre) > 0 else None,
-            "discharge_vphpl": float(np.mean(dis)), "pre_vphpl": float(np.mean(pre)), "window_s": float(d1 - d0)}
+    dis = _mean_in(tq, q, d0, d1) if d1 - d0 >= 300.0 else None
+    pre10 = _mean_in(tq, q, t_b - 600.0, t_b)
+    pre5 = _mean_in(tq, q, t_b - 300.0, t_b) if t_b - 300.0 >= PLATEAU_EXIT[0] else None
+    return {"discharge_vphpl": dis, "window_s": max(0.0, d1 - d0),
+            "ratio_original_10min": dis / pre10 if dis and pre10 else None,
+            "ratio_within_ramp_corrected": dis / pre5 if dis and pre5 else None}
+
+
+def plateau_flow(tq: np.ndarray, q: np.ndarray):
+    return _mean_in(tq, q, *PLATEAU_EXIT)
 
 
 def origin(t: np.ndarray, v: dict) -> str | None:
@@ -158,5 +172,11 @@ def run_signatures(run_dir: Path, xs: dict) -> dict:
     t_b, t_rec = onset_recovery(t, v["up0b"])
     out = {"t_b": t_b, "t_rec": t_rec, "origin": origin(t, v), "wave": wave_speed(v, xs)}
     out["cap"] = capacity_ratio(tq, q, t_b, t_rec) if t_b is not None else None
+    out["plateau_vphpl"] = plateau_flow(tq, q)
     out["n_cong_samples"], out["n_stop_samples"] = stopped_share(v)
     return out
+
+
+def sustained_onset(run_dir: Path):
+    t, v = load_probes(run_dir)
+    return onset_recovery(t, v["up0b"])[0]
