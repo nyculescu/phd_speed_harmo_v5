@@ -2,14 +2,14 @@
 
 | Field | Value |
 |---|---|
-| Doc version | v0.1 (initial) |
+| Doc version | v0.2 (full ablation matrix + detection method) |
 | Status | **Active** — append-only catalog; entries are added when an experiment lands, never deleted |
 | Last updated | 2026-05-19 |
 | Companion docs | [docs/plans/phd_thesis_plan_v0.md](plans/phd_thesis_plan_v0.md) (§8.5 records the headline results derived from these experiments); [README.md](../README.md) (operational); memory entry [`reference_experiments_catalog.md`](file:///home/catalin/.claude/projects/-home-catalin-work-phd-phd-speed-harmo-v5/memory/reference_experiments_catalog.md) (quick-lookup mirror for LLM context) |
 | Purpose | Canonical, append-only mapping from `training_runs/experiment_*` folder names to their role, configuration, and headline metrics. When referencing an experiment by ID in any other doc, link back here. |
 | Audit invariant | Every folder under `training_runs/experiment_*` either appears in §2 (active) or §3 (retired). Never delete a row — mark superseded entries with **SUPERSEDED BY ...** and keep the original metrics. |
 
-> **Reading guide.** §1 is the policy header (what to keep, what to upload, what to strip). §2 is the live catalog of experiments and what each one contains. §3 is the retirement section (none yet). §4 is the cloud-storage layout + tooling. §5 is the change log.
+> **Reading guide.** §1 is the policy header (what to keep, upload, strip, and **§1.4 how to detect which ablation a folder ran**). §2 is the live catalog of experiments. §3 is the retirement section. §4 is the cloud-storage layout + tooling. §5 is authoring rules. §6 is the change log.
 
 ---
 
@@ -58,6 +58,36 @@ For Google Cloud Storage uploads, strip the redundant files to save ~70 % storag
 | **PAPER-2 HOOK** | Not in Paper 1 but reserved for the next paper |
 | **TEST / DEV** | Throwaway runs — local-only, do not upload |
 
+### 1.4 How to identify which ablation an experiment ran
+
+The experiment folder name (`experiment_<TS>`) is **timestamp-only — it does not encode the ablation**. Use one of two detection methods, in order of preference:
+
+**Method A — the `ABLATION:` log line (runs from 2026-05-19 train.py change onward).**
+Every per-seed log (`experiment_<TS>/{algo_box}/{algo_box}_seed{N}.log`) prints, near the top:
+```
+  ABLATION: no_temporal
+  Config file: configurations/per_lane_stochastic_no_temporal.yaml
+  Reward weights: w_h=0.44 w_t=0.0 w_q=0.31 w_l=0.19 w_s=0.06
+```
+Detect with: `grep -m1 "ABLATION:" experiment_<TS>/*/*_seed0.log`. This is the canonical method for any run after the train.py change committed alongside catalog v0.2.
+
+**Method B — config.yaml reward-weight fingerprint (works for ALL runs with a config snapshot, including pre-2026-05-19).**
+`train.py` saves `experiment_<TS>/{algo_box}/config.yaml`. Parse `sar_config.reward_weights` into the 5-tuple `(w_h, w_t, w_q, w_l, w_s)` and match against this table (every tuple is unique):
+
+| `(w_h, w_t, w_q, w_l, w_s)` | Ablation |
+|---|---|
+| `(0.35, 0.20, 0.25, 0.15, 0.05)` | base |
+| `(0.37, 0.21, 0.26, 0.16, 0.00)` | no_smoothness |
+| `(0.47, 0.27, 0.00, 0.20, 0.06)` | no_throughput |
+| `(0.44, 0.00, 0.31, 0.19, 0.06)` | no_temporal |
+| `(0.41, 0.24, 0.29, 0.00, 0.06)` | no_lane_eq |
+| `(0.00, 0.31, 0.38, 0.23, 0.08)` | no_harmonization |
+| `(0.70, 0.00, 0.00, 0.30, 0.00)` | harmo_pure |
+| `(0.20, 0.10, 0.55, 0.10, 0.05)` | throughput_heavy |
+| `(0.20, 0.20, 0.20, 0.20, 0.20)` | uniform_weights |
+
+`tools/eval_to_kpi.py::detect_reward_weights()` implements Method B. If a future ablation collides on weights with an existing one, Method B becomes ambiguous — use Method A (the `ABLATION:` log line) which carries the explicit config name.
+
 ---
 
 ## 2. Active experiments (sorted by date ascending)
@@ -83,14 +113,28 @@ For Google Cloud Storage uploads, strip the redundant files to save ~70 % storag
 |---|---|---|---|---|---|---|---|
 | [`experiment_20260518_133246`](../training_runs/experiment_20260518_133246) | **TQC Box(4)** | **100** | **base** `(0.35, 0.20, 0.25, 0.15, 0.05)` | 5 | ⭐ **HEADLINE** (plan §8.5.1) | 636 MB | Mean reward **−164.8**; `lane_sigma` **1.61**; `max_lane_diff_kph` **3.29**; `ds_flow_vph` **4 657**; **0 collisions / 150 eps** |
 | [`experiment_20260518_133504`](../training_runs/experiment_20260518_133504) | TQC Box(4) | 100 | **harmo_pure** `(0.70, 0.00, 0.00, 0.30, 0.00)` | 5 | ⭐ ABLATION ii (plan §8.5) | 480 MB | Mean reward −196.6; `lane_sigma` 1.75; **4× seed variance vs base** |
-| [`experiment_20260518_142808`](../training_runs/experiment_20260518_142808) | TQC Box(4) | 100 | **no_throughput** `(0.47, 0.27, 0.00, 0.20, 0.06)` | **3** ⚠ | ⭐ ABLATION iii (plan §8.5) | 33 MB | Mean reward −182.6 (partial); **throughput preserved** at 4 662 vph despite `w_q=0` — key paper claim |
 | [`experiment_20260518_144123`](../training_runs/experiment_20260518_144123) | TQC Box(4) | 100 | **no_smoothness** `(0.37, 0.21, 0.26, 0.16, 0.00)` | 5 | ⭐ ABLATION i (plan §8.5) | 174 MB | Mean reward −172.9; `lane_sigma` 1.62 — smoothness term is decorative |
+
+### 2026-05-19 — completed reward-weight ablation matrix (5-seed runs)
+
+These six runs complete the 9-config ablation matrix (base + 5 drop-one-out + harmo_pure + throughput_heavy + uniform_weights). All TQC Box(4), 100 % CAV, 5/5 seeds. `experiment_20260519_100431` is the **5-seed re-run** that supersedes the 3-seed partial `experiment_20260518_142808` (now in §3). Headline metrics below are pending — run `tools/eval_to_kpi.py` once these are evaluated.
+
+| Folder | Algo | CAV % | Reward config | Seeds | Tier | Headline metric |
+|---|---|---|---|---|---|---|
+| [`experiment_20260519_100431`](../training_runs/experiment_20260519_100431) | TQC Box(4) | 100 | **no_throughput** `(0.47, 0.27, 0.00, 0.20, 0.06)` | 5 | ⭐ ABLATION iii (drop `w_q`) — **supersedes `_142808`** | pending eval |
+| [`experiment_20260519_102240`](../training_runs/experiment_20260519_102240) | TQC Box(4) | 100 | **no_temporal** `(0.44, 0.00, 0.31, 0.19, 0.06)` | 5 | ⭐ ABLATION iv (drop `w_t`) | pending eval |
+| [`experiment_20260519_102247`](../training_runs/experiment_20260519_102247) | TQC Box(4) | 100 | **no_lane_eq** `(0.41, 0.24, 0.29, 0.00, 0.06)` | 5 | ⭐ ABLATION v (drop `w_l`) | pending eval |
+| [`experiment_20260519_102845`](../training_runs/experiment_20260519_102845) | TQC Box(4) | 100 | **throughput_heavy** `(0.20, 0.10, 0.55, 0.10, 0.05)` | 5 | ⭐ ABLATION vi (reverse-weighting) | pending eval |
+| [`experiment_20260519_103431`](../training_runs/experiment_20260519_103431) | TQC Box(4) | 100 | **no_harmonization** `(0.00, 0.31, 0.38, 0.23, 0.08)` | 5 | ⭐ ABLATION vii (drop `w_h` — closes the matrix) | pending eval |
+| [`experiment_20260519_104158`](../training_runs/experiment_20260519_104158) | TQC Box(4) | 100 | **uniform_weights** `(0.20, 0.20, 0.20, 0.20, 0.20)` | 5 | ⭐ ABLATION viii (naive baseline) | pending eval |
 
 ---
 
 ## 3. Retired / superseded experiments
 
-*(none yet — append here when retiring an entry from §2)*
+| Folder | Was | Superseded by | Reason |
+|---|---|---|---|
+| [`experiment_20260518_142808`](../training_runs/experiment_20260518_142808) | TQC Box(4), 100 % CAV, no_throughput, **3 seeds** (partial) | **`experiment_20260519_100431`** (5 seeds) | The 2026-05-18 no_throughput run completed only 3/5 seeds. The 5-seed re-run on 2026-05-19 is the canonical no_throughput experiment. The partial run's eval data (`evaluation_20260519_085216`) was used in plan §8.5 v0.6 and should be **replaced** by `_100431`'s eval when the plan is next synced. Do not delete the folder — keep for audit per the §2 invariant. |
 
 ---
 
@@ -165,3 +209,4 @@ gsutil -m rsync -r $REMOTE_BASE/experiment_20260518_133246 \
 | Date | Doc version | Author | Change |
 |---|---|---|---|
 | 2026-05-19 | v0.1 | Catalin + Claude | Initial catalog. 9 experiments tracked: 4 from the 100 % CAV ablation run (HEADLINE + 3 ABLATIONs), 2 50 % CAV TQC Box(4) references (uplift baseline + reproducibility), 3 Paper-2 hooks. Retention + strip-before-upload policy documented in §1; GCS layout + upload commands in §4. |
+| 2026-05-19 | v0.2 | Catalin + Claude | Added the 6 `experiment_20260519_*` runs that complete the 9-config reward-weight ablation matrix (no_throughput 5-seed re-run, no_temporal, no_lane_eq, throughput_heavy, no_harmonization, uniform_weights — all TQC Box(4), 100 % CAV, 5/5 seeds, pending evaluation). Retired the 3-seed partial `experiment_20260518_142808` to §3 (superseded by `_100431`). Added §1.4 "How to identify which ablation an experiment ran" — documents Method A (the new `ABLATION:` seed-log line, added to train.py same day) and Method B (config.yaml weight fingerprint, with the full 9-tuple table). |

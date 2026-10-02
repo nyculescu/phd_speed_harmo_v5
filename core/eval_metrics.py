@@ -31,12 +31,24 @@ Metrics produced:
     density_seg_0_before    — mean density at the bottleneck (veh/km/lane)
     density_seg_0_after     — mean density at the merge zone
 
+  Acceleration / jerk (per-SUMO-step — added 2026-05-21, traffic-smoothing study):
+    accel_mean_abs_ms2 / accel_rms_ms2   — ride-harshness of the accel profile
+    decel_mean_ms2 / decel_p95_ms2       — typical / tail braking magnitude
+    decel_ct_{moderate,hard,severe}      — severity-binned braking-event counts
+    decel_rate_{hard,severe}_per1k       — exposure-normalised braking-event rate
+    jerk_{mean_abs,rms,p95}_ms3          — jerk (da/dt) distribution
+    *_merge_* / *_upstream_*             — same metrics split by spatial zone
+  Collected by sumo_step() (every ~1 s SUMO step), unlike every metric above
+  which step() polls only at the 30 s env-step boundary. This finer sampling
+  is why decel_ct_hard supersedes the (30 s-aliased) hard_brake_count.
+
 TTC is computed only for vehicles on the merge approach (seg_0_before,
 seg_0_after, ramp_on_merge), where it matters; computing TTC for every
 vehicle in the network would 2× eval cost.
 """
 from __future__ import annotations
 
+from array import array
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -57,12 +69,81 @@ SAFETY_SEGMENTS = (
     "ramp_on_merge", "ramp_on_transition",
 )
 
+# ── Per-SUMO-step acceleration / jerk instrumentation ───────────────────────
+# Added 2026-05-21 for the traffic-smoothing study (audit follow-up). Collected
+# by EvalMetricsCollector.sumo_step(), called once per SUMO simulation step
+# (~1 s) — far finer than the 30 s env-step poll used for hard_brake_count.
+ACCEL_ARTIFACT_ABS_MS2 = 15.0   # |a| beyond this is an insertion/teleport artefact — discarded
+JERK_ARTIFACT_ABS_MS3 = 30.0    # |jerk| beyond this is discarded as an artefact
+
+# Deceleration severity bands (m/s²; braking is negative). For a sample a:
+#   moderate : DECEL_HARD   < a <= DECEL_MODERATE
+#   hard     : DECEL_SEVERE < a <= DECEL_HARD
+#   severe   :               a <= DECEL_SEVERE
+DECEL_MODERATE_MS2 = -2.5
+DECEL_HARD_MS2 = -4.0           # matches HARD_BRAKE_THRESHOLD_MS2
+DECEL_SEVERE_MS2 = -6.0
+
+# Edge → spatial zone for the merge-vs-upstream split. Edges not listed
+# (downstream release zone seg_*_after past the merge, internal ":" junction
+# edges) are counted only in the network-wide "all" figures, never in a
+# headline bucket. Adjust here if the topology's edge names change.
+ACCEL_ZONE_BY_EDGE: Dict[str, str] = {
+    "seg_3_before":       "upstream",
+    "seg_2_before":       "upstream",
+    "seg_1_before":       "upstream",
+    "ramp_on_approach":   "upstream",
+    "seg_0_before":       "merge",
+    "seg_0_after":        "merge",
+    "ramp_on_transition": "merge",
+    "ramp_on_merge":      "merge",
+}
+
 # Per-segment lane counts (matches env_interact._SEGMENT_LANES)
 _SEGMENT_LANES: Dict[str, int] = {
     "seg_0_before": 3, "seg_0_after": 4,
     "seg_1_before": 3, "seg_2_before": 3, "seg_3_before": 3,
     "seg_1_after": 3,
 }
+
+
+def _accel_zone_stats(samples) -> Dict[str, float]:
+    """Acceleration / deceleration summary for one bucket of per-step samples.
+
+    `samples` is a sequence of signed accelerations (m/s²); braking is negative.
+    Returns zeros for an empty bucket so the CSV schema stays fixed.
+    """
+    if len(samples) == 0:
+        return {
+            "n": 0, "mean_abs": 0.0, "rms": 0.0,
+            "decel_mean": 0.0, "decel_p95": 0.0,
+            "ct_moderate": 0, "ct_hard": 0, "ct_severe": 0,
+        }
+    a = np.asarray(samples, dtype=np.float64)
+    decel = -a[a < 0.0]                       # braking magnitudes, positive
+    return {
+        "n":           int(a.size),
+        "mean_abs":    float(np.abs(a).mean()),
+        "rms":         float(np.sqrt(np.mean(a * a))),
+        "decel_mean":  float(decel.mean()) if decel.size else 0.0,
+        "decel_p95":   float(np.percentile(decel, 95)) if decel.size else 0.0,
+        "ct_moderate": int(np.sum((a <= DECEL_MODERATE_MS2) & (a > DECEL_HARD_MS2))),
+        "ct_hard":     int(np.sum((a <= DECEL_HARD_MS2) & (a > DECEL_SEVERE_MS2))),
+        "ct_severe":   int(np.sum(a <= DECEL_SEVERE_MS2)),
+    }
+
+
+def _jerk_zone_stats(samples) -> Dict[str, float]:
+    """Jerk summary (mean |j|, RMS, p95 |j|) for one bucket of per-step samples."""
+    if len(samples) == 0:
+        return {"mean_abs": 0.0, "rms": 0.0, "p95": 0.0}
+    j = np.asarray(samples, dtype=np.float64)
+    aj = np.abs(j)
+    return {
+        "mean_abs": float(aj.mean()),
+        "rms":      float(np.sqrt(np.mean(j * j))),
+        "p95":      float(np.percentile(aj, 95)),
+    }
 
 
 class EvalMetricsCollector:
@@ -93,6 +174,20 @@ class EvalMetricsCollector:
         # Per-step density samples per segment (mean over episode at end)
         self._density_samples: Dict[str, List[float]] = {
             "seg_0_before": [], "seg_0_after": [],
+        }
+
+        # ── Per-SUMO-step acceleration / jerk samples, bucketed by zone ─────
+        # Populated by sumo_step() (~1 s cadence); summarised in summary().
+        # `array('d')` keeps ~1 M samples/episode at 8 B each instead of the
+        # ~32 B/elem a Python list would cost. "other" = downstream + internal
+        # edges; it feeds only the network-wide "all" figures.
+        self._sumo_dt: Optional[float] = None        # SUMO step length (s), lazy-fetched
+        self._prev_accel: Dict[str, float] = {}      # vid → accel at previous SUMO step
+        self._accel_samples: Dict[str, array] = {
+            "merge": array("d"), "upstream": array("d"), "other": array("d"),
+        }
+        self._jerk_samples: Dict[str, array] = {
+            "merge": array("d"), "upstream": array("d"), "other": array("d"),
         }
 
     # ------------------------------------------------------------------
@@ -194,6 +289,60 @@ class EvalMetricsCollector:
             self._density_samples[seg].append(density)
 
     # ------------------------------------------------------------------
+    # Per-SUMO-step polling (acceleration / jerk) — finer than step()
+    # ------------------------------------------------------------------
+    def sumo_step(self, conn, sim_time_s: float = 0.0) -> None:
+        """Poll per-vehicle acceleration and jerk for the traffic-smoothing study.
+
+        Call once per SUMO *simulation* step (~1 s), NOT per env step. Wired via
+        ``TrafficEnv._eval_collector`` so the hook runs during evaluation only
+        and adds zero overhead to training. SUMO's own ``getAcceleration()`` is
+        used for accel; jerk is the first difference of accel over the SUMO step
+        length. Samples are bucketed merge / upstream / other by current edge.
+        """
+        if conn is None:
+            return
+        if self._sumo_dt is None:
+            try:
+                self._sumo_dt = float(conn.simulation.getDeltaT())
+            except Exception:
+                self._sumo_dt = 1.0
+        dt = self._sumo_dt or 1.0
+
+        try:
+            veh_ids = conn.vehicle.getIDList()
+        except Exception:
+            return
+
+        seen = set()
+        for vid in veh_ids:
+            try:
+                accel = float(conn.vehicle.getAcceleration(vid))
+                road = conn.vehicle.getRoadID(vid)
+            except Exception:
+                continue
+            seen.add(vid)
+            prev = self._prev_accel.get(vid)
+            self._prev_accel[vid] = accel
+
+            # Discard insertion / teleport artefacts (and NaNs).
+            if accel != accel or abs(accel) > ACCEL_ARTIFACT_ABS_MS2:
+                continue
+            zone = ACCEL_ZONE_BY_EDGE.get(road, "other")
+            self._accel_samples[zone].append(accel)
+
+            # Jerk needs a finite, non-artefact previous accel for this vehicle.
+            if prev is not None and prev == prev and abs(prev) <= ACCEL_ARTIFACT_ABS_MS2:
+                jerk = (accel - prev) / dt
+                if abs(jerk) <= JERK_ARTIFACT_ABS_MS3:
+                    self._jerk_samples[zone].append(jerk)
+
+        # Forget vehicles that have left the network (bounds _prev_accel).
+        if len(self._prev_accel) > len(seen):
+            for vid in [v for v in self._prev_accel if v not in seen]:
+                self._prev_accel.pop(vid, None)
+
+    # ------------------------------------------------------------------
     # Episode end summary
     # ------------------------------------------------------------------
     def summary(self) -> Dict[str, float]:
@@ -239,6 +388,53 @@ class EvalMetricsCollector:
             for seg, samples in self._density_samples.items()
         }
 
+        # ── Per-SUMO-step acceleration / jerk study ────────────────────────
+        acc = {z: _accel_zone_stats(s) for z, s in self._accel_samples.items()}
+        jrk = {z: _jerk_zone_stats(s) for z, s in self._jerk_samples.items()}
+        acc["all"] = _accel_zone_stats(
+            self._accel_samples["merge"] + self._accel_samples["upstream"]
+            + self._accel_samples["other"]
+        )
+        jrk["all"] = _jerk_zone_stats(
+            self._jerk_samples["merge"] + self._jerk_samples["upstream"]
+            + self._jerk_samples["other"]
+        )
+
+        def _rate_per1k(count: int, n: int) -> float:
+            """Braking-event count normalised per 1000 vehicle-steps (exposure)."""
+            return (count / n * 1000.0) if n > 0 else 0.0
+
+        accel_summary = {
+            # Network-wide
+            "accel_n_samples":         acc["all"]["n"],
+            "accel_mean_abs_ms2":      acc["all"]["mean_abs"],
+            "accel_rms_ms2":           acc["all"]["rms"],
+            "decel_mean_ms2":          acc["all"]["decel_mean"],
+            "decel_p95_ms2":           acc["all"]["decel_p95"],
+            "decel_ct_moderate":       acc["all"]["ct_moderate"],
+            "decel_ct_hard":           acc["all"]["ct_hard"],
+            "decel_ct_severe":         acc["all"]["ct_severe"],
+            "decel_rate_hard_per1k":   _rate_per1k(acc["all"]["ct_hard"], acc["all"]["n"]),
+            "decel_rate_severe_per1k": _rate_per1k(acc["all"]["ct_severe"], acc["all"]["n"]),
+            "jerk_mean_abs_ms3":       jrk["all"]["mean_abs"],
+            "jerk_rms_ms3":            jrk["all"]["rms"],
+            "jerk_p95_ms3":            jrk["all"]["p95"],
+            # Merge zone
+            "accel_n_merge":                   acc["merge"]["n"],
+            "accel_mean_abs_merge_ms2":        acc["merge"]["mean_abs"],
+            "decel_p95_merge_ms2":             acc["merge"]["decel_p95"],
+            "decel_rate_hard_merge_per1k":     _rate_per1k(acc["merge"]["ct_hard"], acc["merge"]["n"]),
+            "decel_rate_severe_merge_per1k":   _rate_per1k(acc["merge"]["ct_severe"], acc["merge"]["n"]),
+            "jerk_p95_merge_ms3":              jrk["merge"]["p95"],
+            # Upstream zone
+            "accel_n_upstream":                acc["upstream"]["n"],
+            "accel_mean_abs_upstream_ms2":     acc["upstream"]["mean_abs"],
+            "decel_p95_upstream_ms2":          acc["upstream"]["decel_p95"],
+            "decel_rate_hard_upstream_per1k":  _rate_per1k(acc["upstream"]["ct_hard"], acc["upstream"]["n"]),
+            "decel_rate_severe_upstream_per1k": _rate_per1k(acc["upstream"]["ct_severe"], acc["upstream"]["n"]),
+            "jerk_p95_upstream_ms3":           jrk["upstream"]["p95"],
+        }
+
         return {
             # Safety
             "hard_brake_count": int(self.hard_brake_count),
@@ -255,4 +451,6 @@ class EvalMetricsCollector:
             # Macroscopic
             **regime_share,
             **density_means,
+            # Acceleration / jerk (per-SUMO-step — traffic-smoothing study)
+            **accel_summary,
         }

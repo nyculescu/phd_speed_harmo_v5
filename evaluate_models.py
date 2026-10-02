@@ -245,6 +245,11 @@ def run_episode(env, policy_fn, episode_seed: int):
     # called during training.
     from core.eval_metrics import EvalMetricsCollector
     eval_collector = EvalMetricsCollector(aggregation_time_s=env.aggregation_time)
+    # Attach as a per-SUMO-step hook so the collector can poll per-vehicle
+    # acceleration / jerk inside env._advance_sumo (~1 s resolution) — far finer
+    # than the 30 s env-step poll via eval_collector.step() below. env.reset()
+    # has already run, so warm-up steps are correctly excluded.
+    env._eval_collector = eval_collector
 
     steps = []
     total_reward = 0.0

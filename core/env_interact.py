@@ -176,6 +176,10 @@ class TrafficEnv(gym.Env):
         self._sumo_seed: int = 0  # set each reset; threaded into `sumo --seed`
         self._metrics: TrafficMetrics = TrafficMetrics()
         self._anomaly_injector = None
+        # Optional per-SUMO-step evaluation hook. evaluate_models.py attaches an
+        # EvalMetricsCollector here for accel/jerk logging; stays None during
+        # training, so the hook in _advance_sumo is a no-op there.
+        self._eval_collector = None
 
     # ------------------------------------------------------------------
     # gymnasium interface
@@ -557,6 +561,15 @@ class TrafficEnv(gym.Env):
                     self._metrics.episode_collision_count += int(n_collided)
             except Exception:
                 pass  # Don't let a TraCI hiccup kill the episode.
+
+            # Per-SUMO-step acceleration / jerk instrumentation. Active only
+            # when evaluate_models.py has attached an EvalMetricsCollector;
+            # _eval_collector is None during training, so this is a no-op there.
+            if self._eval_collector is not None:
+                try:
+                    self._eval_collector.sumo_step(conn, float(sim_time_base + i + 1))
+                except Exception:
+                    pass
 
             # Anomaly injection (if active this episode)
             if self._anomaly_injector is not None:
