@@ -5,7 +5,7 @@ P=/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314/bin/python
 R=/home/catalin/work/phd/vsl_lab_runs
 cd /run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v5
 unset SUMO_HOME; export OMP_NUM_THREADS=1
-ROOT=$R/t1/r5m_main
+ROOT=$R/t1/r5m_main2
 R0=$(ls -td $R/t1/train/pm3b_bn4/*/ | head -1)
 $P -m vsl_lab.jobs.t1_meter_r5 --runs "$R0" x x --part comps --root $ROOT --gate-ok --workers 48 > $R/t1/r5m_comps.log 2>&1
 until grep -q "pmf done" $R/pmf_chain.log 2>/dev/null; do sleep 60; done

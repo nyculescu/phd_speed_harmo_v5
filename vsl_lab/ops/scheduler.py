@@ -100,6 +100,8 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
     util_win = collections.deque(maxlen=max(int(UTIL_SMOOTH_S / poll_s), 1))
     cpu_prev = _cpu_times()
     util = 0.0
+    n_cpu = os.cpu_count() or 32
+    recent_launches = collections.deque()   # launches in the last 2 s count as load not yet visible in /proc/stat
     k_factory = 0
     window = collections.deque(maxlen=max(int(TEMP_SMOOTH_S / poll_s), 1))     # fast (10 s)
     slow = collections.deque(maxlen=max(int(TEMP_SLOW_S / poll_s), 1))         # slow (10 min)
@@ -182,11 +184,14 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
             tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
             last_launch = now
-            # one launch per poll while the CPU has spare capacity (always keep >= 2 jobs running)
-            if queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
+            # launch while the CPU has spare capacity: estimated util = measured util + pending launches (last 2 s)
+            while recent_launches and recent_launches[0] < now - 2.0:
+                recent_launches.popleft()
+            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
                     and n_paused == 0 and not stop_launch and tokens >= 1.0 \
-                    and (len(running) < 2 or util < TARGET_CPU_UTIL):
+                    and (len(running) < 2 or util + len(recent_launches) / n_cpu < TARGET_CPU_UTIL):
                 launch(queue.pop(0))
+                recent_launches.append(now)
                 tokens -= 1.0
                 event = event or "launch"
             tw.writerow([round(now - t0, 1), round(temp, 2), len(running), n_paused, len(done), len(queue), event, raw,

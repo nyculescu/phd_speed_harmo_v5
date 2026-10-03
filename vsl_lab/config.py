@@ -27,7 +27,7 @@ MAX_WORKERS = 100
 TEMP_PAUSE_C = 99.0     # SLOW (5 min) median >= 99 -> pause one job per step period
 TEMP_RESUME_C = 96.0    # SLOW (5 min) median < 96 -> resume one job per step period
 TEMP_HARD_C = 101.0     # fast cap effectively off: the CPU throttles itself at TjMax 100 C (kept for sensor anomalies)
-MAX_LAUNCH_PER_S = 5.0  # token bucket; 3.0 + one-launch-per-poll throttled short-job batches to ~2 jobs/s at 63-79 C
+MAX_LAUNCH_PER_S = 20.0  # token bucket (2026-10-03: launches are gated by CPU utilisation incl. pending launches)
 SIM_START_MAX_LOAD = 0.15  # fraction of logical CPUs (sim-start gate fallback)
 
 # Thermal history (2026-10-01, vsl_lab/ops/ecore_probe.py): under the old < 90 C limit, one P-core simulation already
