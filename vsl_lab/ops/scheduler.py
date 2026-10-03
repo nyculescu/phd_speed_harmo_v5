@@ -184,8 +184,8 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
             tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
             last_launch = now
-            # launch while the CPU has spare capacity: estimated util = measured util + pending launches (last 2 s)
-            while recent_launches and recent_launches[0] < now - 2.0:
+            # launch while the CPU has spare capacity: estimated util = measured util + pending launches (last 1 s)
+            while recent_launches and recent_launches[0] < now - 1.0:
                 recent_launches.popleft()
             while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
                     and n_paused == 0 and not stop_launch and tokens >= 1.0 \
