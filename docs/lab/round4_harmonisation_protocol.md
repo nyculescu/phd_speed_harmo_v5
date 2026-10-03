@@ -211,3 +211,14 @@ Everything else is as in Addendum A: reward weight, PPO configuration (minibatch
 **Screening:** the same `round4 screen`, run on P-H3's directory after it finishes, with policy evaluation in mode `residual_c`.
 
 **Also, using the same idle CPU:** the **R5-H classical references** are pre-computed on the shared test seeds 7,120,500–7,120,529 (Addendum A) for `const:0.75`, `vslad:90:0.8`, `mtfc:36:38:9:0.0015`, `spec` and `nc`, at both cells. These are classical arms only. They are used only if a pilot passes screening.
+
+## Round 4 outcome (2026-10-03)
+
+- **P-H2: screening FAIL.**
+  - Final policy: J 342.7, against 310.1 for the tuned `const:0.75`; better than NC (359.4), worse than MTFC (322.3) and the adaptive rule (332.5).
+  - Best checkpoint: J 361.7, about NC. See `round4_pilots.md`.
+- **P-H3: abandoned at update 382 of 500, by author decision, to save energy.**
+  - Its validation `score_h` degraded from 1.222 (update 0, about the tuned classical) to 1.39–1.44 (updates 300–375).
+  - `best_val_model.zip` is kept and not screened.
+- **Why DRL has nothing to win here.** The **adaptivity headroom** G on the R2-H tuning data is 0.38 %: the per-cell best constant (0.8 at 3,900; 0.75 at 4,500) against the pooled `const:0.75`. This is far below the 10 % gate of `CLAUDE.md`. A tuned constant posted VSL is near-optimal on this plant; dynamic rules (adaptive rule, SPECIALIST, MTFC) and DRL do worse.
+- **Verdict:** no DRL claim on LD3 harmonisation. The classical result stands: constant 90 km/h VSL gives −25 % delay and −55 % stops in heavy congestion (tuning seeds); its test-seed confirmation is `round4_r5refs`, pre-computed.
