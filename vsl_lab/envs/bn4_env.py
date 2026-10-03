@@ -68,7 +68,11 @@ class BN4Env(gym.Env):
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
                  quiet: bool = True, check_actuator: bool = True, action_map: str = "linear",
-                 actuator: str = "av_caps"):
+                 actuator: str = "av_caps", perturb: dict | None = None):
+        """perturb (meter headroom scan, docs/lab/t1_meter_gscan_protocol.md): {"kind": "slow"|"block"|"surge",
+        "dur": s, ...}; start ~ U(warmup + 100, warmup + control - dur - 100) from rng(seed + 991).
+        slow: bottleneck edge 5 speed limit -> v_mps; block: a vehicle on edge 4 lane 1 stops mid-edge for dur;
+        surge: inflow x factor for dur (built into the demand profile)."""
         super().__init__()
         if quiet:   # SUMO prints warnings to stderr; they are kept in the per-run --log file and parsed by health
             try:   # stderr to a per-process file, NOT /dev/null: Python tracebacks must stay visible
@@ -100,6 +104,7 @@ class BN4Env(gym.Env):
         self.check_actuator = check_actuator
         self.t_drain_max = t_drain_max
         self.meter = None
+        self.perturb = dict(perturb) if perturb else None
         self.files = bn4.files()
         self.lane_len = bn4.net.lane_lengths_from_net(self.files["net"])
         self.obs_slots = [(e, ln, p) for e, k in OBS_PIECES.items() for ln in range(bn4.net.EDGE_LANES[e])
@@ -237,6 +242,34 @@ class BN4Env(gym.Env):
             self.arrivals_20s.append((self.sim.t, n))
         return n
 
+    def _perturb_tick(self) -> None:
+        pp, t = self.pplan, self.sim.t
+        if pp["done"] or pp["kind"] == "surge":
+            return
+        if not pp["on"] and t >= pp["t0"] - 1e-9:
+            if pp["kind"] == "slow":
+                ls.lane.setMaxSpeed("5_0", float(self.perturb.get("v_mps", 3.0)))
+                pp["on"] = True
+            elif pp["kind"] == "block":
+                for vid in reversed(ls.lane.getLastStepVehicleIDs("3_1") + ls.lane.getLastStepVehicleIDs("3_2")):
+                    try:
+                        ls.vehicle.setStop(vid, "4", pos=0.5 * self.lane_len["4_1"], laneIndex=1,
+                                           duration=pp["t1"] - t)
+                        ls.vehicle.setLaneChangeMode(vid, 0)
+                        pp.update(on=True, veh=vid)
+                        break
+                    except ls.TraCIException:
+                        continue
+        elif pp["on"] and t >= pp["t1"] - 1e-9:
+            self._perturb_end()
+
+    def _perturb_end(self) -> None:
+        pp = self.pplan
+        if pp and pp["on"] and pp["kind"] == "slow":
+            ls.lane.setMaxSpeed("5_0", SPEED)
+        if pp:
+            pp["on"], pp["done"] = False, True
+
     def _n_system(self) -> int:
         return ls.vehicle.getIDCount() + len(ls.simulation.getPendingVehicles())
 
@@ -252,7 +285,16 @@ class BN4Env(gym.Env):
             ep_seed = int(self.np_random.integers(self.seed_pool[0], self.seed_pool[1] + 1))
         q = float(self.np_random.uniform(*self.inflow)) if self.inflow[0] != self.inflow[1] else float(self.inflow[0])
         t_total = self.warmup_s + self.control_s
-        dem = bn4.demand(ep_seed, [(0.0, t_total, q)], av_share=self.av_share)
+        self.pplan = None
+        profile = [(0.0, t_total, q)]
+        if self.perturb:
+            dur = float(self.perturb["dur"])
+            t0p = float(np.random.default_rng(ep_seed + 991).uniform(self.warmup_s + 100.0, t_total - dur - 100.0))
+            self.pplan = {"kind": self.perturb["kind"], "t0": t0p, "t1": t0p + dur, "on": False, "done": False, "veh": None}
+            if self.perturb["kind"] == "surge":
+                f_ = float(self.perturb.get("factor", 1.3))
+                profile = [(0.0, t0p, q), (t0p, t0p + dur, q * f_), (t0p + dur, t_total, q)]
+        dem = bn4.demand(ep_seed, profile, av_share=self.av_share)
         run_dir = RUNS_ROOT / "t1" / "envs" / self.tag / f"pid{os.getpid()}"
         rou = run_dir / f"routes_q{int(q)}_s{ep_seed}_pid{os.getpid()}.rou.xml"
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -304,6 +346,8 @@ class BN4Env(gym.Env):
         for _ in range(n_sub):
             if self.meter is not None and self.meter_active:
                 self.meter.step(self.sim.t)
+            if self.pplan is not None:
+                self._perturb_tick()
             self._advance(self.decision_s / n_sub)
         if self.reward_kind == "out":
             r = self._outflow_20s() / 2000.0
@@ -320,6 +364,8 @@ class BN4Env(gym.Env):
         done = self.sim.t >= self._t_ctrl0 + self.control_s - 1e-9
         info = {}
         if done:
+            if self.pplan is not None:   # restore any perturbation before the uncontrolled drain
+                self._perturb_end()
             ctrl_s = self.sim.t - self._t_ctrl0
             info["episode_metrics"] = {
                 "outflow_ctrl_vph": (self.sim.arrived - self._arr_ctrl0) * 3600.0 / ctrl_s,
