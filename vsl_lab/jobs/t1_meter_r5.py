@@ -35,9 +35,11 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", default=None, help="existing root")
+    ap.add_argument("--part", default="all", choices=["all", "comps", "drl"], help="comps can run before the F class ends")
+    ap.add_argument("--root", default=None)
     a = ap.parse_args(argv)
     lk = json.loads((REPO_ROOT / "docs/lab/t1_meter_lookup.json").read_text())["lookup"][str(Q)]
-    root = Path(a.analyse_only) if a.analyse_only else RUNS_ROOT / "t1" / f"r5m_{int(time.time())}"
+    root = Path(a.analyse_only or a.root) if (a.analyse_only or a.root) else RUNS_ROOT / "t1" / f"r5m_{int(time.time())}"
     if not a.analyse_only:
         jobs = []
         for k, pk in KINDS.items():
@@ -45,13 +47,17 @@ def main(argv=None) -> int:
             rlk = dict(base, actuator="meter_sched", meter_grid=GRID, allow_off=False, decision_s=30, obs_stack=1)
             ctrls = [("nc", "nc", base), ("meter106", "meter:10:6", base), ("pooled", lk["pooled_best"], base),
                      ("lookup", lk["per_kind"][k], base), ("evsched", "evsched:7:20:1.15", base), ("mpcf", "mpcf", base)]
-            ctrls += [(f"drl{i}", f"rl:{Path(d) / 'final_model.zip'}:recurrentppo", rlk) for i, d in enumerate(a.runs)]
+            drls = [(f"drl{i}", f"rl:{Path(d) / 'final_model.zip'}:recurrentppo", rlk) for i, d in enumerate(a.runs)]
+            ctrls = ctrls if a.part == "comps" else (drls if a.part == "drl" else ctrls + drls)
             for s in SEEDS:
                 for lab, c, ek in ctrls:
                     jobs.append(Job(jid=f"r5m_{lab}_{k}_s{s}", argv=["vsl_lab.jobs.bn4_eval", "--ctrl", c, "--inflow", str(Q),
                                                                      "--seed", str(s), "--tag", f"{lab}__{k}", "--out-root",
                                                                      str(root), "--env-kwargs", json.dumps(ek)]))
-        run_batch(jobs, root / "batch", a.workers, gate_ok=a.gate_ok)
+        run_batch(jobs, root / f"batch_{a.part}", a.workers, gate_ok=a.gate_ok)
+        if a.part == "comps":
+            print(json.dumps({"part": "comps", "root": str(root), "jobs": len(jobs)}))
+            return 0
     d, fails, tele = {}, {}, {}
     for p in root.glob("*__*/*.json"):
         lab, k = p.parent.name.split("__")

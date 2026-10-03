@@ -75,6 +75,7 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Limits (author, 2026-10-02; replace the 2026-10-01 limits):**
   - **≤ 100 worker processes.** Plain runs use **32 workers on all hardware threads** (the v6 sweet spot); E-core pinning is no longer used.
   - **Thermal guard:** worry only when the **5-minute median** of the CPU package temperature (coretemp "Package id 0", the sensor btop shows; TjMax 100 °C) is **≥ 99 °C**. The guard pauses one job per 30 s at ≥ 99 °C and resumes one below 96 °C; the fast cap is off.
+  - **Concurrency follows CPU load (author, 2026-10-03).** The temperature stays below 97 °C whether the CPU is 60 % or 90 % busy, so it is not the control signal. The scheduler launches one job per poll while the smoothed system CPU utilisation (`/proc/stat`, 4 s) is below **92 %**, with a cap of 48 workers per batch and at least 2 jobs running. The 99 °C median guard stays as a backstop.
   - Temperature is controlled **by worker throttling only.** No power-profile, fan or other system changes.
 - **DRL training:** L learners × E SubprocVecEnv envs ≤ N_max, with `torch.set_num_threads(1)`. Torch's default threads made training 7–50× slower.
 - **CUDA** (`venv314cu`) only for large GNN/LSTM policies.

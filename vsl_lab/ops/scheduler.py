@@ -21,7 +21,8 @@ import collections
 import os
 
 from vsl_lab.config import (WORKER_CPUS, MAX_LAUNCH_PER_S, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C,
-                            TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S, TEMP_SMOOTH_S, TEMP_STEP_S, clean_sumo_env)
+                            TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S, TEMP_SMOOTH_S, TEMP_STEP_S, clean_sumo_env,
+                            TARGET_CPU_UTIL, UTIL_SMOOTH_S)
 from vsl_lab.ops.thermal import load_fraction, package_temp_c
 
 
@@ -60,6 +61,13 @@ def sim_start_gate(gate_ok: bool) -> None:
                            f"confirm v6 sessions are idle and pass gate_ok=True")
 
 
+def _cpu_times() -> tuple:
+    with open("/proc/stat") as fh:
+        v = [int(x) for x in fh.readline().split()[1:]]
+    idle = v[3] + (v[4] if len(v) > 4 else 0)
+    return sum(v), idle
+
+
 def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool = False,
               poll_s: float = 0.5, hold_s: float = 5.0, verbose_every_s: float = 60.0,
               time_budget_s: float | None = None, job_factory=None) -> BatchReport:
@@ -86,7 +94,12 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
     last_verbose = t0
     tf = open(batch_dir / "thermal.csv", "w", newline="")
     tw = csv.writer(tf)
-    tw.writerow(["wall_s", "temp_c", "running", "paused", "done", "queued", "event", "raw_c", "slow_c"])
+    tw.writerow(["wall_s", "temp_c", "running", "paused", "done", "queued", "event", "raw_c", "slow_c", "cpu_util"])
+    # concurrency follows system CPU utilisation (author, 2026-10-03: "measure the CPU load instead of temp"); the 99 C
+    # median guard stays as a safety backstop
+    util_win = collections.deque(maxlen=max(int(UTIL_SMOOTH_S / poll_s), 1))
+    cpu_prev = _cpu_times()
+    util = 0.0
     k_factory = 0
     window = collections.deque(maxlen=max(int(TEMP_SMOOTH_S / poll_s), 1))     # fast (10 s)
     slow = collections.deque(maxlen=max(int(TEMP_SLOW_S / poll_s), 1))         # slow (10 min)
@@ -112,6 +125,12 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
                 for _ in range(max_workers):
                     queue.append(job_factory(k_factory))
                     k_factory += 1
+            cpu_now = _cpu_times()
+            d_tot, d_idle = cpu_now[0] - cpu_prev[0], cpu_now[1] - cpu_prev[1]
+            cpu_prev = cpu_now
+            if d_tot > 0:
+                util_win.append(1.0 - d_idle / d_tot)
+            util = sum(util_win) / len(util_win) if util_win else 0.0
             raw = package_temp_c()
             if raw == raw:
                 window.append(raw)
@@ -163,13 +182,15 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
             tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
             last_launch = now
-            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
-                    and n_paused == 0 and not stop_launch and tokens >= 1.0:
+            # one launch per poll while the CPU has spare capacity (always keep >= 2 jobs running)
+            if queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
+                    and n_paused == 0 and not stop_launch and tokens >= 1.0 \
+                    and (len(running) < 2 or util < TARGET_CPU_UTIL):
                 launch(queue.pop(0))
                 tokens -= 1.0
                 event = event or "launch"
             tw.writerow([round(now - t0, 1), round(temp, 2), len(running), n_paused, len(done), len(queue), event, raw,
-                         round(temp_slow, 2)])
+                         round(temp_slow, 2), round(util, 3)])
             if now - last_verbose >= verbose_every_s:
                 tf.flush()
                 last_verbose = now

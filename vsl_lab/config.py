@@ -36,7 +36,9 @@ SIM_START_MAX_LOAD = 0.15  # fraction of logical CPUs (sim-start gate fallback)
 # (parallel_sweet_spot_20261001.md) measured 32 workers (one per thread) as the throughput sweet spot for libsumo runs.
 E_CORES = tuple(range(16, 32))
 WORKER_CPUS = tuple(range(os.cpu_count() or 32))
-N_MAX_DEFAULT = 32
+N_MAX_DEFAULT = 48         # cap; the actual concurrency follows CPU utilisation (TARGET_CPU_UTIL, author 2026-10-03)
+TARGET_CPU_UTIL = 0.92     # launch new jobs only while the smoothed system CPU utilisation (/proc/stat) is below this
+UTIL_SMOOTH_S = 4.0        # smoothing window of the utilisation signal
 TEMP_SMOOTH_S = 10.0       # FAST window (logging; cap effectively off)
 TEMP_SLOW_S = 300.0        # SLOW window: 5-minute MEDIAN (author, 2026-10-02)
 TEMP_STEP_S = 30.0         # at most one pause or resume per step period on the slow loop
