@@ -262,3 +262,16 @@ Everything else is as in Addendum A: reward weight, PPO configuration (minibatch
 - A family is a **DRL target** only if G ≥ 10 % **and** H ≥ 10 %.
 - G and H are biased upwards (selection on the same seeds), so a FAIL is a conservative KILL.
 - **If no family passes:** DRL on LD3 harmonisation is killed, and the scan moves to other actuators or plants.
+
+**Addendum E result (2026-10-03 06:50, `round4_gscan.md`): no DRL target.**
+
+| Family | G = H |
+|---|---|
+| demand | 2.2 % |
+| compliance | 0.8 % |
+| trucks | 4.0 % |
+| incident (at 3,900 / at 4,500) | 2.5 % / 1.4 % |
+
+**The tuned adaptive rule is worse than the pooled best constant in every family.**
+
+**→ DRL for posted-VSL harmonisation on LD3 is KILLED** by the pre-registered rule. G is biased upwards, so this KILL is conservative. Across conditions, a well-chosen constant limit (0.75–0.8) is within 4 % of the per-condition oracle.
