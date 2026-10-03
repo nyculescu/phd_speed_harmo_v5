@@ -33,6 +33,12 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
         kw.setdefault("actuator", "posted_vsl")
     if ctrl.startswith(("madapt:", "msfix:")):
         kw.setdefault("actuator", "meter_sched")
+    mpcf = None
+    if ctrl == "mpcf" or ctrl.startswith("mpcf:"):   # Addendum D/D2: fitted-model MPC over the 4 lookup settings
+        kw.setdefault("actuator", "meter_sched")
+        kw.setdefault("meter_grid", ["40:6", "40:8", "20:12", "5:8"])
+        kw.setdefault("allow_off", False)
+        kw.setdefault("decision_s", 30.0)
     if kw.get("actuator", "av_caps") != "av_caps":
         kw.setdefault("decision_s", 10.0 if kw["actuator"] == "posted_vsl" else 30.0)
     env = BN4Env(meter=meter, **kw)
@@ -42,6 +48,9 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     else:
         env_meter_params = None
     model, recurrent = None, False
+    if kw.get("actuator") == "meter_sched" and (ctrl == "mpcf" or ctrl.startswith("mpcf:")):
+        from vsl_lab.jobs.mpcf import MPCF, MODEL as _MP
+        mpcf = MPCF(Path(ctrl.split(":", 1)[1]) if ":" in ctrl else _MP)
     if ctrl.startswith("rl:"):
         parts = ctrl.split(":")
         path, algo = parts[1], (parts[2] if len(parts) > 2 else "ppo")
@@ -132,6 +141,8 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             act = madapt["k"] if madapt["on"] else 0
         elif msfix is not None:
             act = msfix
+        elif mpcf is not None:
+            act = mpcf.choose(env, obs)
         elif evs is not None:
             t_now = env.sim.t
             evs["v5"].append(_ls.lane.getLastStepMeanSpeed("5_0") if _ls.lane.getLastStepVehicleNumber("5_0") else 23.0)

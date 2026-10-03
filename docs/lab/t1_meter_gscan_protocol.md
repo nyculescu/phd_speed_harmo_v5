@@ -174,3 +174,18 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
   - **"DRL measurably improves on the best non-learning control"** requires beating **both** `evsched` and MPC-F.
   - Per-kind results are reported, and no kind may be significantly worse by more than +5 %.
 - **Side constraints:** health FAIL share ≤ 5 % (perturbation teleports, as with every controller); teleports reported.
+
+### Addendum D2: MPC-F design, fixed before data generation and fitting (`jobs/mpcf.py`)
+
+**Data:**
+- seeds 7,110,200–7,110,299 × the 4 kinds × 5 replicates;
+- inflow ~ U(1,400, 1,800) per replicate;
+- the meter setting (one of the 4 lookup settings) is held for 10 decisions (300 s) at a time, chosen at random, starting at a random offset;
+- one sample per completed hold: (S-VIN observation at hold start, 120-s measured inflow, setting, veh-s in the system over the hold).
+
+**Model and fit:**
+- an MLP (2 × 64 tanh) on standardised inputs (observation + inflow/2000 + setting one-hot), trained with MSE and Adam (lr 1e-3);
+- 80/20 split **by (kind, seed) group**, with early stopping (patience 30 epochs);
+- the validation R² is reported, and the model is frozen in `docs/lab/t1_mpcf_model.pt` before R5-M.
+
+**Controller:** `mpcf` in `bn4_eval`. Every 30 s, the setting with the lowest predicted 300-s cost from the current state. It is never given the perturbation kind or the true model.
