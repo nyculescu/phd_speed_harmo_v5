@@ -76,7 +76,9 @@ class MRG3Env(gym.Env):
         n_snap = 2 * len(EDGES) + 4
         self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_snap * hist + (1 if oracle else 0),), dtype=np.float32)
         self.action_space = {"direct": gym.spaces.Discrete(9), "hybrid": gym.spaces.Discrete(len(RHO_GRID)),
-                             "residual": gym.spaces.Discrete(5), "direct_fine": gym.spaces.Discrete(11)}[mode]
+                             "residual": gym.spaces.Discrete(5), "direct_fine": gym.spaces.Discrete(11),
+                             "residual_c": gym.spaces.Box(-1.0, 1.0, shape=(1,), dtype=np.float32)}[mode]
+        self.b_base = 0.75   # P-H3 (round4 Addendum D): the frozen tuned classical const:0.75
         self.sim = None
 
     # --------------------------------------------------------------- helpers
@@ -164,7 +166,7 @@ class MRG3Env(gym.Env):
         self.sim = SumoSim(self.files["net"], rou, run_dir, dem, additional=[self.files["add"]],
                            step_length=self.dt, checkpoint_s=300.0, seed=ep_seed, stuck_wait_s=180.0, extra_args=extra)
         self.sim.start()
-        self.b = 1.0
+        self.b = self.b_base if self.mode == "residual_c" else 1.0
         self.mtfc = MTFC(**self.mtfc_kwargs)
         self.k = 0
         self._halting, self.new_stops, self.ep_stops = set(), 0, 0
@@ -176,6 +178,12 @@ class MRG3Env(gym.Env):
         return self._obs(), {}
 
     def step(self, action):
+        if self.mode == "residual_c":   # P-H3: b = clip(0.75 + 0.25 a, 0.5, 1.0), |delta b| <= 0.2 per period
+            a_c = float(np.clip(np.asarray(action, dtype=np.float64).reshape(-1)[0], -1.0, 1.0))
+            target = min(max(self.b_base + 0.25 * a_c, 0.5), 1.0)
+            self.b = float(np.clip(target, self.b - 0.2, self.b + 0.2))
+            b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
+            return self._advance(b_acc)
         a = int(np.asarray(action).reshape(-1)[0])
         qc = P.Sensors.flow_vph_per_lane("up0a")
         if self.mode == "direct_fine":   # P-H2: b in {0.5, 0.55, ..., 1.0}, |delta b| <= 0.2 per period
@@ -195,6 +203,9 @@ class MRG3Env(gym.Env):
             target = round((b_m + (a - 2) * 0.1) * 10.0) / 10.0
             self.b = float(np.clip(target, max(0.2, self.b - 0.2), min(1.0, self.b + 0.2)))
             b_acc = 0.9 if self.b < 1.0 - 1e-9 else 1.0
+        return self._advance(b_acc)
+
+    def _advance(self, b_acc):
         self._post(self.b, b_acc)
         self.ep["min_b"] = min(self.ep["min_b"], self.b)
         n_sys = self._period()

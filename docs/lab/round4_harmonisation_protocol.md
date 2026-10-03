@@ -197,3 +197,17 @@ Both variants are reported. Their family best enters the screening references.
 2. **Training-reward stop counting** samples every 1 s instead of every 0.2 s. Evaluation is unchanged: SUMO tripinfo `waitingCount`, via `r4_eval_rl --mode direct_fine`.
 
 Everything else is as in Addendum A: reward weight, PPO configuration (minibatch 480), training and validation seeds, screening criteria and comparators. The comparators are the tuned classical `const:0.75` and the family bests `vslad:90:0.8`, `mtfc:36:38:9:0.0015`, `spec` and `nc`.
+
+## Addendum D (2026-10-02 20:10): P-H3 hybrid residual pilot, using idle CPU while P-H2 trains
+
+**Why.** P-H2 (16 envs) leaves about 70 % of the CPU idle, and the author asked to use it. P-H3 is the spin-off's original hybrid idea: a validated controller in the loop, with DRL on top.
+
+**Design** (everything else as in P-H2):
+- **Actions:** env mode `residual_c`, a continuous a ∈ [−1, 1]. b = clip(0.75 + 0.25·a, 0.5, 1.0), with |Δb| ≤ 0.2 per 60-s decision and the same staircase and acceleration area.
+- **Starting point:** a = 0 reproduces the frozen tuned classical `const:0.75` exactly; the episode starts at b = 0.75. A Gaussian policy with log-std −1.0 starts near the tuned controller.
+- **PPO:** 14 envs × 120 steps (rollout 1,680, minibatch 420), 500 updates, learning rate 3e-4 with decay, γ 0.99, GAE 0.95, net 128×128, learner seed 0.
+- **Unchanged from P-H2:** reward weight (40 s per stop), training and validation seeds, `score_h` checkpointing, screening criteria and comparators.
+
+**Screening:** the same `round4 screen`, run on P-H3's directory after it finishes, with policy evaluation in mode `residual_c`.
+
+**Also, using the same idle CPU:** the **R5-H classical references** are pre-computed on the shared test seeds 7,120,500–7,120,529 (Addendum A) for `const:0.75`, `vslad:90:0.8`, `mtfc:36:38:9:0.0015`, `spec` and `nc`, at both cells. These are classical arms only. They are used only if a pilot passes screening.

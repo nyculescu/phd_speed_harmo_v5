@@ -179,7 +179,7 @@ def r2(root: Path, workers: int, gate_ok: bool, analyse_only: bool, only: list |
     return out
 
 
-def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool) -> dict:
+def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool, mode: str = "direct_fine") -> dict:
     fz = json.loads(FROZEN.read_text())
     refs = sorted({fz["tuned_classical"], *fz["family_best"].values(), "nc"})
     jobs = [job(c, s, f"{m}/0", root, tag="val") for m, s in VAL_SPECS for c in refs]
@@ -187,7 +187,8 @@ def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool) -> dict:
     for lab, mp in models.items():
         if mp.exists():
             jobs += [Job(jid=f"val_rl{lab}_m{m}_s{s}", argv=["vsl_lab.jobs.r4_eval_rl", "--model", str(mp), "--main-peak", str(m),
-                                                            "--seed", str(s), "--out-root", str(root), "--tag", f"rl_{lab}"])
+                                                            "--seed", str(s), "--out-root", str(root), "--tag", f"rl_{lab}",
+                                                            "--mode", mode])
                      for m, s in VAL_SPECS]
     run_batch(jobs, root / "batch", workers, gate_ok=gate_ok)
     res = {}
@@ -225,7 +226,8 @@ def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["th", "r2", "screen"])
+    ap.add_argument("what", choices=["th", "r2", "screen", "r5refs"])
+    ap.add_argument("--mode", default="direct_fine", help="policy action mode for screen (P-H3: residual_c)")
     ap.add_argument("--run-dir", default=None)
     ap.add_argument("--only", default=None, help="comma list of controllers (r2)")
     ap.add_argument("--skip", default=None, help="comma list of controllers (r2)")
@@ -240,8 +242,16 @@ def main(argv=None) -> int:
                  skip=a.skip.split(",") if a.skip else None)
         print(json.dumps({"tuned": out["tuned_classical"], "family_best": out["family_best"]}))
         return 0
+    if a.what == "r5refs":   # Addendum D: classical arms of R5-H on the shared T2 test seeds, pre-computed
+        fz = json.loads(FROZEN.read_text())
+        refs = sorted({fz["tuned_classical"], *fz["family_best"].values(), "nc"})
+        jobs = [job(c, s, cell, root, tag="r5refs") for cell in CELLS for s in range(7120500, 7120530) for c in refs]
+        run_batch(jobs, root / "batch", a.workers, gate_ok=a.gate_ok)
+        ledger.append("T2", "R4-R5refs", "S", "round4_r5refs", {"refs": refs}, "7120500-7120529", len(jobs), {}, {},
+                      notes=str(root))
+        return 0
     if a.what == "screen":
-        out = screen(root, Path(a.run_dir), a.workers, a.gate_ok)
+        out = screen(root, Path(a.run_dir), a.workers, a.gate_ok, mode=a.mode)
         print(json.dumps(out["criteria"]))
         return 0
     if not a.analyse_only:
