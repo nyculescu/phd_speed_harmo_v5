@@ -1,0 +1,23 @@
+{
+ "source": "docs/lab/t1_meter_gscan.md (tuning seeds 7110160-7110179)",
+ "lookup": {
+  "1600": {
+   "pooled_best": "meter:40:8",
+   "per_kind": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8",
+    "block": "meter:20:12",
+    "surge": "meter:5:8"
+   }
+  },
+  "2000": {
+   "pooled_best": "meter:5:8",
+   "per_kind": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8",
+    "block": "meter:20:10",
+    "surge": "meter:5:10"
+   }
+  }
+ }
+}

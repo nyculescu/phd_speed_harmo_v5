@@ -38,3 +38,46 @@ For each family:
 - G ≥ 10 % → candidate DRL target. An **H** step follows, pre-registered then, with non-learning adaptive meters, e.g. set-point switching on a detected slowdown or blockage.
 - G < 10 % everywhere → the meter is killed as a DRL target on BN4.
 - G is biased upwards, so a FAIL is a conservative KILL.
+
+---
+
+## Result and Addendum A: H step, pre-registered 2026-10-03 before any H run
+
+**Scan result** (`t1_meter_gscan.md`, tuning seeds 7,110,160–7,110,179):
+- **G (all four kinds mixed):** 15.4 % at q = 1,600 and 10.3 % at q = 2,000.
+- **Single-kind families:** 1.8–8.8 %.
+- **Blockage-condition teleports:** spread across controllers; 1 of 20 or 0 for the per-condition best. Reported, and the medians are unaffected.
+
+**Lookup I** (oracle condition → meter setting), frozen in `docs/lab/t1_meter_lookup.json`:
+
+| Inflow | Pooled best | none | slow | block | surge |
+|---|---|---|---|---|---|
+| 1,600 | 40:8 | 40:6 | 40:8 | 20:12 | 5:8 |
+| 2,000 | 5:8 | 40:6 | 40:8 | 20:10 | 5:10 |
+
+**Non-learning adaptive scheduler `evsched:v_slow:t_block:f_surge`** (`jobs/bn4_eval.py`): it detects events from measurements only and maps the detected state to the same lookup settings. It runs every 30 s:
+- **block:** a vehicle on edge 4 lane 1 has been halted ≥ t_block s while lane 0 moves;
+- **slow:** the 60-s mean speed on edge 5 is below v_slow;
+- **surge:** the 120-s departure rate exceeds f_surge × the rate of the first 300 s of control;
+- **otherwise:** none.
+
+**H1 (tuning seeds 7,110,160–7,110,179).**
+- **Grid:** v_slow ∈ {5, 7, 9} m/s, t_block ∈ {10, 20, 40} s, f_surge ∈ {1.15, 1.25, 1.35}, i.e. 27 settings × 8 conditions × 20 seeds.
+- **Selection:** lowest mean over the 8 conditions of the median door-to-door time.
+
+**H2 (fresh gate seeds 7,110,180–7,110,199)**, on the 8 conditions:
+- `nc`;
+- `meter:10:6` (the R2 v2 tuned meter, reported);
+- the per-q pooled best fixed setting;
+- the **lookup I** (oracle: the per-(q, kind) setting from `t1_meter_lookup.json`);
+- the H1-tuned `evsched`.
+
+**H, per q:**
+- per seed s: J_X(s) = the mean over the 4 kinds of door-to-door time;
+- best non-learning NL = whichever of {pooled fixed, `evsched`} has the lower median J (selected on gate seeds; this favours NL, so it is conservative);
+- d(s) = J_NL(s) − J_I(s);
+- **H = median(d) / median(J_NL)**, with a 95 % percentile-bootstrap CI of median(d).
+
+**Rule:** a DRL target needs H ≥ 10 % **and** a CI lower bound > 0 (CLAUDE.md), at either q.
+
+**Before any DRL claim** (not before exploratory DRL), an MPC baseline with a model fitted on separate seeds must also be built (CLAUDE.md).

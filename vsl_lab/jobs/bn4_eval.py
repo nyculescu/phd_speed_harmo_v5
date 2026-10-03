@@ -28,7 +28,7 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     kw = dict(inflow=(inflow, inflow), eval_seeds=[seed], warmup_s=warmup_s, control_s=control_s,
               drain_after=True, tag=f"eval_{tag}", reward="out")
     kw.update(env_kwargs or {})
-    meter = ctrl.startswith("meter")
+    meter = ctrl.startswith("meter") or ctrl.startswith("evsched")
     if ctrl.startswith(("vsl:", "mtfcb:")):
         kw.setdefault("actuator", "posted_vsl")
     if ctrl.startswith(("madapt:", "msfix:")):
@@ -36,7 +36,7 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     if kw.get("actuator", "av_caps") != "av_caps":
         kw.setdefault("decision_s", 10.0 if kw["actuator"] == "posted_vsl" else 30.0)
     env = BN4Env(meter=meter, **kw)
-    if meter and ":" in ctrl:
+    if ctrl.startswith("meter") and ":" in ctrl:
         _, kf, nc = ctrl.split(":")
         env_meter_params = (float(kf), float(nc))
     else:
@@ -74,6 +74,19 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             return np.where(b >= 1.0 - 1e-9, 0.0, (b - 1.0) / 0.8).astype(np.float32)
         return ((b - 0.6) / 0.4).astype(np.float32)
     vsl_const, mtfcb, madapt, msfix = None, None, None, None
+    evs = None
+    if ctrl.startswith("evsched:"):
+        # T1-M H step (docs/lab/t1_meter_gscan_protocol.md, Addendum A): non-learning event-detecting scheduler of the
+        # feedback meter. Every 30 s: slowdown if the 60-s mean speed on bottleneck edge 5 < v_slow; blockage if a vehicle
+        # on edge 4 lane 1 has been halted >= t_block s while lane 0 moves (> 2 m/s); surge if the 120-s departure rate
+        # > f_surge x the rate measured over the first 300 s of control. State -> (K_F, n_crit) from the frozen lookup
+        # (docs/lab/t1_meter_lookup.json) for the inflow nearest to the measured base rate; normal = lookup 'none'.
+        import json as _json
+        from vsl_lab.config import REPO_ROOT as _RR
+        _, v_sl, t_bl, f_su = ctrl.split(":")
+        _lk = _json.loads((_RR / "docs/lab/t1_meter_lookup.json").read_text())["lookup"]
+        evs = {"v_slow": float(v_sl), "t_block": float(t_bl), "f_surge": float(f_su), "lk": _lk, "v5": [], "halt": {},
+               "dep": [], "base": None, "t_last": None, "state": "none", "states": {}}
     if ctrl.startswith("vsl:"):
         vsl_const = [float(x) for x in ctrl.split(":")[1:3]]
     elif ctrl.startswith("mtfcb:"):
@@ -89,6 +102,9 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     obs, _ = env.reset()
     if env_meter_params is not None:
         env.meter.K_F, env.meter.n_crit = env_meter_params
+    if evs is not None:   # start in the lookup's 'none' setting for the nominal inflow
+        _qk = min(evs["lk"], key=lambda k: abs(float(k) - inflow))
+        env.meter.K_F, env.meter.n_crit = (float(x) for x in evs["lk"][_qk]["per_kind"]["none"].split(":")[1:3])
     state, start = None, np.ones((1,), dtype=bool)
     done, info = False, {}
     import libsumo as _ls
@@ -116,6 +132,38 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             act = madapt["k"] if madapt["on"] else 0
         elif msfix is not None:
             act = msfix
+        elif evs is not None:
+            t_now = env.sim.t
+            evs["v5"].append(_ls.lane.getLastStepMeanSpeed("5_0") if _ls.lane.getLastStepVehicleNumber("5_0") else 23.0)
+            evs["v5"] = evs["v5"][-60:]
+            for vid in _ls.lane.getLastStepVehicleIDs("4_1"):
+                evs["halt"][vid] = evs["halt"].get(vid, 0.0) + 1.0 if _ls.vehicle.getSpeed(vid) < 0.1 else 0.0
+            evs["halt"] = {v: h for v, h in evs["halt"].items() if v in set(_ls.lane.getLastStepVehicleIDs("4_1"))}
+            evs["dep"].append((t_now, env.sim.departed))
+            if evs["base"] is None and t_now - env._t_ctrl0 >= 300.0:
+                d0 = [x for x in evs["dep"] if x[0] >= env._t_ctrl0]
+                evs["base"] = (d0[-1][1] - d0[0][1]) * 3600.0 / max(d0[-1][0] - d0[0][0], 1.0)
+            if evs["t_last"] is None or t_now - evs["t_last"] >= 30.0 - 1e-9:
+                evs["t_last"] = t_now
+                v_mean = float(np.mean(evs["v5"])) if evs["v5"] else 23.0
+                lane0 = _ls.lane.getLastStepMeanSpeed("4_0") if _ls.lane.getLastStepVehicleNumber("4_0") else 23.0
+                recent = [x for x in evs["dep"] if x[0] >= t_now - 120.0]
+                rate = (recent[-1][1] - recent[0][1]) * 3600.0 / max(recent[-1][0] - recent[0][0], 1.0) if len(recent) > 1 else 0.0
+                if evs["halt"] and max(evs["halt"].values()) >= evs["t_block"] and lane0 > 2.0:
+                    st = "block"
+                elif v_mean < evs["v_slow"]:
+                    st = "slow"
+                elif evs["base"] is not None and rate > evs["f_surge"] * evs["base"]:
+                    st = "surge"
+                else:
+                    st = "none"
+                evs["state"] = st
+                evs["states"][st] = evs["states"].get(st, 0) + 1
+                base = evs["base"] if evs["base"] is not None else inflow
+                qk = min(evs["lk"], key=lambda k: abs(float(k) - base))
+                kf_, nc_ = (float(x) for x in evs["lk"][qk]["per_kind"][st].split(":")[1:3])
+                env.meter.K_F, env.meter.n_crit = kf_, nc_
+            act = const
         elif avfb is not None:
             t_now = env.sim.t
             if avfb["t_last"] is None or t_now - avfb["t_last"] >= 30.0 - 1e-9:
@@ -132,6 +180,8 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             act, _ = model.predict(obs, deterministic=True)
         obs, r, done, _, info = env.step(act)
     m = info["episode_metrics"]
+    if evs is not None:
+        m["evsched_states"] = evs["states"]
     out = {"job": "bn4_eval", "ctrl": ctrl, "inflow": inflow, "seed": seed, "health": info.get("health"),
            "health_codes": info.get("health_codes"), "wall_s": round(time.time() - t0, 2)} | m
     run_dir = out_root / tag

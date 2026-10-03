@@ -1,0 +1,113 @@
+{
+ "families": {
+  "q1600_slow": {
+   "pooled_best": "meter:40:8",
+   "J_pool": 199.44251247807608,
+   "J_lookup": 191.90202098265183,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8"
+   },
+   "G": 0.03780784448477676
+  },
+  "q1600_block": {
+   "pooled_best": "meter:10:8",
+   "J_pool": 180.6641648283786,
+   "J_lookup": 170.1548785417594,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "block": "meter:20:12"
+   },
+   "G": 0.05817028682252776
+  },
+  "q1600_surge": {
+   "pooled_best": "meter:40:6",
+   "J_pool": 161.372027684025,
+   "J_lookup": 153.57904736200715,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "surge": "meter:5:8"
+   },
+   "G": 0.04829201463141384
+  },
+  "q1600_all": {
+   "pooled_best": "meter:40:8",
+   "J_pool": 229.2445390901731,
+   "J_lookup": 193.86874966335455,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8",
+    "block": "meter:20:12",
+    "surge": "meter:5:8"
+   },
+   "G": 0.15431464394841496
+  },
+  "q2000_slow": {
+   "pooled_best": "meter:40:6",
+   "J_pool": 361.59728858447056,
+   "J_lookup": 329.78227898843153,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8"
+   },
+   "G": 0.08798464645734455
+  },
+  "q2000_block": {
+   "pooled_best": "meter:5:8",
+   "J_pool": 322.74480722322437,
+   "J_lookup": 308.9529300026021,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "block": "meter:20:10"
+   },
+   "G": 0.042733072421156586
+  },
+  "q2000_surge": {
+   "pooled_best": "meter:40:6",
+   "J_pool": 306.90672198874313,
+   "J_lookup": 301.3944815008367,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "surge": "meter:5:10"
+   },
+   "G": 0.01796063785174634
+  },
+  "q2000_all": {
+   "pooled_best": "meter:5:8",
+   "J_pool": 384.5524923234329,
+   "J_lookup": 344.9742103253002,
+   "per_kind_best": {
+    "none": "meter:40:6",
+    "slow": "meter:40:8",
+    "block": "meter:20:10",
+    "surge": "meter:5:10"
+   },
+   "G": 0.10292036272864633
+  }
+ },
+ "targets": [
+  "q1600_all",
+  "q2000_all"
+ ],
+ "teleport_runs": {
+  "q1600_none": 0,
+  "q1600_slow": 0,
+  "q1600_block": 21,
+  "q1600_surge": 1,
+  "q2000_none": 0,
+  "q2000_slow": 2,
+  "q2000_block": 9,
+  "q2000_surge": 0
+ },
+ "fail_runs": {
+  "q1600_none": 0,
+  "q1600_slow": 0,
+  "q1600_block": 21,
+  "q1600_surge": 1,
+  "q2000_none": 0,
+  "q2000_slow": 2,
+  "q2000_block": 9,
+  "q2000_surge": 0
+ },
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/t1/meter_gscan_1791035772"
+}
