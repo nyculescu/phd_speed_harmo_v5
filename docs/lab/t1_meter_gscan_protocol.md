@@ -108,3 +108,11 @@ For each family:
 - **PASS:** median paired (DRL − `evsched`) ≤ −5 % of `evsched`'s median J, with the 95 % bootstrap CI excluding 0; and 0 health FAIL beyond those also seen in `evsched`'s runs.
 - **Passers:** F class (3 seeds × 1,000 updates), then R5-M on test seeds 7,110,590–7,110,619.
 - **Before a thesis claim:** an MPC baseline with a model fitted on separate seeds (CLAUDE.md).
+
+**P-M (first launch) is INVALID: training stopped itself after 2 updates.**
+- **Cause:** the training health rule stops a run when the FAIL share exceeds 1 % after 50 episodes. One perturbation episode out of 96 had a FAIL (1.04 %). FAILs of this kind are teleports, which the scan saw in about 2–5 % of blockage runs for every controller, NC included.
+- **Its screening entry** in `t1_meter_pm.md` (final J 237.6 against `evsched` 197.9) **evaluates an untrained policy and is void.**
+
+**P-M2** is identical to P-M except `--max-fail-share 0.05`, a new CLI option whose default stays 1 %.
+- The 5 % tolerance follows from the scan's measured teleport rate: blockages are a quarter of the mix, so about 1 % of episodes are expected to FAIL.
+- FAIL episodes are still counted and reported.

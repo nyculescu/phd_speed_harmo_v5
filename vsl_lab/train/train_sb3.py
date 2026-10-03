@@ -141,6 +141,8 @@ def main(argv=None) -> int:
     ap.add_argument("--log-std-init", type=float, default=0.0)
     ap.add_argument("--lr-decay", action="store_true", help="linear learning-rate decay to 0 over the run")
     ap.add_argument("--seed", type=int, default=0, help="learner seed index (0-4)")
+    ap.add_argument("--max-fail-share", type=float, default=0.01,
+                    help="health stop rule: stop when the FAIL share of training episodes exceeds this (after 50)")
     ap.add_argument("--val-every", type=int, default=25)
     ap.add_argument("--val-conds", type=float, nargs="+", default=None,
                     help="fixed validation conditions: inflows (bn4) or ring lengths (ring)")
@@ -243,6 +245,7 @@ def main(argv=None) -> int:
             self.health = collections.Counter()
             self.best = -np.inf
             self.stop = False
+            self.max_fail_share = a.max_fail_share
             self.f_prog = open(run_dir / "progress.csv", "w", newline="")
             self.w_prog = csv.writer(self.f_prog)
             self.w_prog.writerow(["update", "timesteps", "wall_s", "ep_rew_mean", "ep_outflow_mean",
@@ -262,7 +265,7 @@ def main(argv=None) -> int:
                 if "episode_metrics" in inf:
                     self.recent.append(inf["episode_metrics"])
             n_ep = sum(self.health.values())
-            if n_ep >= 50 and self.health["FAIL"] / n_ep > 0.01:
+            if n_ep >= 50 and self.health["FAIL"] / n_ep > self.max_fail_share:
                 self.stop = True
                 return False
             return True
