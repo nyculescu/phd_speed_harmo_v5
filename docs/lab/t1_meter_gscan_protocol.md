@@ -136,3 +136,41 @@ For each family:
 **Screening, with more power:** fresh seeds 7,110,340–7,110,389 (50) × 4 kinds. Rule, comparators and statistics are as in Addendum B.
 
 **Multiple comparisons, disclosed:** 4 pilots in total (P-M2 and P-M3 a–c) are screened against the same rule. A pass is an exploratory signal only. A claim still needs the F class (3 learner seeds × 1,000 updates), R5-M on the test seeds and the MPC baseline.
+
+## P-M3 result and Addendum D: the claim path (2026-10-03, before any F-class or R5-M run)
+
+**P-M3 screening** (50 seeds 7,110,340–7,110,389 × 4 kinds, q = 1,600; `t1_meter_pm.md`):
+
+| Variant | Policy | vs `evsched` | 95 % CI | Verdict |
+|---|---|---|---|---|
+| **b (RecurrentPPO)** | final | **−9.6 %** | **[−40.8, −6.7] s** | **PASS** |
+| a (stack 4) | final | +3.5 % | n.s. | FAIL |
+| a | best | −2.1 % | n.s. | FAIL |
+| c (plain PPO) | final | +2.6 % | n.s. | FAIL |
+
+P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0 % (n.s.), vs `meter:10:6` −13.3 %, vs NC −25.7 %.
+
+**Disclosure:**
+- **Screening looks:** 1 PASS out of 8 (P-M2 and P-M3 a–c, each final and best).
+- **Learning:** the validation curves of a and b improved (19.1 → 14.9 and 17.9 → 14.8 veh·h); c's did not.
+
+**F class.** RecurrentPPO, P-M3b's configuration, 1,000 updates.
+- Learner seed 0 = the P-M3b run.
+- Learner seeds 1 and 2 are new runs.
+- **Evaluation:** the final policies.
+
+**MPC-F, the fitted-model MPC baseline** (CLAUDE.md "best non-learning"), frozen before R5-M:
+- **Data:** episodes with random setting switches on separate seeds 7,110,200–7,110,299 (T1 tuning range, unused).
+- **Model:** regressors fitted on that data. They predict the next-5-min TTS increment from the current S-VIN features, the measured inflow and the candidate setting.
+- **Control:** every 30 s, choose the setting with the lowest predicted cost (receding horizon, constant input over 5 min).
+- **Never given the true model or the perturbation kind.**
+- Its design details are added before it is fitted.
+
+**R5-M**, the head-to-head:
+- **Seeds and conditions:** test seeds 7,110,590–7,110,689 (100), × 4 kinds, at q = 1,600.
+- **Controllers:** the F-class finals (3 seeds, plus their pooled median), `evsched:7:20:1.15`, pooled `meter:40:8`, MPC-F, `meter:10:6`, NC, and the lookup oracle (reported only).
+- **Reading:**
+  - DRL beats a comparator if the median paired difference in J (the mean over the 4 kinds of door-to-door time) is < 0 with the 95 % bootstrap CI excluding 0, **pooled and in ≥ 2 of 3 learner seeds**.
+  - **"DRL measurably improves on the best non-learning control"** requires beating **both** `evsched` and MPC-F.
+  - Per-kind results are reported, and no kind may be significantly worse by more than +5 %.
+- **Side constraints:** health FAIL share ≤ 5 % (perturbation teleports, as with every controller); teleports reported.
