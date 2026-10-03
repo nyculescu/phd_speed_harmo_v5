@@ -80,7 +80,7 @@ class Net:
 def features(obs: np.ndarray, qin: float, a: int) -> np.ndarray:
     oh = np.zeros(len(GRID), np.float32)
     oh[a] = 1.0
-    return np.concatenate([obs.astype(np.float32), [qin / 2000.0], oh])
+    return np.concatenate([obs.astype(np.float32), np.asarray([qin / 2000.0], np.float32), oh]).astype(np.float32)
 
 
 class MPCF:
@@ -99,7 +99,7 @@ class MPCF:
 
     def choose(self, env, obs: np.ndarray) -> int:
         qin = inflow_rate(env, self.hist)
-        F = np.stack([features(obs, qin, a) for a in range(len(GRID))])
+        F = np.stack([features(obs, qin, a) for a in range(len(GRID))]).astype(np.float32)   # float64 crashed (bug fix)
         with self.torch.no_grad():
             y = self.net(self.torch.from_numpy((F - self.mu) / self.sd)).numpy().reshape(-1)
         return int(np.argmin(y))

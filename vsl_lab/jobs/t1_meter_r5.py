@@ -35,7 +35,7 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--analyse-only", default=None, help="existing root")
-    ap.add_argument("--part", default="all", choices=["all", "comps", "drl"], help="comps can run before the F class ends")
+    ap.add_argument("--part", default="all", choices=["all", "comps", "drl", "mpcf"], help="comps can run before the F class ends")
     ap.add_argument("--root", default=None)
     a = ap.parse_args(argv)
     lk = json.loads((REPO_ROOT / "docs/lab/t1_meter_lookup.json").read_text())["lookup"][str(Q)]
@@ -48,14 +48,17 @@ def main(argv=None) -> int:
             ctrls = [("nc", "nc", base), ("meter106", "meter:10:6", base), ("pooled", lk["pooled_best"], base),
                      ("lookup", lk["per_kind"][k], base), ("evsched", "evsched:7:20:1.15", base), ("mpcf", "mpcf", base)]
             drls = [(f"drl{i}", f"rl:{Path(d) / 'final_model.zip'}:recurrentppo", rlk) for i, d in enumerate(a.runs)]
-            ctrls = ctrls if a.part == "comps" else (drls if a.part == "drl" else ctrls + drls)
+            if a.part == "mpcf":   # re-run of the MPC-F arm only (float64 bug in MPCF.choose, 2026-10-03)
+                ctrls = [c_ for c_ in ctrls if c_[0] == "mpcf"]
+            else:
+                ctrls = ctrls if a.part == "comps" else (drls if a.part == "drl" else ctrls + drls)
             for s in SEEDS:
                 for lab, c, ek in ctrls:
                     jobs.append(Job(jid=f"r5m_{lab}_{k}_s{s}", argv=["vsl_lab.jobs.bn4_eval", "--ctrl", c, "--inflow", str(Q),
                                                                      "--seed", str(s), "--tag", f"{lab}__{k}", "--out-root",
                                                                      str(root), "--env-kwargs", json.dumps(ek)]))
         run_batch(jobs, root / f"batch_{a.part}", a.workers, gate_ok=a.gate_ok)
-        if a.part == "comps":
+        if a.part in ("comps", "mpcf"):
             print(json.dumps({"part": "comps", "root": str(root), "jobs": len(jobs)}))
             return 0
     d, fails, tele = {}, {}, {}
