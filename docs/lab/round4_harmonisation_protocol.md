@@ -222,3 +222,43 @@ Everything else is as in Addendum A: reward weight, PPO configuration (minibatch
   - `best_val_model.zip` is kept and not screened.
 - **Why DRL has nothing to win here.** The **adaptivity headroom** G on the R2-H tuning data is 0.38 %: the per-cell best constant (0.8 at 3,900; 0.75 at 4,500) against the pooled `const:0.75`. This is far below the 10 % gate of `CLAUDE.md`. A tuned constant posted VSL is near-optimal on this plant; dynamic rules (adaptive rule, SPECIALIST, MTFC) and DRL do worse.
 - **Verdict:** no DRL claim on LD3 harmonisation. The classical result stands: constant 90 km/h VSL gives −25 % delay and −55 % stops in heavy congestion (tuning seeds); its test-seed confirmation is `round4_r5refs`, pre-computed.
+
+## Addendum E (2026-10-03): adaptivity headroom scan, pre-registered before any scan run
+
+**Author context.** The supervisor will not approve a methodology or negative-results paper. A DRL claim needs real adaptivity headroom first, so this scan looks for it, using classical controllers only.
+
+**Plant:** LD3, H5, 0.2 s, with tripinfo stops.
+**Score:** J = delay + 40 s per stop (Addendum A), median over seeds.
+**Seeds:** 7,160,400–7,160,409, shared across all conditions so comparisons are paired (approved block).
+
+**Conditions** (10):
+- **D1–D4:** main peak 3,300 / 3,900 / 4,500 / 5,100 (p_nc 0.3, trucks 0.1, no incident).
+- **C1–C2:** p_nc 0.1 / 0.5 at 4,500.
+- **K1–K2:** truck share 0.05 / 0.20 at 4,500.
+- **I1–I2:** an incident at 3,900 / 4,500 (`--incident 1500:2400:900:up0a:2`).
+  - A vehicle in lane 2 brakes normally to a stop at mid-`up0a` and stays for 15 min. The start is drawn per seed from U(1,500, 2,400) s.
+  - In the smoke run, a sudden lane closure (`setDisallowed`) caused artefact collisions, so this broken-down-vehicle version replaces it (disclosed).
+
+**Controllers** (9): `const:b` for b ∈ {0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}, `nc` (b = 1), and the tuned adaptive rule `vslad:90:0.8`.
+**Runs:** 900.
+
+**Families and their conditions:**
+
+| Family | Conditions |
+|---|---|
+| demand | {D1, D2, D3, D4} |
+| compliance | {C1, D3, C2} |
+| trucks | {K1, D3, K2} |
+| incident | {D2, I1} and {D3, I2}, i.e. incident yes / no at the same demand |
+
+**Measures, per family:**
+- **pooled best constant:** J_pool = min over b of the mean over conditions of J_c(b);
+- **lookup** (oracle, best constant per condition): J_look = mean over conditions of min over b of J_c(b);
+- **G** = (J_pool − J_look) / J_pool;
+- **best non-learning:** J_NL = min(J_pool, mean over conditions of J_c(`vslad`));
+- **H** = (J_NL − J_look) / J_NL.
+
+**Rule:**
+- A family is a **DRL target** only if G ≥ 10 % **and** H ≥ 10 %.
+- G and H are biased upwards (selection on the same seeds), so a FAIL is a conservative KILL.
+- **If no family passes:** DRL on LD3 harmonisation is killed, and the scan moves to other actuators or plants.

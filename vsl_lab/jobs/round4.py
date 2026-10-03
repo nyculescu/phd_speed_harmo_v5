@@ -35,13 +35,14 @@ VAL_SPECS = [(m, s) for s in (7120300, 7120301, 7120302) for m in (3900, 4500)]
 FROZEN = REPO_ROOT / "docs" / "lab" / "round4_baselines_frozen.json"
 
 
-def job(ctrl, s, cell, root, p=0.0, arm="none", tag="th") -> Job:
+def job(ctrl, s, cell, root, p=0.0, arm="none", tag="th", extra=None, jid_sfx="") -> Job:
     m, r = cell.split("/")
     argv = ["vsl_lab.jobs.mrg3_run", "--ctrl", ctrl, "--seed", str(s), "--main-peak", m, "--ramp-peak", r, "--tag", tag,
             "--out-root", str(root), "--plant", "v3", "--driver", "H5", "--step", "0.2", "--geom", "lanedrop", "--stops"]
     if p > 0:
         argv += ["--cav-share", str(p), "--cav-arm", arm, "--cav-x", "1.0"]
-    return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_p{p:g}{arm}_m{m}_s{s}", argv=argv)
+    argv += list(extra or [])
+    return Job(jid=f"{tag}_{ctrl.replace(':', '_')}_p{p:g}{arm}_m{m}_s{s}{jid_sfx}", argv=argv)
 
 
 def label(o) -> str:
@@ -132,6 +133,67 @@ def report(res: dict, root: Path) -> None:
                      f"{r['throughput']['rel']:+.1%} | {'yes' if r['harmonises_for_free'] else 'no'} |")
         L.append("")
     (REPO_ROOT / "docs" / "lab" / "round4_th.md").write_text("\n".join(L) + "\n")
+
+
+GS_SEEDS = list(range(7160400, 7160410))
+GS_CTRLS = [f"const:{b}" for b in (0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9)] + ["nc", "vslad:90:0.8"]
+INC = "1500:2400:900:up0a:2"
+GS_COND = {"D1": ("3300/0", []), "D2": ("3900/0", []), "D3": ("4500/0", []), "D4": ("5100/0", []),
+           "C1": ("4500/0", ["--p-nc", "0.1"]), "C2": ("4500/0", ["--p-nc", "0.5"]),
+           "K1": ("4500/0", ["--truck", "0.05"]), "K2": ("4500/0", ["--truck", "0.2"]),
+           "I1": ("3900/0", ["--incident", INC]), "I2": ("4500/0", ["--incident", INC])}
+GS_FAM = {"demand": [["D1", "D2", "D3", "D4"]], "compliance": [["C1", "D3", "C2"]], "trucks": [["K1", "D3", "K2"]],
+          "incident": [["D2", "I1"], ["D3", "I2"]]}
+
+
+def gscan(root: Path, workers: int, gate_ok: bool, analyse_only: bool) -> dict:
+    if not analyse_only:
+        jobs = [job(c, s, cell, root, tag=f"gs_{k}", extra=ex, jid_sfx=f"_{k}")
+                for k, (cell, ex) in GS_COND.items() for s in GS_SEEDS for c in GS_CTRLS]
+        run_batch(jobs, root / "batch", workers, gate_ok=gate_ok)
+    Jc = {}
+    for k in GS_COND:
+        d = {}
+        for p in (root / f"gs_{k}").glob("*/summary.json"):
+            o = json.loads(p.read_text()); d.setdefault(o["ctrl"], []).append(J(o))
+        Jc[k] = {c: float(np.median(v)) for c, v in d.items()}
+    consts = [c for c in GS_CTRLS if c != "vslad:90:0.8"]
+    fam_out = {}
+    for fam, groups in GS_FAM.items():
+        res_g = []
+        for conds in groups:
+            mean_b = {c: float(np.mean([Jc[k][c] for k in conds])) for c in consts if all(c in Jc[k] for k in conds)}
+            b_pool = min(mean_b, key=mean_b.get)
+            j_pool = mean_b[b_pool]
+            j_look = float(np.mean([min(Jc[k][c] for c in consts if c in Jc[k]) for k in conds]))
+            j_ad = float(np.mean([Jc[k]["vslad:90:0.8"] for k in conds]))
+            j_nl = min(j_pool, j_ad)
+            res_g.append({"conds": conds, "pooled_best": b_pool, "J_pool": j_pool, "J_lookup": j_look, "J_adaptive": j_ad,
+                          "per_cond_best": {k: min((c for c in consts if c in Jc[k]), key=lambda c: Jc[k][c]) for k in conds},
+                          "G": (j_pool - j_look) / j_pool, "H": (j_nl - j_look) / j_nl})
+        G = float(np.mean([r["G"] for r in res_g])); H = float(np.mean([r["H"] for r in res_g]))
+        fam_out[fam] = {"groups": res_g, "G": G, "H": H, "DRL_target": bool(G >= 0.10 and H >= 0.10)}
+    out = {"J_per_condition": Jc, "families": fam_out, "targets": [f for f, v in fam_out.items() if v["DRL_target"]],
+           "raw": str(root)}
+    (REPO_ROOT / "docs" / "lab" / "round4_gscan.json").write_text(json.dumps(out, indent=1))
+    L = ["# Round 4 adaptivity headroom scan (Addendum E): results", "",
+         f"*{time.strftime('%Y-%m-%d %H:%M')} · raw `{root}` · J = delay + 40 s/stop, median of 10 seeds*", "",
+         f"**DRL targets (G ≥ 10 % and H ≥ 10 %): {out['targets'] or 'none'}**", "",
+         "| family | G | H | pooled best | per-condition best | J pooled | J lookup | J adaptive |", "|---|---|---|---|---|---|---|---|"]
+    for fam, v in fam_out.items():
+        for r in v["groups"]:
+            L.append(f"| {fam} {'/'.join(r['conds'])} | {r['G']:.1%} | {r['H']:.1%} | {r['pooled_best']} | {r['per_cond_best']} | "
+                     f"{r['J_pool']:.1f} | {r['J_lookup']:.1f} | {r['J_adaptive']:.1f} |")
+    L += ["", "J per condition and controller (median of 10 seeds):", "", "| controller | " + " | ".join(GS_COND) + " |",
+          "|---|" + "---|" * len(GS_COND)]
+    for c in GS_CTRLS:
+        L.append(f"| {c} | " + " | ".join(f"{Jc[k].get(c, float('nan')):.0f}" for k in GS_COND) + " |")
+    (REPO_ROOT / "docs" / "lab" / "round4_gscan.md").write_text("\n".join(L) + "\n")
+    ledger.append("T2", "R4-gscan", "S", "round4_gscan", {"conds": list(GS_COND), "ctrls": GS_CTRLS}, "7160400-7160409",
+                  sum(1 for _ in root.rglob("summary.json")), {}, {"targets": out["targets"],
+                  "G": {f: round(v["G"], 4) for f, v in fam_out.items()}, "H": {f: round(v["H"], 4) for f, v in fam_out.items()}},
+                  notes=str(root))
+    return out
 
 
 def J(o) -> float:
@@ -226,7 +288,7 @@ def screen(root: Path, run_dir: Path, workers: int, gate_ok: bool, mode: str = "
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["th", "r2", "screen", "r5refs"])
+    ap.add_argument("what", choices=["th", "r2", "screen", "r5refs", "gscan"])
     ap.add_argument("--mode", default="direct_fine", help="policy action mode for screen (P-H3: residual_c)")
     ap.add_argument("--run-dir", default=None)
     ap.add_argument("--only", default=None, help="comma list of controllers (r2)")
@@ -241,6 +303,11 @@ def main(argv=None) -> int:
         out = r2(root, a.workers, a.gate_ok, a.analyse_only, only=a.only.split(",") if a.only else None,
                  skip=a.skip.split(",") if a.skip else None)
         print(json.dumps({"tuned": out["tuned_classical"], "family_best": out["family_best"]}))
+        return 0
+    if a.what == "gscan":
+        out = gscan(root, a.workers, a.gate_ok, a.analyse_only)
+        print(json.dumps({"targets": out["targets"], "G": {f: round(v["G"], 4) for f, v in out["families"].items()},
+                          "H": {f: round(v["H"], 4) for f, v in out["families"].items()}}))
         return 0
     if a.what == "r5refs":   # Addendum D: classical arms of R5-H on the shared T2 test seeds, pre-computed
         fz = json.loads(FROZEN.read_text())
