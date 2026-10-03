@@ -19,3 +19,15 @@
 - **Selection:** among cells with 0 teleports and 0 FAIL in all 3 seeds, the lowest-total-demand cell with ≥ 5 blocking minutes in ≥ 2 of 3 seeds.
   - If none qualifies, the cell with the most blocking minutes, flagged.
   - The chosen cell is frozen for the T4 headroom scan, which is pre-registered separately.
+
+## Result and Addendum A (2026-10-03, before the extended grid)
+
+**Calibration result** (`t4_corr2_calibration.json`): **FLAGGED.**
+- No cell has ≥ 5 off-ramp blocking minutes in ≥ 2 of 3 seeds. The best case is 6.5 minutes in 1 seed, at 4,500 / 600 / 1,200.
+- Higher R2 demand raises door-to-door time (e.g. 271 → 377 s), but the excess queues **on the ramp**: `m4` stays above 60 km/h almost always.
+- With EIDM / LC2013, ramp drivers yield instead of forcing a mainline breakdown. This is consistent with the realism-gate findings.
+
+**Extended grid (one pre-registered try):**
+- **Cells:** overload merge 2 from the mainline side: q_main ∈ {5,000, 5,500} × q_r1 ∈ {0, 300} × q_r2 ∈ {1,500, 2,000}. That is 8 cells on the same seeds 7,140,001–7,140,003, 24 runs.
+- **Rule:** the same selection rule.
+- **If still flagged:** T4 is closed, because the off-ramp blocking mechanism does not arise in this SUMO plant.

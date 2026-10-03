@@ -26,7 +26,11 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=N_MAX_DEFAULT)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--extended", action="store_true", help="Addendum A grid")
     a = ap.parse_args(argv)
+    global QM, QR1, QR2
+    if a.extended:
+        QM, QR1, QR2 = [5000, 5500], [0, 300], [1500, 2000]
     root = RUNS_ROOT / "t4" / f"calib_{int(time.time())}"
     jobs = [Job(jid=f"c_m{m}_r{r1}_{r2}_s{s}", argv=["vsl_lab.jobs.corr_run", "--ctrl", "nc", "--seed", str(s), "--q-main", str(m),
                                                      "--q-r1", str(r1), "--q-r2", str(r2), "--stops", "--tag", "calib",
@@ -52,7 +56,7 @@ def main(argv=None) -> int:
     sel = min(ok, key=lambda k: sum(int(x) for x in k.split("/"))) if ok else max(
         table, key=lambda k: float(np.median(table[k]["block_min"])))
     out = {"table": table, "selected": sel, "flagged": not bool(ok), "raw": str(root)}
-    (REPO_ROOT / "docs/lab/t4_corr2_calibration.json").write_text(json.dumps(out, indent=1, default=str))
+    (REPO_ROOT / f"docs/lab/t4_corr2_calibration{'_ext' if a.extended else ''}.json").write_text(json.dumps(out, indent=1, default=str))
     ledger.append("T4", "R1-calib", "S", "corr2_calibration", {"grid": [QM, QR1, QR2]}, "7140001-7140003 (throw-away)",
                   len(jobs), {}, {"selected": sel, "flagged": out["flagged"]}, notes=str(root))
     print(json.dumps({"selected": sel, "flagged": out["flagged"],
