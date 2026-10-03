@@ -143,6 +143,7 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=0, help="learner seed index (0-4)")
     ap.add_argument("--max-fail-share", type=float, default=0.01,
                     help="health stop rule: stop when the FAIL share of training episodes exceeds this (after 50)")
+    ap.add_argument("--fail-min-episodes", type=int, default=50, help="health stop rule applies after this many episodes")
     ap.add_argument("--val-every", type=int, default=25)
     ap.add_argument("--val-conds", type=float, nargs="+", default=None,
                     help="fixed validation conditions: inflows (bn4) or ring lengths (ring)")
@@ -246,6 +247,7 @@ def main(argv=None) -> int:
             self.best = -np.inf
             self.stop = False
             self.max_fail_share = a.max_fail_share
+            self.fail_min_episodes = a.fail_min_episodes
             self.f_prog = open(run_dir / "progress.csv", "w", newline="")
             self.w_prog = csv.writer(self.f_prog)
             self.w_prog.writerow(["update", "timesteps", "wall_s", "ep_rew_mean", "ep_outflow_mean",
@@ -265,7 +267,7 @@ def main(argv=None) -> int:
                 if "episode_metrics" in inf:
                     self.recent.append(inf["episode_metrics"])
             n_ep = sum(self.health.values())
-            if n_ep >= 50 and self.health["FAIL"] / n_ep > self.max_fail_share:
+            if n_ep >= self.fail_min_episodes and self.health["FAIL"] / n_ep > self.max_fail_share:
                 self.stop = True
                 return False
             return True

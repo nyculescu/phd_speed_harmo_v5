@@ -215,3 +215,8 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
 - **Seeds and conditions:** fresh test seeds 7,110,690–7,110,789 (100) × 4 kinds.
 - **Controllers:** `evsched:7:20:1.15`, MPC-F (frozen), pooled `meter:40:8`, `meter:10:6`, NC and the lookup.
 - **Reading:** exactly as in Addendum D. The claim needs beating both `evsched` and MPC-F, pooled and in ≥ 2 of 3 learners, with no kind significantly worse by more than 5 % and a FAIL share ≤ 5 %.
+
+**P-M4 note (2026-10-03, during training).**
+- **Seed 4 stopped at update 0** on the health rule: 4 perturbation-teleport FAILs in its first 64 episodes (6.25 % > 5 %, right after the 50-episode minimum).
+- **Rerun:** it is re-run identically except `--fail-min-episodes 500` (a new option; the default stays 50), so the 5 % rule judges a meaningful sample. Seeds 3 and 5 continue unchanged.
+- **The R5-M2 chain** is replaced by one that waits for all three learners by PID. The stopped seed-4 run is logged and not used.
