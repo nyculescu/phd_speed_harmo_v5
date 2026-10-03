@@ -189,3 +189,29 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
 - the validation R² is reported, and the model is frozen in `docs/lab/t1_mpcf_model.pt` before R5-M.
 
 **Controller:** `mpcf` in `bn4_eval`. Every 30 s, the setting with the lowest predicted 300-s cost from the current state. It is never given the perturbation kind or the true model.
+
+## R5-M result and Addendum E: P-M4 reliability (2026-10-03, before any P-M4 run)
+
+**R5-M result** (`t1_meter_r5.md`): **no claim.**
+- Pooled DRL against `evsched`: −1.0 %; against MPC-F: −0.5 %; both CIs include 0.
+- Only learner seed 0 beats both.
+- DRL robustly beats `meter:10:6` (−7.4 %) and NC (−16.4 %).
+- **Diagnosis: unreliable training.** Seed 1's validation went 14.8 (best) → 17.8 (final). Checkpoint scores came from only 12 episodes.
+
+**P-M4** (author choice: "both in parallel" with the corridor work):
+
+| Item | P-M4 setting |
+|---|---|
+| algorithm and design | RecurrentPPO, same hybrid as P-M3b |
+| learner seeds | 3, 4, 5 (fresh training pools) |
+| updates | 2,000 |
+| rollout | 16 envs × 120 steps (1,920 per update), minibatch 480 |
+| other hyperparameters | as P-M3b (10 epochs, learning rate 3e-4 with decay, γ 0.99, GAE 0.95, net 128×128, `--max-fail-share 0.05`) |
+| checkpoint selection | every 25 updates, on **40 episodes**: seeds 7,110,400–7,110,409 × the 4 kinds at q = 1,600 |
+
+**Primary policy = the best-validation checkpoint** (CLAUDE.md: "checkpoints chosen on validation seeds only"). The final policy is reported as secondary.
+
+**R5-M2:**
+- **Seeds and conditions:** fresh test seeds 7,110,690–7,110,789 (100) × 4 kinds.
+- **Controllers:** `evsched:7:20:1.15`, MPC-F (frozen), pooled `meter:40:8`, `meter:10:6`, NC and the lookup.
+- **Reading:** exactly as in Addendum D. The claim needs beating both `evsched` and MPC-F, pooled and in ≥ 2 of 3 learners, with no kind significantly worse by more than 5 % and a FAIL share ≤ 5 %.
