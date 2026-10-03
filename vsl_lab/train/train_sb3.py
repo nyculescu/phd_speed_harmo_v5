@@ -34,7 +34,7 @@ from vsl_lab.ops.thermal import package_temp_c
 
 def make_env_fn(env_name: str, env_kwargs: dict, rank: int):
     def _f():
-        kw = {k: v for k, v in env_kwargs.items() if k != "rank_seed"}
+        kw = {k: v for k, v in env_kwargs.items() if k not in ("rank_seed", "val_perturb_cycle")}
         if env_name == "bn4":
             from vsl_lab.envs.bn4_env import BN4Env
             env = BN4Env(**kw)
@@ -171,7 +171,7 @@ def main(argv=None) -> int:
     conds = a.val_conds or ({"bn4": [1600.0, 2000.0, 2400.0], "ring": [230.0, 260.0], "mrg3": [0.1, 0.3, 0.5]}[a.env])
     seed0 = a.val_seed0 or {"t1": 7110300, "t2": 7120300, "t3": 7130300}[track]
     val_metric = a.val_metric or {"bn4": "outflow_ctrl_vph", "ring": "mean_speed", "mrg3": "tts_ctrl_vehh"}[a.env]
-    val_sign = -1.0 if val_metric in ("tts_ctrl_vehh", "mean_time_in_system_s", "score_h") else 1.0
+    val_sign = -1.0 if val_metric in ("tts_ctrl_vehh", "mean_time_in_system_s", "score_h", "tts_system_ctrl_vehh") else 1.0
     a.val_n = len(conds) * a.val_seeds_per
     val_specs = [(conds[i % len(conds)], seed0 + i // len(conds)) for i in range(a.val_n)]
     val_seeds = [sd for _, sd in val_specs]
@@ -188,6 +188,9 @@ def main(argv=None) -> int:
         kw = dict(val_kwargs, eval_seeds=[sd])
         if a.env == "bn4":
             kw["inflow"] = (c, c)
+            if kw.get("val_perturb_cycle") is not None:   # P-M: validation spec i gets kind cycle[i % len(cycle)]
+                cyc = kw["val_perturb_cycle"]
+                kw["perturb"], kw["perturb_mix"] = cyc[i % len(cyc)], None
         elif a.env == "ring":
             kw["eval_L"] = c
         else:

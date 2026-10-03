@@ -68,7 +68,8 @@ class BN4Env(gym.Env):
                  seed_pool=(7210000, 7219999), tag: str = "train", pin_ecores: bool = True,
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
                  quiet: bool = True, check_actuator: bool = True, action_map: str = "linear",
-                 actuator: str = "av_caps", perturb: dict | None = None):
+                 actuator: str = "av_caps", perturb: dict | None = None, perturb_mix: list | None = None,
+                 meter_grid: list | None = None, allow_off: bool = True):
         """perturb (meter headroom scan, docs/lab/t1_meter_gscan_protocol.md): {"kind": "slow"|"block"|"surge",
         "dur": s, ...}; start ~ U(warmup + 100, warmup + control - dur - 100) from rng(seed + 991).
         slow: bottleneck edge 5 speed limit -> v_mps; block: a vehicle on edge 4 lane 1 stops mid-edge for dur;
@@ -105,6 +106,12 @@ class BN4Env(gym.Env):
         self.t_drain_max = t_drain_max
         self.meter = None
         self.perturb = dict(perturb) if perturb else None
+        # P-M (t1_meter_gscan_protocol.md Addendum B): perturb_mix = list of perturb specs (None = no perturbation)
+        # sampled uniformly per training episode; meter_grid = ["K:n", ...] replaces METER_GRID; allow_off=False removes
+        # the meter-off action (the validated feedback meter always stays in the loop)
+        self.perturb_mix = list(perturb_mix) if perturb_mix else None
+        self.meter_grid = [tuple(float(x) for x in g.split(":")) for g in meter_grid] if meter_grid else list(METER_GRID)
+        self.allow_off = allow_off
         self.files = bn4.files()
         self.lane_len = bn4.net.lane_lengths_from_net(self.files["net"])
         self.obs_slots = [(e, ln, p) for e, k in OBS_PIECES.items() for ln in range(bn4.net.EDGE_LANES[e])
@@ -118,8 +125,8 @@ class BN4Env(gym.Env):
             self.action_space = gym.spaces.Box(-1.0, 1.0, shape=(len(VSL_GANTRIES),), dtype=np.float32)
             n_prev = len(VSL_GANTRIES)
         elif actuator == "meter_sched":
-            self.action_space = gym.spaces.Discrete(1 + len(METER_GRID))
-            n_prev = 1 + len(METER_GRID)
+            n_prev = (1 if allow_off else 0) + len(self.meter_grid)
+            self.action_space = gym.spaces.Discrete(n_prev)
         else:
             raise ValueError(actuator)
         self.n_prev = n_prev
@@ -207,12 +214,12 @@ class BN4Env(gym.Env):
         return (not bad, "H-R7", f"posted VSL not applied on {bad}")
 
     def set_meter_mode(self, k: int) -> None:
-        """meter_sched: k = 0 -> meter off (all-green); k >= 1 -> meter on with METER_GRID[k-1]."""
-        if k == 0:
+        """meter_sched: allow_off -> k = 0 meter off (all-green), k >= 1 meter on with grid[k-1]; else grid[k]."""
+        if self.allow_off and k == 0:
             self.meter_active = False
             bn4.set_all_green()
         else:
-            kf, nc = METER_GRID[k - 1]
+            kf, nc = self.meter_grid[k - 1 if self.allow_off else k]
             if self.meter is None:
                 self.meter = FBMeter()
             self.meter.K_F, self.meter.n_crit = kf, nc
@@ -287,6 +294,8 @@ class BN4Env(gym.Env):
         t_total = self.warmup_s + self.control_s
         self.pplan = None
         profile = [(0.0, t_total, q)]
+        if self.perturb_mix is not None:
+            self.perturb = self.perturb_mix[int(self.np_random.integers(0, len(self.perturb_mix)))]
         if self.perturb:
             dur = float(self.perturb["dur"])
             t0p = float(np.random.default_rng(ep_seed + 991).uniform(self.warmup_s + 100.0, t_total - dur - 100.0))
@@ -308,7 +317,7 @@ class BN4Env(gym.Env):
         bn4.set_all_green()
         self.sim.asserts.append(bn4.assert_all_green)
         self.arrivals_20s.clear()
-        self.prev_action = np.zeros(len(self.act_slots), dtype=np.float32)
+        self.prev_action = np.zeros(self.n_prev, dtype=np.float32)   # n_prev per actuator (was av_caps-sized: bug)
         self.slot_caps = np.full(len(self.act_slots), SPEED, dtype=np.float64)
         self.n_actuator_checks = 0
         self.vsl_b = np.ones(len(VSL_GANTRIES), dtype=np.float64)

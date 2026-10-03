@@ -81,3 +81,30 @@ For each family:
 **Rule:** a DRL target needs H ≥ 10 % **and** a CI lower bound > 0 (CLAUDE.md), at either q.
 
 **Before any DRL claim** (not before exploratory DRL), an MPC baseline with a model fitted on separate seeds must also be built (CLAUDE.md).
+
+## Addendum B (2026-10-03): DRL pilot P-M at q ≈ 1,600, pre-registered before any P-M training
+
+**H result.** H = 20.4 % at q = 1,600, with a paired CI of [+18, +79] s, so this is a DRL target. At q = 2,000, H = −3.3 %, so it is not.
+
+**Bug found in the plumbing test, before any P-M run.** `BN4Env.reset()` sized the previous-action vector for the AV-cap actuator (22 values) whatever the actuator, so the first observation of every `meter_sched` or `posted_vsl` episode had the wrong length. Fixed (`n_prev`). No earlier DRL run used those actuators: A-P5 was never run, and C was killed before any DRL.
+
+**Hybrid design** (the validated feedback meter is always in the loop):
+- **Actuator:** `meter_sched` with `meter_grid` = the q = 1,600 lookup settings ["40:6", "40:8", "20:12", "5:8"]. `allow_off` = false.
+- **Decisions:** DRL picks the setting every 30 s.
+- **Observation:** S-VIN (lane-piece counts and speeds, 20-s outflow, previous action).
+- **Reward:** R-TTS, i.e. −(vehicles in network + waiting) per decision.
+
+**Training:**
+- inflow ~ U(1,400, 1,800); one perturbation per episode, uniform over {none, slow, block, surge}, with the same specs as the scan; timing from the seed;
+- seed pool 7,210,000+;
+- PPO, 16 envs × 60 steps (rollout 960, minibatch 240), 500 updates, 10 epochs, learning rate 3e-4 with decay, γ 0.99, GAE 0.95, net 128×128, learner seed 0.
+
+**Checkpointing:** validation every 25 updates on q = 1,600 × the 4 kinds × seeds 7,110,320–7,110,322, metric `tts_system_ctrl_vehh`.
+
+**Screening** (`jobs/t1_meter_pm.py`, `bn4_eval`, door-to-door including the drain):
+- **Seeds:** 7,110,330–7,110,339, disjoint from the checkpoint seeds; 4 kinds × 10 seeds.
+- **Controllers:** the final and best-validation policies, `evsched:7:20:1.15`, pooled `meter:40:8`, the lookup (oracle), `meter:10:6` and `nc`.
+- **Score:** per seed, J(s) = the mean over the 4 kinds.
+- **PASS:** median paired (DRL − `evsched`) ≤ −5 % of `evsched`'s median J, with the 95 % bootstrap CI excluding 0; and 0 health FAIL beyond those also seen in `evsched`'s runs.
+- **Passers:** F class (3 seeds × 1,000 updates), then R5-M on test seeds 7,110,590–7,110,619.
+- **Before a thesis claim:** an MPC baseline with a model fitted on separate seeds (CLAUDE.md).
