@@ -31,3 +31,28 @@
 - **Cells:** overload merge 2 from the mainline side: q_main ∈ {5,000, 5,500} × q_r1 ∈ {0, 300} × q_r2 ∈ {1,500, 2,000}. That is 8 cells on the same seeds 7,140,001–7,140,003, 24 runs.
 - **Rule:** the same selection rule.
 - **If still flagged:** T4 is closed, because the off-ramp blocking mechanism does not arise in this SUMO plant.
+
+**Extended-grid result** (`t4_corr2_calibration_ext.json`): selected cell **5,000 / 300 / 2,000** (not flagged).
+- Off-ramp blocking minutes: 0.5, 6.0 and 5.5. Teleports 0, FAIL 0.
+- The mechanism exists but is modest: about 6 of 65 minutes.
+
+## Addendum B: corridor headroom scan, pre-registered before any scan run
+
+**Conditions** (hidden; q_main / q_r1 / q_r2):
+
+| ID | Demand | Variant |
+|---|---|---|
+| A | 5,000 / 300 / 2,000 | base |
+| B | 5,000 / 300 / 2,500 | high R2 |
+| C | 5,500 / 300 / 2,000 | high mainline |
+| D | 5,000 / 600 / 2,000 | high R1 |
+
+**Controllers:** `nc` + `alinea:o_set:K_R` at both ramps, with o_set ∈ {8, 10, 12, 14} % and K_R ∈ {40, 70}, i.e. 9 in total.
+**Seeds:** T4 plant-check range 7,140,010–7,140,019 (10); 360 runs.
+**Score:** J = door-to-door time (all users, including the ramp and origin queues), median over seeds. Stops are reported.
+
+**G** = (J of the pooled best setting − mean of the per-condition best J) / J of the pooled best, over {A, B, C, D}.
+
+**Rule:**
+- **G ≥ 10 %:** go to an H step with a non-learning adaptive / coordinated rule and the MPC requirement, pre-registered then.
+- **G < 10 %:** T4 is killed for DRL. G is biased upwards, so this is a conservative KILL.
