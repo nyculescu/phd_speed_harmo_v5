@@ -26,6 +26,8 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-ok", action="store_true")
     ap.add_argument("--seeds", default=None)
     ap.add_argument("--tag", default="pm_screen")
+    ap.add_argument("--obs-stack", type=int, default=1)
+    ap.add_argument("--algo", default="ppo")
     a = ap.parse_args(argv)
     seeds = SEEDS if not a.seeds else list(range(int(a.seeds.split("-")[0]), int(a.seeds.split("-")[1]) + 1))
     run_dir = Path(a.run_dir)
@@ -34,12 +36,12 @@ def main(argv=None) -> int:
     jobs = []
     for k, pk in KINDS.items():
         base = {"perturb": pk} if pk else {}
-        rlk = dict(base, actuator="meter_sched", meter_grid=GRID, allow_off=False, decision_s=30)
+        rlk = dict(base, actuator="meter_sched", meter_grid=GRID, allow_off=False, decision_s=30, obs_stack=a.obs_stack)
         ctrls = [("nc", "nc", base), ("meter106", "meter:10:6", base), ("pooled", lk["pooled_best"], base),
                  ("lookup", lk["per_kind"][k], base), ("evsched", "evsched:7:20:1.15", base)]
         for lab, mp in (("drl_final", run_dir / "final_model.zip"), ("drl_best", run_dir / "best_val_model.zip")):
             if mp.exists():
-                ctrls.append((lab, f"rl:{mp}:ppo", rlk))
+                ctrls.append((lab, f"rl:{mp}:{a.algo}", rlk))
         for s in seeds:
             for lab, c, ek in ctrls:
                 jobs.append(Job(jid=f"pm_{lab}_{k}_s{s}", argv=["vsl_lab.jobs.bn4_eval", "--ctrl", c, "--inflow", str(Q),

@@ -69,7 +69,7 @@ class BN4Env(gym.Env):
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
                  quiet: bool = True, check_actuator: bool = True, action_map: str = "linear",
                  actuator: str = "av_caps", perturb: dict | None = None, perturb_mix: list | None = None,
-                 meter_grid: list | None = None, allow_off: bool = True):
+                 meter_grid: list | None = None, allow_off: bool = True, obs_stack: int = 1):
         """perturb (meter headroom scan, docs/lab/t1_meter_gscan_protocol.md): {"kind": "slow"|"block"|"surge",
         "dur": s, ...}; start ~ U(warmup + 100, warmup + control - dur - 100) from rng(seed + 991).
         slow: bottleneck edge 5 speed limit -> v_mps; block: a vehicle on edge 4 lane 1 stops mid-edge for dur;
@@ -112,6 +112,8 @@ class BN4Env(gym.Env):
         self.perturb_mix = list(perturb_mix) if perturb_mix else None
         self.meter_grid = [tuple(float(x) for x in g.split(":")) for g in meter_grid] if meter_grid else list(METER_GRID)
         self.allow_off = allow_off
+        self.obs_stack = max(1, int(obs_stack))   # P-M3a: concatenate the last k observations (oldest first)
+        self._obs_hist = deque(maxlen=self.obs_stack)
         self.files = bn4.files()
         self.lane_len = bn4.net.lane_lengths_from_net(self.files["net"])
         self.obs_slots = [(e, ln, p) for e, k in OBS_PIECES.items() for ln in range(bn4.net.EDGE_LANES[e])
@@ -131,7 +133,7 @@ class BN4Env(gym.Env):
             raise ValueError(actuator)
         self.n_prev = n_prev
         n_obs = 4 * len(self.obs_slots) + 1 + n_prev
-        self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_obs,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(-1.0, 5.0, shape=(n_obs * self.obs_stack,), dtype=np.float32)
         self.sim = None
         self.rng = np.random.default_rng()
         self.prev_action = np.zeros(n_prev, dtype=np.float32)
@@ -144,6 +146,16 @@ class BN4Env(gym.Env):
         return min(int(pos / L * k), k - 1)
 
     def _observe(self) -> np.ndarray:
+        o = self._observe1()
+        if self.obs_stack == 1:
+            return o
+        if not self._obs_hist:
+            self._obs_hist.extend([o] * self.obs_stack)
+        else:
+            self._obs_hist.append(o)
+        return np.concatenate(list(self._obs_hist)).astype(np.float32)
+
+    def _observe1(self) -> np.ndarray:
         nh = {s: 0 for s in self.obs_slots}
         vh = {s: 0.0 for s in self.obs_slots}
         na = {s: 0 for s in self.obs_slots}
@@ -332,6 +344,7 @@ class BN4Env(gym.Env):
         self._advance(self.warmup_s)   # uncontrolled warm-up (AVs follow IDM)
         self._t_ctrl0 = self.sim.t
         self._arr_ctrl0 = self.sim.arrived
+        self._obs_hist.clear()
         return self._observe(), {}
 
     def step(self, action):

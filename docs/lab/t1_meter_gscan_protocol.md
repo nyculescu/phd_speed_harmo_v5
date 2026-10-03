@@ -116,3 +116,23 @@ For each family:
 **P-M2** is identical to P-M except `--max-fail-share 0.05`, a new CLI option whose default stays 1 %.
 - The 5 % tolerance follows from the scan's measured teleport rate: blockages are a quarter of the mix, so about 1 % of episodes are expected to FAIL.
 - FAIL episodes are still counted and reported.
+
+## P-M2 result and Addendum C: P-M3 exploratory variants (2026-10-03, before any P-M3 run)
+
+**P-M2: screening FAIL.**
+- 500 updates; FAIL share 2.8 %.
+- Final DRL against `evsched`: median paired Δ +0.2 s (+0.1 %), CI [−26, +51]. Against the lookup: +6.5 %, n.s. Against NC: −20 %, CI excluding 0.
+- **The validation curve shows no learning:** 16.0 at update 0 (a random policy over the 4 settings), 17.4 at the end.
+- **The screening was underpowered:** with 10 seeds the CI widths were about ±40 s, against a 5 % target of about 10 s.
+
+**P-M3, exploratory.** Three variants trained in parallel, each 1,000 updates, learner seed 0, otherwise P-M2's configuration (including `--max-fail-share 0.05`):
+
+| Variant | Change |
+|---|---|
+| **a** | PPO + `obs_stack` 4 (the last 4 observations concatenated; events need trends) |
+| **b** | RecurrentPPO (LSTM), no stack |
+| **c** | plain PPO (the budget effect alone) |
+
+**Screening, with more power:** fresh seeds 7,110,340–7,110,389 (50) × 4 kinds. Rule, comparators and statistics are as in Addendum B.
+
+**Multiple comparisons, disclosed:** 4 pilots in total (P-M2 and P-M3 a–c) are screened against the same rule. A pass is an exploratory signal only. A claim still needs the F class (3 learner seeds × 1,000 updates), R5-M on the test seeds and the MPC baseline.
