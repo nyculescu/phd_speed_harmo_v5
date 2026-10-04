@@ -70,8 +70,8 @@
 15. **Ramp vehicles stranded at the acceleration-lane end** (MRG3-v3 teleports in every cell).
 16. A ':' in a tag broke SUMO's `--log` path (smoke only).
 17. The P-H action grid did not contain the tuned classical b = 0.75. Corrected before screening (P-H2).
-19. **Pre-registration flaw (mine):** stage H chose B by median *level*, against the binding paired convention. With wide seed spread, it picked `evsched2`, which is paired-worse than 4 of 5 rivals. Both readings are logged. Future gates use the minimum over non-learning arms of the paired H.
 18. **A 360 s blockage on BN4 teleports in 209 of 220 runs, whatever the controller.** Found after the Lead 1 scan, before stage H. The condition was excluded and both stage-S outcomes logged (G 12.0 % → 12.2 %).
+19. **Pre-registration flaw (mine):** stage H chose B by median *level*, against the binding paired convention. With wide seed spread, it picked `evsched2`, which is paired-worse than 4 of 5 rivals. Both readings are logged. Future gates use the minimum over non-learning arms of the paired H.
 
 ## Compute
 
