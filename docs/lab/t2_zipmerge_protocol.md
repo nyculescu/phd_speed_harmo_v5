@@ -25,3 +25,14 @@
 
 **If a variant passes:** posted VSL, MTFC and the CAV arms get their tool checks on ZM3 (T0, T1c), pre-registered then.
 **If all fail:** Lead 2 stops.
+
+## Result (2026-10-03, `t2_realism_zm.md`): all FAIL, near miss for H5
+
+| Variant | R-a (capacity drop) | R-b (waves) | R-c (discharge) | R-d (origin) | Other |
+|---|---|---|---|---|---|
+| **H5** (EIDM defaults) | **PASS** (onset share 0.80; Q_dis/Q_ff = 0.967 [0.923, 0.982], inside [0.82, 0.97]) | PASS (−16.9 km/h) | **FAIL** (1,528 veh/h/lane < 1,600) | PASS (100 %) | 0 teleports, deterministic |
+| H3 (W99) | not measurable (n = 2 + 7) | — | 1,489 | — | — |
+| H0 (IDM) | not measurable (n = 19 + 1) | — | 1,407 | — | 0 teleports |
+
+- **The zipper junction removed the IDM stranding artefact** and produced a measurable capacity drop for EIDM (the first in any merge plant).
+- **The bound is not relaxed post hoc.** Lead 2 stops here unless the author decides on a new pre-registered variant.
