@@ -1,10 +1,25 @@
 # DRL lab: status (living document)
 
-*Last update 2026-10-03 21:00 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · roadmap `docs/plans/vsl_drl_run_roadmap_v0.md`*
+*Last update 2026-10-04 15:10 · branch `claude/vsl-lab-core` · every run is in `vsl_lab/runs/ledger.csv` · roadmap `docs/plans/vsl_drl_run_roadmap_v0.md`*
 
 ## Bottom line so far (honest)
 
 **First confirmatory DRL claim (R6, 2026-10-03):** a hybrid RecurrentPPO policy scheduling the validated Vinitsky feedback meter on BN4 under perturbations beats the tuned event scheduler (−4.3 %, CI [−14.7, −4.9] s) and a fitted-model MPC (−2.5 %, CI [−14.9, −0.8] s) on 210 reserved seeds (`docs/lab/t1_meter_r6.md`, caveats there). Everything else is exploratory.
+
+**R6 caveats added 2026-10-04 (context-aware R6 gate, `docs/lab/gate_ctx_r6/`):**
+- R6's learners trained at a constant lr 3e-4. The protocol said "with decay", but the trainer ignored `--lr-decay` for RecurrentPPO; this is fixed in `34ae76f`.
+- The learners fail the roadmap's C1 convergence check: final vs best +6.7 to +10.7 %, with entropy collapse.
+- **R6's plant (BN4 with Flow IDM vTypes) fails the realism gate:**
+  - capacity-drop ratio 0.77, outside [0.82, 0.97];
+  - discharge 900 veh/h/lane, below the 1,600 floor;
+  - wave speed −8.8 km/h.
+
+  The claim stays true for SUMO BN4 as specified, but it is not a realistic-plant claim.
+
+**Context-aware R6 restart (S0–S3 gate, 2026-10-04): stopped at S1, outcome C** (`gate_ctx_r6/report_S1_20261004-1508.md`).
+- BN4 driver variants B0 (R6 plant), B2 (EIDM at SUMO defaults) and B3 (sampled driver-population mix with trucks and non-compliance), all observed through 10-s E1 loops, **all FAIL R-c**. Discharge was 900 / 1,440 / 1,320 veh/h/lane; no single run at any cell reached 1,600.
+- Conclusion: the BN4 family is not realism-capable under the t2_realism criteria. Per the hard stop, there is no S2 or S3 and no T0.
+- Seeds burned: 7,180,000 and 7,180,010–039.
 
 **Lead 1 (T1-M2, incident severity and duration on BN4) is closed (`t1_meter2_h.md`).**
 - **Gate readings:** the literal stage-H rule gave GO (H 11.1 % against `evsched2`, chosen by median level). Under the binding paired convention, the best non-learning arm is the R6-frozen MPC-F, and H = 3.3 % with a CI including 0. That is a KILL, consistent with the pre-registered prior.

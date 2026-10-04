@@ -1,0 +1,456 @@
+{
+ "protocol": "docs/lab/gate_ctx_r6/s1_protocol.md",
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/t1/gate_ctx_r6/s1_realism_1791149932",
+ "loop_x": {
+  "L1": 50.0,
+  "L2m": 255.0,
+  "L2e": 400.0,
+  "L3e": 520.0,
+  "L4a": 580.0,
+  "L4m": 690.0,
+  "L4e": 800.0,
+  "L5a": 860.0,
+  "L5m": 917.5,
+  "Lx": 970.0
+ },
+ "variants": {
+  "B0": {
+   "calibration": {
+    "table": {
+     "1000": {
+      "n": 10,
+      "onset_share": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1200": {
+      "n": 10,
+      "onset_share": 0.5,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1400": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2200": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2400": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "3000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": 1200,
+    "max_share": 1.0
+   },
+   "cell": 1200,
+   "n_cal_runs": 110,
+   "R-a": {
+    "n": 20,
+    "onset_share": 0.7,
+    "n_discharge": 12,
+    "n_free": 6,
+    "Q_dis_vphpl": 900.0,
+    "Q_ff_vphpl": 1165.7142857142858,
+    "ratio": 0.7720588235294117,
+    "ratio_ci95": [
+     0.7425742574257426,
+     0.7966616084977238
+    ],
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 29,
+    "n_valid": 22,
+    "median_c_kmh": -8.8,
+    "pairs_used": {
+     "L4e->L4a": 29
+    },
+    "status": "FAIL"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 0,
+    "median_discharge_vphpl": 900.0,
+    "determinism": true,
+    "PASS": false,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 38,
+    "share_bottleneck_origin": 1.0,
+    "origins": {
+     "L4e": 38
+    },
+    "PASS": true
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.7946107146660987,
+    "spawned_by_class": {
+     "human": 31522,
+     "av": 3578
+    },
+    "median_wall_s": 6.835000000000001,
+    "Q_ff_all_runs_vphpl": 1069.7142857142858
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  },
+  "B2": {
+   "calibration": {
+    "table": {
+     "1000": {
+      "n": 10,
+      "onset_share": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1200": {
+      "n": 10,
+      "onset_share": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1400": {
+      "n": 10,
+      "onset_share": 0.1,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2200": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2400": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "3000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": 1400,
+    "max_share": 1.0
+   },
+   "cell": 1400,
+   "n_cal_runs": 110,
+   "R-0": {
+    "pairs": 110,
+    "identical": 0,
+    "INERT": false
+   },
+   "R-a": {
+    "n": 20,
+    "onset_share": 0.2,
+    "n_discharge": 3,
+    "n_free": 16,
+    "Q_dis_vphpl": 1440.0,
+    "Q_ff_vphpl": 1397.142857142857,
+    "ratio": 1.030674846625767,
+    "ratio_ci95": [
+     1.0100778744846541,
+     1.05
+    ],
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 20,
+    "n_valid": 20,
+    "median_c_kmh": -9.9,
+    "pairs_used": {
+     "L4e->L4a": 20
+    },
+    "status": "FAIL"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 0,
+    "fail_stress": 0,
+    "median_discharge_vphpl": 1440.0,
+    "determinism": true,
+    "PASS": false,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 37,
+    "share_bottleneck_origin": 1.0,
+    "origins": {
+     "L4e": 37
+    },
+    "PASS": true
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.9572130583116842,
+    "spawned_by_class": {
+     "human": 39676,
+     "av": 4493
+    },
+    "median_wall_s": 6.075,
+    "Q_ff_all_runs_vphpl": 1397.142857142857
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  },
+  "B3": {
+   "calibration": {
+    "table": {
+     "1000": {
+      "n": 10,
+      "onset_share": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1200": {
+      "n": 10,
+      "onset_share": 0.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1400": {
+      "n": 10,
+      "onset_share": 0.6,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "1800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 1,
+      "fail": 1
+     },
+     "2000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2200": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2400": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 6,
+      "fail": 2
+     },
+     "2600": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     },
+     "2800": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 2,
+      "fail": 1
+     },
+     "3000": {
+      "n": 10,
+      "onset_share": 1.0,
+      "teleports": 0,
+      "fail": 0
+     }
+    },
+    "selected": 1400,
+    "max_share": 1.0
+   },
+   "cell": 1400,
+   "n_cal_runs": 110,
+   "R-0": {
+    "pairs": 110,
+    "identical": 0,
+    "INERT": false
+   },
+   "R-a": {
+    "n": 20,
+    "onset_share": 0.75,
+    "n_discharge": 12,
+    "n_free": 5,
+    "Q_dis_vphpl": 1320.0,
+    "Q_ff_vphpl": 1359.4285714285713,
+    "ratio": 0.9709962168978563,
+    "ratio_ci95": [
+     0.9373163324656503,
+     0.9974093264248706
+    ],
+    "PASS": false
+   },
+   "R-b": {
+    "n_runs": 40,
+    "n_windows": 26,
+    "n_valid": 20,
+    "median_c_kmh": -13.2,
+    "pairs_used": {
+     "L4e->L4a": 26
+    },
+    "status": "PASS"
+   },
+   "R-c": {
+    "teleports_operating": 0,
+    "fail_operating": 0,
+    "teleports_stress": 1,
+    "fail_stress": 1,
+    "median_discharge_vphpl": 1320.0,
+    "determinism": true,
+    "PASS": false,
+    "PASS_original_rule": false
+   },
+   "R-d": {
+    "n_congested_runs": 40,
+    "share_bottleneck_origin": 1.0,
+    "origins": {
+     "L4e": 40
+    },
+    "PASS": true
+   },
+   "reported": {
+    "stopped_share_in_congestion": 0.9190098281389604,
+    "spawned_by_class": {
+     "assertive_c": 8011,
+     "truck": 4039,
+     "normal_c": 10738,
+     "timid_c": 8257,
+     "av": 4290,
+     "assertive_nc": 2058,
+     "normal_nc": 2626,
+     "timid_nc": 2050
+    },
+    "median_wall_s": 5.71,
+    "Q_ff_all_runs_vphpl": 1344.857142857143
+   },
+   "verdict": "FAIL",
+   "verdict_original_rc_rule": "FAIL",
+   "flag_wave_na": false
+  }
+ },
+ "verdict": {
+  "B0": "FAIL",
+  "B2": "FAIL",
+  "B3": "FAIL"
+ },
+ "primary": null,
+ "reported_robustness_discharge": {
+  "B0": {
+   "stress_q3000_median_discharge": 900.0,
+   "n": 20,
+   "max": 904.0,
+   "calibration_all_onset_runs_median": 900.0,
+   "cal_n": 94,
+   "cal_max": 904.0
+  },
+  "B2": {
+   "stress_q3000_median_discharge": 1436.0,
+   "n": 20,
+   "max": 1444.0,
+   "calibration_all_onset_runs_median": 1440.0,
+   "cal_n": 80,
+   "cal_max": 1492.0
+  },
+  "B3": {
+   "stress_q3000_median_discharge": 1330.0,
+   "n": 20,
+   "max": 1380.0,
+   "calibration_all_onset_runs_median": 1312.0,
+   "cal_n": 85,
+   "cal_max": 1360.0
+  }
+ }
+}
