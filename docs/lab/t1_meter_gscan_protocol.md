@@ -220,3 +220,24 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
 - **Seed 4 stopped at update 0** on the health rule: 4 perturbation-teleport FAILs in its first 64 episodes (6.25 % > 5 %, right after the 50-episode minimum).
 - **Rerun:** it is re-run identically except `--fail-min-episodes 500` (a new option; the default stays 50), so the 5 % rule judges a meaningful sample. Seeds 3 and 5 continue unchanged.
 - **The R5-M2 chain** is replaced by one that waits for all three learners by PID. The stopped seed-4 run is logged and not used.
+
+## R5-M2 result (2026-10-03 14:37) and a seed-layout breach
+
+**R5-M2** (`r5m2.md`; primary = the best-validation checkpoints of learners 3, 4, 5): **NO claim.**
+
+| DRL vs | Pooled Δ | 95 % CI | Learners (3 / 4 / 5) | Beats |
+|---|---|---|---|---|
+| `evsched` | −2.7 % (−6.2 s) | [−13.0, +2.6] s | −9.3 / −3.9 / −8.8 s, none significant | no |
+| MPC-F | −4.7 % (−11.1 s) | **[−19.6, −4.3] s** | only learner 3 significant | no (1 of 3) |
+| pooled fixed | −4.7 % | excludes 0 | 2 of 3 | **yes** |
+| `meter:10:6` | −12.4 % | excludes 0 | 3 of 3 | **yes** |
+| NC | −24.5 % | excludes 0 | 3 of 3 | **yes** |
+
+- **Per kind:** under blockages, −18 % vs `evsched` and −10.5 % vs MPC-F, both CIs excluding 0.
+- **Secondary (final policies, `r5m2_final.md`):** also NO.
+- **Interpretation:** all three learners are now competitive. Reliability is fixed relative to R5-M. The effect against the best non-learning control (about 3–5 %) is below what 100 seeds resolve per learner.
+
+**Seed-layout breach (my error, disclosed).**
+- R5-M2's test seeds 7,110,690–7,110,789 extend into the **reserved confirmatory range** 7,110,700–7,110,999 (approved layout, roadmap §10). 90 reserved seeds were consumed by an exploratory test.
+- Seeds 7,110,790–7,110,999 (210) remain untouched.
+- Any R6 confirmatory run uses only those 210 seeds, and is pre-registered before it runs.
