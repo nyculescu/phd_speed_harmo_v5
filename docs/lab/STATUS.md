@@ -4,7 +4,7 @@
 
 ## Bottom line so far (honest)
 
-**No DRL controller has yet beaten a tuned classical controller.** Everything below is exploratory.
+**First confirmatory DRL claim (R6, 2026-10-03):** a hybrid RecurrentPPO policy scheduling the validated Vinitsky feedback meter on BN4 under perturbations beats the tuned event scheduler (−4.3 %, CI [−14.7, −4.9] s) and a fitted-model MPC (−2.5 %, CI [−14.9, −0.8] s) on 210 reserved seeds (`docs/lab/t1_meter_r6.md`, caveats there). Everything else is exploratory.
 
 **The most promising thread is Round 4: harmonisation on a lane drop.**
 - A tuned **constant posted VSL (90 km/h)** cuts both delay (−25 %) and stops (−55 %) in heavy congestion.
