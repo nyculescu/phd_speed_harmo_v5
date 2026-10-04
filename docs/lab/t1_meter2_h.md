@@ -67,3 +67,33 @@ Headroom against each non-learning arm, H_arm = median(J_arm − J_I) / median(J
 - The refitted MPC-F2 has a better held-out R² (0.94 against 0.90) but controls worse than `mpcf_old`: it is worse by 25.4 s paired, and worse than `pooled` too. Its A6 action set includes "meter off", which is a plausible cause, but this was not tested.
 - The re-tuned `evsched2` sits at the corner of its tuning grid (v_slow = 9, t_block = 40, f_surge = 1.35). It is still worse than its untuned predecessor here (+14.7 s).
 - H measures the headroom of *static* per-condition settings. A dynamic scheduler (MPC-F, DRL) can in principle beat I; `mpcf_old` already gets within 3.3 % of it.
+
+## Exploratory follow-up: the R6-frozen DRL candidate on this mix (not a claim)
+
+*`vsl_lab/jobs/t1_meter2_r6ood.py`, run on the same gate seeds 7,170,220–239 (already used, tuning role), 420 runs, raw under `m2r6ood_*`. Purpose: decide whether a pre-registered out-of-distribution test on fresh seeds is worth proposing.*
+
+Median paired Δ of DRL − arm, s [95 % CI], relative to the arm:
+
+| arm | DRL − arm |
+|---|---|
+| `mpcf_old` | +7.9 [−2.3, +12.9] (+2.8 %) |
+| `pooled` | −1.7 [−10.5, +4.2] (−0.6 %) |
+| `evsched_old` | +2.3 [−14.5, +14.0] (+0.8 %) |
+| `evsched2` | −23.2 [−40.2, −3.6] (−8.2 %) |
+| `I` (oracle) | +16.1 [+2.8, +31.5] (+6.3 %) |
+
+Per family, against `pooled`:
+
+| family | DRL − `pooled` |
+|---|---|
+| slow | −12.0 % |
+| block | −11.4 % |
+| surge | **+16.1 %** (CI [+21.9, +52.7] s) |
+
+Against `mpcf_old`, the DRL is +0.3 % to +4.1 % in every family.
+
+**Reading:**
+- The R6 policy does **not** generalise to the varied severities and durations. Its gains under slowdowns and blockages are cancelled by surges outside its training range (factors 1.15–1.5 and 150–600 s, against 1.3 and 300 s in training).
+- It is not better than the R6-frozen MPC-F here.
+- **No out-of-distribution test is proposed. Lead 1 is closed.**
+- The R6 claim (`t1_meter_r6.md`) is unaffected: it was made on the pre-registered 4-kind mix. Its scope must be stated as that mix only, because this check shows it does not transfer.

@@ -6,9 +6,10 @@
 
 **First confirmatory DRL claim (R6, 2026-10-03):** a hybrid RecurrentPPO policy scheduling the validated Vinitsky feedback meter on BN4 under perturbations beats the tuned event scheduler (−4.3 %, CI [−14.7, −4.9] s) and a fitted-model MPC (−2.5 %, CI [−14.9, −0.8] s) on 210 reserved seeds (`docs/lab/t1_meter_r6.md`, caveats there). Everything else is exploratory.
 
-**Open now: Lead 1 (T1-M2), incident severity and duration on BN4.**
-- The stage-S scan found headroom G = 12.2 % on 21 conditions (`t1_meter2_scan.md`; correction in Addendum A).
-- Stage H is running: a tuned event scheduler and a refitted MPC against the oracle lookup on fresh gate seeds 7,170,220–239. The pre-registered prior is that a KILL is likely, with H ≈ 4–13 %.
+**Lead 1 (T1-M2, incident severity and duration on BN4) is closed (`t1_meter2_h.md`).**
+- **Gate readings:** the literal stage-H rule gave GO (H 11.1 % against `evsched2`, chosen by median level). Under the binding paired convention, the best non-learning arm is the R6-frozen MPC-F, and H = 3.3 % with a CI including 0. That is a KILL, consistent with the pre-registered prior.
+- **R6 policy on this mix (exploratory):** it does not generalise. Surges outside its training range cost +16 %.
+- **Scope:** the R6 claim stands on its pre-registered 4-kind mix only.
 
 **Closed since 2026-10-02:**
 - Round 4 harmonisation on LD3 was killed (G ≤ 4 %; P-H3 stopped).
@@ -28,7 +29,7 @@
 | **Round 3 TM21 vs TM20 (CAVs)** | parked | SUMO's default CACC at 0.5 s brakes hard; at 0.2 s and 25 %, CACC alone worsens delay by 46–93 %. CAV arms showed no authority (T-H). |
 | **Round 4 harmonisation (LD3 lane drop, EIDM defaults, 0.2 s)** | killed | T-H0 PASS. Tuned constant VSL (90 km/h) gives −25 % delay and −55 % stops, but G ≤ 4 %. P-H3 stopped. |
 | **T1-M hybrid meter scheduling under perturbations** | **CLAIM YES (R6)** | The frozen RecurrentPPO beats `evsched` (−4.3 %) and MPC-F (−2.5 %) on 210 reserved seeds (`t1_meter_r6.md`). |
-| **T1-M2 Lead 1 (incident severity and duration)** | **stage H running** | Stage S: G = 12.2 % (21 conditions). Gate rule: H ≥ 10 % with CI lower bound > 0 (`t1_meter2_protocol.md`, Addendum A). |
+| **T1-M2 Lead 1 (incident severity and duration)** | **killed (conservative reading)** | G = 12.2 %, but H against the best non-learning arm (`mpcf_old`) = 3.3 % [CI incl. 0]. The R6 policy does not transfer (surge +16 %). |
 | **T2 Lead 2 (ZM3 zipper merge)** | FAIL (realism) | H5: capacity drop 0.967, waves −16.9 km/h, origin 100 %, 0 teleports; discharge 1,528 < 1,600 floor. |
 | **T4 corridor (CORR2)** | killed | G = 0.4 %. |
 
@@ -69,6 +70,7 @@
 15. **Ramp vehicles stranded at the acceleration-lane end** (MRG3-v3 teleports in every cell).
 16. A ':' in a tag broke SUMO's `--log` path (smoke only).
 17. The P-H action grid did not contain the tuned classical b = 0.75. Corrected before screening (P-H2).
+19. **Pre-registration flaw (mine):** stage H chose B by median *level*, against the binding paired convention. With wide seed spread, it picked `evsched2`, which is paired-worse than 4 of 5 rivals. Both readings are logged. Future gates use the minimum over non-learning arms of the paired H.
 18. **A 360 s blockage on BN4 teleports in 209 of 220 runs, whatever the controller.** Found after the Lead 1 scan, before stage H. The condition was excluded and both stage-S outcomes logged (G 12.0 % → 12.2 %).
 
 ## Compute
