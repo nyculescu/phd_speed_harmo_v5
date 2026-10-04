@@ -122,7 +122,7 @@ def profile(q_base: float, q_peak: float, t_rise: float, t_peak: float, t_fall: 
 
 def files(geom: str = "merge") -> dict:
     """geom 'merge' = MRG3 (default); 'lanedrop' = LD3 (D-4: 3 -> 2 lane drop, no ramp demand)."""
-    d = net.build(net.LD_SPEC if geom == "lanedrop" else net.SPEC)
+    d = net.build({"lanedrop": net.LD_SPEC, "zipmerge": net.ZM_SPEC}.get(geom, net.SPEC))
     lanes = json.loads((d / "lanes.json").read_text())
     n = {e: sum(1 for k in lanes if k.rsplit("_", 1)[0] == e) for e in ("merge", "down")}
     return {"net": d / "mrg3.net.xml", "add": d / "mrg3.det.add.xml", "dir": d, "lanes": lanes, "n_lanes": n,
@@ -132,9 +132,10 @@ def files(geom: str = "merge") -> dict:
 class Sensors:
     """Last-interval E1/E2 readings (getLastInterval*; the just-started interval is never read)."""
 
-    def __init__(self, lanes: dict):
+    def __init__(self, lanes: dict, merge_eff_lanes: int | None = None):
         self.lanes = lanes
-        self.n_merge = sum(1 for k in lanes if k.startswith("merge_"))     # 4 (MRG3) or 3 (LD3)
+        self.n_merge = sum(1 for k in lanes if k.startswith("merge_"))     # 4 (MRG3) or 3 (LD3, ZM3)
+        self.merge_eff = merge_eff_lanes      # ZM3: all 3 merge lanes are mainline lanes
         self.n_down = sum(1 for k in lanes if k.startswith("down_"))       # 3 (MRG3) or 2 (LD3)
 
     @staticmethod
@@ -153,7 +154,7 @@ class Sensors:
         """Bottleneck density (veh/km/lane) from current vehicle counts on the merge lanes 1-3 (+ acc. lane)."""
         n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_merge_{i}") for i in range(self.n_merge))
         L = self.lanes["merge_1"] / 1000.0
-        return n / (L * (self.n_merge - 1))
+        return n / (L * (self.merge_eff or (self.n_merge - 1)))
 
     def density_down_vkl(self) -> float:
         n = sum(ls.lanearea.getLastStepVehicleNumber(f"e2_down_{i}") for i in range(self.n_down))

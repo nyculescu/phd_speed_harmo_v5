@@ -214,7 +214,7 @@ def main(argv=None) -> int:
     ap.add_argument("--cal-seeds", default=None, help="a-b inclusive")
     ap.add_argument("--chk-seeds", default=None, help="a-b inclusive")
     ap.add_argument("--suffix", default=None, help="output-file suffix override (e.g. _d3)")
-    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
+    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop", "zipmerge"])
     ap.add_argument("--main", default=None, help="comma list of main peaks (grid override)")
     ap.add_argument("--ramp", default=None, help="comma list of ramp peaks (grid override)")
     ap.add_argument("--stress", default=None, help="stress cell override, e.g. 5100/0")

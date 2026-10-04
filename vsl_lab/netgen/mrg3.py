@@ -27,6 +27,9 @@ SPEC = {
 # D-4 lane-drop geometry (round2_protocol.md): same mainline, edge `merge` has 3 lanes whose lane 0 ends (a 3 -> 2
 # lane drop, no ramp demand; the ramp edge is kept, unused, so detector ids stay valid), `down` has 2 lanes.
 LD_SPEC = dict(SPEC, name="LD3", geom="lanedrop")
+# Lead 2 (docs/lab/t2_zipmerge_protocol.md): the on-ramp joins at a ZIPPER node (as BN4's capacity-drop junctions):
+# ramp lane + mainline lane 0 zipper into merge lane 0; mainline lanes 1-2 continue; merge and down have 3 lanes.
+ZM_SPEC = dict(SPEC, name="ZM3", geom="zipmerge", zipper_radius=20.0)
 VSL_AREA = ("up1", "up0a")
 ACC_AREA = ("up0b",)
 MAIN_ROUTE = "up3 up2 up1 up0a up0b merge down"
@@ -38,23 +41,26 @@ def spec_hash(spec=SPEC) -> str:
 
 
 def build(spec=SPEC, force=False) -> Path:
-    d = NET_CACHE / f"{'ld3' if spec.get('geom') == 'lanedrop' else 'mrg3'}_{spec_hash(spec)}"
+    d = NET_CACHE / f"{ {'lanedrop': 'ld3', 'zipmerge': 'zm3'}.get(spec.get('geom'), 'mrg3') }_{spec_hash(spec)}"
     net = d / "mrg3.net.xml"
     if net.exists() and (d / "mrg3.det.add.xml").exists() and not force:
         return d
     d.mkdir(parents=True, exist_ok=True)
+    zm = spec.get("geom") == "zipmerge"
     nodes = ['<nodes>']
     xs = [0.0, 1000.0, 2000.0, 3000.0, 3500.0, 4000.0, 4250.0, 5250.0]
     ids = ["n0", "n1", "n2", "n3", "n3b", "n4", "n5", "n6"]
     for i, x in zip(ids, xs):
-        t = "dead_end" if i in ("n0", "n6") else "priority"
-        nodes.append(f'  <node id="{i}" x="{x}" y="0" type="{t}"/>')
+        t = "dead_end" if i in ("n0", "n6") else ("zipper" if (zm and i == "n4") else "priority")
+        extra = f' radius="{spec["zipper_radius"]}"' if t == "zipper" else ""
+        nodes.append(f'  <node id="{i}" x="{x}" y="0" type="{t}"{extra}/>')
     nodes.append(f'  <node id="r0" x="{4000.0 - spec["ramp_len"] * 0.96:.1f}" y="-{spec["ramp_len"] * 0.28:.1f}" type="dead_end"/>')
     nodes.append("</nodes>")
     (d / "mrg3.nod.xml").write_text("\n".join(nodes) + "\n")
     vm, vr = spec["v_main"], spec["v_ramp"]
     ld = spec.get("geom") == "lanedrop"
-    n_merge, n_down = (3, 2) if ld else (4, 3)
+    zm = spec.get("geom") == "zipmerge"
+    n_merge, n_down = (3, 2) if ld else ((3, 3) if zm else (4, 3))
     edges = ["<edges>",
              f'  <edge id="up3" from="n0" to="n1" numLanes="3" speed="{vm}"/>',
              f'  <edge id="up2" from="n1" to="n2" numLanes="3" speed="{vm}"/>',
@@ -71,9 +77,9 @@ def build(spec=SPEC, force=False) -> Path:
         for i in range(3):
             con.append(f'  <connection from="{a}" to="{b}" fromLane="{i}" toLane="{i}"/>')
     for i in range(3):
-        con.append(f'  <connection from="up0b" to="merge" fromLane="{i}" toLane="{i if ld else i + 1}"/>')
+        con.append(f'  <connection from="up0b" to="merge" fromLane="{i}" toLane="{i if (ld or zm) else i + 1}"/>')
     for i in range(n_down):
-        con.append(f'  <connection from="merge" to="down" fromLane="{i + 1}" toLane="{i}"/>')
+        con.append(f'  <connection from="merge" to="down" fromLane="{i if zm else i + 1}" toLane="{i}"/>')
     con.append('  <connection from="ramp" to="merge" fromLane="0" toLane="0"/>')
     con.append("</connections>")
     (d / "mrg3.con.xml").write_text("\n".join(con) + "\n")

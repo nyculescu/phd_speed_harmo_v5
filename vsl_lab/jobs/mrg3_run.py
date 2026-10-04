@@ -74,6 +74,8 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     cav_tag += f"_dt{dt:g}" if abs(dt - P.STEP_LENGTH) > 1e-9 else ""
     if geom == "lanedrop":
         cav_tag += "_ld"
+    elif geom == "zipmerge":
+        cav_tag += "_zm"
     inc = None
     if incident:   # headroom scan (round4 Addendum E): "lo:hi:dur:edge:lane" -> a broken-down vehicle stops in that lane
         # at mid-edge for dur s; start ~ U(lo, hi) per seed. The vehicle is the next one on the upstream edge's same lane
@@ -90,7 +92,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     f = P.files(geom)
     nd = f["n_lanes"]["down"]
     mprof = P.profile(2500.0, main_peak, 600.0, 1200.0, 3000.0, t_end)
-    rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end) if geom == "merge" else []
+    rprof = P.profile(300.0, ramp_peak, 600.0, 1200.0, 3000.0, t_end) if geom in ("merge", "zipmerge") else []
     dem = P.demand(seed, mprof, rprof, p_noncompliant=p_nc, truck_share=truck, model=model, depart_speed=dspeed,
                    driver=driver, cav_share=cav_share, cav_model=cav_model, step_length=dt)
     cav_ids = {v[1] for v in dem.vehicles if v[3] == "cav"}
@@ -103,7 +105,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     sim = SumoSim(f["net"], rou, run_dir, dem, additional=[f["add"]], step_length=dt, checkpoint_s=300.0,
                   seed=seed, stuck_wait_s=180.0, extra_args=extra)
     sim.start()
-    sens = P.Sensors(f["lanes"])
+    sens = P.Sensors(f["lanes"], merge_eff_lanes=3 if geom == "zipmerge" else None)
     mt = None
     b_const = None
     vslad = None
@@ -376,7 +378,7 @@ def main(argv=None) -> int:
     ap.add_argument("--cav-arm", default="none", choices=["none", "B", "C", "P"])
     ap.add_argument("--cav-x", type=float, default=1.0)
     ap.add_argument("--step", type=float, default=None, help="simulation step (default plant 0.5 s)")
-    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop"])
+    ap.add_argument("--geom", default="merge", choices=["merge", "lanedrop", "zipmerge"])
     ap.add_argument("--stops", action="store_true", help="tripinfo stop metrics (Round 4)")
     ap.add_argument("--incident", default=None, help="lo:hi:dur:edge:lane lane closure (headroom scan)")
     ap.add_argument("--tag", default="smoke")
