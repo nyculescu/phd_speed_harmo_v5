@@ -123,6 +123,53 @@ def evaluate(model, venv, n_episodes: int, recurrent: bool = False) -> dict:
     return out
 
 
+class LinearDecay:
+    """lr * max(0, 1 - n / updates), with n set by the training loop before each update (model.learn() is called
+    once per update, so SB3's own progress_remaining restarts every call). Picklable, so model.save() works."""
+
+    def __init__(self, lr: float, updates: int):
+        self.lr, self.updates, self.n = lr, max(int(updates), 1), 0
+
+    def __call__(self, _progress_remaining: float) -> float:
+        return self.lr * max(0.0, 1.0 - self.n / self.updates)
+
+
+def build_model(a, venv, lr):
+    """The SB3 model for --algo. `lr` (float or LinearDecay) is passed to EVERY algorithm. Before 2026-10-04,
+    RecurrentPPO and TRPO were given the constant a.lr, so --lr-decay was silently ignored for them (P-M3b, PMF,
+    P-M4 and the R6 candidate trained at constant 3e-4 although their protocols said "with decay")."""
+    policy_kwargs = dict(net_arch=dict(pi=a.net, vf=a.net), activation_fn=torch.nn.Tanh)
+    if a.log_std_init != 0.0:
+        policy_kwargs["log_std_init"] = a.log_std_init
+    if a.algo == "ppo":
+        from stable_baselines3 import PPO
+        return PPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs, learning_rate=lr,
+                   gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, policy_kwargs=policy_kwargs, seed=a.seed,
+                   verbose=0, device="cpu")
+    if a.algo == "recurrentppo":
+        from sb3_contrib import RecurrentPPO
+        return RecurrentPPO("MlpLstmPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs,
+                            learning_rate=lr, gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, seed=a.seed,
+                            policy_kwargs=dict(net_arch=dict(pi=a.net, vf=a.net), lstm_hidden_size=64,
+                                               **({"log_std_init": a.log_std_init} if a.log_std_init != 0.0 else {})),
+                            verbose=0, device="cpu")
+    if a.algo == "trpo":
+        from sb3_contrib import TRPO
+        return TRPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, learning_rate=lr, gamma=a.gamma,
+                    gae_lambda=a.gae, policy_kwargs=policy_kwargs, seed=a.seed, verbose=0, device="cpu")
+    raise NotImplementedError(a.algo)
+
+
+def n_actions_of(space):
+    """Discrete -> n, MultiDiscrete -> list of n, otherwise None (for the C1f entropy floor)."""
+    from gymnasium import spaces
+    if isinstance(space, spaces.Discrete):
+        return int(space.n)
+    if isinstance(space, spaces.MultiDiscrete):
+        return [int(n) for n in space.nvec]
+    return None
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--env", default="bn4")
@@ -158,6 +205,10 @@ def main(argv=None) -> int:
     torch.set_num_threads(1)
     from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
+    if not 0 <= a.seed <= 4:
+        # 2,000 training seeds per learner in a 10,000-seed track pool: seed 5 would draw from the next track's pool
+        # (it did, for P-M4 learner 5: 7,220,000-7,221,999 = the T2 DRL range; disclosed 2026-10-04)
+        raise SystemExit(f"--seed {a.seed}: learner seed index must be 0-4 (track DRL pool = 5 x 2,000 seeds)")
     env_kwargs = json.loads(a.env_kwargs)
     track = {"bn4": "t1", "ring": "t3", "mrg3": "t2"}[a.env]
     seed_pool = {"t1": (7210000 + a.seed * 2000, 7210000 + a.seed * 2000 + 1999),
@@ -209,33 +260,9 @@ def main(argv=None) -> int:
     wd = Watchdog(pids)
     wd.start()
 
-    policy_kwargs = dict(net_arch=dict(pi=a.net, vf=a.net), activation_fn=torch.nn.Tanh)
-    lr = a.lr
-    if a.lr_decay:
-        # model.learn() is called once per update, so SB3's progress_remaining is per-call; use our own counter
-        _upd = {"n": 0}
-        lr = lambda _pr, _a=a, _u=_upd: _a.lr * max(0.0, 1.0 - _u["n"] / max(_a.updates, 1))
-    if a.log_std_init != 0.0:
-        policy_kwargs["log_std_init"] = a.log_std_init
+    lr = LinearDecay(a.lr, a.updates) if a.lr_decay else a.lr
     recurrent = a.algo == "recurrentppo"
-    if a.algo == "ppo":
-        from stable_baselines3 import PPO
-        model = PPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs, learning_rate=lr,
-                    gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, policy_kwargs=policy_kwargs, seed=a.seed,
-                    verbose=0, device="cpu")
-    elif a.algo == "recurrentppo":
-        from sb3_contrib import RecurrentPPO
-        model = RecurrentPPO("MlpLstmPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, n_epochs=a.epochs,
-                             learning_rate=a.lr, gamma=a.gamma, gae_lambda=a.gae, ent_coef=a.ent, seed=a.seed,
-                             policy_kwargs=dict(net_arch=dict(pi=a.net, vf=a.net), lstm_hidden_size=64,
-                                                **({"log_std_init": a.log_std_init} if a.log_std_init != 0.0 else {})),
-                             verbose=0, device="cpu")
-    elif a.algo == "trpo":
-        from sb3_contrib import TRPO
-        model = TRPO("MlpPolicy", venv, n_steps=a.n_steps, batch_size=a.batch, learning_rate=a.lr, gamma=a.gamma,
-                     gae_lambda=a.gae, policy_kwargs=policy_kwargs, seed=a.seed, verbose=0, device="cpu")
-    else:
-        raise NotImplementedError(a.algo)
+    model = build_model(a, venv, lr)
 
     from stable_baselines3.common.callbacks import BaseCallback
 
@@ -308,7 +335,7 @@ def main(argv=None) -> int:
         ev0 = cb.validate(0)
         for u in range(1, a.updates + 1):
             if a.lr_decay:
-                _upd["n"] = u - 1
+                lr.n = u - 1
             model.learn(total_timesteps=steps_per_update, reset_num_timesteps=False, callback=cb,
                         progress_bar=False)
             cb.log_update()
@@ -325,11 +352,15 @@ def main(argv=None) -> int:
         cb.f_val.close()
         venv.close()
         vval.close()
+    from vsl_lab.train.convergence import check_run_dir
+    conv = check_run_dir(run_dir, n_actions=n_actions_of(model.action_space))
+    (run_dir / "convergence.json").write_text(json.dumps(conv, indent=1, default=str))
     summary = {"run_id": run_id, "run_dir": str(run_dir), "updates_done": cb.n_upd, "stopped_health": cb.stop,
                "wall_s": round(time.time() - t_start, 1), "health_train": dict(cb.health),
                "val_initial": {k: v for k, v in ev0.items() if k != "per_episode"},
                "val_final": {k: v for k, v in ev_final.items() if k != "per_episode"},
-               "best_val_return": cb.best, "watchdog_pauses": wd.n_pauses, "watchdog_max_c": round(wd.max_smoothed, 1)}
+               "best_val_return": cb.best, "watchdog_pauses": wd.n_pauses, "watchdog_max_c": round(wd.max_smoothed, 1),
+               "converged_c1": conv["converged"], "c1_pass": conv["pass"]}
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
     ledger.append(track.upper(), "R3", "P" if a.updates < 500 else "F", f"{a.env}_{a.algo}_{a.reward}",
                   cfg, f"train {seed_pool[0]}-{seed_pool[1]}; val {val_seeds[0]}-{val_seeds[-1]}", cb.n_upd,
@@ -338,7 +369,8 @@ def main(argv=None) -> int:
                    "val_final_return": summary["val_final"].get("return"),
                    "val_metric": val_metric, "val_initial_metric": summary["val_initial"].get(val_metric),
                    "val_final_metric": summary["val_final"].get(val_metric),
-                   "best_val_return": cb.best}, notes=str(run_dir))
+                   "best_val_return": cb.best, "converged_c1": conv["converged"],
+                   "c1_final_vs_best": conv["C1a_final_vs_best"]}, notes=str(run_dir))
     print(json.dumps(summary, default=str))
     return 0
 
