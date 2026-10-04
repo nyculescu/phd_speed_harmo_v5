@@ -115,3 +115,55 @@ def build(spec: dict = SPEC, force: bool = False) -> Path:
 
 if __name__ == "__main__":
     print(build(force=True))
+
+
+# ---- gate_ctx_r6 S1 (docs/lab/gate_ctx_r6/s1_protocol.md §2): 10-s E1 loops, opt-in, separate additional file -------
+LOOP_PERIOD_S = 10.0
+# group -> (edge, position rule); position rule: float >= 0 = metres from lane start, "mid", or ("end", metres)
+LOOP_GROUPS = (("L1", "1", 50.0), ("L2m", "2", "mid"), ("L2e", "2", ("end", 10.0)), ("L3e", "3", ("end", 10.0)),
+               ("L4a", "4", 10.0), ("L4m", "4", "mid"), ("L4e", "4", ("end", 10.0)),
+               ("L5a", "5", 10.0), ("L5m", "5", "mid"), ("Lx", "5", ("end", 15.0)))
+BOTTLENECK_GROUPS = ("L3e", "L4a", "L4m", "L4e")
+
+
+def loop_ids() -> dict:
+    """group -> [(loop id, lane id), ...] in lane order."""
+    return {g: [(f"{g}_{i}", f"{e}_{i}") for i in range(EDGE_LANES[e])] for g, e, _ in LOOP_GROUPS}
+
+
+def _loop_pos(rule, length: float) -> float:
+    if rule == "mid":
+        return length / 2.0
+    if isinstance(rule, tuple):
+        return length - rule[1]
+    return float(rule)
+
+
+def loops_file(d: Path | None = None) -> Path:
+    """Write (once) bn4.loops.add.xml next to the cached net; returns its path."""
+    d = d or build()
+    f = d / "bn4.loops.add.xml"
+    if f.exists():
+        return f
+    ll = lane_lengths_from_net(d / "bn4.net.xml")
+    add = ["<additional>"]
+    for g, e, rule in LOOP_GROUPS:
+        for lid, lane in loop_ids()[g]:
+            add.append(f'  <inductionLoop id="{lid}" lane="{lane}" pos="{_loop_pos(rule, ll[lane]):.2f}" '
+                       f'period="{LOOP_PERIOD_S}" file="NUL"/>')
+    add.append("</additional>")
+    tmp = d / f"bn4.loops.add.xml.tmp{__import__('os').getpid()}"
+    tmp.write_text("\n".join(add) + "\n")
+    tmp.replace(f)
+    return f
+
+
+def loop_x(d: Path | None = None) -> dict:
+    """group -> x coordinate (m) of its lane-0 loop (straight lanes along x)."""
+    import xml.etree.ElementTree as ET
+    d = d or build()
+    net = d / "bn4.net.xml"
+    shapes = {ln.get("id"): ln.get("shape") for ln in ET.parse(net).getroot().iter("lane")}
+    ll = lane_lengths_from_net(net)
+    return {g: float(shapes[f"{e}_0"].split()[0].split(",")[0]) + _loop_pos(rule, ll[f"{e}_0"])
+            for g, e, rule in LOOP_GROUPS}
