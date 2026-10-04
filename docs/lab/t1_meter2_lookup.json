@@ -1,0 +1,77 @@
+{
+ "source": "t1_meter2_scan (seeds 7170000-7170009); 21 conditions: block_d360 excluded before stage H (teleports in 209/220 scan runs, plant artefact; Addendum A)",
+ "A6": [
+  "nc",
+  "meter:10:8",
+  "meter:40:8",
+  "meter:20:12",
+  "meter:5:10",
+  "meter:10:12"
+ ],
+ "lookup": {
+  "1600": {
+   "per_kind": {
+    "none": "meter:10:8",
+    "slow": "meter:40:8",
+    "block": "meter:40:8",
+    "surge": "meter:5:10"
+   },
+   "pooled_best": "meter:5:10"
+  }
+ },
+ "lookup_I_per_condition": {
+  "none": "meter:10:8",
+  "slow_v3_d150": "meter:40:8",
+  "slow_v3_d300": "meter:40:8",
+  "slow_v3_d600": "meter:20:12",
+  "slow_v5_d150": "meter:40:8",
+  "slow_v5_d300": "meter:40:8",
+  "slow_v5_d600": "meter:40:12",
+  "slow_v8_d150": "meter:10:10",
+  "slow_v8_d300": "meter:40:8",
+  "slow_v8_d600": "nc",
+  "block_d60": "meter:40:8",
+  "block_d180": "meter:20:10",
+  "surge_f1.15_d150": "meter:10:8",
+  "surge_f1.15_d300": "meter:5:8",
+  "surge_f1.15_d600": "meter:5:10",
+  "surge_f1.3_d150": "meter:5:10",
+  "surge_f1.3_d300": "meter:5:10",
+  "surge_f1.3_d600": "meter:5:10",
+  "surge_f1.5_d150": "meter:5:10",
+  "surge_f1.5_d300": "meter:20:6",
+  "surge_f1.5_d600": "meter:5:10"
+ },
+ "excluded_conditions": [
+  "block_d360"
+ ],
+ "family_lookup_with_22_conditions": {
+  "none": "meter:10:8",
+  "slow": "meter:40:8",
+  "block": "meter:5:10",
+  "surge": "meter:5:10"
+ },
+ "lookup_I_A6_per_condition": {
+  "none": "meter:10:8",
+  "slow_v3_d150": "meter:40:8",
+  "slow_v3_d300": "meter:40:8",
+  "slow_v3_d600": "meter:20:12",
+  "slow_v5_d150": "meter:40:8",
+  "slow_v5_d300": "meter:40:8",
+  "slow_v5_d600": "nc",
+  "slow_v8_d150": "meter:40:8",
+  "slow_v8_d300": "meter:40:8",
+  "slow_v8_d600": "nc",
+  "block_d60": "meter:40:8",
+  "block_d180": "meter:10:8",
+  "surge_f1.15_d150": "meter:10:8",
+  "surge_f1.15_d300": "meter:5:10",
+  "surge_f1.15_d600": "meter:5:10",
+  "surge_f1.3_d150": "meter:5:10",
+  "surge_f1.3_d300": "meter:5:10",
+  "surge_f1.3_d600": "meter:5:10",
+  "surge_f1.5_d150": "meter:5:10",
+  "surge_f1.5_d300": "meter:5:10",
+  "surge_f1.5_d600": "meter:5:10"
+ }
+}

@@ -92,8 +92,10 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
         # (docs/lab/t1_meter_lookup.json) for the inflow nearest to the measured base rate; normal = lookup 'none'.
         import json as _json
         from vsl_lab.config import REPO_ROOT as _RR
-        _, v_sl, t_bl, f_su = ctrl.split(":")
-        _lk = _json.loads((_RR / "docs/lab/t1_meter_lookup.json").read_text())["lookup"]
+        _parts = ctrl.split(":")
+        v_sl, t_bl, f_su = _parts[1:4]
+        _lkf = _parts[4] if len(_parts) > 4 else "t1_meter_lookup.json"   # Lead 1: t1_meter2_lookup.json
+        _lk = _json.loads((_RR / "docs/lab" / _lkf).read_text())["lookup"]
         evs = {"v_slow": float(v_sl), "t_block": float(t_bl), "f_surge": float(f_su), "lk": _lk, "v5": [], "halt": {},
                "dep": [], "base": None, "t_last": None, "state": "none", "states": {}}
     if ctrl.startswith("vsl:"):
@@ -111,9 +113,18 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     obs, _ = env.reset()
     if env_meter_params is not None:
         env.meter.K_F, env.meter.n_crit = env_meter_params
+    def _set_meter(setting: str) -> None:   # "meter:K:n" -> feedback meter on with (K, n); "nc" -> meter off
+        from vsl_lab.plants import bn4 as _bn4
+        if setting == "nc":
+            if env.meter_active:
+                env.meter_active = False
+                _bn4.set_all_green()
+        else:
+            env.meter.K_F, env.meter.n_crit = (float(x) for x in setting.split(":")[1:3])
+            env.meter_active = True
     if evs is not None:   # start in the lookup's 'none' setting for the nominal inflow
         _qk = min(evs["lk"], key=lambda k: abs(float(k) - inflow))
-        env.meter.K_F, env.meter.n_crit = (float(x) for x in evs["lk"][_qk]["per_kind"]["none"].split(":")[1:3])
+        _set_meter(evs["lk"][_qk]["per_kind"]["none"])
     state, start = None, np.ones((1,), dtype=bool)
     done, info = False, {}
     import libsumo as _ls
@@ -172,8 +183,7 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
                 evs["states"][st] = evs["states"].get(st, 0) + 1
                 base = evs["base"] if evs["base"] is not None else inflow
                 qk = min(evs["lk"], key=lambda k: abs(float(k) - base))
-                kf_, nc_ = (float(x) for x in evs["lk"][qk]["per_kind"][st].split(":")[1:3])
-                env.meter.K_F, env.meter.n_crit = kf_, nc_
+                _set_meter(evs["lk"][qk]["per_kind"][st])
             act = const
         elif avfb is not None:
             t_now = env.sim.t
