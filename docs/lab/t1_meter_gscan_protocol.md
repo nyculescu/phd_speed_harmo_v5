@@ -241,3 +241,26 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
 - R5-M2's test seeds 7,110,690–7,110,789 extend into the **reserved confirmatory range** 7,110,700–7,110,999 (approved layout, roadmap §10). 90 reserved seeds were consumed by an exploratory test.
 - Seeds 7,110,790–7,110,999 (210) remain untouched.
 - Any R6 confirmatory run uses only those 210 seeds, and is pre-registered before it runs.
+
+## Addendum F: R6 confirmatory run, pre-registered 2026-10-03 before it runs (author: "Run R6 now")
+
+**Frozen candidate:** P-M4 learner 3's best-validation checkpoint.
+- **Why this one:** it has the lowest validation score among the three learners (13.92 vs 14.37 and 14.68). It was selected on validation seeds only.
+- **File:** copied to `docs/lab/frozen/r6_candidate_pm4_s3_best_val.zip`, SHA-256 `d855ba4c7cf0be275df20e18131878e4e688443d7de1fc80d2b2fdad01015c15`. The job asserts this hash.
+
+**Comparators (frozen):**
+- `evsched:7:20:1.15`, tuned on H1;
+- MPC-F (`docs/lab/t1_mpcf_model.pt`, SHA-256 `415ea0510523c2816718f0123e6a4a3f56a233a50c38639aa7f1658efc0b8224`);
+- pooled `meter:40:8`, `meter:10:6` and NC;
+- the lookup oracle (reported only).
+
+**Seeds:** the untouched reserved range 7,110,790–7,110,999 (210) × the 4 kinds at q = 1,600.
+**Metric:** J(s) = the mean over the 4 kinds of door-to-door time, including the origin queue. Statistic: the median of paired differences (DRL − comparator), with a 95 % percentile bootstrap (10,000 resamples).
+
+**Claim, YES only if all hold:**
+1. The CI against `evsched` lies entirely below 0.
+2. The CI against MPC-F lies entirely below 0.
+3. No kind is significantly worse by more than 5 % against either.
+4. The DRL FAIL share is ≤ 5 %.
+
+**Run once** (`jobs/t1_meter_r6.py`; it refuses to run a second time). The result is reported whatever it is.
