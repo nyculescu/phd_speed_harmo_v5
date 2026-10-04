@@ -1,0 +1,102 @@
+{
+ "bn4_recurrentppo_tts_u2000_e16_s3_1791047512_pid3492327": {
+  "updates_done": 2000,
+  "window": 100,
+  "n_val_points": 82,
+  "best_score": -13.9204,
+  "final_score": -15.4147,
+  "C1a_final_vs_best": 0.1074,
+  "C1b_window_vs_best": 0.1226,
+  "C1c_slope_per100_rel": 0.042,
+  "C1d_ev_window": 0.8445,
+  "entropy_last": 0.208,
+  "entropy_prev": 0.1855,
+  "C1e_entropy_change_rel": 0.1213,
+  "entropy_floor": 0.3466,
+  "C1f_entropy_last": 0.208,
+  "pass": {
+   "C1a": false,
+   "C1b": false,
+   "C1c": false,
+   "C1d": true,
+   "C1e": false,
+   "C1f": false
+  },
+  "converged": false
+ },
+ "bn4_recurrentppo_tts_u2000_e16_s4_1791047512_pid3492328": {
+  "updates_done": 0,
+  "window": 100,
+  "n_val_points": 2,
+  "best_score": NaN,
+  "final_score": -17.0285,
+  "C1a_final_vs_best": NaN,
+  "C1b_window_vs_best": NaN,
+  "C1c_slope_per100_rel": NaN,
+  "C1d_ev_window": NaN,
+  "entropy_last": NaN,
+  "entropy_prev": NaN,
+  "C1e_entropy_change_rel": NaN,
+  "entropy_floor": 0.3466,
+  "C1f_entropy_last": NaN,
+  "pass": {
+   "C1a": null,
+   "C1b": null,
+   "C1c": null,
+   "C1d": null,
+   "C1e": null,
+   "C1f": null
+  },
+  "converged": false
+ },
+ "bn4_recurrentppo_tts_u2000_e16_s4_1791050017_pid3565620": {
+  "updates_done": 2000,
+  "window": 100,
+  "n_val_points": 82,
+  "best_score": -14.3738,
+  "final_score": -15.5054,
+  "C1a_final_vs_best": 0.0787,
+  "C1b_window_vs_best": 0.0933,
+  "C1c_slope_per100_rel": 0.0489,
+  "C1d_ev_window": 0.8412,
+  "entropy_last": 0.1468,
+  "entropy_prev": 0.1492,
+  "C1e_entropy_change_rel": 0.0162,
+  "entropy_floor": 0.3466,
+  "C1f_entropy_last": 0.1468,
+  "pass": {
+   "C1a": false,
+   "C1b": false,
+   "C1c": false,
+   "C1d": true,
+   "C1e": true,
+   "C1f": false
+  },
+  "converged": false
+ },
+ "bn4_recurrentppo_tts_u2000_e16_s5_1791047512_pid3492329": {
+  "updates_done": 2000,
+  "window": 100,
+  "n_val_points": 82,
+  "best_score": -14.68,
+  "final_score": -15.6595,
+  "C1a_final_vs_best": 0.0667,
+  "C1b_window_vs_best": 0.0507,
+  "C1c_slope_per100_rel": 0.0052,
+  "C1d_ev_window": 0.8421,
+  "entropy_last": 0.1032,
+  "entropy_prev": 0.1103,
+  "C1e_entropy_change_rel": 0.0643,
+  "entropy_floor": 0.3466,
+  "C1f_entropy_last": 0.1032,
+  "pass": {
+   "C1a": false,
+   "C1b": false,
+   "C1c": false,
+   "C1d": true,
+   "C1e": true,
+   "C1f": false
+  },
+  "converged": false
+ }
+}
