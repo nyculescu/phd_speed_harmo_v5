@@ -1,0 +1,64 @@
+group,factor,M1 drop,M2 waves,M3 authority,M4 hidden,M5 delay,M6 reward,M7 artefacts,M8 samples,M9 OOD,M10 fairness,rationale
+Vehicle (SUMO vType),length (truck 16.5 m),1,0,1,2,0,0,1,0,2,0,"Trucks raise occupancy at the same flow, shifting occupancy-based set-points (v6 ramp T2 saw no consistent shift)."
+Vehicle (SUMO vType),minGap,2,1,1,0,0,0,1,0,1,0,"Sets jam density and steady-state capacity; v5 CAVs used half minGap (~3,070 veh/h/lane)."
+Vehicle (SUMO vType),maxSpeed / speedFactor,1,1,3,1,0,0,0,0,2,0,A posted limit binds only if desired speed exceeds it; compliance groups were built on speedFactor.
+Vehicle (SUMO vType),accel,3,2,1,1,0,0,1,0,2,0,Queue-discharge rate drives the capacity drop; slow-accel variants removed metering benefit (v6 ramp calibration).
+Vehicle (SUMO vType),decel / emergencyDecel,1,2,0,0,0,0,3,0,1,0,ACC/CACC at 0.5 s braked at 9 m/s2 tens of times per run: an artefact source.
+Vehicle (SUMO vType),tau (headway),3,2,1,2,0,0,1,0,2,0,Capacity and wave growth; 'driver-population class' as a hidden condition was never tested; short tau caused teleports (v6 ramp).
+Vehicle (SUMO vType),sigma (imperfection),2,3,0,1,0,0,1,1,2,0,Krauss noise seeds stop-and-go waves; sigma 0 CAVs remove them.
+Vehicle (SUMO vType),carFollowModel,3,3,1,1,0,0,3,1,3,0,"Krauss/IDM/EIDM/W99 all give realistic waves, none an artefact-free drop at merges; IDM strands ramp vehicles."
+Vehicle (SUMO vType),lane-change params,3,1,1,1,0,0,3,0,2,0,lcAssertive moves breakdown onsets to the network entry; merge behaviour decides the drop.
+Vehicle (SUMO vType),step / actionStepLength,1,1,0,0,0,0,3,2,1,0,0.5 s step gave CACC emergency-braking artefacts; smaller steps cost runtime.
+Vehicle diversity,class library (4 x 25 types),1,1,1,2,0,0,1,1,3,1,"v5's 100-type library never reached the headline runs (100 % CAV); hard-coded, no config."
+Vehicle diversity,per-vehicle sampling,1,2,1,2,0,0,1,0,3,0,Only speedFactor and CF noise vary per vehicle; lab vTypeDistribution + normc is the reusable pattern.
+Vehicle diversity,truck share,2,1,1,3,0,0,1,0,2,0,Largest measured adaptivity headroom among heterogeneity families: G = 4.0 % (LD3 Round 4).
+Vehicle diversity,compliance to posted limit,0,1,3,2,0,0,0,0,2,0,Decides VSL authority; v5 model was binary/dead code; lab compliance family G = 0.8 %.
+Vehicle diversity,reckless / aggressive share,1,2,0,1,0,0,1,0,1,0,Fixed 2 % in v5; inert at 100 % CAV; never a tested condition.
+Vehicle diversity,weather multipliers,1,1,1,2,0,0,1,0,2,1,"Trained with 30 % rain/fog, evaluated only clear: a train/eval mismatch."
+CAV,CAV / AV penetration,1,2,3,1,0,0,1,1,3,1,Authority scales with share; policies trained at one share underperform at another (Vinitsky 2020); 10/25 % AVs never beat a tuned cap.
+CAV,CAV car-following (ACC/CACC),1,2,2,0,0,0,3,0,2,0,SUMO default CACC at 25 % added 46-93 % delay on its own; v5 CAVs were Krauss sigma 0.
+CAV,CAV actuation channel,0,2,3,0,1,1,2,1,1,1,"slowDown re-issued every 5 s (v5), setMaxSpeed caps, set-point staircases: channel decides authority and artefacts."
+Network & demand,bottleneck type,3,2,3,0,1,0,2,0,1,0,"Only zipper nodes (BN4 13.8 %, ZM3 3.3 %) gave an artefact-free capacity drop; acceleration-lane merges did not."
+Network & demand,lanes / drop ratio,3,1,2,0,0,0,1,0,1,0,BN4 4->2->1 gave the only plant with large metering authority (+20 %).
+Network & demand,merge / acc-lane geometry,3,1,1,0,0,0,3,0,1,0,ramps_v1 drop -0.4 %; IDM stranded ramp vehicles; MRG3 edge lengths drifted.
+Network & demand,VSL sign stretch / placement,1,2,3,0,2,0,0,0,1,0,Posted VSL did not bind on BN4 (4 lanes of storage); bound on LD3 (stops -55 to -63 %).
+Network & demand,meter location / storage,2,0,3,1,2,1,1,0,0,0,Metering authority needs storage and a binding bottleneck; queue must enter the reward.
+Network & demand,detector layout vs ground truth,0,1,1,3,1,1,0,0,2,2,"BN4 meter and DRL read ground-truth counts (S-VIN), not loops: optimistic information."
+Network & demand,demand level / band,3,3,3,1,0,0,1,0,2,1,Control matters only in a narrow band (LD3: one of four levels); v5 never reached it.
+Network & demand,demand profile / generator,2,1,1,2,0,1,1,0,2,3,"v5 Bernoulli cap (<= 3,600 veh/h, bound 77 % of seconds), ramp burst at t = 100 s, train/eval mismatch; lab used fixed trapezoids."
+Network & demand,perturbations (block / surge),1,1,2,3,2,0,2,1,3,1,R6 headroom came from the hidden perturbation type (G 15.4 %); OOD severities broke it (+16 %); long blocks teleport.
+Network & demand,insertion & teleport settings,1,0,0,0,0,3,3,0,0,2,"v5: insertionChecks none, teleports disabled, insertion backlog outside the KPI."
+Observation,aggregated detectors (E1/E2),0,1,0,3,1,0,0,1,2,1,"Realistic, partial; the information level a fair baseline also gets."
+Observation,vehicle-level ground truth,0,0,0,2,0,0,0,1,1,3,Gives DRL more than the baseline sees unless both get it (signal-control lesson).
+Observation,memory (stack / LSTM),0,1,0,3,3,0,0,2,2,0,Only the LSTM policy passed (R6); frame-stack and plain PPO failed (1 pass in 8 looks).
+Observation,privileged context (critic/oracle),0,0,0,3,1,0,0,2,2,2,Asymmetric critic / context head: diagnoses whether history carries the hidden condition.
+Action,posted VSL (discrete levels),1,3,2,1,2,0,0,1,1,0,LD3 Discrete(11) PPO lost ~10 % to a constant 0.75 limit.
+Action,per-lane continuous CAV speeds,1,2,2,0,2,2,1,3,2,1,"v5 Box(4) TQC: slowed everyone, TTS +23 %; large continuous space, hard credit."
+Action,controller-setting menu,3,0,3,2,2,0,0,1,1,1,R6 Discrete(4) over a validated meter: the only win.
+Action,residual on tuned controller,1,1,2,1,1,0,0,2,1,2,LD3 residual degraded during training; reviewers may credit the controller.
+Action,decision interval,0,2,1,1,3,0,1,2,0,0,30-60 s steps versus 30-60 s wave delays sets the credit-assignment horizon.
+Reward / metric,door-to-door delay incl. queue,2,1,1,0,2,3,1,0,0,3,The lab's R-TTS including origin queue; screened against a constant policy.
+Reward / metric,stops weight (J = delay + 40 s/stop),0,3,1,0,1,3,0,0,0,2,"Whether harmonisation 'wins' at 3,900 veh/h depends on this weight (+2 % delay, -63 % stops)."
+Reward / metric,speed-variance proxies,0,2,0,0,0,3,0,0,0,2,4 of 5 v5 reward terms; gamed: +221 reward while TTS +23 %.
+Reward / metric,"safety proxies (TTC, hard braking)",0,2,0,0,0,2,2,0,0,1,Polled 1/30 in v5; secondary metric only.
+Reward / metric,metric sampling resolution,0,0,0,0,0,3,1,0,0,3,v5 polled arrivals and hard brakes once per 30 s (~1/30 counted).
+DRL family,PPO (memoryless),0,0,0,1,2,0,0,2,1,1,Failed screening on BN4 and LD3.
+DRL family,RecurrentPPO (LSTM),0,0,0,3,2,0,0,2,2,1,R6 win (in-distribution); no OOD transfer; LR decay flag ignored; no convergence.
+DRL family,SAC / TD3,0,0,0,1,2,0,0,2,1,1,v5 SAC proxy runs only; TD3 matched ALINEA at 40 % AVs (Vinitsky 2020).
+DRL family,TQC / QR-DQN (distributional),1,0,0,1,1,0,0,2,1,1,Chosen for assumed bimodal returns never reached; no traffic evidence; 20.6 k gradient steps per run.
+DRL family,DQN family,0,0,0,1,2,0,0,1,1,1,Reliable in RESCO signal control (vs untuned baselines); untried in the lab.
+DRL family,MaskablePPO / hybrid menu,1,0,3,1,1,0,0,1,1,2,Baseline inside the action set; masks enforce queue limits; untried.
+DRL family,MARL (IPPO / MAPPO),0,1,1,1,2,0,0,3,1,1,Only for multi-ramp corridors; unstable in RESCO.
+DRL family,model-based (Dreamer / MBPO),0,0,0,1,2,0,0,2,2,1,No clear data-efficiency gain in the one traffic paper found.
+DRL family,non-RL search (BO / CMA-ES / ARS),0,0,1,1,1,0,0,1,1,3,Tunes baselines with equal budget; ARS on the same features falsifies 'deep' learning.
+Training,"budget (updates, env steps)",0,0,0,0,2,0,0,3,1,2,"v5: 20.6 k gradient steps, flat curves; R6: 2,000 updates."
+Training,domain randomisation,0,0,0,3,0,0,0,2,3,1,Penetration DR gave one robust TD3 controller with 'small loss' (Vinitsky 2020).
+Training,learner seeds (3-5),0,0,0,0,0,0,0,2,1,3,Single-seed screening passes were false positives (lab).
+Training,validation-only checkpointing,0,0,0,0,0,0,0,1,2,3,v5 picked best_model on the training pool; R6 final policy 6.7-10.7 % worse than best checkpoint.
+Training,train / eval scenario split,1,0,0,1,0,0,0,0,3,3,"v5 trained on a 200-scenario pool, evaluated on a capped generator."
+Evaluation,"tuned baselines (const, ALINEA, MTFC, MPC-F)",1,1,3,1,0,1,0,0,0,3,A constant limit or tuned meter beat every direct DRL design.
+Evaluation,static headroom gate (G / H),2,1,2,3,0,0,0,0,1,3,"Killed LD3, CORR2, BN4-M2 and the v6 cards before DRL."
+Evaluation,within-run timing reference,1,2,1,3,3,0,0,0,0,2,Never built; the one open question on LD3.
+Evaluation,"paired seeds, CIs, pre-registration",0,0,0,0,0,1,0,0,0,3,R6's CI vs MPC-F only just excluded 0 (-0.8 s).
+Evaluation,OOD context tests,0,0,0,2,0,0,0,0,3,2,Lead 1 showed R6 does not transfer (+16 % on surges).
+Evaluation,plant realism gate,3,3,1,0,0,0,3,0,1,1,Waves pass everywhere; capacity drop only on zipper plants; BN4 never gated.

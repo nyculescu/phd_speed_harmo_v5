@@ -1,0 +1,21 @@
+aspect,v5 original,vsl_lab,restart (plan),what changes
+Diversity reaches SUMO,0,2,3,100 % CAV headline; compliance dead code -> lab vTypeDistribution + normc -> sampled populations with held-out ranges
+Diversity changes the best action,0,2,2,"untested -> compliance G 0.8 %, trucks G 4.0 % -> add driver-population class; context-prediction diagnostic"
+Driver-model realism,0,2,3,"no gate -> waves pass, drop only on zipper plants -> gate every plant incl. BN4 first"
+CAV modelling,1,1,2,"Krauss sigma 0 + slowDown -> default CACC harmful -> CAVs only after an authority check, 0.1 s step"
+Controllable bottleneck,0,3,3,no breakdown -> BN4 13.8 % drop -> zipper family (BN4 / ZM3) only
+Demand generation,0,2,3,"Bernoulli cap, ramp burst, mismatch -> Poisson trapezoids -> stochastic shapes, uncapped"
+Hidden events / perturbations,1,3,3,"ramp_spike no-op, overrides -> R6 mix -> mix + held-out severities"
+Insertion / teleport health,0,3,3,"checks off, teleports off -> health-checked runner -> keep"
+Observation realism,2,1,3,E1 30 s -> BN4 ground-truth counts -> loops + memory; privileged info only in the critic
+Action design,0,3,3,per-lane continuous CAV speeds -> menu over validated meter -> menu (+ residual variant)
+Reward = real objective,0,3,3,speed-variance proxies -> R-TTS incl. queue -> keep; screen vs constant policy
+Metric correctness,0,3,3,"1/30 sampling, backlog ignored -> fixed -> keep"
+Algorithm fit,1,2,3,TQC unjustified -> RecurrentPPO -> context-conditioned RecPPO; MaskablePPO hybrid
+Training budget & convergence,0,2,3,"20.6 k grad steps -> 2,000 updates, no convergence, LR decay ignored -> convergence rule enforced"
+Checkpoint selection,0,3,3,training pool -> validation only -> keep
+Tuned baselines incl. MPC,0,3,3,NC yardstick -> const / MTFC / evsched / MPC-F -> + BO-tuned with equal budget
+Headroom gating,0,3,3,none -> static G / H -> + within-run timing reference
+Statistics & pre-registration,0,3,3,"none -> paired CIs, ledger -> keep"
+OOD / generalisation test,0,2,3,none -> Lead 1 (exploratory) -> pre-registered held-out contexts
+Non-RL learned comparator,0,1,3,none -> MPC-F learned model -> + ARS / BO on the same features

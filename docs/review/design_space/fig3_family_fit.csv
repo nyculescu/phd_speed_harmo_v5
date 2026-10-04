@@ -1,0 +1,16 @@
+requirement,PPO,Recurrent PPO,Context- conditioned RecPPO,SAC / TD3,TQC / QR-DQN (distrib.),DQN,Maskable PPO menu,Residual PPO,RL-in- MPC,MARL,Model- based,Offline RL,BO / CMA / ARS (non-RL)
+Infers hidden context from history,-1,2,2,-1,-1,-1,0,-1,0,0,1,-1,0
+Handles 30-60 s delayed effects,0,1,1,0,0,0,1,0,2,-1,1,0,1
+Discrete menu of controller settings,1,2,2,-2,1,1,2,-1,0,0,0,0,1
+Continuous per-lane speed actions,1,1,1,2,1,-2,-2,1,1,1,1,0,1
+Sample efficiency (SUMO cost),0,-1,-1,1,1,1,1,1,1,-2,0,-1,0
+Generalises across vehicle diversity,0,0,1,0,0,0,1,1,1,0,0,-1,0
+Safety / constraint handling,-1,-1,-1,-1,0,-1,2,1,2,-1,-1,0,0
+Never worse than tuned baseline,-1,-1,-1,-1,-1,-1,1,2,2,-1,-1,0,1
+Gain attributable to DRL (thesis),2,2,1,2,2,2,0,-1,-1,1,1,1,-2
+Tooling (SB3 / contrib),2,2,0,2,1,2,2,1,-1,-2,-2,-1,2
+Evidence vs tuned baselines (traffic),0,1,0,-1,-1,0,0,-1,0,-1,-1,-1,1
+Risk-sensitive / tail objectives,0,0,0,0,2,0,0,0,1,0,0,1,1
+Multi-ramp / multi-gantry coordination,1,1,1,1,1,0,0,1,2,2,0,0,0
+SUM,4,9,6,2,6,1,8,4,10,-4,-1,-3,6
+WEIGHTED SUM (weights 3 2 2 0 1 3 1 1 2 1 2 0 0),3,17,14,-4,2,4,15,-1,9,-8,1,-8,5
