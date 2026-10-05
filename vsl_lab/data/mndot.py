@@ -77,6 +77,66 @@ def windows(span=(1.5, 8.0), down_km=2.0) -> list[dict]:
     return out
 
 
+TOP3 = {"I35W_SB": ["M35WS29", "M35WS30", "M35WS34"], "I394_WB": ["M394W17", "M394W22", "M394W24"],
+        "TH100_SB": ["M100S36", "M100S37", "M100S39"]}      # author choice 2026-10-05 (shortlist #1-#3)
+RAMP_CATS = ("Queue", "Passage", "Merge", "Bypass", "Green")
+
+
+def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0) -> dict:
+    """All detectors of the corridor containing `meters`: mainline lanes of every station from up_km upstream of the
+    first metered ramp to down_km downstream of the last; ramp detectors (RAMP_CATS) of the metered entrances; Exit
+    detectors of exits in between."""
+    root = ET.fromstring(gzip.open(CONFIG).read())
+    for c in root.iter("corridor"):
+        nodes = [n for n in c.iter("r_node") if n.get("active", "t") == "t"]
+        names = [n.find("meter").get("name") if n.find("meter") is not None else None for n in nodes]
+        if not all(m in names for m in meters):
+            continue
+        pos = [(float(n.get("lat")), float(n.get("lon"))) for n in nodes]
+        km = [0.0]
+        for i in range(1, len(pos)):
+            km.append(km[-1] + _dist(pos[i - 1], pos[i]))
+        i0, i1 = names.index(meters[0]), names.index(meters[-1])
+        out = {"route": c.get("route"), "dir": c.get("dir"), "meters": meters, "mainline": [], "ramps": [], "exits": []}
+        for i, n in enumerate(nodes):
+            if not (km[i0] - up_km <= km[i] <= km[i1] + down_km):
+                continue
+            t = n.get("n_type", "Station")
+            dets = list(n.iter("detector"))
+            rec = {"node": n.get("name"), "label": n.get("label", ""), "km": round(km[i] - km[i0], 3),
+                   "lanes": n.get("lanes"), "s_limit": n.get("s_limit", "55")}
+            if t == "Station":
+                d = [(x.get("name"), x.get("lane"), x.get("field", "22.0")) for x in dets if x.get("category", "") == ""]
+                if d:
+                    out["mainline"].append(rec | {"dets": d})
+            elif t == "Entrance" and n.find("meter") is not None and names[i] in meters:
+                d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") in RAMP_CATS]
+                out["ramps"].append(rec | {"meter": names[i], "storage": n.find("meter").get("storage"), "dets": d})
+            elif t == "Exit":
+                d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") == "Exit"]
+                if d:
+                    out["exits"].append(rec | {"dets": d})
+        return out
+    raise KeyError(meters)
+
+
+def year_dates(year=2023) -> list[str]:
+    """All days of `year`, weekdays first (weekends second: the / and \\ day shapes need them)."""
+    days = [dt.date(year, 1, 1) + dt.timedelta(k) for k in range((dt.date(year + 1, 1, 1) - dt.date(year, 1, 1)).days)]
+    return [d.strftime("%Y%m%d") for d in sorted(days, key=lambda d: (d.weekday() >= 5, d))]
+
+
+def pass1_dates(year=2023) -> list[str]:
+    """Corridor-selection pass (104 days, ~32.7k requests for the top 3; the author approved ~25k, overrun disclosed
+    2026-10-05): every Wednesday, plus alternate Saturdays and
+    alternate Sundays (weekend / and \\ shapes), of `year`."""
+    days = [dt.date(year, 1, 1) + dt.timedelta(k) for k in range((dt.date(year + 1, 1, 1) - dt.date(year, 1, 1)).days)]
+    wed = [d for d in days if d.weekday() == 2]
+    sat = [d for d in days if d.weekday() == 5][::2]
+    sun = [d for d in days if d.weekday() == 6][1::2]
+    return [d.strftime("%Y%m%d") for d in wed + sat + sun]
+
+
 def screening_dates() -> list[str]:
     """1st and 3rd Wednesday of Feb-Nov 2023 (20 dates; 2023 = screening/tuning year, 2024 kept for the gate)."""
     out = []
@@ -214,8 +274,9 @@ def score(W: list[dict]) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["windows", "screen", "probe", "score"])
+    ap.add_argument("what", choices=["windows", "screen", "probe", "score", "corridors", "pull"])
     ap.add_argument("--det", default="1664")
+    ap.add_argument("--full-year", action="store_true", help="pull: every day of 2023 (needs author approval: ~115k req)")
     a = ap.parse_args(argv)
     W = windows()
     if a.what == "windows":
@@ -228,6 +289,32 @@ def main(argv=None) -> int:
         f = Fetcher()
         o = f.get("occupancy", "20230315", a.det)
         print(json.dumps({"n": None if o is None else len(o), "max": None if o is None else max(x for x in o if x is not None)}))
+        return 0
+    if a.what == "corridors":
+        out = {k: corridor_detectors(v) for k, v in TOP3.items()}
+        (DATA_ROOT / "top3_corridors.json").write_text(json.dumps(out, indent=1))
+        n = {k: sum(len(x["dets"]) for x in v["mainline"] + v["ramps"] + v["exits"]) for k, v in out.items()}
+        print(json.dumps({"detectors": n, "requests_all_days_2023": 2 * 365 * sum(n.values()),
+                          "requests_weekdays_2023": 2 * 260 * sum(n.values())}))
+        return 0
+    if a.what == "pull":
+        cors = {k: corridor_detectors(v) for k, v in TOP3.items()}
+        dets = sorted({d[0] for v in cors.values() for x in v["mainline"] + v["ramps"] + v["exits"] for d in x["dets"]})
+        f = Fetcher()
+        t0 = time.time()
+        log = DATA_ROOT / "pull_top3_progress.log"
+        dates = pass1_dates(2023) if not a.full_year else year_dates(2023)
+        for i, date in enumerate(dates):
+            have = set(available(date))
+            for det in dets:
+                if det in have:
+                    for kind in ("counts", "occupancy"):
+                        f.get(kind, date, det)
+            if i % 10 == 9 or i == len(dates) - 1:
+                with open(log, "a") as fh:
+                    fh.write(f"{time.strftime('%H:%M:%S')} day {i + 1}/{len(dates)} {date} req={f.n_req} "
+                             f"cached={f.n_cached} 404={f.n_404} err={f.n_err} elapsed={time.time() - t0:.0f}s\n")
+        print(json.dumps({"done": True, "req": f.n_req, "cached": f.n_cached, "404": f.n_404, "err": f.n_err}))
         return 0
     if a.what == "score":
         res = score(W)
