@@ -98,8 +98,8 @@ def ramp_valid(date: str, det: str) -> bool:
     return bool(np.nansum(day) > 0)
 
 
-def analyse_corridor(name: str, meters: list, dates: list) -> dict:
-    cor = corridor_detectors(meters, down_km=DOWN_KM.get(name, 2.0))
+def analyse_corridor(name: str, meters: list, dates: list, down_km: float | None = None) -> dict:
+    cor = corridor_detectors(meters, down_km=down_km if down_km is not None else DOWN_KM.get(name, 2.0))
     sts = sorted(cor["mainline"], key=lambda s: s["km"])
     ramp_km = [r["km"] for r in cor["ramps"]]
     wed = [d for d in dates if dt.datetime.strptime(d, "%Y%m%d").weekday() == 2]
@@ -284,12 +284,23 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
     return out
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    """No argument: the TOP3 corridors (v1 output). '--from-bnscreen': the top 3 of the bottleneck-anchored screen
+    (selection protocol v1), same criteria and choice rule, written to ..._v2.json."""
+    argv = sys.argv[1:] if argv is None else argv
     dates = pass1_dates(2023)
+    if "--from-bnscreen" in argv:
+        bn = json.loads((OUT.parent / "day_pattern_bnscreen_v1.json").read_text())
+        cors = {f"{c['route']}_{c['dir']}_{c['u_label']}".replace(" ", "").replace(".", ""): (c["meters"], c["down_km"])
+                for c in bn["top3"]}
+        out_path = OUT.parent / "day_pattern_corridor_analysis_v2.json"
+    else:
+        cors = {k: (v, None) for k, v in TOP3.items()}
+        out_path = OUT
     res = {"protocol": "docs/plans/day_pattern_corridor_analysis_protocol_v0.md", "dates": f"{len(dates)} days of 2023",
            "corridors": {}}
-    for name, meters in TOP3.items():
-        res["corridors"][name] = analyse_corridor(name, meters, dates)
+    for name, (meters, dk) in cors.items():
+        res["corridors"][name] = analyse_corridor(name, meters, dates, down_km=dk)
     elig = [n for n, c in res["corridors"].items() if c.get("C1", {}).get("PASS") and c.get("C2", {}).get("PASS")
             and c.get("C4", {}).get("PASS")]
 
@@ -300,7 +311,7 @@ def main() -> int:
     res["eligible"] = elig
     res["ranking"] = sorted(elig, key=rank)
     res["proposed"] = res["ranking"][0] if res["ranking"] else None
-    OUT.write_text(json.dumps(res, indent=1, default=str))
+    out_path.write_text(json.dumps(res, indent=1, default=str))
     print(json.dumps({"eligible": elig, "proposed": res["proposed"]}))
     return 0
 

@@ -292,6 +292,7 @@ def main(argv=None) -> int:
     ap.add_argument("what", choices=["windows", "screen", "probe", "score", "corridors", "pull"])
     ap.add_argument("--det", default="1664")
     ap.add_argument("--full-year", action="store_true", help="pull: every day of 2023 (needs author approval: ~115k req)")
+    ap.add_argument("--from-bnscreen", action="store_true", help="pull: the bottleneck-anchored top 3 (protocol v1)")
     a = ap.parse_args(argv)
     W = windows()
     if a.what == "windows":
@@ -313,7 +314,12 @@ def main(argv=None) -> int:
                           "requests_weekdays_2023": 2 * 260 * sum(n.values())}))
         return 0
     if a.what == "pull":
-        cors = {k: corridor_detectors(v, down_km=DOWN_KM.get(k, 2.0)) for k, v in TOP3.items()}
+        if a.from_bnscreen:   # selection protocol v1: the bottleneck-anchored top 3 (each <= 12,000 requests)
+            bn = json.loads((Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_bnscreen_v1.json").read_text())
+            cors = {f"{c['route']}_{c['dir']}": corridor_detectors(c["meters"], down_km=c["down_km"])
+                    for c in bn["top3"] if c["within_cap_12000"]}
+        else:
+            cors = {k: corridor_detectors(v, down_km=DOWN_KM.get(k, 2.0)) for k, v in TOP3.items()}
         dets = sorted({d[0] for v in cors.values() for x in v["mainline"] + v["ramps"] + v["exits"] for d in x["dets"]})
         f = Fetcher()
         t0 = time.time()
