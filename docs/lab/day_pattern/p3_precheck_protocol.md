@@ -83,3 +83,19 @@ From the approved block 7,190,000–7,190,999, plant-check role:
 - Raw runs: `/home/catalin/work/phd/vsl_lab_runs/dp/p3_precheck_*`.
 - Summary: `docs/lab/day_pattern/p3_precheck.json` and `p3_precheck.md`.
 - One ledger row.
+
+## Addendum A (2026-10-05, after the smoke, before any check run)
+
+**Smoke result.** Throw-away seed 7,190,000, raw `/home/catalin/work/phd/vsl_lab_runs/dp/p3_precheck_smoke_1791212172`; not used for any criterion.
+- **The queue-formation assert failed for all 4 candidates.**
+- **Cause:** at 3,000 veh/h with `departSpeed="max"`, SUMO cannot insert at a safe gap. Insertions backed up: the last vehicle (v149) was inserted at about t = 280 s and was still at 27 m/s on `up` at t = 299 s.
+- **Also measured:** a stopped queue takes about 10 m per vehicle with Krauss defaults (1,517 m for 150 vehicles), more than the 7.5 m I assumed.
+- The smoke discharge values (2,315–2,483 veh/h) came from incomplete queues, so they are invalid.
+
+**Fix (setup only; criteria unchanged):**
+- insertion rate **1,200 veh/h** (one vehicle every 3.0 s, over [0, 450) s);
+- red until **t = 700 s** (the queue-formation assert is checked at t = 699 s);
+- upstream edge `up` lengthened to **3,000 m** (stop line at x = 3,000; `down` still 1,000 m with loops at 200 and 600 m);
+- simulation horizon 2,000 s.
+
+The smoke is re-run once on 7,190,000 with the fix, to confirm that the queue forms, before the check.
