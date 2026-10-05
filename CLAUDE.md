@@ -40,6 +40,9 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - `claude/vsl-hybrid-v1`: Step 1 screen;
 - `claude/vsl-lab-core`: DRL lab infrastructure and roadmap;
 - `claude/vsl-lab-t1-bottleneck`, `-t2-merge`, `-t3-ring`, `-t4-corridor`: one per track.
+- **`claude/day-pattern-core`** (created 2026-10-05 from `claude/vsl-lab-core` at `2a79e5e`): **the day-pattern project.** It covers learning daily demand patterns for coordinated ramp metering and speed harmonisation over full days, on a real MnDOT corridor.
+  - Author: "a big bump, like a new project". The repo stays v5, because v6 is assigned to traffic lights and intersections.
+  - Front page: `docs/day_pattern/README.md`. All new day-pattern work goes on this branch; `claude/vsl-lab-core` is left as it was at the branch point.
 
 **This mirror is on exFAT.** Its `.venv` has no `python` executable (symlinks are lost); use `venv314`.
 
