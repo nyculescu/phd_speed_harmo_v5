@@ -91,6 +91,39 @@ This is what makes the learning problem tractable. A full day is about 108 decis
 | Non-RL rivals on the same features | ARS (linear policy) and BO/CMA-ES-tuned schedules | if ARS matches the DRL, the claim is not about DRL (design-space R3) |
 | Environment | METANET corridor, 05:00–23:00 plus drain; controller periods as §1.4; seeds from the approved block 7,190,xxx | full days are needed for the timing problem |
 
+### 1.6 Neural-network components beyond RL (added 2026-10-05 at the author's request; this reframes the plan)
+
+**Terms first.** LSTM, GRU, TCN, CNN, graph networks (GNN) and transformers are **network architectures**. Supervised learning (classification, regression, forecasting), imitation learning and reinforcement learning are **learning paradigms**. RecurrentPPO already *uses* an LSTM inside an RL policy. The real question is therefore which **paradigm** the learned component uses, not which network.
+
+**Supervised and imitation alternatives for the DRL component:**
+
+| Component | Paradigm | What it outputs | Where it plugs in | Evidence found (all [VERIFY]) |
+|---|---|---|---|---|
+| **Demand / traffic forecaster** (LSTM, BiLSTM, TCN; physics-informed variants) | supervised regression | the expected demand or density over the next 15–60 min | an *information aggregator* for HERO/ALINEA ("predictive ALINEA"), MTFC or MPC | physics-informed LSTM with a localised and an integrated **Predictive ALINEA** ([Univ. Genova records](https://unige.iris.cineca.it/handle/11567/1301562)); BiLSTM freeway forecasting on a calibrated Melbourne freeway ([Sci. Rep. 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8668885/)) |
+| **Breakdown / day-type classifier** | supervised classification | P(breakdown within the next k min); day type or cluster | triggers HERO's anticipatory mode, or selects the plan | ANN breakdown prediction at merges using ramp and upstream data, 96–97 % accuracy ([Algorithms 2023](https://www.mdpi.com/1999-4893/16/6/298)); day-type clustering (research report §1) |
+| **Imitation of the informed reference** (behaviour cloning, then DAgger) | supervised / imitation | the mode the informed reference *I* would choose, from online-available observations only | replaces the RL scheduler of H1 | none found for freeway control; the method itself is standard (Ross, Gordon & Bagnell 2011, DAgger [VERIFY]) |
+| **Learned dynamics model** | supervised | next-state prediction | the model inside an MPC (model-based learning control) | learning-based MPC review (Hewing et al. 2020 [VERIFY]); RL + MPC ramp metering (Airaldi et al. 2023, [arXiv 2311.08820](https://arxiv.org/pdf/2311.08820)) |
+| **Demand reconstruction** (estimator) | supervised | the true demand behind clipped counts, from queues, upstream flows and travel time | input to any controller, and the source of training labels | freeway accuracy figures not found (research report §2) |
+
+**How this reframes the research:**
+1. **The supervised rivals become mandatory comparators.**
+   - Their training target (true demand, or *I*'s actions) is **available**: in simulation it is known, and in real data it can be reconstructed in hindsight from upstream detectors.
+   - Supervised training is far more stable than RL, which directly addresses the "better at 60k than at 800k steps" problem.
+   - So a DRL hybrid must beat **forecast-informed HERO** (supervised aggregator) and **imitation of *I*** on the same observations. Otherwise the result says "learning helped", not "DRL was needed". This extends the ARS check (§1.5) to neural rivals.
+2. **They can train on real days; RL cannot, easily.**
+   - A forecaster or classifier can be trained on reconstructed **real** 2023 MnDOT days and tested on 2024 days.
+   - RL trains on synthetic days fitted to real ones.
+   - The forecasting route therefore uses *real* day-to-day predictability directly. This is an advantage for the supervised variants, and a validity check for RL's synthetic training.
+3. **What RL can add that supervised learning cannot** (this is where a DRL claim must live):
+   - *I* is a heuristic reference, **not an optimum**. Imitating it can at best approach it.
+   - RL optimises the actual objective, so in principle it can **exceed** *I*: for example, trading ramp-queue storage now against breakdown risk hours later, which no forecast or label directly encodes.
+   - So the DRL claim is strongest as "DRL beats the forecast-informed and imitation hybrids", not just the tuned controller.
+4. **A stacked design:** the DRL scheduler can take the forecaster's or classifier's outputs **as observations** (forecast-augmented DRL). This shortens the memory the policy needs, which helps the timing problem (thesis path §5). The supervised parts then stay frozen and separately tested.
+5. **The predictability check** (thesis path §5.5.3) is exactly a supervised forecaster or classifier. So the same component serves as a gate diagnostic, a comparator, and possibly an input to DRL.
+6. **Architecture choice:** for a 3-ramp corridor with about 15–30 stations, LSTM, GRU or TCN on station sequences is adequate. Graph networks pay off at network scale (many interacting nodes) and are not needed first. No evidence was found that transformers help here.
+
+**The decision this raises for the thesis claim:** does a **supervised NN hybrid** (for example, LSTM-forecast-informed HERO) count as the positive "learning-based control" result? Or must the winning component be **DRL**? (The memory `thesis-claim-definition` currently reads "learning-based control, i.e. DRL".) Either way, the supervised hybrids are in the comparison.
+
 ---
 
 ## 2. H1: HERO + DRL day-pattern mode scheduler (co-controller). **Recommended first.**
@@ -121,7 +154,7 @@ The DRL layer sees the long upstream road, the day so far and the time. Every 10
 | **Action** | discrete mode (above), every 10 min |
 | **Reward** | −ΔTTS including ramp and origin queues, per 10 min |
 | **Vehicles / drivers / conditions** | **P:** MnDOT-observed mix (truck share from length data where available [VERIFY that Mayfly `length` covers these stations]); normal HDV. **H (primary):** the day's demand curve (multi-peak, level around the transition). **H (secondary, from H4):** ramp-demand spikes, lane closures. **T:** weather classes (snow / rain days from 2024), unusual days (holidays). **O:** CAVs, VSL compliance |
-| **Comparators** | NC; tuned fixed-time metering per calendar type (counts-fitted); first-hour pattern matching; tuned ALINEA; tuned HERO; **adaptive ALINEA** (online critical-occupancy estimation, AD-ALINEA-style [VERIFY]); MPC with a METANET fitted on separate days and a fitted forecast; ARS; DRL alone (reference arm) |
+| **Comparators** | NC; tuned fixed-time metering per calendar type (counts-fitted); first-hour pattern matching; tuned ALINEA; tuned HERO; **adaptive ALINEA** (online critical-occupancy estimation, AD-ALINEA-style [VERIFY]); MPC with a METANET fitted on separate days and a fitted forecast; **forecast-informed HERO** (LSTM/TCN demand forecaster as information aggregator, §1.6); **breakdown-classifier-triggered HERO** (§1.6); **imitation of *I*** (DAgger, §1.6); ARS; DRL alone (reference arm) |
 | **Informed reference (gate)** | HERO with the mode schedule computed from the **true** day demand (frozen mapping), and MPC with true demand |
 | **Kill tests** | realism (S1-style) on the calibrated METANET; the predictability check (can a forecaster time the onset from the same observations?); T2 G = informed mode table vs pooled best mode ≥ 10 %; the headroom gate on 2024 days |
 
@@ -218,3 +251,4 @@ This keeps the R6 idea alive on a realistic corridor, which is option D for R6, 
 3. **Information aggregator:** must it be RL-trained, so that it counts as DRL? Or is a supervised forecaster feeding the main controller acceptable as "learning-based"? (§1.1)
 4. Factor roles (§1.2): agree that vehicle classes, normal and heterogeneous HDVs and lane-changing are **plant realism** (fixed, calibrated)? That the **day pattern** (H1) and **effective capacity** (H2) are the hidden conditions? And that weather, reckless share, compliance outside range and CAVs are **held-out tests**?
 5. Is "multimodal demand profiles" in the brief the multi-peak demand shape? I read it that way, not as transport modes.
+6. **(§1.6)** Does a **supervised NN hybrid** (forecast- or classifier-informed HERO, or imitation of *I*) count as the positive thesis result? Or must the winning component be **DRL**, with the supervised hybrids as mandatory comparators?
