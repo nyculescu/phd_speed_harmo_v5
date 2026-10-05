@@ -1,10 +1,10 @@
-"""Thermal-aware batch scheduler (roadmap §5).
+"""CPU- and thermal-aware batch scheduler (roadmap §5; compute rule of 2026-10-05, CLAUDE.md "Limits").
 
-Each job is one fresh process (one simulation per process). Concurrency never exceeds max_workers
-(<= 100). The package temperature is polled every `poll_s`; at >= TEMP_PAUSE_C (sustained `hold_s`)
-the most recently started running job is SIGSTOPped; below TEMP_RESUME_C a paused job is resumed.
-At >= TEMP_HARD_C no new job is launched and paused jobs stay paused. Pausing does not change results
-(the simulations are not real-time). Every decision is logged in <batch_dir>/thermal.csv.
+Each job is one fresh process (one simulation per process). Concurrency never exceeds max_workers (<= 100).
+Launch / pause / resume decisions come from vsl_lab/ops/guard.py (CPU > 90 % for 2 min -> pause one job per 30 s;
+v6 thermal hysteresis 95 +/- 3 C with 150 s holds and a 99 C emergency; limits live in RUNS_ROOT/ops/thermal.json).
+Pausing (SIGSTOP) does not change results (the simulations are not real-time). Every decision is logged in
+<batch_dir>/thermal.csv.
 """
 from __future__ import annotations
 
@@ -22,7 +22,8 @@ import os
 
 from vsl_lab.config import (WORKER_CPUS, MAX_LAUNCH_PER_S, MAX_WORKERS, PYTHON_BIN, SIM_START_MAX_LOAD, TEMP_HARD_C,
                             TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S, TEMP_SMOOTH_S, TEMP_STEP_S, clean_sumo_env,
-                            TARGET_CPU_UTIL, UTIL_SMOOTH_S)
+                            UTIL_SMOOTH_S, GUARD_CFG)
+from vsl_lab.ops.guard import ComputeGuard
 from vsl_lab.ops.thermal import load_fraction, package_temp_c
 
 
@@ -105,7 +106,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
     k_factory = 0
     window = collections.deque(maxlen=max(int(TEMP_SMOOTH_S / poll_s), 1))     # fast (10 s)
     slow = collections.deque(maxlen=max(int(TEMP_SLOW_S / poll_s), 1))         # slow (10 min)
-    last_thermal_action = 0.0
+    guard = ComputeGuard(cfg_path=GUARD_CFG)
 
     def launch(job: Job) -> None:
         job.log = logs / f"{job.jid}.log"
@@ -153,33 +154,22 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
                     running.remove(job)
                     job.result = _last_json_line(job.log)
                     done.append(job)
-            n_paused = sum(j.paused for j in running)
-            # thermal control: slow loop (5-min median, 99 / 96 C, one action per TEMP_STEP_S); the fast cap
-            # (TEMP_HARD_C) is effectively off since 2026-10-02
+            # compute guard (author rule 2026-10-05, vsl_lab/ops/guard.py): CPU > 90 % for 2 min -> pause one job per
+            # 30 s; v6 thermal hysteresis (98 C for 150 s pauses launches, <= 92 C for 150 s resumes, 99 C emergency)
             active = [j for j in running if not j.paused]
             paused_jobs = [j for j in running if j.paused]
-            if temp >= TEMP_HARD_C and active:
+            dec = guard.update(now, util, raw, n_paused=len(paused_jobs))
+            if dec.pause_one and active:
                 j = max(active, key=lambda x: x.t_start)
                 j.proc.send_signal(signal.SIGSTOP)
                 j.paused = True
                 n_pauses += 1
-                event = f"cap-pause {j.jid}"
-                last_thermal_action = now
-            elif now - last_thermal_action >= TEMP_STEP_S:
-                if temp_slow >= TEMP_PAUSE_C and active:
-                    j = max(active, key=lambda x: x.t_start)
-                    j.proc.send_signal(signal.SIGSTOP)
-                    j.paused = True
-                    n_pauses += 1
-                    event = f"pause {j.jid}"
-                    last_thermal_action = now
-                elif temp_slow < TEMP_RESUME_C and temp < TEMP_HARD_C - 1.0 and paused_jobs:
-                    j = min(paused_jobs, key=lambda x: x.t_start)
-                    j.proc.send_signal(signal.SIGCONT)
-                    j.paused = False
-                    event = f"resume {j.jid}"
-                    last_thermal_action = now
-            # launches (only when cool enough and nothing is paused)
+                event = f"pause {j.jid} ({dec.reason})"
+            elif dec.resume_one and paused_jobs:
+                j = min(paused_jobs, key=lambda x: x.t_start)
+                j.proc.send_signal(signal.SIGCONT)
+                j.paused = False
+                event = f"resume {j.jid}"
             n_paused = sum(j.paused for j in running)
             stop_launch = time_budget_s is not None and now - t0 >= time_budget_s
             tokens = min(MAX_LAUNCH_PER_S, tokens + (now - last_launch) * MAX_LAUNCH_PER_S)
@@ -187,9 +177,9 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
             # launch while the CPU has spare capacity: estimated util = measured util + pending launches (last 1 s)
             while recent_launches and recent_launches[0] < now - 1.0:
                 recent_launches.popleft()
-            while queue and len(running) < max_workers and temp_slow < TEMP_PAUSE_C and temp < TEMP_HARD_C \
-                    and n_paused == 0 and not stop_launch and tokens >= 1.0 \
-                    and (len(running) < 2 or util + len(recent_launches) / n_cpu < TARGET_CPU_UTIL):
+            lim = guard.cfg["cpu_limit"]
+            while queue and len(running) < max_workers and dec.allow_launch and n_paused == 0 and not stop_launch \
+                    and tokens >= 1.0 and util + len(recent_launches) / n_cpu < lim:
                 launch(queue.pop(0))
                 recent_launches.append(now)
                 tokens -= 1.0

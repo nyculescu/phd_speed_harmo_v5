@@ -1,8 +1,8 @@
 """SB3 / sb3-contrib training driver for the lab envs (roadmap §5, §9).
 
 - learner and every env worker pinned to E-cores; torch.set_num_threads(1)
-- thermal watchdog: if the 10 s smoothed package temperature >= TEMP_PAUSE_C, SIGSTOP all env workers
-  (the learner blocks on the pipes); resume below TEMP_RESUME_C. Pauses do not change results.
+- compute watchdog (author rule 2026-10-05, vsl_lab/ops/guard.py): CPU > 90 % for 2 min or the v6 thermal hysteresis
+  SIGSTOPs all env workers (the learner blocks on the pipes) until clear. Pauses do not change results.
 - validation on fixed validation seeds every `val_every` updates (deterministic policy); checkpoint
   selection on validation seeds only; the final policy is always saved and evaluated too
 - health: every finished training episode reports PASS/WARN/FAIL; FAIL share > 1 % (after 50 episodes) stops
@@ -26,8 +26,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from vsl_lab.config import (WORKER_CPUS, RUNS_ROOT, TEMP_HARD_C, TEMP_PAUSE_C, TEMP_RESUME_C, TEMP_SLOW_S,
-                            TEMP_SMOOTH_S)
+from vsl_lab.config import WORKER_CPUS, RUNS_ROOT, TEMP_SMOOTH_S
 from vsl_lab.ops import ledger
 from vsl_lab.ops.thermal import package_temp_c
 
@@ -52,19 +51,21 @@ def make_env_fn(env_name: str, env_kwargs: dict, rank: int):
 
 
 class Watchdog(threading.Thread):
-    """Thermal guard for training: the slow 5-min median >= TEMP_PAUSE_C pauses all env workers, < TEMP_RESUME_C
-    resumes them; the fast 10 s mean >= TEMP_HARD_C (effectively off since 2026-10-02) pauses them immediately."""
+    """Compute guard for training (author rule 2026-10-05, vsl_lab/ops/guard.py). A learner cannot run on a subset of
+    its env workers, so all of them are paused together: when the CPU has been > 90 % for 2 min, or the v6 thermal
+    hysteresis is in its paused state (>= 98 C for 150 s, or >= 99 C at once); resumed when neither holds."""
 
     def __init__(self, pids_fn, poll_s=0.5):
         super().__init__(daemon=True)
+        from vsl_lab.config import GUARD_CFG
+        from vsl_lab.ops.guard import ComputeGuard
         self.pids_fn = pids_fn
         self.poll_s = poll_s
+        self.guard = ComputeGuard(cfg_path=GUARD_CFG)
         self.win = collections.deque(maxlen=int(TEMP_SMOOTH_S / poll_s))
-        self.slow = collections.deque(maxlen=int(TEMP_SLOW_S / poll_s))
         self.paused = False
         self.n_pauses = 0
         self.max_smoothed = 0.0
-        self.max_slow = 0.0
         self.paused_s = 0.0
         self.stop_flag = False
 
@@ -75,21 +76,36 @@ class Watchdog(threading.Thread):
             except OSError:
                 pass
 
+    @staticmethod
+    def _cpu():
+        with open("/proc/stat") as fh:
+            v = [int(x) for x in fh.readline().split()[1:]]
+        return sum(v), v[3] + (v[4] if len(v) > 4 else 0)
+
     def run(self):
+        prev = self._cpu()
+        util_win = collections.deque(maxlen=8)
         while not self.stop_flag:
             t = package_temp_c()
             if t == t:
                 self.win.append(t)
-                self.slow.append(t)
-            fast = sum(self.win) / len(self.win) if self.win else 0.0
-            slow = statistics.median(self.slow) if self.slow else 0.0   # 5-min median (author, 2026-10-02)
-            self.max_smoothed = max(self.max_smoothed, fast)
-            self.max_slow = max(self.max_slow, slow)
-            if not self.paused and (slow >= TEMP_PAUSE_C or fast >= TEMP_HARD_C):
+            self.max_smoothed = max(self.max_smoothed, sum(self.win) / len(self.win) if self.win else 0.0)
+            cur = self._cpu()
+            if cur[0] > prev[0]:
+                util_win.append(1.0 - (cur[1] - prev[1]) / (cur[0] - prev[0]))
+            prev = cur
+            util = sum(util_win) / len(util_win) if util_win else 0.0
+            now = time.time()
+            self.guard.update(now, util, t, n_paused=0)
+            g = self.guard
+            cpu_hold = g.cpu_hot_since is not None and now - g.cpu_hot_since >= g.cfg["cpu_hold_s"]
+            want = g.thermal_paused or cpu_hold
+            if want and not self.paused:
                 self._signal(signal.SIGSTOP)
                 self.paused = True
                 self.n_pauses += 1
-            elif self.paused and slow < TEMP_RESUME_C and fast < TEMP_HARD_C - 1.0:
+            elif not want and self.paused and (g.cpu_cool_since is not None
+                                               and now - g.cpu_cool_since >= g.cfg["step_s"]):
                 self._signal(signal.SIGCONT)
                 self.paused = False
             if self.paused:

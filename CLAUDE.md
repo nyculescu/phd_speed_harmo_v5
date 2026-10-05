@@ -75,16 +75,20 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Limits (author, 2026-10-05; replace the 2026-10-02/03 thermal guard and the 92 % concurrency rule):**
   - **≤ 100 worker processes.** Plain runs use **32 workers on all hardware threads** (the v6 sweet spot); E-core pinning is no longer used.
   - **Check machine resources before every simulation batch.**
-  - **CPU rule:** if system CPU utilisation (`/proc/stat`) is **> 90 % for 2 consecutive minutes**, pause: no new launches, and running jobs are paused, until utilisation is back at or below 90 %.
+  - **CPU rule:** if system CPU utilisation (`/proc/stat`) is **> 90 % for 2 consecutive minutes**, pause until it is back at or below 90 %:
+    - new jobs launch only while utilisation is < 90 %;
+    - after 2 minutes above 90 %, the newest running job is paused (SIGSTOP), and one more every 30 s while the condition holds;
+    - after 30 s at ≤ 87 %, paused jobs are resumed one per 30 s. One at a time, because our own 32 workers are the load and pausing everything would thrash;
+    - training pauses all of its env workers together.
   - **Thermal rule (the v6 `feasibility/cvsig/step2.py` design, re-implemented in v5; never imported across repos):**
     - sensor: the CPU package temperature (coretemp "Package id 0"; TjMax 100 °C);
     - band: centre **95 °C ± 3 °C**;
-    - pause when the temperature stays **≥ 98 °C for 150 s**;
-    - resume when it stays **≤ 92 °C for 150 s**;
-    - pause at once at **≥ 99 °C** (emergency);
-    - the limits live in a `thermal.json` that the runner re-reads every loop, so they can change while a job runs;
-    - a pause or resume line is logged every minute (CPU %, temperature, in flight, paused).
-  - **Code status:** `vsl_lab/config.py`, `vsl_lab/ops/scheduler.py` and the `train_sb3.py` watchdog still implement the 2026-10-02/03 rules (92 % launch threshold, 99 °C 5-min median). Bring them in line before the next batch.
+    - stop launching when the temperature stays **≥ 98 °C for 150 s**;
+    - launch again when it stays **≤ 92 °C for 150 s**;
+    - at **≥ 99 °C** (emergency), stop launching at once and also pause one running job per 30 s;
+    - the limits live in `/home/catalin/work/phd/vsl_lab_runs/ops/thermal.json` (optional; keys `cpu_limit`, `cpu_hold_s`, `center`, `band`, `hold_s`, `emergency`, `step_s`). The runner re-reads it every poll, so limits can change while a job runs;
+    - every decision is logged in the batch's `thermal.csv` (CPU %, temperature, running, paused).
+  - **Code:** `vsl_lab/ops/guard.py` (unit-tested in `tests/test_guard.py`), used by `vsl_lab/ops/scheduler.py` and the `train_sb3.py` watchdog since 2026-10-05.
   - Temperature is controlled **by worker throttling only.** No power-profile, fan or other system changes.
 - **DRL training:** L learners × E SubprocVecEnv envs ≤ N_max, with `torch.set_num_threads(1)`. Torch's default threads made training 7–50× slower.
 - **CUDA** (`venv314cu`) only for large GNN/LSTM policies.
