@@ -64,3 +64,26 @@ It is **active on a day** if this holds in ≥ 5 of 7 consecutive bins, i.e. 35 
 - `docs/plans/day_pattern_corridor_analysis_v0.json` (summary numbers only) and `day_pattern_corridor_analysis_v0.md`.
 - A ledger row.
 - Code: `vsl_lab/data/corridor_analysis.py`.
+
+## Addendum A (2026-10-05, after the v0 run, before the re-run)
+
+**v0 outcome, as run** (`day_pattern_corridor_analysis_v0_asrun.json`, commit `df742f9`, ledger row): no corridor eligible.
+
+**A.1 Data-extent defect (mine).** The pull stopped 2 km past the last metered ramp. A bottleneck pair needs the station *downstream* of the queue head, and for some corridors that station lies beyond the pulled range.
+- **I-35W SB:** the queue head is Johnson St (6.33 km), the last pulled station, so its bottleneck could not be detected.
+- **I-394 WB:** the same applies to its last pair (W of I-494 → Carlson Pkwy).
+- **Fix:** pull the next 3 downstream stations that have data, for both corridors:
+  - I-35W SB: Broadway St, Hennepin Ave, University Ave;
+  - I-394 WB: Carlson Pkwy, Co Rd 15, Central Ave;
+  - 19 detectors, counts and occupancy, 104 days = **3,952 requests**.
+- **T.H.100 SB is not fixable:** the MnDOT configuration has no station downstream of it (the corridor ends at the I-494 interchange), and "N of I-494" has no 2023 data. Its C1 FAIL is genuine and stands.
+
+**Re-run v1.** The same code, criteria and choice rule. Only the station list is extended:
+- the B window is still [first ramp − 0.5 km, last ramp + 2 km] for the upstream station u;
+- d may now be any following valid station within 3 km, as written.
+
+**A.2 Reported only (no criterion change):**
+- **Ramp placement:** the metered ramps of the window that lie upstream of B (within 6 km). H1 needs ramps that feed the bottleneck. I-394 WB's B lies upstream of two of its three ramps.
+- **Speed plausibility:** stations whose median 05:00–06:00 Wednesday speed is outside [50, 80] mph. Field-length errors are suspected (e.g. Winnetka Ave, 157 mph; I-35W SB upstream stations, 82–88 mph). These are listed with the results; no recalibration in this analysis.
+
+Both outcomes (v0 as run, v1) are logged.
