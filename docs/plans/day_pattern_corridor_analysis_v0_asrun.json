@@ -1,0 +1,349 @@
+{
+ "protocol": "docs/plans/day_pattern_corridor_analysis_protocol_v0.md",
+ "dates": "104 days of 2023",
+ "corridors": {
+  "I35W_SB": {
+   "corridor": "I35W_SB",
+   "route": "I-35W",
+   "dir": "SB",
+   "meters": [
+    "M35WS29",
+    "M35WS30",
+    "M35WS34"
+   ],
+   "ramps": [
+    {
+     "label": "Co Rd D",
+     "km": 0.0,
+     "storage": "425"
+    },
+    {
+     "label": "Co Rd C",
+     "km": 1.214,
+     "storage": "410"
+    },
+    {
+     "label": "Industrial Blvd",
+     "km": 4.905,
+     "storage": "500"
+    }
+   ],
+   "n_days": 104,
+   "n_wednesdays": 52,
+   "bottleneck_pair_counts_wed": {
+    "rnd_87877->rnd_87881": 2,
+    "rnd_87881->rnd_87887": 1,
+    "rnd_87865->rnd_87871": 1,
+    "rnd_87857->rnd_87861": 1
+   },
+   "B": {
+    "u": "T.H.280",
+    "d": "Industrial Blvd",
+    "u_km": 3.396,
+    "d_km": 4.79
+   },
+   "C1": {
+    "valid_wed": 52,
+    "active_wed": 2,
+    "share": 0.038461538461538464,
+    "PASS": false
+   },
+   "weekend_active_share": 0.0,
+   "C2": {
+    "ramps": [
+     {
+      "ramp": "Co Rd D",
+      "queue_valid_share": 1.0,
+      "passage_valid_share": 1.0,
+      "PASS": true
+     },
+     {
+      "ramp": "Co Rd C",
+      "queue_valid_share": 1.0,
+      "passage_valid_share": 1.0,
+      "PASS": true
+     },
+     {
+      "ramp": "Industrial Blvd",
+      "queue_valid_share": 1.0,
+      "passage_valid_share": 1.0,
+      "PASS": true
+     }
+    ],
+    "PASS": true
+   },
+   "C3": {
+    "share_uncongested_wed": 0.8846153846153846,
+    "PASS": false,
+    "extension_stations_km_le_-4": 12,
+    "extension_min_km": -10.995,
+    "extension_detectors": 33
+   },
+   "C4": {
+    "n_episode_days": 2,
+    "median_r": 0.8117842384887839,
+    "r_iqr": [
+     0.746491292798111,
+     0.8770771841794569
+    ],
+    "PASS": false
+   },
+   "reported": {
+    "Q_dis_vphpl_median": 1130.0,
+    "capacity_15min_vphpl_median": 1511.3333333333335,
+    "onset_median": "15:25",
+    "episode_min_median": 45.0,
+    "wed_with_AM_episode": 1,
+    "wed_with_PM_episode": 1,
+    "wed_with_both": 0,
+    "share_wed_both": 0.0
+   },
+   "boundary_station": [
+    "I-694",
+    -3.764
+   ],
+   "day_shapes": {
+    "wed": {
+     "M": 49,
+     "^": 3
+    },
+    "sat": {
+     "flat": 21,
+     "^": 4,
+     "M": 1
+    },
+    "sun": {
+     "^": 8,
+     "M": 4,
+     "other": 1,
+     "flat": 13
+    }
+   },
+   "m_to_trapezoid": {
+    "n": 52,
+    "spearman_total_vs_duration": -0.22662540192606498,
+    "spearman_peakhour_vs_duration": -0.18486570665005256,
+    "by_total_quartile": [
+     {
+      "quartile": 1,
+      "n": 13,
+      "total_veh_median": 37559.555555555555,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.15384615384615385
+     },
+     {
+      "quartile": 2,
+      "n": 13,
+      "total_veh_median": 40471.777777777774,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.0
+     },
+     {
+      "quartile": 3,
+      "n": 13,
+      "total_veh_median": 42566.0,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.0
+     },
+     {
+      "quartile": 4,
+      "n": 13,
+      "total_veh_median": 43877.666666666664,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.0
+     }
+    ]
+   }
+  },
+  "I394_WB": {
+   "corridor": "I394_WB",
+   "route": "I-394",
+   "dir": "WB",
+   "meters": [
+    "M394W17",
+    "M394W22",
+    "M394W24"
+   ],
+   "ramps": [
+    {
+     "label": "Louisiana Ave",
+     "km": 0.0,
+     "storage": "330"
+    },
+    {
+     "label": "Co Rd 73",
+     "km": 3.714,
+     "storage": "435"
+    },
+    {
+     "label": "Plymouth Rd",
+     "km": 5.775,
+     "storage": "560"
+    }
+   ],
+   "n_days": 104,
+   "n_wednesdays": 52,
+   "bottleneck_pair_counts_wed": {
+    "rnd_88433->rnd_88437": 19,
+    "rnd_88433->rnd_88443": 2,
+    "rnd_88403->rnd_88409": 1,
+    "rnd_88419->rnd_88433": 1
+   },
+   "B": {
+    "u": "Shelard Pkwy",
+    "d": "Co Rd 73",
+    "u_km": 2.824,
+    "d_km": 3.616
+   },
+   "C1": {
+    "valid_wed": 50,
+    "active_wed": 19,
+    "share": 0.38,
+    "PASS": true
+   },
+   "weekend_active_share": 0.019230769230769232,
+   "C2": {
+    "ramps": [
+     {
+      "ramp": "Louisiana Ave",
+      "queue_valid_share": 0.0,
+      "passage_valid_share": 0.9903846153846154,
+      "PASS": false
+     },
+     {
+      "ramp": "Co Rd 73",
+      "queue_valid_share": 0.9807692307692307,
+      "passage_valid_share": 0.9807692307692307,
+      "PASS": true
+     },
+     {
+      "ramp": "Plymouth Rd",
+      "queue_valid_share": 1.0,
+      "passage_valid_share": 1.0,
+      "PASS": true
+     }
+    ],
+    "PASS": false
+   },
+   "C3": {
+    "share_uncongested_wed": 0.9615384615384616,
+    "PASS": true,
+    "extension_stations_km_le_-4": 6,
+    "extension_min_km": -7.355,
+    "extension_detectors": 21
+   },
+   "C4": {
+    "n_episode_days": 19,
+    "median_r": 0.9680851063829787,
+    "r_iqr": [
+     0.9501341955535503,
+     0.998525864379523
+    ],
+    "PASS": "True"
+   },
+   "reported": {
+    "Q_dis_vphpl_median": 1886.25,
+    "capacity_15min_vphpl_median": 1988.0,
+    "onset_median": "16:00",
+    "episode_min_median": 65.0,
+    "wed_with_AM_episode": 0,
+    "wed_with_PM_episode": 19,
+    "wed_with_both": 0,
+    "share_wed_both": 0.0
+   },
+   "boundary_station": [
+    "E of T.H.100",
+    -3.012
+   ],
+   "day_shapes": {
+    "wed": {
+     "M": 52
+    },
+    "sat": {
+     "^": 7,
+     "other": 9,
+     "flat": 6,
+     "M": 4
+    },
+    "sun": {
+     "other": 13,
+     "^": 9,
+     "flat": 2,
+     "M": 2
+    }
+   },
+   "m_to_trapezoid": {
+    "n": 50,
+    "spearman_total_vs_duration": 0.41124976107633754,
+    "spearman_peakhour_vs_duration": 0.2769588934859277,
+    "by_total_quartile": [
+     {
+      "quartile": 1,
+      "n": 13,
+      "total_veh_median": 33578.0,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.07692307692307693
+     },
+     {
+      "quartile": 2,
+      "n": 12,
+      "total_veh_median": 37369.0,
+      "duration_min_median": 0.0,
+      "share_any_episode": 0.3333333333333333
+     },
+     {
+      "quartile": 3,
+      "n": 12,
+      "total_veh_median": 38918.83333333333,
+      "duration_min_median": 40.0,
+      "share_any_episode": 0.5833333333333334
+     },
+     {
+      "quartile": 4,
+      "n": 13,
+      "total_veh_median": 40110.0,
+      "duration_min_median": 45.0,
+      "share_any_episode": 0.5384615384615384
+     }
+    ]
+   }
+  },
+  "TH100_SB": {
+   "corridor": "TH100_SB",
+   "route": "T.H.100",
+   "dir": "SB",
+   "meters": [
+    "M100S36",
+    "M100S37",
+    "M100S39"
+   ],
+   "ramps": [
+    {
+     "label": "T.H.62 WB",
+     "km": 0.0,
+     "storage": "400"
+    },
+    {
+     "label": "T.H.62 EB",
+     "km": 0.394,
+     "storage": "760"
+    },
+    {
+     "label": "70th St",
+     "km": 1.87,
+     "storage": "540"
+    }
+   ],
+   "n_days": 104,
+   "n_wednesdays": 52,
+   "bottleneck_pair_counts_wed": {},
+   "C1": {
+    "PASS": false,
+    "note": "no active bottleneck in the window"
+   }
+  }
+ },
+ "eligible": [],
+ "ranking": [],
+ "proposed": null
+}
