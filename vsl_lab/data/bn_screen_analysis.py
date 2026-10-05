@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import gzip
+from fractions import Fraction
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -121,17 +122,21 @@ def screen() -> dict:
         rec = p | {"feeding": [(e["label"], e["meter"], round(e["km"], 2)) for e in sel],
                    "n_feeding": min(len(good), 3)}
         (rejected if why else feas).append(rec | ({"why": why} if why else {}))
-    feas.sort(key=lambda p: (abs(p["share"] - 0.5), -p["n_feeding"], -(p["median_dv_mph"] or 0.0)))
+    # exact distance from 0.5 (bn-screen review: float error split exact ties, so key 2 was never consulted)
+    feas.sort(key=lambda p: (Fraction(abs(2 * p["active"] - p["valid"]), 2 * p["valid"]), -p["n_feeding"],
+                             -(p["median_dv_mph"] or 0.0)))
+    av104 = {d: set(available_cached(d)) for d in pass1_dates(2023)}
     top = []
     for p in feas[:3]:
         meters = [m for _, m, _ in p["feeding"]]
         c = cmap[(p["route"], p["dir"])]
         down = sorted([s for s in c["stations"] if s["km"] > p["km_d"]], key=lambda s: s["km"])[:2]
         down_km = (down[-1]["km"] if down else p["km_d"]) - max(km for _, _, km in p["feeding"]) + 0.01
-        cd = corridor_detectors(meters, up_km=4.0, down_km=max(down_km, 0.5))
+        cd = corridor_detectors(meters, up_km=4.0, down_km=max(down_km, 0.5), exit_down_km=max(down_km, 0.5))
         dets = sorted({x[0] for g in cd["mainline"] + cd["ramps"] + cd["exits"] for x in g["dets"]})
+        # exactly what the pull fetches: detectors in that day's archive list, not yet cached (bn-screen review)
         new = sum(not (DATA_ROOT / "mayfly" / d[:4] / d / f"{det}.{k}.json").exists()
-                  for d in pass1_dates(2023) for det in dets for k in ("counts", "occupancy"))
+                  for d in pass1_dates(2023) for det in dets if det in av104[d] for k in ("counts", "occupancy"))
         top.append(p | {"meters": meters, "down_km": round(max(down_km, 0.5), 3), "n_detectors": len(dets),
                         "requests_104d": new, "within_cap_12000": new <= 12000})
     return {"protocol": "docs/plans/day_pattern_corridor_selection_protocol_v1.md", "dates": dates,

@@ -56,3 +56,14 @@ A candidate is **feasible** if all three hold:
 - `docs/plans/day_pattern_bnscreen_v1.json`: summary; the candidate and feasibility tables; the top 3 with exact request counts.
 - A ledger row for the pull and one for the screen.
 - Code: `vsl_lab/data/bn_screen.py`.
+
+## Addendum A (2026-10-05, code review before the screen ran; no result existed)
+
+An adversarial review (workflow `wf_f8bed967-0ce`) confirmed 7 findings, 5 of them distinct. All were fixed **before the screen ran**, so no result is affected:
+1. **Request count.** It now counts only detectors in that day's MnDOT archive list, exactly what the pull fetches. The old count was 0–37 % too high and could wrongly mark a corridor as over the 12,000 cap.
+2. **Ranking.** Key 1 now uses the exact distance |active/valid − 0.5| (a fraction), so exact ties reach key 2. The same fix is in the corridor-analysis choice rule.
+3. **Exits.** The top-3 corridors include exits over the whole mainline range (§4.3), not only to last ramp + 2 km (`corridor_detectors(..., exit_down_km)`).
+4. **Pull keys.** The `pull --from-bnscreen` keys are unique per corridor (route, direction, u label). Two top-3 corridors on one route no longer overwrite each other.
+5. **Over-cap corridors.** Over-cap corridors are not analysed; they are listed as "author decision pending".
+
+The protocol text is unchanged; these fixes make the code follow it.

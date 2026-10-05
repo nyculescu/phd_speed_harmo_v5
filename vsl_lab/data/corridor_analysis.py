@@ -7,6 +7,7 @@ python -m vsl_lab.data.corridor_analysis
 from __future__ import annotations
 
 import datetime as dt
+from fractions import Fraction
 import json
 import sys
 from pathlib import Path
@@ -292,10 +293,13 @@ def main(argv=None) -> int:
     if "--from-bnscreen" in argv:
         bn = json.loads((OUT.parent / "day_pattern_bnscreen_v1.json").read_text())
         cors = {f"{c['route']}_{c['dir']}_{c['u_label']}".replace(" ", "").replace(".", ""): (c["meters"], c["down_km"])
-                for c in bn["top3"]}
+                for c in bn["top3"] if c["within_cap_12000"]}       # over-cap corridors were not pulled
+        over_cap = [f"{c['route']} {c['dir']} {c['u_label']} ({c['requests_104d']} requests)" for c in bn["top3"]
+                    if not c["within_cap_12000"]]
         out_path = OUT.parent / "day_pattern_corridor_analysis_v2.json"
     else:
         cors = {k: (v, None) for k, v in TOP3.items()}
+        over_cap = []
         out_path = OUT
     res = {"protocol": "docs/plans/day_pattern_corridor_analysis_protocol_v0.md", "dates": f"{len(dates)} days of 2023",
            "corridors": {}}
@@ -307,10 +311,14 @@ def main(argv=None) -> int:
     def rank(n):
         c = res["corridors"][n]
         ext_ok = c["C3"]["PASS"] or (c["C3"]["extension_min_km"] is not None and c["C3"]["extension_min_km"] <= -10.0)
-        return (not ext_ok, abs(c["C1"]["share"] - 0.5), -(c["reported"]["share_wed_both"] or 0.0))
+        c1 = c["C1"]                                   # exact distance from 0.5 (bn-screen review)
+        return (not ext_ok, Fraction(abs(2 * c1["active_wed"] - c1["valid_wed"]), 2 * c1["valid_wed"]),
+                -(c["reported"]["share_wed_both"] or 0.0))
     res["eligible"] = elig
     res["ranking"] = sorted(elig, key=rank)
     res["proposed"] = res["ranking"][0] if res["ranking"] else None
+    if over_cap:
+        res["not_analysed_over_cap_author_decision_pending"] = over_cap
     out_path.write_text(json.dumps(res, indent=1, default=str))
     print(json.dumps({"eligible": elig, "proposed": res["proposed"]}))
     return 0

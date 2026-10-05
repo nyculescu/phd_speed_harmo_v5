@@ -85,7 +85,7 @@ RAMP_CATS = ("Queue", "Passage", "Merge", "Bypass", "Green")
 DOWN_KM = {"I35W_SB": 4.2, "I394_WB": 4.6, "TH100_SB": 2.0}
 
 
-def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0) -> dict:
+def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0, exit_down_km: float | None = None) -> dict:
     """All detectors of the corridor containing `meters`: mainline lanes of every station from up_km upstream of the
     first metered ramp to down_km downstream of the last; ramp detectors (RAMP_CATS) of the metered entrances; Exit
     detectors of exits in between."""
@@ -115,7 +115,7 @@ def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0) -> dict:
             elif t == "Entrance" and n.find("meter") is not None and names[i] in meters:
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") in RAMP_CATS]
                 out["ramps"].append(rec | {"meter": names[i], "storage": n.find("meter").get("storage"), "dets": d})
-            elif t == "Exit" and km[i] <= km[i1] + min(down_km, 2.0):
+            elif t == "Exit" and km[i] <= km[i1] + (min(down_km, 2.0) if exit_down_km is None else exit_down_km):
                 # review fix #5: exits only inside the original range (the Addendum A extension is mainline only)
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") == "Exit"]
                 if d:
@@ -316,7 +316,9 @@ def main(argv=None) -> int:
     if a.what == "pull":
         if a.from_bnscreen:   # selection protocol v1: the bottleneck-anchored top 3 (each <= 12,000 requests)
             bn = json.loads((Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_bnscreen_v1.json").read_text())
-            cors = {f"{c['route']}_{c['dir']}": corridor_detectors(c["meters"], down_km=c["down_km"])
+            # unique key per corridor (bn-screen review: route_dir alone could collide); exits over the full range
+            cors = {f"{c['route']}_{c['dir']}_{c['u_label']}": corridor_detectors(c["meters"], down_km=c["down_km"],
+                                                                                  exit_down_km=c["down_km"])
                     for c in bn["top3"] if c["within_cap_12000"]}
         else:
             cors = {k: corridor_detectors(v, down_km=DOWN_KM.get(k, 2.0)) for k, v in TOP3.items()}
