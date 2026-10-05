@@ -397,8 +397,7 @@ These responses are proposals for discussion, not decisions.
 **Still open:**
 1. **Does R6 count** towards the thesis, with its caveats (unrealistic road, unconverged training)?
 2. **Corridor extension** (§4.4): extending the chosen corridor far upstream means more data requests. The size will be stated before asking.
-3. **"Resources"** for running alongside v6: what is the limit? Computer time, or the author's own time?
-4. **The learnability ladder** (§5.5.4): run it as soon as the corridor is chosen, in parallel with the gate? Or only after the gate?
+3. **The learnability ladder** (§5.5.4): run it as soon as the corridor is chosen, in parallel with the gate? Or only after the gate?
 
 ---
 
