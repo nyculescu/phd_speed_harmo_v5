@@ -80,7 +80,7 @@ def run_one(cand: str, step: float, seed: int, out_root: Path) -> dict:
     rou.write_text("<routes>\n" + vtypes(cand, seed) + '\n  <route id="r" edges="up down"/>\n' + "\n".join(veh)
                    + "\n</routes>\n")
     ls.start([SUMO_BIN, "-n", str(d / "lane.net.xml"), "-r", str(rou), "-a", str(d / "lane.det.add.xml"),
-              "--step-length", str(step), "--seed", str(seed), "--time-to-teleport", "300",
+              "--step-length", str(step), "--seed", str(seed), "--time-to-teleport", "1000",   # Addendum B
               "--collision.action", "warn", "--no-step-log", "true", "--log", str(run_dir / "sumo.log")])
     ls.trafficlight.setRedYellowGreenState("stop", "r")
     seen = {k: {} for k in LOOPS}

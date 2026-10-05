@@ -99,3 +99,17 @@ From the approved block 7,190,000–7,190,999, plant-check role:
 - simulation horizon 2,000 s.
 
 The smoke is re-run once on 7,190,000 with the fix, to confirm that the queue forms, before the check.
+
+## Addendum B (2026-10-05, after the second smoke, before any check run)
+
+**Second smoke** (seed 7,190,000, throw-away):
+- **The head vehicle teleported in every candidate** (1 teleport each; first loop passage about 295 s *before* green).
+- **Cause:** the head vehicle waits at the deliberate red from about t = 103 s to 700 s. That is about 600 s, longer than `--time-to-teleport 300`.
+- The queue-formation assert therefore failed again, so the smoke values are invalid.
+
+**Fix (setup only; criteria unchanged):**
+- `--time-to-teleport 1000` for this test only. That is longer than the designed red wait (≤ 600 s) and shorter than the 2,000 s horizon, so a genuinely stuck vehicle still teleports and is counted.
+- The criterion "0 teleports" is unchanged.
+- This does **not** relax teleports in any plant or gate. It removes an artefact of holding a queue at a red light for longer than the threshold.
+
+The smoke is re-run once more on 7,190,000 before the check.
