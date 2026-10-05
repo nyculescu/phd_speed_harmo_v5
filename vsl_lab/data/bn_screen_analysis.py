@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from vsl_lab.data.corridor_analysis import NB, episodes, lane_bins
+from vsl_lab.data.corridor_analysis import DEAD_SLICE, NB, episodes, lane_bins
 from vsl_lab.data.mndot import (CONFIG, DATA_ROOT, _dist, available_cached, corridor_detectors, pass1_dates,
                                 screening_dates, windows)
 from vsl_lab.data.bn_screen import screen_lane
@@ -51,6 +51,8 @@ def station_speed(date: str, st: dict):
     field = dict(st["dets"])[det]
     q, occ = lane_bins(date, det)
     if np.mean(~np.isnan(q)) < 0.9:
+        return None
+    if not np.nansum(q[DEAD_SLICE]) > 0:   # Addendum B: a dead detector (zero counts 06-20 h) is invalid
         return None
     k = occ / 100.0 * 5280.0 / field
     with np.errstate(divide="ignore", invalid="ignore"):

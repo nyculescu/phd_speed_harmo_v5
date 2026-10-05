@@ -20,6 +20,7 @@ from vsl_lab.data.mndot import DATA_ROOT, DOWN_KM, TOP3, corridor_detectors, pas
 
 B0, B1 = 60, 276                 # 5-min bins 05:00-23:00 (216 bins)
 NB = B1 - B0
+DEAD_SLICE = slice(6 * 12 - B0, 20 * 12 - B0)   # 06:00-20:00: zero counts all through -> dead lane-day
 V_CONG, DV, BN_MIN, BN_WIN = 40.0, 20.0, 5, 7
 MAX_GAP_KM, MERGE_GAP = 3.0, 6   # pair spacing; episodes merged if separated by < 30 min
 OUT = Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_corridor_analysis_v1.json"   # Addendum A re-run
@@ -53,14 +54,16 @@ def lane_bins(date: str, det: str):
 def station_day(date: str, st: dict):
     """Station flow q (veh/h), density k (veh/mi), speed v (mph); NaN where any lane is invalid."""
     Q, K = np.zeros(NB), np.zeros(NB)
+    dead = False
     for det, _lane, field in st["dets"]:
         q, occ = lane_bins(date, det)
+        dead = dead or not np.nansum(q[DEAD_SLICE]) > 0   # selection protocol v1 Addendum B: dead lane
         Q = Q + q
         K = K + occ / 100.0 * 5280.0 / float(field)
     with np.errstate(divide="ignore", invalid="ignore"):
         V = np.where(K > 0, Q / K, np.inf)
     V = np.where(np.isnan(Q) | np.isnan(K), np.nan, V)
-    valid = np.mean(~np.isnan(Q)) >= 0.9
+    valid = np.mean(~np.isnan(Q)) >= 0.9 and not dead
     return {"q": Q, "k": K, "v": V, "valid": bool(valid), "lanes": len(st["dets"])}
 
 

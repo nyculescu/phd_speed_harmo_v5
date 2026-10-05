@@ -1,0 +1,1861 @@
+{
+ "protocol": "docs/plans/day_pattern_corridor_selection_protocol_v1.md",
+ "dates": [
+  "20230201",
+  "20230215",
+  "20230301",
+  "20230315",
+  "20230405",
+  "20230419",
+  "20230503",
+  "20230517",
+  "20230607",
+  "20230621",
+  "20230705",
+  "20230719",
+  "20230802",
+  "20230816",
+  "20230906",
+  "20230920",
+  "20231004",
+  "20231018",
+  "20231101",
+  "20231115"
+ ],
+ "n_pairs": 893,
+ "n_candidates": 46,
+ "n_merged": 37,
+ "n_feasible": 22,
+ "candidates_merged": [
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "u": "rnd_85885",
+   "u_label": "Grand Ave",
+   "km_u": 34.39870297826677,
+   "d": "rnd_85891",
+   "d_label": "St. Clair Ave",
+   "km_d": 35.36111646505734,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 34.197231823753725
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "u": "rnd_88357",
+   "u_label": "I-94",
+   "km_u": 1.678383653424614,
+   "d": "rnd_5727",
+   "d_label": "Dunwoody Blvd",
+   "km_d": 2.422113244668863,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 36.347417975931464
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_11263",
+   "u_label": "Century Ave",
+   "km_u": 27.27931441575463,
+   "d": "rnd_90411",
+   "d_label": "E of T.H.120",
+   "km_d": 28.30701994469156,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 34.224041571361795
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "u": "rnd_86133",
+   "u_label": "T.H.77",
+   "km_u": 14.526705676869422,
+   "d": "rnd_86137",
+   "d_label": "Bloomington Ave",
+   "km_d": 15.260217101403754,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 26.427302773097022
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_87129",
+   "u_label": "E of I-35W",
+   "km_u": 10.520132926804779,
+   "d": "rnd_88611",
+   "d_label": "W of T.H.10",
+   "km_d": 11.32296529809533,
+   "valid": 20,
+   "active": 17,
+   "share": 0.85,
+   "median_dv_mph": 26.225854113201
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "u": "rnd_86499",
+   "u_label": "26th St",
+   "km_u": 43.02928634958133,
+   "d": "rnd_9976",
+   "d_label": "Franklin Ave",
+   "km_d": 43.52261665557789,
+   "valid": 19,
+   "active": 16,
+   "share": 0.8421052631578947,
+   "median_dv_mph": 30.499050412655887
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "u": "rnd_1340",
+   "u_label": "Cretin Ave",
+   "km_u": 38.60816001716781,
+   "d": "rnd_87281",
+   "d_label": "T.H.280",
+   "km_d": 39.60816455173211,
+   "valid": 20,
+   "active": 16,
+   "share": 0.8,
+   "median_dv_mph": 27.276244784039267
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "u": "rnd_87431",
+   "u_label": "I-494",
+   "km_u": 71.18525503251537,
+   "d": "rnd_87435",
+   "d_label": "80th Ave",
+   "km_d": 72.28954331148795,
+   "valid": 18,
+   "active": 16,
+   "share": 0.8888888888888888,
+   "median_dv_mph": 38.041310317005184
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "u": "rnd_85409",
+   "u_label": "Glenwood Ave",
+   "km_u": 13.705991555020036,
+   "d": "rnd_88647",
+   "d_label": "T.H.55",
+   "km_d": 14.820152759713864,
+   "valid": 20,
+   "active": 16,
+   "share": 0.8,
+   "median_dv_mph": 32.66784482439155
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "u": "rnd_87737",
+   "u_label": "Maryland Ave",
+   "km_u": 33.980197199657724,
+   "d": "rnd_87743",
+   "d_label": "Wheelock Pkwy",
+   "km_d": 35.01907155193892,
+   "valid": 19,
+   "active": 15,
+   "share": 0.7894736842105263,
+   "median_dv_mph": 27.622647314182775
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "u": "rnd_85849",
+   "u_label": "Roselawn Ave",
+   "km_u": 27.02694129936428,
+   "d": "rnd_85855",
+   "d_label": "Larpenteur Ave",
+   "km_d": 27.638680865377793,
+   "valid": 20,
+   "active": 15,
+   "share": 0.75,
+   "median_dv_mph": 22.989152486256497
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "u": "rnd_86183",
+   "u_label": "Wooddale Ave",
+   "km_u": 22.231793320912345,
+   "d": "rnd_86193",
+   "d_label": "Wyman Ave",
+   "km_d": 23.819535082253235,
+   "valid": 20,
+   "active": 13,
+   "share": 0.65,
+   "median_dv_mph": 30.143528566913847
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "u": "rnd_86977",
+   "u_label": "T.H.280",
+   "km_u": 52.81830458013502,
+   "d": "rnd_87449",
+   "d_label": "T.H.36",
+   "km_d": 53.851733473728515,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 36.22034147683292
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "u": "rnd_87957",
+   "u_label": "Diamond Lake Rd",
+   "km_u": 47.13602496253677,
+   "d": "rnd_1079",
+   "d_label": "57th St",
+   "km_d": 47.71887101069708,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 30.59107678300581
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "u": "rnd_88341",
+   "u_label": "I-94",
+   "km_u": 19.893514603855415,
+   "d": "rnd_88347",
+   "d_label": "Linden Ave",
+   "km_d": 20.36649589170787,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 33.94877139835759
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "u": "rnd_87185",
+   "u_label": "Main St",
+   "km_u": 25.633106261393646,
+   "d": "rnd_87189",
+   "d_label": "East River Rd",
+   "km_d": 26.24233389803218,
+   "valid": 19,
+   "active": 12,
+   "share": 0.631578947368421,
+   "median_dv_mph": 22.455097456321774
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "u": "rnd_84679",
+   "u_label": "Bren Rd",
+   "km_u": 112.67227042309561,
+   "d": "rnd_84781",
+   "d_label": "Lincoln Dr",
+   "km_d": 114.25723362637751,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 31.66368684753535
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "u": "rnd_87041",
+   "u_label": "Nord Ave",
+   "km_u": 35.975507018379865,
+   "d": "rnd_89023",
+   "d_label": "T.H.100",
+   "km_d": 36.87535978236332,
+   "valid": 19,
+   "active": 11,
+   "share": 0.5789473684210527,
+   "median_dv_mph": 61.87494059439437
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_1342",
+   "u_label": "Snelling Ave",
+   "km_u": 384.76126439787913,
+   "d": "rnd_85665",
+   "d_label": "Hamline Ave",
+   "km_d": 385.41762820595824,
+   "valid": 19,
+   "active": 11,
+   "share": 0.5789473684210527,
+   "median_dv_mph": 29.147689607057508
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "u": "rnd_87677",
+   "u_label": "Bachelor Ave",
+   "km_u": 22.141374534693178,
+   "d": "rnd_87681",
+   "d_label": "T.H.13",
+   "km_d": 22.710504071056846,
+   "valid": 17,
+   "active": 10,
+   "share": 0.5882352941176471,
+   "median_dv_mph": 27.779632746063854
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "u": "rnd_1695",
+   "u_label": "S of Co Rd 6",
+   "km_u": 14.79117879606591,
+   "d": "rnd_1909",
+   "d_label": "Co Rd 6",
+   "km_d": 15.502071519424597,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 25.726686484211974
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85519",
+   "u_label": "Xerxes Ave",
+   "km_u": 359.99462673339644,
+   "d": "rnd_1758",
+   "d_label": "Shingle Creek Pkwy",
+   "km_d": 360.99148128548944,
+   "valid": 17,
+   "active": 10,
+   "share": 0.5882352941176471,
+   "median_dv_mph": 30.980208098857275
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "u": "rnd_88681",
+   "u_label": "France Ave",
+   "km_u": 21.876630699172633,
+   "d": "rnd_90777",
+   "d_label": "Brooklyn Blvd",
+   "km_d": 22.962498145377708,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 29.678345642268564
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "u": "rnd_89689",
+   "u_label": "Anderson Lakes Pkwy",
+   "km_u": 99.75258238575996,
+   "d": "rnd_89677",
+   "d_label": "Pioneer Tr",
+   "km_d": 101.86870479996581,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 28.166481753852516
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "u": "rnd_84975",
+   "u_label": "Marth Rd",
+   "km_u": 4.884461444437615,
+   "d": "rnd_85249",
+   "d_label": "E Bush Lake Rd",
+   "km_d": 5.769446832895273,
+   "valid": 18,
+   "active": 9,
+   "share": 0.5,
+   "median_dv_mph": 30.538930490196577
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "u": "rnd_88927",
+   "u_label": "W of T.H.10",
+   "km_u": 17.976798536741658,
+   "d": "rnd_87135",
+   "d_label": "E of I-35W",
+   "km_d": 18.778874633486417,
+   "valid": 20,
+   "active": 9,
+   "share": 0.45,
+   "median_dv_mph": 28.028310762012318
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_10254",
+   "u_label": "95th Ave",
+   "km_u": 345.13775382783535,
+   "d": "rnd_89357",
+   "d_label": "E of 95th Ave (Rest Area)",
+   "km_d": 346.13334705047595,
+   "valid": 20,
+   "active": 9,
+   "share": 0.45,
+   "median_dv_mph": 26.354054144514123
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "u": "rnd_88025",
+   "u_label": "92nd St",
+   "km_u": 55.957379699213334,
+   "d": "rnd_95760",
+   "d_label": "S of 94th St",
+   "km_d": 56.73787250485296,
+   "valid": 19,
+   "active": 8,
+   "share": 0.42105263157894735,
+   "median_dv_mph": 29.523469812203263
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "u": "rnd_85111",
+   "u_label": "Hillsboro Ave",
+   "km_u": 74.01805321807103,
+   "d": "rnd_85119",
+   "d_label": "Bass Lake Rd",
+   "km_d": 75.01222727431764,
+   "valid": 19,
+   "active": 8,
+   "share": 0.42105263157894735,
+   "median_dv_mph": 21.832143916087873
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "u": "rnd_88433",
+   "u_label": "Shelard Pkwy",
+   "km_u": 11.388788448813735,
+   "d": "rnd_88437",
+   "d_label": "Co Rd 73",
+   "km_d": 12.18045663072456,
+   "valid": 19,
+   "active": 7,
+   "share": 0.3684210526315789,
+   "median_dv_mph": 31.456049939734626
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_88993",
+   "u_label": "U.S.169",
+   "km_u": 353.1433024352334,
+   "d": "rnd_85497",
+   "d_label": "Boone Ave",
+   "km_d": 354.50638113332343,
+   "valid": 20,
+   "active": 7,
+   "share": 0.35,
+   "median_dv_mph": 35.5035574501542
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "u": "rnd_88967",
+   "u_label": "N of Westbrooke Rd",
+   "km_u": 9.070872347626509,
+   "d": "rnd_88971",
+   "d_label": "Duluth St",
+   "km_d": 10.269568836756914,
+   "valid": 19,
+   "active": 7,
+   "share": 0.3684210526315789,
+   "median_dv_mph": 26.276376588646585
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "u": "rnd_1704",
+   "u_label": "S of Co Rd 6",
+   "km_u": 11.579588444879922,
+   "d": "rnd_84913",
+   "d_label": "S of Carlson Pkwy",
+   "km_d": 12.733594867681902,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 31.608086001402214
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_88897",
+   "u_label": "Victoria St",
+   "km_u": 15.053506730757329,
+   "d": "rnd_88901",
+   "d_label": "E of Victoria St",
+   "km_d": 15.913329553558116,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 24.69934013774553
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85483",
+   "u_label": "80th Ave",
+   "km_u": 348.6090806207961,
+   "d": "rnd_85487",
+   "d_label": "I-494",
+   "km_d": 349.8022029723979,
+   "valid": 18,
+   "active": 6,
+   "share": 0.3333333333333333,
+   "median_dv_mph": 31.836495659779978
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "u": "rnd_86085",
+   "u_label": "Bloomington Ave",
+   "km_u": 15.529972238745872,
+   "d": "rnd_86097",
+   "d_label": "T.H.77",
+   "km_d": 16.54563187838814,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 29.235008854546496
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85641",
+   "u_label": "E of Huron Blvd",
+   "km_u": 380.7818128381177,
+   "d": "rnd_10144",
+   "d_label": "W of T.H.280",
+   "km_d": 381.4508312128884,
+   "valid": 16,
+   "active": 5,
+   "share": 0.3125,
+   "median_dv_mph": 37.613457769700545
+  }
+ ],
+ "feasible": [
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "u": "rnd_89689",
+   "u_label": "Anderson Lakes Pkwy",
+   "km_u": 99.75258238575996,
+   "d": "rnd_89677",
+   "d_label": "Pioneer Tr",
+   "km_d": 101.86870479996581,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 28.166481753852516,
+   "feeding": [
+    [
+     "Valley View Rd",
+     "M169S51",
+     95.83
+    ],
+    [
+     "Marth Rd",
+     "M169S54",
+     97.66
+    ],
+    [
+     "Anderson Lakes Pkwy",
+     "M169S55",
+     99.88
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "u": "rnd_1695",
+   "u_label": "S of Co Rd 6",
+   "km_u": 14.79117879606591,
+   "d": "rnd_1909",
+   "d_label": "Co Rd 6",
+   "km_d": 15.502071519424597,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 25.726686484211974,
+   "feeding": [
+    [
+     "I-394 EB",
+     "M494W63",
+     12.48
+    ],
+    [
+     "I-394 WB",
+     "M494W64",
+     12.88
+    ],
+    [
+     "Carlson Pkwy",
+     "M494W65",
+     14.26
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_10254",
+   "u_label": "95th Ave",
+   "km_u": 345.13775382783535,
+   "d": "rnd_89357",
+   "d_label": "E of 95th Ave (Rest Area)",
+   "km_d": 346.13334705047595,
+   "valid": 20,
+   "active": 9,
+   "share": 0.45,
+   "median_dv_mph": 26.354054144514123,
+   "feeding": [
+    [
+     "Dayton Pkwy",
+     "M94E15",
+     341.07
+    ],
+    [
+     "95th Ave",
+     "M94E18",
+     344.9
+    ]
+   ],
+   "n_feeding": 2
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "u": "rnd_87041",
+   "u_label": "Nord Ave",
+   "km_u": 35.975507018379865,
+   "d": "rnd_89023",
+   "d_label": "T.H.100",
+   "km_d": 36.87535978236332,
+   "valid": 19,
+   "active": 11,
+   "share": 0.5789473684210527,
+   "median_dv_mph": 61.87494059439437,
+   "feeding": [
+    [
+     "France Ave NB",
+     "M494W42",
+     34.92
+    ],
+    [
+     "France Ave SB",
+     "M494W43",
+     35.23
+    ],
+    [
+     "T.H.100 NB",
+     "M494W44",
+     36.53
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "u": "rnd_88025",
+   "u_label": "92nd St",
+   "km_u": 55.957379699213334,
+   "d": "rnd_95760",
+   "d_label": "S of 94th St",
+   "km_d": 56.73787250485296,
+   "valid": 19,
+   "active": 8,
+   "share": 0.42105263157894735,
+   "median_dv_mph": 29.523469812203263,
+   "feeding": [
+    [
+     "82nd St",
+     "M35WS67",
+     54.04
+    ],
+    [
+     "90th St",
+     "M35WS69",
+     55.67
+    ],
+    [
+     "94th St",
+     "M35WS70",
+     56.59
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_1342",
+   "u_label": "Snelling Ave",
+   "km_u": 384.76126439787913,
+   "d": "rnd_85665",
+   "d_label": "Hamline Ave",
+   "km_d": 385.41762820595824,
+   "valid": 19,
+   "active": 11,
+   "share": 0.5789473684210527,
+   "median_dv_mph": 29.147689607057508,
+   "feeding": [
+    [
+     "Huron Blvd",
+     "M94E47",
+     379.88
+    ],
+    [
+     "Cretin Ave",
+     "M94E49",
+     382.76
+    ],
+    [
+     "Snelling Ave",
+     "M94E50",
+     384.98
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "u": "rnd_85111",
+   "u_label": "Hillsboro Ave",
+   "km_u": 74.01805321807103,
+   "d": "rnd_85119",
+   "d_label": "Bass Lake Rd",
+   "km_d": 75.01222727431764,
+   "valid": 19,
+   "active": 8,
+   "share": 0.42105263157894735,
+   "median_dv_mph": 21.832143916087873,
+   "feeding": [
+    [
+     "I-94 WB",
+     "M169S22",
+     71.96
+    ],
+    [
+     "I-94 EB",
+     "M169S23",
+     72.39
+    ],
+    [
+     "Bass Lake Rd WB",
+     "M169S25",
+     74.78
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85519",
+   "u_label": "Xerxes Ave",
+   "km_u": 359.99462673339644,
+   "d": "rnd_1758",
+   "d_label": "Shingle Creek Pkwy",
+   "km_d": 360.99148128548944,
+   "valid": 17,
+   "active": 10,
+   "share": 0.5882352941176471,
+   "median_dv_mph": 30.980208098857275,
+   "feeding": [
+    [
+     "Boone Ave",
+     "M94E25",
+     354.57
+    ],
+    [
+     "Co Rd 81",
+     "M94E26",
+     356.15
+    ],
+    [
+     "Brooklyn Blvd",
+     "M94E28",
+     359.21
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "u": "rnd_87677",
+   "u_label": "Bachelor Ave",
+   "km_u": 22.141374534693178,
+   "d": "rnd_87681",
+   "d_label": "T.H.13",
+   "km_d": 22.710504071056846,
+   "valid": 17,
+   "active": 10,
+   "share": 0.5882352941176471,
+   "median_dv_mph": 27.779632746063854,
+   "feeding": [
+    [
+     "Lone Oak Rd",
+     "M35EN10",
+     16.95
+    ],
+    [
+     "T.H.62",
+     "M35EN13",
+     21.2
+    ]
+   ],
+   "n_feeding": 2
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "u": "rnd_86977",
+   "u_label": "T.H.280",
+   "km_u": 52.81830458013502,
+   "d": "rnd_87449",
+   "d_label": "T.H.36",
+   "km_d": 53.851733473728515,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 36.22034147683292,
+   "feeding": [
+    [
+     "4th St",
+     "M35WN48",
+     47.6
+    ],
+    [
+     "Stinson Blvd",
+     "M35WN52",
+     50.77
+    ],
+    [
+     "Industrial Blvd",
+     "M35WN53",
+     52.04
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "u": "rnd_84679",
+   "u_label": "Bren Rd",
+   "km_u": 112.67227042309561,
+   "d": "rnd_84781",
+   "d_label": "Lincoln Dr",
+   "km_d": 114.25723362637751,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 31.66368684753535,
+   "feeding": [
+    [
+     "T.H.62 EB",
+     "M169N23",
+     111.45
+    ],
+    [
+     "T.H.62 WB",
+     "M169N24",
+     111.86
+    ],
+    [
+     "Bren Rd",
+     "M169N25",
+     112.8
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "u": "rnd_87185",
+   "u_label": "Main St",
+   "km_u": 25.633106261393646,
+   "d": "rnd_87189",
+   "d_label": "East River Rd",
+   "km_d": 26.24233389803218,
+   "valid": 19,
+   "active": 12,
+   "share": 0.631578947368421,
+   "median_dv_mph": 22.455097456321774,
+   "feeding": [
+    [
+     "T.H.65 SB",
+     "M694W56",
+     24.25
+    ],
+    [
+     "University Ave NB",
+     "M694W57",
+     25.49
+    ],
+    [
+     "University Ave SB",
+     "M694W58",
+     25.49
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_88993",
+   "u_label": "U.S.169",
+   "km_u": 353.1433024352334,
+   "d": "rnd_85497",
+   "d_label": "Boone Ave",
+   "km_d": 354.50638113332343,
+   "valid": 20,
+   "active": 7,
+   "share": 0.35,
+   "median_dv_mph": 35.5035574501542,
+   "feeding": [
+    [
+     "Hemlock Ln",
+     "M94E22",
+     351.52
+    ],
+    [
+     "U.S.169 SB",
+     "M94E23",
+     353.27
+    ],
+    [
+     "U.S.169 NB",
+     "M94E24",
+     353.74
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "u": "rnd_86183",
+   "u_label": "Wooddale Ave",
+   "km_u": 22.231793320912345,
+   "d": "rnd_86193",
+   "d_label": "Wyman Ave",
+   "km_d": 23.819535082253235,
+   "valid": 20,
+   "active": 13,
+   "share": 0.65,
+   "median_dv_mph": 30.143528566913847,
+   "feeding": [
+    [
+     "Valley View Rd",
+     "M62W53",
+     21.74
+    ],
+    [
+     "T.H.100 NB",
+     "M62W54",
+     22.85
+    ],
+    [
+     "T.H.100 SB",
+     "M62W55",
+     23.26
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85483",
+   "u_label": "80th Ave",
+   "km_u": 348.6090806207961,
+   "d": "rnd_85487",
+   "d_label": "I-494",
+   "km_d": 349.8022029723979,
+   "valid": 18,
+   "active": 6,
+   "share": 0.3333333333333333,
+   "median_dv_mph": 31.836495659779978,
+   "feeding": [
+    [
+     "95th Ave",
+     "M94E18",
+     344.9
+    ],
+    [
+     "Weaver Lake Rd WB",
+     "M94E19",
+     347.84
+    ],
+    [
+     "Weaver Lake Rd EB",
+     "M94E20",
+     348.11
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_85641",
+   "u_label": "E of Huron Blvd",
+   "km_u": 380.7818128381177,
+   "d": "rnd_10144",
+   "d_label": "W of T.H.280",
+   "km_d": 381.4508312128884,
+   "valid": 16,
+   "active": 5,
+   "share": 0.3125,
+   "median_dv_mph": 37.613457769700545,
+   "feeding": [
+    [
+     "Cedar Ave",
+     "M94E45",
+     377.9
+    ],
+    [
+     "Riverside Ave",
+     "M94E46",
+     379.04
+    ],
+    [
+     "Huron Blvd",
+     "M94E47",
+     379.88
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "u": "rnd_86085",
+   "u_label": "Bloomington Ave",
+   "km_u": 15.529972238745872,
+   "d": "rnd_86097",
+   "d_label": "T.H.77",
+   "km_d": 16.54563187838814,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 29.235008854546496,
+   "feeding": [
+    [
+     "I-35W NB",
+     "M62E37",
+     12.89
+    ],
+    [
+     "Lyndale Ave",
+     "M62E38",
+     12.95
+    ],
+    [
+     "Portland Ave",
+     "M62E40",
+     14.77
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "u": "rnd_85849",
+   "u_label": "Roselawn Ave",
+   "km_u": 27.02694129936428,
+   "d": "rnd_85855",
+   "d_label": "Larpenteur Ave",
+   "km_d": 27.638680865377793,
+   "valid": 20,
+   "active": 15,
+   "share": 0.75,
+   "median_dv_mph": 22.989152486256497,
+   "feeding": [
+    [
+     "T.H.36 WB",
+     "M35ES31",
+     25.54
+    ],
+    [
+     "T.H.36 EB",
+     "M35ES32",
+     25.92
+    ],
+    [
+     "Roselawn Ave",
+     "M35ES33",
+     27.23
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "u": "rnd_87737",
+   "u_label": "Maryland Ave",
+   "km_u": 33.980197199657724,
+   "d": "rnd_87743",
+   "d_label": "Wheelock Pkwy",
+   "km_d": 35.01907155193892,
+   "valid": 19,
+   "active": 15,
+   "share": 0.7894736842105263,
+   "median_dv_mph": 27.622647314182775,
+   "feeding": [
+    [
+     "Jackson St",
+     "M35EN21",
+     31.28
+    ],
+    [
+     "Cayuga St",
+     "M35EN26",
+     32.66
+    ],
+    [
+     "Maryland Ave",
+     "M35EN27",
+     34.17
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "u": "rnd_85409",
+   "u_label": "Glenwood Ave",
+   "km_u": 13.705991555020036,
+   "d": "rnd_88647",
+   "d_label": "T.H.55",
+   "km_d": 14.820152759713864,
+   "valid": 20,
+   "active": 16,
+   "share": 0.8,
+   "median_dv_mph": 32.66784482439155,
+   "feeding": [
+    [
+     "Cedar Lake Rd",
+     "M100N38",
+     12.6
+    ],
+    [
+     "I-394 WB",
+     "M100N40",
+     13.19
+    ],
+    [
+     "Glenwood Ave",
+     "M100N41",
+     13.88
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "u": "rnd_1340",
+   "u_label": "Cretin Ave",
+   "km_u": 38.60816001716781,
+   "d": "rnd_87281",
+   "d_label": "T.H.280",
+   "km_d": 39.60816455173211,
+   "valid": 20,
+   "active": 16,
+   "share": 0.8,
+   "median_dv_mph": 27.276244784039267,
+   "feeding": [
+    [
+     "Lexington Pkwy",
+     "M94W45",
+     35.09
+    ],
+    [
+     "Snelling Ave",
+     "M94W46",
+     36.71
+    ],
+    [
+     "Vandalia St",
+     "M94W47",
+     38.83
+    ]
+   ],
+   "n_feeding": 3
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "u": "rnd_85885",
+   "u_label": "Grand Ave",
+   "km_u": 34.39870297826677,
+   "d": "rnd_85891",
+   "d_label": "St. Clair Ave",
+   "km_d": 35.36111646505734,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 34.197231823753725,
+   "feeding": [
+    [
+     "Cayuga St",
+     "M35ES36",
+     30.55
+    ],
+    [
+     "12th St",
+     "M35ES38",
+     32.9
+    ],
+    [
+     "Kellogg Blvd",
+     "M35ES39",
+     33.51
+    ]
+   ],
+   "n_feeding": 3
+  }
+ ],
+ "rejected": [
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "u": "rnd_88357",
+   "u_label": "I-94",
+   "km_u": 1.678383653424614,
+   "d": "rnd_5727",
+   "d_label": "Dunwoody Blvd",
+   "km_d": 2.422113244668863,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 36.347417975931464,
+   "feeding": [
+    [
+     "Washington Ave",
+     "M394W01",
+     0.19
+    ],
+    [
+     "5th St (+ Garages)",
+     "M394W04",
+     0.9
+    ]
+   ],
+   "n_feeding": 2,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_11263",
+   "u_label": "Century Ave",
+   "km_u": 27.27931441575463,
+   "d": "rnd_90411",
+   "d_label": "E of T.H.120",
+   "km_d": 28.30701994469156,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 34.224041571361795,
+   "feeding": [
+    [
+     "T.H.61",
+     "M694E25",
+     22.99
+    ],
+    [
+     "White Bear Ave",
+     "M694E26",
+     24.94
+    ],
+    [
+     "Century Ave",
+     "M694E27",
+     27.49
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "only 0 station(s) within 5 km downstream of d"
+   ]
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "u": "rnd_86133",
+   "u_label": "T.H.77",
+   "km_u": 14.526705676869422,
+   "d": "rnd_86137",
+   "d_label": "Bloomington Ave",
+   "km_d": 15.260217101403754,
+   "valid": 20,
+   "active": 18,
+   "share": 0.9,
+   "median_dv_mph": 26.427302773097022,
+   "feeding": [
+    [
+     "34th Ave",
+     "M62W40",
+     12.65
+    ],
+    [
+     "28th Ave",
+     "M62W41",
+     13.53
+    ],
+    [
+     "T.H.77 SB",
+     "M62W43",
+     14.63
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_87129",
+   "u_label": "E of I-35W",
+   "km_u": 10.520132926804779,
+   "d": "rnd_88611",
+   "d_label": "W of T.H.10",
+   "km_d": 11.32296529809533,
+   "valid": 20,
+   "active": 17,
+   "share": 0.85,
+   "median_dv_mph": 26.225854113201,
+   "feeding": [
+    [
+     "Long Lake Rd",
+     "M694E11",
+     9.29
+    ],
+    [
+     "I-35W SB",
+     "M694E13",
+     10.21
+    ],
+    [
+     "I-35W NB",
+     "M694E14",
+     10.62
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "u": "rnd_86499",
+   "u_label": "26th St",
+   "km_u": 43.02928634958133,
+   "d": "rnd_9976",
+   "d_label": "Franklin Ave",
+   "km_d": 43.52261665557789,
+   "valid": 19,
+   "active": 16,
+   "share": 0.8421052631578947,
+   "median_dv_mph": 30.499050412655887,
+   "feeding": [
+    [
+     "Diamond Lake Rd",
+     "M35WN37",
+     37.49
+    ],
+    [
+     "46th St",
+     "M35WN38",
+     39.41
+    ],
+    [
+     "35th St",
+     "M35WN40",
+     41.45
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "nearest healthy feeding ramp 2.07 km upstream of d (> 2)"
+   ]
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "u": "rnd_87431",
+   "u_label": "I-494",
+   "km_u": 71.18525503251537,
+   "d": "rnd_87435",
+   "d_label": "80th Ave",
+   "km_d": 72.28954331148795,
+   "valid": 18,
+   "active": 16,
+   "share": 0.8888888888888888,
+   "median_dv_mph": 38.041310317005184,
+   "feeding": [
+    [
+     "U.S.169 NB",
+     "M94W70",
+     67.59
+    ],
+    [
+     "U.S.169 SB",
+     "M94W71",
+     68.01
+    ],
+    [
+     "Hemlock Ln",
+     "M94W73",
+     70.06
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "nearest healthy feeding ramp 2.23 km upstream of d (> 2)"
+   ]
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "u": "rnd_87957",
+   "u_label": "Diamond Lake Rd",
+   "km_u": 47.13602496253677,
+   "d": "rnd_1079",
+   "d_label": "57th St",
+   "km_d": 47.71887101069708,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 30.59107678300581,
+   "feeding": [
+    [
+     "31st St",
+     "M35WS52",
+     42.38
+    ],
+    [
+     "36th St",
+     "M35WS53",
+     43.59
+    ],
+    [
+     "46th St",
+     "M35WS55",
+     45.58
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "nearest healthy feeding ramp 2.14 km upstream of d (> 2)"
+   ]
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "u": "rnd_88341",
+   "u_label": "I-94",
+   "km_u": 19.893514603855415,
+   "d": "rnd_88347",
+   "d_label": "Linden Ave",
+   "km_d": 20.36649589170787,
+   "valid": 20,
+   "active": 12,
+   "share": 0.6,
+   "median_dv_mph": 33.94877139835759,
+   "feeding": [
+    [
+     "I-394 CD EB",
+     "M394E24",
+     15.94
+    ],
+    [
+     "T.H.100 CD NB",
+     "M394E26",
+     16.31
+    ],
+    [
+     "Penn Ave",
+     "M394E27",
+     18.41
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "only 0 station(s) within 5 km downstream of d"
+   ]
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "u": "rnd_88681",
+   "u_label": "France Ave",
+   "km_u": 21.876630699172633,
+   "d": "rnd_90777",
+   "d_label": "Brooklyn Blvd",
+   "km_d": 22.962498145377708,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 29.678345642268564,
+   "feeding": [
+    [
+     "36th Ave",
+     "M100N46",
+     19.01
+    ],
+    [
+     "Co Rd 81",
+     "M100N48",
+     20.78
+    ],
+    [
+     "France Ave",
+     "M100N49",
+     21.66
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "only 1 station(s) within 5 km downstream of d"
+   ]
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "u": "rnd_84975",
+   "u_label": "Marth Rd",
+   "km_u": 4.884461444437615,
+   "d": "rnd_85249",
+   "d_label": "E Bush Lake Rd",
+   "km_d": 5.769446832895273,
+   "valid": 18,
+   "active": 9,
+   "share": 0.5,
+   "median_dv_mph": 30.538930490196577,
+   "feeding": [
+    [
+     "U.S.169 SB",
+     "M494E27",
+     3.13
+    ],
+    [
+     "Marth Rd",
+     "M494E271",
+     3.5
+    ],
+    [
+     "U.S.169 NB",
+     "M494E28",
+     3.98
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "u": "rnd_88927",
+   "u_label": "W of T.H.10",
+   "km_u": 17.976798536741658,
+   "d": "rnd_87135",
+   "d_label": "E of I-35W",
+   "km_d": 18.778874633486417,
+   "valid": 20,
+   "active": 9,
+   "share": 0.45,
+   "median_dv_mph": 28.028310762012318,
+   "feeding": [
+    [
+     "Victoria St",
+     "M694W45",
+     14.44
+    ]
+   ],
+   "n_feeding": 1,
+   "why": [
+    "feeding ramps with healthy queue+passage: 1 of 1 metered in range"
+   ]
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "u": "rnd_88433",
+   "u_label": "Shelard Pkwy",
+   "km_u": 11.388788448813735,
+   "d": "rnd_88437",
+   "d_label": "Co Rd 73",
+   "km_d": 12.18045663072456,
+   "valid": 19,
+   "active": 7,
+   "share": 0.3684210526315789,
+   "median_dv_mph": 31.456049939734626,
+   "feeding": [],
+   "n_feeding": 0,
+   "why": [
+    "feeding ramps with healthy queue+passage: 0 of 1 metered in range"
+   ]
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "u": "rnd_88967",
+   "u_label": "N of Westbrooke Rd",
+   "km_u": 9.070872347626509,
+   "d": "rnd_88971",
+   "d_label": "Duluth St",
+   "km_d": 10.269568836756914,
+   "valid": 19,
+   "active": 7,
+   "share": 0.3684210526315789,
+   "median_dv_mph": 26.276376588646585,
+   "feeding": [
+    [
+     "Co Rd 81",
+     "M100S17",
+     6.0
+    ],
+    [
+     "42nd Ave",
+     "M100S18",
+     6.65
+    ],
+    [
+     "36th Ave",
+     "M100S19",
+     8.0
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "nearest healthy feeding ramp 2.27 km upstream of d (> 2)",
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "u": "rnd_1704",
+   "u_label": "S of Co Rd 6",
+   "km_u": 11.579588444879922,
+   "d": "rnd_84913",
+   "d_label": "S of Carlson Pkwy",
+   "km_d": 12.733594867681902,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 31.608086001402214,
+   "feeding": [
+    [
+     "Rockford Rd",
+     "M494E06",
+     7.68
+    ],
+    [
+     "T.H.55",
+     "M494E07",
+     9.69
+    ],
+    [
+     "Co Rd 6",
+     "M494E08",
+     11.2
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "u": "rnd_88897",
+   "u_label": "Victoria St",
+   "km_u": 15.053506730757329,
+   "d": "rnd_88901",
+   "d_label": "E of Victoria St",
+   "km_d": 15.913329553558116,
+   "valid": 20,
+   "active": 6,
+   "share": 0.3,
+   "median_dv_mph": 24.69934013774553,
+   "feeding": [
+    [
+     "I-35W NB",
+     "M694E14",
+     10.62
+    ],
+    [
+     "Lexington Ave",
+     "M694E17",
+     13.91
+    ],
+    [
+     "Victoria St",
+     "M694E18",
+     15.16
+    ]
+   ],
+   "n_feeding": 3,
+   "why": [
+    "no mainline station >= 10 km upstream of the first feeding ramp"
+   ]
+  }
+ ],
+ "top3": [
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "u": "rnd_89689",
+   "u_label": "Anderson Lakes Pkwy",
+   "km_u": 99.75258238575996,
+   "d": "rnd_89677",
+   "d_label": "Pioneer Tr",
+   "km_d": 101.86870479996581,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 28.166481753852516,
+   "feeding": [
+    [
+     "Valley View Rd",
+     "M169S51",
+     95.83
+    ],
+    [
+     "Marth Rd",
+     "M169S54",
+     97.66
+    ],
+    [
+     "Anderson Lakes Pkwy",
+     "M169S55",
+     99.88
+    ]
+   ],
+   "n_feeding": 3,
+   "meters": [
+    "M169S51",
+    "M169S54",
+    "M169S55"
+   ],
+   "down_km": 5.35,
+   "n_detectors": 42,
+   "requests_104d": 8088,
+   "within_cap_12000": true
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "u": "rnd_1695",
+   "u_label": "S of Co Rd 6",
+   "km_u": 14.79117879606591,
+   "d": "rnd_1909",
+   "d_label": "Co Rd 6",
+   "km_d": 15.502071519424597,
+   "valid": 20,
+   "active": 10,
+   "share": 0.5,
+   "median_dv_mph": 25.726686484211974,
+   "feeding": [
+    [
+     "I-394 EB",
+     "M494W63",
+     12.48
+    ],
+    [
+     "I-394 WB",
+     "M494W64",
+     12.88
+    ],
+    [
+     "Carlson Pkwy",
+     "M494W65",
+     14.26
+    ]
+   ],
+   "n_feeding": 3,
+   "meters": [
+    "M494W63",
+    "M494W64",
+    "M494W65"
+   ],
+   "down_km": 2.774,
+   "n_detectors": 48,
+   "requests_104d": 8522,
+   "within_cap_12000": true
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "u": "rnd_10254",
+   "u_label": "95th Ave",
+   "km_u": 345.13775382783535,
+   "d": "rnd_89357",
+   "d_label": "E of 95th Ave (Rest Area)",
+   "km_d": 346.13334705047595,
+   "valid": 20,
+   "active": 9,
+   "share": 0.45,
+   "median_dv_mph": 26.354054144514123,
+   "feeding": [
+    [
+     "Dayton Pkwy",
+     "M94E15",
+     341.07
+    ],
+    [
+     "95th Ave",
+     "M94E18",
+     344.9
+    ]
+   ],
+   "n_feeding": 2,
+   "meters": [
+    "M94E15",
+    "M94E18"
+   ],
+   "down_km": 2.027,
+   "n_detectors": 85,
+   "requests_104d": 10232,
+   "within_cap_12000": true
+  }
+ ]
+}

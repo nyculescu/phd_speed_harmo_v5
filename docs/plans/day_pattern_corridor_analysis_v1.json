@@ -449,7 +449,7 @@
     "PASS": true
    },
    "C3": {
-    "share_uncongested_wed": 0.8846153846153846,
+    "share_uncongested_wed": 0.9038461538461539,
     "PASS": false,
     "extension_stations_km_le_-4": 13,
     "extension_min_km": -11.841,

@@ -67,3 +67,17 @@ An adversarial review (workflow `wf_f8bed967-0ce`) confirmed 7 findings, 5 of th
 5. **Over-cap corridors.** Over-cap corridors are not analysed; they are listed as "author decision pending".
 
 The protocol text is unchanged; these fixes make the code follow it.
+
+## Addendum B (2026-10-05, after the first screen run; a bug found after results)
+
+**First run** (`day_pattern_bnscreen_v1_asrun.json`):
+- 893 pairs → 53 candidates → 23 feasible;
+- top 3: U.S.169 SB Anderson Lakes Pkwy, I-494 NB S of Co Rd 6, I-94 EB Riverside Ave.
+
+**Artefact.** The I-94 EB downstream station (Huron Blvd) reports **zero counts and zero occupancy on all 20 days**. A dead detector's zeros passed as "present values", k = 0 was read as free flow, and so every slowdown upstream counted as an active bottleneck. 85th St (I-35W NB, rank 4) is dead on 10 of 20 days.
+
+**Fix** (the rule C2 already uses for ramp detectors, `ramp_valid`): a lane-day whose counts sum to zero over 06:00–20:00 is **invalid**.
+- In the screen, that station-day is invalid.
+- In the corridor analysis, any dead lane makes the station-day invalid, since a station is valid only if every lane is.
+
+**Both outcomes logged:** the screen and the corridor analysis v1 are re-run with the fix.
