@@ -251,4 +251,9 @@ This keeps the R6 idea alive on a realistic corridor, which is option D for R6, 
 3. **Information aggregator:** must it be RL-trained, so that it counts as DRL? Or is a supervised forecaster feeding the main controller acceptable as "learning-based"? (§1.1)
 4. Factor roles (§1.2): agree that vehicle classes, normal and heterogeneous HDVs and lane-changing are **plant realism** (fixed, calibrated)? That the **day pattern** (H1) and **effective capacity** (H2) are the hidden conditions? And that weather, reckless share, compliance outside range and CAVs are **held-out tests**?
 5. Is "multimodal demand profiles" in the brief the multi-peak demand shape? I read it that way, not as transport modes.
-6. **(§1.6)** Does a **supervised NN hybrid** (forecast- or classifier-informed HERO, or imitation of *I*) count as the positive thesis result? Or must the winning component be **DRL**, with the supervised hybrids as mandatory comparators?
+6. ~~Supervised NN hybrid as the result?~~ **Decided (author, 2026-10-05):**
+   - for now, the **winning component must be DRL**;
+   - supervised NN hybrids are **opponents or complements** (for example, forecasts as DRL inputs);
+   - if this research fails, switch to a hybrid supervised neural network.
+
+   This also settles **decision 3**: an aggregator meant to be the winning component must be RL-trained; a supervised aggregator is an opponent or a complement.
