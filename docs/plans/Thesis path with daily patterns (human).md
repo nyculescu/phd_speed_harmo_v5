@@ -351,7 +351,7 @@ These responses are proposals for discussion, not decisions.
 | # | Question | Status |
 |---|---|---|
 | RQ1 | How should learning-based control be compared with proven control fairly (tuned competitors, headroom gates, pre-registration, paired statistics)? | Method in use |
-| RQ2 | Can DRL scheduling a validated controller beat tuned non-learning schedulers under hidden events? | R6: yes, 2.5–4.3 %, with caveats; counting it is undecided |
+| RQ2 | Can DRL scheduling a validated controller beat tuned non-learning schedulers under hidden events? | R6: yes, 2.5–4.3 %, with caveats; a thesis chapter with its limits, no paper; to be repeated on the realistic corridor |
 | **RQ3** | On a long, real, instrumented corridor, does knowing the day's true demand leave ≥ 10 % room over the best tuned proven control? | **Open (gate)** |
 | **RQ4** | Up to which demand-profile complexity can DRL alone learn *when* to act, and which observations or structures extend that limit? | **Open (learnability study, §5.5)** |
 | **RQ5** | Can a hybrid or stand-alone DRL controller recover part of the RQ3 room on held-out real days, and does the ranking survive in a second simulator? | **Open, needs RQ3 = GO** |
@@ -394,10 +394,11 @@ These responses are proposals for discussion, not decisions.
 - the ARC-IT framing is accepted (TM20/TM21 for speed limits, plus the ramp-metering package; the codes still to be checked [VERIFY]);
 - only positive DRL results count; no negative Paper B.
 
-**Still open:**
-1. **Does R6 count** towards the thesis, with its caveats (unrealistic road, unconverged training)?
-2. **Corridor extension** (§4.4): extending the chosen corridor far upstream means more data requests. The size will be stated before asking.
-3. **The learnability ladder** (§5.5.4): run it as soon as the corridor is chosen, in parallel with the gate? Or only after the gate?
+**Settled in the second batch (2026-10-05; full record in `day_pattern_decisions_v0.md`):**
+1. **R6:** it becomes a thesis chapter, with its limits stated, but no paper is built on it. The aim is to repeat the R6 idea (DRL scheduling a proven controller) on the realistic Minneapolis corridor, and to count that.
+2. **Corridor extension** (§4.4): approved in principle. The exact number of data requests will be stated before pulling.
+3. **The learnability ladder** (§5.5.4): the cheap rungs run alongside the gate; the expensive rungs only after a GO. It is aimed at the hybrid's DRL layer, with DRL alone as a reference only. That aim is assumed from the "hybrid first" decision and was flagged to the author.
+4. **The winning component** must be a controller that relies on or integrates DRL. Supervised neural-network hybrids are opponents or complements. If the DRL research fails, the target switches to a supervised-network hybrid.
 
 ---
 

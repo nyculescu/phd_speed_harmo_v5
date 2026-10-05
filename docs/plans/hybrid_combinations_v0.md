@@ -245,7 +245,14 @@ This keeps the R6 idea alive on a realistic corridor, which is option D for R6, 
 - **CAV-centred combinations.** SUMO's default CACC artefacts are known; the v5 100 %-CAV failure; and the author's constraint against new car-following models. CAVs stay a held-out test (T) at 10–20 % penetration in the confirmation stage.
 - **Weather as a primary hidden condition.** The data link (MnDOT RWIS) and its behavioural parameters are unverified. Use it as a held-out test first.
 
-**Decisions for the author:**
+**Status 2026-10-05:** decisions 1–6 are settled by the author. See `day_pattern_decisions_v0.md` (D2.2.1, D2.2.2, D2.3.1, D2.3.2 and D1). In short:
+- H1 first, with H2's tool checks in parallel;
+- H4's disturbances in H1 as secondary surprises;
+- the factor roles as proposed;
+- "multimodal" = several peaks;
+- the winning component must integrate DRL.
+
+**Decisions for the author (as asked):**
 1. Start with **H1**, and run H2's tool checks in parallel?
 2. For H1, include **H4's disturbances** as secondary hidden events (yes), or keep H1 purely about day patterns?
 3. **Information aggregator:** must it be RL-trained, so that it counts as DRL? Or is a supervised forecaster feeding the main controller acceptable as "learning-based"? (§1.1)
