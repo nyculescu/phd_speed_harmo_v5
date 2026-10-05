@@ -72,10 +72,19 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Environment:** `/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314` (CPU torch; SUMO / libsumo 1.27.1, SB3 2.8.0), unless this repo's own env is confirmed working. Before runs: `unset SUMO_HOME; export OMP_NUM_THREADS=1`.
 - **libsumo,** one simulation per process, unique file names that include every varying parameter and the PID.
   - v5 used socket TraCI. That is why ~140 workers paid off; with libsumo they do not.
-- **Limits (author, 2026-10-02; replace the 2026-10-01 limits):**
+- **Limits (author, 2026-10-05; replace the 2026-10-02/03 thermal guard and the 92 % concurrency rule):**
   - **≤ 100 worker processes.** Plain runs use **32 workers on all hardware threads** (the v6 sweet spot); E-core pinning is no longer used.
-  - **Thermal guard:** worry only when the **5-minute median** of the CPU package temperature (coretemp "Package id 0", the sensor btop shows; TjMax 100 °C) is **≥ 99 °C**. The guard pauses one job per 30 s at ≥ 99 °C and resumes one below 96 °C; the fast cap is off.
-  - **Concurrency follows CPU load (author, 2026-10-03).** The temperature stays below 97 °C whether the CPU is 60 % or 90 % busy, so it is not the control signal. The scheduler launches one job per poll while the smoothed system CPU utilisation (`/proc/stat`, 4 s) is below **92 %**, with a cap of 48 workers per batch and at least 2 jobs running. The 99 °C median guard stays as a backstop.
+  - **Check machine resources before every simulation batch.**
+  - **CPU rule:** if system CPU utilisation (`/proc/stat`) is **> 90 % for 2 consecutive minutes**, pause: no new launches, and running jobs are paused, until utilisation is back at or below 90 %.
+  - **Thermal rule (the v6 `feasibility/cvsig/step2.py` design, re-implemented in v5; never imported across repos):**
+    - sensor: the CPU package temperature (coretemp "Package id 0"; TjMax 100 °C);
+    - band: centre **95 °C ± 3 °C**;
+    - pause when the temperature stays **≥ 98 °C for 150 s**;
+    - resume when it stays **≤ 92 °C for 150 s**;
+    - pause at once at **≥ 99 °C** (emergency);
+    - the limits live in a `thermal.json` that the runner re-reads every loop, so they can change while a job runs;
+    - a pause or resume line is logged every minute (CPU %, temperature, in flight, paused).
+  - **Code status:** `vsl_lab/config.py`, `vsl_lab/ops/scheduler.py` and the `train_sb3.py` watchdog still implement the 2026-10-02/03 rules (92 % launch threshold, 99 °C 5-min median). Bring them in line before the next batch.
   - Temperature is controlled **by worker throttling only.** No power-profile, fan or other system changes.
 - **DRL training:** L learners × E SubprocVecEnv envs ≤ N_max, with `torch.set_num_threads(1)`. Torch's default threads made training 7–50× slower.
 - **CUDA** (`venv314cu`) only for large GNN/LSTM policies.
