@@ -39,3 +39,20 @@ One candidate, **K2 (IDM at SUMO defaults), passes at both steps.** SUMO stays t
 - **Smoke values** (not used for any criterion) were: K0 2,483, K1 2,392, K2 2,315, K3 2,384 veh/h/lane at 0.5 s.
 - **Resolution:** headways are quantised to the step. The ±1 step error on a 100-headway window is about ±0.5 s over about 150 s, i.e. about ±0.3 %.
 - **Scope:** discharge from a standing queue on one lane, released by a light. A freeway bottleneck queue discharges after a merge or lane drop, which this test deliberately leaves out.
+
+## Addendum (2026-10-05): a missing pre-registered quantity, added and re-run
+
+The protocol lists "the mean speed at the 200 m loop" as reported, but the code never recorded it (review `wf_3a789fa2-71a` #6).
+- **Fix:** speed at first detection on the 200 m loop, averaged over the same vehicles 21–121 used for Q.
+- **Re-run:** the same 88 runs on the same seeds. **Every discharge value, PASS flag and the P3-ALIVE outcome are identical** to v0 (`p3_precheck_v0_asrun.json`).
+
+Median mean speed at 200 m (m/s; dt 0.5 / 0.2):
+
+| Candidate | dt 0.5 | dt 0.2 |
+|---|---|---|
+| K0 | 21.56 | 21.35 |
+| K1 | 24.31 | 24.16 |
+| K2 | 19.61 | 19.40 |
+| K3 | 24.84 | 24.68 |
+
+All are 70–89 km/h, well below the 29 m/s (≈ 104 km/h) limit, as expected for discharge from a standing queue.

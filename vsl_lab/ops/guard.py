@@ -27,9 +27,19 @@ def load_cfg(path: Path | None) -> dict:
     cfg = dict(DEFAULTS)
     if path is not None:
         try:
-            cfg.update({k: float(v) for k, v in json.loads(Path(path).read_text()).items() if k in DEFAULTS})
+            raw = json.loads(Path(path).read_text())
         except (OSError, ValueError):
-            pass
+            return cfg
+        if not isinstance(raw, dict):        # review fix #7: a malformed live file must never crash the guard
+            return cfg
+        for k, v in raw.items():
+            if k in DEFAULTS:
+                try:
+                    f = float(v)
+                except (TypeError, ValueError):
+                    continue                 # bad value for one key: keep that key's default
+                if f == f:
+                    cfg[k] = f
     return cfg
 
 

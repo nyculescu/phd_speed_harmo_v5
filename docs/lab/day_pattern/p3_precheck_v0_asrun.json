@@ -1,0 +1,126 @@
+{
+ "protocol": "docs/lab/day_pattern/p3_precheck_protocol.md",
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/dp/p3_precheck_check_1791212259",
+ "cands": {
+  "K0": {
+   "0.5": {
+    "n": 10,
+    "median_Q_d200": 2535.211267605634,
+    "min_Q": 2508.710801393728,
+    "max_Q": 2562.2775800711743,
+    "median_Q_d600": 2539.690439456527,
+    "median_startup_s": 14.0,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "0.2": {
+    "n": 10,
+    "median_Q_d200": 2649.008056830979,
+    "min_Q": 2631.57894736842,
+    "max_Q": 2678.571428571429,
+    "median_Q_d600": 2662.7218934911234,
+    "median_startup_s": 14.200000000000045,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "PASS_any_step": []
+  },
+  "K1": {
+   "0.5": {
+    "n": 10,
+    "median_Q_d200": 2428.3374283374283,
+    "min_Q": 2292.9936305732485,
+    "max_Q": 2448.9795918367345,
+    "median_Q_d600": 2412.067069201589,
+    "median_startup_s": 13.5,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "0.2": {
+    "n": 10,
+    "median_Q_d200": 2412.8859755045723,
+    "min_Q": 2295.918367346938,
+    "max_Q": 2435.7239512855217,
+    "median_Q_d600": 2393.617021276596,
+    "median_startup_s": 13.799999999999955,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "PASS_any_step": []
+  },
+  "K2": {
+   "0.5": {
+    "n": 10,
+    "median_Q_d200": 2322.5806451612902,
+    "min_Q": 2307.6923076923076,
+    "max_Q": 2345.2768729641693,
+    "median_Q_d600": 2285.714285714286,
+    "median_startup_s": 13.0,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": true
+   },
+   "0.2": {
+    "n": 10,
+    "median_Q_d200": 2334.634277639459,
+    "min_Q": 2319.587628865979,
+    "max_Q": 2356.020942408378,
+    "median_Q_d600": 2292.9973516124,
+    "median_startup_s": 13.0,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": true
+   },
+   "PASS_any_step": [
+    "0.5",
+    "0.2"
+   ]
+  },
+  "K3": {
+   "0.5": {
+    "n": 10,
+    "median_Q_d200": 2408.0536912751677,
+    "min_Q": 2264.1509433962265,
+    "max_Q": 2526.315789473684,
+    "median_Q_d600": 2380.223815352334,
+    "median_startup_s": 14.25,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "0.2": {
+    "n": 10,
+    "median_Q_d200": 2403.2085561497324,
+    "min_Q": 2272.727272727273,
+    "max_Q": 2553.191489361702,
+    "median_Q_d600": 2395.210641130974,
+    "median_startup_s": 14.699999999999989,
+    "teleports": 0,
+    "collisions": 0,
+    "queued_ok_all": true,
+    "determinism": true,
+    "PASS": false
+   },
+   "PASS_any_step": []
+  }
+ },
+ "outcome": "P3-ALIVE"
+}

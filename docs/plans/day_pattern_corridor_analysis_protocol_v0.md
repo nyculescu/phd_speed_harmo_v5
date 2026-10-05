@@ -87,3 +87,16 @@ It is **active on a day** if this holds in ≥ 5 of 7 consecutive bins, i.e. 35 
 - **Speed plausibility:** stations whose median 05:00–06:00 Wednesday speed is outside [50, 80] mph. Field-length errors are suspected (e.g. Winnetka Ave, 157 mph; I-35W SB upstream stations, 82–88 mph). These are listed with the results; no recalibration in this analysis.
 
 Both outcomes (v0 as run, v1) are logged.
+
+### Addendum A, disclosure (after the fix pull)
+
+**The fix pull made 4,696 requests (0 errors), not the 3,952 approved.** The overrun of 744 requests (≈ 19 %) came from exit detectors beyond the original range. `corridor_detectors()` took every Exit detector inside the extended range (review `wf_3a789fa2-71a` #5).
+- **Fixed:** exits are now limited to the original range.
+- **The extra exit data is not used by any criterion.**
+
+**Review fixes applied before the v1 re-run** (code only; no criterion changed):
+- **#0:** C2 is computed on Wednesdays, with a separate weekend share;
+- **#1:** "M" means exactly two peaks; the peak counts are reported;
+- **#2:** missing boundary bins are interpolated, not zero;
+- **#3:** C2, C3 and the speed list are reported even without a bottleneck;
+- **#4:** `score()` reproduces the screening's lane choice (0 of 440 windows differ from the committed screening).

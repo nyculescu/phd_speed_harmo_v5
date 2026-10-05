@@ -233,8 +233,8 @@
     "Q_ff_vphpl": 1397.142857142857,
     "ratio": 1.030674846625767,
     "ratio_ci95": [
-     1.0100778744846541,
-     1.05
+     1.0169491525423728,
+     1.0505804311774463
     ],
     "PASS": false
    },
@@ -364,14 +364,14 @@
     "onset_share": 0.75,
     "n_discharge": 12,
     "n_free": 5,
-    "Q_dis_vphpl": 1320.0,
+    "Q_dis_vphpl": 1316.0,
     "Q_ff_vphpl": 1359.4285714285713,
-    "ratio": 0.9709962168978563,
+    "ratio": 0.9680538041193779,
     "ratio_ci95": [
-     0.9373163324656503,
-     0.9974093264248706
+     0.9373219373219374,
+     0.9943868739205528
     ],
-    "PASS": false
+    "PASS": true
    },
    "R-b": {
     "n_runs": 40,
@@ -388,7 +388,7 @@
     "fail_operating": 0,
     "teleports_stress": 1,
     "fail_stress": 1,
-    "median_discharge_vphpl": 1320.0,
+    "median_discharge_vphpl": 1316.0,
     "determinism": true,
     "PASS": false,
     "PASS_original_rule": false
@@ -442,7 +442,7 @@
    "max": 1444.0,
    "calibration_all_onset_runs_median": 1440.0,
    "cal_n": 80,
-   "cal_max": 1492.0
+   "cal_max": 1496.0
   },
   "B3": {
    "stress_q3000_median_discharge": 1330.0,
@@ -452,5 +452,6 @@
    "cal_n": 85,
    "cal_max": 1360.0
   }
- }
+ },
+ "revision": "v1 (2026-10-05): onset/recovery labelled by forward-window start (review fix #12); v0 as run in s1_realism_v0_asrun.json"
 }

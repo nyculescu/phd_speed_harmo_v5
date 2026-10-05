@@ -176,6 +176,25 @@ def build_model(a, venv, lr):
     raise NotImplementedError(a.algo)
 
 
+def _entropy_loss_from_buffer(model):
+    """-mean policy entropy over the last rollout's observations, for algorithms that log no train/entropy_loss
+    (sb3-contrib TRPO; review fix #9). Same sign convention as SB3's entropy_loss. '' if not computable."""
+    try:
+        buf = model.rollout_buffer
+        obs = buf.observations.reshape(-1, *model.observation_space.shape)
+        with torch.no_grad():
+            dist = model.policy.get_distribution(torch.as_tensor(obs, dtype=torch.float32))
+            return -float(dist.entropy().mean())
+    except Exception:
+        return ""
+
+
+def action_dim_of(space):
+    """Box -> number of action dimensions (continuous entropy rule), otherwise None."""
+    from gymnasium import spaces
+    return int(np.prod(space.shape)) if isinstance(space, spaces.Box) else None
+
+
 def n_actions_of(space):
     """Discrete -> n, MultiDiscrete -> list of n, otherwise None (for the C1f entropy floor)."""
     from gymnasium import spaces
@@ -329,7 +348,8 @@ def main(argv=None) -> int:
                                   np.mean([r["outflow_ctrl_vph"] for r in rec]) if rec and "outflow_ctrl_vph" in rec[0] else "",
                                   self.health["PASS"], self.health["WARN"], self.health["FAIL"], wd.n_pauses,
                                   round(wd.max_smoothed, 1), lg.get("train/explained_variance", ""),
-                                  lg.get("train/entropy_loss", ""), lg.get("train/approx_kl", "")])
+                                  lg.get("train/entropy_loss", _entropy_loss_from_buffer(model)),
+                                  lg.get("train/approx_kl", "")])
             self.f_prog.flush()
 
         def validate(self, label):
@@ -369,7 +389,7 @@ def main(argv=None) -> int:
         venv.close()
         vval.close()
     from vsl_lab.train.convergence import check_run_dir
-    conv = check_run_dir(run_dir, n_actions=n_actions_of(model.action_space))
+    conv = check_run_dir(run_dir, n_actions=n_actions_of(model.action_space), action_dim=action_dim_of(model.action_space))
     (run_dir / "convergence.json").write_text(json.dumps(conv, indent=1, default=str))
     summary = {"run_id": run_id, "run_dir": str(run_dir), "updates_done": cb.n_upd, "stopped_health": cb.stop,
                "wall_s": round(time.time() - t_start, 1), "health_train": dict(cb.health),

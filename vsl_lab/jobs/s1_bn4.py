@@ -133,13 +133,15 @@ def signatures(run_dir: Path, xs: dict) -> dict:
     t = L["t"]
     v4 = L["L4m"]["v"]
     f2, f5 = _fwd(v4, 12), _fwd(v4, 30)
-    tb = next((i for i in range(len(t)) if ONSET_WIN[0] <= t[i] <= ONSET_WIN[1] and f2[i] < V_CONG and f5[i] < V_CONG),
+    # review fix #12 (2026-10-05): loop rows are labelled by interval END (row t holds [t-10, t)), so the forward
+    # window starting at row i begins at t[i] - DT; onset and recovery are labelled by that start time
+    tb = next((i for i in range(len(t)) if ONSET_WIN[0] <= t[i] - DT <= ONSET_WIN[1] and f2[i] < V_CONG and f5[i] < V_CONG),
               None)
-    t_b = float(t[tb]) if tb is not None else None
+    t_b = float(t[tb] - DT) if tb is not None else None
     t_rec = None
     if tb is not None:
         j = next((j for j in range(tb + 1, len(t)) if f5[j] > V_REC), None)
-        t_rec = float(t[j]) if j is not None else None
+        t_rec = float(t[j] - DT) if j is not None else None
     qx = L["Lx"]["q_vphpl"]
     cap = None
     if t_b is not None:

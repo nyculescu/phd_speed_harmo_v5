@@ -84,6 +84,7 @@ def run_one(cand: str, step: float, seed: int, out_root: Path) -> dict:
               "--collision.action", "warn", "--no-step-log", "true", "--log", str(run_dir / "sumo.log")])
     ls.trafficlight.setRedYellowGreenState("stop", "r")
     seen = {k: {} for k in LOOPS}
+    spd200 = {}                                     # review fix #6: speed at first detection on the 200 m loop
     tele = coll = 0
     queued_ok = None
     t = 0.0
@@ -99,7 +100,10 @@ def run_one(cand: str, step: float, seed: int, out_root: Path) -> dict:
             ls.trafficlight.setRedYellowGreenState("stop", "G")
         for k in LOOPS:
             for v in ls.inductionloop.getLastStepVehicleIDs(k):
-                seen[k].setdefault(v, t)
+                if v not in seen[k]:
+                    seen[k][v] = t
+                    if k == "d200":
+                        spd200[v] = ls.vehicle.getSpeed(v)
         if len(seen["d600"]) == N_VEH:
             break
     ls.close()
@@ -110,6 +114,8 @@ def run_one(cand: str, step: float, seed: int, out_root: Path) -> dict:
         out[f"n_{k}"] = len(ts)
         out[f"Q_{k}"] = 100 * 3600.0 / (ts[120] - ts[20]) if len(ts) > 120 and ts[120] > ts[20] else None
         out[f"t1_{k}"] = ts[0] - T_GREEN if ts else None
+    order200 = sorted(seen["d200"], key=seen["d200"].get)[20:121]       # the same vehicles 21..121 as Q
+    out["mean_speed_d200_mps"] = float(np.mean([spd200[v] for v in order200])) if len(order200) == 101 else None
     out["hash"] = hashlib.sha1(json.dumps({k: sorted(seen[k].items()) for k in LOOPS}).encode()).hexdigest()[:16]
     (run_dir / "summary.json").write_text(json.dumps(out, indent=1))
     return out
@@ -144,6 +150,9 @@ def analyse(root: Path) -> dict:
             ok = med is not None and 1600.0 <= med <= 2400.0 and clean and det_ok and queued and len(q) == len(CHK_SEEDS)
             rc[str(st)] = {"n": len(rows), "median_Q_d200": med, "min_Q": min(q) if q else None,
                            "max_Q": max(q) if q else None, "median_Q_d600": float(np.median(q6)) if q6 else None,
+                           "median_mean_speed_d200_mps": float(np.median([o["mean_speed_d200_mps"] for o in rows
+                                                                          if o.get("mean_speed_d200_mps") is not None]))
+                           if rows else None,
                            "median_startup_s": float(np.median([o["t1_d200"] for o in rows if o["t1_d200"] is not None]))
                            if rows else None, "teleports": sum(o["teleports"] for o in rows),
                            "collisions": sum(o["collisions"] for o in rows), "queued_ok_all": queued,

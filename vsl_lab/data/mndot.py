@@ -115,7 +115,8 @@ def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0) -> dict:
             elif t == "Entrance" and n.find("meter") is not None and names[i] in meters:
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") in RAMP_CATS]
                 out["ramps"].append(rec | {"meter": names[i], "storage": n.find("meter").get("storage"), "dets": d})
-            elif t == "Exit":
+            elif t == "Exit" and km[i] <= km[i1] + min(down_km, 2.0):
+                # review fix #5: exits only inside the original range (the Addendum A extension is mainline only)
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") == "Exit"]
                 if d:
                     out["exits"].append(rec | {"dets": d})
@@ -203,6 +204,12 @@ def available(date: str) -> list:
     return data
 
 
+def available_cached(date: str) -> list:
+    """The cached detector list of `date` (no request); empty if it was never fetched."""
+    f = DATA_ROOT / "mayfly" / date[:4] / date / "_detectors.json"
+    return json.loads(f.read_text()) if f.exists() else []
+
+
 def day_congested(occ_lanes: list[list], thr=25.0, min_bins=3) -> dict:
     """Lane-mean 5-min occupancy (%); congested if >= thr for >= min_bins consecutive 5-min bins in 06:00-20:00.
     Mayfly occupancy units: per the IRIS docs scaled values; normalised here by the max plausible (see note)."""
@@ -246,7 +253,12 @@ def score(W: list[dict]) -> dict:
             for s in w["stations"]:
                 key = (date, s["node"])
                 if key not in cache:
-                    occ = next((o for o in (_cached_occ(date, d) for d in s["dets"]) if o is not None), None)
+                    # review fix #4: the screen's lane choice (available that date, middle lane first), so that
+                    # later pulls of more lanes cannot change the screening result
+                    have = set(available_cached(date))
+                    ds = [d for d in s["dets"] if d in have]
+                    order = sorted(ds, key=lambda d: abs(ds.index(d) - (len(ds) - 1) / 2))
+                    occ = next((o for o in (_cached_occ(date, d) for d in order) if o is not None), None)
                     cache[key] = day_congested([occ]) if occ is not None else {"valid": False}
                 sts.append((s, cache[key]))
             valid = [(s, c) for s, c in sts if c["valid"]]

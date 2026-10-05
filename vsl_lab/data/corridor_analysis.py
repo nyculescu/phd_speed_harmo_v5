@@ -129,15 +129,8 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
            "ramps": [{"label": r["label"], "km": r["km"], "storage": r["storage"]} for r in cor["ramps"]],
            "n_days": len(dates), "n_wednesdays": len(wed), "bottleneck_pair_counts_wed": {
                f"{k[0]}->{k[1]}": v for k, v in sorted(cnt.items(), key=lambda kv: -kv[1])[:5]}}
-    if not cnt:
-        out["C1"] = {"PASS": False, "note": "no active bottleneck in the window"}
-        return out
-    B = max(cnt, key=cnt.get)
-    bu = next(s for s in sts if s["node"] == B[0])
-    bd = next(s for s in sts if s["node"] == B[1])
-    out["B"] = {"u": bu["label"] or bu["node"], "d": bd["label"] or bd["node"], "u_km": bu["km"], "d_km": bd["km"]}
-    # Addendum A.2 (reported only): ramps feeding B; implausible free-flow speeds
-    out["ramps_upstream_of_B_within_6km"] = [r["label"] for r in cor["ramps"] if bu["km"] - 6.0 <= r["km"] <= bu["km"]]
+    # B-independent items first (review fix #3): implausible speeds, C2, C3 are reported even without a bottleneck
+    # Addendum A.2 (reported only): implausible free-flow speeds
     implaus = []
     for s in sts:
         ff = [np.nanmedian(x["v"][0:12]) for d in wed for s2, x in days[d] if s2["node"] == s["node"]]
@@ -145,27 +138,20 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
         if mff is not None and not (50.0 <= mff <= 80.0):
             implaus.append({"station": s["label"] or s["node"], "km": s["km"], "median_05_06_mph": round(mff, 1)})
     out["implausible_speed_stations"] = implaus
-    # C1
-    wed_valid = [d for d in wed if any(s["node"] == B[0] for s, _ in days[d]) and any(s["node"] == B[1] for s, _ in days[d])]
-    wed_act = [d for d in wed_valid if B in act[d]]
-    share = len(wed_act) / len(wed_valid) if wed_valid else None
-    out["C1"] = {"valid_wed": len(wed_valid), "active_wed": len(wed_act), "share": share,
-                 "PASS": share is not None and 0.30 <= share <= 0.90}
-    wk = [d for d in dates if d not in wed]
-    wk_valid = [d for d in wk if any(s["node"] == B[0] for s, _ in days[d]) and any(s["node"] == B[1] for s, _ in days[d])]
-    out["weekend_active_share"] = (sum(B in act[d] for d in wk_valid) / len(wk_valid)) if wk_valid else None
     # C2
     rr = []
     for r in cor["ramps"]:
-        res = {}
+        res, wkb = {}, {}
         for cat in ("Queue", "Passage"):
             best = 0.0
             for det, c in r["dets"]:
                 if c != cat:
                     continue
-                best = max(best, float(np.mean([ramp_valid(d, det) for d in dates])))
+                best = max(best, float(np.mean([ramp_valid(d, det) for d in wed])))   # Wednesdays (review fix #0)
+                wkb[cat] = max(wkb.get(cat, 0.0), float(np.mean([ramp_valid(d, det) for d in dates if d not in wed])))
             res[cat] = best
         rr.append({"ramp": r["label"], "queue_valid_share": res["Queue"], "passage_valid_share": res["Passage"],
+                   "weekend_queue_valid_share": wkb.get("Queue"), "weekend_passage_valid_share": wkb.get("Passage"),
                    "PASS": res["Queue"] >= 0.9 and res["Passage"] >= 0.9})
     out["C2"] = {"ramps": rr, "PASS": all(x["PASS"] for x in rr)}
     # C3 (per Wednesday: the most upstream valid station)
@@ -183,6 +169,24 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
                  "extension_stations_km_le_-4": len(up_st),
                  "extension_min_km": min((s["km"] for s in ext["mainline"]), default=None),
                  "extension_detectors": sum(len(s["dets"]) for s in up_st)}
+    if not cnt:
+        out["C1"] = {"PASS": False, "note": "no active bottleneck in the window"}
+        return out
+    B = max(cnt, key=cnt.get)
+    bu = next(s for s in sts if s["node"] == B[0])
+    bd = next(s for s in sts if s["node"] == B[1])
+    out["B"] = {"u": bu["label"] or bu["node"], "d": bd["label"] or bd["node"], "u_km": bu["km"], "d_km": bd["km"]}
+    # Addendum A.2 (reported only): ramps feeding B
+    out["ramps_upstream_of_B_within_6km"] = [r["label"] for r in cor["ramps"] if bu["km"] - 6.0 <= r["km"] <= bu["km"]]
+    # C1
+    wed_valid = [d for d in wed if any(s["node"] == B[0] for s, _ in days[d]) and any(s["node"] == B[1] for s, _ in days[d])]
+    wed_act = [d for d in wed_valid if B in act[d]]
+    share = len(wed_act) / len(wed_valid) if wed_valid else None
+    out["C1"] = {"valid_wed": len(wed_valid), "active_wed": len(wed_act), "share": share,
+                 "PASS": share is not None and 0.30 <= share <= 0.90}
+    wk = [d for d in dates if d not in wed]
+    wk_valid = [d for d in wk if any(s["node"] == B[0] for s, _ in days[d]) and any(s["node"] == B[1] for s, _ in days[d])]
+    out["weekend_active_share"] = (sum(B in act[d] for d in wk_valid) / len(wk_valid)) if wk_valid else None
     # C4 and reported per-episode numbers (Wednesdays)
     rs, qdis_l, cap_l, onsets, durs, am, pm, both = [], [], [], [], [], 0, 0, 0
     for d in wed_act:
@@ -219,7 +223,7 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
                        "wed_with_both": both, "share_wed_both": both / len(wed_valid) if wed_valid else None}
     # day shapes at the boundary: the most upstream station valid on >= 80 % of Wednesdays
     bnd = next((s for s in sts if np.mean([any(x["node"] == s["node"] for x, _ in days[d]) for d in wed]) >= 0.8), None)
-    shapes = {}
+    shapes, peak_counts = {}, {}
     tot, peak = {}, {}
     if bnd is not None:
         for d in dates:
@@ -229,12 +233,14 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
             q15 = np.nanmean(x["q"][:NB - NB % 3].reshape(-1, 3), axis=1)
             mx = np.nanmax(q15)
             mid = np.nanmedian(q15[4:60])                    # 06:00-20:00 in 15-min bins
+            npk = 0
             if mx / max(mid, 1e-9) < 1.3:
                 lab = "flat"
             else:
                 pk, _ = find_peaks(np.nan_to_num(q15), prominence=0.15 * mx, distance=12)
                 times = [(5 * 60 + 15 * p) for p in pk]
-                if len(pk) >= 2 and min(times) < 720 <= max(times):
+                npk = len(pk)
+                if len(pk) == 2 and min(times) < 720 <= max(times):   # protocol: two peaks (review fix #1)
                     lab = "M"
                 elif len(pk) == 1:
                     lab = "^"
@@ -244,10 +250,16 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
             grp = "wed" if wd == 2 else ("sat" if wd == 5 else "sun")
             shapes.setdefault(grp, {}).setdefault(lab, 0)
             shapes[grp][lab] += 1
-            tot[d] = float(np.nansum(x["q"]) / 12.0)
-            peak[d] = float(np.nanmax(np.convolve(np.nan_to_num(x["q"]), np.ones(12) / 12, mode="valid")))
+            peak_counts.setdefault(grp, {}).setdefault(str(npk), 0)
+            peak_counts[grp][str(npk)] += 1
+            qi = x["q"].copy()                             # review fix #2: interpolate missing bins, not zeros
+            ok = ~np.isnan(qi)
+            qi[~ok] = np.interp(np.flatnonzero(~ok), np.flatnonzero(ok), qi[ok])
+            tot[d] = float(np.sum(qi) / 12.0)
+            peak[d] = float(np.max(np.convolve(qi, np.ones(12) / 12, mode="valid")))
     out["boundary_station"] = (bnd["label"] or bnd["node"], bnd["km"]) if bnd else None
     out["day_shapes"] = shapes
+    out["day_peak_counts"] = peak_counts             # review fix #1: 3+-peak days stay visible ("other")
     # M-to-trapezoid descriptive (Wednesdays)
     rows = []
     for d in wed_valid:

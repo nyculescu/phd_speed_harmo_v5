@@ -72,3 +72,14 @@ def test_live_config_override(tmp_path):
     assert not g.update(0, 0.6, 80.0).allow_launch
     f.write_text(json.dumps({"cpu_limit": 0.9}))
     assert g.update(1, 0.6, 80.0).allow_launch
+
+
+def test_malformed_live_config_falls_back(tmp_path):
+    from vsl_lab.ops.guard import load_cfg, DEFAULTS
+    f = tmp_path / "thermal.json"
+    for txt in ('{"cpu_limit": null}', '[0.9]', '{"cpu_limit": "x", "center": 94}', 'not json', '{"cpu_limit": "nan"}'):
+        f.write_text(txt)
+        cfg = load_cfg(f)
+        assert cfg["cpu_limit"] == DEFAULTS["cpu_limit"]
+    f.write_text('{"cpu_limit": "x", "center": 94}')
+    assert load_cfg(f)["center"] == 94.0
