@@ -15,13 +15,13 @@ import numpy as np
 from scipy.signal import find_peaks
 from scipy.stats import spearmanr
 
-from vsl_lab.data.mndot import DATA_ROOT, TOP3, corridor_detectors, pass1_dates
+from vsl_lab.data.mndot import DATA_ROOT, DOWN_KM, TOP3, corridor_detectors, pass1_dates
 
 B0, B1 = 60, 276                 # 5-min bins 05:00-23:00 (216 bins)
 NB = B1 - B0
 V_CONG, DV, BN_MIN, BN_WIN = 40.0, 20.0, 5, 7
 MAX_GAP_KM, MERGE_GAP = 3.0, 6   # pair spacing; episodes merged if separated by < 30 min
-OUT = Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_corridor_analysis_v0.json"
+OUT = Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_corridor_analysis_v1.json"   # Addendum A re-run
 
 
 def _load(date: str, det: str, kind: str):
@@ -99,7 +99,7 @@ def ramp_valid(date: str, det: str) -> bool:
 
 
 def analyse_corridor(name: str, meters: list, dates: list) -> dict:
-    cor = corridor_detectors(meters)
+    cor = corridor_detectors(meters, down_km=DOWN_KM.get(name, 2.0))
     sts = sorted(cor["mainline"], key=lambda s: s["km"])
     ramp_km = [r["km"] for r in cor["ramps"]]
     wed = [d for d in dates if dt.datetime.strptime(d, "%Y%m%d").weekday() == 2]
@@ -136,6 +136,15 @@ def analyse_corridor(name: str, meters: list, dates: list) -> dict:
     bu = next(s for s in sts if s["node"] == B[0])
     bd = next(s for s in sts if s["node"] == B[1])
     out["B"] = {"u": bu["label"] or bu["node"], "d": bd["label"] or bd["node"], "u_km": bu["km"], "d_km": bd["km"]}
+    # Addendum A.2 (reported only): ramps feeding B; implausible free-flow speeds
+    out["ramps_upstream_of_B_within_6km"] = [r["label"] for r in cor["ramps"] if bu["km"] - 6.0 <= r["km"] <= bu["km"]]
+    implaus = []
+    for s in sts:
+        ff = [np.nanmedian(x["v"][0:12]) for d in wed for s2, x in days[d] if s2["node"] == s["node"]]
+        mff = float(np.nanmedian(ff)) if ff else None
+        if mff is not None and not (50.0 <= mff <= 80.0):
+            implaus.append({"station": s["label"] or s["node"], "km": s["km"], "median_05_06_mph": round(mff, 1)})
+    out["implausible_speed_stations"] = implaus
     # C1
     wed_valid = [d for d in wed if any(s["node"] == B[0] for s, _ in days[d]) and any(s["node"] == B[1] for s, _ in days[d])]
     wed_act = [d for d in wed_valid if B in act[d]]

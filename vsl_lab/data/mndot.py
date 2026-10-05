@@ -80,6 +80,9 @@ def windows(span=(1.5, 8.0), down_km=2.0) -> list[dict]:
 TOP3 = {"I35W_SB": ["M35WS29", "M35WS30", "M35WS34"], "I394_WB": ["M394W17", "M394W22", "M394W24"],
         "TH100_SB": ["M100S36", "M100S37", "M100S39"]}      # author choice 2026-10-05 (shortlist #1-#3)
 RAMP_CATS = ("Queue", "Passage", "Merge", "Bypass", "Green")
+# Corridor analysis Addendum A (2026-10-05): downstream range extended to include the next 3 data-bearing stations
+# (data-extent fix); T.H.100 SB has no station downstream in the configuration.
+DOWN_KM = {"I35W_SB": 4.2, "I394_WB": 4.6, "TH100_SB": 2.0}
 
 
 def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0) -> dict:
@@ -298,7 +301,7 @@ def main(argv=None) -> int:
                           "requests_weekdays_2023": 2 * 260 * sum(n.values())}))
         return 0
     if a.what == "pull":
-        cors = {k: corridor_detectors(v) for k, v in TOP3.items()}
+        cors = {k: corridor_detectors(v, down_km=DOWN_KM.get(k, 2.0)) for k, v in TOP3.items()}
         dets = sorted({d[0] for v in cors.values() for x in v["mainline"] + v["ramps"] + v["exits"] for d in x["dets"]})
         f = Fetcher()
         t0 = time.time()
