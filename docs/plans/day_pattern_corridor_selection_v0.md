@@ -25,6 +25,19 @@
 - **NDW** (Netherlands): the open data portal answers (minute data).
 - **PeMS** (California): the site answers; it needs a free account (yours).
 
+## Update (2026-10-05, later): MnDOT data IS accessible, through Mayfly
+
+**The `trafdat` paths above were my guess and were wrong.** The author could not download them either.
+- MnDOT's IRIS source (`github.com/mnit-rtmc/iris`, `mayfly/src/routes.rs`) documents the **Mayfly** HTTP service. It works from this machine with no account:
+  - `https://data.dot.state.mn.us/mayfly/districts` → `["d1","lg","metro","metro_signals","d6"]`;
+  - `…/mayfly/years` → 1993–2024 (and later);
+  - `…/mayfly/detectors?district=metro&date=YYYYMMDD` → detector ids with data that day (7,766 on 2024-03-12);
+  - `…/mayfly/counts?district=metro&date=YYYYMMDD&detector=ID` → a JSON array of **2,880 30-s counts**;
+  - `…/mayfly/occupancy?...` → the same for occupancy;
+  - `/speed` returns 404 for plain loops. Speed is derived from counts and occupancy with the detector field length, as usual.
+- **Size:** about 6 kB per detector-day per quantity.
+- **Option (a) is therefore open without the author.** The data route is MnDOT via Mayfly.
+
 ## Selection criteria (to apply once data is available; proposed, not yet pre-registered)
 
 1. **A recurrent active bottleneck inside the window.** A speed drop below 50 km/h at the downstream end on ≥ 30 % of weekdays in the tuning year, with free flow upstream of the queue tail.
