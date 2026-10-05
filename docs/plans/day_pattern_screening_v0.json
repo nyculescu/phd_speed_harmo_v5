@@ -1,0 +1,10756 @@
+{
+ "dates": [
+  "20230201",
+  "20230215",
+  "20230301",
+  "20230315",
+  "20230405",
+  "20230419",
+  "20230503",
+  "20230517",
+  "20230607",
+  "20230621",
+  "20230705",
+  "20230719",
+  "20230802",
+  "20230816",
+  "20230906",
+  "20230920",
+  "20231004",
+  "20231018",
+  "20231101",
+  "20231115"
+ ],
+ "threshold": "lane 5-min occupancy >= 25 % for >= 15 min, 06-20h, one lane per station",
+ "windows": [
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.96,
+   "start_km": 30.55,
+   "ramps": [
+    "Cayuga St",
+    "12th St",
+    "Kellogg Blvd"
+   ],
+   "meters": [
+    "M35ES36",
+    "M35ES38",
+    "M35ES39"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.7,
+   "bottleneck_station_counts": {
+    "Grand Ave": 17,
+    "St. Clair Ave": 3
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.53,
+   "start_km": 32.9,
+   "ramps": [
+    "12th St",
+    "Kellogg Blvd",
+    "Grand Ave"
+   ],
+   "meters": [
+    "M35ES38",
+    "M35ES39",
+    "M35ES40"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.7,
+   "bottleneck_station_counts": {
+    "Grand Ave": 17,
+    "St. Clair Ave": 2,
+    "Victoria St": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.17,
+   "start_km": 33.51,
+   "ramps": [
+    "Kellogg Blvd",
+    "Grand Ave",
+    "Randolph Ave"
+   ],
+   "meters": [
+    "M35ES39",
+    "M35ES40",
+    "M35ES42"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.7,
+   "bottleneck_station_counts": {
+    "Grand Ave": 16,
+    "St. Clair Ave": 2,
+    "Shepard Rd": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.68,
+   "start_km": 31.69,
+   "ramps": [
+    "76th St",
+    "66th St",
+    "60th St"
+   ],
+   "meters": [
+    "M35WN29",
+    "M35WN30",
+    "M35WN36"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "53rd St": 11,
+    "Diamond Lake Rd": 9
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.25,
+   "start_km": 34.12,
+   "ramps": [
+    "66th St",
+    "60th St"
+   ],
+   "meters": [
+    "M35WN30",
+    "M35WN36"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "53rd St": 11,
+    "Diamond Lake Rd": 9
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.37,
+   "start_km": 34.12,
+   "ramps": [
+    "66th St",
+    "60th St",
+    "Diamond Lake Rd"
+   ],
+   "meters": [
+    "M35WN30",
+    "M35WN36",
+    "M35WN37"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "47th St": 11,
+    "48th St": 9
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.04,
+   "start_km": 36.38,
+   "ramps": [
+    "60th St",
+    "Diamond Lake Rd",
+    "46th St"
+   ],
+   "meters": [
+    "M35WN36",
+    "M35WN37",
+    "M35WN38"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "47th St": 8,
+    "48th St": 8,
+    "42nd St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.92,
+   "start_km": 37.49,
+   "ramps": [
+    "Diamond Lake Rd",
+    "46th St"
+   ],
+   "meters": [
+    "M35WN37",
+    "M35WN38"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "47th St": 8,
+    "48th St": 8,
+    "42nd St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.96,
+   "start_km": 37.49,
+   "ramps": [
+    "Diamond Lake Rd",
+    "46th St",
+    "35th St"
+   ],
+   "meters": [
+    "M35WN37",
+    "M35WN38",
+    "M35WN40"
+   ],
+   "n_stations": 15,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "48th St": 8,
+    "47th St": 7,
+    "42nd St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.04,
+   "start_km": 39.41,
+   "ramps": [
+    "46th St",
+    "35th St"
+   ],
+   "meters": [
+    "M35WN38",
+    "M35WN40"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "42nd St": 12,
+    "26th St": 7,
+    "28th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.89,
+   "start_km": 39.41,
+   "ramps": [
+    "46th St",
+    "35th St",
+    "5th Ave"
+   ],
+   "meters": [
+    "M35WN38",
+    "M35WN40",
+    "M35WN42"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "42nd St": 12,
+    "26th St": 5,
+    "Franklin Ave": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 6.37,
+   "start_km": 9.57,
+   "ramps": [
+    "Co Rd 73",
+    "Louisiana Ave",
+    "I-394 CD EB"
+   ],
+   "meters": [
+    "M394E17",
+    "M394E22",
+    "M394E24"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Winnetka Ave": 7,
+    "E of T.H.100": 6,
+    "E of Wirth Pkwy": 3
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.31,
+   "start_km": 13.63,
+   "ramps": [
+    "Louisiana Ave",
+    "I-394 CD EB"
+   ],
+   "meters": [
+    "M394E22",
+    "M394E24"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "E of T.H.100": 16,
+    "E of Wirth Pkwy": 3,
+    "W of Wirth Pkwy": 1
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.68,
+   "start_km": 13.63,
+   "ramps": [
+    "Louisiana Ave",
+    "I-394 CD EB",
+    "T.H.100 CD NB"
+   ],
+   "meters": [
+    "M394E22",
+    "M394E24",
+    "M394E26"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "E of T.H.100": 15,
+    "Penn Ave": 2,
+    "E of Wirth Pkwy": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.47,
+   "start_km": 15.94,
+   "ramps": [
+    "I-394 CD EB",
+    "T.H.100 CD NB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M394E24",
+    "M394E26",
+    "M394E27"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "E of T.H.100": 10,
+    "I-94": 5,
+    "Penn Ave": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.1,
+   "start_km": 16.31,
+   "ramps": [
+    "T.H.100 CD NB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M394E26",
+    "M394E27"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.7,
+   "bottleneck_station_counts": {
+    "I-94": 10,
+    "E of Wirth Pkwy": 6,
+    "Penn Ave": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.21,
+   "start_km": 0.92,
+   "ramps": [
+    "Flying Cloud Dr",
+    "Prairie Center Dr",
+    "U.S.169 SB"
+   ],
+   "meters": [
+    "M494E25",
+    "M494E26",
+    "M494E27"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Marth Rd": 20
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.69,
+   "start_km": 1.45,
+   "ramps": [
+    "Prairie Center Dr",
+    "U.S.169 SB"
+   ],
+   "meters": [
+    "M494E26",
+    "M494E27"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Marth Rd": 20
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.05,
+   "start_km": 1.45,
+   "ramps": [
+    "Prairie Center Dr",
+    "U.S.169 SB",
+    "Marth Rd"
+   ],
+   "meters": [
+    "M494E26",
+    "M494E27",
+    "M494E271"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Marth Rd": 20
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.41,
+   "start_km": 3.5,
+   "ramps": [
+    "Marth Rd",
+    "U.S.169 NB",
+    "E Bush Lake Rd"
+   ],
+   "meters": [
+    "M494E271",
+    "M494E28",
+    "M494E29"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "Marth Rd": 11,
+    "Nord Ave": 9
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.94,
+   "start_km": 3.98,
+   "ramps": [
+    "U.S.169 NB",
+    "E Bush Lake Rd"
+   ],
+   "meters": [
+    "M494E28",
+    "M494E29"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "Marth Rd": 11,
+    "Nord Ave": 9
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.63,
+   "start_km": 3.98,
+   "ramps": [
+    "U.S.169 NB",
+    "E Bush Lake Rd",
+    "T.H.100 SB"
+   ],
+   "meters": [
+    "M494E28",
+    "M494E29",
+    "M494E30"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "Marth Rd": 11,
+    "Nord Ave": 8,
+    "France Ave": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.73,
+   "start_km": 6.61,
+   "ramps": [
+    "T.H.100 SB",
+    "T.H.100 NB",
+    "France Ave SB"
+   ],
+   "meters": [
+    "M494E30",
+    "M494E31",
+    "M494E32"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Nord Ave": 19,
+    "France Ave": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.84,
+   "start_km": 6.95,
+   "ramps": [
+    "T.H.100 NB",
+    "France Ave SB",
+    "France Ave NB"
+   ],
+   "meters": [
+    "M494E31",
+    "M494E32",
+    "M494E33"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.9,
+   "bottleneck_station_counts": {
+    "Nord Ave": 19,
+    "France Ave": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.52,
+   "start_km": 26.83,
+   "ramps": [
+    "34th Ave",
+    "24th Ave",
+    "T.H.77 NB"
+   ],
+   "meters": [
+    "M494W30",
+    "M494W31",
+    "M494W32"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "24th Ave": 10,
+    "Portland Ave": 9,
+    "T.H.77": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.91,
+   "start_km": 28.35,
+   "ramps": [
+    "T.H.77 NB",
+    "T.H.77 SB",
+    "Portland Ave"
+   ],
+   "meters": [
+    "M494W32",
+    "M494W33",
+    "M494W35"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lyndale Ave": 13,
+    "Nicollet Ave": 6,
+    "T.H.77": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.32,
+   "start_km": 28.76,
+   "ramps": [
+    "T.H.77 SB",
+    "Portland Ave",
+    "Nicollet Ave"
+   ],
+   "meters": [
+    "M494W33",
+    "M494W35",
+    "M494W36"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lyndale Ave": 13,
+    "Nicollet Ave": 7
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.58,
+   "start_km": 30.26,
+   "ramps": [
+    "Portland Ave",
+    "Nicollet Ave",
+    "Lyndale Ave"
+   ],
+   "meters": [
+    "M494W35",
+    "M494W36",
+    "M494W37"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lyndale Ave": 13,
+    "Nicollet Ave": 7
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.51,
+   "start_km": 5.77,
+   "ramps": [
+    "T.H.65 NB",
+    "Silver Lake Rd",
+    "Long Lake Rd"
+   ],
+   "meters": [
+    "M694E09",
+    "M694E10",
+    "M694E11"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.55,
+   "bottleneck_station_counts": {
+    "E of I-35W": 16,
+    "Oakwood Dr": 3,
+    "Long Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.21,
+   "start_km": 8.0,
+   "ramps": [
+    "Silver Lake Rd",
+    "Long Lake Rd",
+    "I-35W SB"
+   ],
+   "meters": [
+    "M694E10",
+    "M694E11",
+    "M694E13"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.55,
+   "bottleneck_station_counts": {
+    "E of I-35W": 16,
+    "Oakwood Dr": 3,
+    "Long Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.7,
+   "start_km": 10.21,
+   "ramps": [
+    "I-35W SB",
+    "I-35W NB",
+    "Lexington Ave"
+   ],
+   "meters": [
+    "M694E13",
+    "M694E14",
+    "M694E17"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.45,
+   "bottleneck_station_counts": {
+    "E of I-35W": 20
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.63,
+   "start_km": 23.86,
+   "ramps": [
+    "T.H.65 NB",
+    "T.H.65 SB",
+    "University Ave NB"
+   ],
+   "meters": [
+    "M694W55",
+    "M694W56",
+    "M694W57"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "East River Rd": 10,
+    "T.H.47": 5,
+    "Main St": 4
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.84,
+   "start_km": 367.98,
+   "ramps": [
+    "Dowling Ave",
+    "Broadway Ave"
+   ],
+   "meters": [
+    "M94E34",
+    "M94E35"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "Olson Hwy": 19,
+    "7th St": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.88,
+   "start_km": 367.98,
+   "ramps": [
+    "Dowling Ave",
+    "Broadway Ave",
+    "Olson Hwy"
+   ],
+   "meters": [
+    "M94E34",
+    "M94E35",
+    "M94E36"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of I-394": 13,
+    "N of I-394": 4,
+    "S of Dunwoody Blvd": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.04,
+   "start_km": 370.82,
+   "ramps": [
+    "Broadway Ave",
+    "Olson Hwy"
+   ],
+   "meters": [
+    "M94E35",
+    "M94E36"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of I-394": 13,
+    "N of I-394": 4,
+    "S of Dunwoody Blvd": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.9,
+   "start_km": 370.82,
+   "ramps": [
+    "Broadway Ave",
+    "Olson Hwy",
+    "Lyndale Ave"
+   ],
+   "meters": [
+    "M94E35",
+    "M94E36",
+    "M94E39"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of I-394": 13,
+    "N of I-394": 4,
+    "S of Dunwoody Blvd": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.86,
+   "start_km": 372.87,
+   "ramps": [
+    "Olson Hwy",
+    "Lyndale Ave"
+   ],
+   "meters": [
+    "M94E36",
+    "M94E39"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of I-394": 13,
+    "N of I-394": 4,
+    "S of Dunwoody Blvd": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.9,
+   "start_km": 372.87,
+   "ramps": [
+    "Olson Hwy",
+    "Lyndale Ave",
+    "Hennepin Ave"
+   ],
+   "meters": [
+    "M94E36",
+    "M94E39",
+    "M94E40"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of I-394": 13,
+    "N of I-394": 4,
+    "S of Dunwoody Blvd": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.39,
+   "start_km": 29.12,
+   "ramps": [
+    "Mounds Blvd",
+    "Wabasha St"
+   ],
+   "meters": [
+    "M94W35",
+    "M94W41"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 20
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.07,
+   "start_km": 29.12,
+   "ramps": [
+    "Mounds Blvd",
+    "Wabasha St",
+    "Marion St"
+   ],
+   "meters": [
+    "M94W35",
+    "M94W41",
+    "M94W43"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 20
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.62,
+   "start_km": 38.83,
+   "ramps": [
+    "Vandalia St",
+    "T.H.280 SB",
+    "Huron Blvd"
+   ],
+   "meters": [
+    "M94W47",
+    "M94W48",
+    "M94W50"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.6,
+   "bottleneck_station_counts": {
+    "Cedar Ave": 9,
+    "25th Ave": 8,
+    "T.H.280": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.65,
+   "start_km": 39.99,
+   "ramps": [
+    "T.H.280 SB",
+    "Huron Blvd",
+    "25th Ave"
+   ],
+   "meters": [
+    "M94W48",
+    "M94W50",
+    "M94W51"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.6,
+   "bottleneck_station_counts": {
+    "Cedar Ave": 10,
+    "25th Ave": 8,
+    "Huron Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.37,
+   "start_km": 4.16,
+   "ramps": [
+    "U.S.169 NB",
+    "Gleason Rd",
+    "Tracy Ave"
+   ],
+   "meters": [
+    "M62E27",
+    "M62E29",
+    "M62E30"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.85,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 10,
+    "Gleason Rd": 8,
+    "Wyman Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.68,
+   "start_km": 5.17,
+   "ramps": [
+    "Gleason Rd",
+    "Tracy Ave",
+    "T.H.100 SB"
+   ],
+   "meters": [
+    "M62E29",
+    "M62E30",
+    "M62E31"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.85,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 18,
+    "Wyman Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.72,
+   "start_km": 6.53,
+   "ramps": [
+    "Tracy Ave",
+    "T.H.100 SB",
+    "T.H.100 NB"
+   ],
+   "meters": [
+    "M62E30",
+    "M62E31",
+    "M62E32"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.85,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 18,
+    "Wyman Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.11,
+   "start_km": 7.85,
+   "ramps": [
+    "T.H.100 SB",
+    "T.H.100 NB",
+    "France Ave"
+   ],
+   "meters": [
+    "M62E31",
+    "M62E32",
+    "M62E33"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 20
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.7,
+   "start_km": 8.25,
+   "ramps": [
+    "T.H.100 NB",
+    "France Ave"
+   ],
+   "meters": [
+    "M62E32",
+    "M62E33"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 20
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.49,
+   "start_km": 8.25,
+   "ramps": [
+    "T.H.100 NB",
+    "France Ave",
+    "Xerxes Ave"
+   ],
+   "meters": [
+    "M62E32",
+    "M62E33",
+    "M62E34"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 20
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.14,
+   "start_km": 10.74,
+   "ramps": [
+    "Xerxes Ave",
+    "Penn Ave",
+    "I-35W NB"
+   ],
+   "meters": [
+    "M62E34",
+    "M62E35",
+    "M62E37"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 17,
+    "Portland Ave": 3
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.89,
+   "start_km": 12.89,
+   "ramps": [
+    "I-35W NB",
+    "Lyndale Ave",
+    "Portland Ave"
+   ],
+   "meters": [
+    "M62E37",
+    "M62E38",
+    "M62E40"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 17,
+    "Portland Ave": 2,
+    "Bloomington Ave": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.82,
+   "start_km": 12.95,
+   "ramps": [
+    "Lyndale Ave",
+    "Portland Ave"
+   ],
+   "meters": [
+    "M62E38",
+    "M62E40"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 17,
+    "Portland Ave": 2,
+    "Bloomington Ave": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 4.35,
+   "start_km": 13.53,
+   "ramps": [
+    "28th Ave",
+    "T.H.77 SB",
+    "Lyndale Ave"
+   ],
+   "meters": [
+    "M62W41",
+    "M62W43",
+    "M62W46"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.77": 9,
+    "Penn Ave": 5,
+    "T.H.121": 5
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.24,
+   "start_km": 14.63,
+   "ramps": [
+    "T.H.77 SB",
+    "Lyndale Ave"
+   ],
+   "meters": [
+    "M62W43",
+    "M62W46"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Penn Ave": 9,
+    "T.H.121": 9,
+    "Lyndale Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.88,
+   "start_km": 14.63,
+   "ramps": [
+    "T.H.77 SB",
+    "Lyndale Ave",
+    "T.H.121 NB"
+   ],
+   "meters": [
+    "M62W43",
+    "M62W46",
+    "M62W47"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.121": 9,
+    "Penn Ave": 8,
+    "Lyndale Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.78,
+   "start_km": 17.88,
+   "ramps": [
+    "Lyndale Ave",
+    "T.H.121 NB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M62W46",
+    "M62W47",
+    "M62W50"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "T.H.121": 10,
+    "Penn Ave": 9,
+    "Xerxes Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.73,
+   "start_km": 92.93,
+   "ramps": [
+    "Bren Rd",
+    "Valley View Rd",
+    "Marth Rd"
+   ],
+   "meters": [
+    "M169S47",
+    "M169S51",
+    "M169S54"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Highwood Ave": 20
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.83,
+   "start_km": 95.83,
+   "ramps": [
+    "Valley View Rd",
+    "Marth Rd"
+   ],
+   "meters": [
+    "M169S51",
+    "M169S54"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Highwood Ave": 20
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.05,
+   "start_km": 95.83,
+   "ramps": [
+    "Valley View Rd",
+    "Marth Rd",
+    "Anderson Lakes Pkwy"
+   ],
+   "meters": [
+    "M169S51",
+    "M169S54",
+    "M169S55"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Highwood Ave": 20
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.22,
+   "start_km": 97.66,
+   "ramps": [
+    "Marth Rd",
+    "Anderson Lakes Pkwy"
+   ],
+   "meters": [
+    "M169S54",
+    "M169S55"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Highwood Ave": 20
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.29,
+   "start_km": 97.66,
+   "ramps": [
+    "Marth Rd",
+    "Anderson Lakes Pkwy",
+    "Pioneer Tr"
+   ],
+   "meters": [
+    "M169S54",
+    "M169S55",
+    "M169S56"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 1.0,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Highwood Ave": 20
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.81,
+   "start_km": 41.45,
+   "ramps": [
+    "Huron Blvd",
+    "25th Ave",
+    "Hiawatha Ave"
+   ],
+   "meters": [
+    "M94W50",
+    "M94W51",
+    "M94W52"
+   ],
+   "n_stations": 14,
+   "n_valid_days": 8,
+   "share_congested": 1.0,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "LaSalle Ave": 7,
+    "W of T.H.65": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.18,
+   "start_km": 27.1,
+   "ramps": [
+    "Victoria St",
+    "St. Clair Ave",
+    "Jackson St"
+   ],
+   "meters": [
+    "M35EN17",
+    "M35EN18",
+    "M35EN21"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.47,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 10,
+    "Jenks Ave": 9
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.29,
+   "start_km": 27.99,
+   "ramps": [
+    "St. Clair Ave",
+    "Jackson St"
+   ],
+   "meters": [
+    "M35EN18",
+    "M35EN21"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Jenks Ave": 19
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.67,
+   "start_km": 27.99,
+   "ramps": [
+    "St. Clair Ave",
+    "Jackson St",
+    "Cayuga St"
+   ],
+   "meters": [
+    "M35EN18",
+    "M35EN21",
+    "M35EN26"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Jenks Ave": 18,
+    "Maryland Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.89,
+   "start_km": 31.28,
+   "ramps": [
+    "Jackson St",
+    "Cayuga St",
+    "Maryland Ave"
+   ],
+   "meters": [
+    "M35EN21",
+    "M35EN26",
+    "M35EN27"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Jenks Ave": 18,
+    "Maryland Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.52,
+   "start_km": 32.66,
+   "ramps": [
+    "Cayuga St",
+    "Maryland Ave"
+   ],
+   "meters": [
+    "M35EN26",
+    "M35EN27"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Jenks Ave": 18,
+    "Maryland Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.15,
+   "start_km": 32.66,
+   "ramps": [
+    "Cayuga St",
+    "Maryland Ave",
+    "Larpenteur Ave"
+   ],
+   "meters": [
+    "M35EN26",
+    "M35EN27",
+    "M35EN28"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Jenks Ave": 14,
+    "T.H.36": 4,
+    "Maryland Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.24,
+   "start_km": 29.66,
+   "ramps": [
+    "Maryland Ave",
+    "Cayuga St",
+    "12th St"
+   ],
+   "meters": [
+    "M35ES35",
+    "M35ES36",
+    "M35ES38"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.68,
+   "bottleneck_station_counts": {
+    "Grand Ave": 19
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.35,
+   "start_km": 30.55,
+   "ramps": [
+    "Cayuga St",
+    "12th St"
+   ],
+   "meters": [
+    "M35ES36",
+    "M35ES38"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.68,
+   "bottleneck_station_counts": {
+    "Grand Ave": 19
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.25,
+   "start_km": 34.43,
+   "ramps": [
+    "Grand Ave",
+    "Randolph Ave"
+   ],
+   "meters": [
+    "M35ES40",
+    "M35ES42"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.16,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 6,
+    "Randolph Ave": 5,
+    "Shepard Rd": 4
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.41,
+   "start_km": 34.43,
+   "ramps": [
+    "Grand Ave",
+    "Randolph Ave",
+    "W. 7th St"
+   ],
+   "meters": [
+    "M35ES40",
+    "M35ES42",
+    "M35ES43"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.16,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 6,
+    "Randolph Ave": 5,
+    "Shepard Rd": 4
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.85,
+   "start_km": 41.45,
+   "ramps": [
+    "35th St",
+    "5th Ave"
+   ],
+   "meters": [
+    "M35WN40",
+    "M35WN42"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.84,
+   "bottleneck_station_counts": {
+    "26th St": 12,
+    "Franklin Ave": 6,
+    "28th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.92,
+   "start_km": 41.45,
+   "ramps": [
+    "35th St",
+    "5th Ave",
+    "Washington Ave"
+   ],
+   "meters": [
+    "M35WN40",
+    "M35WN42",
+    "M35WN47"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.89,
+   "bottleneck_station_counts": {
+    "26th St": 11,
+    "Franklin Ave": 6,
+    "28th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.46,
+   "start_km": 34.57,
+   "ramps": [
+    "Johnson St",
+    "Hennepin Ave",
+    "University Ave"
+   ],
+   "meters": [
+    "M35WS36",
+    "M35WS38",
+    "M35WS39"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.63,
+   "bottleneck_station_counts": {
+    "Broadway St": 9,
+    "Hiawatha Ave": 8,
+    "Hennepin Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 6.42,
+   "start_km": 35.96,
+   "ramps": [
+    "Hennepin Ave",
+    "University Ave",
+    "31st St"
+   ],
+   "meters": [
+    "M35WS38",
+    "M35WS39",
+    "M35WS52"
+   ],
+   "n_stations": 14,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.11,
+   "bottleneck_station_counts": {
+    "Hiawatha Ave": 15,
+    "37th St": 3,
+    "Franklin Ave": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 5.35,
+   "start_km": 37.03,
+   "ramps": [
+    "University Ave",
+    "31st St"
+   ],
+   "meters": [
+    "M35WS39",
+    "M35WS52"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.11,
+   "bottleneck_station_counts": {
+    "Hiawatha Ave": 15,
+    "37th St": 3,
+    "Franklin Ave": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 6.56,
+   "start_km": 37.03,
+   "ramps": [
+    "University Ave",
+    "31st St",
+    "36th St"
+   ],
+   "meters": [
+    "M35WS39",
+    "M35WS52",
+    "M35WS53"
+   ],
+   "n_stations": 15,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.11,
+   "bottleneck_station_counts": {
+    "Hiawatha Ave": 14,
+    "37th St": 3,
+    "47th St": 1
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 5.1,
+   "start_km": 8.53,
+   "ramps": [
+    "Ridgedale Dr",
+    "Co Rd 73",
+    "Louisiana Ave"
+   ],
+   "meters": [
+    "M394E16",
+    "M394E17",
+    "M394E22"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.84,
+   "bottleneck_station_counts": {
+    "Winnetka Ave": 11,
+    "T.H.100": 4,
+    "Louisiana Ave": 3
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 4.06,
+   "start_km": 9.57,
+   "ramps": [
+    "Co Rd 73",
+    "Louisiana Ave"
+   ],
+   "meters": [
+    "M394E17",
+    "M394E22"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.84,
+   "bottleneck_station_counts": {
+    "Winnetka Ave": 11,
+    "T.H.100": 4,
+    "Louisiana Ave": 3
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.67,
+   "start_km": 5.33,
+   "ramps": [
+    "T.H.65 SB",
+    "T.H.65 NB",
+    "Silver Lake Rd"
+   ],
+   "meters": [
+    "M694E08",
+    "M694E09",
+    "M694E10"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.47,
+   "bottleneck_station_counts": {
+    "5th Ave": 7,
+    "Oakwood Dr": 6,
+    "Long Lake Rd": 5
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.22,
+   "start_km": 5.77,
+   "ramps": [
+    "T.H.65 NB",
+    "Silver Lake Rd"
+   ],
+   "meters": [
+    "M694E09",
+    "M694E10"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.47,
+   "bottleneck_station_counts": {
+    "5th Ave": 7,
+    "Oakwood Dr": 7,
+    "Long Lake Rd": 5
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.72,
+   "start_km": 379.04,
+   "ramps": [
+    "Riverside Ave",
+    "Huron Blvd",
+    "Cretin Ave"
+   ],
+   "meters": [
+    "M94E46",
+    "M94E47",
+    "M94E49"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.05,
+   "bottleneck_station_counts": {
+    "Cretin Ave": 10,
+    "Huron Blvd": 4,
+    "Snelling Ave": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.89,
+   "start_km": 379.88,
+   "ramps": [
+    "Huron Blvd",
+    "Cretin Ave"
+   ],
+   "meters": [
+    "M94E47",
+    "M94E49"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.05,
+   "bottleneck_station_counts": {
+    "Cretin Ave": 10,
+    "Huron Blvd": 4,
+    "Snelling Ave": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 5.11,
+   "start_km": 379.88,
+   "ramps": [
+    "Huron Blvd",
+    "Cretin Ave",
+    "Snelling Ave"
+   ],
+   "meters": [
+    "M94E47",
+    "M94E49",
+    "M94E50"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.05,
+   "bottleneck_station_counts": {
+    "Cretin Ave": 9,
+    "Huron Blvd": 4,
+    "Lexington Pkwy": 2
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.78,
+   "start_km": 13.19,
+   "ramps": [
+    "I-394 WB",
+    "Glenwood Ave",
+    "T.H.55"
+   ],
+   "meters": [
+    "M100N40",
+    "M100N41",
+    "M100N43"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Golden Valley Rd": 18,
+    "T.H.55": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.7,
+   "start_km": 13.88,
+   "ramps": [
+    "Glenwood Ave",
+    "T.H.55",
+    "Duluth St"
+   ],
+   "meters": [
+    "M100N41",
+    "M100N43",
+    "M100N45"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Golden Valley Rd": 18,
+    "N of Westbrooke Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 14.96,
+   "ramps": [
+    "T.H.55",
+    "Duluth St"
+   ],
+   "meters": [
+    "M100N43",
+    "M100N45"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Golden Valley Rd": 18,
+    "N of Westbrooke Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.04,
+   "start_km": 14.96,
+   "ramps": [
+    "T.H.55",
+    "Duluth St",
+    "36th Ave"
+   ],
+   "meters": [
+    "M100N43",
+    "M100N45",
+    "M100N46"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Golden Valley Rd": 17,
+    "N of Westbrooke Rd": 1,
+    "Co Rd 81": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.98,
+   "start_km": 12.65,
+   "ramps": [
+    "34th Ave",
+    "28th Ave",
+    "T.H.77 SB"
+   ],
+   "meters": [
+    "M62W40",
+    "M62W41",
+    "M62W43"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.77": 19
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.94,
+   "start_km": 18.52,
+   "ramps": [
+    "T.H.121 NB",
+    "Penn Ave",
+    "Xerxes Ave"
+   ],
+   "meters": [
+    "M62W47",
+    "M62W50",
+    "M62W51"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.95,
+   "bottleneck_station_counts": {
+    "Penn Ave": 12,
+    "Wooddale Ave": 5,
+    "Xerxes Ave": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.45,
+   "start_km": 111.86,
+   "ramps": [
+    "T.H.62 WB",
+    "Bren Rd",
+    "Lincoln Dr"
+   ],
+   "meters": [
+    "M169N24",
+    "M169N25",
+    "M169N26"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.37,
+   "bottleneck_station_counts": {
+    "Van Buren Way": 9,
+    "Excelsior Blvd": 5,
+    "Bren Rd": 5
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.01,
+   "start_km": 112.8,
+   "ramps": [
+    "Bren Rd",
+    "Lincoln Dr",
+    "Excelsior Blvd"
+   ],
+   "meters": [
+    "M169N25",
+    "M169N26",
+    "M169N27"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.63,
+   "bottleneck_station_counts": {
+    "36th St": 16,
+    "Excelsior Blvd": 2,
+    "T.H.7": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.52,
+   "start_km": 114.31,
+   "ramps": [
+    "Lincoln Dr",
+    "Excelsior Blvd",
+    "T.H.7"
+   ],
+   "meters": [
+    "M169N26",
+    "M169N27",
+    "M169N28"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.95,
+   "share_am_onset": 0.63,
+   "bottleneck_station_counts": {
+    "36th St": 15,
+    "Excelsior Blvd": 2,
+    "Cedar Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.85,
+   "start_km": 15.35,
+   "ramps": [
+    "Yankee Doodle Rd WB",
+    "Lone Oak Rd",
+    "T.H.62"
+   ],
+   "meters": [
+    "M35EN09",
+    "M35EN10",
+    "M35EN13"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.89,
+   "bottleneck_station_counts": {
+    "T.H.62": 10,
+    "N of I-494": 6,
+    "Marie Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 4.25,
+   "start_km": 16.95,
+   "ramps": [
+    "Lone Oak Rd",
+    "T.H.62"
+   ],
+   "meters": [
+    "M35EN10",
+    "M35EN13"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.89,
+   "bottleneck_station_counts": {
+    "T.H.62": 10,
+    "N of I-494": 6,
+    "Marie Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.95,
+   "start_km": 16.95,
+   "ramps": [
+    "Lone Oak Rd",
+    "T.H.62",
+    "T.H.13"
+   ],
+   "meters": [
+    "M35EN10",
+    "M35EN13",
+    "M35EN14"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.89,
+   "bottleneck_station_counts": {
+    "T.H.62": 10,
+    "N of I-494": 6,
+    "Marie Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.63,
+   "start_km": 37.68,
+   "ramps": [
+    "Randolph Ave",
+    "W. 7th St",
+    "Shepard Rd"
+   ],
+   "meters": [
+    "M35ES42",
+    "M35ES43",
+    "M35ES44"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "W. 7th St": 9,
+    "Bachelor Ave": 5,
+    "Shepard Rd": 4
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.19,
+   "start_km": 42.38,
+   "ramps": [
+    "31st St",
+    "36th St",
+    "46th St"
+   ],
+   "meters": [
+    "M35WS52",
+    "M35WS53",
+    "M35WS55"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "Diamond Lake Rd": 12,
+    "37th St": 4,
+    "53rd St": 1
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.69,
+   "start_km": 0.9,
+   "ramps": [
+    "5th St (+ Garages)",
+    "Linden Ave",
+    "Dunwoody Blvd"
+   ],
+   "meters": [
+    "M394W04",
+    "M394W07",
+    "M394W11"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.28,
+   "bottleneck_station_counts": {
+    "I-94": 13,
+    "Dunwoody Blvd": 3,
+    "E of Wirth Pkwy": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.38,
+   "start_km": 1.28,
+   "ramps": [
+    "Linden Ave",
+    "Dunwoody Blvd",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M394W07",
+    "M394W11",
+    "M394W12"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.28,
+   "bottleneck_station_counts": {
+    "I-94": 13,
+    "Dunwoody Blvd": 3,
+    "E of Wirth Pkwy": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.61,
+   "start_km": 31.08,
+   "ramps": [
+    "Nicollet Ave",
+    "Lyndale Ave",
+    "I-35W SB"
+   ],
+   "meters": [
+    "M494W36",
+    "M494W37",
+    "M494W39"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lyndale Ave": 18
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.74,
+   "start_km": 31.85,
+   "ramps": [
+    "Lyndale Ave",
+    "I-35W SB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M494W37",
+    "M494W39",
+    "M494W40"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "France Ave": 14,
+    "Penn Ave": 3,
+    "I-35W": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.22,
+   "start_km": 32.69,
+   "ramps": [
+    "I-35W SB",
+    "Penn Ave",
+    "France Ave NB"
+   ],
+   "meters": [
+    "M494W39",
+    "M494W40",
+    "M494W42"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "France Ave": 12,
+    "Penn Ave": 3,
+    "Nord Ave": 3
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.64,
+   "start_km": 33.58,
+   "ramps": [
+    "Penn Ave",
+    "France Ave NB",
+    "France Ave SB"
+   ],
+   "meters": [
+    "M494W40",
+    "M494W42",
+    "M494W43"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.44,
+   "bottleneck_station_counts": {
+    "France Ave": 12,
+    "Nord Ave": 5,
+    "Xerxes Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.93,
+   "start_km": 9.67,
+   "ramps": [
+    "T.H.7",
+    "Minnetonka Blvd",
+    "Cedar Lake Rd"
+   ],
+   "meters": [
+    "M100N35",
+    "M100N36",
+    "M100N38"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.78,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 15,
+    "I-394": 3
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.3,
+   "start_km": 29.62,
+   "ramps": [
+    "I-35E SB",
+    "Rice St",
+    "Dale St"
+   ],
+   "meters": [
+    "M36W64",
+    "M36W65",
+    "M36W66"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of I-35E": 7,
+    "Victoria St": 6,
+    "Lexington Ave": 5
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.68,
+   "start_km": 19.66,
+   "ramps": [
+    "Penn Ave",
+    "Xerxes Ave",
+    "France Ave"
+   ],
+   "meters": [
+    "M62W50",
+    "M62W51",
+    "M62W52"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.72,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 12,
+    "Xerxes Ave": 6
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.51,
+   "start_km": 21.34,
+   "ramps": [
+    "France Ave",
+    "Valley View Rd",
+    "T.H.100 NB"
+   ],
+   "meters": [
+    "M62W52",
+    "M62W53",
+    "M62W54"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.61,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 14,
+    "Wyman Ave": 3,
+    "Tracy Ave": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.52,
+   "start_km": 21.74,
+   "ramps": [
+    "Valley View Rd",
+    "T.H.100 NB",
+    "T.H.100 SB"
+   ],
+   "meters": [
+    "M62W53",
+    "M62W54",
+    "M62W55"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.61,
+   "bottleneck_station_counts": {
+    "Wooddale Ave": 14,
+    "Wyman Ave": 3,
+    "Tracy Ave": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 4.74,
+   "start_km": 10.34,
+   "ramps": [
+    "Old Shakopee Rd",
+    "66th St"
+   ],
+   "meters": [
+    "M77N85",
+    "M77N91"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.9,
+   "share_am_onset": 0.83,
+   "bottleneck_station_counts": {
+    "T.H.62": 18
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.47,
+   "start_km": 22.9,
+   "ramps": [
+    "T.H.13",
+    "W. 7th St",
+    "Randolph Ave"
+   ],
+   "meters": [
+    "M35EN14",
+    "M35EN15",
+    "M35EN16"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 8,
+    "Victoria St": 6,
+    "Jefferson Ave": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.72,
+   "start_km": 24.64,
+   "ramps": [
+    "W. 7th St",
+    "Randolph Ave"
+   ],
+   "meters": [
+    "M35EN15",
+    "M35EN16"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 8,
+    "Victoria St": 7,
+    "Jefferson Ave": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.46,
+   "start_km": 24.64,
+   "ramps": [
+    "W. 7th St",
+    "Randolph Ave",
+    "Victoria St"
+   ],
+   "meters": [
+    "M35EN15",
+    "M35EN16",
+    "M35EN17"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 8,
+    "Victoria St": 7,
+    "Jefferson Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 7.31,
+   "start_km": 43.59,
+   "ramps": [
+    "36th St",
+    "46th St",
+    "66th St"
+   ],
+   "meters": [
+    "M35WS53",
+    "M35WS55",
+    "M35WS62"
+   ],
+   "n_stations": 18,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.59,
+   "bottleneck_station_counts": {
+    "76th St": 8,
+    "Diamond Lake Rd": 4,
+    "S of 70th St": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 5.32,
+   "start_km": 45.58,
+   "ramps": [
+    "46th St",
+    "66th St"
+   ],
+   "meters": [
+    "M35WS55",
+    "M35WS62"
+   ],
+   "n_stations": 15,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.59,
+   "bottleneck_station_counts": {
+    "76th St": 8,
+    "Diamond Lake Rd": 4,
+    "S of 70th St": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 7.41,
+   "start_km": 45.58,
+   "ramps": [
+    "46th St",
+    "66th St",
+    "I-494 WB"
+   ],
+   "meters": [
+    "M35WS55",
+    "M35WS62",
+    "M35WS65"
+   ],
+   "n_stations": 20,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.59,
+   "bottleneck_station_counts": {
+    "76th St": 7,
+    "Diamond Lake Rd": 4,
+    "73rd St": 2
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 4.94,
+   "start_km": 14.44,
+   "ramps": [
+    "Victoria St",
+    "I-35W SB"
+   ],
+   "meters": [
+    "M694W45",
+    "M694W51"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.88,
+   "bottleneck_station_counts": {
+    "Oakwood Dr": 7,
+    "Long Lake Rd": 4,
+    "E of I-35W": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.83,
+   "start_km": 341.07,
+   "ramps": [
+    "Dayton Pkwy",
+    "Rush Creek Blvd",
+    "95th Ave"
+   ],
+   "meters": [
+    "M94E15",
+    "M94E17",
+    "M94E18"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.94,
+   "bottleneck_station_counts": {
+    "95th Ave": 7,
+    "Elm Creek RA": 4,
+    "E of T.H.610": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.51,
+   "start_km": 343.33,
+   "ramps": [
+    "Rush Creek Blvd",
+    "95th Ave",
+    "Weaver Lake Rd WB"
+   ],
+   "meters": [
+    "M94E17",
+    "M94E18",
+    "M94E19"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.94,
+   "bottleneck_station_counts": {
+    "80th Ave": 7,
+    "95th Ave": 5,
+    "W of Weaver Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.94,
+   "start_km": 344.9,
+   "ramps": [
+    "95th Ave",
+    "Weaver Lake Rd WB"
+   ],
+   "meters": [
+    "M94E18",
+    "M94E19"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.94,
+   "bottleneck_station_counts": {
+    "80th Ave": 8,
+    "95th Ave": 5,
+    "W of Weaver Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.21,
+   "start_km": 344.9,
+   "ramps": [
+    "95th Ave",
+    "Weaver Lake Rd WB",
+    "Weaver Lake Rd EB"
+   ],
+   "meters": [
+    "M94E18",
+    "M94E19",
+    "M94E20"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.94,
+   "bottleneck_station_counts": {
+    "80th Ave": 8,
+    "95th Ave": 5,
+    "W of Weaver Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.28,
+   "start_km": 36.71,
+   "ramps": [
+    "Snelling Ave",
+    "Vandalia St",
+    "T.H.280 SB"
+   ],
+   "meters": [
+    "M94W46",
+    "M94W47",
+    "M94W48"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.76,
+   "bottleneck_station_counts": {
+    "Riverside Ave": 9,
+    "Huron Blvd": 4,
+    "Prior Ave": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.48,
+   "start_km": 67.59,
+   "ramps": [
+    "U.S.169 NB",
+    "U.S.169 SB",
+    "Hemlock Ln"
+   ],
+   "meters": [
+    "M94W70",
+    "M94W71",
+    "M94W73"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.18,
+   "bottleneck_station_counts": {
+    "Hemlock Ln": 14,
+    "I-494": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 5.3,
+   "start_km": 68.01,
+   "ramps": [
+    "U.S.169 SB",
+    "Hemlock Ln",
+    "Weaver Lake Rd"
+   ],
+   "meters": [
+    "M94W71",
+    "M94W73",
+    "M94W75"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.18,
+   "bottleneck_station_counts": {
+    "Hemlock Ln": 13,
+    "I-494": 2,
+    "Weaver Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.02,
+   "start_km": 4.66,
+   "ramps": [
+    "Benton Ave",
+    "50th St",
+    "T.H.7"
+   ],
+   "meters": [
+    "M100N27",
+    "M100N30",
+    "M100N35"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 12,
+    "T.H.7": 5
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.24,
+   "start_km": 6.43,
+   "ramps": [
+    "50th St",
+    "T.H.7"
+   ],
+   "meters": [
+    "M100N30",
+    "M100N35"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 12,
+    "T.H.7": 5
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.08,
+   "start_km": 6.43,
+   "ramps": [
+    "50th St",
+    "T.H.7",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M100N30",
+    "M100N35",
+    "M100N36"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 12,
+    "T.H.7": 5
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.35,
+   "start_km": 20.78,
+   "ramps": [
+    "Co Rd 81",
+    "France Ave",
+    "Brooklyn Blvd"
+   ],
+   "meters": [
+    "M100N48",
+    "M100N49",
+    "M100N50"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "57th Ave": 13,
+    "France Ave": 4
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.92,
+   "start_km": 21.66,
+   "ramps": [
+    "France Ave",
+    "Brooklyn Blvd",
+    "57th Ave"
+   ],
+   "meters": [
+    "M100N49",
+    "M100N50",
+    "M100N51"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "57th Ave": 13,
+    "France Ave": 4
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.69,
+   "start_km": 29.25,
+   "ramps": [
+    "I-35E NB",
+    "I-35E SB",
+    "Rice St"
+   ],
+   "meters": [
+    "M36W63",
+    "M36W64",
+    "M36W65"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of I-35E": 11,
+    "Dale St": 5,
+    "Western Ave": 1
+   }
+  },
+  {
+   "route": "T.H.610",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.5,
+   "start_km": 9.58,
+   "ramps": [
+    "U.S.169 NB",
+    "W Broadway Ave",
+    "Zane Ave"
+   ],
+   "meters": [
+    "M610E05",
+    "M610E06",
+    "M610E07"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.12,
+   "bottleneck_station_counts": {
+    "E of W Broadway Ave": 9,
+    "Zane Ave": 4,
+    "W Broadway Ave": 3
+   }
+  },
+  {
+   "route": "T.H.610",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.59,
+   "start_km": 10.49,
+   "ramps": [
+    "W Broadway Ave",
+    "Zane Ave"
+   ],
+   "meters": [
+    "M610E06",
+    "M610E07"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.12,
+   "bottleneck_station_counts": {
+    "E of W Broadway Ave": 12,
+    "Zane Ave": 4,
+    "Noble Pkwy": 1
+   }
+  },
+  {
+   "route": "T.H.610",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.32,
+   "start_km": 10.49,
+   "ramps": [
+    "W Broadway Ave",
+    "Zane Ave",
+    "Noble Pkwy"
+   ],
+   "meters": [
+    "M610E06",
+    "M610E07",
+    "M610E08"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.18,
+   "bottleneck_station_counts": {
+    "E of W Broadway Ave": 12,
+    "Zane Ave": 3,
+    "E of Noble Pkwy": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.82,
+   "start_km": 2.04,
+   "ramps": [
+    "Shady Oak Rd SB",
+    "Shady Oak Rd NB",
+    "U.S.169 SB"
+   ],
+   "meters": [
+    "M62E23",
+    "M62E24",
+    "M62E26"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Gleason Rd": 15,
+    "W of Tracy Ave": 2
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.69,
+   "start_km": 2.47,
+   "ramps": [
+    "Shady Oak Rd NB",
+    "U.S.169 SB",
+    "U.S.169 NB"
+   ],
+   "meters": [
+    "M62E24",
+    "M62E26",
+    "M62E27"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Gleason Rd": 15,
+    "W of Tracy Ave": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.97,
+   "start_km": 103.53,
+   "ramps": [
+    "Pioneer Tr",
+    "Anderson Lakes Pkwy"
+   ],
+   "meters": [
+    "M169N16",
+    "M169N17"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Anderson Lakes Pkwy": 15,
+    "N of Anderson Lakes Pkwy": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 6.22,
+   "start_km": 103.53,
+   "ramps": [
+    "Pioneer Tr",
+    "Anderson Lakes Pkwy",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M169N16",
+    "M169N17",
+    "M169N21"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Anderson Lakes Pkwy": 15,
+    "N of Anderson Lakes Pkwy": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.96,
+   "start_km": 105.49,
+   "ramps": [
+    "Anderson Lakes Pkwy",
+    "Valley View Rd",
+    "T.H.62 EB"
+   ],
+   "meters": [
+    "M169N17",
+    "M169N21",
+    "M169N23"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.35,
+   "bottleneck_station_counts": {
+    "Bren Rd": 13,
+    "N of Anderson Lakes Pkwy": 3,
+    "T.H.62": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.51,
+   "start_km": 115.8,
+   "ramps": [
+    "Excelsior Blvd",
+    "T.H.7",
+    "36th St"
+   ],
+   "meters": [
+    "M169N27",
+    "M169N28",
+    "M169N29"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "36th St": 15,
+    "Cedar Lake Rd": 1,
+    "T.H.7": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.42,
+   "start_km": 79.05,
+   "ramps": [
+    "36th Ave",
+    "Medicine Lake Rd",
+    "Plymouth Ave"
+   ],
+   "meters": [
+    "M169S30",
+    "M169S32",
+    "M169S33"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.85,
+   "share_am_onset": 0.65,
+   "bottleneck_station_counts": {
+    "Medicine Lake Rd": 6,
+    "S of I-394": 6,
+    "32nd Ave": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.54,
+   "start_km": 386.56,
+   "ramps": [
+    "Lexington Pkwy",
+    "Dale St"
+   ],
+   "meters": [
+    "M94E52",
+    "M94E53"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 19,
+   "share_congested": 0.84,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 16
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.96,
+   "start_km": 386.56,
+   "ramps": [
+    "Lexington Pkwy",
+    "Dale St",
+    "Marion St"
+   ],
+   "meters": [
+    "M94E52",
+    "M94E53",
+    "M94E54"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 19,
+   "share_congested": 0.84,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 16
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.06,
+   "start_km": 68.01,
+   "ramps": [
+    "U.S.169 SB",
+    "Hemlock Ln"
+   ],
+   "meters": [
+    "M94W71",
+    "M94W73"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 19,
+   "share_congested": 0.84,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "Hemlock Ln": 13,
+    "I-494": 3
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.62,
+   "start_km": 26.37,
+   "ramps": [
+    "Randolph Ave",
+    "Victoria St",
+    "St. Clair Ave"
+   ],
+   "meters": [
+    "M35EN16",
+    "M35EN17",
+    "M35EN18"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "St. Clair Ave": 9,
+    "Victoria St": 7
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.97,
+   "start_km": 8.78,
+   "ramps": [
+    "France Ave NB",
+    "Penn Ave",
+    "I-35W SB"
+   ],
+   "meters": [
+    "M494E33",
+    "M494E35",
+    "M494E36"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "I-35W": 10,
+    "Nicollet Ave": 6
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 5.16,
+   "start_km": 348.11,
+   "ramps": [
+    "Weaver Lake Rd EB",
+    "Hemlock Ln",
+    "U.S.169 SB"
+   ],
+   "meters": [
+    "M94E20",
+    "M94E22",
+    "M94E23"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.88,
+   "bottleneck_station_counts": {
+    "80th Ave": 13,
+    "Boone Ave": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.98,
+   "start_km": 377.9,
+   "ramps": [
+    "Cedar Ave",
+    "Riverside Ave",
+    "Huron Blvd"
+   ],
+   "meters": [
+    "M94E45",
+    "M94E46",
+    "M94E47"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.06,
+   "bottleneck_station_counts": {
+    "Huron Blvd": 9,
+    "E of Huron Blvd": 6,
+    "W of T.H.280": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.12,
+   "start_km": 384.98,
+   "ramps": [
+    "Snelling Ave",
+    "Lexington Pkwy",
+    "Dale St"
+   ],
+   "meters": [
+    "M94E50",
+    "M94E52",
+    "M94E53"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 16
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.61,
+   "start_km": 388.1,
+   "ramps": [
+    "Dale St",
+    "Marion St",
+    "Jackson St"
+   ],
+   "meters": [
+    "M94E53",
+    "M94E54",
+    "M94E57"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 16
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.07,
+   "start_km": 389.52,
+   "ramps": [
+    "Marion St",
+    "Jackson St",
+    "Broadway St"
+   ],
+   "meters": [
+    "M94E54",
+    "M94E57",
+    "M94E59"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "John Ireland Blvd": 16
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.29,
+   "start_km": 31.51,
+   "ramps": [
+    "Wabasha St",
+    "Marion St",
+    "Dale St"
+   ],
+   "meters": [
+    "M94W41",
+    "M94W43",
+    "M94W44"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 15,
+    "Victoria St": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 32.19,
+   "ramps": [
+    "Marion St",
+    "Dale St"
+   ],
+   "meters": [
+    "M94W43",
+    "M94W44"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 15,
+    "Victoria St": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.9,
+   "start_km": 32.19,
+   "ramps": [
+    "Marion St",
+    "Dale St",
+    "Lexington Pkwy"
+   ],
+   "meters": [
+    "M94W43",
+    "M94W44",
+    "M94W45"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 15,
+    "Victoria St": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.91,
+   "start_km": 33.8,
+   "ramps": [
+    "Dale St",
+    "Lexington Pkwy",
+    "Snelling Ave"
+   ],
+   "meters": [
+    "M94W44",
+    "M94W45",
+    "M94W46"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 14,
+    "Victoria St": 1,
+    "Prior Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.62,
+   "start_km": 35.09,
+   "ramps": [
+    "Lexington Pkwy",
+    "Snelling Ave"
+   ],
+   "meters": [
+    "M94W45",
+    "M94W46"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 15,
+    "Prior Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.74,
+   "start_km": 35.09,
+   "ramps": [
+    "Lexington Pkwy",
+    "Snelling Ave",
+    "Vandalia St"
+   ],
+   "meters": [
+    "M94W45",
+    "M94W46",
+    "M94W47"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Hamline Ave": 15,
+    "Prior Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.25,
+   "start_km": 70.06,
+   "ramps": [
+    "Hemlock Ln",
+    "Weaver Lake Rd"
+   ],
+   "meters": [
+    "M94W73",
+    "M94W75"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.12,
+   "bottleneck_station_counts": {
+    "I-494": 14,
+    "Weaver Lake Rd": 1,
+    "W of Weaver Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 6.45,
+   "start_km": 70.06,
+   "ramps": [
+    "Hemlock Ln",
+    "Weaver Lake Rd",
+    "Maple Grove Pkwy"
+   ],
+   "meters": [
+    "M94W73",
+    "M94W75",
+    "M94W76"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.12,
+   "bottleneck_station_counts": {
+    "I-494": 14,
+    "Weaver Lake Rd": 1,
+    "W of Weaver Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.21,
+   "start_km": 16.57,
+   "ramps": [
+    "Duluth St",
+    "36th Ave",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M100N45",
+    "M100N46",
+    "M100N48"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "France Ave": 9,
+    "Co Rd 81": 5,
+    "N of Westbrooke Rd": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.98,
+   "start_km": 30.94,
+   "ramps": [
+    "Rice St",
+    "Dale St"
+   ],
+   "meters": [
+    "M36W65",
+    "M36W66"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 10,
+    "Lexington Ave": 6
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.11,
+   "start_km": 30.94,
+   "ramps": [
+    "Rice St",
+    "Dale St",
+    "Lexington Ave"
+   ],
+   "meters": [
+    "M36W65",
+    "M36W66",
+    "M36W67"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 10,
+    "Lexington Ave": 6
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.65,
+   "start_km": 32.92,
+   "ramps": [
+    "Dale St",
+    "Lexington Ave",
+    "Hamline Ave"
+   ],
+   "meters": [
+    "M36W66",
+    "M36W67",
+    "M36W68"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 10,
+    "Lexington Ave": 6
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.71,
+   "start_km": 109.74,
+   "ramps": [
+    "Valley View Rd",
+    "T.H.62 EB"
+   ],
+   "meters": [
+    "M169N21",
+    "M169N23"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "Bren Rd": 14,
+    "T.H.62": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.12,
+   "start_km": 109.74,
+   "ramps": [
+    "Valley View Rd",
+    "T.H.62 EB",
+    "T.H.62 WB"
+   ],
+   "meters": [
+    "M169N21",
+    "M169N23",
+    "M169N24"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "Bren Rd": 14,
+    "T.H.62": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.77,
+   "start_km": 76.62,
+   "ramps": [
+    "49th Ave",
+    "36th Ave",
+    "Medicine Lake Rd"
+   ],
+   "meters": [
+    "M169S27",
+    "M169S30",
+    "M169S32"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.56,
+   "bottleneck_station_counts": {
+    "Plymouth Ave": 7,
+    "Medicine Lake Rd": 5,
+    "32nd Ave": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.08,
+   "start_km": 80.39,
+   "ramps": [
+    "Medicine Lake Rd",
+    "Plymouth Ave"
+   ],
+   "meters": [
+    "M169S32",
+    "M169S33"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "S of I-394": 10,
+    "S of T.H.55": 4,
+    "Plymouth Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.69,
+   "start_km": 80.39,
+   "ramps": [
+    "Medicine Lake Rd",
+    "Plymouth Ave",
+    "T.H.55 WB"
+   ],
+   "meters": [
+    "M169S32",
+    "M169S33",
+    "M169S34"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "S of I-394": 10,
+    "S of T.H.55": 4,
+    "Plymouth Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.42,
+   "start_km": 84.17,
+   "ramps": [
+    "I-394 CD WB",
+    "I-394 EB",
+    "Cedar Lake Rd"
+   ],
+   "meters": [
+    "M169S37",
+    "M169S38",
+    "M169S40"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.8,
+   "share_am_onset": 0.19,
+   "bottleneck_station_counts": {
+    "S of I-394": 15,
+    "22nd St": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.44,
+   "start_km": 21.2,
+   "ramps": [
+    "T.H.62",
+    "T.H.13",
+    "W. 7th St"
+   ],
+   "meters": [
+    "M35EN13",
+    "M35EN14",
+    "M35EN15"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Jefferson Ave": 6,
+    "Bachelor Ave": 5,
+    "Marie Ave": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 4.77,
+   "start_km": 19.83,
+   "ramps": [
+    "Co Rd E",
+    "Little Canada Rd"
+   ],
+   "meters": [
+    "M35ES29",
+    "M35ES30"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd B": 12,
+    "T.H.36": 2,
+    "Little Canada Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 5.71,
+   "start_km": 19.83,
+   "ramps": [
+    "Co Rd E",
+    "Little Canada Rd",
+    "T.H.36 WB"
+   ],
+   "meters": [
+    "M35ES29",
+    "M35ES30",
+    "M35ES31"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd B": 12,
+    "T.H.36": 1,
+    "Little Canada Rd": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.99,
+   "start_km": 43.59,
+   "ramps": [
+    "36th St",
+    "46th St"
+   ],
+   "meters": [
+    "M35WS53",
+    "M35WS55"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Diamond Lake Rd": 13,
+    "48th St": 1,
+    "53rd St": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.95,
+   "start_km": 8.35,
+   "ramps": [
+    "France Ave SB",
+    "France Ave NB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M494E32",
+    "M494E33",
+    "M494E35"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "I-35W": 14,
+    "Penn Ave": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.52,
+   "start_km": 8.78,
+   "ramps": [
+    "France Ave NB",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M494E33",
+    "M494E35"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "I-35W": 14,
+    "Penn Ave": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.55,
+   "start_km": 36.53,
+   "ramps": [
+    "T.H.100 NB",
+    "T.H.100 SB",
+    "U.S.169 NB"
+   ],
+   "meters": [
+    "M494W44",
+    "M494W45",
+    "M494W48"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.27,
+   "bottleneck_station_counts": {
+    "Marth Rd": 9,
+    "W Bush Lake Rd": 4,
+    "E Bush Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.18,
+   "start_km": 36.9,
+   "ramps": [
+    "T.H.100 SB",
+    "U.S.169 NB"
+   ],
+   "meters": [
+    "M494W45",
+    "M494W48"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.27,
+   "bottleneck_station_counts": {
+    "Marth Rd": 9,
+    "W Bush Lake Rd": 4,
+    "E Bush Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.26,
+   "start_km": 341.07,
+   "ramps": [
+    "Dayton Pkwy",
+    "Rush Creek Blvd"
+   ],
+   "meters": [
+    "M94E15",
+    "M94E17"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "95th Ave": 10,
+    "E of T.H.610": 1,
+    "W of T.H.610": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.57,
+   "start_km": 343.33,
+   "ramps": [
+    "Rush Creek Blvd",
+    "95th Ave"
+   ],
+   "meters": [
+    "M94E17",
+    "M94E18"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.93,
+   "bottleneck_station_counts": {
+    "95th Ave": 8,
+    "Elm Creek RA": 4,
+    "E of 95th Ave (Rest Area)": 2
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.43,
+   "start_km": 16.57,
+   "ramps": [
+    "Duluth St",
+    "36th Ave"
+   ],
+   "meters": [
+    "M100N45",
+    "M100N46"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Co Rd 81": 13,
+    "N of Westbrooke Rd": 1,
+    "39th Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.77,
+   "start_km": 19.01,
+   "ramps": [
+    "36th Ave",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M100N46",
+    "M100N48"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "France Ave": 9,
+    "Co Rd 81": 5,
+    "39th Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.65,
+   "start_km": 19.01,
+   "ramps": [
+    "36th Ave",
+    "Co Rd 81",
+    "France Ave"
+   ],
+   "meters": [
+    "M100N46",
+    "M100N48",
+    "M100N49"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.75,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "France Ave": 9,
+    "Co Rd 81": 5,
+    "39th Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.69,
+   "start_km": 25.54,
+   "ramps": [
+    "T.H.36 WB",
+    "T.H.36 EB",
+    "Roselawn Ave"
+   ],
+   "meters": [
+    "M35ES31",
+    "M35ES32",
+    "M35ES33"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd B": 11,
+    "Wheelock Pkwy": 2,
+    "Roselawn Ave": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.08,
+   "start_km": 21.72,
+   "ramps": [
+    "T.H.13 WB",
+    "Cliff Rd",
+    "106th St"
+   ],
+   "meters": [
+    "M35WN18",
+    "M35WN19",
+    "M35WN21"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of 94th St": 4,
+    "S of 102nd St": 3,
+    "S of 106th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.16,
+   "start_km": 22.64,
+   "ramps": [
+    "Cliff Rd",
+    "106th St"
+   ],
+   "meters": [
+    "M35WN19",
+    "M35WN21"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of 94th St": 4,
+    "S of 102nd St": 3,
+    "S of 106th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.69,
+   "start_km": 22.64,
+   "ramps": [
+    "Cliff Rd",
+    "106th St",
+    "98th St"
+   ],
+   "meters": [
+    "M35WN19",
+    "M35WN21",
+    "M35WN22"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of 102nd St": 3,
+    "S of 106th St": 3,
+    "S of 98th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.51,
+   "start_km": 50.77,
+   "ramps": [
+    "Stinson Blvd",
+    "Industrial Blvd",
+    "Cleveland Ave"
+   ],
+   "meters": [
+    "M35WN52",
+    "M35WN53",
+    "M35WN54"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.280": 11,
+    "Industrial Blvd": 2,
+    "Co Rd C": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.09,
+   "start_km": 50.9,
+   "ramps": [
+    "66th St",
+    "I-494 WB"
+   ],
+   "meters": [
+    "M35WS62",
+    "M35WS65"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "76th St": 7,
+    "73rd St": 2,
+    "86th St": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.44,
+   "start_km": 50.9,
+   "ramps": [
+    "66th St",
+    "I-494 WB",
+    "I-494 EB"
+   ],
+   "meters": [
+    "M35WS62",
+    "M35WS65",
+    "M35WS66"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "76th St": 7,
+    "73rd St": 2,
+    "86th St": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.68,
+   "start_km": 347.84,
+   "ramps": [
+    "Weaver Lake Rd WB",
+    "Weaver Lake Rd EB",
+    "Hemlock Ln"
+   ],
+   "meters": [
+    "M94E19",
+    "M94E20",
+    "M94E22"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.93,
+   "bottleneck_station_counts": {
+    "80th Ave": 13,
+    "Weaver Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.47,
+   "start_km": 10.28,
+   "ramps": [
+    "Duluth St",
+    "T.H.55",
+    "Glenwood Ave"
+   ],
+   "meters": [
+    "M100S20",
+    "M100S22",
+    "M100S24"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.64,
+   "bottleneck_station_counts": {
+    "23rd St": 10,
+    "Cedar Lake Rd": 4
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.09,
+   "start_km": 11.95,
+   "ramps": [
+    "T.H.55",
+    "Glenwood Ave",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M100S22",
+    "M100S24",
+    "M100S29"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "26th St": 7,
+    "23rd St": 6,
+    "Cedar Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.3,
+   "start_km": 12.75,
+   "ramps": [
+    "Glenwood Ave",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M100S24",
+    "M100S29"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "26th St": 7,
+    "23rd St": 6,
+    "Cedar Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.97,
+   "start_km": 12.75,
+   "ramps": [
+    "Glenwood Ave",
+    "Minnetonka Blvd",
+    "T.H.7"
+   ],
+   "meters": [
+    "M100S24",
+    "M100S29",
+    "M100S30"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "26th St": 7,
+    "23rd St": 6,
+    "Cedar Lake Rd": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.62,
+   "start_km": 3.43,
+   "ramps": [
+    "Snelling Ave NB",
+    "Hamline Ave",
+    "Lexington Ave"
+   ],
+   "meters": [
+    "M36E06",
+    "M36E07",
+    "M36E08"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 6,
+    "Hamline Ave": 6,
+    "E of Dale St": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.85,
+   "start_km": 3.81,
+   "ramps": [
+    "Hamline Ave",
+    "Lexington Ave",
+    "Dale St"
+   ],
+   "meters": [
+    "M36E07",
+    "M36E08",
+    "M36E09"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 8,
+    "Lexington Ave": 5,
+    "E of Dale St": 1
+   }
+  },
+  {
+   "route": "T.H.610",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.73,
+   "start_km": 12.07,
+   "ramps": [
+    "Zane Ave",
+    "Noble Pkwy"
+   ],
+   "meters": [
+    "M610E07",
+    "M610E08"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.07,
+   "bottleneck_station_counts": {
+    "Regent Ave": 7,
+    "Noble Pkwy": 4,
+    "E of Noble Pkwy": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.51,
+   "start_km": 112.8,
+   "ramps": [
+    "Bren Rd",
+    "Lincoln Dr"
+   ],
+   "meters": [
+    "M169N25",
+    "M169N26"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.7,
+   "share_am_onset": 0.43,
+   "bottleneck_station_counts": {
+    "Van Buren Way": 9,
+    "Excelsior Blvd": 5
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.75,
+   "start_km": 22.9,
+   "ramps": [
+    "T.H.13",
+    "W. 7th St"
+   ],
+   "meters": [
+    "M35EN14",
+    "M35EN15"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.46,
+   "bottleneck_station_counts": {
+    "Jefferson Ave": 12,
+    "Shepard Rd": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.3,
+   "start_km": 25.8,
+   "ramps": [
+    "106th St",
+    "98th St",
+    "94th St"
+   ],
+   "meters": [
+    "M35WN21",
+    "M35WN22",
+    "M35WN23"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of 98th St": 4,
+    "S of 102nd St": 3,
+    "S of 94th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.44,
+   "start_km": 47.6,
+   "ramps": [
+    "4th St",
+    "Stinson Blvd",
+    "Industrial Blvd"
+   ],
+   "meters": [
+    "M35WN48",
+    "M35WN52",
+    "M35WN53"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.280": 11,
+    "Industrial Blvd": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.24,
+   "start_km": 52.04,
+   "ramps": [
+    "Industrial Blvd",
+    "Cleveland Ave"
+   ],
+   "meters": [
+    "M35WN53",
+    "M35WN54"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.280": 12,
+    "Co Rd C": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.24,
+   "start_km": 52.04,
+   "ramps": [
+    "Industrial Blvd",
+    "Cleveland Ave",
+    "T.H.36 WB"
+   ],
+   "meters": [
+    "M35WN53",
+    "M35WN54",
+    "M35WN55"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.280": 12,
+    "Co Rd C": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 5.42,
+   "start_km": 29.11,
+   "ramps": [
+    "Co Rd C",
+    "Industrial Blvd",
+    "New Brighton Blvd"
+   ],
+   "meters": [
+    "M35WS30",
+    "M35WS34",
+    "M35WS35"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.92,
+   "bottleneck_station_counts": {
+    "Johnson St": 6,
+    "Broadway St": 5,
+    "Hennepin Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.73,
+   "start_km": 32.8,
+   "ramps": [
+    "Industrial Blvd",
+    "New Brighton Blvd"
+   ],
+   "meters": [
+    "M35WS34",
+    "M35WS35"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.92,
+   "bottleneck_station_counts": {
+    "Johnson St": 6,
+    "Broadway St": 5,
+    "Hennepin Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.77,
+   "start_km": 32.8,
+   "ramps": [
+    "Industrial Blvd",
+    "New Brighton Blvd",
+    "Johnson St"
+   ],
+   "meters": [
+    "M35WS34",
+    "M35WS35",
+    "M35WS36"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.92,
+   "bottleneck_station_counts": {
+    "Johnson St": 6,
+    "Broadway St": 5,
+    "Hennepin Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.34,
+   "start_km": 53.33,
+   "ramps": [
+    "I-494 EB",
+    "82nd St",
+    "90th St"
+   ],
+   "meters": [
+    "M35WS66",
+    "M35WS67",
+    "M35WS69"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "92nd St": 8,
+    "S of 98th St": 3,
+    "S of 94th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.64,
+   "start_km": 54.04,
+   "ramps": [
+    "82nd St",
+    "90th St"
+   ],
+   "meters": [
+    "M35WS67",
+    "M35WS69"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "92nd St": 8,
+    "S of 98th St": 3,
+    "S of 94th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.55,
+   "start_km": 54.04,
+   "ramps": [
+    "82nd St",
+    "90th St",
+    "94th St"
+   ],
+   "meters": [
+    "M35WS67",
+    "M35WS69",
+    "M35WS70"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "92nd St": 8,
+    "S of 98th St": 3,
+    "S of 94th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.74,
+   "start_km": 55.67,
+   "ramps": [
+    "90th St",
+    "94th St",
+    "98th St WB"
+   ],
+   "meters": [
+    "M35WS69",
+    "M35WS70",
+    "M35WS71"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "92nd St": 9,
+    "S of 98th St": 3,
+    "S of 94th St": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.62,
+   "start_km": 34.92,
+   "ramps": [
+    "France Ave NB",
+    "France Ave SB",
+    "T.H.100 NB"
+   ],
+   "meters": [
+    "M494W42",
+    "M494W43",
+    "M494W44"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.31,
+   "bottleneck_station_counts": {
+    "Marth Rd": 8,
+    "Nord Ave": 3,
+    "E Bush Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.67,
+   "start_km": 35.23,
+   "ramps": [
+    "France Ave SB",
+    "T.H.100 NB",
+    "T.H.100 SB"
+   ],
+   "meters": [
+    "M494W43",
+    "M494W44",
+    "M494W45"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.31,
+   "bottleneck_station_counts": {
+    "Marth Rd": 8,
+    "Nord Ave": 3,
+    "E Bush Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 3.41,
+   "start_km": 348.11,
+   "ramps": [
+    "Weaver Lake Rd EB",
+    "Hemlock Ln"
+   ],
+   "meters": [
+    "M94E20",
+    "M94E22"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "80th Ave": 13
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.4,
+   "start_km": 353.74,
+   "ramps": [
+    "U.S.169 NB",
+    "Boone Ave",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M94E24",
+    "M94E25",
+    "M94E26"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.38,
+   "bottleneck_station_counts": {
+    "Boone Ave": 6,
+    "Perry Ave": 3,
+    "Zane Ave": 3
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.09,
+   "start_km": 10.51,
+   "ramps": [
+    "Minnetonka Blvd",
+    "Cedar Lake Rd"
+   ],
+   "meters": [
+    "M100N36",
+    "M100N38"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.15,
+   "bottleneck_station_counts": {
+    "I-394": 9,
+    "23rd St": 3,
+    "Glenwood Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.68,
+   "start_km": 10.51,
+   "ramps": [
+    "Minnetonka Blvd",
+    "Cedar Lake Rd",
+    "I-394 WB"
+   ],
+   "meters": [
+    "M100N36",
+    "M100N38",
+    "M100N40"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 0.15,
+   "bottleneck_station_counts": {
+    "I-394": 9,
+    "23rd St": 3,
+    "Glenwood Ave": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.68,
+   "start_km": 26.89,
+   "ramps": [
+    "T.H.61 SB",
+    "Edgerton St"
+   ],
+   "meters": [
+    "M36W61",
+    "M36W62"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of I-35E": 13
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.37,
+   "start_km": 26.89,
+   "ramps": [
+    "T.H.61 SB",
+    "Edgerton St",
+    "I-35E NB"
+   ],
+   "meters": [
+    "M36W61",
+    "M36W62",
+    "M36W63"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.65,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of I-35E": 13
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.52,
+   "start_km": 25.8,
+   "ramps": [
+    "106th St",
+    "98th St"
+   ],
+   "meters": [
+    "M35WN21",
+    "M35WN22"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 19,
+   "share_congested": 0.63,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of 94th St": 4,
+    "S of 102nd St": 3,
+    "S of 98th St": 3
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 5.43,
+   "start_km": 195.24,
+   "ramps": [
+    "C.S.A.H.56",
+    "Sunfish Lake Blvd",
+    "Ferry St"
+   ],
+   "meters": [
+    "M10E26",
+    "M10E27",
+    "M10E01"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 16,
+   "share_congested": 0.62,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "Ferry St": 9,
+    "7th Ave": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 3.71,
+   "start_km": 196.96,
+   "ramps": [
+    "Sunfish Lake Blvd",
+    "Ferry St"
+   ],
+   "meters": [
+    "M10E27",
+    "M10E01"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 16,
+   "share_congested": 0.62,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "Ferry St": 9,
+    "7th Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.7,
+   "start_km": 21.2,
+   "ramps": [
+    "T.H.62",
+    "T.H.13"
+   ],
+   "meters": [
+    "M35EN13",
+    "M35EN14"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "Bachelor Ave": 5,
+    "Marie Ave": 4,
+    "Shepard Rd": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.91,
+   "start_km": 27.9,
+   "ramps": [
+    "Co Rd D",
+    "Co Rd C",
+    "Industrial Blvd"
+   ],
+   "meters": [
+    "M35WS29",
+    "M35WS30",
+    "M35WS34"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Johnson St": 12
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.69,
+   "start_km": 29.11,
+   "ramps": [
+    "Co Rd C",
+    "Industrial Blvd"
+   ],
+   "meters": [
+    "M35WS30",
+    "M35WS34"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Johnson St": 12
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.54,
+   "start_km": 11.12,
+   "ramps": [
+    "I-35W NB",
+    "Lyndale Ave",
+    "Nicollet Ave"
+   ],
+   "meters": [
+    "M494E37",
+    "M494E38",
+    "M494E39"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.08,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 8,
+    "Portland Ave": 4
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.69,
+   "start_km": 11.78,
+   "ramps": [
+    "Lyndale Ave",
+    "Nicollet Ave",
+    "Portland Ave"
+   ],
+   "meters": [
+    "M494E38",
+    "M494E39",
+    "M494E40"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.08,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 8,
+    "Portland Ave": 4
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 6.23,
+   "start_km": 17.29,
+   "ramps": [
+    "T.H.55",
+    "Rockford Rd",
+    "Bass Lake Rd"
+   ],
+   "meters": [
+    "M494W67",
+    "M494W68",
+    "M494W71"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "67th Ave": 5,
+    "Bass Lake Rd": 4,
+    "E Fish Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 4.31,
+   "start_km": 19.21,
+   "ramps": [
+    "Rockford Rd",
+    "Bass Lake Rd"
+   ],
+   "meters": [
+    "M494W68",
+    "M494W71"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "67th Ave": 5,
+    "Bass Lake Rd": 4,
+    "E Fish Lake Rd": 2
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.5,
+   "start_km": 22.99,
+   "ramps": [
+    "T.H.61",
+    "White Bear Ave",
+    "Century Ave"
+   ],
+   "meters": [
+    "M694E25",
+    "M694E26",
+    "M694E27"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.17,
+   "bottleneck_station_counts": {
+    "E of T.H.61": 8,
+    "E of T.H.120": 3,
+    "McKnight Rd": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.81,
+   "start_km": 374.77,
+   "ramps": [
+    "Hennepin Ave",
+    "5th Ave",
+    "6th St"
+   ],
+   "meters": [
+    "M94E40",
+    "M94E42",
+    "M94E44"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "LaSalle Ave": 7,
+    "Riverside Ave": 5
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.8,
+   "start_km": 382.76,
+   "ramps": [
+    "Cretin Ave",
+    "Snelling Ave",
+    "Lexington Pkwy"
+   ],
+   "meters": [
+    "M94E49",
+    "M94E50",
+    "M94E52"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Western Ave": 8,
+    "W of Prior Ave": 3,
+    "Lexington Pkwy": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.87,
+   "start_km": 22.4,
+   "ramps": [
+    "T.H.62 WB",
+    "T.H.62 EB",
+    "70th St"
+   ],
+   "meters": [
+    "M100S36",
+    "M100S37",
+    "M100S39"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.08,
+   "bottleneck_station_counts": {
+    "77th St": 12
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.47,
+   "start_km": 22.8,
+   "ramps": [
+    "T.H.62 EB",
+    "70th St",
+    "77th St"
+   ],
+   "meters": [
+    "M100S37",
+    "M100S39",
+    "M100S40"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.08,
+   "bottleneck_station_counts": {
+    "77th St": 12
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.57,
+   "start_km": 71.96,
+   "ramps": [
+    "I-94 WB",
+    "I-94 EB",
+    "63rd Ave"
+   ],
+   "meters": [
+    "M169S22",
+    "M169S23",
+    "M169S24"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.6,
+   "share_am_onset": 0.83,
+   "bottleneck_station_counts": {
+    "Bass Lake Rd": 5,
+    "S of I-94": 4,
+    "Hillsboro Ave": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.71,
+   "start_km": 8.56,
+   "ramps": [
+    "Louisiana Ave",
+    "Co Rd 73"
+   ],
+   "meters": [
+    "M394W17",
+    "M394W22"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Shelard Pkwy": 11
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 5.77,
+   "start_km": 8.56,
+   "ramps": [
+    "Louisiana Ave",
+    "Co Rd 73",
+    "Plymouth Rd"
+   ],
+   "meters": [
+    "M394W17",
+    "M394W22",
+    "M394W24"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Shelard Pkwy": 11
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.8,
+   "start_km": 7.68,
+   "ramps": [
+    "T.H.7 WB",
+    "Minnetonka Blvd",
+    "I-394 EB"
+   ],
+   "meters": [
+    "M494W59",
+    "M494W61",
+    "M494W63"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.18,
+   "bottleneck_station_counts": {
+    "N of I-394": 5,
+    "Minnetonka Blvd": 3,
+    "Orchard Rd": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 4.45,
+   "start_km": 62.38,
+   "ramps": [
+    "Brooklyn Blvd",
+    "Co Rd 81",
+    "Boone Ave"
+   ],
+   "meters": [
+    "M94W67",
+    "M94W68",
+    "M94W69"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.09,
+   "bottleneck_station_counts": {
+    "Ximinies Ln": 8,
+    "Zane Ave": 2,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.72,
+   "start_km": 196.96,
+   "ramps": [
+    "Sunfish Lake Blvd",
+    "Ferry St",
+    "7th Ave"
+   ],
+   "meters": [
+    "M10E27",
+    "M10E01",
+    "M10E02"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.45,
+   "bottleneck_station_counts": {
+    "Ferry St": 9,
+    "Round Lake Blvd": 1,
+    "7th Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.95,
+   "start_km": 8.0,
+   "ramps": [
+    "36th Ave",
+    "Duluth St",
+    "T.H.55"
+   ],
+   "meters": [
+    "M100S19",
+    "M100S20",
+    "M100S22"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.55,
+   "share_am_onset": 0.82,
+   "bottleneck_station_counts": {
+    "Cedar Lake Rd": 9,
+    "Duluth St": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.72,
+   "start_km": 35.81,
+   "ramps": [
+    "Larpenteur Ave",
+    "Roselawn Ave",
+    "T.H.36 EB"
+   ],
+   "meters": [
+    "M35EN28",
+    "M35EN29",
+    "M35EN30"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Little Canada Rd": 8,
+    "T.H.36": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 6.24,
+   "start_km": 37.53,
+   "ramps": [
+    "T.H.36 EB",
+    "T.H.36 WB",
+    "Co Rd E"
+   ],
+   "meters": [
+    "M35EN30",
+    "M35EN31",
+    "M35EN33"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Little Canada Rd": 8,
+    "T.H.36": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.75,
+   "start_km": 31.37,
+   "ramps": [
+    "I-494 WB",
+    "76th St",
+    "66th St"
+   ],
+   "meters": [
+    "M35WN28",
+    "M35WN29",
+    "M35WN30"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 7,
+    "76th St": 2,
+    "66th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.43,
+   "start_km": 31.69,
+   "ramps": [
+    "76th St",
+    "66th St"
+   ],
+   "meters": [
+    "M35WN29",
+    "M35WN30"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Nicollet Ave": 9,
+    "66th St": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.83,
+   "start_km": 3.85,
+   "ramps": [
+    "T.H.62",
+    "T.H.7 EB",
+    "T.H.7 WB"
+   ],
+   "meters": [
+    "M494W55",
+    "M494W58",
+    "M494W59"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.2,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 6,
+    "Orchard Rd": 2,
+    "Excelsior Blvd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.29,
+   "start_km": 7.25,
+   "ramps": [
+    "T.H.7 EB",
+    "T.H.7 WB",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M494W58",
+    "M494W59",
+    "M494W61"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.2,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 6,
+    "Orchard Rd": 2,
+    "Stone Rd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.85,
+   "start_km": 7.68,
+   "ramps": [
+    "T.H.7 WB",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M494W59",
+    "M494W61"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.2,
+   "bottleneck_station_counts": {
+    "Minnetonka Blvd": 6,
+    "Orchard Rd": 2,
+    "Stone Rd": 2
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.96,
+   "start_km": 22.99,
+   "ramps": [
+    "T.H.61",
+    "White Bear Ave"
+   ],
+   "meters": [
+    "M694E25",
+    "M694E26"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.1,
+   "bottleneck_station_counts": {
+    "E of T.H.61": 9,
+    "McKnight Rd": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.65,
+   "start_km": 374.73,
+   "ramps": [
+    "Lyndale Ave",
+    "Hennepin Ave",
+    "5th Ave"
+   ],
+   "meters": [
+    "M94E39",
+    "M94E40",
+    "M94E42"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "LaSalle Ave": 7,
+    "25th Ave": 2,
+    "W of T.H.65": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 374.77,
+   "ramps": [
+    "Hennepin Ave",
+    "5th Ave"
+   ],
+   "meters": [
+    "M94E40",
+    "M94E42"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "LaSalle Ave": 7,
+    "25th Ave": 2,
+    "W of T.H.65": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.68,
+   "start_km": 10.28,
+   "ramps": [
+    "Duluth St",
+    "T.H.55"
+   ],
+   "meters": [
+    "M100S20",
+    "M100S22"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Cedar Lake Rd": 10
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.17,
+   "start_km": 10.85,
+   "ramps": [
+    "Dell Rd",
+    "Eden Prairie Rd",
+    "Mitchell Rd"
+   ],
+   "meters": [
+    "M212E69",
+    "M212E71",
+    "M212E73"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 5,
+    "W of Prairie Center Dr": 4,
+    "Eden Prairie Rd": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.61,
+   "start_km": 12.41,
+   "ramps": [
+    "Eden Prairie Rd",
+    "Mitchell Rd"
+   ],
+   "meters": [
+    "M212E71",
+    "M212E73"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 6,
+    "W of Prairie Center Dr": 4
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.8,
+   "start_km": 12.41,
+   "ramps": [
+    "Eden Prairie Rd",
+    "Mitchell Rd",
+    "Prairie Center Dr"
+   ],
+   "meters": [
+    "M212E71",
+    "M212E73",
+    "M212E74"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 6,
+    "W of Prairie Center Dr": 4
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 5.05,
+   "ramps": [
+    "Lexington Ave",
+    "Dale St"
+   ],
+   "meters": [
+    "M36E08",
+    "M36E09"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 9,
+    "E of Dale St": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.12,
+   "start_km": 5.05,
+   "ramps": [
+    "Lexington Ave",
+    "Dale St",
+    "Rice St"
+   ],
+   "meters": [
+    "M36E08",
+    "M36E09",
+    "M36E10"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 9,
+    "E of Dale St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 4.25,
+   "start_km": 105.49,
+   "ramps": [
+    "Anderson Lakes Pkwy",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M169N17",
+    "M169N21"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.5,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "T.H.62": 7,
+    "N of Anderson Lakes Pkwy": 3
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 5.87,
+   "start_km": 37.9,
+   "ramps": [
+    "T.H.36 WB",
+    "Co Rd E"
+   ],
+   "meters": [
+    "M35EN31",
+    "M35EN33"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Little Canada Rd": 9
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.4,
+   "start_km": 46.37,
+   "ramps": [
+    "Washington Ave",
+    "4th St",
+    "Stinson Blvd"
+   ],
+   "meters": [
+    "M35WN47",
+    "M35WN48",
+    "M35WN52"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.11,
+   "bottleneck_station_counts": {
+    "University Ave": 5,
+    "Industrial Blvd": 4
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.25,
+   "start_km": 21.78,
+   "ramps": [
+    "Co Rd 10 EB",
+    "Co Rd 96",
+    "I-694 WB"
+   ],
+   "meters": [
+    "M35WS23",
+    "M35WS24",
+    "M35WS25"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-694": 5,
+    "Co Rd E2": 3,
+    "S of Co Rd 96": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.16,
+   "start_km": 9.69,
+   "ramps": [
+    "T.H.55",
+    "Co Rd 6",
+    "Carlson Pkwy"
+   ],
+   "meters": [
+    "M494E07",
+    "M494E08",
+    "M494E09"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.67,
+   "bottleneck_station_counts": {
+    "N of Co Rd 6": 4,
+    "S of I-394": 3,
+    "S of Carlson Pkwy": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.75,
+   "start_km": 351.52,
+   "ramps": [
+    "Hemlock Ln",
+    "U.S.169 SB"
+   ],
+   "meters": [
+    "M94E22",
+    "M94E23"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Boone Ave": 9
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.22,
+   "start_km": 351.52,
+   "ramps": [
+    "Hemlock Ln",
+    "U.S.169 SB",
+    "U.S.169 NB"
+   ],
+   "meters": [
+    "M94E22",
+    "M94E23",
+    "M94E24"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Boone Ave": 7,
+    "Winnetka Ave": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.65,
+   "start_km": 354.57,
+   "ramps": [
+    "Boone Ave",
+    "Co Rd 81",
+    "Brooklyn Blvd"
+   ],
+   "meters": [
+    "M94E25",
+    "M94E26",
+    "M94E28"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.56,
+   "bottleneck_station_counts": {
+    "Brooklyn Blvd": 3,
+    "Zane Ave": 3,
+    "Winnetka Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 3.07,
+   "start_km": 356.15,
+   "ramps": [
+    "Co Rd 81",
+    "Brooklyn Blvd"
+   ],
+   "meters": [
+    "M94E26",
+    "M94E28"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.56,
+   "bottleneck_station_counts": {
+    "Zane Ave": 4,
+    "Brooklyn Blvd": 3,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 5.47,
+   "start_km": 356.15,
+   "ramps": [
+    "Co Rd 81",
+    "Brooklyn Blvd",
+    "Shingle Creek Pkwy"
+   ],
+   "meters": [
+    "M94E26",
+    "M94E28",
+    "M94E29"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.56,
+   "bottleneck_station_counts": {
+    "Zane Ave": 4,
+    "Brooklyn Blvd": 3,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.58,
+   "start_km": 384.98,
+   "ramps": [
+    "Snelling Ave",
+    "Lexington Pkwy"
+   ],
+   "meters": [
+    "M94E50",
+    "M94E52"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Western Ave": 8,
+    "Lexington Pkwy": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.15,
+   "start_km": 6.7,
+   "ramps": [
+    "Powers Blvd",
+    "T.H.101",
+    "Dell Rd"
+   ],
+   "meters": [
+    "M212E65",
+    "M212E67",
+    "M212E69"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 6,
+    "Eden Prairie Rd": 2,
+    "T.H.101": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.45,
+   "start_km": 8.4,
+   "ramps": [
+    "T.H.101",
+    "Dell Rd"
+   ],
+   "meters": [
+    "M212E67",
+    "M212E69"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 7,
+    "Eden Prairie Rd": 2
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.01,
+   "start_km": 8.4,
+   "ramps": [
+    "T.H.101",
+    "Dell Rd",
+    "Eden Prairie Rd"
+   ],
+   "meters": [
+    "M212E67",
+    "M212E69",
+    "M212E71"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 6,
+    "W of Mitchell Rd": 2,
+    "Eden Prairie Rd": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.56,
+   "start_km": 10.85,
+   "ramps": [
+    "Dell Rd",
+    "Eden Prairie Rd"
+   ],
+   "meters": [
+    "M212E69",
+    "M212E71"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "E of Eden Prairie Rd": 6,
+    "W of Mitchell Rd": 2,
+    "Eden Prairie Rd": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.64,
+   "start_km": 9.96,
+   "ramps": [
+    "France Ave",
+    "Xerxes Ave",
+    "Penn Ave"
+   ],
+   "meters": [
+    "M62E33",
+    "M62E34",
+    "M62E35"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Xerxes Ave": 9
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.39,
+   "start_km": 72.39,
+   "ramps": [
+    "I-94 EB",
+    "63rd Ave",
+    "Bass Lake Rd WB"
+   ],
+   "meters": [
+    "M169S23",
+    "M169S24",
+    "M169S25"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 0.89,
+   "bottleneck_station_counts": {
+    "Bass Lake Rd": 4,
+    "Hillsboro Ave": 2,
+    "54th Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.84,
+   "start_km": 75.21,
+   "ramps": [
+    "Bass Lake Rd EB",
+    "49th Ave",
+    "36th Ave"
+   ],
+   "meters": [
+    "M169S26",
+    "M169S27",
+    "M169S30"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Medicine Lake Rd": 5,
+    "32nd Ave": 2,
+    "36th Ave": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.43,
+   "start_km": 76.62,
+   "ramps": [
+    "49th Ave",
+    "36th Ave"
+   ],
+   "meters": [
+    "M169S27",
+    "M169S30"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.45,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Medicine Lake Rd": 5,
+    "32nd Ave": 2,
+    "36th Ave": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.64,
+   "start_km": 34.17,
+   "ramps": [
+    "Maryland Ave",
+    "Larpenteur Ave"
+   ],
+   "meters": [
+    "M35EN27",
+    "M35EN28"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.36": 8
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.48,
+   "start_km": 34.17,
+   "ramps": [
+    "Maryland Ave",
+    "Larpenteur Ave",
+    "Roselawn Ave"
+   ],
+   "meters": [
+    "M35EN27",
+    "M35EN28",
+    "M35EN29"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.36": 8
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.78,
+   "start_km": 13.31,
+   "ramps": [
+    "Lexington Ave",
+    "95th Ave"
+   ],
+   "meters": [
+    "M35WS15",
+    "M35WS16"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "95th Ave": 5,
+    "Co Rd J": 2,
+    "Lake Dr": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.36,
+   "start_km": 13.31,
+   "ramps": [
+    "Lexington Ave",
+    "95th Ave",
+    "Co Rd J"
+   ],
+   "meters": [
+    "M35WS15",
+    "M35WS16",
+    "M35WS18"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "95th Ave": 5,
+    "Co Rd J": 2,
+    "Lake Dr": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.1,
+   "start_km": 19.93,
+   "ramps": [
+    "Co Rd I",
+    "Co Rd 10 EB",
+    "Co Rd 96"
+   ],
+   "meters": [
+    "M35WS20",
+    "M35WS23",
+    "M35WS24"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-694": 7,
+    "S of Co Rd 96": 1
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 5.98,
+   "start_km": 2.59,
+   "ramps": [
+    "Dunwoody Blvd",
+    "Penn Ave",
+    "Louisiana Ave"
+   ],
+   "meters": [
+    "M394W11",
+    "M394W12",
+    "M394W17"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.62,
+   "bottleneck_station_counts": {
+    "Colorado Ave": 3,
+    "Dunwoody Blvd": 2,
+    "E of Wirth Pkwy": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.94,
+   "start_km": 9.54,
+   "ramps": [
+    "Minnetonka Blvd",
+    "I-394 EB"
+   ],
+   "meters": [
+    "M494W61",
+    "M494W63"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "N of I-394": 7,
+    "Stone Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.34,
+   "start_km": 9.54,
+   "ramps": [
+    "Minnetonka Blvd",
+    "I-394 EB",
+    "I-394 WB"
+   ],
+   "meters": [
+    "M494W61",
+    "M494W63",
+    "M494W64"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "N of I-394": 7,
+    "Stone Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.52,
+   "start_km": 7.68,
+   "ramps": [
+    "Rockford Rd",
+    "T.H.55",
+    "Co Rd 6"
+   ],
+   "meters": [
+    "M494E06",
+    "M494E07",
+    "M494E08"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "N of Co Rd 6": 5,
+    "S of Carlson Pkwy": 2,
+    "S of Co Rd 6": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.5,
+   "start_km": 9.69,
+   "ramps": [
+    "T.H.55",
+    "Co Rd 6"
+   ],
+   "meters": [
+    "M494E07",
+    "M494E08"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "N of Co Rd 6": 5,
+    "S of Carlson Pkwy": 2,
+    "S of Co Rd 6": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.58,
+   "start_km": 354.57,
+   "ramps": [
+    "Boone Ave",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M94E25",
+    "M94E26"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Zane Ave": 4,
+    "Perry Ave": 3,
+    "Winnetka Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.52,
+   "start_km": 376.38,
+   "ramps": [
+    "5th Ave",
+    "6th St",
+    "Cedar Ave"
+   ],
+   "meters": [
+    "M94E42",
+    "M94E44",
+    "M94E45"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Riverside Ave": 8
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.22,
+   "start_km": 382.76,
+   "ramps": [
+    "Cretin Ave",
+    "Snelling Ave"
+   ],
+   "meters": [
+    "M94E49",
+    "M94E50"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Victoria St": 3,
+    "W of Prior Ave": 3,
+    "Lexington Pkwy": 2
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.12,
+   "start_km": 36.71,
+   "ramps": [
+    "Snelling Ave",
+    "Vandalia St"
+   ],
+   "meters": [
+    "M94W46",
+    "M94W47"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.88,
+   "bottleneck_station_counts": {
+    "W of T.H.280": 3,
+    "Prior Ave": 3,
+    "Cretin Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.58,
+   "start_km": 65.25,
+   "ramps": [
+    "Co Rd 81",
+    "Boone Ave"
+   ],
+   "meters": [
+    "M94W68",
+    "M94W69"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Ximinies Ln": 8
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.34,
+   "start_km": 65.25,
+   "ramps": [
+    "Co Rd 81",
+    "Boone Ave",
+    "U.S.169 NB"
+   ],
+   "meters": [
+    "M94W68",
+    "M94W69",
+    "M94W70"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Ximinies Ln": 8
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.31,
+   "start_km": 200.67,
+   "ramps": [
+    "Ferry St",
+    "7th Ave",
+    "Round Lake Blvd SB"
+   ],
+   "meters": [
+    "M10E01",
+    "M10E02",
+    "M10E03"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.88,
+   "bottleneck_station_counts": {
+    "Main St NW": 5,
+    "7th Ave": 2,
+    "Round Lake Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 4.43,
+   "start_km": 16.08,
+   "ramps": [
+    "Foley Blvd",
+    "Hanson Blvd"
+   ],
+   "meters": [
+    "M10W10",
+    "M10W12"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.12,
+   "bottleneck_station_counts": {
+    "E of Main St": 4,
+    "Hanson Blvd": 3,
+    "E of Hanson Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.37,
+   "start_km": 4.07,
+   "ramps": [
+    "T.H.62 WB",
+    "Benton Ave",
+    "50th St"
+   ],
+   "meters": [
+    "M100N26",
+    "M100N27",
+    "M100N30"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Wind Rd": 4,
+    "Vernon Ave": 2,
+    "Benton Ave": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.27,
+   "start_km": 15.02,
+   "ramps": [
+    "Mitchell Rd",
+    "Prairie Center Dr",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M212E73",
+    "M212E74",
+    "M212E77"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.75,
+   "bottleneck_station_counts": {
+    "W of Prairie Center Dr": 6,
+    "Shady Oak Rd": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.68,
+   "start_km": 73.52,
+   "ramps": [
+    "63rd Ave",
+    "Bass Lake Rd WB",
+    "Bass Lake Rd EB"
+   ],
+   "meters": [
+    "M169S24",
+    "M169S25",
+    "M169S26"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.4,
+   "share_am_onset": 0.88,
+   "bottleneck_station_counts": {
+    "Bass Lake Rd": 4,
+    "Hillsboro Ave": 2,
+    "54th Ave": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.46,
+   "start_km": 18.25,
+   "ramps": [
+    "Co Rd 42",
+    "Burnsville Pkwy"
+   ],
+   "meters": [
+    "M35WN14",
+    "M35WN16"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "Timberland Dr": 3,
+    "T.H.13": 2,
+    "S of T.H.13": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.07,
+   "start_km": 18.25,
+   "ramps": [
+    "Co Rd 42",
+    "Burnsville Pkwy",
+    "T.H.13 EB"
+   ],
+   "meters": [
+    "M35WN14",
+    "M35WN16",
+    "M35WN17"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "Timberland Dr": 3,
+    "T.H.13": 2,
+    "S of T.H.13": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.64,
+   "start_km": 27.32,
+   "ramps": [
+    "98th St",
+    "94th St",
+    "90th St"
+   ],
+   "meters": [
+    "M35WN22",
+    "M35WN23",
+    "M35WN24"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.86,
+   "bottleneck_station_counts": {
+    "S of 94th St": 5,
+    "86th St": 1,
+    "N of 90th St": 1
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 4.91,
+   "start_km": 3.66,
+   "ramps": [
+    "Penn Ave",
+    "Louisiana Ave"
+   ],
+   "meters": [
+    "M394W12",
+    "M394W17"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.43,
+   "bottleneck_station_counts": {
+    "Colorado Ave": 4,
+    "E of Wirth Pkwy": 2,
+    "W of T.H.100": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 6.09,
+   "start_km": 1.16,
+   "ramps": [
+    "Valley View Rd",
+    "T.H.62",
+    "T.H.7 EB"
+   ],
+   "meters": [
+    "M494W53",
+    "M494W55",
+    "M494W58"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.14,
+   "bottleneck_station_counts": {
+    "Orchard Rd": 3,
+    "Excelsior Blvd": 3,
+    "T.H.62": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.4,
+   "start_km": 3.85,
+   "ramps": [
+    "T.H.62",
+    "T.H.7 EB"
+   ],
+   "meters": [
+    "M494W55",
+    "M494W58"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.14,
+   "bottleneck_station_counts": {
+    "Excelsior Blvd": 4,
+    "Orchard Rd": 3
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.78,
+   "start_km": 12.48,
+   "ramps": [
+    "I-394 EB",
+    "I-394 WB",
+    "Carlson Pkwy"
+   ],
+   "meters": [
+    "M494W63",
+    "M494W64",
+    "M494W65"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "N of I-394": 7
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.56,
+   "start_km": 15.65,
+   "ramps": [
+    "Co Rd 6",
+    "T.H.55",
+    "Rockford Rd"
+   ],
+   "meters": [
+    "M494W66",
+    "M494W67",
+    "M494W68"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "49th Ave": 5,
+    "T.H.55": 1,
+    "Annapolis Cir": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 6.38,
+   "start_km": 3.31,
+   "ramps": [
+    "Bass Lake Rd",
+    "Rockford Rd",
+    "T.H.55"
+   ],
+   "meters": [
+    "M494E03",
+    "M494E06",
+    "M494E07"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "N of Co Rd 6": 4,
+    "S of Co Rd 6": 2,
+    "Bass Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.01,
+   "start_km": 7.68,
+   "ramps": [
+    "Rockford Rd",
+    "T.H.55"
+   ],
+   "meters": [
+    "M494E06",
+    "M494E07"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.71,
+   "bottleneck_station_counts": {
+    "N of Co Rd 6": 5,
+    "S of Co Rd 6": 2
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.77,
+   "start_km": 4.66,
+   "ramps": [
+    "Benton Ave",
+    "50th St"
+   ],
+   "meters": [
+    "M100N27",
+    "M100N30"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.57,
+   "bottleneck_station_counts": {
+    "Wind Rd": 4,
+    "Vernon Ave": 2,
+    "50th St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.73,
+   "start_km": 122.23,
+   "ramps": [
+    "T.H.55 WB",
+    "Plymouth Ave",
+    "Medicine Lake Rd"
+   ],
+   "meters": [
+    "M169N38",
+    "M169N39",
+    "M169N40"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Plymouth Ave": 3,
+    "32nd Ave": 2,
+    "21st Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.58,
+   "start_km": 91.25,
+   "ramps": [
+    "Lincoln Dr",
+    "Bren Rd",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M169S46",
+    "M169S47",
+    "M169S51"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Highwood Ave": 7
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.9,
+   "start_km": 92.93,
+   "ramps": [
+    "Bren Rd",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M169S47",
+    "M169S51"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Highwood Ave": 7
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.06,
+   "start_km": 99.88,
+   "ramps": [
+    "Anderson Lakes Pkwy",
+    "Pioneer Tr"
+   ],
+   "meters": [
+    "M169S55",
+    "M169S56"
+   ],
+   "n_stations": 2,
+   "n_valid_days": 20,
+   "share_congested": 0.35,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Pioneer Tr": 7
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.07,
+   "start_km": 44.3,
+   "ramps": [
+    "5th Ave",
+    "Washington Ave"
+   ],
+   "meters": [
+    "M35WN42",
+    "M35WN47"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.17,
+   "bottleneck_station_counts": {
+    "University Ave": 4,
+    "Hiawatha Ave": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.3,
+   "start_km": 44.3,
+   "ramps": [
+    "5th Ave",
+    "Washington Ave",
+    "4th St"
+   ],
+   "meters": [
+    "M35WN42",
+    "M35WN47",
+    "M35WN48"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.17,
+   "bottleneck_station_counts": {
+    "University Ave": 4,
+    "Hiawatha Ave": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.1,
+   "start_km": 0.76,
+   "ramps": [
+    "T.H.212 WB",
+    "Valley View Rd",
+    "T.H.62"
+   ],
+   "meters": [
+    "M494W52",
+    "M494W53",
+    "M494W55"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Baker Rd": 3,
+    "T.H.62": 2,
+    "Valley View Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.69,
+   "start_km": 1.16,
+   "ramps": [
+    "Valley View Rd",
+    "T.H.62"
+   ],
+   "meters": [
+    "M494W53",
+    "M494W55"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.62": 3,
+    "Baker Rd": 3
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.92,
+   "start_km": 17.29,
+   "ramps": [
+    "T.H.55",
+    "Rockford Rd"
+   ],
+   "meters": [
+    "M494W67",
+    "M494W68"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "49th Ave": 5,
+    "Annapolis Cir": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.42,
+   "start_km": 13.76,
+   "ramps": [
+    "I-394 WB",
+    "I-394 EB",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M494E10",
+    "M494E11",
+    "M494E13"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "S of I-394": 3,
+    "Orchard Rd": 2,
+    "Stone Rd": 1
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.55,
+   "start_km": 24.94,
+   "ramps": [
+    "White Bear Ave",
+    "Century Ave"
+   ],
+   "meters": [
+    "M694E26",
+    "M694E27"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "E of T.H.120": 4,
+    "Century Ave": 1,
+    "McKnight Rd": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.66,
+   "start_km": 201.68,
+   "ramps": [
+    "7th Ave",
+    "Round Lake Blvd SB",
+    "Round Lake Blvd NB"
+   ],
+   "meters": [
+    "M10E02",
+    "M10E03",
+    "M10E04"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Main St NW": 5,
+    "Round Lake Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 2.22,
+   "start_km": 202.98,
+   "ramps": [
+    "Round Lake Blvd SB",
+    "Round Lake Blvd NB",
+    "Main St NW"
+   ],
+   "meters": [
+    "M10E03",
+    "M10E04",
+    "M10E05"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Main St NW": 5,
+    "E of Main St NW": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.86,
+   "start_km": 203.34,
+   "ramps": [
+    "Round Lake Blvd NB",
+    "Main St NW"
+   ],
+   "meters": [
+    "M10E04",
+    "M10E05"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Main St NW": 5,
+    "E of Main St NW": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.24,
+   "start_km": 203.34,
+   "ramps": [
+    "Round Lake Blvd NB",
+    "Main St NW",
+    "Hanson Blvd"
+   ],
+   "meters": [
+    "M10E04",
+    "M10E05",
+    "M10E06"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Main St NW": 5,
+    "E of Main St NW": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.39,
+   "start_km": 1.2,
+   "ramps": [
+    "77th St",
+    "70th St",
+    "T.H.62 EB"
+   ],
+   "meters": [
+    "M100N22",
+    "M100N23",
+    "M100N25"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Wind Rd": 5,
+    "Benton Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.53,
+   "start_km": 2.53,
+   "ramps": [
+    "70th St",
+    "T.H.62 EB",
+    "T.H.62 WB"
+   ],
+   "meters": [
+    "M100N23",
+    "M100N25",
+    "M100N26"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Wind Rd": 5,
+    "Benton Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.12,
+   "start_km": 16.04,
+   "ramps": [
+    "Minnetonka Blvd",
+    "T.H.7",
+    "Excelsior Blvd"
+   ],
+   "meters": [
+    "M100S29",
+    "M100S30",
+    "M100S33"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "36th St": 4,
+    "Vernon Ave": 1,
+    "Excelsior Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.69,
+   "start_km": 16.72,
+   "ramps": [
+    "T.H.7",
+    "Excelsior Blvd",
+    "50th St"
+   ],
+   "meters": [
+    "M100S30",
+    "M100S33",
+    "M100S34"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "36th St": 4,
+    "Vernon Ave": 1,
+    "Excelsior Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 1.85,
+   "start_km": 22.85,
+   "ramps": [
+    "T.H.100 NB",
+    "T.H.100 SB",
+    "Tracy Ave"
+   ],
+   "meters": [
+    "M62W54",
+    "M62W55",
+    "M62W56"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.83,
+   "bottleneck_station_counts": {
+    "Wyman Ave": 5,
+    "Tracy Ave": 1
+   }
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.06,
+   "start_km": 23.26,
+   "ramps": [
+    "T.H.100 SB",
+    "Tracy Ave",
+    "Gleason Rd"
+   ],
+   "meters": [
+    "M62W55",
+    "M62W56",
+    "M62W57"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.3,
+   "share_am_onset": 0.83,
+   "bottleneck_station_counts": {
+    "Wyman Ave": 5,
+    "Tracy Ave": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.51,
+   "start_km": 57.41,
+   "ramps": [
+    "98th St WB",
+    "98th St EB",
+    "106th St"
+   ],
+   "meters": [
+    "M35WS71",
+    "M35WS72",
+    "M35WS74"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 10,
+   "share_congested": 0.3,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of 98th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.51,
+   "start_km": 57.41,
+   "ramps": [
+    "98th St EB",
+    "106th St"
+   ],
+   "meters": [
+    "M35WS72",
+    "M35WS74"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 10,
+   "share_congested": 0.3,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of 98th St": 3
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.51,
+   "start_km": 28.1,
+   "ramps": [
+    "94th St",
+    "90th St",
+    "82nd St"
+   ],
+   "meters": [
+    "M35WN23",
+    "M35WN24",
+    "M35WN26"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.6,
+   "bottleneck_station_counts": {
+    "76th St": 2,
+    "86th St": 1,
+    "N of 90th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.64,
+   "start_km": 28.96,
+   "ramps": [
+    "90th St",
+    "82nd St"
+   ],
+   "meters": [
+    "M35WN24",
+    "M35WN26"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.6,
+   "bottleneck_station_counts": {
+    "76th St": 2,
+    "86th St": 1,
+    "N of 90th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.41,
+   "start_km": 28.96,
+   "ramps": [
+    "90th St",
+    "82nd St",
+    "I-494 WB"
+   ],
+   "meters": [
+    "M35WN24",
+    "M35WN26",
+    "M35WN28"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.6,
+   "bottleneck_station_counts": {
+    "76th St": 2,
+    "86th St": 1,
+    "N of 90th St": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.17,
+   "start_km": 47.6,
+   "ramps": [
+    "4th St",
+    "Stinson Blvd"
+   ],
+   "meters": [
+    "M35WN48",
+    "M35WN52"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Industrial Blvd": 5
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.58,
+   "start_km": 16.08,
+   "ramps": [
+    "95th Ave",
+    "Co Rd J"
+   ],
+   "meters": [
+    "M35WS16",
+    "M35WS18"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd J": 3,
+    "Co Rd I": 1,
+    "Lake Dr": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.58,
+   "start_km": 16.08,
+   "ramps": [
+    "95th Ave",
+    "Co Rd J",
+    "Lake Dr"
+   ],
+   "meters": [
+    "M35WS16",
+    "M35WS18",
+    "M35WS17"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd J": 3,
+    "Co Rd I": 1,
+    "Lake Dr": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.5,
+   "start_km": 24.4,
+   "ramps": [
+    "I-694 EB",
+    "Co Rd E2",
+    "Co Rd D"
+   ],
+   "meters": [
+    "M35WS26",
+    "M35WS27",
+    "M35WS29"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd E2": 3,
+    "Co Rd C": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.66,
+   "start_km": 11.2,
+   "ramps": [
+    "Co Rd 6",
+    "Carlson Pkwy"
+   ],
+   "meters": [
+    "M494E08",
+    "M494E09"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "S of I-394": 3,
+    "S of Carlson Pkwy": 1,
+    "Oakland Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.56,
+   "start_km": 11.2,
+   "ramps": [
+    "Co Rd 6",
+    "Carlson Pkwy",
+    "I-394 WB"
+   ],
+   "meters": [
+    "M494E08",
+    "M494E09",
+    "M494E10"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "S of I-394": 3,
+    "S of Carlson Pkwy": 1,
+    "Oakland Rd": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.2,
+   "start_km": 73.31,
+   "ramps": [
+    "Weaver Lake Rd",
+    "Maple Grove Pkwy"
+   ],
+   "meters": [
+    "M94W75",
+    "M94W76"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "W of Weaver Lake Rd": 2,
+    "W of Maple Grove Pkwy": 2,
+    "T.H.610": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 4.49,
+   "start_km": 73.31,
+   "ramps": [
+    "Weaver Lake Rd",
+    "Maple Grove Pkwy",
+    "T.H.610 WB"
+   ],
+   "meters": [
+    "M94W75",
+    "M94W76",
+    "M94W77"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.4,
+   "bottleneck_station_counts": {
+    "W of Weaver Lake Rd": 2,
+    "W of Maple Grove Pkwy": 2,
+    "T.H.610": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.81,
+   "start_km": 4.83,
+   "ramps": [
+    "France Ave",
+    "Co Rd 81",
+    "42nd Ave"
+   ],
+   "meters": [
+    "M100S15",
+    "M100S17",
+    "M100S18"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "36th Ave": 5
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.0,
+   "start_km": 6.0,
+   "ramps": [
+    "Co Rd 81",
+    "42nd Ave",
+    "36th Ave"
+   ],
+   "meters": [
+    "M100S17",
+    "M100S18",
+    "M100S19"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "36th Ave": 5
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.63,
+   "start_km": 6.65,
+   "ramps": [
+    "42nd Ave",
+    "36th Ave",
+    "Duluth St"
+   ],
+   "meters": [
+    "M100S18",
+    "M100S19",
+    "M100S20"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "36th Ave": 4,
+    "Duluth St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.84,
+   "start_km": 74.78,
+   "ramps": [
+    "Bass Lake Rd WB",
+    "Bass Lake Rd EB",
+    "49th Ave"
+   ],
+   "meters": [
+    "M169S25",
+    "M169S26",
+    "M169S27"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.25,
+   "share_am_onset": 0.8,
+   "bottleneck_station_counts": {
+    "Bass Lake Rd": 4,
+    "54th Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 4.85,
+   "start_km": 6.74,
+   "ramps": [
+    "Co Rd 14",
+    "Co Rd J"
+   ],
+   "meters": [
+    "M35ES26",
+    "M35ES27"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd J": 2,
+    "S of Co Rd J": 1,
+    "N of Co Rd H2": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.11,
+   "start_km": 17.66,
+   "ramps": [
+    "Lake Dr",
+    "Co Rd I",
+    "Co Rd 10 EB"
+   ],
+   "meters": [
+    "M35WS17",
+    "M35WS20",
+    "M35WS23"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Co Rd 96": 4
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.84,
+   "start_km": 19.93,
+   "ramps": [
+    "Co Rd I",
+    "Co Rd 10 EB"
+   ],
+   "meters": [
+    "M35WS20",
+    "M35WS23"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Co Rd 96": 4
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.85,
+   "start_km": 3.01,
+   "ramps": [
+    "Central Ave",
+    "Bushaway Rd",
+    "Plymouth Rd"
+   ],
+   "meters": [
+    "M394E10",
+    "M394E11",
+    "M394E15"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Plymouth Rd": 2,
+    "I-494": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 4.02,
+   "start_km": 3.84,
+   "ramps": [
+    "Bushaway Rd",
+    "Plymouth Rd"
+   ],
+   "meters": [
+    "M394E11",
+    "M394E15"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Plymouth Rd": 2,
+    "I-494": 2
+   }
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.69,
+   "start_km": 3.84,
+   "ramps": [
+    "Bushaway Rd",
+    "Plymouth Rd",
+    "Ridgedale Dr"
+   ],
+   "meters": [
+    "M394E11",
+    "M394E15",
+    "M394E16"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Plymouth Rd": 2,
+    "I-494": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.52,
+   "start_km": 12.65,
+   "ramps": [
+    "Nicollet Ave",
+    "Portland Ave",
+    "12th Ave"
+   ],
+   "meters": [
+    "M494E39",
+    "M494E40",
+    "M494E41"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "Portland Ave": 4
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.03,
+   "start_km": 14.26,
+   "ramps": [
+    "Carlson Pkwy",
+    "Co Rd 6",
+    "T.H.55"
+   ],
+   "meters": [
+    "M494W65",
+    "M494W66",
+    "M494W67"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Rockford Rd": 2,
+    "N of T.H.55": 1,
+    "T.H.55": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.64,
+   "start_km": 15.65,
+   "ramps": [
+    "Co Rd 6",
+    "T.H.55"
+   ],
+   "meters": [
+    "M494W66",
+    "M494W67"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Rockford Rd": 2,
+    "N of T.H.55": 1,
+    "T.H.55": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 4.37,
+   "start_km": 3.31,
+   "ramps": [
+    "Bass Lake Rd",
+    "Rockford Rd"
+   ],
+   "meters": [
+    "M494E03",
+    "M494E06"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.55": 2,
+    "Bass Lake Rd": 1,
+    "N of T.H.55": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.02,
+   "start_km": 14.16,
+   "ramps": [
+    "I-394 EB",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M494E11",
+    "M494E13"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Orchard Rd": 2,
+    "Oakland Rd": 1,
+    "Stone Rd": 1
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.87,
+   "start_km": 14.16,
+   "ramps": [
+    "I-394 EB",
+    "Minnetonka Blvd",
+    "T.H.7 WB"
+   ],
+   "meters": [
+    "M494E11",
+    "M494E13",
+    "M494E15"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Orchard Rd": 2,
+    "Oakland Rd": 1,
+    "Stone Rd": 1
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 3.28,
+   "start_km": 10.62,
+   "ramps": [
+    "I-35W NB",
+    "Lexington Ave"
+   ],
+   "meters": [
+    "M694E14",
+    "M694E17"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "Lexington Ave": 3,
+    "E of Lexington Ave": 1
+   }
+  },
+  {
+   "route": "I-694",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.54,
+   "start_km": 10.62,
+   "ramps": [
+    "I-35W NB",
+    "Lexington Ave",
+    "Victoria St"
+   ],
+   "meters": [
+    "M694E14",
+    "M694E17",
+    "M694E18"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "Lexington Ave": 3,
+    "E of Lexington Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 4.71,
+   "start_km": 390.71,
+   "ramps": [
+    "Jackson St",
+    "Broadway St",
+    "T.H.61"
+   ],
+   "meters": [
+    "M94E57",
+    "M94E59",
+    "M94E63"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "E of Mounds Blvd": 2,
+    "Mounds Blvd": 1,
+    "Ruth St": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 3.82,
+   "start_km": 391.6,
+   "ramps": [
+    "Broadway St",
+    "T.H.61"
+   ],
+   "meters": [
+    "M94E59",
+    "M94E63"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.25,
+   "bottleneck_station_counts": {
+    "E of Mounds Blvd": 2,
+    "Mounds Blvd": 1,
+    "Ruth St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.66,
+   "start_km": 123.29,
+   "ramps": [
+    "Plymouth Ave",
+    "Medicine Lake Rd"
+   ],
+   "meters": [
+    "M169N39",
+    "M169N40"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.2,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "32nd Ave": 2,
+    "21st Ave": 1,
+    "36th Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.11,
+   "start_km": 12.41,
+   "ramps": [
+    "Manning Ave",
+    "Co Rd 19"
+   ],
+   "meters": [
+    "M94W20",
+    "M94W21"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 5,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of Manning Ave": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.42,
+   "start_km": 87.93,
+   "ramps": [
+    "Old Brick Yard Rd",
+    "Marystown Rd",
+    "Marschall Rd"
+   ],
+   "meters": [
+    "M169N10",
+    "M169N11",
+    "M169N12"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 5,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Canterbury Rd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.81,
+   "start_km": 89.54,
+   "ramps": [
+    "Marystown Rd",
+    "Marschall Rd"
+   ],
+   "meters": [
+    "M169N11",
+    "M169N12"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 5,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Canterbury Rd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.65,
+   "start_km": 89.54,
+   "ramps": [
+    "Marystown Rd",
+    "Marschall Rd",
+    "Canterbury Rd"
+   ],
+   "meters": [
+    "M169N11",
+    "M169N12",
+    "M169N13"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 5,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "N of Canterbury Rd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.84,
+   "start_km": 92.35,
+   "ramps": [
+    "Marschall Rd",
+    "Canterbury Rd"
+   ],
+   "meters": [
+    "M169N12",
+    "M169N13"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 5,
+   "share_congested": 0.2,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "N of Canterbury Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 4.83,
+   "start_km": 11.6,
+   "ramps": [
+    "Co Rd J",
+    "Co Rd 96"
+   ],
+   "meters": [
+    "M35ES27",
+    "M35ES28"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Co Rd J": 1,
+    "Co Rd H2": 1,
+    "N of Co Rd H2": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.9,
+   "start_km": 60.48,
+   "ramps": [
+    "Shingle Creek Pkwy",
+    "Brooklyn Blvd"
+   ],
+   "meters": [
+    "M94W66",
+    "M94W67"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Zane Ave": 2,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 4.77,
+   "start_km": 60.48,
+   "ramps": [
+    "Shingle Creek Pkwy",
+    "Brooklyn Blvd",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M94W66",
+    "M94W67",
+    "M94W68"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Zane Ave": 2,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.87,
+   "start_km": 62.38,
+   "ramps": [
+    "Brooklyn Blvd",
+    "Co Rd 81"
+   ],
+   "meters": [
+    "M94W67",
+    "M94W68"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Zane Ave": 2,
+    "Perry Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.25,
+   "start_km": 18.16,
+   "ramps": [
+    "Excelsior Blvd",
+    "50th St"
+   ],
+   "meters": [
+    "M100S33",
+    "M100S34"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Vernon Ave": 1,
+    "Benton Ave": 1,
+    "50th St": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.24,
+   "start_km": 18.16,
+   "ramps": [
+    "Excelsior Blvd",
+    "50th St",
+    "T.H.62 WB"
+   ],
+   "meters": [
+    "M100S33",
+    "M100S34",
+    "M100S36"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 0.33,
+   "bottleneck_station_counts": {
+    "Vernon Ave": 1,
+    "Benton Ave": 1,
+    "50th St": 1
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 4.81,
+   "start_km": 1.89,
+   "ramps": [
+    "T.H.41",
+    "Powers Blvd"
+   ],
+   "meters": [
+    "M212E61",
+    "M212E65"
+   ],
+   "n_stations": 8,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.101": 3
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 6.51,
+   "start_km": 1.89,
+   "ramps": [
+    "T.H.41",
+    "Powers Blvd",
+    "T.H.101"
+   ],
+   "meters": [
+    "M212E61",
+    "M212E65",
+    "M212E67"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.101": 3
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.7,
+   "start_km": 6.7,
+   "ramps": [
+    "Powers Blvd",
+    "T.H.101"
+   ],
+   "meters": [
+    "M212E65",
+    "M212E67"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.15,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "T.H.101": 3
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 5.28,
+   "start_km": 12.41,
+   "ramps": [
+    "Manning Ave",
+    "Co Rd 19",
+    "Co Rd 13"
+   ],
+   "meters": [
+    "M94W20",
+    "M94W21",
+    "M94W22"
+   ],
+   "n_stations": 15,
+   "n_valid_days": 9,
+   "share_congested": 0.11,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of Manning Ave": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 7.96,
+   "start_km": 1.29,
+   "ramps": [
+    "Co Rd 42",
+    "Co Rd 11",
+    "Cliff Rd"
+   ],
+   "meters": [
+    "M35EN01",
+    "M35EN02",
+    "M35EN05"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.77": 1,
+    "McAndrews Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 1.88,
+   "start_km": 15.07,
+   "ramps": [
+    "Yankee Doodle Rd EB",
+    "Yankee Doodle Rd WB",
+    "Lone Oak Rd"
+   ],
+   "meters": [
+    "M35EN08",
+    "M35EN09",
+    "M35EN10"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-494": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.6,
+   "start_km": 15.35,
+   "ramps": [
+    "Yankee Doodle Rd WB",
+    "Lone Oak Rd"
+   ],
+   "meters": [
+    "M35EN09",
+    "M35EN10"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-494": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.62,
+   "start_km": 54.28,
+   "ramps": [
+    "T.H.36 WB",
+    "Co Rd C",
+    "Co Rd D"
+   ],
+   "meters": [
+    "M35WN55",
+    "M35WN58",
+    "M35WN59"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Co Rd 88": 1,
+    "Co Rd D": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 55.29,
+   "ramps": [
+    "Co Rd C",
+    "Co Rd D"
+   ],
+   "meters": [
+    "M35WN58",
+    "M35WN59"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Co Rd 88": 1,
+    "Co Rd D": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.22,
+   "start_km": 55.29,
+   "ramps": [
+    "Co Rd C",
+    "Co Rd D",
+    "Co Rd 88"
+   ],
+   "meters": [
+    "M35WN58",
+    "M35WN59",
+    "M35WN60"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Co Rd 88": 1,
+    "Co Rd D": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.43,
+   "start_km": 56.9,
+   "ramps": [
+    "Co Rd D",
+    "Co Rd 88",
+    "Co Rd E2"
+   ],
+   "meters": [
+    "M35WN59",
+    "M35WN60",
+    "M35WN62"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Co Rd 88": 1,
+    "I-694": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.45,
+   "start_km": 25.44,
+   "ramps": [
+    "Co Rd E2",
+    "Co Rd D"
+   ],
+   "meters": [
+    "M35WS27",
+    "M35WS29"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd C": 2
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.67,
+   "start_km": 25.44,
+   "ramps": [
+    "Co Rd E2",
+    "Co Rd D",
+    "Co Rd C"
+   ],
+   "meters": [
+    "M35WS27",
+    "M35WS29",
+    "M35WS30"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd C": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.77,
+   "start_km": 12.88,
+   "ramps": [
+    "I-394 WB",
+    "Carlson Pkwy",
+    "Co Rd 6"
+   ],
+   "meters": [
+    "M494W64",
+    "M494W65",
+    "M494W66"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.55": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.85,
+   "start_km": 17.18,
+   "ramps": [
+    "Minnetonka Blvd",
+    "T.H.7 WB"
+   ],
+   "meters": [
+    "M494E13",
+    "M494E15"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Orchard Rd": 2
+   }
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.26,
+   "start_km": 17.18,
+   "ramps": [
+    "Minnetonka Blvd",
+    "T.H.7 WB",
+    "T.H.7 EB"
+   ],
+   "meters": [
+    "M494E13",
+    "M494E15",
+    "M494E16"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.5,
+   "bottleneck_station_counts": {
+    "Orchard Rd": 2
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.38,
+   "start_km": 205.2,
+   "ramps": [
+    "Main St NW",
+    "Hanson Blvd"
+   ],
+   "meters": [
+    "M10E05",
+    "M10E06"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "W of Hanson Blvd": 1,
+    "E of Main St NW": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.27,
+   "start_km": 8.0,
+   "ramps": [
+    "36th Ave",
+    "Duluth St"
+   ],
+   "meters": [
+    "M100S19",
+    "M100S20"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Duluth St": 2
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.09,
+   "start_km": 16.2,
+   "ramps": [
+    "Prairie Center Dr",
+    "Valley View Rd"
+   ],
+   "meters": [
+    "M212E74",
+    "M212E77"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Shady Oak Rd": 2
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 3.81,
+   "start_km": 16.2,
+   "ramps": [
+    "Prairie Center Dr",
+    "Valley View Rd",
+    "Shady Oak Rd"
+   ],
+   "meters": [
+    "M212E74",
+    "M212E77",
+    "M212E78"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Shady Oak Rd": 2
+   }
+  },
+  {
+   "route": "T.H.212",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.72,
+   "start_km": 18.29,
+   "ramps": [
+    "Valley View Rd",
+    "Shady Oak Rd"
+   ],
+   "meters": [
+    "M212E77",
+    "M212E78"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Shady Oak Rd": 2
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.9,
+   "start_km": 2.7,
+   "ramps": [
+    "Diagonal Blvd",
+    "Lindau Ln",
+    "Killebrew Dr"
+   ],
+   "meters": [
+    "M77S29",
+    "M77S31",
+    "M77S33"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Diagonal Blvd": 1,
+    "S of Old Shakopee Rd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.26,
+   "start_km": 89.0,
+   "ramps": [
+    "T.H.7 EB",
+    "Excelsior Blvd",
+    "Lincoln Dr"
+   ],
+   "meters": [
+    "M169S44",
+    "M169S45",
+    "M169S46"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lincoln Dr": 2
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.99,
+   "start_km": 89.93,
+   "ramps": [
+    "Excelsior Blvd",
+    "Lincoln Dr",
+    "Bren Rd"
+   ],
+   "meters": [
+    "M169S45",
+    "M169S46",
+    "M169S47"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.1,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Lincoln Dr": 2
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.91,
+   "start_km": 1.29,
+   "ramps": [
+    "Co Rd 42",
+    "Co Rd 11"
+   ],
+   "meters": [
+    "M35EN01",
+    "M35EN02"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "McAndrews Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 5.04,
+   "start_km": 4.2,
+   "ramps": [
+    "Co Rd 11",
+    "Cliff Rd"
+   ],
+   "meters": [
+    "M35EN02",
+    "M35EN05"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.77": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 6.95,
+   "start_km": 4.2,
+   "ramps": [
+    "Co Rd 11",
+    "Cliff Rd",
+    "Diffley Rd"
+   ],
+   "meters": [
+    "M35EN02",
+    "M35EN05",
+    "M35EN06"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "T.H.77": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 5.36,
+   "start_km": 9.24,
+   "ramps": [
+    "Cliff Rd",
+    "Diffley Rd",
+    "Pilot Knob Rd"
+   ],
+   "meters": [
+    "M35EN05",
+    "M35EN06",
+    "M35EN07"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Pilot Knob Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.46,
+   "start_km": 11.15,
+   "ramps": [
+    "Diffley Rd",
+    "Pilot Knob Rd"
+   ],
+   "meters": [
+    "M35EN06",
+    "M35EN07"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Pilot Knob Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.92,
+   "start_km": 11.15,
+   "ramps": [
+    "Diffley Rd",
+    "Pilot Knob Rd",
+    "Yankee Doodle Rd EB"
+   ],
+   "meters": [
+    "M35EN06",
+    "M35EN07",
+    "M35EN08"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Pilot Knob Rd": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.4,
+   "start_km": 16.43,
+   "ramps": [
+    "Co Rd 96",
+    "Co Rd E"
+   ],
+   "meters": [
+    "M35ES28",
+    "M35ES29"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Goose Lake Rd": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.81,
+   "start_km": 57.52,
+   "ramps": [
+    "Co Rd 88",
+    "Co Rd E2"
+   ],
+   "meters": [
+    "M35WN60",
+    "M35WN62"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "I-694": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.5,
+   "start_km": 57.52,
+   "ramps": [
+    "Co Rd 88",
+    "Co Rd E2",
+    "I-694 EB"
+   ],
+   "meters": [
+    "M35WN60",
+    "M35WN62",
+    "M35WN63"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "I-694": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.27,
+   "start_km": 17.66,
+   "ramps": [
+    "Co Rd J",
+    "Lake Dr",
+    "Co Rd I"
+   ],
+   "meters": [
+    "M35WS18",
+    "M35WS17",
+    "M35WS20"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd I": 1
+   }
+  },
+  {
+   "route": "I-35W",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.27,
+   "start_km": 17.66,
+   "ramps": [
+    "Lake Dr",
+    "Co Rd I"
+   ],
+   "meters": [
+    "M35WS17",
+    "M35WS20"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Co Rd I": 1
+   }
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 2.4,
+   "start_km": 359.21,
+   "ramps": [
+    "Brooklyn Blvd",
+    "Shingle Creek Pkwy"
+   ],
+   "meters": [
+    "M94E28",
+    "M94E29"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Shingle Creek Pkwy": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 3.8,
+   "start_km": 12.28,
+   "ramps": [
+    "T.H.65 NB",
+    "T.H.65 SB",
+    "Foley Blvd"
+   ],
+   "meters": [
+    "M10W05",
+    "M10W06",
+    "M10W10"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "W of Egret Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.10",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 3.8,
+   "start_km": 12.28,
+   "ramps": [
+    "T.H.65 SB",
+    "Foley Blvd"
+   ],
+   "meters": [
+    "M10W06",
+    "M10W10"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "W of Egret Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.99,
+   "start_km": 20.41,
+   "ramps": [
+    "50th St",
+    "T.H.62 WB"
+   ],
+   "meters": [
+    "M100S34",
+    "M100S36"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Benton Ave": 1
+   }
+  },
+  {
+   "route": "T.H.100",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.39,
+   "start_km": 20.41,
+   "ramps": [
+    "50th St",
+    "T.H.62 WB",
+    "T.H.62 EB"
+   ],
+   "meters": [
+    "M100S34",
+    "M100S36",
+    "M100S37"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "Benton Ave": 1
+   }
+  },
+  {
+   "route": "T.H.36",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.51,
+   "start_km": 6.66,
+   "ramps": [
+    "Dale St",
+    "Rice St"
+   ],
+   "meters": [
+    "M36E09",
+    "M36E10"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "I-35E": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 2.88,
+   "start_km": 1.31,
+   "ramps": [
+    "127th St",
+    "Cliff Rd"
+   ],
+   "meters": [
+    "M77N76",
+    "M77N79"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-35E": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 4.37,
+   "start_km": 1.31,
+   "ramps": [
+    "127th St",
+    "Cliff Rd",
+    "Diffley Rd"
+   ],
+   "meters": [
+    "M77N76",
+    "M77N79",
+    "M77N81"
+   ],
+   "n_stations": 7,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-35E": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.89,
+   "start_km": 6.45,
+   "ramps": [
+    "T.H.13 EB",
+    "T.H.13 WB",
+    "Old Shakopee Rd"
+   ],
+   "meters": [
+    "M77N82",
+    "M77N83",
+    "M77N85"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Old Shakopee Rd": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 3.34,
+   "start_km": 7.0,
+   "ramps": [
+    "T.H.13 WB",
+    "Old Shakopee Rd"
+   ],
+   "meters": [
+    "M77N83",
+    "M77N85"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "S of Old Shakopee Rd": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 3.02,
+   "start_km": 2.12,
+   "ramps": [
+    "66th St",
+    "Diagonal Blvd",
+    "Lindau Ln"
+   ],
+   "meters": [
+    "M77S28",
+    "M77S29",
+    "M77S31"
+   ],
+   "n_stations": 11,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Diagonal Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.43,
+   "start_km": 2.7,
+   "ramps": [
+    "Diagonal Blvd",
+    "Lindau Ln"
+   ],
+   "meters": [
+    "M77S29",
+    "M77S31"
+   ],
+   "n_stations": 9,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 0.0,
+   "bottleneck_station_counts": {
+    "S of Diagonal Blvd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 2.0,
+   "start_km": 84.59,
+   "ramps": [
+    "I-394 EB",
+    "Cedar Lake Rd"
+   ],
+   "meters": [
+    "M169S38",
+    "M169S40"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "22nd St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.86,
+   "start_km": 84.59,
+   "ramps": [
+    "I-394 EB",
+    "Cedar Lake Rd",
+    "Minnetonka Blvd"
+   ],
+   "meters": [
+    "M169S38",
+    "M169S40",
+    "M169S41"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "22nd St": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.01,
+   "start_km": 86.59,
+   "ramps": [
+    "Cedar Lake Rd",
+    "Minnetonka Blvd",
+    "T.H.7 WB"
+   ],
+   "meters": [
+    "M169S40",
+    "M169S41",
+    "M169S43"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Excelsior Blvd": 1
+   }
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 1.55,
+   "start_km": 87.45,
+   "ramps": [
+    "Minnetonka Blvd",
+    "T.H.7 WB",
+    "T.H.7 EB"
+   ],
+   "meters": [
+    "M169S41",
+    "M169S43",
+    "M169S44"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 20,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "Excelsior Blvd": 1
+   }
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 3.53,
+   "start_km": 0.66,
+   "ramps": [
+    "Co Rd 38",
+    "127th St",
+    "Cliff Rd"
+   ],
+   "meters": [
+    "M77N75",
+    "M77N76",
+    "M77N79"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 19,
+   "share_congested": 0.05,
+   "share_am_onset": 1.0,
+   "bottleneck_station_counts": {
+    "I-35E": 1
+   }
+  },
+  {
+   "route": "I-35E",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.9,
+   "start_km": 9.24,
+   "ramps": [
+    "Cliff Rd",
+    "Diffley Rd"
+   ],
+   "meters": [
+    "M35EN05",
+    "M35EN06"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-35W",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.7,
+   "start_km": 61.77,
+   "ramps": [
+    "Co Rd 96",
+    "Co Rd H"
+   ],
+   "meters": [
+    "M35WN65",
+    "M35WN68"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-394",
+   "dir": "EB",
+   "n_ramps": 3,
+   "span_km": 1.71,
+   "start_km": 7.86,
+   "ramps": [
+    "Plymouth Rd",
+    "Ridgedale Dr",
+    "Co Rd 73"
+   ],
+   "meters": [
+    "M394E15",
+    "M394E16",
+    "M394E17"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-394",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.06,
+   "start_km": 12.28,
+   "ramps": [
+    "Co Rd 73",
+    "Plymouth Rd"
+   ],
+   "meters": [
+    "M394W22",
+    "M394W24"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 4.14,
+   "start_km": 19.03,
+   "ramps": [
+    "T.H.7 WB",
+    "T.H.7 EB",
+    "T.H.62"
+   ],
+   "meters": [
+    "M494E15",
+    "M494E16",
+    "M494E19"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-494",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 3.72,
+   "start_km": 19.44,
+   "ramps": [
+    "T.H.7 EB",
+    "T.H.62"
+   ],
+   "meters": [
+    "M494E16",
+    "M494E19"
+   ],
+   "n_stations": 4,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-94",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 6.37,
+   "start_km": 361.61,
+   "ramps": [
+    "Shingle Creek Pkwy",
+    "Dowling Ave"
+   ],
+   "meters": [
+    "M94E29",
+    "M94E34"
+   ],
+   "n_stations": 13,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "T.H.62",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 24.7,
+   "ramps": [
+    "Tracy Ave",
+    "Gleason Rd"
+   ],
+   "meters": [
+    "M62W56",
+    "M62W57"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "T.H.77",
+   "dir": "NB",
+   "n_ramps": 3,
+   "span_km": 2.26,
+   "start_km": 4.19,
+   "ramps": [
+    "Cliff Rd",
+    "Diffley Rd",
+    "T.H.13 EB"
+   ],
+   "meters": [
+    "M77N79",
+    "M77N81",
+    "M77N82"
+   ],
+   "n_stations": 6,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 2,
+   "span_km": 1.67,
+   "start_km": 91.25,
+   "ramps": [
+    "Lincoln Dr",
+    "Bren Rd"
+   ],
+   "meters": [
+    "M169S46",
+    "M169S47"
+   ],
+   "n_stations": 2,
+   "n_valid_days": 20,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 2.17,
+   "start_km": 15.52,
+   "ramps": [
+    "Co Rd 19",
+    "Co Rd 13"
+   ],
+   "meters": [
+    "M94W21",
+    "M94W22"
+   ],
+   "n_stations": 10,
+   "n_valid_days": 9,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "U.S.169",
+   "dir": "NB",
+   "n_ramps": 2,
+   "span_km": 1.61,
+   "start_km": 87.93,
+   "ramps": [
+    "Old Brick Yard Rd",
+    "Marystown Rd"
+   ],
+   "meters": [
+    "M169N10",
+    "M169N11"
+   ],
+   "n_stations": 5,
+   "n_valid_days": 5,
+   "share_congested": 0.0,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 2,
+   "span_km": 1.63,
+   "start_km": 42.64,
+   "ramps": [
+    "25th Ave",
+    "Hiawatha Ave"
+   ],
+   "meters": [
+    "M94W51",
+    "M94W52"
+   ],
+   "n_stations": 12,
+   "n_valid_days": 0,
+   "share_congested": null,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "I-94",
+   "dir": "WB",
+   "n_ramps": 3,
+   "span_km": 2.93,
+   "start_km": 42.64,
+   "ramps": [
+    "25th Ave",
+    "Hiawatha Ave",
+    "4th Ave"
+   ],
+   "meters": [
+    "M94W51",
+    "M94W52",
+    "M94W57"
+   ],
+   "n_stations": 17,
+   "n_valid_days": 0,
+   "share_congested": null,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "T.H.10",
+   "dir": "EB",
+   "n_ramps": 2,
+   "span_km": 1.72,
+   "start_km": 195.24,
+   "ramps": [
+    "C.S.A.H.56",
+    "Sunfish Lake Blvd"
+   ],
+   "meters": [
+    "M10E26",
+    "M10E27"
+   ],
+   "n_stations": 2,
+   "n_valid_days": 0,
+   "share_congested": null,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  },
+  {
+   "route": "U.S.169",
+   "dir": "SB",
+   "n_ramps": 3,
+   "span_km": 2.1,
+   "start_km": 38.4,
+   "ramps": [
+    "Jackson Ave NW",
+    "School Street NW",
+    "Main St"
+   ],
+   "meters": [
+    "M169S03",
+    "M169S04",
+    "M169S05"
+   ],
+   "n_stations": 3,
+   "n_valid_days": 0,
+   "share_congested": null,
+   "share_am_onset": null,
+   "bottleneck_station_counts": {}
+  }
+ ]
+}

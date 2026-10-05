@@ -229,6 +229,12 @@ def main(argv=None) -> int:
         o = f.get("occupancy", "20230315", a.det)
         print(json.dumps({"n": None if o is None else len(o), "max": None if o is None else max(x for x in o if x is not None)}))
         return 0
+    if a.what == "score":
+        res = score(W)
+        out = Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_screening_v0.json"
+        out.write_text(json.dumps(res, indent=1))
+        print(json.dumps({"n_windows_scored": len(res["windows"]), "out": str(out)}))
+        return 0
     f = Fetcher()
     dates = screening_dates()
     # one lane per station (middle lane; neighbours only if it has no data) keeps the pull at ~1 h at 5 req/s
