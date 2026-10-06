@@ -80,12 +80,14 @@ def windows(span=(1.5, 8.0), down_km=2.0) -> list[dict]:
 TOP3 = {"I35W_SB": ["M35WS29", "M35WS30", "M35WS34"], "I394_WB": ["M394W17", "M394W22", "M394W24"],
         "TH100_SB": ["M100S36", "M100S37", "M100S39"]}      # author choice 2026-10-05 (shortlist #1-#3)
 RAMP_CATS = ("Queue", "Passage", "Merge", "Bypass", "Green")
+US169_METERS = ["M169S51", "M169S54", "M169S55", "M169S56"]   # decision D3.2 (2026-10-05)
 # Corridor analysis Addendum A (2026-10-05): downstream range extended to include the next 3 data-bearing stations
 # (data-extent fix); T.H.100 SB has no station downstream in the configuration.
 DOWN_KM = {"I35W_SB": 4.2, "I394_WB": 4.6, "TH100_SB": 2.0}
 
 
-def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0, exit_down_km: float | None = None) -> dict:
+def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0, exit_down_km: float | None = None,
+                       all_entrances: bool = False) -> dict:
     """All detectors of the corridor containing `meters`: mainline lanes of every station from up_km upstream of the
     first metered ramp to down_km downstream of the last; ramp detectors (RAMP_CATS) of the metered entrances; Exit
     detectors of exits in between."""
@@ -112,9 +114,12 @@ def corridor_detectors(meters: list[str], up_km=4.0, down_km=2.0, exit_down_km: 
                 d = [(x.get("name"), x.get("lane"), x.get("field", "22.0")) for x in dets if x.get("category", "") == ""]
                 if d:
                     out["mainline"].append(rec | {"dets": d})
-            elif t == "Entrance" and n.find("meter") is not None and names[i] in meters:
+            elif t == "Entrance" and (all_entrances or (n.find("meter") is not None and names[i] in meters)):
+                # all_entrances (METANET calibration): every entrance in range, metered or not, with Merge too
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") in RAMP_CATS]
-                out["ramps"].append(rec | {"meter": names[i], "storage": n.find("meter").get("storage"), "dets": d})
+                mt = n.find("meter")
+                out["ramps"].append(rec | {"meter": names[i], "storage": mt.get("storage") if mt is not None else None,
+                                           "dets": d})
             elif t == "Exit" and km[i] <= km[i1] + (min(down_km, 2.0) if exit_down_km is None else exit_down_km):
                 # review fix #5: exits only inside the original range (the Addendum A extension is mainline only)
                 d = [(x.get("name"), x.get("category")) for x in dets if x.get("category", "") == "Exit"]
@@ -293,6 +298,7 @@ def main(argv=None) -> int:
     ap.add_argument("--det", default="1664")
     ap.add_argument("--full-year", action="store_true", help="pull: every day of 2023 (needs author approval: ~115k req)")
     ap.add_argument("--from-bnscreen", action="store_true", help="pull: the bottleneck-anchored top 3 (protocol v1)")
+    ap.add_argument("--us169-full", action="store_true", help="pull: the complete U.S.169 SB corridor (decision D3.3)")
     a = ap.parse_args(argv)
     W = windows()
     if a.what == "windows":
@@ -314,7 +320,10 @@ def main(argv=None) -> int:
                           "requests_weekdays_2023": 2 * 260 * sum(n.values())}))
         return 0
     if a.what == "pull":
-        if a.from_bnscreen:   # selection protocol v1: the bottleneck-anchored top 3 (each <= 12,000 requests)
+        if a.us169_full:   # decision D3.3: complete U.S.169 SB corridor for METANET calibration
+            cors = {"US169_SB_full": corridor_detectors(US169_METERS, up_km=12.0, down_km=5.35, exit_down_km=5.35,
+                                                        all_entrances=True)}
+        elif a.from_bnscreen:   # selection protocol v1: the bottleneck-anchored top 3 (each <= 12,000 requests)
             bn = json.loads((Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_bnscreen_v1.json").read_text())
             # unique key per corridor (bn-screen review: route_dir alone could collide); exits over the full range
             cors = {f"{c['route']}_{c['dir']}_{c['u_label']}": corridor_detectors(c["meters"], down_km=c["down_km"],
