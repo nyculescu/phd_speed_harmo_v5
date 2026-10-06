@@ -264,3 +264,34 @@ def test_step_halving_runs(pmid):
     a = M.simulate(n, pmid, inp, T_s=5.0)
     b = M.simulate(n, pmid, inp, T_s=2.5)
     np.testing.assert_allclose(a.q_st[0, :, 12:], b.q_st[0, :, 12:], rtol=1e-3)
+
+
+# ---------------------------------------------------------------- 15 relocation and c2* (§4.7)
+def test_relocation_flag_and_c2_star(net, pmid):
+    from vsl_lab.jobs.metanet_postcal import RELOC_PAIR, c2_star, cell_rc, relocation
+    hrs = 4.0 + np.arange(NB) / 12.0
+    shape = np.where((hrs >= 15) & (hrs < 18), 1.0, 0.5)
+    ne, nx = len(net.entrances), len(net.exits)
+    d_o = np.full((1, ne, NB), 50.0) * shape
+    d_o[0, [e["id"] for e in net.entrances].index("E14")] = 800.0 * shape     # overloaded B2
+    inp = M.Inputs(d0=(3800.0 * shape)[None, :], d_o=d_o, beta=np.zeros((1, nx, NB)))
+    c2s = np.array([0.85, 0.875, 0.90, 0.925, 0.95])
+    o = M.simulate(net, {k: np.full(len(c2s), v) for k, v in pmid.items()}, inp, n_param_sets=len(c2s), c1=1.2, c2=c2s)
+    first = net.b2_cells[-1] + 1
+    flags, binds = {}, {}
+    for i, c2 in enumerate(c2s):
+        rc = cell_rc(net, pmid, 1.2, float(c2))
+        rho = o.rho_cell[i][:, 12:]
+        assert (rho[net.b2_cells] > rc[net.b2_cells, None]).any()           # B2 is congested throughout the sweep
+        over = (rho[first] > rc[first]).astype(int)
+        binds[float(c2)] = bool((np.convolve(over, np.ones(3, int), mode="valid") == 3).any())   # cell 33, >= 3 bins
+        flags[float(c2)] = relocation({}, rho, rc, first)["flag"]
+    assert flags == binds
+    c_first = min(c for c, b in binds.items() if b)
+    assert not any(flags[c] for c in flags if c < c_first) and flags[c_first]
+    assert c2_star(flags, grid=c2s) == max(c for c in c2s if c < c_first)
+    free = np.zeros((net.N, 216))                                          # the pair branch alone
+    rc1 = cell_rc(net, pmid)
+    assert relocation({RELOC_PAIR: [(10, 20)]}, free, rc1, first) == {"flag": True, "cells": [], "pair": True}
+    assert not relocation({("S1140", "S1141"): [(10, 20)]}, free, rc1, first)["flag"]
+    assert c2_star({0.85: True, 0.875: False}, grid=[0.85, 0.875]) is None

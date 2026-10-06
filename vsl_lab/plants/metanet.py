@@ -332,6 +332,8 @@ class SimOut:
     veh_end: np.ndarray = None      # (B,) vehicles in the cells at the end
     rho_end: np.ndarray = None      # (B, N)
     v_end: np.ndarray = None        # (B, N)
+    floor_nonjam_share: np.ndarray = None   # (B,) v_min floor activations with rho < rho_cr (counted as clipped)
+    floor_jam_share: np.ndarray = None      # (B,) v_min floor activations with rho >= rho_cr (reported only)
 
 
 def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
@@ -431,6 +433,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     w = np.zeros((B, 1 + ne))
     veh0 = (rho * L_ * lam_).sum(axis=1)
     clip_n = np.zeros(B)
+    fl_nj, fl_j = np.zeros(B), np.zeros(B)
     nonfin = np.zeros(B, dtype=bool)
     st_cells = np.array([s["cell"] for s in net.stations], dtype=int)
     eid = {e["id"]: i for i, e in enumerate(net.entrances)}
@@ -513,6 +516,8 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
             v_c = np.clip(v_n, V_MIN, vcap)
             clipped = (rho_c != rho_n) | vclip_hi | (vfloor & (rho_c < rc))
             clip_n += clipped.sum(axis=1)
+            fl_nj += (vfloor & (rho_c < rc)).sum(axis=1)
+            fl_j += (vfloor & (rho_c >= rc)).sum(axis=1)
             fin = np.isfinite(rho_c).all(axis=1) & np.isfinite(v_c).all(axis=1)
             nonfin |= ~fin
             rho_next, v_next = np.nan_to_num(rho_c), np.nan_to_num(v_c, nan=V_MIN)
@@ -553,7 +558,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     xflow /= spb
     oflow /= spb
     return SimOut(q_st, v_st, rho_rec, v_rec, clip_n / (N * nb * spb), qclip, w, wlong, nonfin, eflow, xflow, oflow,
-                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v)
+                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb))
 
 
 def assert_numerics(net: Net, params: dict, T_s: float = T_S) -> None:
