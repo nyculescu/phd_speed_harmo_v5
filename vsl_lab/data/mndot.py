@@ -294,7 +294,8 @@ def score(W: list[dict]) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["windows", "screen", "probe", "score", "corridors", "pull"])
+    ap.add_argument("what", choices=["windows", "screen", "probe", "score", "corridors", "pull", "pull-dets"])
+    ap.add_argument("--dets", default="", help="pull-dets: comma-separated detector ids (104 days, counts+occupancy)")
     ap.add_argument("--det", default="1664")
     ap.add_argument("--full-year", action="store_true", help="pull: every day of 2023 (needs author approval: ~115k req)")
     ap.add_argument("--from-bnscreen", action="store_true", help="pull: the bottleneck-anchored top 3 (protocol v1)")
@@ -318,6 +319,18 @@ def main(argv=None) -> int:
         n = {k: sum(len(x["dets"]) for x in v["mainline"] + v["ramps"] + v["exits"]) for k, v in out.items()}
         print(json.dumps({"detectors": n, "requests_all_days_2023": 2 * 365 * sum(n.values()),
                           "requests_weekdays_2023": 2 * 260 * sum(n.values())}))
+        return 0
+    if a.what == "pull-dets":   # author-approved small pulls (e.g. U.S.169 SB aux-lane detectors, 2026-10-05)
+        f = Fetcher()
+        dets = [d for d in a.dets.split(",") if d]
+        for date in pass1_dates(2023):
+            have = set(available(date))
+            for det in dets:
+                if det in have:
+                    for kind in ("counts", "occupancy"):
+                        f.get(kind, date, det)
+        print(json.dumps({"done": True, "dets": dets, "req": f.n_req, "cached": f.n_cached, "404": f.n_404,
+                          "err": f.n_err}))
         return 0
     if a.what == "pull":
         if a.us169_full:   # decision D3.3: complete U.S.169 SB corridor for METANET calibration

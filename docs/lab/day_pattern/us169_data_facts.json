@@ -1,0 +1,69 @@
+{
+ "note": "inspection for protocol design (review wf_2f6737c1-079); disclosed in protocol v1",
+ "pioneer_tr_ramp": {
+  "n_days": 51,
+  "median_passage_over_balance_PM": 1.2353823088455773,
+  "median_green_over_balance_PM": null,
+  "note": "balance = q(Old Shakopee) - q(Pioneer Tr station) + Old Shakopee exit; Old Shakopee entrance (no detector, downstream of station?) may bias it"
+ },
+ "upstream_boundary_candidates": {
+  "-11.79 N of I-394": {
+   "valid_wed": 52,
+   "share_uncongested": 0.36538461538461536
+  },
+  "-11.45 S of I-394": {
+   "valid_wed": 25,
+   "share_uncongested": 0.16
+  },
+  "-10.27 22nd St": {
+   "valid_wed": 52,
+   "share_uncongested": 0.8846153846153846
+  },
+  "-9.41 Cedar Lake Rd": {
+   "valid_wed": 52,
+   "share_uncongested": 0.9038461538461539
+  },
+  "-8.41 Minnetonka Blvd": {
+   "valid_wed": 52,
+   "share_uncongested": 0.9230769230769231
+  },
+  "-7.30 T.H.7": {
+   "valid_wed": 52,
+   "share_uncongested": 0.9230769230769231
+  },
+  "-6.95 Van Buren Way": {
+   "valid_wed": 52,
+   "share_uncongested": 0.9230769230769231
+  },
+  "-5.97 Excelsior Blvd": {
+   "valid_wed": 52,
+   "share_uncongested": 0.9038461538461539
+  }
+ },
+ "i494_merge_share_of_PM_inflow": {
+  "n_days": 52,
+  "median": 0.37635045891130614
+ },
+ "queue_reaches_highwood_when_pioneer_congested": {
+  "n_pioneer_cong_days": 38,
+  "share": 0.9736842105263158
+ },
+ "drop_r_by_split": {
+  "first_half": {
+   "n": 9,
+   "median": 0.96375
+  },
+  "even_index_1based": {
+   "n": 12,
+   "median": 0.9614185333896872
+  },
+  "odd_index_1based": {
+   "n": 11,
+   "median": 0.9967458509599739
+  },
+  "second_half": {
+   "n": 14,
+   "median": 0.9907374909618025
+  }
+ }
+}
