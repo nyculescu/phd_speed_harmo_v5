@@ -300,6 +300,7 @@ def main(argv=None) -> int:
     ap.add_argument("--full-year", action="store_true", help="pull: every day of 2023 (needs author approval: ~115k req)")
     ap.add_argument("--from-bnscreen", action="store_true", help="pull: the bottleneck-anchored top 3 (protocol v1)")
     ap.add_argument("--us169-full", action="store_true", help="pull: the complete U.S.169 SB corridor (decision D3.3)")
+    ap.add_argument("--tue-thu", action="store_true", help="pull: 2023 Tuesdays and Thursdays (validation extension)")
     a = ap.parse_args(argv)
     W = windows()
     if a.what == "windows":
@@ -336,6 +337,7 @@ def main(argv=None) -> int:
         if a.us169_full:   # decision D3.3: complete U.S.169 SB corridor for METANET calibration
             cors = {"US169_SB_full": corridor_detectors(US169_METERS, up_km=12.0, down_km=5.35, exit_down_km=5.35,
                                                         all_entrances=True)}
+            cors["aux"] = {"mainline": [{"dets": [("7097",), ("7077",)]}], "ramps": [], "exits": []}
         elif a.from_bnscreen:   # selection protocol v1: the bottleneck-anchored top 3 (each <= 12,000 requests)
             bn = json.loads((Path(__file__).resolve().parents[2] / "docs" / "plans" / "day_pattern_bnscreen_v1.json").read_text())
             # unique key per corridor (bn-screen review: route_dir alone could collide); exits over the full range
@@ -348,7 +350,10 @@ def main(argv=None) -> int:
         f = Fetcher()
         t0 = time.time()
         log = DATA_ROOT / "pull_top3_progress.log"
-        dates = pass1_dates(2023) if not a.full_year else year_dates(2023)
+        if a.tue_thu:   # author 2026-10-05: pre-fetch the validation-extension days (2023 Tuesdays + Thursdays)
+            dates = [d for d in year_dates(2023) if dt.datetime.strptime(d, "%Y%m%d").weekday() in (1, 3)]
+        else:
+            dates = pass1_dates(2023) if not a.full_year else year_dates(2023)
         for i, date in enumerate(dates):
             have = set(available(date))
             for det in dets:
