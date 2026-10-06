@@ -447,15 +447,11 @@ def station_scaling(cal_days: list[str], speed_lanes: dict) -> dict:
         m_s[sid] = float(np.median(meds)) if meds else np.nan
         m_s_all[sid] = float(np.median(meds_all)) if meds_all else np.nan
     full = {sid for sid in ST if set(speed_lanes.get(sid, [])) == set(ST[sid]["dets"])}
-    c = {}
-    for g, sids in groups.items():
-        ref = [m_s[s] for s in sids if s in full and s != "S453" and np.isfinite(m_s[s])]
-        mG = float(np.median(ref)) if ref else np.nan
-        for s in sids:
-            if s == "S453":
-                continue
-            c[s] = {"group": g, "m_s": m_s[s], "m_s_all_lanes": m_s_all[s], "m_G": mG, "c_s": mG / m_s[s],
-                    "dropped": bool(abs(mG / m_s[s] - 1.0) > 0.15), "in_mG": s in full}
+    grp = {sid: g for g, sids in groups.items() for sid in sids if sid != "S453"}
+    from vsl_lab.data.metanet_events import scale_table
+    c = scale_table({sid: m_s[sid] for sid in grp}, grp, full)
+    for sid in c:
+        c[sid]["m_s_all_lanes"] = m_s_all[sid]
     return c
 
 
