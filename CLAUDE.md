@@ -103,3 +103,18 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - Background jobs only. Tail logs at most every 10 minutes. Never print raw run JSON. Do not re-read unchanged files.
 - Commit summaries only (< 5 MB per file). Raw runs go under `/home/catalin/work/phd/` on ext4, not into the repo.
 - Push via SSH: `git push git@github.com:nyculescu/phd_speed_harmo_v5.git <branch>`. Check `git branch --show-current` first; never push from a detached HEAD.
+
+## Effort and ultracode per phase (author, 2026-10-05)
+
+Claude cannot change these settings itself. **Before each phase it asks the author to switch, in one line**, e.g. "Next: X. Suggest Extra High, ultracode off. Switch?". It also suggests switching back down after a checkpoint.
+
+| Phase | Effort | Ultracode |
+|---|---|---|
+| Routine: data pulls, batch runs, monitoring, small fixes, status replies | High | off |
+| Implementing the plant, opponents and training code | High | off |
+| Writing a protocol (criteria fixed before data) | Extra High | **on** for its design review, then off |
+| METANET calibration; the MPC opponent; any subtle numerics | Extra High | off |
+| Checkpoint: plant and all opponents done, before the gate runs | High | **on** (adversarial code review) |
+| Checkpoint: DRL training code done, before long runs | High | **on** (review) |
+| Interpreting gate or confirmatory results; any thesis claim | Extra High | **on** (verify before reporting) |
+| Stuck on a hard bug after two attempts | Max | off |
