@@ -58,14 +58,18 @@ def to_norm(p: dict) -> np.ndarray:
 
 # ---------------------------------------------------------------- data (calibration days only)
 def prep() -> Path:
-    from vsl_lab.data import metanet_inputs as I
-    facts = json.loads(FACTS.read_text())
     p1 = json.loads((RUNS / "precal_part1.json").read_text())
-    days = p1["usable"]["calibration"]
+    return build_data(p1["usable"]["calibration"], RUNS / "calib_data.npz")
+
+
+def build_data(days: list, out: Path, exit_flows: bool = False) -> Path:
+    """Replay inputs and fit-layer targets for a day list (frozen §3 references from part 1)."""
+    from vsl_lab.data import metanet_inputs as I
+    p1 = json.loads((RUNS / "precal_part1.json").read_text())
     net = M.build_network(VARIANT)
     sl, cs, unrel, src = p1["speed_lanes"], p1["c_s"], set(p1["unreliable"]), p1["sources"]
     st_ids = [s["id"] for s in net.stations]
-    d0, d_o, beta, q, v, mq, mv, mc = ([] for _ in range(8))
+    d0, d_o, beta, q, v, mq, mv, mc, xq = ([] for _ in range(9))
     for d in days:
         mi = I.model_inputs(d, src, unrel, net)
         if not mi["valid"]:
@@ -74,6 +78,7 @@ def prep() -> Path:
         d0.append(mi["d0"])
         d_o.append(mi["d_o"])
         beta.append(mi["beta"])
+        xq.append(mi["x_q"])
         rows = {k: [] for k in ("q", "v", "mq", "mv", "mc")}
         for sid in st_ids:
             s = ft["stations"].get(sid)
@@ -89,10 +94,10 @@ def prep() -> Path:
                 rows["mv"].append(s["v_mask"])
                 rows["mc"].append(s["c_mask"])
         q.append(rows["q"]); v.append(rows["v"]); mq.append(rows["mq"]); mv.append(rows["mv"]); mc.append(rows["mc"])
-    out = RUNS / "calib_data.npz"
+    extra = {"x_q": np.array(xq)} if exit_flows else {}
     np.savez_compressed(out, d0=np.array(d0), d_o=np.array(d_o), beta=np.array(beta), q=np.array(q, float),
                         v=np.array(v, float), mq=np.array(mq), mv=np.array(mv), mc=np.array(mc),
-                        days=np.array(days), stations=np.array(st_ids))
+                        days=np.array(days), stations=np.array(st_ids), **extra)
     return out
 
 

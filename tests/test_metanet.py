@@ -295,3 +295,22 @@ def test_relocation_flag_and_c2_star(net, pmid):
     assert relocation({RELOC_PAIR: [(10, 20)]}, free, rc1, first) == {"flag": True, "cells": [], "pair": True}
     assert not relocation({("S1140", "S1141"): [(10, 20)]}, free, rc1, first)["flag"]
     assert c2_star({0.85: True, 0.875: False}, grid=[0.85, 0.875]) is None
+
+
+# ---------------------------------------------------------------- 12 arrivals A_b (§5.4 P9)
+def test_arrivals_match_downstream_flow_in_free_flow(pmid):
+    from vsl_lab.jobs.metanet_gate import arrivals
+    net = M.build_network("step_b")
+    p = dict(pmid)
+    p["rc4"], p["a4"] = p["rc3"], p["a3"]
+    hrs = 4.0 + np.arange(NB) / 12.0
+    prof = 1.0 + 0.3 * np.sin(2 * np.pi * (hrs - 4.0) / 19.0)          # slow, smooth free-flow day
+    inp = inputs_for(net, D=1, d0=1800.0, ramp=120.0, beta=0.04, shape=prof)
+    o = M.simulate(net, p, inp)
+    assert o.clipped_share[0] == 0 and o.queue_clip_veh.max() < 1e-6     # free flow, nothing held back
+    sids = [s["id"] for s in net.stations]
+    for b, st in (("B1", "S1140"), ("B2", "S1141")):
+        A = arrivals(inp.d0[0], inp.d_o[0], o.exit_flow[0], net, p, b)
+        q15 = o.q_st[0, sids.index(st)].reshape(-1, 3).mean(axis=1)
+        rel = np.abs(A[4:] - q15[4:]) / q15[4:]                         # after the 04:00-05:00 warm-up hour
+        assert rel.max() <= 0.01, (b, float(rel.max()))

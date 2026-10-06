@@ -62,9 +62,9 @@ def cell_rc(net: M.Net, p: dict, c1: float = 1.0, c2: float = 1.0) -> np.ndarray
 
 
 # ---------------------------------------------------------------- model-side events (§5.1)
-def model_pairs(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> dict:
-    """Corridor rule (EA-2) on the model through the observation operator v / c_s (computed c_s, dropped stations
-    included, §3.2.4); masked per bin by the real event-layer series and per station-day by real event validity.
+def model_speeds(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> tuple:
+    """Model event-layer speeds (mph) through the observation operator v / c_s (computed c_s, dropped stations
+    included, §3.2.4), masked per bin by the real event-layer series and per station-day by real event validity.
     The boundary station has no c_s (it is not in any §3.2.4 group): c = 1 (disclosed)."""
     sids = [s["id"] for s in net.stations]
     speeds, valid = {}, {}
@@ -73,6 +73,12 @@ def model_pairs(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> dict:
         c = cs[sid]["c_s"] if sid in cs else 1.0
         speeds[sid] = V.observe(v_st[sids.index(sid)][EV0:EV0 + NEV], c, real["v"], real["valid"])
         valid[sid] = real["valid"]
+    return speeds, valid
+
+
+def model_pairs(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> dict:
+    """Corridor rule (EA-2) on the model's event-layer speeds (model_speeds)."""
+    speeds, valid = model_speeds(day, v_st, net, cs)
     return {k: e for k, e in I.event_pairs(day, speeds=speeds, valid=valid).items() if e}
 
 
@@ -217,6 +223,41 @@ def stephalving(seed: int | None = None) -> dict:
     return res
 
 
+def step_probe(day: str, steps=(5.0, 2.5, 1.25, 0.625), seed: int | None = None) -> dict:
+    """Post-stop diagnostic (report-only): the P_2 decision on one calibration day as T shrinks; the maximum number
+    of qualifying bins in a 7-bin window, near-miss bins (v_u < 40 mph, 19 <= v_d - v_u < 20 mph) and the RMS change
+    of the Pioneer Tr 5-min speed against the previous step."""
+    data = C.load_data()
+    days = [str(d) for d in data["days"]]
+    i = days.index(day)
+    sl = slice(i, i + 1)
+    net = M.build_network(C.VARIANT)
+    cs = part1()["c_s"]
+    p = plant_params(seed)
+    u_id, d_id = I.P2
+    out, prev = {}, None
+    for T in steps:
+        o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"][sl], data["d_o"][sl],
+                                                                            data["beta"][sl]), record_cells=False, T_s=T)
+        sp, _ = model_speeds(day, o.v_st[0], net, cs)
+        u, dv = sp[u_id], sp[d_id] - sp[u_id]
+        with np.errstate(invalid="ignore"):
+            cond = np.nan_to_num((u < 40) & (dv >= 20)).astype(int)
+            near = np.flatnonzero((u < 40) & (dv >= 19) & (dv < 20))
+        w = np.convolve(cond, np.ones(7, int), mode="valid")
+        r = {"P2_episodes": model_pairs(day, o.v_st[0], net, cs).get(I.P2, []), "max_qualifying_in_7": int(w.max()),
+             "near_miss_bins": {int(b): round(float(dv[b]), 2) for b in near}}
+        if prev is not None:
+            r["rms_change_S1140_mph_vs_previous"] = float(np.sqrt(np.nanmean((u - prev) ** 2)))
+            r["max_abs_change_S1140_mph_vs_previous"] = float(np.nanmax(np.abs(u - prev)))
+        prev = u
+        out[str(T)] = r
+    res = {"day": day, "plant_seed": seed if seed is not None else summary()["nominal_seed"], "steps": out,
+           "real_P2_episodes": [list(e) for e in I.event_pairs(day).get(I.P2, [])]}
+    (RUNS / f"step_probe_{day}.json").write_text(json.dumps(res, indent=1))
+    return res
+
+
 # ---------------------------------------------------------------- profiles (§4.5)
 def profile_job(pi: int, j: int) -> dict:
     import cma
@@ -256,7 +297,8 @@ def main(argv=None) -> int:
     from vsl_lab.ops import ledger
     from vsl_lab.ops.scheduler import Job
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["stephalving", "grid", "grid-run", "profile", "profile-run"])
+    ap.add_argument("what", choices=["stephalving", "grid", "grid-run", "profile", "profile-run", "probe"])
+    ap.add_argument("--day", default="20230517")
     ap.add_argument("--plant", type=int, default=None)
     ap.add_argument("--c2-index", type=int, default=0)
     ap.add_argument("--param", type=int, default=0)
@@ -273,7 +315,7 @@ def main(argv=None) -> int:
                        "PASS": r["PASS"]}, notes=str(RUNS / f"stephalving_{r['plant_seed']}.json"))
     elif a.what == "grid":
         seed = a.plant if a.plant is not None else summary()["nominal_seed"]
-        print(grid_job(seed, a.c2_index))
+        print(json.dumps({"grid_file": str(grid_job(seed, a.c2_index))}))   # a JSON line: the scheduler counts it ok
     elif a.what == "grid-run":
         seed = a.plant if a.plant is not None else summary()["nominal_seed"]
         jobs = [Job(jid=f"grid_{seed}_{i:02d}", argv=["vsl_lab.jobs.metanet_postcal", "grid", "--plant", str(seed),
@@ -285,6 +327,9 @@ def main(argv=None) -> int:
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / f"grid_{seed}_c2_*.json"))
     elif a.what == "profile":
         print(json.dumps(profile_job(a.param, a.point)))
+    elif a.what == "probe":
+        r = step_probe(a.day, seed=a.plant)
+        print(json.dumps({T: {k: v[k] for k in ("P2_episodes", "max_qualifying_in_7")} for T, v in r["steps"].items()}))
     else:
         jobs = [Job(jid=f"prof_{p}_{j}", argv=["vsl_lab.jobs.metanet_postcal", "profile", "--param", str(p),
                                                "--point", str(j)]) for p in range(len(PROFILE_PARAMS)) for j in range(9)]

@@ -360,7 +360,8 @@ def split_ratios(date: str, sources: dict, unreliable: set) -> dict:
         for j in range(NBIN):
             if not (F[j] >= 300.0) and j > 0:
                 bs[j] = bs[j - 1]
-        out[x] = {"valid": True, "beta": bs, "ref": f[1], "form": f[0], "flagged_unreliable": f[1] in unreliable,
+        out[x] = {"valid": True, "beta": bs, "q": np.nan_to_num(eq), "ref": f[1], "form": f[0],
+                  "flagged_unreliable": f[1] in unreliable,
                   "check": float(abs(np.nansum(bs * F) - np.nansum(eq)) / max(np.nansum(eq), 1.0))}
     return out
 
@@ -511,20 +512,23 @@ def model_inputs(date: str, sources: dict, unreliable: set, net: M.Net) -> dict:
             f = {"q": np.zeros(NBIN)}
         d_o.append(np.nan_to_num(f["q"]))
     sr = split_ratios(date, sources, unreliable)
-    beta = []
+    beta, x_q = [], []
     for x in net.exits:
         r = sr[x["id"]]
         if not r["valid"]:
             bad.append(f"exit {x['id']}")
             beta.append(np.zeros(NBIN))
+            x_q.append(np.zeros(NBIN))
         else:
             beta.append(r["beta"])
+            x_q.append(r["q"])
     for x in ("X67", "X9", "X10"):
         cb = CLASS_B[x]
         f = balance(date, cb[0], cb[1], cb[2], cb[3], sources)
         if f["valid"]:
             clip[x] = f["clip_share"]
     return {"valid": not bad, "why": bad, "d0": np.nan_to_num(b0["q"]), "d_o": np.array(d_o), "beta": np.array(beta),
+            "x_q": np.array(x_q),
             "class_b_clip": clip, "beta_meta": {k: {kk: v[kk] for kk in ("ref", "form", "flagged_unreliable", "check")}
                                                 for k, v in sr.items() if v["valid"]}}
 

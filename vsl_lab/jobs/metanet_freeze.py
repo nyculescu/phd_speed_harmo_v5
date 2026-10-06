@@ -25,6 +25,42 @@ OUT = C.REPO / "docs" / "lab" / "day_pattern"
 SEED_BOOT = 7190094
 NEAR = 1.02
 ENS_KEYS = ["tau", "nu", "kappa", "delta_m", "phi"]
+STOP_OUTCOME = ("FAIL (N0: step-halving, §2.5); F1 not triggered (N0 is outside the §6.1 set); route stop before any "
+                "validation run (§0.3, §6.2, §8.6 step 4)")
+RECORD_NOTES = [
+    "Everything in this record after the step-halving check (capacity grid, c2*, F-hat, identifiability profiles, "
+    "§4.8 diagnostics) is post-stop and report-only: it ran on calibration days after the FAIL was known (a driver "
+    "scheduled before the result) and may not inform any capacity-factor, plant or protocol choice.",
+    "The step-halving FAIL was checked by an adversarial review (4 independent lenses: implementation, simulator time "
+    "step, event rule, protocol reading; 2026-10-06): none refuted it. The step loop scales every term by T, the "
+    "event rule is unchanged, and the observation operator does not cause the flip (the decisions are the same with "
+    "c_s = 1).",
+    "The 5-s plant is not converged in time step inside the B2 queue: finer steps (2.5, 1.25, 0.625 s) agree with "
+    "each other and keep the 20230517 P_2 episode, while 5 s drops it (step_probe). The FAIL is a numerical defect of "
+    "the T = 5 s plant, not a threshold artefact around a converged answer.",
+    "Protocol inconsistency disclosed: §5.5 ('reported, not gated') and Appendix A round-1 row 16 still list "
+    "step-halving as reported (a v1 remnant); §2.5, the §5.3 N0 row, §8.6 step 4 and Appendix C round-3 issue 2 make "
+    "it gated, and the specific, amended text governs.",
+    "Fix after results (logged, both outcomes): the model-side mask of §5.1 used np.isfinite (it also masked real "
+    "+inf bins, K = 0); it now masks NaN only, as written. The step-halving check was re-run with the fix; both "
+    "outcomes are in stephalving_7190016_mask_isfinite.json and stephalving_7190016.json.",
+    "Provenance: the CMA-ES batch was launched at 06:08:58 from commit 663dd62 (the working tree held only untracked "
+    "files the job does not import); its ledger row carries the commit at append time (9f0e477+dirty), because "
+    "metanet.py gained diagnostic counters during the run (aaa8b21). J(5 s) in the step-halving run equals the CMA-ES "
+    "best J bit for bit, so those counters left the dynamics unchanged.",
+    "The capacity-grid batch report counts its 41 jobs as failed: the grid subcommand printed a path instead of a "
+    "JSON line. All 41 jobs exited with code 0 and wrote their files; the subcommand now prints a JSON line.",
+    "The nominal restart 7190016 is alone in its basin (the other 7 restarts end at J ~ 0.1697). Its tau = 12.0 s is "
+    "the closest of all restarts to the 2T = 10 s bound (T/tau = 0.42 at 5 s); the fit may partly exploit the 5-s "
+    "scheme. Choosing another restart now would be post hoc.",
+    "Post-stop lesson (report-only; the explanation is a hypothesis, not tested): the event stations that close the "
+    "bottleneck pairs sit inside the model's bottleneck cells: Pioneer Tr (S1140, P_1's downstream station) in B1's "
+    "last cell (30) and Old Shakopee Rd (S1141, P_2's downstream station) in B2's last cell (32). In the capacity grid "
+    "at c2 = 0.80, B2 is model-active on all 22 days and relocation branch (b) (an episode at Old Shakopee Rd -> "
+    "T.H.101) fires on 869 of 902 (c1, day) points: S1141 reads the bottleneck cell's queue speeds. At c1 = c2 = 1, "
+    "branch (a) fires on 6 of 22 days at cell 33 (the E15 merge cell). The same placement may contribute to the "
+    "model's B2 activity on only 2 of the 9 real-B2 calibration days.",
+]
 
 
 # ---------------------------------------------------------------- small statistics
@@ -409,7 +445,7 @@ def _f(x, nd=3):
 def report_md(res: dict) -> str:
     cf, dg, idn, sh = res["capacity_factors"]["nominal"], res["diagnostics"], res["identifiability"], res["stephalving"]
     L = ["# U.S.169 SB METANET plant: calibration freeze", "",
-         f"Protocol: `{res['protocol']}` (v3, binding). Stage: {res['stage']}. Variant `{res['variant']}` (§1.7 step (b), "
+         f"Protocol: `{res['protocol']}` (v3, binding). Stage: {res['stage']}{'; route stop record' if 'stop' in res else ''}. Variant `{res['variant']}` (§1.7 step (b), "
          f"G4). pycma {res['pycma']}. Calibration days only: {res['days']['n']} usable. Raw runs: "
          f"`{RUNS}`; full numbers in `metanet_calibration.json`.", "",
          f"**Route after the freeze: {res['route']}.**", "",
@@ -427,7 +463,10 @@ def report_md(res: dict) -> str:
           "## Step-halving (§2.5; gated as part of N0)", "",
           f"J(5 s) = {_f(sh['J_5s'], 4)}, J(2.5 s) = {_f(sh['J_2p5s'], 4)}, relative change {_f(sh['rel_change'], 4)} "
           f"(limit 0.05); P_1/P_2 episode-day sets unchanged: {sh['episode_day_sets_unchanged']}; largest per-station RMS "
-          f"speed change {_f(sh['rms_speed_change_kmh_max_station'], 2)} km/h. **{'PASS' if sh['PASS'] else 'FAIL'}**.", "",
+          f"speed change {_f(sh['rms_speed_change_kmh_max_station'], 2)} km/h. **{'PASS' if sh['PASS'] else 'FAIL'}**."
+          + "".join(f" {k} days only at 5 s: {sorted(set(sh[k + '_days_5s']) - set(sh[k + '_days_2p5s']))}; only at "
+                    f"2.5 s: {sorted(set(sh[k + '_days_2p5s']) - set(sh[k + '_days_5s']))}."
+                    for k in ("P1", "P2") if sh[k + "_days_5s"] != sh[k + "_days_2p5s"]), "",
           "## Identifiability (§4.5; reported, not gated)", "",
           f"- Near-best restarts (J ≤ 1.02 J_best): {idn['n_near_best']} ({idn['near_best_seeds']}).",
           f"- Non-identifiable: " + ("; ".join(f"{k} ({', '.join(v)})" for k, v in idn["non_identifiable"].items())
@@ -474,8 +513,10 @@ def report_md(res: dict) -> str:
     for k in ("B1", "B2"):
         b = dg["benchmarks"][k]
         c = b["climatology"]
+        thr = (f"demand {b['direction']} {_f(b['threshold'], 0)} veh" if b["threshold"] is not None
+               else "every day active: the constant classifier")
         L.append(f"- {k}: best daily-demand threshold classifier accuracy {_f(b['threshold_classifier_accuracy'], 3)} "
-                 f"(demand {b['direction']} {_f(b['threshold'], 0)} veh); demand-half climatology p_lower "
+                 f"({thr}); demand-half climatology p_lower "
                  f"{_f(c['p_lower'])} ({c['R_lower']}/{c['n_lower']}), p_upper {_f(c['p_upper'])} "
                  f"({c['R_upper']}/{c['n_upper']}), split at {dg['benchmarks']['daily_demand_median_veh']:.0f} veh.")
     L += ["", "## Ensemble candidates (§4.6)", "",
@@ -485,6 +526,18 @@ def report_md(res: dict) -> str:
                  f"{c.get('stephalving_PASS')}.")
     if not res["ensemble_candidates"]["candidates"]:
         L.append("- none (no other restart within 1.02 J_best).")
+    if "stop" in res:
+        L += ["", "## Route stop", "", f"**{res['stop']['outcome']}.** Author decision: {res['stop']['author_decision']}.", ""]
+        pb = res["stop"].get("step_probe")
+        if pb:
+            L.append(f"Step probe on {pb['day']} (real P_2 episodes {pb['real_P2_episodes']}):")
+            for T, v in pb["steps"].items():
+                L.append(f"- T = {T} s: P_2 episodes {v['P2_episodes']}, max qualifying bins in 7 = "
+                         f"{v['max_qualifying_in_7']}, near misses {v['near_miss_bins']}"
+                         + (f", RMS / max change of the Pioneer Tr speed vs the previous step "
+                            f"{v['rms_change_S1140_mph_vs_previous']:.2f} / {v['max_abs_change_S1140_mph_vs_previous']:.1f} mph"
+                            if "rms_change_S1140_mph_vs_previous" in v else "") + ".")
+        L += [""] + [f"- {n}" for n in res["stop"]["notes"]]
     L += ["", "## Disclosures", "",
           "- The boundary station (Minnetonka Blvd) has no c_s (not in a §3.2.4 group); the observation operator uses "
           "c = 1 there. Dropped stations use their computed c_s (§3.2.4).",
@@ -552,6 +605,14 @@ def finalize() -> dict:
         "capacity_factors": cap, "diagnostics": diag,
         "route": "STOP (N0 FAIL: step-halving)" if not sh["PASS"] else "continue to the plant gate (§5)",
     }
+    if not sh["PASS"]:
+        pr = RUNS / "step_probe_20230517.json"
+        first = RUNS / f"stephalving_{nom_seed}_mask_isfinite.json"
+        res["stop"] = {"outcome": STOP_OUTCOME, "author_decision": "accept the route stop as pre-registered "
+                       "(option (a), 2026-10-06)", "notes": RECORD_NOTES,
+                       "step_probe": json.loads(pr.read_text()) if pr.exists() else None,
+                       "stephalving_first_outcome": {k: v for k, v in json.loads(first.read_text()).items()
+                                                     if k != "rms_speed_change_kmh_by_station"} if first.exists() else None}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metanet_calibration.json").write_text(json.dumps(res, indent=1, default=float))
     (OUT / "metanet_calibration.md").write_text(report_md(res))

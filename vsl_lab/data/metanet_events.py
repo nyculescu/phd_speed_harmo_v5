@@ -46,11 +46,12 @@ def scale_table(m_s: dict, group: dict, full_lanes: set, max_dev: float = 0.15) 
 
 def observe(v_model_kmh: np.ndarray, c_s: float, real_v_mph: np.ndarray, station_valid: bool) -> np.ndarray:
     """Observation operator: model speed (km/h, fitted to scaled real speeds) -> detector scale (mph) by / c_s;
-    masked wherever the real bin is NaN, and entirely when the real station-day is event-invalid."""
+    masked wherever the real bin is NaN (§5.1; a real +inf bin, K = 0, is not masked), and entirely when the real
+    station-day is event-invalid."""
     if not station_valid:
         return np.full(real_v_mph.shape, np.nan)
     v = v_model_kmh / c_s / MPH
-    return np.where(np.isfinite(real_v_mph), v, np.nan)
+    return np.where(np.isnan(real_v_mph), np.nan, v)
 
 
 def pair_episodes(speeds: dict, km: dict, valid: dict, named=(("S1773", "S1140"),), max_km: float = 3.0) -> dict:

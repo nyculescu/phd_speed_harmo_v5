@@ -27,17 +27,16 @@
 | Gate | informed reference (true demand) vs best opponent; KILL if < 10 %; two looks (all days, heavy days), each at 97.5 % | gate draft §4 |
 | The timing problem | a learnability ladder (flat → step → ramp → one peak → two peaks → full day), aimed at the hybrid's DRL layer; cheap rungs alongside the gate | thesis path §5 |
 
-## Status (2026-10-05)
+## Status (2026-10-06)
 
 - **Done:**
   - literature review: `docs/review/day_pattern_research_v0.md`;
   - plant options;
   - the SUMO discharge pre-check (P3-ALIVE: car-following is not the problem, merges are; `docs/lab/day_pattern/p3_precheck.md`);
-  - MnDOT screening of 440 windows;
-  - the 104-day pull for 3 corridors;
-  - corridor analysis v0 (no corridor eligible; data-extent defect found).
-- **Running:** the fix pull for the missing downstream stations, then corridor analysis v1 (protocol Addendum A).
-- **Next:** propose one corridor → upstream extension (≥ 10 km) and full-year pulls (request counts stated first) → METANET calibration and plant checks → predictability check → T2 → gate.
+  - MnDOT screening, corridor analyses v0–v2, corridor **U.S.169 SB** (two bottlenecks in series; decisions D3.1–D3.5);
+  - METANET protocol v3 (binding), pre-calibration facts, calibration (8 CMA-ES restarts; J = 0.1649).
+- **METANET route: STOPPED (2026-10-06, D4.1).** The gated step-halving check failed (N0, §2.5): halving the time step changes the set of calibration days with a model B2 episode (20230517). Finer steps agree with each other, so the 5-s plant is not converged inside the B2 queue. The protocol makes this a route stop before any validation run; the author accepted it as pre-registered. No validation day was simulated. Record: `docs/lab/day_pattern/metanet_calibration.md`.
+- **Next:** author decision on the next plant (e.g. SUMO with its own realism protocol, §0.3), informed by the post-stop lessons in the record.
 
 ## Documents, in reading order
 
@@ -59,6 +58,10 @@
 | `vsl_lab/data/mndot.py` | MnDOT Mayfly fetcher (≤ 5 req/s, disk cache), windows, screening, corridor detector sets, pulls |
 | `vsl_lab/data/corridor_analysis.py` | corridor criteria C1–C4 and the reported items |
 | `vsl_lab/jobs/dp_jamrelease.py` | SUMO single-lane queue-discharge pre-check |
+| `vsl_lab/plants/metanet.py` | METANET plant of U.S.169 SB (protocol v3) |
+| `vsl_lab/data/metanet_inputs.py`, `metanet_events.py`, `metanet_facts.py` | data layers, event comparison, pre-calibration facts |
+| `vsl_lab/jobs/metanet_calibrate.py`, `metanet_postcal.py`, `metanet_freeze.py` | CMA-ES calibration, step-halving / grid / profiles / step probe, freeze and stop record |
+| `vsl_lab/jobs/metanet_gate.py` | plant gate (§5); written and smoke-tested on calibration days only; never run (route stop; it refuses to run) |
 | `vsl_lab/ops/guard.py`, `vsl_lab/ops/scheduler.py` | compute guard (CPU > 90 % for 2 min; 95 ± 3 °C) and batch runner |
 
 Lab infrastructure (runner, health checks, ledger, statistics, trainer with the S0 fixes) is shared with the VSL lab under `vsl_lab/`.
