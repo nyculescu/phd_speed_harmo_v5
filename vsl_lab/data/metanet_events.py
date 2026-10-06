@@ -7,7 +7,7 @@ Pure functions on 5-min series so that they are unit-testable on toy data:
 - pair_episodes               §3.2.1 corridor rule with EA-2 (named pair allowed beyond 3 km)
 - censor_b1                   §5.1 B1 right-censored by B2
 - match_episodes              §5.1 one-to-one nearest onset within +-90 min
-- p7c                         §5.4 system duration = longest union interval of P_1 and P_2 episodes
+- union_intervals, p7c(_pair)  §5.4 system duration = longest union interval of P_1 and P_2 episodes (< 30-min gap rule)
 - c4                          C4 block (Q_dis, r) with an optional window end
 Bins are 5-min; event-layer series start at 05:00 (216 bins), as in corridor_analysis.
 """
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from vsl_lab.data.corridor_analysis import episodes
+from vsl_lab.data.corridor_analysis import MERGE_GAP, episodes
 
 MPH = 1.609344
 BIN_MIN = 5
@@ -103,21 +103,33 @@ def match_episodes(real: list, model: list, tol_bins: int = 18) -> dict:
     return out
 
 
-def p7c(eps1: list, eps2: list) -> int:
-    """Longest union interval (minutes) of the P_1 and P_2 episodes (inclusive bins); overlapping or
-    back-to-back episodes join."""
-    iv = sorted([tuple(e) for e in eps1] + [tuple(e) for e in eps2])
-    best, cur = 0, None
-    for s, e in iv:
-        if cur is None or s > cur[1] + 1:
-            if cur is not None:
-                best = max(best, cur[1] - cur[0] + 1)
-            cur = [s, e]
+def union_intervals(eps1: list, eps2: list, merge_gap: int = MERGE_GAP) -> list:
+    """Union of the P_1 and P_2 episodes (inclusive bins) with the < 30-min gap rule of §5.1: intervals separated by
+    fewer than merge_gap empty bins join (overlapping and back-to-back ones included)."""
+    out = []
+    for s, e in sorted([tuple(x) for x in eps1] + [tuple(x) for x in eps2]):
+        if out and s - out[-1][1] - 1 < merge_gap:
+            out[-1][1] = max(out[-1][1], e)
         else:
-            cur[1] = max(cur[1], e)
-    if cur is not None:
-        best = max(best, cur[1] - cur[0] + 1)
-    return best * BIN_MIN
+            out.append([s, e])
+    return out
+
+
+def p7c(eps1: list, eps2: list) -> int:
+    """Longest union interval (minutes) of the P_1 and P_2 episodes (§5.4 P7c)."""
+    iv = union_intervals(eps1, eps2)
+    return max((e - s + 1 for s, e in iv), default=0) * BIN_MIN
+
+
+def p7c_pair(real1: list, real2: list, mod1: list, mod2: list, tol: int = 12) -> tuple:
+    """(dur_sys,real, dur_sys,model): the real longest union interval, and the longest model union interval that
+    overlaps it within +-60 min (0 if none)."""
+    ri = union_intervals(real1, real2)
+    if not ri:
+        return 0, 0
+    rs, re_ = max(ri, key=lambda x: (x[1] - x[0], -x[0]))
+    mi = [x for x in union_intervals(mod1, mod2) if x[0] <= re_ + tol and rs <= x[1] + tol]
+    return (re_ - rs + 1) * BIN_MIN, max((e - s + 1 for s, e in mi), default=0) * BIN_MIN
 
 
 def c4(q_down: np.ndarray, ep: tuple, lanes: int, end_cap: int | None = None) -> dict | None:

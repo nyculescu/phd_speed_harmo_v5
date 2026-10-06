@@ -82,7 +82,11 @@ def test_b1_censoring_by_b2():
 def test_p7c_union():
     assert V.p7c([(10, 20)], [(15, 30)]) == 21 * 5                     # overlapping
     assert V.p7c([(10, 20)], [(21, 30)]) == 21 * 5                     # back-to-back
-    assert V.p7c([(10, 20)], [(23, 30)]) == 11 * 5                     # separate: the longer one
+    assert V.p7c([(10, 20)], [(23, 30)]) == 21 * 5                     # gap of 2 bins (< 30 min): joined
+    assert V.p7c([(10, 20)], [(27, 30)]) == 11 * 5                     # gap of 6 bins (30 min): separate, the longer
+    assert V.p7c_pair([(10, 20)], [], [(30, 40)], []) == (55, 55)       # starts 50 min after the real end
+    assert V.p7c_pair([(10, 20)], [], [(30, 40)], [(80, 90)]) == (55, 55)
+    assert V.p7c_pair([(10, 20)], [], [(33, 43)], []) == (55, 0)        # 65 min after the real end: 0
     assert V.p7c([(10, 20)], [(15, 30)]) == V.p7c([(15, 30)], [(10, 20)])
 
 
