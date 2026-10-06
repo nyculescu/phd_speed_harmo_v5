@@ -63,3 +63,24 @@ The shortlist was built from windows of consecutive metered ramps, scored by occ
 | (c) Bottleneck-anchored I-394 WB: re-window around Shelard Pkwy with the metered ramps upstream of it | small (the config shows which ramps exist; data partly cached) | minutes | Louisiana Ave's missing queue data probably still fails C2 |
 
 Option (b) needs a short protocol v1 (selection procedure only; C1–C4 unchanged), committed before the pull.
+
+## v2 (2026-10-05): the bottleneck-anchored top 3 (selection protocol v1)
+
+*Data: 26,842 requests (0 errors). Criteria and choice rule unchanged. Summary: `day_pattern_corridor_analysis_v2.json`.*
+
+**Verdict: no corridor is eligible. C4 (a capacity drop of at least 3 %) is the binding failure.**
+
+| Corridor | C1 | C2 | C3 (reported) | C4 median r | Discharge (veh/h/lane) | Notes |
+|---|---|---|---|---|---|---|
+| **U.S.169 SB** (B: Pioneer Tr → Old Shakopee Rd) | **PASS** 23/51 = 0.45 | **PASS** (all 1.0) | 0.94 (extension to −11.8 km available) | **0.984: FAIL** (drop ≈ 1.6 %; IQR 0.95–1.00) | 1,850 | PM onset ≈ 16:10, 90 min. 48/52 Wednesdays are M-shaped. Breakdown share by demand quartile: 15 / 33 / 46 / 85 %, ρ = 0.56 |
+| **I-494 NB** (S of Co Rd 6 → Co Rd 6) | PASS 0.42 | **FAIL** (Carlson Pkwy 0.75) | 0.65 | 0.987: FAIL | 1,642 | PM; breakdown share by quartile 8 / 38 / 62 / 62 % |
+| **I-94 EB** (95th Ave) | **FAIL** 2/52 | PASS | 0.88 | — | — | With all lanes, the one-lane screen signal does not hold up; implausible speeds near T.H.610 |
+
+**What the real data say about capacity drop:** at these pinned, metered bottlenecks the measured drop is **small**:
+- about 1.3–1.6 % median (r = 0.984–0.987), against I-394 WB at about 3 %;
+- the interquartile ranges reach about 5 %.
+
+**Caveats:**
+- These sites are **actively ramp-metered**, which is expected to limit the drop (MnDOT meters operate in the peaks).
+- The estimator, 15 min before onset against the discharge at the downstream station, is not the cumulative-count method of the literature [VERIFY].
+- These are interpretations, not tested.
