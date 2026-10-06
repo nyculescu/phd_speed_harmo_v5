@@ -650,6 +650,7 @@ def run_part1(out_path: Path | None = None) -> dict:
             if v is not None:
                 drops.append(v <= ref[sid] - 8.0)
         excl[d]["E4"] = bool(drops) and float(np.mean(drops)) >= 0.5
+    res["e4_reference_mph"] = ref
     status = {d: real_status(d) for d in days}
 
     def usable(d):
@@ -680,3 +681,27 @@ def run_part1(out_path: Path | None = None) -> dict:
     if out_path:
         out_path.write_text(json.dumps(res, indent=1, default=lambda o: float(o) if isinstance(o, np.floating) else str(o)))
     return res
+
+
+def exclusions_frozen(days: list[str], part1: dict, net: M.Net) -> dict:
+    """§3.8 step 13: steps 1, 3, 8, 9 on extension days with every reference frozen from the calibration Wednesdays."""
+    speed_lanes, sources = part1["speed_lanes"], part1["sources"]
+    unreliable, cs = set(part1["unreliable"]), part1["c_s"]
+    ref = part1["e4_reference_mph"]
+    out = {}
+    for d in days:
+        mi = model_inputs(d, sources, unreliable, net)
+        x = {"E1": e1(d, mi, speed_lanes, cs, unreliable, sources), "E1-B": e1b(d), "E2": e2(d), "E3": e3(d)}
+        drops = []
+        for sid in INTERIOR:
+            if ref.get(sid) is None:
+                continue
+            v = ffree_speed(d, sid, speed_lanes)
+            if v is not None:
+                drops.append(v <= ref[sid] - 8.0)
+        x["E4"] = bool(drops) and float(np.mean(drops)) >= 0.5
+        st = real_status(d)
+        x["usable"] = not x["E1"] and not x["E1-B"] and not x["E2"] and not x["E3"] and not x["E4"]
+        x["B1"], x["B2"] = st["B1"], st["B2"]
+        out[d] = x
+    return out
