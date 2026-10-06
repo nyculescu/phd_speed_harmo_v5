@@ -36,7 +36,7 @@
   - MnDOT screening, corridor analyses v0–v2, corridor **U.S.169 SB** (two bottlenecks in series; decisions D3.1–D3.5);
   - METANET protocol v3 (binding), pre-calibration facts, calibration (8 CMA-ES restarts; J = 0.1649).
 - **METANET route: STOPPED (2026-10-06, D4.1).** The gated step-halving check failed (N0, §2.5): halving the time step changes the set of calibration days with a model B2 episode (20230517). Finer steps agree with each other, so the 5-s plant is not converged inside the B2 queue. The protocol makes this a route stop before any validation run; the author accepted it as pre-registered. No validation day was simulated. Record: `docs/lab/day_pattern/metanet_calibration.md`.
-- **Next:** author decision on the next plant (e.g. SUMO with its own realism protocol, §0.3), informed by the post-stop lessons in the record.
+- **Next (D4.2–D4.5):** a pre-registered, KILL-only **prize screen** on a fast, optimistic plant (seeds 7,191,xxx). If it does not KILL, METANET v4 follows as the gate plant (P6b unchanged). The E15–X15 lane check comes first. Study: `docs/lab/day_pattern/next_plant_study_v0.md`.
 
 ## Documents, in reading order
 
