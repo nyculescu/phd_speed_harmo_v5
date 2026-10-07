@@ -508,6 +508,34 @@ def profile_job(pi: int, j: int) -> dict:
     return res
 
 
+def all_run(gate_ok: bool) -> dict:
+    """§8.6 step 4 after calibration as ONE batch, decisive jobs first: nominal step-halving, the nominal capacity
+    grid, the ensemble candidates' step-halving and grids, then the 72 profile jobs filling every free slot. Same jobs,
+    seeds and outputs as the separate subcommands; only the scheduling changes."""
+    from vsl_lab.ops import ledger
+    from vsl_lab.ops.scheduler import Job
+    s = summary()
+    nom = s["nominal_seed"]
+    cands = [r["seed"] for r in s["restarts"] if r["best_J"] <= 1.02 * s["nominal_J"] and r["seed"] != nom]
+    mod = "vsl_lab.jobs.metanet_postcal"
+    jobs = [Job(jid=f"sh_{nom}", argv=[mod, "stephalving"])]
+    jobs += [Job(jid=f"grid_{nom}_{i:02d}", argv=[mod, "grid", "--plant", str(nom), "--c2-index", str(i)])
+             for i in range(len(GRID))]
+    for c in cands:
+        jobs.append(Job(jid=f"sh_{c}", argv=[mod, "stephalving", "--plant", str(c)]))
+        jobs += [Job(jid=f"grid_{c}_{i:02d}", argv=[mod, "grid", "--plant", str(c), "--c2-index", str(i)])
+                 for i in range(len(GRID))]
+    jobs += [Job(jid=f"prof_{q}_{j}", argv=[mod, "profile", "--param", str(q), "--point", str(j)])
+             for q in range(len(PROFILE_PARAMS)) for j in range(9)]
+    rep = _batch(jobs, "all", gate_ok)
+    out = {"jobs": rep.n_jobs, "failed": rep.n_failed_proc, "wall_s": rep.wall_s, "candidates": cands}
+    for name, seeds in (("metanet_v4_capacity_grid", [nom] + cands), ("metanet_v4_profiles", None)):
+        ledger.append("DP", "metanet-v4-calib", "S", name, {"plants": seeds, "T_s": C.T_RUN, "batch": "all-run"},
+                      "7191026-7191097 (profiles); grids deterministic", rep.n_jobs,
+                      {"proc_failed": rep.n_failed_proc}, {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS))
+    return out
+
+
 def _batch(jobs, tag, gate_ok):
     from vsl_lab.ops.scheduler import run_batch
     try:
@@ -520,7 +548,7 @@ def main(argv=None) -> int:
     from vsl_lab.ops import ledger
     from vsl_lab.ops.scheduler import Job
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["stephalving", "grid", "grid-run", "profile", "profile-run", "probe"])
+    ap.add_argument("what", choices=["stephalving", "grid", "grid-run", "profile", "profile-run", "probe", "all-run"])
     ap.add_argument("--day", default="20230517")
     ap.add_argument("--plant", type=int, default=None)
     ap.add_argument("--c2-index", type=int, default=0)
@@ -549,6 +577,9 @@ def main(argv=None) -> int:
         ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_capacity_grid", {"plant": seed, "grid": "0.80:0.01:1.20 x2", "T_s": C.T_RUN},
                       "none (deterministic); calibration days", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / f"grid_{seed}_c2_*.json"))
+    elif a.what == "all-run":
+        r = all_run(a.gate_ok)
+        print(json.dumps(r))
     elif a.what == "profile":
         print(json.dumps(profile_job(a.param, a.point)))
     elif a.what == "probe":
