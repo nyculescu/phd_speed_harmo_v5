@@ -98,7 +98,7 @@ def longest_run(b: np.ndarray) -> int:
     return best
 
 
-RELOC_EXCLUDE_ADJACENT_JAM = False    # protocol v4 as written; an author ruling may switch it (addendum, before grid)
+RELOC_EXCLUDE_ADJACENT_JAM = True     # protocol v4 addendum 2026-10-07 (D4.10): acceleration-zone bins excluded
 
 
 def relocation(pairs: dict, rho_bins: np.ndarray, rc_cells: np.ndarray, first_cell: int, n_consec: int = 3,
