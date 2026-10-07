@@ -1,9 +1,10 @@
-"""U.S.169 SB METANET plant gate (protocol v3 §5, outcome §0.3, F1 trigger §6.1). Runs only after the freeze commit
-(docs/lab/day_pattern/metanet_calibration.json). Validation days = the frozen F11 list (Wednesdays + extension).
+"""U.S.169 SB METANET plant gate, protocol v4 (v3 §5, outcome §0.3, F1 trigger §6.1, plus §A12 P11-k). Runs only
+after the v4 freeze commit (docs/lab/day_pattern/metanet_v4_calibration.json; guard §A9). Validation days = the frozen
+F11 list (Wednesdays + extension); single look (§A6).
 
 python -m vsl_lab.jobs.metanet_gate prep                         # validation inputs/targets -> val_data.npz (no model)
 python -m vsl_lab.jobs.metanet_gate deterministic [--plant SEED] # N0, P1-P9 at c1 = c2 = 1
-python -m vsl_lab.jobs.metanet_gate draws-plan [--plant SEED]    # 200 joint draws per day (seed 7,190,095)
+python -m vsl_lab.jobs.metanet_gate draws-plan [--plant SEED]    # 200 joint draws per day (seed 7,191,301)
 python -m vsl_lab.jobs.metanet_gate draws --day-index I [--plant SEED]
 python -m vsl_lab.jobs.metanet_gate draws-run --gate-ok [--plant SEED]
 python -m vsl_lab.jobs.metanet_gate stochastic [--plant SEED]    # N0s, P8s, P6s, P10a, P10b
@@ -29,9 +30,9 @@ from vsl_lab.jobs import metanet_postcal as Q
 from vsl_lab.plants import metanet as M
 
 RUNS = C.RUNS
-FREEZE = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_calibration.json"
-SEED_BOOT = 7190093
-SEED_DRAW = 7190095
+FREEZE = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v4_calibration.json"
+SEED_BOOT = 7191300                       # §A8
+SEED_DRAW = 7191301
 N_DRAWS = 200
 EV0, NEV = Q.EV0, Q.NEV
 MPH = 1.609344
@@ -158,7 +159,18 @@ def load_val() -> dict:
 
 
 def freeze() -> dict:
-    return json.loads(FREEZE.read_text())
+    """§A9 guard: the v4 freeze record must be tracked by git, unchanged against HEAD, name protocol v4, have stage
+    freeze and a route not starting with STOP. The v3 record is never read."""
+    import subprocess
+    rel = str(FREEZE.relative_to(C.REPO))
+    tracked = subprocess.run(["git", "-C", str(C.REPO), "ls-files", "--error-unmatch", rel], capture_output=True)
+    dirty = subprocess.run(["git", "-C", str(C.REPO), "diff", "--quiet", "HEAD", "--", rel])
+    if tracked.returncode != 0 or dirty.returncode != 0:
+        raise SystemExit(f"{rel} is not committed or differs from HEAD: the gate must not run (§A9)")
+    fz = json.loads(FREEZE.read_text())
+    if fz.get("protocol_version") != "v4" or not str(fz.get("stage", "")).startswith("freeze"):
+        raise SystemExit(f"{rel} does not name protocol v4 at stage freeze (§A9)")
+    return fz
 
 
 def plant(seed: int | None) -> tuple:
@@ -199,7 +211,7 @@ def deterministic(seed: int | None = None) -> dict:
     sh = fz["stephalving"] if seed == fz["nominal_seed"] else json.loads((RUNS / f"stephalving_{seed}.json").read_text())
     sids = [s["id"] for s in net.stations]
     o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
-                   record_cells=False)
+                   record_cells=True)
     nl = nulls()
     qa = np.array([s in I.Q_A for s in sids])
     rows, per = {}, {}
@@ -450,6 +462,12 @@ def deterministic(seed: int | None = None) -> dict:
         rm = rows[f"P5b-{k[1]}"]["median_r_model"]
         rep[k] = {"real_r_median": med(rr), "real_r_ci": ci, "model_r_median": rm,
                   "drop_under_reproduced": bool(rm is not None and ci and rm > ci[1])}
+    # §A12 P11-k (gated; not in the F1 trigger set)
+    p11 = Q.p11_verdict({d: Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs) for i, d in enumerate(days)})
+    for kk, k in ((1, "B1"), (2, "B2")):
+        rows[f"P11-{kk}"] = {kk2: p11[k][kk2] for kk2 in ("n_unbacked", "unbacked_days", "pooled_backed_share",
+                                                         "most_downstream_congested_cell")} | {
+            "tolerance": p11["tolerance"], "PASS": p11[k]["PASS"]}
     det = [r for r in rows if r != "P5c" or rows["P5c"]["gated"]]
     failed = [r for r in det if not rows[r]["PASS"]]
     res = {"plant_seed": seed, "n_val": len(days), "rows": rows, "reported": rep, "failed": failed,
@@ -522,17 +540,20 @@ def draws_day(i: int, seed: int | None = None) -> dict:
                    M.Inputs(data["d0"][sl], data["d_o"][sl], data["beta"][sl]), n_param_sets=N_DRAWS,
                    c1=cc[:, 0], c2=cc[:, 1], record_cells=True)
     rp = {k: e for k, e in I.event_pairs(d).items() if e}
-    act, z, x, bad = {"B1": 0, "B2": 0}, 0, {"B1": 0, "B2": 0}, 0
+    act, z, x, bad, unb = {"B1": 0, "B2": 0}, 0, {"B1": 0, "B2": 0}, 0, 0
     for j in range(N_DRAWS):
         mp = Q.model_pairs(d, o.v_st[j], net, cs)
-        rl = Q.relocation(mp, o.rho_cell[j][:, EV0:], Q.cell_rc(net, p, cc[j, 0], cc[j, 1]), net.b2_cells[-1] + 1)
+        rl = Q.relocation(mp, o.rho_cell[j][:, EV0:], o.rc_cell[j][:, EV0:].mean(axis=1), net.b2_cells[-1] + 1)
         z += bool(Q.spurious(mp, rp)) or rl["flag"]
         for k in ("B1", "B2"):
             me = mp.get(Q.PAIR[k], [])
             act[k] += bool(me)
             x[k] += any(not Q.overlaps([e], rp.get(Q.PAIR[k], [])) for e in me)
         bad += bool(o.nonfinite[j] or o.clipped_share[j] > 0.01)
+        pk = Q.p11_day(d, o.v_st[j], o.rho_cell[j], o.rc_cell[j], net, cs, pairs=mp)
+        unb += pk["B1"]["unbacked"] or pk["B2"]["unbacked"]            # §A12 report-only under draws
     res = {"day": d, "active": act, "z": z, "extra": x, "bad": bad, "nonfinite": int(o.nonfinite.sum()),
+           "share_draws_unbacked_report_only": unb / N_DRAWS,
            "real_active": {k: bool(rp.get(Q.PAIR[k])) for k in ("B1", "B2")}}
     (RUNS / f"gate_draw_{seed}_{i:03d}.json").write_text(json.dumps(res))
     return res
@@ -632,7 +653,7 @@ def main(argv=None) -> int:
         r = deterministic(a.plant)
         print(json.dumps({"plant": r["plant_seed"], "deterministic_PASS": r["deterministic_PASS"], "failed": r["failed"],
                           "F1_trigger": r["F1_trigger"]}))
-        ledger.append("DP", "metanet-gate", "S", "metanet_gate_deterministic", {"plant": r["plant_seed"]},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_deterministic", {"plant": r["plant_seed"]},
                       "none (deterministic); validation days (F11 list)", r["n_val"], {},
                       {"PASS": r["deterministic_PASS"], "failed": r["failed"]},
                       notes=str(RUNS / f"gate_det_{r['plant_seed']}.json"))
@@ -646,14 +667,14 @@ def main(argv=None) -> int:
                                                       "--plant", str(seed)]) for i in range(len(val_days()))]
         rep = run_batch(jobs, RUNS / f"batch_draws_{seed}_{int(time.time())}", max_workers=32, gate_ok=a.gate_ok)
         print(json.dumps({"jobs": rep.n_jobs, "failed": rep.n_failed_proc, "wall_s": rep.wall_s}))
-        ledger.append("DP", "metanet-gate", "S", "metanet_gate_draws", {"plant": seed, "draws": N_DRAWS},
-                      "7190095 (draws); validation days", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_draws", {"plant": seed, "draws": N_DRAWS},
+                      "7191301 (draws); validation days; T = 0.75 s", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / f"gate_draw_{seed}_*.json"))
     elif a.what == "stochastic":
         r = stochastic(a.plant)
         print(json.dumps({"plant": r["plant_seed"], "stochastic_PASS": r["stochastic_PASS"], "failed": r["failed"]}))
-        ledger.append("DP", "metanet-gate", "S", "metanet_gate_stochastic", {"plant": r["plant_seed"]},
-                      "7190095 (draws), 7190093 (bootstrap); validation days", len(val_days()), {},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_stochastic", {"plant": r["plant_seed"]},
+                      "7191301 (draws), 7191300 (bootstrap); validation days; T = 0.75 s", len(val_days()), {},
                       {"PASS": r["stochastic_PASS"], "failed": r["failed"]},
                       notes=str(RUNS / f"gate_sto_{r['plant_seed']}.json"))
     else:

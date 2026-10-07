@@ -360,7 +360,111 @@ def f13(days: list[str]) -> dict:
 
 
 # ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- protocol v4 recompute list (§A6 step 3)
+def _series(d: str, eid: str, sources: dict) -> dict:
+    """Replayed series of a ramp element (class B from its balance, class M as replayed)."""
+    if eid in I.CLASS_B:
+        cb = I.CLASS_B[eid]
+        return I.balance(d, cb[0], cb[1], cb[2], cb[3], sources)
+    return I.element_flow(d, eid, "input", sources.get(eid))
+
+
+def conservation_flow(x_km: float, st_km: float, q_st: np.ndarray, elems: list) -> np.ndarray:
+    """Flow just downstream of km x (elements exactly at x are upstream of the point) from a station's flow and the
+    ramp series between them. elems: (km, sign, series), sign +1 entrance, -1 exit. Pure function (test 23)."""
+    xe = x_km + 1e-6
+    q = np.array(q_st, float)
+    for km, sign, ser in elems:
+        if st_km < xe and st_km < km < xe:
+            q = q + sign * np.asarray(ser, float)
+        elif st_km > xe and xe < km < st_km:
+            q = q - sign * np.asarray(ser, float)
+    return q
+
+
+def arriving_flow(d: str, x_km: float, part1: dict):
+    """v3 §1.7 A_i: arriving flow just downstream of km x from the nearest flow-valid station and the replayed ramp
+    series (no storage term). Returns (series on 228 bins, station id) or None."""
+    sources = part1["sources"]
+    xe = x_km + 1e-6
+    for sid, skm, *_ in sorted(M.STATIONS, key=lambda st: abs(st[1] - x_km)):
+        st = I.station_fit(d, sid, "input")
+        if not st["flow_valid"]:
+            continue
+        lo, hi = sorted((skm, xe))
+        between = [(e[1], e[0], +1) for e in M.ENTRANCES if lo < e[1] < hi] + \
+                  [(x[1], x[0], -1) for x in M.EXITS if lo < x[1] < hi]
+        series = []
+        for km, eid, sign in between:
+            f = _series(d, eid, sources)
+            if not f["valid"]:
+                break
+            series.append((km, sign, np.nan_to_num(np.asarray(f["q"], float))))
+        else:
+            return conservation_flow(x_km, skm, st["q"], series), sid
+    return None
+
+
+def _ratio_cells(cal_use: list[str], part1: dict, q_ref: float, net, cells: list[int]) -> dict:
+    out = {}
+    for i in cells:
+        ents = [e for e in net.entrances if e["cell"] == i]
+        x = max(e["km"] for e in ents) if ents else float(net.km_from[i])
+        A = []
+        for d in cal_use:
+            r = arriving_flow(d, x, part1)
+            if r is None:
+                continue
+            roll = np.convolve(np.nan_to_num(r[0][OFF:]), np.ones(3) / 3, mode="valid")
+            A.append(float(roll.max()))
+        A_med = float(np.median(A)) if A else None
+        R = A_med / (net.lam[i] * q_ref) if A_med else None
+        out[f"cell {i + 1}"] = {"point_km": x, "A_veh_h": A_med, "n_days": len(A), "lambda": int(net.lam[i]),
+                                "R": R, "over_1.10": bool(R and R > 1.10)}
+    return out
+
+
+def main_v4() -> int:
+    """Protocol v4 §A6 step 3: the recompute list only -> docs/lab/day_pattern/metanet_v4_precal_facts.json. Reused
+    facts are read from the v3 file, never written."""
+    import subprocess
+    from vsl_lab.jobs import metanet_calibrate as C
+    p1 = C.part1()
+    v3 = json.loads(OUT.read_text())
+    blob = subprocess.run(["git", "-C", str(C.REPO), "hash-object", str(OUT)], capture_output=True, text=True).stdout.strip()
+    net = M.build_network("v4")
+    cal_use = p1["usable"]["calibration"]
+    q_ref = max(x for x in (v3["F8"]["B1"]["Q_dis_per_lane_median"], v3["F8"]["B2"]["Q_dis_per_lane_median"]) if x)
+    facts = {"protocol": "docs/plans/day_pattern_metanet_protocol_v4.md", "protocol_version": "v4",
+             "v3_facts_git_blob": blob, "v3_facts_path": str(OUT.relative_to(C.REPO)),
+             "F1": {"variant": net.variant, "N": net.N, "km_from": net.km_from.round(4).tolist(),
+                    "km_to": net.km_to.round(4).tolist(), "lanes": net.lam.astype(int).tolist(),
+                    "group": [int(g) + 1 for g in net.group], "merge_log": net.merge_log,
+                    "b1_cells": [i + 1 for i in net.b1_cells], "b2_cells": [i + 1 for i in net.b2_cells],
+                    "head1": net.head1 + 1, "phi_cell": net.phi_cell + 1,
+                    "entrances": {e["id"]: {"cell": e["cell"] + 1, "merging": e["merging"]} for e in net.entrances},
+                    "exits": {x["id"]: x["cell"] + 1 for x in net.exits},
+                    "stations": {st["id"]: {"cell": st["cell"] + 1, "corr_entr": st["corr_entr"],
+                                            "corr_exit": st["corr_exit"]} for st in net.stations}},
+             "F16": {"report_only": True, "Q_ref_vphpl": q_ref, "n_cal_days": len(cal_use),
+                     "cells": _ratio_cells(cal_use, p1, q_ref, net, [26, 31] + list(range(34, net.N))),
+                     "step": "(b), adopted without condition (§A4 (i))"},
+             "F14_G1G2_ratios": {"report_only": True,
+                                 "cells": _ratio_cells(cal_use, p1, q_ref, net, list(range(0, 26)))},
+             "F7_cells_restated": {"X12": next(x["cell"] + 1 for x in net.exits if x["id"] == "X12"),
+                                   "X13": next(x["cell"] + 1 for x in net.exits if x["id"] == "X13"),
+                                   "outcome": {k: v3["F7"][k]["outcome"] for k in ("B1", "B2")}}}
+    C.FACTS_V4.write_text(json.dumps(facts, indent=1, default=str))
+    print(json.dumps({"F16": {k: round(v["R"], 3) if v["R"] else None for k, v in facts["F16"]["cells"].items()},
+                      "F14_over_1.10": [k for k, v in facts["F14_G1G2_ratios"]["cells"].items() if v["over_1.10"]]}))
+    return 0
+
+
 def main() -> int:
+    raise SystemExit("protocol v3 facts are frozen (v4 §A9: v3 paths are read-only); run main_v4 via --v4")
+
+
+def main_v3_frozen() -> int:
     p1 = json.loads((RUNS / "precal_part1.json").read_text())
     cal, val = p1["split"]["calibration"], p1["split"]["validation"]
     cal_use, val_use = p1["usable"]["calibration"], p1["usable"]["validation"]
@@ -447,4 +551,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main_v4() if "--v4" in sys.argv else main())

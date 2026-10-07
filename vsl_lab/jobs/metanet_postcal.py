@@ -1,5 +1,6 @@
-"""U.S.169 SB METANET post-calibration stage (protocol v3 §2.5 step-halving, §4.5 profiles, §4.7 capacity-factor
-grid). Calibration days only; no validation day is touched here. The freeze itself is in metanet_freeze.
+"""U.S.169 SB METANET post-calibration stage, protocol v4 (v3 §2.5 step-halving at T vs T/2 = 0.75 vs 0.375 s,
+§4.5 profiles with the §A3 rules, §4.7 capacity-factor grid on v4 cells, §A12 P11-k). Calibration days only; no
+validation day is touched here. The freeze itself is in metanet_freeze.
 
 python -m vsl_lab.jobs.metanet_postcal stephalving [--plant SEED]
 python -m vsl_lab.jobs.metanet_postcal grid --plant SEED --c2-index I   # one c2 value x all 41 c1 values x all days
@@ -49,7 +50,7 @@ def plant_params(seed: int | None = None) -> dict:
 
 
 def part1() -> dict:
-    return json.loads((RUNS / "precal_part1.json").read_text())
+    return C.part1()                                         # v3 raw input, read-only, sha256-verified (§A9)
 
 
 def cell_rc(net: M.Net, p: dict, c1: float = 1.0, c2: float = 1.0) -> np.ndarray:
@@ -96,6 +97,66 @@ def relocation(pairs: dict, rho_bins: np.ndarray, rc_cells: np.ndarray, first_ce
     cells = [i for i in range(first_cell, rho_bins.shape[0]) if longest_run(rho_bins[i] > rc_cells[i]) >= n_consec]
     pair = bool(pairs.get(RELOC_PAIR))
     return {"flag": bool(cells) or pair, "cells": cells, "pair": pair}
+
+
+def p11_day(day: str, v_st: np.ndarray, rho_bins: np.ndarray, rc_bins: np.ndarray, net: M.Net, cs: dict,
+            pairs: dict | None = None) -> dict:
+    """§A12 P11-k for one model day. Qualifying bin: inside a model P_k episode with the pair condition on detector
+    scale; backed: a congested cell (bin-mean rho > bin-mean effective rho_cr) strictly between the pair's station
+    cells (P_1: cells 26-31; P_2: cells 33-34). Unbacked day: episodes whose pooled qualifying bins are < 50 % backed.
+    Also §A13 item 4: per P_2 episode, the most upstream congested cell from Pioneer Tr's cell on (1-based)."""
+    speeds, valid = model_speeds(day, v_st, net, cs)
+    mp = pairs if pairs is not None else {k: e for k, e in I.event_pairs(day, speeds=speeds, valid=valid).items() if e}
+    scell = {st["id"]: st["cell"] for st in net.stations}
+    cong_all = rho_bins[:, EV0:EV0 + NEV] > rc_bins[:, EV0:EV0 + NEV]          # (N, 216)
+    return p11_core(speeds, mp, cong_all, scell)
+
+
+def p11_core(speeds: dict, mp: dict, cong_all: np.ndarray, scell: dict) -> dict:
+    """Pure §A12 classifier (test 21): speeds (mph, detector scale) per station on event bins, model episodes per
+    pair, congested-cell matrix (N, bins), station -> 0-based cell."""
+    out = {}
+    for k, (u, d) in (("B1", I.P1), ("B2", I.P2)):
+        eps = [tuple(e) for e in mp.get((u, d), [])]
+        between = list(range(scell[u] + 1, scell[d]))
+        with np.errstate(invalid="ignore"):
+            cond = np.nan_to_num((speeds[u] < 40.0) & ((speeds[d] - speeds[u]) >= 20.0)).astype(bool)
+        qual = [b for s_, e_ in eps for b in range(s_, e_ + 1) if cond[b]]
+        backed = [b for b in qual if cong_all[between, b].any()]
+        share = len(backed) / len(qual) if qual else None
+        unb = bool(eps) and (share is None or share < 0.5)
+        r = {"episodes": [list(e) for e in eps], "n_qualifying": len(qual), "n_backed": len(backed), "share": share,
+             "unbacked": unb}
+        if unb and qual:
+            dn = [int(np.flatnonzero(cong_all[:, b]).max()) + 1 for b in qual if cong_all[:, b].any()]
+            r["most_downstream_congested_cell"] = max(dn) if dn else None
+        if k == "B2":
+            ups = []
+            for s_, e_ in eps:
+                cells = sorted({int(c) + 1 for b in range(s_, e_ + 1)
+                                for c in np.flatnonzero(cong_all[scell[u]:, b]) + scell[u]})
+                ups.append({"episode": [s_, e_], "most_upstream_congested_cell": cells[0] if cells else None,
+                            "only_35_39": bool(cells) and min(cells) >= scell[d] + 1})
+            r["a13_item4"] = ups
+        out[k] = r
+    return out
+
+
+def p11_verdict(days_res: dict) -> dict:
+    """§A12 criterion per k: PASS iff unbacked episode-days <= max(2, ceil(0.10 n))."""
+    n = len(days_res)
+    tol = max(2, math.ceil(0.10 * n))
+    out = {"n_days": n, "tolerance": tol}
+    for k in ("B1", "B2"):
+        unb = [d for d, r in days_res.items() if r[k]["unbacked"]]
+        q = sum(r[k]["n_qualifying"] for r in days_res.values())
+        bk = sum(r[k]["n_backed"] for r in days_res.values())
+        out[k] = {"unbacked_days": unb, "n_unbacked": len(unb), "pooled_backed_share": bk / q if q else None,
+                  "most_downstream_congested_cell": {d: days_res[d][k].get("most_downstream_congested_cell")
+                                                     for d in unb},
+                  "PASS": len(unb) <= tol}
+    out["PASS"] = out["B1"]["PASS"] and out["B2"]["PASS"]
+    return out
 
 
 def c2_star(reloc_by_c2: dict, grid=GRID):
@@ -169,23 +230,32 @@ def grid_job(seed: int, c2_index: int):
     o = M.simulate(net, {k: np.full(P, v) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    n_param_sets=P, c1=GRID.copy(), c2=np.full(P, c2), record_cells=True)
     real = {d: {k: e for k, e in I.event_pairs(d).items() if e} for d in days}
+    a13_5 = abs(c2 - 1.0) < 1e-9                              # §A13 item 5 runs on the c2 = 1.00 slice only
+    if a13_5:
+        from vsl_lab.data import metanet_facts as F
+        rev = {d: F.day_events(d) for d in days}
     res = []
     for pi, c1 in enumerate(GRID):
         rc = cell_rc(net, p, float(c1), c2)
         for di, day in enumerate(days):
             b = pi * D + di
             mp = model_pairs(day, o.v_st[b], net, cs)
-            rl = relocation(mp, o.rho_cell[b][:, EV0:], rc, net.b2_cells[-1] + 1)
+            rl = relocation(mp, o.rho_cell[b][:, EV0:], o.rc_cell[b][:, EV0:].mean(axis=1), net.b2_cells[-1] + 1)
             sp = spurious(mp, real[day])
             row = {"day": day, "c1": float(c1), "c2": c2, "Z": bool(sp) or rl["flag"], "reloc": rl["flag"],
                    "reloc_cells": [int(i) + 1 for i in rl["cells"]], "reloc_pair": rl["pair"],
                    "spurious": [list(x) for x in sp],
                    "L": V.nrmse(o.v_st[b], data["v"][di], data["mc"][di]),
                    "clip": float(o.clipped_share[b])}
+            pk = p11_day(day, o.v_st[b], o.rho_cell[b], o.rc_cell[b], net, cs, pairs=mp)
             for k in ("B1", "B2"):
                 me = mp.get(PAIR[k], [])
                 row["E" + k[1]] = bool(me)
                 row["O" + k[1]] = overlaps(me, real[day].get(PAIR[k], []))
+                row["backed_share_" + k] = pk[k]["share"]           # §A13 item 7 (report-only)
+            if a13_5 and rev[day]["B1"] and not rev[day]["B2"] and row["E1"] and not row["E2"] and not rl["flag"]:
+                md = model_day(day, o.q_st[b], o.v_st[b], o.exit_flow[b], net, cs, rev[day])
+                row["b1_discharge_vph"] = None if md["B1"]["merge"] is None else 2.0 * md["B1"]["merge"]
             res.append(row)
     out = RUNS / f"grid_{seed}_c2_{c2_index:02d}.json"
     out.write_text(json.dumps(res))
@@ -193,7 +263,27 @@ def grid_job(seed: int, c2_index: int):
 
 
 # ---------------------------------------------------------------- step-halving (§2.5, gated as part of N0)
+def _margins(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> dict:
+    """§A2 report-only margins per pair: best 7-bin count - 5, and signed m_v = 40 - v_u, m_d = (v_d - v_u) - 20
+    (mph, detector scale) per bin of the best window."""
+    speeds, _ = model_speeds(day, v_st, net, cs)
+    out = {}
+    for k, (u, d) in (("B1", I.P1), ("B2", I.P2)):
+        with np.errstate(invalid="ignore"):
+            cond = np.nan_to_num((speeds[u] < 40.0) & ((speeds[d] - speeds[u]) >= 20.0)).astype(int)
+        w = np.convolve(cond, np.ones(7, int), mode="valid")
+        j = int(np.argmax(w))
+        mv = 40.0 - speeds[u][j:j + 7]
+        md = (speeds[d] - speeds[u])[j:j + 7] - 20.0
+        out[k] = {"count_margin": int(w.max()) - 5, "window_start": j,
+                  "m_v": [None if not np.isfinite(x) else round(float(x), 2) for x in mv],
+                  "m_d": [None if not np.isfinite(x) else round(float(x), 2) for x in md],
+                  "cond": cond.tolist()}
+    return out
+
+
 def stephalving(seed: int | None = None) -> dict:
+    """§A2: T vs T/2 on all usable calibration days: |dJ|/J <= 0.05 and identical P_1, P_2 episode-day sets."""
     data = C.load_data()
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
@@ -201,29 +291,73 @@ def stephalving(seed: int | None = None) -> dict:
     p = plant_params(seed)
     x = C.to_norm(p)[None, :]
     sids = [s["id"] for s in net.stations]
+    Ts = (C.T_RUN, C.T_RUN / 2.0)
     out = {}
-    for T in (5.0, 2.5):
+    for T in Ts:
         J = C.objective(x, data, net, T_s=T)
         o = M.simulate(net, C.to_params(x), M.Inputs(data["d0"], data["d_o"], data["beta"]), record_cells=False, T_s=T)
         mp = [model_pairs(d, o.v_st[i], net, cs) for i, d in enumerate(days)]
         out[T] = {"J": float(J[0]), "v": o.v_st, "clip_max": float(o.clipped_share.max()),
                   "P1": sorted(d for d, m in zip(days, mp) if m.get(I.P1)),
-                  "P2": sorted(d for d, m in zip(days, mp) if m.get(I.P2))}
-    rel = abs(out[2.5]["J"] - out[5.0]["J"]) / out[5.0]["J"]
-    same = out[2.5]["P1"] == out[5.0]["P1"] and out[2.5]["P2"] == out[5.0]["P2"]
-    dv = out[2.5]["v"][:, :, EV0:] - out[5.0]["v"][:, :, EV0:]
+                  "P2": sorted(d for d, m in zip(days, mp) if m.get(I.P2)),
+                  "margins": {d: _margins(d, o.v_st[i], net, cs) for i, d in enumerate(days)}}
+    T1, T2 = Ts
+    rel = abs(out[T2]["J"] - out[T1]["J"]) / out[T1]["J"]
+    same = out[T2]["P1"] == out[T1]["P1"] and out[T2]["P2"] == out[T1]["P2"]
+    dv = out[T2]["v"][:, :, EV0:] - out[T1]["v"][:, :, EV0:]
     rms = {sid: float(np.sqrt(np.nanmean(dv[:, j] ** 2))) for j, sid in enumerate(sids)}
-    res = {"plant_seed": seed if seed is not None else summary()["nominal_seed"],
-           "J_5s": out[5.0]["J"], "J_2p5s": out[2.5]["J"], "rel_change": rel, "episode_day_sets_unchanged": same,
-           "P1_days_5s": out[5.0]["P1"], "P1_days_2p5s": out[2.5]["P1"],
-           "P2_days_5s": out[5.0]["P2"], "P2_days_2p5s": out[2.5]["P2"],
-           "clip_max_5s": out[5.0]["clip_max"], "clip_max_2p5s": out[2.5]["clip_max"],
-           "rms_speed_change_kmh_by_station": rms, "PASS": bool(rel <= 0.05 and same)}
+    differ = sorted((set(out[T1]["P1"]) ^ set(out[T2]["P1"])) | (set(out[T1]["P2"]) ^ set(out[T2]["P2"])))
+    margins = {d: {"T": {k: {kk: out[T1]["margins"][d][k][kk] for kk in ("count_margin", "m_v", "m_d")}
+                         for k in ("B1", "B2")},
+                   "T_half": {k: {kk: out[T2]["margins"][d][k][kk] for kk in ("count_margin", "m_v", "m_d")}
+                              for k in ("B1", "B2")}} for d in days}
+    res = {"protocol": C.PROTOCOL, "plant_seed": seed if seed is not None else summary()["nominal_seed"],
+           "T_s": T1, "T_half_s": T2, "J_T": out[T1]["J"], "J_T_half": out[T2]["J"], "rel_change": rel,
+           "episode_day_sets_unchanged": same,
+           "P1_days_T": out[T1]["P1"], "P1_days_T_half": out[T2]["P1"],
+           "P2_days_T": out[T1]["P2"], "P2_days_T_half": out[T2]["P2"],
+           "clip_max_T": out[T1]["clip_max"], "clip_max_T_half": out[T2]["clip_max"],
+           "rms_speed_change_kmh_by_station": rms, "PASS": bool(rel <= 0.05 and same),
+           "differing_days": differ, "margins_report_only": margins}
+    if differ:                                                # §A2 T/4 check, numbers only
+        res["T_quarter_report_only"] = step_probe_days(differ, (T1, T2, T1 / 4.0), seed)
     (RUNS / f"stephalving_{res['plant_seed']}.json").write_text(json.dumps(res, indent=1))
     return res
 
 
-def step_probe(day: str, steps=(5.0, 2.5, 1.25, 0.625), seed: int | None = None) -> dict:
+def step_probe_days(days_: list, steps, seed) -> dict:
+    """Report-only: v_u and v_d - v_u per deciding bin at T, T/2, T/4 for the differing days, with
+    r = |x(T/2) - x(T/4)| / |x(T) - x(T/2)|."""
+    data = C.load_data()
+    days = [str(d) for d in data["days"]]
+    net = M.build_network(C.VARIANT)
+    cs = part1()["c_s"]
+    p = plant_params(seed)
+    out = {}
+    for day in days_:
+        i = days.index(day)
+        sl = slice(i, i + 1)
+        series = {}
+        for T in steps:
+            o = M.simulate(net, {k: np.array([v]) for k, v in p.items()},
+                           M.Inputs(data["d0"][sl], data["d_o"][sl], data["beta"][sl]), record_cells=False, T_s=T)
+            sp, _ = model_speeds(day, o.v_st[0], net, cs)
+            series[T] = sp
+        rec = {}
+        for k, (u, d) in (("B1", I.P1), ("B2", I.P2)):
+            xs = [(series[T][u], series[T][d] - series[T][u]) for T in steps]
+            with np.errstate(invalid="ignore", divide="ignore"):
+                r_u = np.abs(xs[1][0] - xs[2][0]) / np.abs(xs[0][0] - xs[1][0])
+                r_d = np.abs(xs[1][1] - xs[2][1]) / np.abs(xs[0][1] - xs[1][1])
+            bins = sorted(set(np.flatnonzero(np.nan_to_num((xs[0][0] < 40) & (xs[0][1] >= 20)))) ^
+                          set(np.flatnonzero(np.nan_to_num((xs[1][0] < 40) & (xs[1][1] >= 20)))))
+            rec[k] = {int(b): {"v_u": [round(float(x[0][b]), 2) for x in xs], "dv": [round(float(x[1][b]), 2) for x in xs],
+                               "r_u": float(r_u[b]), "r_dv": float(r_d[b])} for b in bins}
+        out[day] = rec
+    return out
+
+
+def step_probe(day: str, steps=(0.75, 0.375, 0.1875), seed: int | None = None) -> dict:
     """Post-stop diagnostic (report-only): the P_2 decision on one calibration day as T shrinks; the maximum number
     of qualifying bins in a 7-bin window, near-miss bins (v_u < 40 mph, 19 <= v_d - v_u < 20 mph) and the RMS change
     of the Pioneer Tr 5-min speed against the previous step."""
@@ -259,31 +393,61 @@ def step_probe(day: str, steps=(5.0, 2.5, 1.25, 0.625), seed: int | None = None)
 
 
 # ---------------------------------------------------------------- profiles (§4.5)
+def a3_warm_start(p0: dict, thr: dict) -> dict | None:
+    """§A3 (e): None if no A3-feasible completion exists (some v_f below thr x e^(1/a_max)); otherwise p0 with each
+    violating a_g raised to its smallest A3-feasible value."""
+    p0 = dict(p0)
+    a_hi = M.BOUNDS["a"][1]
+    vf_of = {0: "vf1", 1: "vf2", 2: "vf3", 3: "vf3"}
+    a_of = {0: "a1", 1: "a2", 2: "a3", 3: "a4"}
+    for g, t in thr.items():
+        vf = p0[vf_of[g]]
+        if vf * math.exp(-1.0 / a_hi) < t:
+            return None
+        if vf * math.exp(-1.0 / p0[a_of[g]]) < t:
+            p0[a_of[g]] = 1.0 / math.log(vf / t) * (1 + 1e-9)
+    return p0
+
+
 def profile_job(pi: int, j: int) -> dict:
+    """§4.5 with §A3 (e): points with no A3-feasible completion are not run; the warm start raises each violating
+    a_g to its smallest A3-feasible value. Seeds 7,191,026 + 9p + j (§A8)."""
     import cma
     data = C.load_data()
     net = M.build_network(C.VARIANT)
     name = PROFILE_PARAMS[pi]
     k = C.NAMES.index(name)
-    x_nom = C.to_norm(plant_params())
     fixed = j / 8.0                                   # 9 equally spaced points across the bound (normalised)
+    seed = 7191026 + 9 * pi + j
+    thr = C.a3_thresholds(net)
+    p0 = dict(plant_params())
+    p0[name] = float(C.to_params(np.where(np.arange(len(C.NAMES)) == k, fixed, C.to_norm(p0))[None, :])[name][0])
+    p0 = a3_warm_start(p0, thr)
+    if p0 is None:
+        res = {"param": name, "point": j, "fixed_norm": fixed, "seed": seed, "status": "infeasible (A3)",
+               "best_J": None, "best_x": None}
+        (RUNS / f"profile_{name}_{j}.json").write_text(json.dumps(res))
+        return res
+    x_nom = np.clip(C.to_norm(p0), 0.0, 1.0)
+    x_nom[k] = fixed
     free = [i for i in range(len(C.NAMES)) if i != k]
-    seed = (7190100 + j) if name == "theta1" else (7190030 + 9 * pi + j)
     es = cma.CMAEvolutionStrategy(x_nom[free], 0.1, C.cma_options(seed, len(free)))   # lambda = 4 + floor(3 ln(n-1))
-    best, n_inadm = (np.inf, None), 0
+    best, n_inadm, n_a3 = (np.inf, None), 0, 0
     while es.countevals < 600:
         Xf = np.array(es.ask())
         X = np.repeat(x_nom[None, :], len(Xf), axis=0)
         X[:, free] = Xf
         X[:, k] = fixed
-        J = C.objective(X, data, net)
-        n_inadm += int((J >= C.J_INADMISSIBLE).sum())
+        J, parts = C.objective(X, data, net, return_parts=True)
+        n_a3 += int(parts["a3_violation"].sum())
+        n_inadm += int(((J >= C.J_INADMISSIBLE) & ~parts["a3_violation"]).sum())
         es.tell(list(Xf), list(J))
         i = int(np.argmin(J))
         if J[i] < best[0]:
             best = (float(J[i]), np.clip(X[i], 0, 1).tolist())
-    res = {"param": name, "point": j, "fixed_norm": fixed, "seed": seed, "popsize": es.popsize,
-           "evals": int(es.countevals), "best_J": best[0], "best_x": best[1], "inadmissible_evals": n_inadm}
+    res = {"param": name, "point": j, "fixed_norm": fixed, "seed": seed, "status": "run", "popsize": es.popsize,
+           "evals": int(es.countevals), "best_J": best[0], "best_x": best[1], "inadmissible_evals": n_inadm,
+           "inadmissible_a3_evals": n_a3}
     (RUNS / f"profile_{name}_{j}.json").write_text(json.dumps(res))
     return res
 
@@ -307,9 +471,9 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.what == "stephalving":
         r = stephalving(a.plant)
-        print(json.dumps({k: r[k] for k in ("plant_seed", "J_5s", "J_2p5s", "rel_change", "episode_day_sets_unchanged",
+        print(json.dumps({k: r[k] for k in ("plant_seed", "T_s", "J_T", "J_T_half", "rel_change", "episode_day_sets_unchanged",
                                             "PASS")}))
-        ledger.append("DP", "metanet-calib", "S", "metanet_stephalving", {"T_s": [5.0, 2.5], "plant": r["plant_seed"]},
+        ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_stephalving", {"T_s": [r["T_s"], r["T_half_s"]], "plant": r["plant_seed"]},
                       "none (deterministic); calibration days", 1, {},
                       {"rel_change": round(r["rel_change"], 4), "same_episode_days": r["episode_day_sets_unchanged"],
                        "PASS": r["PASS"]}, notes=str(RUNS / f"stephalving_{r['plant_seed']}.json"))
@@ -322,7 +486,7 @@ def main(argv=None) -> int:
                                                       "--c2-index", str(i)]) for i in range(len(GRID))]
         rep = _batch(jobs, f"grid_{seed}", a.gate_ok)
         print(json.dumps({"jobs": rep.n_jobs, "failed": rep.n_failed_proc, "wall_s": rep.wall_s}))
-        ledger.append("DP", "metanet-calib", "S", "metanet_capacity_grid", {"plant": seed, "grid": "0.80:0.01:1.20 x2"},
+        ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_capacity_grid", {"plant": seed, "grid": "0.80:0.01:1.20 x2", "T_s": C.T_RUN},
                       "none (deterministic); calibration days", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / f"grid_{seed}_c2_*.json"))
     elif a.what == "profile":
@@ -335,8 +499,8 @@ def main(argv=None) -> int:
                                                "--point", str(j)]) for p in range(len(PROFILE_PARAMS)) for j in range(9)]
         rep = _batch(jobs, "profiles", a.gate_ok)
         print(json.dumps({"jobs": rep.n_jobs, "failed": rep.n_failed_proc, "wall_s": rep.wall_s}))
-        ledger.append("DP", "metanet-calib", "S", "metanet_profiles", {"params": PROFILE_PARAMS, "points": 9, "evals": 600},
-                      "7190030-7190092, 7190100-7190108 (optimizer)", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
+        ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_profiles", {"params": PROFILE_PARAMS, "points": 9, "evals": 600, "T_s": C.T_RUN},
+                      "7191026-7191097 (optimizer); T = 0.75 s", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / "profile_*.json"))
     return 0
 

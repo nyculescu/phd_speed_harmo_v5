@@ -432,6 +432,7 @@ class SimOut:
     floor_nonjam_share: np.ndarray = None   # (B,) v_min floor activations with rho < rho_cr (counted as clipped)
     floor_jam_share: np.ndarray = None      # (B,) v_min floor activations with rho >= rho_cr (reported only)
     rc_cell: np.ndarray = None              # (B, N, bins) bin mean of the per-step effective rho_cr (v4 §A12)
+    w0_bin: np.ndarray = None               # (B, bins) bin-mean mainstream-origin queue (veh; v4 §A13 item 2)
 
 
 def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
@@ -450,11 +451,13 @@ def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
 
 
 def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0, c2=1.0, f1: dict | None = None,
-             vsl: np.ndarray | None = None, alpha: float = 0.1, T_s: float = T_S, record_cells: bool = True,
+             vsl: np.ndarray | None = None, alpha: float = 0.1, T_s: float | None = None, record_cells: bool = True,
              cap_exit: dict | None = None) -> SimOut:
     """Replay simulation. Batch B = n_param_sets * D: parameter set p and day d sit at index p * D + d.
     params: dict of scalars or arrays of length n_param_sets. f1: {"Delta":..., "eta":...} enables F1 (cells B1 u B2).
     vsl: optional (B or 1, N, bins) displayed speed limit (km/h, NaN = none); None = no speed-limit term (§2.8)."""
+    if T_s is None:                                           # protocol default: v3 5 s, v4 0.75 s (§A2)
+        T_s = T_S_V4 if net.variant.startswith("v4") else T_S
     assert_numerics(net, params, T_s)
     if cap_exit:
         raise NotImplementedError("EXIT-branch exit cap (§1.6) with FIFO blocking: implement only if §1.6 gives EXIT")
@@ -543,6 +546,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     rho_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
     v_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
     rc_rec = np.zeros((B, N, nb)) if record_cells else None
+    w0_rec = np.zeros((B, nb))
     eflow = np.zeros((B, ne, nb))
     xflow = np.zeros((B, nx, nb))
     oflow = np.zeros((B, nb))
@@ -640,6 +644,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
                 v_rec[:, :, b] += v
                 rc_rec[:, :, b] += rc
             eflow[:, :, b] += qo
+            w0_rec[:, b] += w[:, 0]
             xflow[:, :, b] += sx
             oflow[:, b] += q[:, -1]
             # state update
@@ -657,9 +662,10 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
         rc_rec /= spb
     eflow /= spb
     xflow /= spb
+    w0_rec /= spb
     oflow /= spb
     return SimOut(q_st, v_st, rho_rec, v_rec, clip_n / (N * nb * spb), qclip, w, wlong, nonfin, eflow, xflow, oflow,
-                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb), rc_rec)
+                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb), rc_rec, w0_rec)
 
 
 T_S_V4 = 0.75                                  # protocol v4 §A2 (rule applied to the step-(b) table)

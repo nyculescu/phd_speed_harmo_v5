@@ -22,44 +22,15 @@ from vsl_lab.plants import metanet as M
 
 RUNS = C.RUNS
 OUT = C.REPO / "docs" / "lab" / "day_pattern"
-SEED_BOOT = 7190094
+SEED_BOOT = 7191098                       # v4 §A8 (replaces 7,190,094's §4.7 use)
 NEAR = 1.02
 ENS_KEYS = ["tau", "nu", "kappa", "delta_m", "phi"]
-STOP_OUTCOME = ("FAIL (N0: step-halving, §2.5); F1 not triggered (N0 is outside the §6.1 set); route stop before any "
-                "validation run (§0.3, §6.2, §8.6 step 4)")
+RECORD = "metanet_v4_calibration"
 RECORD_NOTES = [
-    "Everything in this record after the step-halving check (capacity grid, c2*, F-hat, identifiability profiles, "
-    "§4.8 diagnostics) is post-stop and report-only: it ran on calibration days after the FAIL was known (a driver "
-    "scheduled before the result) and may not inform any capacity-factor, plant or protocol choice.",
-    "The step-halving FAIL was checked by an adversarial review (4 independent lenses: implementation, simulator time "
-    "step, event rule, protocol reading; 2026-10-06): none refuted it. The step loop scales every term by T, the "
-    "event rule is unchanged, and the observation operator does not cause the flip (the decisions are the same with "
-    "c_s = 1).",
-    "The 5-s plant is not converged in time step inside the B2 queue: finer steps (2.5, 1.25, 0.625 s) agree with "
-    "each other and keep the 20230517 P_2 episode, while 5 s drops it (step_probe). The FAIL is a numerical defect of "
-    "the T = 5 s plant, not a threshold artefact around a converged answer.",
-    "Protocol inconsistency disclosed: §5.5 ('reported, not gated') and Appendix A round-1 row 16 still list "
-    "step-halving as reported (a v1 remnant); §2.5, the §5.3 N0 row, §8.6 step 4 and Appendix C round-3 issue 2 make "
-    "it gated, and the specific, amended text governs.",
-    "Fix after results (logged, both outcomes): the model-side mask of §5.1 used np.isfinite (it also masked real "
-    "+inf bins, K = 0); it now masks NaN only, as written. The step-halving check was re-run with the fix; both "
-    "outcomes are in stephalving_7190016_mask_isfinite.json and stephalving_7190016.json.",
-    "Provenance: the CMA-ES batch was launched at 06:08:58 from commit 663dd62 (the working tree held only untracked "
-    "files the job does not import); its ledger row carries the commit at append time (9f0e477+dirty), because "
-    "metanet.py gained diagnostic counters during the run (aaa8b21). J(5 s) in the step-halving run equals the CMA-ES "
-    "best J bit for bit, so those counters left the dynamics unchanged.",
-    "The capacity-grid batch report counts its 41 jobs as failed: the grid subcommand printed a path instead of a "
-    "JSON line. All 41 jobs exited with code 0 and wrote their files; the subcommand now prints a JSON line.",
-    "The nominal restart 7190016 is alone in its basin (the other 7 restarts end at J ~ 0.1697). Its tau = 12.0 s is "
-    "the closest of all restarts to the 2T = 10 s bound (T/tau = 0.42 at 5 s); the fit may partly exploit the 5-s "
-    "scheme. Choosing another restart now would be post hoc.",
-    "Post-stop lesson (report-only; the explanation is a hypothesis, not tested): the event stations that close the "
-    "bottleneck pairs sit inside the model's bottleneck cells: Pioneer Tr (S1140, P_1's downstream station) in B1's "
-    "last cell (30) and Old Shakopee Rd (S1141, P_2's downstream station) in B2's last cell (32). In the capacity grid "
-    "at c2 = 0.80, B2 is model-active on all 22 days and relocation branch (b) (an episode at Old Shakopee Rd -> "
-    "T.H.101) fires on 869 of 902 (c1, day) points: S1141 reads the bottleneck cell's queue speeds. At c1 = c2 = 1, "
-    "branch (a) fires on 6 of 22 days at cell 33 (the E15 merge cell). The same placement may contribute to the "
-    "model's B2 activity on only 2 of the 9 real-B2 calibration days.",
+    "Protocol v4 (docs/plans/day_pattern_metanet_protocol_v4.md) = v3 + amendments §A1-§A14; disclosures §A11: "
+    "v4 reopens the METANET route stopped by v3 (a disclosed deviation, D4.9 V6); plant selected after 2 attempts.",
+    "The §A1 B-set rule eases relocation (b), rule (iv) and F-hat estimability, and shrinks F1's domain (§A11 item 2).",
+    "Calibration days are used a second time; every calibration-day diagnostic here is in-sample (§A11 item 3).",
 ]
 
 
@@ -146,7 +117,17 @@ def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, rea
     nxt = G[0] if cstar is None else (round(cstar + 0.01, 2) if cstar < 1.20 - 1e-9 else None)
     build = [{"day": r["day"], "c1": r["c1"], "cells_1based": r["reloc_cells"], "pair": r["reloc_pair"]}
              for r in rows if nxt is not None and r["c2"] == nxt and r["reloc"]]
+    r5 = [r for r in rows if abs(r["c2"] - 1.0) < 1e-9 and r.get("b1_discharge_vph") is not None]
+    a13_5 = {}
+    if r5:                                                    # §A13 item 5: median model B1 discharge vs c1 at c2 = 1
+        med = {g: float(np.median([r["b1_discharge_vph"] for r in r5 if abs(r["c1"] - g) < 1e-9]))
+               for g in G if any(abs(r["c1"] - g) < 1e-9 for r in r5)}
+        base = med.get(1.0)
+        a13_5 = {"median_discharge_by_c1": {f"{g:.2f}": v for g, v in med.items()},
+                 "R_per_0.05": {f"{g:.2f}": (med[round(g + 0.05, 2)] - med[g]) / (0.05 * base)
+                                for g in med if round(g + 0.05, 2) in med and base}}
     out = {"plant_seed": seed, "c2_star": cstar, "relocation_rows_by_c2": flags, "build_check_c2": nxt,
+           "a13_item5": a13_5,
            "build_check_rows": build[:50], "build_check_days": sorted({b["day"] for b in build})}
     if cstar is None:
         out.update({"estimable": False, "rules_failed": ["iv"], "note": "c2* below the grid minimum 0.80"})
@@ -203,7 +184,9 @@ def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, rea
                 low, fb = hat[k], True
             comp[k] = {"type": "censored", "c_low": low, "other_held_at": other, "fallback_argmin": fb}
         per_day[d] = {"reproducible": True, "c1_hat": hat["B1"], "c2_hat": hat["B2"], "L": best["L"],
-                      "n_consistent": len(cset), "components": comp}
+                      "n_consistent": len(cset), "components": comp,
+                      "a13_item7_backed_share": {k: best.get("backed_share_" + k) for k in ("B1", "B2")
+                                                 if comp[k]["type"] == "exact"}}
     act_days = [d for d in days if real_active[d]["B1"] or real_active[d]["B2"]]
     n_nonrep_act = sum(1 for x in nonrep if x["real_active"])
     F_hat, tob, comps = {}, {}, {}
@@ -268,9 +251,15 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
             f = RUNS / f"profile_{pn}_{j}.json"
             pts.append(json.loads(f.read_text()) if f.exists() else None)
         Js = [p["best_J"] if p else None for p in pts]
+        infeas = [j for j, p in enumerate(pts) if p and p.get("status") == "infeasible (A3)"]
         ok = [J is not None and J <= NEAR * Jb for J in Js]
-        flat = sum(ok[i] and ok[i + 1] for i in range(8)) / 8.0     # share of bound width (inter-point intervals)
-        prof[pn] = {"J": Js, "flat_share": flat, "min_J": min(J for J in Js if J is not None) if any(Js) else None,
+        pairs = [i for i in range(8) if i not in infeas and i + 1 not in infeas]     # A3-feasible intervals (§A3 (e))
+        flat_all = sum(ok[i] and ok[i + 1] for i in range(8)) / 8.0
+        flat_feas = sum(ok[i] and ok[i + 1] for i in pairs) / len(pairs) if pairs else None
+        Jv = [J for J in Js if J is not None]
+        prof[pn] = {"J": Js, "infeasible_points": infeas, "flat_share_all": flat_all, "flat_share_feasible": flat_feas,
+                    "flat_share": flat_feas if flat_feas is not None else flat_all,
+                    "min_J": min(Jv) if Jv else None,
                     "below_J_best": [j for j, J in enumerate(Js) if J is not None and J < Jb]}
     out["profiles"] = prof
     flags = {}
@@ -309,7 +298,7 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
             f = RUNS / f"profile_{pn}_{j}.json"
             if f.exists():
                 p = json.loads(f.read_text())
-                if p["best_J"] <= NEAR * Jb:
+                if p.get("best_J") is not None and p["best_J"] <= NEAR * Jb:
                     pc.append(caps(pdict(p["best_x"])))
     out["capacity_range_profiles"] = {k: [min(c[k] for c in pc), max(c[k] for c in pc)] for k in pc[0]} if pc else None
     if assess:
@@ -340,7 +329,7 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
     ok = np.isfinite(pr[:, :2])
     v0 = (np.where(ok, pr[:, :2], 0) * 0.5).sum(1) / (ok * 0.5).sum(1)
     o = M.simulate(net, {k: np.array([v]) for k, v in nom.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
-                   record_cells=False)
+                   record_cells=True)
     out = {"J": float(J[0]),
            "J_terms_mean": {"NRMSE_q": float(np.nanmean(pr[:, 0])), "NRMSE_v": float(np.nanmean(pr[:, 1])),
                             "NRMSE_v_congestion": float(np.nanmean(pr[:, 2]))},
@@ -350,6 +339,11 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
                     "floor_nonjam_max": float(o.floor_nonjam_share.max()),
                     "floor_jam_max": float(o.floor_jam_share.max()), "floor_jam_median": float(np.median(o.floor_jam_share))},
            "theta1": nom["theta1"]}
+    out["a13_item1"] = a13_item1(o, net, cs, days)
+    cong0 = o.rho_cell[:, 0, :] > o.rc_cell[:, 0, :]
+    q0 = o.w0_bin > 1e-6
+    out["a13_item2_origin_misfit_min"] = {"rho1_le_rcr": int((q0 & ~cong0).sum()) * 5,
+                                          "rho1_gt_rcr": int((q0 & cong0).sum()) * 5}
     origins = ["mainstream"] + [e["id"] for e in net.entrances]
     out["origin_misfit"] = {n: {"days_clipped": int((o.queue_clip_veh[:, i] > 1).sum()),
                                 "clip_veh_median": float(np.median(o.queue_clip_veh[:, i])),
@@ -411,6 +405,32 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
     return out
 
 
+def a13_item1_core(v_mph: np.ndarray, cong: np.ndarray) -> tuple:
+    """(valid bins, bins with speed < 40 mph and no congested cell in the station's stretch). Pure (test 21 (iv))."""
+    ok = np.isfinite(v_mph)
+    return int(ok.sum()), int((ok & (np.nan_to_num(v_mph, nan=99.0) < 40.0) & ~cong).sum())
+
+
+def a13_item1(o, net: M.Net, cs: dict, days: list) -> dict:
+    """§A13 item 1 (report-only): per event station, the share of its valid bins with event-scale model speed < 40 mph
+    while every cell from its cell to the next downstream event station's cell is not congested (rho <= rho_cr bar)."""
+    ev = [s for s in net.stations if s["id"] in Q.I.EVENT_STATIONS]
+    ev.sort(key=lambda s: s["km"])
+    out = {}
+    for j, st in enumerate(ev):
+        hi = ev[j + 1]["cell"] if j + 1 < len(ev) else net.N - 1
+        n_valid = n_hit = 0
+        for i, d in enumerate(days):
+            sp, _ = Q.model_speeds(d, o.v_st[i], net, cs)
+            v = sp[st["id"]]
+            cong = (o.rho_cell[i, st["cell"]:hi + 1, Q.EV0:Q.EV0 + Q.NEV] > o.rc_cell[i, st["cell"]:hi + 1, Q.EV0:Q.EV0 + Q.NEV]).any(axis=0)
+            nv, nh = a13_item1_core(v, cong)
+            n_valid += nv
+            n_hit += nh
+        out[st["id"]] = n_hit / n_valid if n_valid else None
+    return out
+
+
 def theta1_merge_profile(data, net, cs, days, real_ev) -> list:
     """§4.5: the model's B2/B1 merge-section ratio along theta1's profile (calibration days)."""
     pts = [json.loads((RUNS / f"profile_theta1_{j}.json").read_text()) for j in range(9)
@@ -444,10 +464,10 @@ def _f(x, nd=3):
 
 def report_md(res: dict) -> str:
     cf, dg, idn, sh = res["capacity_factors"]["nominal"], res["diagnostics"], res["identifiability"], res["stephalving"]
-    L = ["# U.S.169 SB METANET plant: calibration freeze", "",
-         f"Protocol: `{res['protocol']}` (v3, binding). Stage: {res['stage']}{'; route stop record' if 'stop' in res else ''}. Variant `{res['variant']}` (§1.7 step (b), "
-         f"G4). pycma {res['pycma']}. Calibration days only: {res['days']['n']} usable. Raw runs: "
-         f"`{RUNS}`; full numbers in `metanet_calibration.json`.", "",
+    L = ["# U.S.169 SB METANET plant v4: calibration freeze", "",
+         f"Protocol: `{res['protocol']}` (v4, binding). Stage: {res['stage']}. Variant `{res['variant']}` (§A1, "
+         f"step (b), 39 cells), T = {res['T_s']} s. pycma {res['pycma']}. Calibration days only: {res['days']['n']} usable. "
+         f"Raw runs: `{RUNS}`; full numbers in `{RECORD}.json`.", "",
          f"**Route after the freeze: {res['route']}.**", "",
          "## Fit (§4.3–4.4)", "",
          f"- Nominal plant: restart seed {res['nominal_seed']}, J = {_f(res['nominal_J'], 4)} "
@@ -461,12 +481,19 @@ def report_md(res: dict) -> str:
                  f"{_f(r['rel_improvement_last20pct'], 4)} |")
     L += ["", "Frozen parameters: " + ", ".join(f"{k} = {v:.4g}" for k, v in res["frozen_params"].items()) + ".", "",
           "## Step-halving (§2.5; gated as part of N0)", "",
-          f"J(5 s) = {_f(sh['J_5s'], 4)}, J(2.5 s) = {_f(sh['J_2p5s'], 4)}, relative change {_f(sh['rel_change'], 4)} "
-          f"(limit 0.05); P_1/P_2 episode-day sets unchanged: {sh['episode_day_sets_unchanged']}; largest per-station RMS "
-          f"speed change {_f(sh['rms_speed_change_kmh_max_station'], 2)} km/h. **{'PASS' if sh['PASS'] else 'FAIL'}**."
-          + "".join(f" {k} days only at 5 s: {sorted(set(sh[k + '_days_5s']) - set(sh[k + '_days_2p5s']))}; only at "
-                    f"2.5 s: {sorted(set(sh[k + '_days_2p5s']) - set(sh[k + '_days_5s']))}."
-                    for k in ("P1", "P2") if sh[k + "_days_5s"] != sh[k + "_days_2p5s"]), "",
+          f"J(T = {sh['T_s']} s) = {_f(sh['J_T'], 4)}, J(T/2) = {_f(sh['J_T_half'], 4)}, relative change "
+          f"{_f(sh['rel_change'], 4)} (limit 0.05); P_1/P_2 episode-day sets unchanged: {sh['episode_day_sets_unchanged']}; "
+          f"largest per-station RMS speed change {_f(sh['rms_speed_change_kmh_max_station'], 2)} km/h. "
+          f"**{'PASS' if sh['PASS'] else 'FAIL'}**. Differing days: {sh.get('differing_days') or 'none'}.", "",
+          "## P11-k queue backing at the freeze (§A12; gated)", "",
+          f"Tolerance {res['p11']['tolerance']} unbacked days over {res['p11']['n_days']} days. " + "; ".join(
+              f"{k}: unbacked {res['p11'][k]['n_unbacked']}, pooled backed share {_f(res['p11'][k]['pooled_backed_share'])}"
+              for k in ("B1", "B2")) + f". **{'PASS' if res['p11']['PASS'] else 'FAIL'}**.", "",
+          "## Speed at capacity (§A3)", "",
+          "- At the nominal: " + ", ".join(f"{g} v_c − thr = {v['vc_minus_thr']:.2f} km/h{' (A3-active)' if v['a3_active'] else ''}"
+                                           for g, v in res["a3_at_nominal"].items()) + ".",
+          "- Per restart: " + "; ".join(f"{r['seed']}: A3-inadmissible {r.get('inadmissible_a3_evals')}, first feasible eval "
+                                        f"{r.get('first_a3_feasible_eval')}" for r in res["convergence"]["restarts"]) + ".", "",
           "## Identifiability (§4.5; reported, not gated)", "",
           f"- Near-best restarts (J ≤ 1.02 J_best): {idn['n_near_best']} ({idn['near_best_seeds']}).",
           f"- Non-identifiable: " + ("; ".join(f"{k} ({', '.join(v)})" for k, v in idn["non_identifiable"].items())
@@ -526,18 +553,9 @@ def report_md(res: dict) -> str:
                  f"{c.get('stephalving_PASS')}.")
     if not res["ensemble_candidates"]["candidates"]:
         L.append("- none (no other restart within 1.02 J_best).")
-    if "stop" in res:
-        L += ["", "## Route stop", "", f"**{res['stop']['outcome']}.** Author decision: {res['stop']['author_decision']}.", ""]
-        pb = res["stop"].get("step_probe")
-        if pb:
-            L.append(f"Step probe on {pb['day']} (real P_2 episodes {pb['real_P2_episodes']}):")
-            for T, v in pb["steps"].items():
-                L.append(f"- T = {T} s: P_2 episodes {v['P2_episodes']}, max qualifying bins in 7 = "
-                         f"{v['max_qualifying_in_7']}, near misses {v['near_miss_bins']}"
-                         + (f", RMS / max change of the Pioneer Tr speed vs the previous step "
-                            f"{v['rms_change_S1140_mph_vs_previous']:.2f} / {v['max_abs_change_S1140_mph_vs_previous']:.1f} mph"
-                            if "rms_change_S1140_mph_vs_previous" in v else "") + ".")
-        L += [""] + [f"- {n}" for n in res["stop"]["notes"]]
+    if res["route"].startswith("STOP"):
+        L += ["", "## Route stop", "", f"**{res['route']}.** Reasons: " + "; ".join(res["stop_reasons"]) + ".", ""]
+    L += ["", "## Notes (protocol v4)", ""] + [f"- {n}" for n in RECORD_NOTES]
     L += ["", "## Disclosures", "",
           "- The boundary station (Minnetonka Blvd) has no c_s (not in a §3.2.4 group); the observation operator uses "
           "c = 1 there. Dropped stations use their computed c_s (§3.2.4).",
@@ -580,45 +598,69 @@ def finalize() -> dict:
         c["stephalving_PASS"] = json.loads(f.read_text())["PASS"] if f.exists() else None
     diag = diagnostics(data, net, cs, days, real_ev, demand)
     diag["theta1_merge_profile"] = theta1_merge_profile(data, net, cs, days, real_ev)
+    p11 = p11_at_freeze(data, net, cs, days)
+    nom = next(r for r in s["restarts"] if r["seed"] == nom_seed)
+    spread = cap["nominal"].get("spread_used")
+    reasons = []
+    if s.get("no_admissible_restart"):
+        reasons.append("no admissible restart (§A3 (d))")
+    if not sh["PASS"]:
+        reasons.append("N0 FAIL: step-halving (§A2)")
+    if not p11["PASS"]:
+        reasons.append("P11-k FAIL at the freeze (§A12)")
+    if spread not in ("KM", "Tobit"):
+        reasons.append(f"no usable spread at the freeze ({spread}; rules failed {cap['nominal'].get('rules_failed')}; "
+                       "§A6 (7)(b))")
     res = {
-        "protocol": "docs/plans/day_pattern_metanet_protocol_v3.md", "stage": "freeze (before any validation run)",
+        "protocol": "docs/plans/day_pattern_metanet_protocol_v4.md", "protocol_version": "v4", "T_s": C.T_RUN,
+        "T_half_s": C.T_RUN / 2, "stage": "freeze (before any validation run)",
         "variant": C.VARIANT, "pycma": cma.__version__,
-        "days": {"calibration_usable": days, "n": len(days), "facts": str(C.FACTS.relative_to(C.REPO))},
-        "network": {"N": net.N, "km_from": net.km_from.round(3).tolist(), "km_to": net.km_to.round(3).tolist(),
+        "days": {"calibration_usable": days, "n": len(days), "facts_v3": str(C.FACTS.relative_to(C.REPO)),
+                 "facts_v4": str(C.FACTS_V4.relative_to(C.REPO))},
+        "network": {"N": net.N, "km_from": net.km_from.round(4).tolist(), "km_to": net.km_to.round(4).tolist(),
                     "lanes": net.lam.tolist(), "group": [int(g) + 1 for g in net.group],
                     "b1_cells_1based": [i + 1 for i in net.b1_cells], "b2_cells_1based": [i + 1 for i in net.b2_cells],
                     "head1_1based": net.head1 + 1, "phi_cell_1based": net.phi_cell + 1,
-                    "entrances": {e["id"]: e["cell"] + 1 for e in net.entrances},
+                    "entrances": {e["id"]: [e["cell"] + 1, e["merging"]] for e in net.entrances},
                     "exits": {x["id"]: x["cell"] + 1 for x in net.exits}},
-        "bounds": {n: list(b) for n, b in lo_hi.items()},
+        "bounds": {n: list(b) for n, b in lo_hi.items()}, "a3_thresholds_kmh": {f"G{g + 1}": t for g, t in
+                                                                               C.a3_thresholds(net, cs).items()},
         "frozen_params": Q.plant_params(), "nominal_seed": nom_seed, "nominal_J": s["nominal_J"],
+        "a3_at_nominal": nom.get("a3_at_best", {}),
         "convergence": {"budget": s["budget"], "continued_to_8000": s["continued_to_8000"],
-                        "restarts": [{k: r[k] for k in ("seed", "evals", "best_J", "final_sigma", "cov_condition",
-                                                         "inadmissible_evals", "rel_improvement_last20pct")}
-                                     for r in s["restarts"]]},
-        "stephalving": {k: v for k, v in sh.items() if k != "rms_speed_change_kmh_by_station"}
+                        "restarts": [{k: r.get(k) for k in ("seed", "evals", "best_J", "admissible", "final_sigma",
+                                                             "cov_condition", "inadmissible_evals",
+                                                             "inadmissible_a3_evals", "first_a3_feasible_eval",
+                                                             "rel_improvement_last20pct")} for r in s["restarts"]]},
+        "stephalving": {k: v for k, v in sh.items() if k not in ("rms_speed_change_kmh_by_station",
+                                                                 "margins_report_only")}
         | {"rms_speed_change_kmh_max_station": max(sh["rms_speed_change_kmh_by_station"].values())},
-        "identifiability": ident,
+        "p11": p11, "identifiability": ident,
         "ensemble_candidates": {"rule": "J <= 1.02 J_best, farthest first in normalised (tau, nu, kappa, delta_m, phi);"
-                                        " admissibility filter (N0, deterministic rows, stochastic rows) runs at §8.6 "
+                                        " admissibility filter (N0, P11-k, deterministic and stochastic rows) at §8.6 "
                                         "step 5 on validation days as a filter only", "candidates": cand},
         "capacity_factors": cap, "diagnostics": diag,
-        "route": "STOP (N0 FAIL: step-halving)" if not sh["PASS"] else "continue to the plant gate (§5)",
+        "route": ("STOP (" + "; ".join(reasons) + ")") if reasons else "continue to the plant gate (§5)",
+        "stop_reasons": reasons,
     }
-    if not sh["PASS"]:
-        pr = RUNS / "step_probe_20230517.json"
-        first = RUNS / f"stephalving_{nom_seed}_mask_isfinite.json"
-        res["stop"] = {"outcome": STOP_OUTCOME, "author_decision": "accept the route stop as pre-registered "
-                       "(option (a), 2026-10-06)", "notes": RECORD_NOTES,
-                       "step_probe": json.loads(pr.read_text()) if pr.exists() else None,
-                       "stephalving_first_outcome": {k: v for k, v in json.loads(first.read_text()).items()
-                                                     if k != "rms_speed_change_kmh_by_station"} if first.exists() else None}
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "metanet_calibration.json").write_text(json.dumps(res, indent=1, default=float))
-    (OUT / "metanet_calibration.md").write_text(report_md(res))
-    return {"nominal_J": s["nominal_J"], "stephalving_PASS": sh["PASS"], "c2_star": cap["nominal"]["c2_star"],
-            "estimable": cap["nominal"]["estimable"], "rules_failed": cap["nominal"]["rules_failed"],
-            "spread": cap["nominal"].get("spread_used"), "n_candidates": len(cand)}
+    (OUT / f"{RECORD}.json").write_text(json.dumps(res, indent=1, default=float))
+    (OUT / f"{RECORD}.md").write_text(report_md(res))
+    return {"nominal_J": s["nominal_J"], "stephalving_PASS": sh["PASS"], "p11_PASS": p11["PASS"],
+            "c2_star": cap["nominal"]["c2_star"], "estimable": cap["nominal"]["estimable"],
+            "rules_failed": cap["nominal"]["rules_failed"], "spread": spread, "route": res["route"],
+            "n_candidates": len(cand)}
+
+
+def p11_at_freeze(data: dict, net: M.Net, cs: dict, days: list, seed: int | None = None) -> dict:
+    """§A12 on usable calibration days at c1 = c2 = 1 for a plant (default: nominal)."""
+    p = Q.plant_params(seed)
+    o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+                   record_cells=True)
+    per = {d: Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs) for i, d in enumerate(days)}
+    v = Q.p11_verdict(per)
+    v["a13_item4_P2"] = {d: per[d]["B2"].get("a13_item4") for d in days if per[d]["B2"]["episodes"]}
+    return v
 
 
 if __name__ == "__main__":
