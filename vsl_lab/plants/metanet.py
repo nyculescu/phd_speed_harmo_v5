@@ -218,6 +218,45 @@ def cell_table(lanes, end_km, station_kms) -> tuple[list, list]:
     return cells, log
 
 
+def cell_table_v4(lanes, end_km) -> tuple[list, list]:
+    """Protocol v4 §A1 rule: break points = lambda-change points, ramp gores (X6+X7 lumped) and the stretch ends;
+    stations are not break points. Pieces < L_merge are merged shortest first (ties: the upstream one) into the
+    same-lambda neighbour (the shorter if both), else into the larger-lambda neighbour; n = floor(L/500 m + 0.5)."""
+    start = lanes[0][0]
+    lam_pts = {x for x0, x1, _ in lanes for x in (x0, x1)}
+    gores = {km for _, km, *_ in ENTRANCES} | {km for _, km, *_ in EXITS}
+    pts = sorted({round(x, 6) for x in lam_pts | gores | {start, end_km} if start - 1e-9 <= x <= end_km + 1e-9})
+    pieces = [[pts[i], pts[i + 1], _lam_at(lanes, pts[i], pts[i + 1])] for i in range(len(pts) - 1)]
+    log = []
+    while True:
+        short = [i for i, p in enumerate(pieces) if p[1] - p[0] < L_MIN_KM - 1e-9]
+        if not short:
+            break
+        i = min(short, key=lambda j: (round(pieces[j][1] - pieces[j][0], 9), j))
+        p = pieces[i]
+        nb = [j for j in (i - 1, i + 1) if 0 <= j < len(pieces)]
+        same = [j for j in nb if pieces[j][2] == p[2]]
+        if same:
+            j = min(same, key=lambda j: (pieces[j][1] - pieces[j][0], j))
+            lam = p[2]
+        else:
+            j = max(nb, key=lambda j: (pieces[j][2], -(pieces[j][1] - pieces[j][0])))
+            lam = pieces[j][2]
+        shared = p[0] if j < i else p[1]                    # the break point the merge removes
+        inside = [e for e, km, *_ in ENTRANCES + EXITS if abs(km - shared) < 1e-9]
+        log.append({"removed_break_km": shared,"piece": [p[0], p[1]], "length_m": round(1000 * (p[1] - p[0])), "lam": p[2],
+                    "into": [pieces[j][0], pieces[j][1]], "into_lam": pieces[j][2], "same_lam": bool(same),
+                    "ramps_now_inside": inside})
+        lo, hi = min(i, j), max(i, j)
+        pieces[lo:hi + 1] = [[min(p[0], pieces[j][0]), max(p[1], pieces[j][1]), lam]]
+    cells = []
+    for a, b, lam in pieces:
+        n = max(1, int(np.floor((b - a) / CELL_TARGET_KM + 0.5)))
+        for k in range(n):
+            cells.append((a + (b - a) * k / n, a + (b - a) * (k + 1) / n, lam))
+    return cells, log
+
+
 def _cell_of(km_from, km_to, x, on_boundary="downstream"):
     """§1.5: an element strictly inside a cell belongs to it; exactly on a boundary: entrances feed the downstream
     cell, exits leave and stations read the upstream cell (the first cell for the stretch start)."""
@@ -232,9 +271,67 @@ def _cell_of(km_from, km_to, x, on_boundary="downstream"):
     raise ValueError(x)
 
 
+V4_VARIANTS = {"v4": LANES_MODEL, "v4_weave": LANES_WEAVE, "v4_step_a": LANES_STEP_A, "v4_step_c": LANES_STEP_C}
+
+
+def build_network_v4(variant: str = "v4", verify: bool = True, rnodes: list | None = None) -> Net:
+    """Protocol v4 §A1/§A4. 'v4' = step (b) (G4 from the E15 cell; E15 lane-adding, V9); 'v4_weave', 'v4_step_a',
+    'v4_step_c' are the regenerated variants. Build checks (1)-(2) of §A1 raise on failure."""
+    lanes = V4_VARIANTS[variant]
+    end_km = 7.518 if variant == "v4_step_c" else 9.390
+    if verify:
+        rn = rnodes if rnodes is not None else load_rnodes()
+        bad = verify_elements(rn)
+        if bad:
+            raise RuntimeError("element table differs from the configuration: " + "; ".join(bad[:10]))
+    cells, log = cell_table_v4(lanes, end_km)
+    kf = np.array([c[0] for c in cells])
+    kt = np.array([c[1] for c in cells])
+    lam = np.array([c[2] for c in cells], dtype=float)
+    mid = 0.5 * (kf + kt)
+    group = np.where(mid < GROUP_EDGES[0], 0, np.where(mid < GROUP_EDGES[1], 1, 2))
+    adds = {"v4": {"E9", "E10", "E11", "E15"}, "v4_weave": {"E9", "E10", "E11", "E14"},
+            "v4_step_a": {"E9", "E10", "E11", "E15"}, "v4_step_c": {"E9", "E10", "E11"}}[variant]
+    entr = []
+    for eid, km, label, kind, merging, dets in ENTRANCES:
+        if km >= end_km - 1e-9:
+            continue
+        entr.append({"id": eid, "km": km, "label": label, "kind": kind, "merging": merging and eid not in adds,
+                     "dets": dets, "cell": _cell_of(kf, kt, km, "downstream")})
+    if variant == "v4":                                       # G4 = the cell fed by E15 to the stretch end
+        e15 = next(e["cell"] for e in entr if e["id"] == "E15")
+        group = np.where(np.arange(len(kf)) >= e15, 3, group)
+    exits = [{"id": x, "km": km, "label": lab, "det": det, "cell": _cell_of(kf, kt, km, "upstream")}
+             for x, km, lab, det in EXITS if km <= end_km]
+    stations = []
+    for sid, km, label, dets in STATIONS:
+        if km > end_km + 1e-9:
+            continue
+        c = _cell_of(kf, kt, km, "upstream") if km > kf[0] + 1e-9 else 0
+        stations.append({"id": sid, "km": km, "label": label, "dets": dets, "cell": c,
+                         "corr_entr": [e["id"] for e in entr if e["cell"] == c and e["km"] > km + 1e-9],
+                         "corr_exit": [x["id"] for x in exits if x["cell"] == c and x["km"] > km + 1e-9]})
+    phi_cell = int(np.flatnonzero(np.isclose(kt, PHI_DROP_KM))[0]) if np.any(np.isclose(kt, PHI_DROP_KM)) else -1
+    ecell = {e["id"]: e["cell"] for e in entr}
+    xcell = {x["id"]: x["cell"] for x in exits}
+    b1 = list(range(ecell["E13"], xcell["X12"] + 1))          # §A1: merge cell .. cell of the last exit before the station
+    b2 = list(range(ecell["E14"], xcell["X13"] + 1))
+    net = Net(variant, kf, kt, kt - kf, lam, group, log, entr, exits, stations, phi_cell, b1, b2, head1=b1[0])
+    scell = {s["id"]: s["cell"] for s in stations}
+    scaled = set(b1) | set(b2)
+    if scaled & set(scell.values()):                          # build check (1)
+        raise RuntimeError(f"build check (1): a station reads a scaled cell: "
+                           f"{[s for s, c in scell.items() if c in scaled]}")
+    if not (scell["S1773"] < b1[0] < scell["S1140"] and scell["S1140"] < b2[0] < scell["S1141"]):   # check (2)
+        raise RuntimeError("build check (2): a head is not strictly between its pair's station cells")
+    return net
+
+
 def build_network(variant: str = "model", verify: bool = True, rnodes: list | None = None) -> Net:
     """variant: 'model' (merge reading), 'weave' (configuration reading, sensitivity), 'step_a', 'step_c', and
-    'step_b' (= model geometry with G4 on cells 33-36)."""
+    'step_b' (= model geometry with G4 on cells 33-36); protocol v3. 'v4*' variants follow protocol v4 §A1."""
+    if variant.startswith("v4"):
+        return build_network_v4(variant, verify, rnodes)
     lanes = {"model": LANES_MODEL, "step_b": LANES_MODEL, "weave": LANES_WEAVE, "step_a": LANES_STEP_A,
              "step_c": LANES_STEP_C}[variant]
     end_km = 7.518 if variant == "step_c" else 9.390
@@ -334,6 +431,7 @@ class SimOut:
     v_end: np.ndarray = None        # (B, N)
     floor_nonjam_share: np.ndarray = None   # (B,) v_min floor activations with rho < rho_cr (counted as clipped)
     floor_jam_share: np.ndarray = None      # (B,) v_min floor activations with rho >= rho_cr (reported only)
+    rc_cell: np.ndarray = None              # (B, N, bins) bin mean of the per-step effective rho_cr (v4 §A12)
 
 
 def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
@@ -444,6 +542,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     vden = np.zeros((B, ns, nb))
     rho_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
     v_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
+    rc_rec = np.zeros((B, N, nb)) if record_cells else None
     eflow = np.zeros((B, ne, nb))
     xflow = np.zeros((B, nx, nb))
     oflow = np.zeros((B, nb))
@@ -539,6 +638,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
             if record_cells:
                 rho_rec[:, :, b] += rho
                 v_rec[:, :, b] += v
+                rc_rec[:, :, b] += rc
             eflow[:, :, b] += qo
             xflow[:, :, b] += sx
             oflow[:, b] += q[:, -1]
@@ -554,14 +654,112 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     if record_cells:
         rho_rec /= spb
         v_rec /= spb
+        rc_rec /= spb
     eflow /= spb
     xflow /= spb
     oflow /= spb
     return SimOut(q_st, v_st, rho_rec, v_rec, clip_n / (N * nb * spb), qclip, w, wlong, nonfin, eflow, xflow, oflow,
-                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb))
+                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb), rc_rec)
+
+
+T_S_V4 = 0.75                                  # protocol v4 §A2 (rule applied to the step-(b) table)
+T_LADDER_V4 = (1.25, 1.0, 0.75, 0.625, 0.5)
+NU_MAX, DM_MAX, KAPPA_MIN = 90.0, 4.0, 5.0     # bound maxima/minima used by §A2 (a)-(f)
+VN_EPS = 1e-4                                  # §A10 test 2 (iii) gate, 1/s
+_VN_CACHE: dict = {}
+
+
+def v4_conditions(net: Net, T_s: float) -> dict:
+    """§A2 (a)-(d), (f) against the bound maxima (units: h, km, km/h, veh/h, veh/km/lane)."""
+    T, tau_min = T_s / 3600.0, TAU_MIN_S / 3600.0
+    vcap = V_CAP_FACTOR * VF_MAX
+    Ltab = float(net.L.min())
+    sq = np.zeros(net.N)
+    for e in net.entrances:
+        if e["merging"]:
+            sq[e["cell"]] += Q_O
+    stiff = DM_MAX * T * sq / (net.L * net.lam * KAPPA_MIN)
+    comb = T / tau_min + stiff + vcap * T / net.L
+    return {"a": NU_MAX * T / Ltab ** 2, "b": (vcap + np.sqrt(NU_MAX / tau_min)) * T / Ltab, "c": T / tau_min,
+            "d": float(stiff.max()), "d_cell": int(stiff.argmax()) + 1, "f": float(comb.max()),
+            "f_cell": int(comb.argmax()) + 1, "L_tab_m": 1000 * Ltab}
+
+
+def vn_scan(T_s: float, lengths_km, n_theta: int = 181) -> dict:
+    """§A10 test 2 (iii): frozen-coefficient von Neumann scan of the simulate() cell update, linearised about
+    uniform states (no ramps, delta_m, phi or boundaries). Returns the worst Euler growth (1/s) over stable states."""
+    taus = np.array([10.0, 15.0, 30.0, 60.0])                  # s
+    nus = np.array([5.0, 30.0, 60.0, 90.0]) * 1e6 / 3600.0     # m^2/s
+    kaps = np.array([5.0, 20.0, 40.0, 60.0])                    # veh/km/lane
+    th = np.arange(n_theta + 1) * np.pi / n_theta
+    Ls = np.unique(np.round(np.asarray(lengths_km, float) * 1000.0, 3))     # m
+    TAU, NU, KAP, TH, LL = np.meshgrid(taus, nus, kaps, th, Ls, indexing="ij")
+    em = 1.0 - np.exp(-1j * TH)
+    ep = np.exp(1j * TH) - 1.0
+    worst, n_stable, n_bad, worst_state = 0.0, 0, 0, None
+    for vf in (80.0, 120.0, 150.0):
+        for rc in (15.0, 30.0, 45.0):
+            for a in (1.0, 2.0, 3.5):
+                states = []
+                for r in (0.1, 0.3, 0.6, 1.0, 1.25, 1.5, 2.0, 3.0, 5.0, 8.0, 12.0):
+                    rho = r * rc
+                    if rho > RHO_MAX:
+                        continue
+                    V = vf * np.exp(-(1.0 / a) * r ** a)
+                    Vp = -V * r ** (a - 1.0) / rc
+                    if V >= V_MIN:
+                        states.append((rho, V, Vp, "eq"))
+                    else:
+                        states += [(rho, V_MIN, 0.0, "floor0"), (rho, V_MIN, Vp, "floorVp")]
+                for r in (0.1, 0.3):
+                    V = vf * np.exp(-(1.0 / a) * r ** a)
+                    states.append((r * rc, V_CAP_FACTOR * vf, -V * r ** (a - 1.0) / rc, "cap"))
+                for rho0, v0k, Vpk, kind in states:
+                    v0, Vp = v0k / 3.6, Vpk / 3.6                 # m/s, (m/s)/(veh/km)
+                    a11 = -(v0 / LL) * em
+                    a12 = -(rho0 / LL) * em
+                    a21 = Vp / TAU - NU * ep / (TAU * LL * (rho0 + KAP))
+                    a22 = -1.0 / TAU - (v0 / LL) * em
+                    tr, det = a11 + a22, a11 * a22 - a12 * a21
+                    s = np.sqrt(tr * tr / 4.0 - det)
+                    lam = np.stack([tr / 2.0 + s, tr / 2.0 - s])          # (2, tau, nu, kap, th, L)
+                    re_max = lam.real.max(axis=(0, 4))
+                    mag = np.abs(lam).max(axis=(0, 4))
+                    stable = re_max <= 1e-9 * mag
+                    gr = (np.log(np.abs(1.0 + T_s * lam)) / T_s).max(axis=(0, 4))
+                    n_stable += int(stable.sum())
+                    g = np.where(stable, gr, -np.inf)
+                    if g.max() > worst:
+                        worst = float(g.max())
+                        k = np.unravel_index(int(g.argmax()), g.shape)
+                        worst_state = {"tau": float(taus[k[0]]), "nu": float(nus[k[1]] * 3600 / 1e6),
+                                       "kappa": float(kaps[k[2]]), "L_m": float(Ls[k[3]]), "vf": vf, "rc": rc,
+                                       "a": a, "rho": float(rho0), "kind": kind}
+                    n_bad += int((g > VN_EPS).sum())
+    return {"T_s": T_s, "worst_stable_growth": worst, "n_stable": n_stable, "n_stable_above_eps": n_bad,
+            "worst_state": worst_state, "PASS": bool(worst <= VN_EPS)}
+
+
+def assert_numerics_v4(net: Net, params: dict, T_s: float) -> None:
+    """§A2: (a)-(d), (f) in every call; (e) the von Neumann gate, cached per (T, table)."""
+    c = v4_conditions(net, T_s)
+    bad = [k for k, lim in (("a", 0.25), ("b", 0.5)) if c[k] > lim + 1e-12]
+    bad += ["c"] if c["c"] > 0.1 + 1e-12 else []
+    bad += [k for k in ("d", "f") if c[k] >= 1.0]
+    if bad:
+        raise ValueError(f"protocol v4 §A2: conditions {bad} fail at T = {T_s} s ({c})")
+    key = (T_s, tuple(np.round(np.unique(net.L), 6)))
+    if key not in _VN_CACHE:
+        _VN_CACHE[key] = vn_scan(T_s, net.L)
+    if not _VN_CACHE[key]["PASS"]:
+        raise ValueError(f"protocol v4 §A2 (e): von Neumann gate fails at T = {T_s} s: {_VN_CACHE[key]}")
+    if np.any(np.asarray(params["tau"], dtype=float) < TAU_MIN_S - 1e-9):
+        raise ValueError("tau below its lower bound")
 
 
 def assert_numerics(net: Net, params: dict, T_s: float = T_S) -> None:
+    if net.variant.startswith("v4"):
+        return assert_numerics_v4(net, params, T_s)
     """§2.5, asserted against the bound maxima (not the current iterate): CFL with v_cap = 1.05 x 150 km/h, and
     tau >= 2T over the whole tau range (tau_min = 10 s)."""
     vcap = V_CAP_FACTOR * VF_MAX / 3.6                       # m/s

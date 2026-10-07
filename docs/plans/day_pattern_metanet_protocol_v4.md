@@ -16,7 +16,7 @@ Decisions behind v4 (decision log `day_pattern_decisions_v0.md`):
 - D4.5: lane check (inconclusive).
 - D4.7: R4(d) and R2(c) are bound.
 - D4.8: skip the prize screen; METANET v4 unconditionally next.
-- Pending: V6 (§0.6), the route reopening, to be recorded as a decision.
+- D4.9: author items V1–V9 accepted (2026-10-07), including V6, the route reopening.
 
 ```
  why each amendment exists (v3 lesson → v4 change)
