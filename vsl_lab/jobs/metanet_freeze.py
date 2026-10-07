@@ -26,6 +26,21 @@ SEED_BOOT = 7191098                       # v4 §A8 (replaces 7,190,094's §4.7 
 NEAR = 1.02
 ENS_KEYS = ["tau", "nu", "kappa", "delta_m", "phi"]
 RECORD = "metanet_v4_calibration"
+_S = {"kind": "base", "nom": None}            # which structure is being frozen (base or F1, §6.1)
+
+
+def _names() -> list:
+    from vsl_lab.jobs import metanet_f1
+    return metanet_f1.NAMES_F1 if _S["kind"] == "f1" else C.NAMES
+
+
+def _to_params(X):
+    from vsl_lab.jobs import metanet_f1
+    return metanet_f1.to_params(X) if _S["kind"] == "f1" else _to_params(X)
+
+
+def _record_name() -> str:
+    return RECORD if _S["kind"] == "base" else "metanet_v4_f1_calibration"
 RECORD_NOTES = [
     "Protocol v4 (docs/plans/day_pattern_metanet_protocol_v4.md) = v3 + amendments §A1-§A14; disclosures §A11: "
     "v4 reopens the METANET route stopped by v3 (a disclosed deviation, D4.9 V6); plant selected after 2 attempts.",
@@ -237,7 +252,7 @@ def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, rea
 
 # ---------------------------------------------------------------- §4.5 identifiability
 def identifiability(s: dict, data: dict, net: M.Net) -> dict:
-    names = C.NAMES
+    names = _names()
     Jb = s["nominal_J"]
     near = [r for r in s["restarts"] if r["best_J"] <= NEAR * Jb]
     X = np.array([r["best_x"] for r in near])
@@ -245,7 +260,7 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
     assess = len(near) >= 3
     out["restart_range_norm"] = {n: float(np.ptp(X[:, i])) for i, n in enumerate(names)} if assess else "not assessable"
     prof = {}
-    for pn in Q.PROFILE_PARAMS:
+    for pn in (Q.PROFILE_PARAMS if _S["kind"] == "base" else []):      # F1: no profiles (§6.1)
         pts = []
         for j in range(9):
             f = RUNS / f"profile_{pn}_{j}.json"
@@ -285,10 +300,10 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
         c["B1_head"] = p["theta1"] * c["G3"]
         return c
 
-    nom = Q.plant_params()
+    nom = Q.plant_params(_S['nom'])
     out["capacity_per_lane_nominal"] = caps(nom)
     def pdict(x):
-        return {k: float(np.ravel(v)[0]) for k, v in C.to_params(np.array(x)[None]).items()}
+        return {k: float(np.ravel(v)[0]) for k, v in _to_params(np.array(x)[None]).items()}
 
     cn = [caps(pdict(r["best_x"])) for r in near]
     out["capacity_range_near_best"] = {k: [min(c[k] for c in cn), max(c[k] for c in cn)] for k in cn[0]}
@@ -302,14 +317,14 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
                     pc.append(caps(pdict(p["best_x"])))
     out["capacity_range_profiles"] = {k: [min(c[k] for c in pc), max(c[k] for c in pc)] for k in pc[0]} if pc else None
     if assess:
-        P = C.to_params(X)
+        P = _to_params(X)
         out["vf_rc_corr_near_best"] = {}
         for g in (1, 2, 3, 4):
             vf = P["vf3"] if g == 4 else P[f"vf{g}"]
             r = pearsonr(vf, P[f"rc{g}"]).statistic if np.ptp(vf) > 0 and np.ptp(P[f"rc{g}"]) > 0 else None
             out["vf_rc_corr_near_best"][f"G{g}"] = None if r is None else float(r)
     # per-group median (model - detector) speed 05:00-06:00 at the nominal plant
-    o = M.simulate(net, {k: np.array([v]) for k, v in nom.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+    o = Q.simf(net, {k: np.array([v]) for k, v in nom.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=False)
     grp = np.array([net.group[s["cell"]] for s in net.stations])
     dv = (o.v_st - data["v"])[:, :, 12:24]
@@ -322,15 +337,15 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
 
 # ---------------------------------------------------------------- §4.8 diagnostics
 def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, demand: dict) -> dict:
-    nom = Q.plant_params()
-    x = np.array(Q.plant_record()["best_x"], float)[None, :]      # the stored vector, no round trip
-    J, parts = C.objective(x, data, net, return_parts=True)
+    nom = Q.plant_params(_S['nom'])
+    x = np.array(Q.plant_record(_S['nom'])["best_x"], float)[None, :]      # the stored vector, no round trip
+    J, parts = Q.objective_for(x, data, net, return_parts=True)
     if parts["parts"] is None:
         raise RuntimeError("nominal plant is A3-infeasible: diagnostics undefined")
     pr = parts["parts"][0]                                        # (D, 3)
     ok = np.isfinite(pr[:, :2])
     v0 = (np.where(ok, pr[:, :2], 0) * 0.5).sum(1) / (ok * 0.5).sum(1)
-    o = M.simulate(net, {k: np.array([v]) for k, v in nom.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+    o = Q.simf(net, {k: np.array([v]) for k, v in nom.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=True)
     out = {"J": float(J[0]),
            "J_terms_mean": {"NRMSE_q": float(np.nanmean(pr[:, 0])), "NRMSE_v": float(np.nanmean(pr[:, 1])),
@@ -460,7 +475,7 @@ def theta1_merge_profile(data, net, cs, days, real_ev) -> list:
         return []
     X = np.array([p["best_x"] for p in pts])
     P, D = len(pts), len(days)
-    o = M.simulate(net, C.to_params(X), M.Inputs(data["d0"], data["d_o"], data["beta"]), n_param_sets=P,
+    o = Q.simf(net, _to_params(X), M.Inputs(data["d0"], data["d_o"], data["beta"]), n_param_sets=P,
                    record_cells=False)
     res = []
     for pi, p in enumerate(pts):
@@ -472,7 +487,7 @@ def theta1_merge_profile(data, net, cs, days, real_ev) -> list:
             md = Q.model_day(d, o.q_st[b], o.v_st[b], o.exit_flow[b], net, cs, real_ev[d])
             if all(md[k]["merge"] is not None for k in ("B1", "B2")):
                 rm.append(md["B2"]["merge"] / md["B1"]["merge"])
-        th = float(C.to_params(X[pi][None])["theta1"][0])
+        th = float(_to_params(X[pi][None])["theta1"][0])
         res.append({"point": p["point"], "theta1": th, "J": p["best_J"], "n_days": len(rm),
                     "model_merge_ratio_median": float(np.median(rm)) if rm else None})
     return res
@@ -488,7 +503,7 @@ def report_md(res: dict) -> str:
     L = ["# U.S.169 SB METANET plant v4: calibration freeze", "",
          f"Protocol: `{res['protocol']}` (v4, binding). Stage: {res['stage']}. Variant `{res['variant']}` (§A1, "
          f"step (b), 39 cells), T = {res['T_s']} s. pycma {res['pycma']}. Calibration days only: {res['days']['n']} usable. "
-         f"Raw runs: `{RUNS}`; full numbers in `{RECORD}.json`.", "",
+         f"Raw runs: `{RUNS}`; full numbers in `{_record_name()}.json`.", "",
          f"**Route after the freeze: {res['route']}.**", "",
          "## Fit (§4.3–4.4)", "",
          f"- Nominal plant: restart seed {res['nominal_seed']}, J = {_f(res['nominal_J'], 4)} "
@@ -590,9 +605,14 @@ def report_md(res: dict) -> str:
 
 
 # ---------------------------------------------------------------- driver
-def finalize() -> dict:
+def finalize(kind: str = "base") -> dict:
+    """Freeze record of the base plant or of F1 (§6.1: refit frozen, re-derived F-hat and ensemble, P11-k at F1's
+    own freeze; label 'second look on the same validation days'; Delta at zero = 'base structure, second
+    optimisation', a FAIL by default)."""
+    _S["kind"] = kind
     import cma
-    s = Q.summary()
+    s = Q.summary(kind)
+    _S['nom'] = s['nominal_seed']
     C.verify_v3()
     if s.get("no_admissible_restart"):                         # §A3 (d): no nominal plant; stop record only
         res = {"protocol": "docs/plans/day_pattern_metanet_protocol_v4.md", "protocol_version": "v4",
@@ -600,8 +620,8 @@ def finalize() -> dict:
                "route": "STOP (no admissible restart (§A3 (d)))", "stop_reasons": ["no admissible restart (§A3 (d))"],
                "convergence": {"restarts": s["restarts"], "restarts_base": s.get("restarts_base")}}
         OUT.mkdir(parents=True, exist_ok=True)
-        (OUT / f"{RECORD}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
-        (OUT / f"{RECORD}.md").write_text(f"# U.S.169 SB METANET plant v4: route stop\n\n**{res['route']}.**\n")
+        (OUT / f"{_record_name()}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
+        (OUT / f"{_record_name()}.md").write_text(f"# U.S.169 SB METANET plant v4: route stop\n\n**{res['route']}.**\n")
         return {"route": res["route"]}
     data = C.load_data()
     days = [str(d) for d in data["days"]]
@@ -615,9 +635,9 @@ def finalize() -> dict:
     sh = json.loads((RUNS / f"stephalving_{nom_seed}.json").read_text())
     ident = identifiability(s, data, net)
     near = [r for r in s["restarts"] if r["best_J"] <= NEAR * s["nominal_J"] and r["seed"] != nom_seed]
-    lo_hi = dict(zip(C.NAMES, C.bounds()))
-    xn = C.to_norm(Q.plant_params())
-    ki = [C.NAMES.index(k) for k in ENS_KEYS]
+    lo_hi = dict(zip(_names(), M.param_bounds(_names())))
+    xn = np.array(Q.plant_record(nom_seed)["best_x"], float)
+    ki = [_names().index(k) for k in ENS_KEYS]
     cand = sorted(({"seed": r["seed"], "J": r["best_J"],
                     "distance": float(np.linalg.norm(np.array(r["best_x"])[ki] - xn[ki]))} for r in near),
                   key=lambda c: -c["distance"])
@@ -633,7 +653,7 @@ def finalize() -> dict:
         c["admissible_calibration"] = bool(c["stephalving_PASS"] and c["p11_calibration"]["PASS"])
         c["params"] = Q.plant_params(c["seed"])
     diag = diagnostics(data, net, cs, days, real_ev, demand)
-    diag["theta1_merge_profile"] = theta1_merge_profile(data, net, cs, days, real_ev)
+    diag["theta1_merge_profile"] = theta1_merge_profile(data, net, cs, days, real_ev) if kind == "base" else None
     p11 = p11_at_freeze(data, net, cs, days)
     nom = next(r for r in s["restarts"] if r["seed"] == nom_seed)
     spread = cap["nominal"].get("spread_used")
@@ -661,7 +681,7 @@ def finalize() -> dict:
                     "exits": {x["id"]: x["cell"] + 1 for x in net.exits}},
         "bounds": {n: list(b) for n, b in lo_hi.items()}, "a3_thresholds_kmh": {f"G{g + 1}": t for g, t in
                                                                                C.a3_thresholds(net, cs).items()},
-        "frozen_params": Q.plant_params(), "nominal_seed": nom_seed, "nominal_J": s["nominal_J"],
+        "frozen_params": Q.plant_params(_S['nom']), "nominal_seed": nom_seed, "nominal_J": s["nominal_J"],
         "a3_at_nominal": nom.get("a3_at_best", {}),
         "convergence": {"budget": s["budget"], "continued_to_8000": s["continued_to_8000"],
                         "restarts": [{k: r.get(k) for k in ("seed", "evals", "best_J", "admissible", "final_sigma",
@@ -681,11 +701,17 @@ def finalize() -> dict:
         "capacity_factors": cap, "diagnostics": diag,
         "route": ("STOP (" + "; ".join(reasons) + ")") if reasons else "continue to the plant gate (§5)",
         "stop_reasons": reasons,
+        "structure": "F1" if kind == "f1" else "base",
     }
+    if kind == "f1":
+        res["label"] = "second look on the same validation days"
+        res["delta_bound_active_at_zero"] = s.get("delta_bound_active_at_zero")
+        if s.get("delta_bound_active_at_zero"):
+            res["outcome_label"] = "base structure, second optimisation (a FAIL by default, §6.1)"
     OUT.mkdir(parents=True, exist_ok=True)
     C.verify_v3()
-    (OUT / f"{RECORD}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
-    (OUT / f"{RECORD}.md").write_text(report_md(res))
+    (OUT / f"{_record_name()}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
+    (OUT / f"{_record_name()}.md").write_text(report_md(res))
     return {"nominal_J": s["nominal_J"], "stephalving_PASS": sh["PASS"], "p11_PASS": p11["PASS"],
             "c2_star": cap["nominal"]["c2_star"], "estimable": cap["nominal"]["estimable"],
             "rules_failed": cap["nominal"]["rules_failed"], "spread": spread, "route": res["route"],
@@ -712,7 +738,7 @@ def _clean(x):
 def p11_at_freeze(data: dict, net: M.Net, cs: dict, days: list, seed: int | None = None) -> dict:
     """§A12 on usable calibration days at c1 = c2 = 1 for a plant (default: nominal)."""
     p = Q.plant_params(seed)
-    o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+    o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=True)
     per = {d: Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs) for i, d in enumerate(days)}
     v = Q.p11_verdict(per)
@@ -721,5 +747,5 @@ def p11_at_freeze(data: dict, net: M.Net, cs: dict, days: list, seed: int | None
 
 
 if __name__ == "__main__":
-    print(json.dumps(finalize()))
+    print(json.dumps(finalize("f1" if "--f1" in sys.argv else "base")))
     sys.exit(0)

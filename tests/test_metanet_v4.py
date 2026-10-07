@@ -375,3 +375,64 @@ def test23_f16_sources_on_synthetic_flows():
     a36 = conservation_flow(7.518, 7.199, q_osr, elems)       # cell 36: just after E15
     a39 = conservation_flow(8.999, 7.199, q_osr, elems)       # cell 39 upstream end: X14 already left
     assert np.allclose(a35, 1000) and np.allclose(a36, 1100) and np.allclose(a39, 1070)
+
+
+# ---------------------------------------------------------------- F1 (§6.1 under v4)
+def _synthetic_targets(net4):
+    """A 1-day synthetic data dict whose targets are a base-plant run (masks all true): J is finite and admissible."""
+    inp = inputs(net4, d0=2400.0)
+    o = M.simulate(net4, feasible(), inp)
+    ns = o.q_st.shape[1]
+    m = np.ones((1, ns, NB), bool)
+    return {"d0": inp.d0, "d_o": inp.d_o, "beta": inp.beta, "q": o.q_st.copy(), "v": o.v_st.copy(),
+            "mq": m, "mv": m, "mc": m}
+
+
+def test_f1_delta_zero_reproduces_base_objective_and_a3(net4):
+    from vsl_lab.jobs import metanet_f1 as F1
+    data = _synthetic_targets(net4)
+    xb = C.to_norm(feasible())
+    lo, hi = M.BOUNDS["eta"]
+    x1 = np.concatenate([xb, [0.0, (0.9 - lo) / (hi - lo)]])            # Delta = 0, eta = 0.9
+    Jb = C.objective(xb[None, :], data, net4)
+    J1 = F1.objective(x1[None, :], data, net4)
+    assert np.isfinite(Jb[0]) and Jb[0] < 10 and J1[0] == pytest.approx(Jb[0], rel=1e-12)
+    bad = x1.copy()
+    bad[C.NAMES.index("a2")] = 0.0                                      # violates A3 at G2
+    Jv, pv = F1.objective(np.vstack([x1, bad]), data, net4, return_parts=True)
+    assert list(pv["a3_violation"]) == [False, True] and Jv[1] > 10.0
+    assert F1.NAMES_F1[-2:] == ["Delta", "eta"] and len(F1.NAMES_F1) == 19 and F1.SEEDS_F1[0] == 7191018
+
+
+def test_f1_switch_changes_an_overloaded_jam(net4):
+    """The pinned B2 scenario of test 15 at c2 = 0.85 (B2 jams): Delta = 0 is the base plant; Delta = 0.15 lowers
+    the active B2 cells' effective rho_cr through the memory switch and changes the flows."""
+    ne, nx = len(net4.entrances), len(net4.exits)
+    h = 4.0 + np.arange(NB) / 12.0
+    shape = np.clip(0.5 + 0.5 * (h - 14.0) * 60 / 90, 0.5, 1.0) * (h < 18) + 0.5 * (h >= 18)
+    ids = [e["id"] for e in net4.entrances]
+    d_o = np.full((1, ne, NB), 50.0) * shape
+    d_o[0, ids.index("E14")] = 900.0 * shape
+    d_o[0, ids.index("E15")] = 300.0 * shape
+    inp = M.Inputs(d0=(3600.0 * shape)[None, :], d_o=d_o, beta=np.zeros((1, nx, NB)))
+    base = Q.simf(net4, feasible(), inp, c1=1.2, c2=0.85)
+    zero = Q.simf(net4, feasible() | {"Delta": 0.0, "eta": 0.9}, inp, c1=1.2, c2=0.85)
+    drop = Q.simf(net4, feasible() | {"Delta": 0.15, "eta": 0.9}, inp, c1=1.2, c2=0.85)
+    assert np.allclose(zero.q_st, base.q_st)                             # Delta = 0 is the base plant
+    assert (base.rho_cell[0, 32] > base.rc_cell[0, 32]).any()            # B2 jams in this scenario
+    assert drop.rc_cell[0, 32].min() < base.rc_cell[0, 32].min()          # memory lowers B2's rho_cr
+    assert not np.allclose(drop.q_st, base.q_st)
+
+
+def test_f1_plant_lookup_and_gate_seed(monkeypatch):
+    from vsl_lab.jobs import metanet_gate as G
+    base = {"nominal_seed": 7191012, "restarts": [{"seed": 7191012, "best_params": {"tau": 20.0}, "best_x": [0.1]}]}
+    f1 = {"nominal_seed": 7191020, "restarts": [{"seed": 7191020, "best_params": {"tau": 21.0, "Delta": 0.05,
+                                                                                    "eta": 0.8}, "best_x": [0.2]}]}
+    monkeypatch.setattr(Q, "summary", lambda kind="base": base if kind == "base" else f1)
+    assert Q.plant_params()["tau"] == 20.0 and "Delta" not in Q.plant_params()
+    assert Q.plant_params(7191020)["Delta"] == 0.05 and Q.is_f1(Q.plant_params(7191020))
+    monkeypatch.setattr(G, "SEED_BOOT", G.SEED_BOOT_F1)
+    a = G.boot_median_ci([1.0, 2.0, 3.0, 4.0])
+    b = G.boot_median_ci([1.0, 2.0, 3.0, 4.0], seed=7191302)
+    assert a == b and G.SEED_BOOT_F1 == 7191302

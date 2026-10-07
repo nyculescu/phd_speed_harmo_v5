@@ -37,23 +37,49 @@ OVERLAP_BINS = 12                                            # +-60 min
 
 
 # ---------------------------------------------------------------- plants
-def summary() -> dict:
-    return json.loads((RUNS / "cma_summary.json").read_text())
-
-
-def plant_params(seed: int | None = None) -> dict:
-    """Frozen parameters of a restart (None = the nominal plant)."""
-    s = summary()
-    seed = s["nominal_seed"] if seed is None else seed
-    r = next(r for r in s["restarts"] if r["seed"] == seed)
-    return {k: float(v) for k, v in r["best_params"].items()}
+def summary(kind: str = "base") -> dict:
+    """The CMA-ES summary of the base plant ('base') or of F1 ('f1', §6.1)."""
+    return json.loads((RUNS / ("cma_summary.json" if kind == "base" else "f1_cma_summary.json")).read_text())
 
 
 def plant_record(seed: int | None = None) -> dict:
-    """The stored restart record (best_x is the vector CMA-ES evaluated; never rebuilt by a round trip)."""
+    """The stored restart record (best_x is the vector CMA-ES evaluated; never rebuilt by a round trip). Seeds are
+    unique across the base (7,191,010-017) and F1 (7,191,018-025) restarts."""
     s = summary()
     seed = s["nominal_seed"] if seed is None else seed
-    return next(r for r in s["restarts"] if r["seed"] == seed)
+    for kind in ("base", "f1"):
+        try:
+            sk = s if kind == "base" else summary("f1")
+        except FileNotFoundError:
+            continue
+        r = next((r for r in sk["restarts"] if r["seed"] == seed), None)
+        if r is not None:
+            return r
+    raise KeyError(f"no restart record for seed {seed}")
+
+
+def plant_params(seed: int | None = None) -> dict:
+    """Frozen parameters of a restart (None = the nominal base plant); F1 plants carry Delta and eta."""
+    return {k: float(v) for k, v in plant_record(seed)["best_params"].items()}
+
+
+def is_f1(params_or_x) -> bool:
+    return ("Delta" in params_or_x) if isinstance(params_or_x, dict) else len(params_or_x) == len(C.NAMES) + 2
+
+
+def simf(net: M.Net, params: dict, inp: M.Inputs, **kw):
+    """M.simulate with F1 switched on when the parameter set carries Delta and eta (§6.1)."""
+    from vsl_lab.jobs.metanet_f1 import split_f1
+    base, f1 = split_f1(params)
+    return M.simulate(net, base, inp, f1=f1, **kw)
+
+
+def objective_for(X: np.ndarray, data: dict, net: M.Net, T_s: float = C.T_RUN, return_parts: bool = False):
+    """The base or the F1 objective, by the vector length."""
+    if X.shape[1] == len(C.NAMES) + 2:
+        from vsl_lab.jobs import metanet_f1
+        return metanet_f1.objective(X, data, net, T_s=T_s, return_parts=return_parts)
+    return C.objective(X, data, net, T_s=T_s, return_parts=return_parts)
 
 
 def part1() -> dict:
@@ -244,7 +270,7 @@ def grid_job(seed: int, c2_index: int):
     p = plant_params(seed)
     c2 = float(GRID[c2_index])
     P, D = len(GRID), len(days)
-    o = M.simulate(net, {k: np.full(P, v) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+    o = simf(net, {k: np.full(P, v) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    n_param_sets=P, c1=GRID.copy(), c2=np.full(P, c2), record_cells=True)
     real = {d: {k: e for k, e in I.event_pairs(d).items() if e} for d in days}
     a13_5 = abs(c2 - 1.0) < 1e-9                              # §A13 item 5 runs on the c2 = 1.00 slice only
@@ -322,12 +348,13 @@ def stephalving(seed: int | None = None) -> dict:
     Ts = (C.T_RUN, C.T_RUN / 2.0)
     out = {}
     for T in Ts:
-        J, parts = C.objective(x, data, net, T_s=T, return_parts=True)
+        J, parts = objective_for(x, data, net, T_s=T, return_parts=True)
         if parts["a3_violation"][0]:
             raise RuntimeError("the stored optimum is A3-infeasible: step-halving would pass vacuously")
         if T == Ts[0] and abs(float(J[0]) - rec["best_J"]) > 1e-12 * max(1.0, abs(rec["best_J"])):
             raise RuntimeError(f"J(T) {float(J[0])!r} != calibrated best J {rec['best_J']!r}: plant not reproduced")
-        o = M.simulate(net, C.to_params(x), M.Inputs(data["d0"], data["d_o"], data["beta"]), record_cells=False, T_s=T)
+        o = simf(net, {k: v for k, v in plant_params(seed).items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+                 record_cells=False, T_s=T)
         mp = [model_pairs(d, o.v_st[i], net, cs) for i, d in enumerate(days)]
         out[T] = {"J": float(J[0]), "v": o.v_st, "clip_max": float(o.clipped_share.max()),
                   "P1": sorted(d for d, m in zip(days, mp) if m.get(I.P1)),
@@ -368,7 +395,7 @@ def step_probe_days(days_: list, steps, seed) -> dict:
         sl = slice(i, i + 1)
         series = {}
         for T in steps:
-            o = M.simulate(net, {k: np.array([v]) for k, v in p.items()},
+            o = simf(net, {k: np.array([v]) for k, v in p.items()},
                            M.Inputs(data["d0"][sl], data["d_o"][sl], data["beta"][sl]), record_cells=False, T_s=T)
             sp, _ = model_speeds(day, o.v_st[0], net, cs)
             series[T] = sp
@@ -400,7 +427,7 @@ def step_probe(day: str, steps=(0.75, 0.375, 0.1875), seed: int | None = None) -
     u_id, d_id = I.P2
     out, prev = {}, None
     for T in steps:
-        o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"][sl], data["d_o"][sl],
+        o = simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"][sl], data["d_o"][sl],
                                                                             data["beta"][sl]), record_cells=False, T_s=T)
         sp, _ = model_speeds(day, o.v_st[0], net, cs)
         u, dv = sp[u_id], sp[d_id] - sp[u_id]

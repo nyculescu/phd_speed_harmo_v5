@@ -31,6 +31,8 @@ from vsl_lab.plants import metanet as M
 
 RUNS = C.RUNS
 FREEZE = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v4_calibration.json"
+FREEZE_F1 = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v4_f1_calibration.json"
+SEED_BOOT_F1 = 7191302                    # §A8: bootstrap of the F1 gate statistics
 SEED_BOOT = 7191300                       # §A8
 SEED_DRAW = 7191301
 N_DRAWS = 200
@@ -52,7 +54,8 @@ def wilson(k: int, n: int, z: float = 1.959964) -> list | None:
     return [c - h, c + h]
 
 
-def boot_median_ci(x, seed: int = SEED_BOOT, n: int = 10000) -> list | None:
+def boot_median_ci(x, seed: int | None = None, n: int = 10000) -> list | None:
+    seed = SEED_BOOT if seed is None else seed                # read at call time (F1 switches it, §A8)
     x = np.asarray(x, float)
     if x.size == 0:
         return None
@@ -231,7 +234,7 @@ def deterministic(seed: int | None = None) -> dict:
     sh = fz["stephalving"] if seed == fz["nominal_seed"] else \
         {"PASS": next(c for c in fz["ensemble_candidates"]["candidates"] if c["seed"] == seed)["stephalving_PASS"]}
     sids = [s["id"] for s in net.stations]
-    o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+    o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=True)
     nl = nulls()
     qa = np.array([s in I.Q_A for s in sids])
@@ -557,7 +560,7 @@ def draws_day(i: int, seed: int | None = None) -> dict:
     cs = Q.part1()["c_s"]
     cc = np.load(RUNS / f"gate_draws_{seed}.npy")[i]
     sl = slice(i, i + 1)
-    o = M.simulate(net, {k: np.full(N_DRAWS, v) for k, v in p.items()},
+    o = Q.simf(net, {k: np.full(N_DRAWS, v) for k, v in p.items()},
                    M.Inputs(data["d0"][sl], data["d_o"][sl], data["beta"][sl]), n_param_sets=N_DRAWS,
                    c1=cc[:, 0], c2=cc[:, 1], record_cells=True)
     rp = {k: e for k, e in I.event_pairs(d).items() if e}
@@ -639,22 +642,32 @@ def stochastic(seed: int | None = None) -> dict:
 
 
 def verdict() -> dict:
-    """§0.3 for the nominal plant (ensemble filter and F1 are separate steps)."""
+    """§0.3 for the nominal plant of the record in use (base, or F1 under --f1: §6.1 labels)."""
     fz = freeze()
     seed = fz["nominal_seed"]
+    f1 = fz.get("structure") == "F1"
     det = json.loads((RUNS / f"gate_det_{seed}.json").read_text())
     cf = fz["capacity_factors"]["nominal"]
+
+    def lab(d):
+        if f1:
+            d["label"] = "second look on the same validation days"
+            if fz.get("delta_bound_active_at_zero"):
+                d["outcome"] = "base structure, second optimisation (a FAIL by default, §6.1); was: " + d["outcome"]
+        return d
     if not det["deterministic_PASS"]:
+        if f1:
+            return lab({"outcome": "FAIL after F1; route stop (§6.2)", "failed": det["failed"]})
         out = "FAIL; F1 triggered (§6.1)" if det["F1_trigger"] else "FAIL; route stop (F1 not triggered, §6.1)"
         return {"outcome": out, "failed": det["failed"]}
     spread = cf.get("spread_used")
     if spread not in ("KM", "Tobit"):
-        return {"outcome": "PASS, deterministic-only (no usable spread)", "rules_failed": cf.get("rules_failed")}
+        return lab({"outcome": "PASS, deterministic-only (no usable spread)", "rules_failed": cf.get("rules_failed")})
     sto = json.loads((RUNS / f"gate_sto_{seed}.json").read_text())
     if not sto["stochastic_PASS"]:
-        return {"outcome": "PASS, deterministic-only (a stochastic row failed under "
-                           f"{'F-hat' if spread == 'KM' else 'F-hat_T'})", "failed": sto["failed"]}
-    return {"outcome": "PASS" if spread == "KM" else "PASS, substitute spread"}
+        return lab({"outcome": "PASS, deterministic-only (a stochastic row failed under "
+                               f"{'F-hat' if spread == 'KM' else 'F-hat_T'})", "failed": sto["failed"]})
+    return lab({"outcome": "PASS" if spread == "KM" else "PASS, substitute spread"})
 
 
 def main(argv=None) -> int:
@@ -665,7 +678,11 @@ def main(argv=None) -> int:
     ap.add_argument("--plant", type=int, default=None)
     ap.add_argument("--day-index", type=int, default=0)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--f1", action="store_true", help="judge F1 (§6.1): F1's freeze record and bootstrap seed")
     a = ap.parse_args(argv)
+    if a.f1:                                                  # F1: its own committed record and seed 7,191,302
+        global FREEZE, SEED_BOOT
+        FREEZE, SEED_BOOT = FREEZE_F1, SEED_BOOT_F1
     if freeze()["route"].startswith("STOP"):                 # no validation-day work after a route stop
         raise SystemExit(f"route is '{freeze()['route']}' in {FREEZE.name}: the gate must not run (§8.6 step 4)")
     commit = code_commit()
@@ -689,7 +706,8 @@ def main(argv=None) -> int:
     elif a.what == "draws-run":
         seed, _ = plant(a.plant)
         jobs = [Job(jid=f"draw_{seed}_{i:03d}", argv=["vsl_lab.jobs.metanet_gate", "draws", "--day-index", str(i),
-                                                      "--plant", str(seed)]) for i in range(len(val_days()))]
+                                                      "--plant", str(seed)] + (["--f1"] if a.f1 else []))
+                for i in range(len(val_days()))]
         try:
             rep = run_batch(jobs, RUNS / f"batch_draws_{seed}_{int(time.time())}", max_workers=32, gate_ok=a.gate_ok)
         finally:
