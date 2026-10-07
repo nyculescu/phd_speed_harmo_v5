@@ -49,6 +49,13 @@ def plant_params(seed: int | None = None) -> dict:
     return {k: float(v) for k, v in r["best_params"].items()}
 
 
+def plant_record(seed: int | None = None) -> dict:
+    """The stored restart record (best_x is the vector CMA-ES evaluated; never rebuilt by a round trip)."""
+    s = summary()
+    seed = s["nominal_seed"] if seed is None else seed
+    return next(r for r in s["restarts"] if r["seed"] == seed)
+
+
 def part1() -> dict:
     return C.part1()                                         # v3 raw input, read-only, sha256-verified (§A9)
 
@@ -91,10 +98,20 @@ def longest_run(b: np.ndarray) -> int:
     return best
 
 
-def relocation(pairs: dict, rho_bins: np.ndarray, rc_cells: np.ndarray, first_cell: int, n_consec: int = 3) -> dict:
-    """§4.7: (a) a cell downstream of B2 with 5-min mean density > rho_cr for >= 3 consecutive bins, or (b) a model
-    episode at (Old Shakopee Rd, T.H.101). rho_bins (N, bins) over the scored day."""
-    cells = [i for i in range(first_cell, rho_bins.shape[0]) if longest_run(rho_bins[i] > rc_cells[i]) >= n_consec]
+RELOC_EXCLUDE_ADJACENT_JAM = False    # protocol v4 as written; an author ruling may switch it (addendum, before grid)
+
+
+def relocation(pairs: dict, rho_bins: np.ndarray, rc_cells: np.ndarray, first_cell: int, n_consec: int = 3,
+               exclude_adjacent_jam: bool | None = None) -> dict:
+    """§4.7 / v4 §A1: (a) a cell downstream of B2 (index >= first_cell) with 5-min mean density > rho_cr for >= 3
+    consecutive bins, or (b) a model episode at (Old Shakopee Rd, T.H.101). rho_bins (N, bins); rc_cells (N,) or
+    (N, bins) effective rho_cr. exclude_adjacent_jam: bins in which B2's last scaled cell (first_cell - 1) is itself
+    over-critical do not count (the acceleration zone of an active B2 jam)."""
+    excl = RELOC_EXCLUDE_ADJACENT_JAM if exclude_adjacent_jam is None else exclude_adjacent_jam
+    rc = rc_cells if np.ndim(rc_cells) == 2 else np.asarray(rc_cells)[:, None]
+    over = rho_bins > rc
+    mask = ~over[first_cell - 1] if excl else np.ones(rho_bins.shape[1], bool)
+    cells = [i for i in range(first_cell, rho_bins.shape[0]) if longest_run(over[i] & mask) >= n_consec]
     pair = bool(pairs.get(RELOC_PAIR))
     return {"flag": bool(cells) or pair, "cells": cells, "pair": pair}
 
@@ -240,7 +257,7 @@ def grid_job(seed: int, c2_index: int):
         for di, day in enumerate(days):
             b = pi * D + di
             mp = model_pairs(day, o.v_st[b], net, cs)
-            rl = relocation(mp, o.rho_cell[b][:, EV0:], o.rc_cell[b][:, EV0:].mean(axis=1), net.b2_cells[-1] + 1)
+            rl = relocation(mp, o.rho_cell[b][:, EV0:], o.rc_cell[b][:, EV0:], net.b2_cells[-1] + 1)
             sp = spurious(mp, real[day])
             row = {"day": day, "c1": float(c1), "c2": c2, "Z": bool(sp) or rl["flag"], "reloc": rl["flag"],
                    "reloc_cells": [int(i) + 1 for i in rl["cells"]], "reloc_pair": rl["pair"],
@@ -263,22 +280,33 @@ def grid_job(seed: int, c2_index: int):
 
 
 # ---------------------------------------------------------------- step-halving (§2.5, gated as part of N0)
-def _margins(day: str, v_st: np.ndarray, net: M.Net, cs: dict) -> dict:
-    """§A2 report-only margins per pair: best 7-bin count - 5, and signed m_v = 40 - v_u, m_d = (v_d - v_u) - 20
-    (mph, detector scale) per bin of the best window."""
-    speeds, _ = model_speeds(day, v_st, net, cs)
+def _fin(x):
+    return None if x is None or not np.isfinite(x) else round(float(x), 3)
+
+
+def margins_pair(sp_T: dict, sp_T2: dict) -> dict:
+    """§A2 report-only margins per pair at T and T/2: best 7-bin count - 5, and the signed m_v = 40 - v_u and
+    m_d = (v_d - v_u) - 20 (mph, detector scale) at every bin of every window reaching the maximum plus every bin
+    whose status differs between T and T/2."""
     out = {}
     for k, (u, d) in (("B1", I.P1), ("B2", I.P2)):
-        with np.errstate(invalid="ignore"):
-            cond = np.nan_to_num((speeds[u] < 40.0) & ((speeds[d] - speeds[u]) >= 20.0)).astype(int)
-        w = np.convolve(cond, np.ones(7, int), mode="valid")
-        j = int(np.argmax(w))
-        mv = 40.0 - speeds[u][j:j + 7]
-        md = (speeds[d] - speeds[u])[j:j + 7] - 20.0
-        out[k] = {"count_margin": int(w.max()) - 5, "window_start": j,
-                  "m_v": [None if not np.isfinite(x) else round(float(x), 2) for x in mv],
-                  "m_d": [None if not np.isfinite(x) else round(float(x), 2) for x in md],
-                  "cond": cond.tolist()}
+        rec, conds = {}, {}
+        for lab, sp in (("T", sp_T), ("T_half", sp_T2)):
+            with np.errstate(invalid="ignore"):
+                conds[lab] = np.nan_to_num((sp[u] < 40.0) & ((sp[d] - sp[u]) >= 20.0)).astype(int)
+        diff = set(np.flatnonzero(conds["T"] != conds["T_half"]).tolist())
+        for lab, sp in (("T", sp_T), ("T_half", sp_T2)):
+            w = np.convolve(conds[lab], np.ones(7, int), mode="valid")
+            wm = int(w.max()) if w.size else 0
+            bins = set(diff)
+            if wm > 0:
+                for j in np.flatnonzero(w == wm):
+                    bins |= set(range(int(j), int(j) + 7))
+            rec[lab] = {"count_margin": wm - 5,
+                        "bins": {int(b): {"m_v": _fin(40.0 - sp[u][b]), "m_d": _fin(sp[d][b] - sp[u][b] - 20.0)}
+                                 for b in sorted(bins)}}
+        rec["status_differs_bins"] = sorted(int(b) for b in diff)
+        out[k] = rec
     return out
 
 
@@ -288,29 +316,30 @@ def stephalving(seed: int | None = None) -> dict:
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
     cs = part1()["c_s"]
-    p = plant_params(seed)
-    x = C.to_norm(p)[None, :]
+    rec = plant_record(seed)
+    x = np.array(rec["best_x"], float)[None, :]
     sids = [s["id"] for s in net.stations]
     Ts = (C.T_RUN, C.T_RUN / 2.0)
     out = {}
     for T in Ts:
-        J = C.objective(x, data, net, T_s=T)
+        J, parts = C.objective(x, data, net, T_s=T, return_parts=True)
+        if parts["a3_violation"][0]:
+            raise RuntimeError("the stored optimum is A3-infeasible: step-halving would pass vacuously")
+        if T == Ts[0] and abs(float(J[0]) - rec["best_J"]) > 1e-12 * max(1.0, abs(rec["best_J"])):
+            raise RuntimeError(f"J(T) {float(J[0])!r} != calibrated best J {rec['best_J']!r}: plant not reproduced")
         o = M.simulate(net, C.to_params(x), M.Inputs(data["d0"], data["d_o"], data["beta"]), record_cells=False, T_s=T)
         mp = [model_pairs(d, o.v_st[i], net, cs) for i, d in enumerate(days)]
         out[T] = {"J": float(J[0]), "v": o.v_st, "clip_max": float(o.clipped_share.max()),
                   "P1": sorted(d for d, m in zip(days, mp) if m.get(I.P1)),
                   "P2": sorted(d for d, m in zip(days, mp) if m.get(I.P2)),
-                  "margins": {d: _margins(d, o.v_st[i], net, cs) for i, d in enumerate(days)}}
+                  "speeds": {d: model_speeds(d, o.v_st[i], net, cs)[0] for i, d in enumerate(days)}}
     T1, T2 = Ts
     rel = abs(out[T2]["J"] - out[T1]["J"]) / out[T1]["J"]
     same = out[T2]["P1"] == out[T1]["P1"] and out[T2]["P2"] == out[T1]["P2"]
     dv = out[T2]["v"][:, :, EV0:] - out[T1]["v"][:, :, EV0:]
     rms = {sid: float(np.sqrt(np.nanmean(dv[:, j] ** 2))) for j, sid in enumerate(sids)}
     differ = sorted((set(out[T1]["P1"]) ^ set(out[T2]["P1"])) | (set(out[T1]["P2"]) ^ set(out[T2]["P2"])))
-    margins = {d: {"T": {k: {kk: out[T1]["margins"][d][k][kk] for kk in ("count_margin", "m_v", "m_d")}
-                         for k in ("B1", "B2")},
-                   "T_half": {k: {kk: out[T2]["margins"][d][k][kk] for kk in ("count_margin", "m_v", "m_d")}
-                              for k in ("B1", "B2")}} for d in days}
+    margins = {d: margins_pair(out[T1]["speeds"][d], out[T2]["speeds"][d]) for d in days}
     res = {"protocol": C.PROTOCOL, "plant_seed": seed if seed is not None else summary()["nominal_seed"],
            "T_s": T1, "T_half_s": T2, "J_T": out[T1]["J"], "J_T_half": out[T2]["J"], "rel_change": rel,
            "episode_day_sets_unchanged": same,
@@ -352,7 +381,7 @@ def step_probe_days(days_: list, steps, seed) -> dict:
             bins = sorted(set(np.flatnonzero(np.nan_to_num((xs[0][0] < 40) & (xs[0][1] >= 20)))) ^
                           set(np.flatnonzero(np.nan_to_num((xs[1][0] < 40) & (xs[1][1] >= 20)))))
             rec[k] = {int(b): {"v_u": [round(float(x[0][b]), 2) for x in xs], "dv": [round(float(x[1][b]), 2) for x in xs],
-                               "r_u": float(r_u[b]), "r_dv": float(r_d[b])} for b in bins}
+                               "r_u": _fin(r_u[b]), "r_dv": _fin(r_d[b])} for b in bins}
         out[day] = rec
     return out
 
@@ -454,7 +483,10 @@ def profile_job(pi: int, j: int) -> dict:
 
 def _batch(jobs, tag, gate_ok):
     from vsl_lab.ops.scheduler import run_batch
-    return run_batch(jobs, RUNS / f"batch_{tag}_{int(time.time())}", max_workers=32, gate_ok=gate_ok)
+    try:
+        return run_batch(jobs, RUNS / f"batch_{tag}_{int(time.time())}", max_workers=32, gate_ok=gate_ok)
+    finally:
+        C.verify_v3()                                          # §A9: after every v4 batch
 
 
 def main(argv=None) -> int:
@@ -477,6 +509,7 @@ def main(argv=None) -> int:
                       "none (deterministic); calibration days", 1, {},
                       {"rel_change": round(r["rel_change"], 4), "same_episode_days": r["episode_day_sets_unchanged"],
                        "PASS": r["PASS"]}, notes=str(RUNS / f"stephalving_{r['plant_seed']}.json"))
+        C.verify_v3()
     elif a.what == "grid":
         seed = a.plant if a.plant is not None else summary()["nominal_seed"]
         print(json.dumps({"grid_file": str(grid_job(seed, a.c2_index))}))   # a JSON line: the scheduler counts it ok

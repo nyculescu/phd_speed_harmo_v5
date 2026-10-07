@@ -323,8 +323,10 @@ def identifiability(s: dict, data: dict, net: M.Net) -> dict:
 # ---------------------------------------------------------------- §4.8 diagnostics
 def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, demand: dict) -> dict:
     nom = Q.plant_params()
-    x = C.to_norm(nom)[None, :]
+    x = np.array(Q.plant_record()["best_x"], float)[None, :]      # the stored vector, no round trip
     J, parts = C.objective(x, data, net, return_parts=True)
+    if parts["parts"] is None:
+        raise RuntimeError("nominal plant is A3-infeasible: diagnostics undefined")
     pr = parts["parts"][0]                                        # (D, 3)
     ok = np.isfinite(pr[:, :2])
     v0 = (np.where(ok, pr[:, :2], 0) * 0.5).sum(1) / (ok * 0.5).sum(1)
@@ -340,10 +342,9 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
                     "floor_jam_max": float(o.floor_jam_share.max()), "floor_jam_median": float(np.median(o.floor_jam_share))},
            "theta1": nom["theta1"]}
     out["a13_item1"] = a13_item1(o, net, cs, days)
-    cong0 = o.rho_cell[:, 0, :] > o.rc_cell[:, 0, :]
-    q0 = o.w0_bin > 1e-6
-    out["a13_item2_origin_misfit_min"] = {"rho1_le_rcr": int((q0 & ~cong0).sum()) * 5,
-                                          "rho1_gt_rcr": int((q0 & cong0).sum()) * 5}
+    out["a13_item2_origin_misfit_min"] = origin_misfit_split(o, C.T_RUN)
+    out["phi_factor_max_report_only"] = float(o.phi_factor_max.max())
+    out["payne_report_only"] = M.payne_diagnostic(nom, net, C.T_RUN)
     origins = ["mainstream"] + [e["id"] for e in net.entrances]
     out["origin_misfit"] = {n: {"days_clipped": int((o.queue_clip_veh[:, i] > 1).sum()),
                                 "clip_veh_median": float(np.median(o.queue_clip_veh[:, i])),
@@ -402,6 +403,26 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
                                  "n_upper": int(hi.sum()), "R_lower": int(y[lo].sum()), "R_upper": int(y[hi].sum()),
                                  "in_sample_brier": brier}}
     out["benchmarks"] = bm
+    return out
+
+
+def origin_misfit_split(o, T_s: float) -> dict:
+    """§A13 item 2 with v3 §2.3's definition: mainstream-origin queue (w_0 > 0) runs of >= 15 consecutive minutes in
+    05:00-23:00, minutes split by whether cell 1 is congested (bin mean rho_1 > rho_cr,1)."""
+    spb = round(300.0 / T_s)
+    out = {"rho1_le_rcr": 0, "rho1_gt_rcr": 0}
+    for b in range(o.w0_steps.shape[0]):
+        full = o.w0_steps[b, Q.EV0:Q.EV0 + Q.NEV] >= spb          # whole bin queued
+        cong = (o.rho_cell[b, 0, Q.EV0:Q.EV0 + Q.NEV] > o.rc_cell[b, 0, Q.EV0:Q.EV0 + Q.NEV])
+        run = []
+        for j, f in enumerate(list(full) + [False]):
+            if f:
+                run.append(j)
+                continue
+            if len(run) * 5 >= 15:
+                for k in run:
+                    out["rho1_gt_rcr" if cong[k] else "rho1_le_rcr"] += 5
+            run = []
     return out
 
 
@@ -572,6 +593,16 @@ def report_md(res: dict) -> str:
 def finalize() -> dict:
     import cma
     s = Q.summary()
+    C.verify_v3()
+    if s.get("no_admissible_restart"):                         # §A3 (d): no nominal plant; stop record only
+        res = {"protocol": "docs/plans/day_pattern_metanet_protocol_v4.md", "protocol_version": "v4",
+               "stage": "freeze (before any validation run)", "T_s": C.T_RUN,
+               "route": "STOP (no admissible restart (§A3 (d)))", "stop_reasons": ["no admissible restart (§A3 (d))"],
+               "convergence": {"restarts": s["restarts"], "restarts_base": s.get("restarts_base")}}
+        OUT.mkdir(parents=True, exist_ok=True)
+        (OUT / f"{RECORD}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
+        (OUT / f"{RECORD}.md").write_text(f"# U.S.169 SB METANET plant v4: route stop\n\n**{res['route']}.**\n")
+        return {"route": res["route"]}
     data = C.load_data()
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
@@ -591,11 +622,16 @@ def finalize() -> dict:
                     "distance": float(np.linalg.norm(np.array(r["best_x"])[ki] - xn[ki]))} for r in near),
                   key=lambda c: -c["distance"])
     cap = {"nominal": capacity_factors(nom_seed, days, real_active, demand, real_ev)}
-    for c in cand:
-        if all((RUNS / f"grid_{c['seed']}_c2_{i:02d}.json").exists() for i in range(len(Q.GRID))):
-            cap[str(c["seed"])] = capacity_factors(c["seed"], days, real_active, demand, real_ev)
-        f = RUNS / f"stephalving_{c['seed']}.json"
-        c["stephalving_PASS"] = json.loads(f.read_text())["PASS"] if f.exists() else None
+    for c in cand:                                             # §4.6 / §A12: calibration-day filters only
+        need = [RUNS / f"grid_{c['seed']}_c2_{i:02d}.json" for i in range(len(Q.GRID))] + \
+            [RUNS / f"stephalving_{c['seed']}.json"]
+        if not all(f.exists() for f in need):
+            raise SystemExit(f"candidate {c['seed']}: step-halving or grid files missing (run them before the freeze)")
+        cap[str(c["seed"])] = capacity_factors(c["seed"], days, real_active, demand, real_ev)
+        c["stephalving_PASS"] = json.loads((RUNS / f"stephalving_{c['seed']}.json").read_text())["PASS"]
+        c["p11_calibration"] = p11_at_freeze(data, net, cs, days, seed=c["seed"])
+        c["admissible_calibration"] = bool(c["stephalving_PASS"] and c["p11_calibration"]["PASS"])
+        c["params"] = Q.plant_params(c["seed"])
     diag = diagnostics(data, net, cs, days, real_ev, demand)
     diag["theta1_merge_profile"] = theta1_merge_profile(data, net, cs, days, real_ev)
     p11 = p11_at_freeze(data, net, cs, days)
@@ -631,25 +667,46 @@ def finalize() -> dict:
                         "restarts": [{k: r.get(k) for k in ("seed", "evals", "best_J", "admissible", "final_sigma",
                                                              "cov_condition", "inadmissible_evals",
                                                              "inadmissible_a3_evals", "first_a3_feasible_eval",
-                                                             "rel_improvement_last20pct")} for r in s["restarts"]]},
+                                                             "a3_violating_share", "a3_at_best",
+                                                             "rel_improvement_last20pct")} for r in s["restarts"]],
+                        "restarts_base": s.get("restarts_base"), "code_commit": s.get("code_commit")},
         "stephalving": {k: v for k, v in sh.items() if k not in ("rms_speed_change_kmh_by_station",
                                                                  "margins_report_only")}
         | {"rms_speed_change_kmh_max_station": max(sh["rms_speed_change_kmh_by_station"].values())},
         "p11": p11, "identifiability": ident,
         "ensemble_candidates": {"rule": "J <= 1.02 J_best, farthest first in normalised (tau, nu, kappa, delta_m, phi);"
-                                        " admissibility filter (N0, P11-k, deterministic and stochastic rows) at §8.6 "
-                                        "step 5 on validation days as a filter only", "candidates": cand},
+                                        " admissible iff step-halving and P11-k pass on calibration days (recorded here)"
+                                        " and N0, P11-k, deterministic and stochastic rows pass on validation days at "
+                                        "§8.6 step 5 (a filter only, never a route stop)", "candidates": cand},
         "capacity_factors": cap, "diagnostics": diag,
         "route": ("STOP (" + "; ".join(reasons) + ")") if reasons else "continue to the plant gate (§5)",
         "stop_reasons": reasons,
     }
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"{RECORD}.json").write_text(json.dumps(res, indent=1, default=float))
+    C.verify_v3()
+    (OUT / f"{RECORD}.json").write_text(json.dumps(_clean(res), indent=1, allow_nan=False))
     (OUT / f"{RECORD}.md").write_text(report_md(res))
     return {"nominal_J": s["nominal_J"], "stephalving_PASS": sh["PASS"], "p11_PASS": p11["PASS"],
             "c2_star": cap["nominal"]["c2_star"], "estimable": cap["nominal"]["estimable"],
             "rules_failed": cap["nominal"]["rules_failed"], "spread": spread, "route": res["route"],
             "n_candidates": len(cand)}
+
+
+def _clean(x):
+    """JSON-safe: non-finite floats -> None; numpy scalars -> Python."""
+    if isinstance(x, dict):
+        return {str(k): _clean(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_clean(v) for v in x]
+    if isinstance(x, (np.floating, float)):
+        return float(x) if math.isfinite(float(x)) else None
+    if isinstance(x, np.integer):
+        return int(x)
+    if isinstance(x, np.bool_):
+        return bool(x)
+    if isinstance(x, np.ndarray):
+        return _clean(x.tolist())
+    return x
 
 
 def p11_at_freeze(data: dict, net: M.Net, cs: dict, days: list, seed: int | None = None) -> dict:

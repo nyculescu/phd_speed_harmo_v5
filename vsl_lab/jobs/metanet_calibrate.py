@@ -49,7 +49,7 @@ def verify_v3(names: list[str] | None = None) -> None:
     man = {}
     for line in V3_MANIFEST.read_text().splitlines():
         h, f = line.split(None, 1)
-        man[f.lstrip("./").strip()] = h
+        man[f.strip().removeprefix("./")] = h
     for f in (names if names is not None else man):
         h = hashlib.sha256((V3_RUNS / f).read_bytes()).hexdigest()
         if man.get(f) != h:
@@ -114,15 +114,17 @@ def prep() -> Path:
     """§A9: rebuild calib_data.npz into the v4 directory; it must equal v3's array for array."""
     p1 = part1()
     RUNS.mkdir(parents=True, exist_ok=True)
-    out = build_data(p1["usable"]["calibration"], RUNS / "calib_data.npz")
+    tmp = build_data(p1["usable"]["calibration"], RUNS / "calib_data.tmp.npz")
+    out = RUNS / "calib_data.npz"
     verify_v3(["calib_data.npz"])
-    a, b = np.load(out), np.load(V3_RUNS / "calib_data.npz")
+    a, b = np.load(tmp), np.load(V3_RUNS / "calib_data.npz")
     def same(x, y):
         return x.shape == y.shape and (np.array_equal(x, y, equal_nan=True) if x.dtype.kind == "f" else
                                        np.array_equal(x, y))
     diff = [k for k in sorted(set(a.files) | set(b.files)) if k not in a.files or k not in b.files or not same(a[k], b[k])]
     if diff:
         raise RuntimeError(f"rebuilt calib_data.npz differs from v3's in {diff}: logged deviation, author decides")
+    tmp.replace(out)
     return out
 
 
@@ -245,7 +247,9 @@ def restart(seed: int, continue_to: int | None = None) -> dict:
     n = len(NAMES)
     state = RUNS / f"cma_state_{seed}.pkl"
     RUNS.mkdir(parents=True, exist_ok=True)
-    if continue_to and state.exists():
+    if continue_to:
+        if not state.exists():
+            raise RuntimeError(f"no CMA state for seed {seed}: a continuation never cold-starts")
         es, hist, n_inadm, best, n_a3, first_feas = pickle.loads(state.read_bytes())
         budget = continue_to
     else:
@@ -268,6 +272,7 @@ def restart(seed: int, continue_to: int | None = None) -> dict:
         if J[i] < best[0]:
             best = (float(J[i]), X[i].tolist())
         hist.append((int(es.countevals), float(J.min()), float(best[0]), float(es.sigma)))
+    assert es.countevals >= budget
     state.write_bytes(pickle.dumps((es, hist, n_inadm, best, n_a3, first_feas)))
     evs = np.array([h[0] for h in hist])
     bj = np.array([h[2] for h in hist])
@@ -338,33 +343,91 @@ def timing() -> dict:
 
 
 # ---------------------------------------------------------------- driver
-def run(gate_ok: bool) -> dict:
+def _code_commit() -> str:
+    import subprocess
+    head = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    dirty = subprocess.run(["git", "-C", str(REPO), "status", "--porcelain", "--", "vsl_lab"], capture_output=True,
+                           text=True).stdout.strip()
+    if dirty:
+        raise SystemExit("vsl_lab has uncommitted changes: commit the code before a v4 batch (provenance, §A9)")
+    return head
+
+
+def _cal_batch(tag: str, seeds: list, suffix: str, extra: list, gate_ok: bool, commit: str) -> list:
+    """One CMA-ES batch with full bookkeeping: stale result files removed first, one ledger row whatever happens,
+    the v3 manifest re-verified after the batch (§A9), and a hard error if any seed produced no result."""
     from vsl_lab.ops import ledger
     from vsl_lab.ops.scheduler import Job, run_batch
-    jobs = [Job(jid=f"cma_{s}", argv=["vsl_lab.jobs.metanet_calibrate", "restart", "--seed", str(s)]) for s in SEEDS]
-    rep = run_batch(jobs, RUNS / f"batch_cma_{int(time.time())}", max_workers=8, gate_ok=gate_ok)
-    res = [json.loads((RUNS / f"cma_restart_{s}.json").read_text()) for s in SEEDS]
-    best = min(res, key=lambda r: r["best_J"])
-    continued = False
-    if best["rel_improvement_last20pct"] is not None and best["rel_improvement_last20pct"] > 0.01:
-        continued = True
-        jobs = [Job(jid=f"cma_{s}_c", argv=["vsl_lab.jobs.metanet_calibrate", "restart", "--seed", str(s),
-                                             "--continue-to", "8000"]) for s in SEEDS]
-        run_batch(jobs, RUNS / f"batch_cma_cont_{int(time.time())}", max_workers=8, gate_ok=True)
-        res = [json.loads((RUNS / f"cma_restart_{s}_cont.json").read_text()) for s in SEEDS]
+    for s in seeds:
+        (RUNS / f"cma_restart_{s}{suffix}.json").unlink(missing_ok=True)
+    jobs = [Job(jid=f"cma_{s}{suffix}", argv=["vsl_lab.jobs.metanet_calibrate", "restart", "--seed", str(s)] + extra)
+            for s in seeds]
+    rep, res, missing = None, [], []
+    try:
+        rep = run_batch(jobs, RUNS / f"batch_cma{suffix}_{int(time.time())}", max_workers=8, gate_ok=gate_ok)
+    finally:
+        for s in seeds:
+            f = RUNS / f"cma_restart_{s}{suffix}.json"
+            (res.append(json.loads(f.read_text())) if f.exists() else missing.append(s))
+        verify_v3()
+        ledger.append("DP", "metanet-v4-calib", "S", f"metanet_v4_cmaes{suffix or '_base'}",
+                      {"protocol": PROTOCOL, "seeds": seeds, "budget": BUDGET, "variant": VARIANT, "T_s": T_RUN,
+                       "extra": extra, "code_commit": commit},
+                      f"{seeds[0]}-{seeds[-1]} (optimizer); 22 calibration days; T = {T_RUN} s", len(seeds),
+                      {"proc_failed": rep.n_failed_proc if rep else None},
+                      {"missing_seeds": missing, "J_by_seed": {r["seed"]: round(r["best_J"], 5) for r in res},
+                       "v3_manifest_ok": True, "code_commit": commit}, notes=f"{tag}; {RUNS}")
+    if missing:
+        raise RuntimeError(f"{tag}: no result for seeds {missing}")
+    return res
+
+
+def _wait_for_load(max_wait_s: int = 1800) -> bool:
+    from vsl_lab.config import SIM_START_MAX_LOAD
+    from vsl_lab.ops.thermal import load_fraction
+    t0 = time.time()
+    while time.time() - t0 < max_wait_s:
+        if load_fraction() < SIM_START_MAX_LOAD:
+            return True
+        time.sleep(30)
+    return False
+
+
+def run(gate_ok: bool, continue_only: bool = False) -> dict:
+    """§4.4 driver: 8 restarts, the continuation rule, the summary. Records the code commit at launch."""
+    from vsl_lab.ops import ledger
+    commit = _code_commit()
+    verify_v3()
+    RUNS.mkdir(parents=True, exist_ok=True)
+    if continue_only:
+        res_base = json.loads((RUNS / "cma_base_summary.json").read_text())["restarts_base"]
+    else:
+        res_base = _cal_batch("base", SEEDS, "", [], gate_ok, commit)
+        (RUNS / "cma_base_summary.json").write_text(json.dumps(
+            {"code_commit": commit, "restarts_base": [{k: r[k] for k in r if k != "history"} for r in res_base]},
+            indent=1))
+    best = min(res_base, key=lambda r: r["best_J"])
+    continued = bool(best["rel_improvement_last20pct"] is not None and best["rel_improvement_last20pct"] > 0.01)
+    res = res_base
+    if continued:
+        if not (continue_only or _wait_for_load()):
+            ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_cmaes_cont", {"code_commit": commit},
+                          "-", 0, {}, {"status": "continuation pending: load gate"}, notes=str(RUNS))
+            raise SystemExit("continuation pending: load gate (resume with run --continue-only --gate-ok)")
+        res = _cal_batch("continuation", SEEDS, "_cont", ["--continue-to", "8000"], continue_only and gate_ok, commit)
         best = min(res, key=lambda r: r["best_J"])
     summary = {"protocol": PROTOCOL, "T_s": T_RUN, "variant": VARIANT, "n_params": len(NAMES), "names": NAMES,
-               "budget": BUDGET, "continued_to_8000": continued,
+               "budget": BUDGET, "continued_to_8000": continued, "code_commit": commit,
                "no_admissible_restart": bool(best["best_J"] >= J_INADMISSIBLE),
-               "restarts": [{k: r[k] for k in r if k != "history"} for r in res], "nominal_seed": best["seed"],
-               "nominal_J": best["best_J"], "nominal_params": best["best_params"]}
+               "restarts": [{k: r[k] for k in r if k != "history"} for r in res],
+               "restarts_base": [{k: r[k] for k in r if k != "history"} for r in res_base],
+               "nominal_seed": best["seed"], "nominal_J": best["best_J"], "nominal_params": best["best_params"],
+               "nominal_x": best["best_x"]}
     (RUNS / "cma_summary.json").write_text(json.dumps(summary, indent=1))
-    ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_cmaes_restarts",
-                  {"protocol": PROTOCOL, "seeds": SEEDS, "budget": BUDGET, "variant": VARIANT, "T_s": T_RUN},
-                  "7191010-7191017 (optimizer); 22 calibration days; T = 0.75 s", len(SEEDS),
-                  {"proc_failed": rep.n_failed_proc},
-                  {"nominal_seed": best["seed"], "nominal_J": round(best["best_J"], 5), "continued": continued,
-                   "J_by_seed": {r["seed"]: round(r["best_J"], 5) for r in res}}, notes=str(RUNS / "cma_summary.json"))
+    ledger.append("DP", "metanet-v4-calib", "S", "metanet_v4_cmaes_selection", {"code_commit": commit, "T_s": T_RUN},
+                  "selection only", len(SEEDS), {},
+                  {"nominal_seed": best["seed"], "nominal_J": round(best["best_J"], 5), "continued": continued},
+                  notes=str(RUNS / "cma_summary.json"))
     return summary
 
 
@@ -374,6 +437,7 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=SEEDS[0])
     ap.add_argument("--continue-to", type=int, default=None)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--continue-only", action="store_true")
     a = ap.parse_args(argv)
     if a.what == "prep":
         print(prep())
@@ -383,7 +447,7 @@ def main(argv=None) -> int:
     elif a.what == "time":
         print(json.dumps(timing()))
     else:
-        s = run(a.gate_ok)
+        s = run(a.gate_ok, a.continue_only)
         print(json.dumps({k: s[k] for k in ("nominal_seed", "nominal_J", "continued_to_8000")}))
     return 0
 

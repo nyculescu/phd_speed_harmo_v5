@@ -427,6 +427,13 @@ def _ratio_cells(cal_use: list[str], part1: dict, q_ref: float, net, cells: list
     return out
 
 
+def f16_cells(net) -> list:
+    """§A4 (ii): the F16 domain from the build: the cells read by Anderson Lakes Pkwy and Pioneer Tr, and every cell
+    downstream of B2's last scaled cell (0-based)."""
+    sc = {st["id"]: st["cell"] for st in net.stations}
+    return [sc["S1147"], sc["S1140"]] + list(range(net.b2_cells[-1] + 1, net.N))
+
+
 def main_v4() -> int:
     """Protocol v4 §A6 step 3: the recompute list only -> docs/lab/day_pattern/metanet_v4_precal_facts.json. Reused
     facts are read from the v3 file, never written."""
@@ -450,11 +457,11 @@ def main_v4() -> int:
                     "stations": {st["id"]: {"cell": st["cell"] + 1, "corr_entr": st["corr_entr"],
                                             "corr_exit": st["corr_exit"]} for st in net.stations}},
              "F16": {"report_only": True, "Q_ref_vphpl": q_ref, "n_cal_days": len(cal_use),
-                     "cells": _ratio_cells(cal_use, p1, q_ref, net, [26, 31] + list(range(34, net.N)),
-                                           anchor={i: "S1141" for i in range(34, net.N)}),
+                     "cells": _ratio_cells(cal_use, p1, q_ref, net, f16_cells(net),
+                                           anchor={i: "S1141" for i in range(net.b2_cells[-1] + 1, net.N)}),
                      "step": "(b), adopted without condition (§A4 (i))"},
              "F14_G1G2_ratios": {"report_only": True,
-                                 "cells": _ratio_cells(cal_use, p1, q_ref, net, list(range(0, 26)))},
+                                 "cells": _ratio_cells(cal_use, p1, q_ref, net, [i for i in range(net.N) if net.group[i] in (0, 1)])},
              "F7_cells_restated": {"X12": next(x["cell"] + 1 for x in net.exits if x["id"] == "X12"),
                                    "X13": next(x["cell"] + 1 for x in net.exits if x["id"] == "X13"),
                                    "outcome": {k: v3["F7"][k]["outcome"] for k in ("B1", "B2")}}}
@@ -469,6 +476,7 @@ def main() -> int:
 
 
 def main_v3_frozen() -> int:
+    raise SystemExit("protocol v3 facts are frozen (code at tag metanet-v3-stop)")
     p1 = json.loads((RUNS / "precal_part1.json").read_text())
     cal, val = p1["split"]["calibration"], p1["split"]["validation"]
     cal_use, val_use = p1["usable"]["calibration"], p1["usable"]["validation"]

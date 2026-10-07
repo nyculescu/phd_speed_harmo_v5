@@ -78,6 +78,11 @@ def test9_build_checks_and_variants(net4):
         assert list(n.km_from[:35]) == pytest.approx(list(net4.km_from[:35]))
         assert n.b1_cells == net4.b1_cells and n.b2_cells == net4.b2_cells
     assert list(weave.lam[32:34]) == [3, 3]
+    assert list(weave.group) == list(net4.group)                       # weave changes only lambda (and E14's event)
+    assert {e["id"] for e in weave.entrances if not e["merging"]} == {"E9", "E10", "E11", "E14", "E15"}
+    for n in (weave, sa, sc):
+        for st in n.stations:
+            assert st["cell"] + 1 == STATION_CELL[st["id"]] and (st["corr_entr"], st["corr_exit"]) == CORR.get(st["id"], ([], []))
     assert list(sa.lam[35:39]) == [3, 3, 3, 3]
     assert sc.N == 35 and not any(g == 3 for g in sc.group)
 
@@ -96,10 +101,15 @@ def test2_conditions_and_gate(net4):
     assert c["a"] == pytest.approx(0.208, abs=5e-4) and c["b"] == pytest.approx(0.234, abs=5e-4)
     assert c["c"] == pytest.approx(0.075) and c["d"] == pytest.approx(0.541, abs=5e-4)
     assert c["f"] == pytest.approx(0.713, abs=5e-4)
+    assert c["d_cell"] == 1 and c["f_cell"] == 1
     r = M.vn_scan(T, net4.L)
-    assert r["PASS"] and r["worst_stable_growth"] <= M.VN_EPS
+    assert r["PASS"] and r["n_stable"] > 0 and r["worst_stable_growth"] == pytest.approx(1.10e-5, rel=0.05)
+    assert r["worst_state"]["kind"] == "floorVp"
+    bad = M.vn_scan(1.25, net4.L)                              # the gate can fail: 1.25 s fails it
+    assert not bad["PASS"] and bad["n_stable_above_eps"] == 217
+    assert bad["worst_stable_growth"] == pytest.approx(4.95e-3, rel=0.02)
     for Tbad in (5.0, 2.5):                                    # (ii): the v4 table rejects v3's steps
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="§A2"):
             M.simulate(net4, feasible(), inputs(net4), T_s=Tbad)
     # the ladder rule picks 0.75 s: 1.25 and 1.0 fail (a)
     ok = [t for t in M.T_LADDER_V4 if M.v4_conditions(net4, t)["a"] <= 0.25]
@@ -110,7 +120,7 @@ def test2_shock_no_negative_speed_or_overflow(net4):
     shape = np.where(np.arange(NB) % 6 < 3, 6000.0, 0.0)
     ne, nx = len(net4.entrances), len(net4.exits)
     inp = M.Inputs(d0=shape[None, :].copy(), d_o=np.full((1, ne, NB), 1500.0), beta=np.full((1, nx, NB), 0.0))
-    o = M.simulate(net4, feasible(nu=90.0, kappa=5.0, tau=10.0), inp)
+    o = M.simulate(net4, feasible(nu=90.0, kappa=5.0, tau=10.0, delta_m=4.0, phi=4.0), inp)
     assert np.all(o.v_cell >= M.V_MIN - 1e-9) and np.all(o.rho_cell <= M.RHO_MAX + 1e-9) and not o.nonfinite.any()
 
 
@@ -157,40 +167,69 @@ def test20_station_cells_never_scaled(net4):
 
 
 # ---------------------------------------------------------------- test 15: relocation domain 35-39 and c2*
-def test15_relocation_on_cells_35_39_and_c2_star(net4):
+def _b2_sweep(net4):
+    """Pinned smooth scenario: d0 3,600, E14 900, E15 300 veh/h, 90-min ramp to the 15:30-18:00 peak, c1 = 1.2."""
     ne, nx = len(net4.entrances), len(net4.exits)
     h = 4.0 + np.arange(NB) / 12.0
-    shape = np.where((h >= 15) & (h < 18), 1.0, 0.5)
+    shape = np.clip(0.5 + 0.5 * (h - 14.0) * 60 / 90, 0.5, 1.0) * (h < 18) + 0.5 * (h >= 18)
+    ids = [e["id"] for e in net4.entrances]
     d_o = np.full((1, ne, NB), 50.0) * shape
-    d_o[0, [e["id"] for e in net4.entrances].index("E14")] = 900.0 * shape
-    inp = M.Inputs(d0=(3800.0 * shape)[None, :], d_o=d_o, beta=np.zeros((1, nx, NB)))
+    d_o[0, ids.index("E14")] = 900.0 * shape
+    d_o[0, ids.index("E15")] = 300.0 * shape
+    inp = M.Inputs(d0=(3600.0 * shape)[None, :], d_o=d_o, beta=np.zeros((1, nx, NB)))
     c2s = np.round(np.arange(0.80, 1.2001, 0.05), 2)
-    p = feasible()
-    o = M.simulate(net4, {k: np.full(len(c2s), v) for k, v in p.items()}, inp, n_param_sets=len(c2s), c1=1.2, c2=c2s)
+    o = M.simulate(net4, {k: np.full(len(c2s), v) for k, v in feasible().items()}, inp, n_param_sets=len(c2s),
+                   c1=1.2, c2=c2s)
+    return c2s, o
+
+
+def test15_relocation_on_cells_35_39_and_c2_star(net4):
+    c2s, o = _b2_sweep(net4)
     first = net4.b2_cells[-1] + 1
     assert first + 1 == 35
-    flags, binds = {}, {}
+    written, refined, binds = {}, {}, {}
     for i, c2 in enumerate(c2s):
         rho, rc = o.rho_cell[i][:, 12:], o.rc_cell[i][:, 12:]
-        over = (rho[first:] > rc[first:]).astype(int)
-        binds[float(c2)] = bool(any((np.convolve(r, np.ones(3, int), mode="valid") == 3).any() for r in over))
-        flags[float(c2)] = Q.relocation({}, rho, rc.mean(axis=1), first)["flag"]
-    assert flags == binds
-    if any(flags.values()):
-        c_first = min(c for c, b in flags.items() if b)
-        assert not any(flags[c] for c in flags if c < c_first)
-        assert Q.c2_star(flags, grid=c2s) == (max(c for c in c2s if c < c_first) if c_first > c2s[0] else None)
+        assert (rho[net4.b2_cells] > rc[net4.b2_cells]).any() or c2 >= 1.15     # B2 congested over the low range
+        written[float(c2)] = Q.relocation({}, rho, rc, first, exclude_adjacent_jam=False)["flag"]
+        refined[float(c2)] = Q.relocation({}, rho, rc, first, exclude_adjacent_jam=True)["flag"]
+        free_b2 = ~(rho[first - 1] > rc[first - 1])                                 # independent re-derivation
+        binds[float(c2)] = any(((np.convolve(((rho[c] > rc[c]) & free_b2).astype(int), np.ones(3, int),
+                                             mode="valid")) == 3).any() for c in range(first, net4.N))
+    # as written, the acceleration-zone transient next to an active B2 jam flags every c2 (2026-10-07 finding)
+    assert all(written.values())
+    # with the refinement, the flag first fires at 1.10 and not below; c2* = 1.05
+    assert refined == binds
+    c_first = min(c for c, b in refined.items() if b)
+    assert c_first == 1.10 and not any(refined[c] for c in refined if c < c_first)
+    assert Q.c2_star(refined, grid=c2s) == 1.05
+    assert Q.c2_star({0.8: True, 0.81: False}, grid=[0.8, 0.81]) is None
     free = np.zeros((net4.N, 216))
     assert Q.relocation({Q.RELOC_PAIR: [(10, 20)]}, free, np.ones(net4.N), first) == {"flag": True, "cells": [],
                                                                                    "pair": True}
+    assert not Q.relocation({("S1140", "S1141"): [(10, 20)]}, free, np.ones(net4.N), first)["flag"]
 
 
 # ---------------------------------------------------------------- test 18b: clipping at T and T/2
-def test18b_clipping_share_t_and_t_half(net4):
+def test18b_clipping_floor_classification_and_t_half(net4):
     a = M.simulate(net4, feasible(), inputs(net4, d0=1800.0), T_s=T)
     b = M.simulate(net4, feasible(), inputs(net4, d0=1800.0), T_s=T / 2)
-    assert a.clipped_share[0] >= 0 and b.clipped_share[0] >= 0
     assert abs(a.q_st[0, :, 30:].mean() - b.q_st[0, :, 30:].mean()) / a.q_st[0, :, 30:].mean() < 0.01
+    # forced floors (the classification code does not depend on T; a 5-s toy is allowed outside v4 tables):
+    # an 8-cell toy with a deep jam behind a weak section (c1 = 0.3) gives both floor kinds.
+    n = 8
+    kf = np.arange(n) * 0.4
+    st = [{"id": f"S{i}", "km": kf[i] + 0.4, "label": "", "dets": [], "cell": i, "corr_entr": [], "corr_exit": []}
+          for i in range(n)]
+    toy = M.Net("toy", kf, kf + 0.4, np.full(n, 0.4), np.full(n, 2.0), np.full(n, 2), [], [], [], st, -1, [6, 7], [],
+                head1=6)
+    p = M.midpoint_params() | {"nu": 90.0, "kappa": 5.0, "tau": 10.0, "theta1": 1.0}
+    o = M.simulate(toy, p, M.Inputs(d0=np.full((1, NB), 3500.0), d_o=np.zeros((1, 0, NB)), beta=np.zeros((1, 0, NB))),
+                   c1=0.3, T_s=5.0)
+    nj, jm, cl = o.floor_nonjam_share[0], o.floor_jam_share[0], o.clipped_share[0]
+    assert nj > 0 and jm > 0
+    assert cl >= nj - 1e-15                                  # non-jam floors are counted as clipped
+    assert cl < nj + jm                                      # jam floors are reported only
 
 
 # ---------------------------------------------------------------- test 19: A3
@@ -224,6 +263,13 @@ def test19_a3_penalty_not_simulated_and_graded(net4, monkeypatch):
         assert (Q.a3_warm_start(feasible(vf3=vf3), thr) is not None) == feas
     w = Q.a3_warm_start(feasible(a2=1.0), thr)
     assert w["vf2"] * math.exp(-1 / w["a2"]) >= thr[1] - 1e-9
+    assert w["a2"] == pytest.approx(1.0 / math.log(w["vf2"] / thr[1]), rel=1e-6)        # minimal raise
+    assert all(w[k] == feasible(a2=1.0)[k] for k in ("a1", "a3", "a4", "vf1", "vf2", "vf3"))
+    calls.clear()                                            # a mixed batch: only feasible rows are simulated
+    Xm = np.vstack([good, bad1, good])
+    Jm, pm = C.objective(Xm, data, net4, return_parts=True)
+    assert calls == [2] and list(pm["feasible_index"]) == [0, 2] and list(pm["a3_violation"]) == [False, True, False]
+    assert Jm[1] > 10.0 and Jm[0] == Jm[2]
 
 
 # ---------------------------------------------------------------- test 21: P11-k classifier and the toy
@@ -258,6 +304,18 @@ def test21_p11_classifier():
     assert r["B2"]["share"] == 0.5 and not r["B2"]["unbacked"] and half["B2"]["unbacked"]
     v = Q.p11_verdict({f"d{i}": _p11_case([23]) for i in range(22)})
     assert v["tolerance"] == 3 and not v["B1"]["PASS"]
+    # pooling over two episodes: 5 qualifying bins in total, 1 backed -> share 0.2 -> unbacked
+    speeds = {s_: np.full(20, 60.0) for s_ in scell}
+    speeds["S1773"][[2, 3, 10, 11, 12]] = 30.0
+    cong = np.zeros((39, 20), bool)
+    cong[27, 2] = True
+    r = Q.p11_core(speeds, {("S1773", "S1140"): [(1, 4), (9, 13)], P2: []}, cong, scell)
+    assert r["B1"]["n_qualifying"] == 5 and r["B1"]["share"] == 0.2 and r["B1"]["unbacked"]
+    for n, k_ok in ((22, 3), (19, 2)):                       # tolerance max(2, ceil(0.10 n))
+        days = {f"d{i}": (_p11_case([23]) if i < k_ok else _p11_case([27])) for i in range(n)}
+        assert Q.p11_verdict(days)["B1"]["PASS"]
+        days[f"d{k_ok}"] = _p11_case([23])
+        assert not Q.p11_verdict(days)["B1"]["PASS"]
 
 
 def test21_iv_lane_drop_toy_reads_slow_without_a_queue():
@@ -293,13 +351,18 @@ def test22_no_v4_job_writes_v3_paths():
     assert Z.RECORD == "metanet_v4_calibration" and G.FREEZE.name == "metanet_v4_calibration.json"
     with pytest.raises(SystemExit):
         F.main()                                            # the v3 facts writer refuses
+    with pytest.raises(SystemExit):
+        F.main_v3_frozen()
     v3_names = ("metanet_precal_facts.json\"", "metanet_calibration.json\"", "metanet_calibration.md\"")
     for mod in ("vsl_lab/jobs/metanet_calibrate.py", "vsl_lab/jobs/metanet_postcal.py",
-                "vsl_lab/jobs/metanet_freeze.py", "vsl_lab/jobs/metanet_gate.py"):
+                "vsl_lab/jobs/metanet_freeze.py", "vsl_lab/jobs/metanet_gate.py", "vsl_lab/data/metanet_facts.py"):
         src = (REPO / mod).read_text()
         assert not re.search(r"V3_RUNS\s*/[^\n]*\.write_", src), mod
         for nm in v3_names[1:]:
             assert nm not in src, (mod, nm)
+    from vsl_lab.data.metanet_facts import f16_cells
+    assert [c + 1 for c in f16_cells(M.build_network("v4"))] == [27, 32, 35, 36, 37, 38, 39]
+    assert [c + 1 for c in f16_cells(M.build_network("v4_step_c"))] == [27, 32, 35]
 
 
 # ---------------------------------------------------------------- test 23: F16 per-cell sources

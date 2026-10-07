@@ -1,0 +1,145 @@
+{
+ "verdict": "Not safe to launch at HEAD 549ab7b. It is safe to launch once the 6 must-fix items are done (about 1-2 h of work, no simulation needed).\n\nI checked line numbers against HEAD: metanet_calibrate.py verify_v3 at 46-56, restart() at 240-275, run() at 345-367; metanet_postcal.py _batch at 455-457.\n\nMust-fix before launch:\n1. \u00a7A9 v3-manifest re-verification is missing after every batch. This is a protocol violation; the v3 data is intact today (268/268 files match).\n2. run() in metanet_calibrate.py:\n   - no ledger row for a failed batch or for the continuation batch;\n   - a stale result file from an earlier attempt can be read silently;\n   - the continuation batch skips the start gate;\n   - a continuation silently cold-starts if its saved state is missing;\n   - the commit recorded in the ledger is read at the end of the run, not at launch.\n3. Step-halving converts the stored best_x to parameters and back. At the A3 boundary this round trip can make the check pass vacuously.\n4. Test 15 is vacuous. On synthetic inputs, relocation fires at c2 = 0.80 because of the onset front at B2. This could push c2* below the grid and decide a stop route. The test needs fixing, and the author needs to rule on this before grid-run at the latest; I recommend before launch.\n5. Tests 19 and 18b are weaker than \u00a7A10 requires on the calibration objective path. Both should pass on the current code.\n6. The launch notice must state that F1 (calibration, gate and freeze) is not implemented, so the 37.8 h worst case does not include runnable F1 code.\n\nThese must be fixed after launch but before a later step:\n- before finalize (freeze): PF-1/G4, PF-2/CAL-5, PF-6, PF-7, M3/PF-5;\n- before the gate: G2, G3, G5, G7;\n- before the weave sensitivity run: M1/T9.\n\nNone of the remaining items changes calibration results. Severity in the fix list follows the verified verdicts. G1 is rated blocking because it violates a binding protocol rule; it does not change any number.",
+ "fixes": [
+  {
+   "severity": "blocking",
+   "where": "vsl_lab/jobs/metanet_calibrate.py:46-56, 345-367; vsl_lab/jobs/metanet_postcal.py:455-457 (+ stephalving branch); vsl_lab/jobs/metanet_gate.py:~668; vsl_lab/jobs/metanet_freeze.py finalize (merges G1, CAL-1, A9-manifest-reverify)",
+   "defect": "\u00a7A9 requires the v3 manifest to be re-verified after every v4 batch. verify_v3() is only ever called on one file at a time (precal_part1.json, calib_data.npz). The full-manifest check (names=None) runs nowhere, and no batch driver checks anything after it finishes.",
+   "change": "1. In metanet_calibrate.py, call verify_v3() once at the start of run(), and wrap each run_batch as `try: rep = run_batch(...) finally: verify_v3()`. Add \"v3_manifest_ok\": True to each ledger row and to cma_summary.json.\n2. In metanet_postcal._batch: `try: return run_batch(...) finally: C.verify_v3()`. Also call C.verify_v3() at the end of the stephalving branch, before its ledger row.\n3. In metanet_gate.py, call C.verify_v3() after the draws run_batch.\n4. In metanet_freeze.finalize, call C.verify_v3() at the start and again before the record is written.\n5. Optional: in verify_v3, replace `f.lstrip(\"./\")` with `f.removeprefix(\"./\")`.\n\nThe full check costs about 0.06 s.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "major",
+   "where": "vsl_lab/jobs/metanet_calibrate.py:345-367 run(), 248-256 restart(); vsl_lab/ops/ledger.py:31-34 (merges CAL-2, CAL-3, CAL-4, CAL-8, CONT-gate-bypass)",
+   "defect": "Five problems in run() and restart():\n(a) If any restart fails, reading the cma_restart_*.json files raises FileNotFoundError before ledger.append, so the batch gets no ledger row and no summary. A crash in the continuation also loses the base batch's row.\n(b) The continuation batch has no ledger row of its own, and the base J values never reach the summary or the freeze record (v3 \u00a74.4 'both logged').\n(c) A cma_restart_<s>.json left over from an earlier attempt is read silently.\n(d) The continuation batch is launched with gate_ok=True, so the load and v6-idle check is skipped hours into the run (\u00a7A9, CLAUDE.md).\n(e) restart(--continue-to) silently cold-starts with BUDGET=4000 when cma_state_<s>.pkl is missing, and labels the result _cont.\nAlso, the ledger reads the commit at append time, at the end of the run, and the untracked docs always mark it +dirty.",
+   "change": "1. Add a helper `_cal_batch(tag, jobs, suffix, gate_ok)` that:\n   - unlinks cma_restart_{s}{suffix}.json for every seed before the batch;\n   - runs `try: rep = run_batch(...) finally:` and, in the finally block, reads the files that exist, lists the missing seeds, appends one ledger row (T_s, proc_failed, missing_seeds, J_by_seed, code_commit) and calls verify_v3();\n   - raises RuntimeError if any seed is missing.\n2. Use it for the base batch (`res_base`) and for the continuation (`res`).\n3. Before the continuation:\n   - wait until load_fraction() < SIM_START_MAX_LOAD (poll every 30 s, give up after 30 min);\n   - if still over the limit, write cma_base_summary.json and a ledger row 'continuation pending: load gate', then exit non-zero (resume with a `--continue-only --gate-ok` path);\n   - otherwise call run_batch(..., gate_ok=False).\n4. Add \"restarts_base\" to cma_summary.json, and copy it into convergence.restarts_base in metanet_freeze.\n5. Make the final ledger row a selection row only (nominal_seed, nominal_J, continued).\n6. In restart(): `if continue_to and not state.exists(): raise RuntimeError(f'no CMA state for {seed}')`, and after the loop `assert es.countevals >= budget`.\n7. At the start of run(), capture `code_commit = git rev-parse HEAD` and check `git status --porcelain -- vsl_lab` is empty. Store both in cma_summary.json and in every ledger row. Do not commit to vsl_lab during the run.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "major",
+   "where": "tests/test_metanet_v4.py:160-185 (test15); vsl_lab/jobs/metanet_postcal.py relocation/c2_star (grid_job)",
+   "defect": "Test 15 (\u00a7A10) is vacuous. On its own inputs, relocation already fires at the lowest c2 = 0.80, so the 'not below c_first' assertion runs over an empty set and c2_star is only checked against None. The flags are also non-monotone (0.90 = F). binds copies relocation()'s own logic, and v3's negative cases were dropped. The underlying behaviour matters: in every scenario tried, including smooth 60-min ramps, the B2 breakdown front puts cell 35 above rho_cr for 3-4 bins at c2 = 0.80. Relocation (a) can therefore fire on that transient, push c2* below the grid minimum, and through rule (iv) decide a stop route.",
+   "change": "1. Remove the `if any(flags.values())` guard.\n2. Compute rc per c2 with Q.cell_rc(net4, p, 1.2, c2), and compute binds independently, for cell index 34 only.\n3. Assert:\n   - flags[c2s[0]] is False;\n   - any(flags.values()) and flags[c_first];\n   - no flag below c_first;\n   - c2_star == max(c < c_first).\n4. Restore the v3 negatives:\n   - B2 congested at every c2;\n   - relocation({('S1140','S1141'):[(10,20)]}, ...)['flag'] is False;\n   - c2_star({0.8:True, 0.81:False}, grid=[0.8, 0.81]) is None.\n5. Find inputs where cell 35 is free at the lowest c2 (raise E15, lower E14). If none exist, report that to the author.\n6. Before launch, or at latest before grid-run: get an author ruling on onset-transient relocation, for example requiring that the cell-35 binding run is not contiguous with the B2 congested region. Record it as a protocol addendum, not as a silent code change.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_postcal.py:291-298 (stephalving x = C.to_norm(p)); vsl_lab/jobs/metanet_freeze.py:326-327 (PF-3)",
+   "defect": "Step-halving and diagnostics rebuild the normalised vector by converting stored parameters back with to_norm(plant_params()). That float round trip can lose about 1 ulp. If the optimum sits on the A3 boundary (expected at G2/G3), the point can flip to infeasible. Then J_T = J_T/2 = 10 with no simulation, and the N0 |\u0394J|/J criterion passes vacuously. J_T is also no longer guaranteed to equal nominal_J, which was v3's provenance check.",
+   "change": "In both functions, use the stored vector: `r = next(r for r in summary['restarts'] if r['seed']==seed); x = np.array(r['best_x'])[None, :]`.\nThen assert:\n- `not parts['a3_violation'][0]`;\n- `abs(J_T - r['best_J']) <= 1e-12*max(1, abs(r['best_J']))`.\nOnly after both pass, compute rel_change.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "minor",
+   "where": "tests/test_metanet_v4.py:197-226 (test19), 189-193 (test18b)",
+   "defect": "Test 19 never sends \u00a7A10's 'explicit A3-feasible set' through objective(), and never checks a batch that mixes feasible and violating rows. It also does not check that the warm start is minimal. Test 18b asserts only clipped_share >= 0, which is always true, and never forces the floor classification: a non-jam floor counted as clipped versus a jam floor excluded. Both cover the calibration objective path. The code passed a synthetic check for test 19; test 18b's classification is unverified.",
+   "change": "Test 19:\n- With the spy, evaluate Xm = vstack([good, bad1, good]) on 1-day synthetic data;\n- assert calls == [2], Jm[[0,2]] < 10, Jm[0] == Jm[2], pm['feasible_index'] == [0,2], and a3_violation == [F,T,F];\n- assert w['a2'] == approx(1/log(vf2/thr[1]), rel=1e-6), and that the other a_g and vf_g are unchanged.\n\nTest 18b, as toy stretches at T = 0.75 s:\n- one light cell with a forced floor: assert floor_nonjam_share > 0 and that it is counted in clipped_share;\n- one jammed cell: assert floor_jam_share > 0 and that it is excluded from clipped_share.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "minor",
+   "where": "author notice / vsl_lab/jobs/metanet_calibrate.py:37 (SEEDS_F1 unused); metanet_postcal, metanet_freeze, metanet_gate:33-35, 211-214, 537-541 (merges CAL-7, PF-8, G7)",
+   "defect": "F1 is not implemented anywhere:\n- no n = 19 restart on seeds 7,191,018-025;\n- simulate is never called with f1=;\n- no F1 freeze, and no P11-k check at F1's freeze;\n- seed 7,191,302 is not defined in the gate.\nThe 37.8 h worst-case notice implies F1 can run.",
+   "change": "In the launch message, state that F1 is not part of this run and its code does not exist yet. Before the base gate runs, implement and test:\n- NAMES_F1 in \u00a7A5 order, plus SEEDS_F1;\n- f1= passed through simulate, grid and gate;\n- an F1 freeze record with P11-k;\n- SEED_BOOT_F1 = 7191302.\nThen F1's design does not postdate validation results.",
+   "must_fix_before_run": true
+  },
+  {
+   "severity": "major",
+   "where": "vsl_lab/jobs/metanet_freeze.py:586-601, 639-641; vsl_lab/jobs/metanet_gate.py:465-470 (merges PF-1, G4)",
+   "defect": "\u00a7A12 requires P11-k on calibration days for each ensemble candidate, but it is computed only for the nominal plant. Candidates get stephalving_PASS = None when the step-halving file is missing, and their grids are dropped silently. The rule text in the record narrows P11-k to validation days.",
+   "change": "Before finalize, in the candidate loop:\n- raise SystemExit if stephalving_{seed}.json or any grid_{seed}_c2_*.json is missing;\n- set c['p11_calibration'] = p11_at_freeze(data, net, cs, days, seed=c['seed']);\n- set c['admissible_calibration'] = stephalving PASS and P11 PASS;\n- store c['params'] = best_params.\nKeep this a filter only (no route stop). Fix the rule text and report_md, and add a driver that runs stephalving and grid-run with --plant for each candidate.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "major",
+   "where": "vsl_lab/jobs/metanet_gate.py:176-182, 211 -> metanet_postcal.py:44-49 (G2)",
+   "defect": "The gate guard checks the committed freeze record, but then simulates parameters read from the untracked, writable RUNS/cma_summary.json, and step-halving from RUNS/stephalving_{seed}.json. A rewrite of these files after the freeze would spend the single validation look on parameters that were never frozen.",
+   "change": "Before any gate step:\n- in plant(), take the parameters from fz['frozen_params'], or from the candidate's committed 'params';\n- raise SystemExit unless they equal Q.plant_params(seed) exactly;\n- reject any seed that is not among the recorded candidates;\n- in deterministic(), read candidate step-halving from the record;\n- add a unit test that perturbs cma_summary.json and expects plant() to raise.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "major",
+   "where": "vsl_lab/plants/metanet.py:293-304 (build_network_v4); tests/test_metanet_v4.py:73-82 (merges M1, T9-weave-G4)",
+   "defect": "In 'v4_weave', cells 36-39 fall in G3 instead of G4, and E15 merges (\u03b4_m applies). \u00a7A1 says the weave changes only \u03bb in cells 33-34, and the run uses the frozen v4 parameters (V9, \u03c1_cr,G4, a_G4). The weave sensitivity would therefore mix three model changes into one number. No calibration job uses this variant.",
+   "change": "Before any weave run:\n- in the `adds` dict: 'v4_weave': {'E9','E10','E11','E14','E15'};\n- change the G4 block to `if variant in ('v4','v4_weave'):`;\n- extend test 9 for every variant: groups, lane-adding sets, merge logs, station cells and corr lists;\n- for step_a, get the author's reading and assert it.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_freeze.py:326-328 (diagnostics); metanet_calibrate.py:143-152, 196-204 objective (merges PF-2, CAL-5)",
+   "defect": "When no row is A3-feasible, parts['parts'] and Jd are None, and feasible_index is missing. On the \u00a7A3 (d) 'no admissible restart' stop route, diagnostics() fails with None[0], so that route's stop record cannot be written. This is unlikely: the data-free replay reached feasibility by evaluation 27.",
+   "change": "Before freeze:\n- in finalize, if s['no_admissible_restart'], write the STOP record and skip the J-term diagnostics;\n- in diagnostics, report the J terms as None when parts['parts'] is None;\n- optionally, have objective() always return feasible_index, with row-aligned NaN-filled arrays.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_gate.py:161-173, 477, 616, 650 (G3)",
+   "defect": "\u00a7A6 item 6 requires that only committed code reads validation days. The guard checks only the freeze record. It does not check that vsl_lab is clean, and the gate outputs do not record the commit. The gate prep step has no ledger row.",
+   "change": "Before gate prep:\n- in freeze(), raise SystemExit if `git status --porcelain --untracked-files=all -- vsl_lab` is not empty;\n- store `git rev-parse HEAD` as code_commit in gate_det_*.json, gate_sto_*.json and their ledger rows;\n- give prep its own ledger row.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/plants/metanet.py:546-650 simulate, 693-746 vn_scan; metanet_freeze.py (merges M2, VN-report-only)",
+   "defect": "Several \u00a7A2 / \u00a7A10 test 2 (iii) report-only items are not implemented:\n- the per-step maximum \u03c6 factor in cell 23 (this cannot be rebuilt from bin means);\n- the Payne-type diagnostic per group;\n- from vn_scan: excess growth in unstable states, states that are continuum-stable but semi-discretely unstable, and states in the 1e-9 tolerance band.",
+   "change": "In simulate, track phimax = max over steps of 2\u00b7phi\u00b7T\u00b7rho\u00b7v/(L\u00b7lam\u00b7rc) at phi_cell, and return it in SimOut. Add payne_diagnostic(params, net), reusing vn_scan's A(\u03b8) code on each group's shortest cell, and call it from the freeze report. Make vn_scan return worst_unstable_growth, n_continuum_stable_semidiscrete_unstable and n_tolerance_band.\n\nThe freeze re-simulates the nominal plant, so this can land before finalize. Adding it before launch avoids a post-results addition.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/plants/metanet.py:647 (w0_rec); vsl_lab/jobs/metanet_freeze.py:343-346 (merges M3, PF-5)",
+   "defect": "\u00a7A13 item 2 asks for origin misfit minutes as defined in v3 \u00a72.3: w_o > 0 for at least 15 consecutive minutes. The code counts 5 min for every bin whose bin-mean w0 exceeds 1e-6. It applies no run-length condition and includes the 04:00-05:00 warm-up.",
+   "change": "In simulate, record the per-bin count of steps with w[:,0] > 1e-9. In freeze, convert steps to minutes, keep only runs of at least 15 min within EV0:EV0+NEV, then split by the \u03c11 versus \u03c1_cr,1 flag.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_postcal.py:266-282, 310-313 (_margins) (PF-4)",
+   "defect": "\u00a7A2 asks for signed m_v and m_d at every bin of every window that reaches the maximum, plus every bin whose status differs between T and T/2. The code reports only the first argmax window, drops the per-bin cond vectors, and reports bins 0-6 when no bin qualifies.",
+   "change": "Store cond_T and cond_T2 per day. Report m_v and m_d at the union of every window reaching the maximum and flatnonzero(cond_T != cond_T2). Report empty lists when w.max() == 0.\n\nThis is report-only, but step-halving would otherwise have to be re-run. Fixing it in the same pass as item 4 is recommended.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_postcal.py:349-355; vsl_lab/jobs/metanet_freeze.py:631-634, 647 (merges PF-6, PF-7)",
+   "defect": "Two record problems:\n- the freeze record drops the per-restart a3_at_best (v_c \u2212 thr and the A3-active flag) and a3_violating_share required by \u00a7A3 (g);\n- r_u and r_dv can be NaN or inf, which json.dumps writes as non-standard JSON into the committed record.",
+   "change": "Add 'a3_at_best' and 'a3_violating_share' to the key tuple and as a report_md column. Store None when a value is non-finite or its denominator is 0. Write the record with json.dumps(..., allow_nan=False).",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_gate.py:656-659 (G5)",
+   "defect": "The deterministic gate ledger row omits T. The draws and stochastic rows hard-code 'T = 0.75 s' instead of using C.T_RUN, which breaks \u00a7A9's 'every row states its T'.",
+   "change": "Add 'T_s': C.T_RUN to the params of all three rows, and build the text with f\"T = {C.T_RUN} s\".",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/jobs/metanet_calibrate.py:113-126 prep, 168-170 load_data (CAL-6)",
+   "defect": "prep() writes calib_data.npz before comparing it with v3's. When the comparison fails, the differing file stays where load_data() reads it. The file is equal today.",
+   "change": "In prep, write to a temporary file and rename it only after the equality check passes. Alternatively, have load_data() call verify_v3-style hashing against V3_RUNS/calib_data.npz once per process.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/data/metanet_facts.py:471, 549; tests/test_metanet_v4.py:287-302 (G8 + test 22 part of A9 item)",
+   "defect": "main_v3_frozen() can still be imported and still writes the v3 facts file and RUNS/precal_facts_full.json. Test 22 is a static regex scan that skips metanet_facts.py, not the read-only-copy run \u00a7A10 asks for.",
+   "change": "Make main_v3_frozen raise SystemExit, or delete it, since it is preserved at tag metanet-v3-stop. Rework test 22 to run on a read-only temporary copy of the v3 paths, with write functions monkeypatched to raise. Add metanet_facts.py to the scan.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "vsl_lab/data/metanet_facts.py:451-457; tests/test_metanet_v4.py:306-314 (merges G6, T23-domain)",
+   "defect": "The F16 and F14 domains are hard-coded indices, while \u00a7A4 (ii) says the domain comes from the build. Test 23 never checks that cells 33-34 are excluded. The committed facts are correct for step (b).",
+   "change": "Add f16_cells(net) = [cell(S1147), cell(S1140)] + range(b2_cells[-1]+1, N), and derive F14 from the groups. Test that it returns [27, 32, 35..39] (1-based) on v4 and [27, 32, 35] on step_c.",
+   "must_fix_before_run": false
+  },
+  {
+   "severity": "minor",
+   "where": "tests/test_metanet_v4.py:94-114 (test 2), 128-135 (test 11), 230-260 (test 21) (merges T2-vn-nonvacuous, T2-shock-weakened, T11-episodes, T21-pooling-qualifying)",
+   "defect": "Several tests cannot fail on the cases they should cover, although the code under test was verified correct on synthetic checks:\n- vn_scan is never shown to fail (it does fail at 1.25 s: 217 states, 4.95e-3);\n- pytest.raises does not match on the message;\n- the shock test does not use delta_m = phi = 4;\n- test 11 never runs event_pairs on the v4 net;\n- test 21 does not check pooling across episodes, qualifying-bin-only counting, or the p11_verdict tolerance boundaries.",
+   "change": "Add these assertions:\n- vn_scan(1.25): not PASS, n_stable_above_eps == 217, worst \u2248 4.95e-3;\n- vn_scan(0.75): worst \u2248 1.10e-5 with kind 'floorVp', and n_stable > 0;\n- c['d_cell'] == c['f_cell'] == 1;\n- `match='\u00a7A2'` on every raises check.\nAlso:\n- add delta_m = 4 and phi = 4 to the shock test;\n- in test 11, call event_pairs for the B1 and B2 overloads;\n- add test 21 cases: share 0.25 pooled over two episodes, n_qualifying == 5, and the tolerance boundaries at n = 22 (3 vs 4 unbacked) and n = 19 (2 vs 3).",
+   "must_fix_before_run": false
+  }
+ ]
+}

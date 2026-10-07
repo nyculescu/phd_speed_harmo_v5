@@ -290,7 +290,7 @@ def build_network_v4(variant: str = "v4", verify: bool = True, rnodes: list | No
     lam = np.array([c[2] for c in cells], dtype=float)
     mid = 0.5 * (kf + kt)
     group = np.where(mid < GROUP_EDGES[0], 0, np.where(mid < GROUP_EDGES[1], 1, 2))
-    adds = {"v4": {"E9", "E10", "E11", "E15"}, "v4_weave": {"E9", "E10", "E11", "E14"},
+    adds = {"v4": {"E9", "E10", "E11", "E15"}, "v4_weave": {"E9", "E10", "E11", "E14", "E15"},
             "v4_step_a": {"E9", "E10", "E11", "E15"}, "v4_step_c": {"E9", "E10", "E11"}}[variant]
     entr = []
     for eid, km, label, kind, merging, dets in ENTRANCES:
@@ -298,7 +298,7 @@ def build_network_v4(variant: str = "v4", verify: bool = True, rnodes: list | No
             continue
         entr.append({"id": eid, "km": km, "label": label, "kind": kind, "merging": merging and eid not in adds,
                      "dets": dets, "cell": _cell_of(kf, kt, km, "downstream")})
-    if variant == "v4":                                       # G4 = the cell fed by E15 to the stretch end
+    if variant in ("v4", "v4_weave"):                        # G4 = the cell fed by E15 to the stretch end
         e15 = next(e["cell"] for e in entr if e["id"] == "E15")
         group = np.where(np.arange(len(kf)) >= e15, 3, group)
     exits = [{"id": x, "km": km, "label": lab, "det": det, "cell": _cell_of(kf, kt, km, "upstream")}
@@ -433,6 +433,8 @@ class SimOut:
     floor_jam_share: np.ndarray = None      # (B,) v_min floor activations with rho >= rho_cr (reported only)
     rc_cell: np.ndarray = None              # (B, N, bins) bin mean of the per-step effective rho_cr (v4 §A12)
     w0_bin: np.ndarray = None               # (B, bins) bin-mean mainstream-origin queue (veh; v4 §A13 item 2)
+    w0_steps: np.ndarray = None             # (B, bins) number of steps in the bin with a mainstream-origin queue
+    phi_factor_max: np.ndarray = None       # (B,) max per-step phi factor 2 phi T rho v/(L lam rho_cr) (v4 §A2)
 
 
 def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
@@ -547,6 +549,8 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     v_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
     rc_rec = np.zeros((B, N, nb)) if record_cells else None
     w0_rec = np.zeros((B, nb))
+    w0_cnt = np.zeros((B, nb))
+    phimax = np.zeros(B)
     eflow = np.zeros((B, ne, nb))
     xflow = np.zeros((B, nx, nb))
     oflow = np.zeros((B, nb))
@@ -612,6 +616,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
             if net.phi_cell >= 0:
                 i = net.phi_cell
                 v_n[:, i] -= phi[:, 0] * T * 1.0 * rho[:, i] * v[:, i] ** 2 / (L[0, i] * lam[0, i] * rc[:, i])
+                phimax = np.maximum(phimax, 2.0 * phi[:, 0] * T * rho[:, i] * v[:, i] / (L[0, i] * lam[0, i] * rc[:, i]))
             # limits and clipping count (§2.5)
             rho_c = np.clip(rho_n, 0.0, RHO_MAX)
             vclip_hi = v_n > vcap
@@ -645,6 +650,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
                 rc_rec[:, :, b] += rc
             eflow[:, :, b] += qo
             w0_rec[:, b] += w[:, 0]
+            w0_cnt[:, b] += w[:, 0] > 1e-9
             xflow[:, :, b] += sx
             oflow[:, b] += q[:, -1]
             # state update
@@ -665,7 +671,7 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     w0_rec /= spb
     oflow /= spb
     return SimOut(q_st, v_st, rho_rec, v_rec, clip_n / (N * nb * spb), qclip, w, wlong, nonfin, eflow, xflow, oflow,
-                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb), rc_rec, w0_rec)
+                  veh0, (rho * L_ * lam_).sum(axis=1), rho, v, fl_nj / (N * nb * spb), fl_j / (N * nb * spb), rc_rec, w0_rec, w0_cnt, phimax)
 
 
 T_S_V4 = 0.75                                  # protocol v4 §A2 (rule applied to the step-(b) table)
@@ -703,6 +709,7 @@ def vn_scan(T_s: float, lengths_km, n_theta: int = 181) -> dict:
     em = 1.0 - np.exp(-1j * TH)
     ep = np.exp(1j * TH) - 1.0
     worst, n_stable, n_bad, worst_state = 0.0, 0, 0, None
+    worst_unstable, n_tol_band = -np.inf, 0
     for vf in (80.0, 120.0, 150.0):
         for rc in (15.0, 30.0, 45.0):
             for a in (1.0, 2.0, 3.5):
@@ -734,6 +741,8 @@ def vn_scan(T_s: float, lengths_km, n_theta: int = 181) -> dict:
                     stable = re_max <= 1e-9 * mag
                     gr = (np.log(np.abs(1.0 + T_s * lam)) / T_s).max(axis=(0, 4))
                     n_stable += int(stable.sum())
+                    worst_unstable = max(worst_unstable, float(np.where(~stable, gr - re_max, -np.inf).max()))
+                    n_tol_band += int(((re_max > 0) & stable).sum())
                     g = np.where(stable, gr, -np.inf)
                     if g.max() > worst:
                         worst = float(g.max())
@@ -743,7 +752,41 @@ def vn_scan(T_s: float, lengths_km, n_theta: int = 181) -> dict:
                                        "a": a, "rho": float(rho0), "kind": kind}
                     n_bad += int((g > VN_EPS).sum())
     return {"T_s": T_s, "worst_stable_growth": worst, "n_stable": n_stable, "n_stable_above_eps": n_bad,
+            "report_only": {"worst_excess_growth_unstable_states": worst_unstable, "n_tolerance_band": n_tol_band},
             "worst_state": worst_state, "PASS": bool(worst <= VN_EPS)}
+
+
+def payne_diagnostic(params: dict, net: Net, T_s: float) -> dict:
+    """§A2 report-only, per FD group g and rho in {1.0, 1.25, 1.5, 1.75, 2.0} x rho_cr,g at the frozen parameters:
+    c = sqrt(nu rho / (tau (rho + kappa))) vs rho |V'(rho)| (km/h), and the maximum semi-discrete growth rate (1/s)
+    of the linearised cell update on g's shortest cell."""
+    p = {k: float(np.ravel(v)[0]) for k, v in params.items()}
+    vf = {0: p["vf1"], 1: p["vf2"], 2: p["vf3"], 3: p["vf3"]}
+    rcg = {0: p["rc1"], 1: p["rc2"], 2: p["rc3"], 3: p.get("rc4", p["rc3"])}
+    ag = {0: p["a1"], 1: p["a2"], 2: p["a3"], 3: p.get("a4", p["a3"])}
+    tau, nu, kap = p["tau"], p["nu"] * 1e6 / 3600.0, p["kappa"]
+    th = np.arange(182) * np.pi / 181
+    out = {}
+    for g in sorted(set(int(x) for x in net.group)):
+        Lm = 1000.0 * float(net.L[net.group == g].min())
+        rows = []
+        for r in (1.0, 1.25, 1.5, 1.75, 2.0):
+            rho = r * rcg[g]
+            V = vf[g] * np.exp(-(1.0 / ag[g]) * r ** ag[g])
+            Vp = -V * r ** (ag[g] - 1.0) / rcg[g]
+            c = np.sqrt(p["nu"] * rho / ((tau / 3600.0) * (rho + kap)))          # km/h
+            v0, Vps = V / 3.6, Vp / 3.6
+            em, ep = 1.0 - np.exp(-1j * th), np.exp(1j * th) - 1.0
+            a11, a12 = -(v0 / Lm) * em, -(rho / Lm) * em
+            a21 = Vps / tau - nu * ep / (tau * Lm * (rho + kap))
+            a22 = -1.0 / tau - (v0 / Lm) * em
+            tr, det = a11 + a22, a11 * a22 - a12 * a21
+            sq = np.sqrt(tr * tr / 4.0 - det)
+            lam = np.concatenate([tr / 2.0 + sq, tr / 2.0 - sq])
+            rows.append({"rho_over_rcr": r, "c_kmh": float(c), "rho_absVprime_kmh": float(rho * abs(Vp)),
+                         "max_growth_1_per_s": float(lam.real.max())})
+        out[f"G{g + 1}"] = rows
+    return out
 
 
 def assert_numerics_v4(net: Net, params: dict, T_s: float) -> None:

@@ -174,12 +174,32 @@ def freeze() -> dict:
 
 
 def plant(seed: int | None) -> tuple:
-    """Refuses to run when the freeze record says the route stopped (§2.5 / §8.6 step 4: no validation run)."""
+    """Parameters come from the committed freeze record only (§A9); the untracked run files must agree exactly.
+    Only the nominal plant and recorded ensemble candidates may be judged."""
     fz = freeze()
     if fz["route"].startswith("STOP"):
         raise SystemExit(f"route is '{fz['route']}' in {FREEZE.name}: the gate must not run (§8.6 step 4)")
     seed = fz["nominal_seed"] if seed is None else seed
-    return seed, Q.plant_params(seed)
+    if seed == fz["nominal_seed"]:
+        p = {k: float(v) for k, v in fz["frozen_params"].items()}
+    else:
+        c = next((c for c in fz["ensemble_candidates"]["candidates"] if c["seed"] == seed), None)
+        if c is None:
+            raise SystemExit(f"seed {seed} is not a recorded ensemble candidate")
+        p = {k: float(v) for k, v in c["params"].items()}
+    if p != Q.plant_params(seed):
+        raise SystemExit("run-file parameters differ from the committed freeze record: the gate must not run")
+    return seed, p
+
+
+def code_commit() -> str:
+    """§A6 (6): only committed code reads validation-day data."""
+    import subprocess
+    dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--untracked-files=all", "--", "vsl_lab"],
+                           capture_output=True, text=True).stdout.strip()
+    if dirty:
+        raise SystemExit("vsl_lab has uncommitted changes: the gate must not run (§A6 (6))")
+    return subprocess.run(["git", "-C", str(C.REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
 
 
 def nulls() -> dict:
@@ -208,7 +228,8 @@ def deterministic(seed: int | None = None) -> dict:
     f11 = facts["F11"]
     tol8 = f11["P8_tolerance"]
     fz = freeze()
-    sh = fz["stephalving"] if seed == fz["nominal_seed"] else json.loads((RUNS / f"stephalving_{seed}.json").read_text())
+    sh = fz["stephalving"] if seed == fz["nominal_seed"] else \
+        {"PASS": next(c for c in fz["ensemble_candidates"]["candidates"] if c["seed"] == seed)["stephalving_PASS"]}
     sids = [s["id"] for s in net.stations]
     o = M.simulate(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=True)
@@ -543,7 +564,7 @@ def draws_day(i: int, seed: int | None = None) -> dict:
     act, z, x, bad, unb = {"B1": 0, "B2": 0}, 0, {"B1": 0, "B2": 0}, 0, 0
     for j in range(N_DRAWS):
         mp = Q.model_pairs(d, o.v_st[j], net, cs)
-        rl = Q.relocation(mp, o.rho_cell[j][:, EV0:], o.rc_cell[j][:, EV0:].mean(axis=1), net.b2_cells[-1] + 1)
+        rl = Q.relocation(mp, o.rho_cell[j][:, EV0:], o.rc_cell[j][:, EV0:], net.b2_cells[-1] + 1)
         z += bool(Q.spurious(mp, rp)) or rl["flag"]
         for k in ("B1", "B2"):
             me = mp.get(Q.PAIR[k], [])
@@ -647,14 +668,18 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if freeze()["route"].startswith("STOP"):                 # no validation-day work after a route stop
         raise SystemExit(f"route is '{freeze()['route']}' in {FREEZE.name}: the gate must not run (§8.6 step 4)")
+    commit = code_commit()
     if a.what == "prep":
-        print(C.build_data(val_days(), RUNS / "val_data.npz", exit_flows=True))
+        out = C.build_data(val_days(), RUNS / "val_data.npz", exit_flows=True)
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_prep", {"code_commit": commit}, "none", 0, {},
+                      {"file": str(out)}, notes="validation inputs; no model run")
+        print(out)
     elif a.what == "deterministic":
         r = deterministic(a.plant)
         print(json.dumps({"plant": r["plant_seed"], "deterministic_PASS": r["deterministic_PASS"], "failed": r["failed"],
                           "F1_trigger": r["F1_trigger"]}))
-        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_deterministic", {"plant": r["plant_seed"]},
-                      "none (deterministic); validation days (F11 list)", r["n_val"], {},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_deterministic", {"plant": r["plant_seed"], "T_s": C.T_RUN, "code_commit": commit},
+                      f"none (deterministic); validation days (F11 list); T = {C.T_RUN} s", r["n_val"], {},
                       {"PASS": r["deterministic_PASS"], "failed": r["failed"]},
                       notes=str(RUNS / f"gate_det_{r['plant_seed']}.json"))
     elif a.what == "draws-plan":
@@ -665,16 +690,19 @@ def main(argv=None) -> int:
         seed, _ = plant(a.plant)
         jobs = [Job(jid=f"draw_{seed}_{i:03d}", argv=["vsl_lab.jobs.metanet_gate", "draws", "--day-index", str(i),
                                                       "--plant", str(seed)]) for i in range(len(val_days()))]
-        rep = run_batch(jobs, RUNS / f"batch_draws_{seed}_{int(time.time())}", max_workers=32, gate_ok=a.gate_ok)
+        try:
+            rep = run_batch(jobs, RUNS / f"batch_draws_{seed}_{int(time.time())}", max_workers=32, gate_ok=a.gate_ok)
+        finally:
+            C.verify_v3()
         print(json.dumps({"jobs": rep.n_jobs, "failed": rep.n_failed_proc, "wall_s": rep.wall_s}))
-        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_draws", {"plant": seed, "draws": N_DRAWS},
-                      "7191301 (draws); validation days; T = 0.75 s", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_draws", {"plant": seed, "draws": N_DRAWS, "T_s": C.T_RUN, "code_commit": commit},
+                      f"7191301 (draws); validation days; T = {C.T_RUN} s", rep.n_jobs, {"proc_failed": rep.n_failed_proc},
                       {"wall_s": round(rep.wall_s, 1)}, notes=str(RUNS / f"gate_draw_{seed}_*.json"))
     elif a.what == "stochastic":
         r = stochastic(a.plant)
         print(json.dumps({"plant": r["plant_seed"], "stochastic_PASS": r["stochastic_PASS"], "failed": r["failed"]}))
-        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_stochastic", {"plant": r["plant_seed"]},
-                      "7191301 (draws), 7191300 (bootstrap); validation days; T = 0.75 s", len(val_days()), {},
+        ledger.append("DP", "metanet-v4-gate", "S", "metanet_v4_gate_stochastic", {"plant": r["plant_seed"], "T_s": C.T_RUN, "code_commit": commit},
+                      f"7191301 (draws), 7191300 (bootstrap); validation days; T = {C.T_RUN} s", len(val_days()), {},
                       {"PASS": r["stochastic_PASS"], "failed": r["failed"]},
                       notes=str(RUNS / f"gate_sto_{r['plant_seed']}.json"))
     else:
