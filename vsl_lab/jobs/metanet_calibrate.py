@@ -117,8 +117,10 @@ def prep() -> Path:
     out = build_data(p1["usable"]["calibration"], RUNS / "calib_data.npz")
     verify_v3(["calib_data.npz"])
     a, b = np.load(out), np.load(V3_RUNS / "calib_data.npz")
-    diff = [k for k in sorted(set(a.files) | set(b.files))
-            if k not in a.files or k not in b.files or not np.array_equal(a[k], b[k], equal_nan=True)]
+    def same(x, y):
+        return x.shape == y.shape and (np.array_equal(x, y, equal_nan=True) if x.dtype.kind == "f" else
+                                       np.array_equal(x, y))
+    diff = [k for k in sorted(set(a.files) | set(b.files)) if k not in a.files or k not in b.files or not same(a[k], b[k])]
     if diff:
         raise RuntimeError(f"rebuilt calib_data.npz differs from v3's in {diff}: logged deviation, author decides")
     return out

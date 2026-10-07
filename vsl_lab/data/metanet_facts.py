@@ -382,12 +382,15 @@ def conservation_flow(x_km: float, st_km: float, q_st: np.ndarray, elems: list) 
     return q
 
 
-def arriving_flow(d: str, x_km: float, part1: dict):
+def arriving_flow(d: str, x_km: float, part1: dict, station: str | None = None):
     """v3 §1.7 A_i: arriving flow just downstream of km x from the nearest flow-valid station and the replayed ramp
     series (no storage term). Returns (series on 228 bins, station id) or None."""
     sources = part1["sources"]
     xe = x_km + 1e-6
-    for sid, skm, *_ in sorted(M.STATIONS, key=lambda st: abs(st[1] - x_km)):
+    cands = sorted(M.STATIONS, key=lambda st: abs(st[1] - x_km))
+    if station is not None:                                   # §A4 (ii) names the source station explicitly
+        cands = [st for st in M.STATIONS if st[0] == station]
+    for sid, skm, *_ in cands:
         st = I.station_fit(d, sid, "input")
         if not st["flow_valid"]:
             continue
@@ -405,21 +408,21 @@ def arriving_flow(d: str, x_km: float, part1: dict):
     return None
 
 
-def _ratio_cells(cal_use: list[str], part1: dict, q_ref: float, net, cells: list[int]) -> dict:
+def _ratio_cells(cal_use: list[str], part1: dict, q_ref: float, net, cells: list[int], anchor: dict | None = None) -> dict:
     out = {}
     for i in cells:
         ents = [e for e in net.entrances if e["cell"] == i]
         x = max(e["km"] for e in ents) if ents else float(net.km_from[i])
         A = []
         for d in cal_use:
-            r = arriving_flow(d, x, part1)
+            r = arriving_flow(d, x, part1, (anchor or {}).get(i))
             if r is None:
                 continue
             roll = np.convolve(np.nan_to_num(r[0][OFF:]), np.ones(3) / 3, mode="valid")
             A.append(float(roll.max()))
         A_med = float(np.median(A)) if A else None
         R = A_med / (net.lam[i] * q_ref) if A_med else None
-        out[f"cell {i + 1}"] = {"point_km": x, "A_veh_h": A_med, "n_days": len(A), "lambda": int(net.lam[i]),
+        out[f"cell {i + 1}"] = {"point_km": x, "anchor_station": (anchor or {}).get(i, "nearest flow-valid"), "A_veh_h": A_med, "n_days": len(A), "lambda": int(net.lam[i]),
                                 "R": R, "over_1.10": bool(R and R > 1.10)}
     return out
 
@@ -447,7 +450,8 @@ def main_v4() -> int:
                     "stations": {st["id"]: {"cell": st["cell"] + 1, "corr_entr": st["corr_entr"],
                                             "corr_exit": st["corr_exit"]} for st in net.stations}},
              "F16": {"report_only": True, "Q_ref_vphpl": q_ref, "n_cal_days": len(cal_use),
-                     "cells": _ratio_cells(cal_use, p1, q_ref, net, [26, 31] + list(range(34, net.N))),
+                     "cells": _ratio_cells(cal_use, p1, q_ref, net, [26, 31] + list(range(34, net.N)),
+                                           anchor={i: "S1141" for i in range(34, net.N)}),
                      "step": "(b), adopted without condition (§A4 (i))"},
              "F14_G1G2_ratios": {"report_only": True,
                                  "cells": _ratio_cells(cal_use, p1, q_ref, net, list(range(0, 26)))},

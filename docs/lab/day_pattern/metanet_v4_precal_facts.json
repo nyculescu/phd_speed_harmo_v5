@@ -1,0 +1,771 @@
+{
+ "protocol": "docs/plans/day_pattern_metanet_protocol_v4.md",
+ "protocol_version": "v4",
+ "v3_facts_git_blob": "c3ed7041911c1fc0581e8a65d191957d97578801",
+ "v3_facts_path": "docs/lab/day_pattern/metanet_precal_facts.json",
+ "F1": {
+  "variant": "v4",
+  "N": 39,
+  "km_from": [
+   -8.413,
+   -8.074,
+   -7.67,
+   -7.233,
+   -6.835,
+   -6.221,
+   -5.896,
+   -5.4495,
+   -5.003,
+   -4.576,
+   -4.034,
+   -3.492,
+   -2.901,
+   -2.3,
+   -1.866,
+   -1.4353,
+   -1.0047,
+   -0.574,
+   0.0,
+   0.466,
+   0.9105,
+   1.355,
+   1.73,
+   2.39,
+   2.8437,
+   3.2973,
+   3.751,
+   4.055,
+   4.4957,
+   4.9365,
+   5.3772,
+   5.818,
+   6.118,
+   6.5675,
+   7.017,
+   7.518,
+   8.0117,
+   8.5053,
+   8.999
+  ],
+  "km_to": [
+   -8.074,
+   -7.67,
+   -7.233,
+   -6.835,
+   -6.221,
+   -5.896,
+   -5.4495,
+   -5.003,
+   -4.576,
+   -4.034,
+   -3.492,
+   -2.901,
+   -2.3,
+   -1.866,
+   -1.4353,
+   -1.0047,
+   -0.574,
+   0.0,
+   0.466,
+   0.9105,
+   1.355,
+   1.73,
+   2.39,
+   2.8437,
+   3.2973,
+   3.751,
+   4.055,
+   4.4957,
+   4.9365,
+   5.3772,
+   5.818,
+   6.118,
+   6.5675,
+   7.017,
+   7.518,
+   8.0117,
+   8.5053,
+   8.999,
+   9.39
+  ],
+  "lanes": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   3,
+   3,
+   3,
+   2,
+   4,
+   3,
+   3,
+   3,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2
+  ],
+  "group": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   4,
+   4,
+   4,
+   4
+  ],
+  "merge_log": [
+   {
+    "removed_break_km": 1.833,
+    "piece": [
+     1.81,
+     1.833
+    ],
+    "length_m": 23,
+    "lam": 4,
+    "into": [
+     1.833,
+     2.39
+    ],
+    "into_lam": 4,
+    "same_lam": true,
+    "ramps_now_inside": [
+     "E12"
+    ]
+   },
+   {
+    "removed_break_km": -8.382,
+    "piece": [
+     -8.413,
+     -8.382
+    ],
+    "length_m": 31,
+    "lam": 2,
+    "into": [
+     -8.382,
+     -8.074
+    ],
+    "into_lam": 2,
+    "same_lam": true,
+    "ramps_now_inside": [
+     "E1"
+    ]
+   },
+   {
+    "removed_break_km": 1.81,
+    "piece": [
+     1.73,
+     1.81
+    ],
+    "length_m": 80,
+    "lam": 3,
+    "into": [
+     1.81,
+     2.39
+    ],
+    "into_lam": 4,
+    "same_lam": false,
+    "ramps_now_inside": [
+     "E11"
+    ]
+   },
+   {
+    "removed_break_km": 9.217,
+    "piece": [
+     9.217,
+     9.39
+    ],
+    "length_m": 173,
+    "lam": 2,
+    "into": [
+     8.999,
+     9.217
+    ],
+    "into_lam": 2,
+    "same_lam": true,
+    "ramps_now_inside": [
+     "X15"
+    ]
+   },
+   {
+    "removed_break_km": -2.549,
+    "piece": [
+     -2.549,
+     -2.3
+    ],
+    "length_m": 249,
+    "lam": 2,
+    "into": [
+     -2.901,
+     -2.549
+    ],
+    "into_lam": 2,
+    "same_lam": true,
+    "ramps_now_inside": [
+     "X67"
+    ]
+   }
+  ],
+  "b1_cells": [
+   28,
+   29,
+   30,
+   31
+  ],
+  "b2_cells": [
+   33,
+   34
+  ],
+  "head1": 28,
+  "phi_cell": 23,
+  "entrances": {
+   "E1": {
+    "cell": 1,
+    "merging": true
+   },
+   "E2": {
+    "cell": 4,
+    "merging": true
+   },
+   "E3": {
+    "cell": 5,
+    "merging": true
+   },
+   "E4": {
+    "cell": 7,
+    "merging": true
+   },
+   "E5": {
+    "cell": 10,
+    "merging": true
+   },
+   "E6": {
+    "cell": 13,
+    "merging": true
+   },
+   "E7": {
+    "cell": 14,
+    "merging": true
+   },
+   "E8": {
+    "cell": 15,
+    "merging": true
+   },
+   "E9": {
+    "cell": 19,
+    "merging": false
+   },
+   "E10": {
+    "cell": 23,
+    "merging": false
+   },
+   "E11": {
+    "cell": 23,
+    "merging": false
+   },
+   "E12": {
+    "cell": 23,
+    "merging": true
+   },
+   "E13": {
+    "cell": 28,
+    "merging": true
+   },
+   "E14": {
+    "cell": 33,
+    "merging": true
+   },
+   "E15": {
+    "cell": 36,
+    "merging": false
+   }
+  },
+  "exits": {
+   "X1": 1,
+   "X2": 2,
+   "X3": 5,
+   "X4": 8,
+   "X5": 11,
+   "X67": 13,
+   "X8": 17,
+   "X9": 19,
+   "X10": 21,
+   "X11": 26,
+   "X12": 31,
+   "X13": 34,
+   "X14": 38,
+   "X15": 39
+  },
+  "stations": {
+   "S453": {
+    "cell": 1,
+    "corr_entr": [
+     "E1"
+    ],
+    "corr_exit": [
+     "X1"
+    ]
+   },
+   "S455": {
+    "cell": 3,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S456": {
+    "cell": 4,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S457": {
+    "cell": 6,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S458": {
+    "cell": 9,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S459": {
+    "cell": 12,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S460": {
+    "cell": 14,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S461": {
+    "cell": 17,
+    "corr_entr": [],
+    "corr_exit": [
+     "X8"
+    ]
+   },
+   "S462": {
+    "cell": 18,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1770": {
+    "cell": 19,
+    "corr_entr": [],
+    "corr_exit": [
+     "X9"
+    ]
+   },
+   "S1771": {
+    "cell": 21,
+    "corr_entr": [],
+    "corr_exit": [
+     "X10"
+    ]
+   },
+   "S1772": {
+    "cell": 22,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1773": {
+    "cell": 25,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1147": {
+    "cell": 27,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1140": {
+    "cell": 32,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1141": {
+    "cell": 35,
+    "corr_entr": [],
+    "corr_exit": []
+   },
+   "S1610": {
+    "cell": 39,
+    "corr_entr": [],
+    "corr_exit": []
+   }
+  }
+ },
+ "F16": {
+  "report_only": true,
+  "Q_ref_vphpl": 1852.6666666666667,
+  "n_cal_days": 22,
+  "cells": {
+   "cell 27": {
+    "point_km": 3.751,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3850.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0390428211586902,
+    "over_1.10": false
+   },
+   "cell 32": {
+    "point_km": 5.818,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3726.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0055775458798129,
+    "over_1.10": false
+   },
+   "cell 35": {
+    "point_km": 7.017,
+    "anchor_station": "S1141",
+    "A_veh_h": 4040.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0903202590860022,
+    "over_1.10": false
+   },
+   "cell 36": {
+    "point_km": 7.518,
+    "anchor_station": "S1141",
+    "A_veh_h": 5079.758392962696,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.3709315562151931,
+    "over_1.10": true
+   },
+   "cell 37": {
+    "point_km": 8.011666666666667,
+    "anchor_station": "S1141",
+    "A_veh_h": 5079.758392962696,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.3709315562151931,
+    "over_1.10": true
+   },
+   "cell 38": {
+    "point_km": 8.505333333333333,
+    "anchor_station": "S1141",
+    "A_veh_h": 5079.758392962696,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.3709315562151931,
+    "over_1.10": true
+   },
+   "cell 39": {
+    "point_km": 8.999,
+    "anchor_station": "S1141",
+    "A_veh_h": 4718.747990036017,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.2735016165984212,
+    "over_1.10": true
+   }
+  },
+  "step": "(b), adopted without condition (\u00a7A4 (i))"
+ },
+ "F14_G1G2_ratios": {
+  "report_only": true,
+  "cells": {
+   "cell 1": {
+    "point_km": -8.382,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4328.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.1680460597337172,
+    "over_1.10": true
+   },
+   "cell 2": {
+    "point_km": -8.074,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4066.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0973371716444764,
+    "over_1.10": false
+   },
+   "cell 3": {
+    "point_km": -7.67,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3596.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.9704929830874415,
+    "over_1.10": false
+   },
+   "cell 4": {
+    "point_km": -7.233,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4084.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.1021950341849587,
+    "over_1.10": true
+   },
+   "cell 5": {
+    "point_km": -6.835,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4302.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.1610291471752427,
+    "over_1.10": true
+   },
+   "cell 6": {
+    "point_km": -6.221,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3660.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.9877653832313782,
+    "over_1.10": false
+   },
+   "cell 7": {
+    "point_km": -5.896,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3976.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0730478589420656,
+    "over_1.10": false
+   },
+   "cell 8": {
+    "point_km": -5.4495000000000005,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3976.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0730478589420656,
+    "over_1.10": false
+   },
+   "cell 9": {
+    "point_km": -5.003,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3746.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.010975170924793,
+    "over_1.10": false
+   },
+   "cell 10": {
+    "point_km": -4.576,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3972.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0719683339330695,
+    "over_1.10": false
+   },
+   "cell 11": {
+    "point_km": -4.034,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3972.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.0719683339330695,
+    "over_1.10": false
+   },
+   "cell 12": {
+    "point_km": -3.492,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3444.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.929471032745592,
+    "over_1.10": false
+   },
+   "cell 13": {
+    "point_km": -2.901,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4032.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 1.08816120906801,
+    "over_1.10": false
+   },
+   "cell 14": {
+    "point_km": -2.3,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2628.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.7092479309103994,
+    "over_1.10": false
+   },
+   "cell 15": {
+    "point_km": -1.866,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2972.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.802087081684059,
+    "over_1.10": false
+   },
+   "cell 16": {
+    "point_km": -1.4353333333333333,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2970.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.801547319179561,
+    "over_1.10": false
+   },
+   "cell 17": {
+    "point_km": -1.0046666666666666,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2970.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.801547319179561,
+    "over_1.10": false
+   },
+   "cell 18": {
+    "point_km": -0.574,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2700.0,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.7286793810723281,
+    "over_1.10": false
+   },
+   "cell 19": {
+    "point_km": 0.0,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 3166.0,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.5696293630802447,
+    "over_1.10": false
+   },
+   "cell 20": {
+    "point_km": 0.466,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2895.692923945923,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.5209954882954162,
+    "over_1.10": false
+   },
+   "cell 21": {
+    "point_km": 0.9105000000000001,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2840.0,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.510975170924793,
+    "over_1.10": false
+   },
+   "cell 22": {
+    "point_km": 1.355,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 2201.4293087017268,
+    "n_days": 22,
+    "lambda": 2,
+    "R": 0.5941244985700954,
+    "over_1.10": false
+   },
+   "cell 23": {
+    "point_km": 1.833,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4466.0,
+    "n_days": 22,
+    "lambda": 4,
+    "R": 0.6026448362720402,
+    "over_1.10": false
+   },
+   "cell 24": {
+    "point_km": 2.39,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4426.0,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.7963296149694135,
+    "over_1.10": false
+   },
+   "cell 25": {
+    "point_km": 2.8436666666666666,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4426.0,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.7963296149694135,
+    "over_1.10": false
+   },
+   "cell 26": {
+    "point_km": 3.2973333333333334,
+    "anchor_station": "nearest flow-valid",
+    "A_veh_h": 4426.0,
+    "n_days": 22,
+    "lambda": 3,
+    "R": 0.7963296149694135,
+    "over_1.10": false
+   }
+  }
+ },
+ "F7_cells_restated": {
+  "X12": 31,
+  "X13": 34,
+  "outcome": {
+   "B1": "base",
+   "B2": "base"
+  }
+ }
+}
