@@ -591,6 +591,8 @@ def report_md(res: dict) -> str:
         L.append("- none (no other restart within 1.02 J_best).")
     if res["route"].startswith("STOP"):
         L += ["", "## Route stop", "", f"**{res['route']}.** Reasons: " + "; ".join(res["stop_reasons"]) + ".", ""]
+    if res.get("not_run"):
+        L += ["", "## Not run (disclosed)", "", f"- {res['not_run']['items']}. Reason: {res['not_run']['reason']}."]
     L += ["", "## Notes (protocol v4)", ""] + [f"- {n}" for n in RECORD_NOTES]
     L += ["", "## Disclosures", "",
           "- The boundary station (Minnetonka Blvd) has no c_s (not in a §3.2.4 group); the observation operator uses "
@@ -605,7 +607,7 @@ def report_md(res: dict) -> str:
 
 
 # ---------------------------------------------------------------- driver
-def finalize(kind: str = "base") -> dict:
+def finalize(kind: str = "base", partial_reason: str | None = None) -> dict:
     """Freeze record of the base plant or of F1 (§6.1: refit frozen, re-derived F-hat and ensemble, P11-k at F1's
     own freeze; label 'second look on the same validation days'; Delta at zero = 'base structure, second
     optimisation', a FAIL by default)."""
@@ -646,6 +648,9 @@ def finalize(kind: str = "base") -> dict:
         need = [RUNS / f"grid_{c['seed']}_c2_{i:02d}.json" for i in range(len(Q.GRID))] + \
             [RUNS / f"stephalving_{c['seed']}.json"]
         if not all(f.exists() for f in need):
+            if partial_reason:                                 # disclosed, never silent
+                c["not_run"] = partial_reason
+                continue
             raise SystemExit(f"candidate {c['seed']}: step-halving or grid files missing (run them before the freeze)")
         cap[str(c["seed"])] = capacity_factors(c["seed"], days, real_active, demand, real_ev)
         c["stephalving_PASS"] = json.loads((RUNS / f"stephalving_{c['seed']}.json").read_text())["PASS"]
@@ -703,6 +708,11 @@ def finalize(kind: str = "base") -> dict:
         "stop_reasons": reasons,
         "structure": "F1" if kind == "f1" else "base",
     }
+    if partial_reason:
+        res["not_run"] = {"reason": partial_reason,
+                          "items": "identifiability profiles (§4.5) and the ensemble candidates' step-halving and "
+                                   "capacity grids (§4.6); the route-deciding checks (step-halving, P11-k, the "
+                                   "nominal capacity grid, F-hat) were complete"}
     if kind == "f1":
         res["label"] = "second look on the same validation days"
         res["delta_bound_active_at_zero"] = s.get("delta_bound_active_at_zero")
@@ -747,5 +757,6 @@ def p11_at_freeze(data: dict, net: M.Net, cs: dict, days: list, seed: int | None
 
 
 if __name__ == "__main__":
-    print(json.dumps(finalize("f1" if "--f1" in sys.argv else "base")))
+    reason = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--partial=")), None)
+    print(json.dumps(finalize("f1" if "--f1" in sys.argv else "base", reason)))
     sys.exit(0)
