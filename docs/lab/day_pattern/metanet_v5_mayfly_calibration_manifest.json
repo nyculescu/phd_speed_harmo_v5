@@ -1,0 +1,98 @@
+{
+ "what": "sha256 of the Mayfly cache files of the 22 usable 2023 calibration days (protocol v5 \u00a7B1.1, \u00a7B8 step 1)",
+ "root": "/home/catalin/work/phd/dp_data/mndot",
+ "full_manifest": "/home/catalin/work/phd/vsl_lab_runs/day_pattern/metanet_v5_design/mayfly_calibration_files.sha256",
+ "full_manifest_sha256": "f3764740477dd0bfe43183fc71b5606404243af385c4d70462c804af3b070be1",
+ "n_files": 38079,
+ "per_day": {
+  "20230118": {
+   "n_files": 735,
+   "sha256_of_lines": "45cd30a473231b5d559553df3c83a94c1ba37e9085da07d35e938ab8fc37cf76"
+  },
+  "20230201": {
+   "n_files": 2087,
+   "sha256_of_lines": "92cc6bad7dcf97ad2ea40d6c1a026f637c1e461e533047ad3c479383641e6f20"
+  },
+  "20230215": {
+   "n_files": 2085,
+   "sha256_of_lines": "53079ab430e9a43bccd1db142aef3f96f1660f2af47de00a70b6a70cf0d8f11e"
+  },
+  "20230315": {
+   "n_files": 2085,
+   "sha256_of_lines": "38f27f7c2fd2df91468f3bfe496d5b377068007004ae7c0b5fd1dce5c7850c0b"
+  },
+  "20230329": {
+   "n_files": 727,
+   "sha256_of_lines": "c77d4eb72edb9bc5e10ac568f78f058535495e39999637ee34e155ef136b5d90"
+  },
+  "20230405": {
+   "n_files": 2103,
+   "sha256_of_lines": "242e68d97c00b647f4abde2eee5d4c91b985e56c700e1e05f087a1e8e52fdc6b"
+  },
+  "20230503": {
+   "n_files": 2115,
+   "sha256_of_lines": "e784415f82c50972f3d829caa2a0a7b8fb548dee349dac8a9111112b931df934"
+  },
+  "20230517": {
+   "n_files": 2103,
+   "sha256_of_lines": "c3b07dd66b7a8f1f17bf9ebdbe10270ec03147be923102e838e1aa1b84f5865e"
+  },
+  "20230531": {
+   "n_files": 735,
+   "sha256_of_lines": "c3ae05e5a59ea868e2a58ca54667273f678a8efc4ef6ab4e3384bfc447e29787"
+  },
+  "20230607": {
+   "n_files": 2099,
+   "sha256_of_lines": "664bcde2d478faaeac1ffd67114089b5fb4bb27586a1f7623b7d0a374c1bdd94"
+  },
+  "20230621": {
+   "n_files": 2089,
+   "sha256_of_lines": "e9b42de748eb424046146babe45365010d11cae17fbbaa0f14111856516cae29"
+  },
+  "20230705": {
+   "n_files": 2099,
+   "sha256_of_lines": "ab7d2273249add44f30d975a0f691aea70426aaf7d202a2a1513678fc9e2b898"
+  },
+  "20230802": {
+   "n_files": 2100,
+   "sha256_of_lines": "2df4ae45b43fc0b5369b1f8adbf55078e145e6fd301e68c5ec83f7061eab5f3c"
+  },
+  "20230816": {
+   "n_files": 2099,
+   "sha256_of_lines": "4c2cc1c986c2f7422bec6c56bb318b1ae7558981d90ee7a060657210b294af4b"
+  },
+  "20230830": {
+   "n_files": 735,
+   "sha256_of_lines": "ef9e0da4559c5d484c6376ea9c8b3288f2cefcab4d665965fa6859f02b5993cc"
+  },
+  "20230920": {
+   "n_files": 2121,
+   "sha256_of_lines": "6abdf53273f6703de54444ac521659b55265ce60a503a0bc5c2ecc1c72c5a782"
+  },
+  "20231004": {
+   "n_files": 2133,
+   "sha256_of_lines": "871a84a9cab8a6cb2b1293c409c54ae42a86cdf883a92dd8779f91885f17db5c"
+  },
+  "20231018": {
+   "n_files": 2131,
+   "sha256_of_lines": "76516bedf4dff7930943303c77268b9c67c8a0b257880cd918c6dbcf4cd27e62"
+  },
+  "20231101": {
+   "n_files": 2116,
+   "sha256_of_lines": "b7c105b39a584bc85f6cbe23475da42365656000756512d05c494200fc7b51f8"
+  },
+  "20231115": {
+   "n_files": 2122,
+   "sha256_of_lines": "88226d8d91a55fc7fd75044c6be9499f9dac3ef8c09b2ec2f175b50a0221635b"
+  },
+  "20231206": {
+   "n_files": 731,
+   "sha256_of_lines": "f9795500f5a43efe91e9e7997388ee59d9486573e1223e248086bfa07761326a"
+  },
+  "20231220": {
+   "n_files": 729,
+   "sha256_of_lines": "6b773c0d65343287fe24f7ee3606fa6f51d3563aa467513103a6aa3dea939874"
+  }
+ },
+ "verify": "per day: sha256 of the sorted 'sha256  relpath' lines (sha256sum format, relpath from root), newline-terminated"
+}
