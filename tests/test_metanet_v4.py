@@ -436,3 +436,16 @@ def test_f1_plant_lookup_and_gate_seed(monkeypatch):
     a = G.boot_median_ci([1.0, 2.0, 3.0, 4.0])
     b = G.boot_median_ci([1.0, 2.0, 3.0, 4.0], seed=7191302)
     assert a == b and G.SEED_BOOT_F1 == 7191302
+
+
+def test_freeze_param_mapping_base_and_f1():
+    """Regression (2026-10-07): _to_params recursed into itself after the F1 refactor."""
+    from vsl_lab.jobs import metanet_f1 as F1
+    from vsl_lab.jobs import metanet_freeze as Z
+    x = np.full((1, len(C.NAMES)), 0.5)
+    Z._S["kind"] = "base"
+    assert Z._to_params(x)["tau"][0] == pytest.approx(C.to_params(x)["tau"][0]) and Z._names() == C.NAMES
+    Z._S["kind"] = "f1"
+    x1 = np.full((1, len(F1.NAMES_F1)), 0.5)
+    assert "Delta" in Z._to_params(x1) and Z._names() == F1.NAMES_F1
+    Z._S["kind"] = "base"

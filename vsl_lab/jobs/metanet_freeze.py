@@ -36,7 +36,7 @@ def _names() -> list:
 
 def _to_params(X):
     from vsl_lab.jobs import metanet_f1
-    return metanet_f1.to_params(X) if _S["kind"] == "f1" else _to_params(X)
+    return metanet_f1.to_params(X) if _S["kind"] == "f1" else C.to_params(X)
 
 
 def _record_name() -> str:
