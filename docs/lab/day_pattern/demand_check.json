@@ -1,0 +1,734 @@
+{
+ "prereg": "docs/lab/day_pattern/demand_check_prereg.md",
+ "n_days": 22,
+ "summary": {
+  "B1": {
+   "n_heavy": 22,
+   "Q_dis_median": 3547.904761904762,
+   "R": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 60.0,
+    "median_peak_ratio": 1.090062713546229,
+    "inactive_days": 0,
+    "inactive_with_overload": 0
+   },
+   "R-NL": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 60.0,
+    "median_peak_ratio": 1.0946526534757455,
+    "inactive_days": 0,
+    "inactive_with_overload": 0
+   },
+   "R-NL+Q": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 75.0,
+    "median_peak_ratio": 1.099724488375866,
+    "inactive_days": 0,
+    "inactive_with_overload": 0
+   }
+  },
+  "B2": {
+   "n_heavy": 9,
+   "Q_dis_median": 3705.3333333333335,
+   "R": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 60.0,
+    "median_peak_ratio": 1.0636245636245758,
+    "inactive_days": 13,
+    "inactive_with_overload": 13
+   },
+   "R-NL": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 105.0,
+    "median_peak_ratio": 1.124301455033726,
+    "inactive_days": 13,
+    "inactive_with_overload": 13
+   },
+   "R-NL+Q": {
+    "share_heavy_with_excess": 1.0,
+    "median_excess_min": 105.0,
+    "median_peak_ratio": 1.1471001579193287,
+    "inactive_days": 13,
+    "inactive_with_overload": 13
+   }
+  }
+ },
+ "signal_worth_writing_v5": true,
+ "per_day": {
+  "20230118": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.1570850746822083
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.1570850746822083
+    },
+    "R-NL+Q": {
+     "excess_min": 75,
+     "peak_ratio": 1.1602888354449925
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230201": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.1005631049384703
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.1005631049384703
+    },
+    "R-NL+Q": {
+     "excess_min": 75,
+     "peak_ratio": 1.1002974146647087
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230215": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0673143812081685
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.0673143812081685
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.072022101702613
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230315": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 90,
+     "peak_ratio": 1.147220153280949
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.147220153280949
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.1600834048397668
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230329": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.0879564791230376
+    },
+    "R-NL": {
+     "excess_min": 30,
+     "peak_ratio": 1.0928007736637313
+    },
+    "R-NL+Q": {
+     "excess_min": 30,
+     "peak_ratio": 1.109189705610392
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230405": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 30,
+     "peak_ratio": 1.058455454985877
+    },
+    "R-NL": {
+     "excess_min": 30,
+     "peak_ratio": 1.058455454985877
+    },
+    "R-NL+Q": {
+     "excess_min": 30,
+     "peak_ratio": 1.0592523142632566
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230503": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.0299057635575808
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.0760123930608443
+    },
+    "R-NL+Q": {
+     "excess_min": 75,
+     "peak_ratio": 1.0929839156122956
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230517": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.0655351606725552
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.0752218658951427
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.0953048214744296
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 90,
+     "peak_ratio": 1.0746475319818263
+    },
+    "R-NL": {
+     "excess_min": 105,
+     "peak_ratio": 1.124301455033726
+    },
+    "R-NL+Q": {
+     "excess_min": 105,
+     "peak_ratio": 1.1471001579193287
+    }
+   }
+  },
+  "20230531": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.1015209798078223
+    },
+    "R-NL": {
+     "excess_min": 120,
+     "peak_ratio": 1.1070742939655576
+    },
+    "R-NL+Q": {
+     "excess_min": 120,
+     "peak_ratio": 1.112731568900145
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 105,
+     "peak_ratio": 1.0636245636245758
+    },
+    "R-NL": {
+     "excess_min": 135,
+     "peak_ratio": 1.2020305901388642
+    },
+    "R-NL+Q": {
+     "excess_min": 135,
+     "peak_ratio": 1.2215327224313828
+    }
+   }
+  },
+  "20230607": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.0404610980579845
+    },
+    "R-NL": {
+     "excess_min": 90,
+     "peak_ratio": 1.1549520588278197
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.1719216975176432
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0535419128260042
+    },
+    "R-NL": {
+     "excess_min": 150,
+     "peak_ratio": 1.1939742545300556
+    },
+    "R-NL+Q": {
+     "excess_min": 150,
+     "peak_ratio": 1.2145206615042017
+    }
+   }
+  },
+  "20230621": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0903443066843386
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.1166384837364929
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.1268434284530064
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.0564355130879444
+    },
+    "R-NL": {
+     "excess_min": 135,
+     "peak_ratio": 1.085692121789827
+    },
+    "R-NL+Q": {
+     "excess_min": 150,
+     "peak_ratio": 1.1124234011902494
+    }
+   }
+  },
+  "20230705": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 135,
+     "peak_ratio": 1.1303450606553354
+    },
+    "R-NL": {
+     "excess_min": 135,
+     "peak_ratio": 1.1303450606553354
+    },
+    "R-NL+Q": {
+     "excess_min": 135,
+     "peak_ratio": 1.1228560369823506
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20230802": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.09033299781343
+    },
+    "R-NL": {
+     "excess_min": 45,
+     "peak_ratio": 1.1362372752196848
+    },
+    "R-NL+Q": {
+     "excess_min": 45,
+     "peak_ratio": 1.123065245171449
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.1217964297583507
+    },
+    "R-NL": {
+     "excess_min": 105,
+     "peak_ratio": 1.1646452707554997
+    },
+    "R-NL+Q": {
+     "excess_min": 105,
+     "peak_ratio": 1.1497454800784273
+    }
+   }
+  },
+  "20230816": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.1161962333917137
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.1203676016375694
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.1438970523556549
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0745877796973407
+    },
+    "R-NL": {
+     "excess_min": 90,
+     "peak_ratio": 1.1002422759837476
+    },
+    "R-NL+Q": {
+     "excess_min": 105,
+     "peak_ratio": 1.112407563080466
+    }
+   }
+  },
+  "20230830": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0627828035244957
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.0571973421831518
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.078921651377565
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 60,
+     "peak_ratio": 1.0416735068506187
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.075498363844018
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.0886100492305715
+    }
+   }
+  },
+  "20230920": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 30,
+     "peak_ratio": 1.0923385248161093
+    },
+    "R-NL": {
+     "excess_min": 30,
+     "peak_ratio": 1.1103112914421969
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.1181929221972877
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 30,
+     "peak_ratio": 1.1227087419934438
+    },
+    "R-NL": {
+     "excess_min": 45,
+     "peak_ratio": 1.139996313791951
+    },
+    "R-NL+Q": {
+     "excess_min": 45,
+     "peak_ratio": 1.1472182918125506
+    }
+   }
+  },
+  "20231004": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.0790442128061162
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.0802140135885496
+    },
+    "R-NL+Q": {
+     "excess_min": 105,
+     "peak_ratio": 1.0832822633092583
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20231018": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.1159486587388703
+    },
+    "R-NL": {
+     "excess_min": 60,
+     "peak_ratio": 1.0665172657409072
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.0717813160039515
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20231101": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 30,
+     "peak_ratio": 1.0897924292790282
+    },
+    "R-NL": {
+     "excess_min": 30,
+     "peak_ratio": 1.0897924292790282
+    },
+    "R-NL+Q": {
+     "excess_min": 45,
+     "peak_ratio": 1.0915645586963276
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20231115": {
+   "real_active": {
+    "B1": true,
+    "B2": true
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.0837727721029566
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.0837727721029566
+    },
+    "R-NL+Q": {
+     "excess_min": 75,
+     "peak_ratio": 1.0991515620870231
+    }
+   },
+   "B2": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.031714750601379
+    },
+    "R-NL": {
+     "excess_min": 90,
+     "peak_ratio": 1.1007496609647003
+    },
+    "R-NL+Q": {
+     "excess_min": 90,
+     "peak_ratio": 1.111702260650239
+    }
+   }
+  },
+  "20231206": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 45,
+     "peak_ratio": 1.0965045332877594
+    },
+    "R-NL": {
+     "excess_min": 45,
+     "peak_ratio": 1.0965045332877594
+    },
+    "R-NL+Q": {
+     "excess_min": 60,
+     "peak_ratio": 1.098611776524806
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  },
+  "20231220": {
+   "real_active": {
+    "B1": true,
+    "B2": false
+   },
+   "B1": {
+    "heavy": true,
+    "R": {
+     "excess_min": 75,
+     "peak_ratio": 1.0876146738000325
+    },
+    "R-NL": {
+     "excess_min": 75,
+     "peak_ratio": 1.0610709544810901
+    },
+    "R-NL+Q": {
+     "excess_min": 75,
+     "peak_ratio": 1.0663582541983807
+    }
+   },
+   "B2": {
+    "heavy": false,
+    "R": {},
+    "R-NL": {},
+    "R-NL+Q": {}
+   }
+  }
+ }
+}
