@@ -16,3 +16,4 @@ Rule for a resumed session: read this file and the protocol sections named in th
 
 ## Log
 - 2026-10-09: checkpoint created; slice A started.
+- 2026-10-09: slice A done. Item functions are pure (episode lists, per-episode Q_dis, cell matrices in; items out); P8g, P5c/P7b inputs (ratios, extent index error) and the real-side facts come in slices B-C. Next: slice B (gate refactor + test 30).
