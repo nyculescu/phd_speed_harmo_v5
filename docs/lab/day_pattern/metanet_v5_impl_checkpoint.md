@@ -17,3 +17,7 @@ Rule for a resumed session: read this file and the protocol sections named in th
 ## Log
 - 2026-10-09: checkpoint created; slice A started.
 - 2026-10-09: slice A done. Item functions are pure (episode lists, per-episode Q_dis, cell matrices in; items out); P8g, P5c/P7b inputs (ratios, extent index error) and the real-side facts come in slices B-C. Next: slice B (gate refactor + test 30).
+
+## Side study G-1 (SUMO 3-lane merge geometry/demand; author 2026-10-09; seeds 7,170,000-999 approved)
+- S0 demand extremes: done (168b2e6), `docs/lab/g1_demand_extremes.md`. Sharp transitions; H5 shows a capacity drop in several layouts, H3 none. Open check: lanedrop results identical across ramp levels (inert ramp?).
+- Next: S1 pre-registration (refine main_peak in 200 veh/h steps inside the H5 brackets, ≥ 10 seeds 7,170,100+), controllers nc + MTFC tuned + constant-VSL grid + "artificial DRL" oracles (O1 best constant per seed; O2 timed oracle around the seed's NC onset), labelled upper bounds; KILL if oracle gap over tuned classical < 10 %. Then length sweep (acceleration lane, downstream) only if S1 shows headroom.
