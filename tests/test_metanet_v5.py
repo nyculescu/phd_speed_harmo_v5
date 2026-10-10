@@ -269,3 +269,29 @@ def test_v5_gate_bindings_and_verdict(tmp_path, monkeypatch):
     assert VG.verdict()["outcome"] == "PASS, substitute spread"
     (tmp_path / "gate_sto_7192013.json").write_text(_j.dumps({"stochastic_PASS": False, "failed": ["P8s"]}))
     assert VG.verdict()["outcome"].startswith("FAIL (stochastic")
+
+
+def test_head_cell():
+    nb = 20
+    cond = np.zeros(nb, bool); cond[5:10] = True
+    c = np.zeros((39, nb), bool)
+    c[25:30, 5:8] = True          # cells 26-30 congested on bins 5-7 -> head 30
+    c[25:28, 8:10] = True         # cells 26-28 on bins 8-9 -> head 28
+    assert J.head_cell((5, 9), cond, c, "B1") == 30
+    c2 = np.zeros((39, nb), bool); c2[32, :] = True
+    assert J.head_cell((5, 9), cond, c2, "B2") == 33
+    assert J.head_cell((5, 9), cond, np.zeros((39, nb), bool), "B1") is None
+
+
+def test24_zero_cost_items():
+    """Item-level zero cost: model episodes equal to the real ones, all creditable, equal C4 and durations -> every
+    target item 0 (the end-to-end variant through the observation operator is pending, see the checkpoint)."""
+    real = [(100, 130)]
+    assert J.p3_item(real, real, [True], s=1.0) == 0.0
+    assert J.p4_items(real, real, [True]) == [0.0]
+    assert J.p7a_item(real, real, [True]) == 0.0
+    assert J.p5a_item(real, real, [True], 1800.0, [1800.0]) == 0.0
+    assert J.p7c_item(real, [], real, []) == 0.0
+    assert J.p7b_item(0, 0.0) == 0.0 and J.p5c_item(1.1, 1.1, 0.0) == 0.0
+    assert J.j5({"a": [0.0], "b": [0.0, 0.0]}, {"a": 1.0, "b": 5.8}) == 0.0
+    assert J.p3_item(real, real, [False], s=1.0) == 1.5                   # no backing: the miss value

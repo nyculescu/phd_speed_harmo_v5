@@ -244,3 +244,26 @@ def load_facts(path: str | Path, sha256: str) -> dict:
     if got != sha256:
         raise RuntimeError(f"J5 refuses to run: facts hash {got[:12]} != committed {sha256[:12]}")
     return json.loads(raw)
+
+
+# ---------- §B5 head-cell report (report-only)
+HEAD_ANCHOR = {"B1": 26, "B2": 33}
+FIRST_CELL = {"B1": 28, "B2": 33}
+
+
+def head_cell(ep: tuple, cond: np.ndarray, cong: np.ndarray, k: str) -> int | None:
+    """Most downstream cell (1-based) of the contiguous congested run that contains the anchor cell (26 for P_1,
+    33 for P_2), modal over the episode's qualifying bins (ties: the lower cell); None if no run."""
+    a = HEAD_ANCHOR[k] - 1
+    heads = []
+    for b in qualifying(cond, ep):
+        if not cong[a, b]:
+            continue
+        c = a
+        while c + 1 < cong.shape[0] and cong[c + 1, b]:
+            c += 1
+        heads.append(c + 1)
+    if not heads:
+        return None
+    vals, cnt = np.unique(heads, return_counts=True)
+    return int(vals[np.flatnonzero(cnt == cnt.max())[0]])

@@ -206,7 +206,33 @@ def p11_freeze(x: list, data: dict, net) -> dict:
     o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                record_cells=True)
     per = {d: Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs) for i, d in enumerate(days)}
-    return Q.p11_verdict(per)
+    v = Q.p11_verdict(per)
+    v["head_cells"] = head_report(days, o, net, cs)
+    return v
+
+
+def head_report(days: list, o, net, cs) -> dict:
+    """§B5 (report-only): per day, the head cell of each model P_1 and P_2 episode; days whose P_1 head lies
+    outside cells 28-31; days flagged 'residual not excluded' (head at B_k's first cell, 28 or 33)."""
+    from vsl_lab.jobs import metanet_j5 as Jm
+    out, outside, residual = {}, [], []
+    for i, d in enumerate(days):
+        sp, _ = Q.model_speeds(d, o.v_st[i], net, cs)
+        mp = Q.model_pairs(d, o.v_st[i], net, cs)
+        cong = o.rho_cell[i][:, Q.EV0:Q.EV0 + Q.NEV] > o.rc_cell[i][:, Q.EV0:Q.EV0 + Q.NEV]
+        rec = {}
+        for k in ("B1", "B2"):
+            u, dn = Q.PAIR[k]
+            with np.errstate(invalid="ignore"):
+                cond = np.nan_to_num((sp[u] < 40.0) & ((sp[dn] - sp[u]) >= 20.0)).astype(bool)
+            rec[k] = [Jm.head_cell(tuple(e), cond, cong, k) for e in mp.get(Q.PAIR[k], [])]
+        out[d] = rec
+        if any(h is None or not 28 <= h <= 31 for h in rec["B1"]):
+            outside.append(d)
+        if any(h == Jm.FIRST_CELL[k] for k in ("B1", "B2") for h in rec[k]):
+            residual.append(d)
+    return {"per_day": out, "days_P1_head_outside_28_31": outside, "days_residual_not_excluded": residual,
+            "note": "in METANET's acceleration zone the reported head can lie 1-2 cells downstream of the true head"}
 
 
 def grid_rows(seed: int) -> list:
