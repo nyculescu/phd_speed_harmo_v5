@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 import math
 import sys
 import time
@@ -262,12 +263,14 @@ def model_day(day: str, q_st: np.ndarray, v_st: np.ndarray, x_flow: np.ndarray, 
 
 
 # ---------------------------------------------------------------- capacity-factor grid (§4.7)
-def grid_job(seed: int, c2_index: int):
+def grid_job(seed: int, c2_index: int, p: dict | None = None, runs: Path | None = None, jd=None):
+    """jd (protocol v5 §B3): a J5 evaluator; each row then also carries J_d (the v5 selector) and b1cells_qual (a
+    cell of 28-31 congested in a P_1 qualifying bin; c1-inert report). p, runs: the v5 plant and raw directory."""
     data = C.load_data()
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
     cs = part1()["c_s"]
-    p = plant_params(seed)
+    p = plant_params(seed) if p is None else p
     c2 = float(GRID[c2_index])
     P, D = len(GRID), len(days)
     o = simf(net, {k: np.full(P, v) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
@@ -296,11 +299,22 @@ def grid_job(seed: int, c2_index: int):
                 row["E" + k[1]] = bool(me)
                 row["O" + k[1]] = overlaps(me, real[day].get(PAIR[k], []))
                 row["backed_share_" + k] = pk[k]["share"]           # §A13 item 7 (report-only)
+            if jd is not None:
+                from vsl_lab.jobs import metanet_j5 as J5m
+                row["J_d"] = J5m.j_day(jd.day_items(di, o.q_st[b], o.v_st[b], o.exit_flow[b], o.rho_cell[b],
+                                                    o.rc_cell[b]), jd.w)
+                sp_, _ = model_speeds(day, o.v_st[b], net, cs)
+                u_, d_ = PAIR["B1"]
+                with np.errstate(invalid="ignore"):
+                    cond = np.nan_to_num((sp_[u_] < 40.0) & ((sp_[d_] - sp_[u_]) >= 20.0)).astype(bool)
+                cong = o.rho_cell[b][:, EV0:EV0 + NEV] > o.rc_cell[b][:, EV0:EV0 + NEV]
+                row["b1cells_qual"] = bool(any(cong[27:31, t].any() for s_, e_ in mp.get(PAIR["B1"], [])
+                                               for t in range(s_, e_ + 1) if cond[t]))
             if a13_5 and rev[day]["B1"] and not rev[day]["B2"] and row["E1"] and not row["E2"] and not rl["flag"]:
                 md = model_day(day, o.q_st[b], o.v_st[b], o.exit_flow[b], net, cs, rev[day])
                 row["b1_discharge_vph"] = None if md["B1"]["merge"] is None else 2.0 * md["B1"]["merge"]
             res.append(row)
-    out = RUNS / f"grid_{seed}_c2_{c2_index:02d}.json"
+    out = (RUNS if runs is None else runs) / f"grid_{seed}_c2_{c2_index:02d}.json"
     out.write_text(json.dumps(res))
     return out
 

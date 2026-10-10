@@ -122,8 +122,10 @@ def load_grid(seed: int) -> list:
     return rows
 
 
-def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, real_ev: dict) -> dict:
-    rows = load_grid(seed)
+def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, real_ev: dict,
+                     rows: list | None = None, selector: str = "L") -> dict:
+    """selector: the within-C_d key ("L" = v3 L_d; protocol v5 §B3 passes "J_d"); rows: grid rows (default: v4 run files)."""
+    rows = load_grid(seed) if rows is None else rows
     G = [float(g) for g in Q.GRID]
     idx = {(r["day"], r["c1"], r["c2"]): r for r in rows}
     reloc_by_c2 = {g: any(r["reloc"] for r in rows if r["c2"] == g) for g in G}
@@ -177,7 +179,7 @@ def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, rea
             nonrep.append({"day": d, "real_active": [k for k in ("B1", "B2") if ra[k]]})
             per_day[d] = {"reproducible": False}
             continue
-        best = min(cset, key=lambda r: (r["L"] if r["L"] is not None else np.inf,
+        best = min(cset, key=lambda r: (r[selector] if r[selector] is not None else np.inf,
                                         math.hypot(r["c1"] - 1, r["c2"] - 1), r["c1"]))
         hat = {"B1": best["c1"], "B2": best["c2"]}
         comp = {}
@@ -199,6 +201,7 @@ def capacity_factors(seed: int, days: list, real_active: dict, demand: dict, rea
                 low, fb = hat[k], True
             comp[k] = {"type": "censored", "c_low": low, "other_held_at": other, "fallback_argmin": fb}
         per_day[d] = {"reproducible": True, "c1_hat": hat["B1"], "c2_hat": hat["B2"], "L": best["L"],
+                      **({"J_d": best["J_d"]} if selector == "J_d" else {}),
                       "n_consistent": len(cset), "components": comp,
                       "a13_item7_backed_share": {k: best.get("backed_share_" + k) for k in ("B1", "B2")
                                                  if comp[k]["type"] == "exact"}}

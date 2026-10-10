@@ -159,6 +159,26 @@ def screen(x: list, stephalving_PASS: bool, seed: int | None = None) -> dict:
             "Lc_k": {k: v["L_r"] for k, v in f11_sub["floors"].items()}, "PASS": not failed}
 
 
+# ---------------------------------------------------------------- §4.7 reports (§B3, report-only)
+def c1_inert(rows: list, c2_max: float) -> dict:
+    """c1-inert days: at every c2 ≤ c2*, E_1 and O_1 equal at every c1, and no cell of 28-31 congested in a P_1
+    qualifying bin at any grid point. Upper-half c1-inert: at c2 = 1.00, E_1 and O_1 equal for every c1 in [1, 1.2]."""
+    days = sorted({r["day"] for r in rows})
+    inert, upper = [], []
+    for d in days:
+        rd = [r for r in rows if r["day"] == d]
+        lines = {}
+        for r in rd:
+            if r["c2"] <= c2_max + 1e-9:
+                lines.setdefault(r["c2"], set()).add((r["E1"], r["O1"]))
+        if all(len(v) == 1 for v in lines.values()) and not any(r.get("b1cells_qual") for r in rd):
+            inert.append(d)
+        up = {(r["E1"], r["O1"]) for r in rd if abs(r["c2"] - 1.0) < 1e-9 and r["c1"] >= 1.0 - 1e-9}
+        if len(up) == 1:
+            upper.append(d)
+    return {"c1_inert_days": inert, "upper_half_c1_inert_days": upper}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["premise", "stephalving"])

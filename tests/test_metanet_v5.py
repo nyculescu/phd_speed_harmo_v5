@@ -207,3 +207,17 @@ def test_members_rule():
     m = members(c, {2: dict(stephalving=True, P11=True, screen=True, F_hat=False),
                     4: dict(stephalving=True, P11=True, screen=True, F_hat=True)})
     assert m == {"gridded": [2, 4], "members": [4]}
+
+
+def test_c1_inert_reports():
+    from vsl_lab.jobs.metanet_v5_freeze import c1_inert
+    G = [0.8, 1.0, 1.2]
+    rows = []
+    for c1 in G:
+        for c2 in G:
+            rows.append({"day": "a", "c1": c1, "c2": c2, "E1": True, "O1": True, "b1cells_qual": False})
+            rows.append({"day": "b", "c1": c1, "c2": c2, "E1": c1 < 1.1, "O1": c1 < 1.1, "b1cells_qual": True})
+            rows.append({"day": "c", "c1": c1, "c2": c2, "E1": True, "O1": True, "b1cells_qual": True})
+    r = c1_inert(rows, 1.2)
+    assert r["c1_inert_days"] == ["a"]                       # c: same E/O but B1 cells congested -> not inert
+    assert r["upper_half_c1_inert_days"] == ["a", "c"]       # b changes inside [1.0, 1.2]
