@@ -13,6 +13,19 @@
   - one confirmatory run on reserved seeds against **tuned** baselines (roadmap §0, §9).
 - **No "lie with statistics":** no cherry-picked seeds, no weak baselines, no hidden variants, no proxy headline metrics.
 
+**Claim update (author decisions, 2026-10-10; D5.1 in `docs/plans/day_pattern_decisions_v0.md`).** It supersedes the claim bullets above and the headroom gate below where they conflict.
+- **The helper may be DRL or any other neural network** on top of a proven controller: a forecaster, a demand reconstructor, a model-error correction, or a scheduler. DRL alone is a reference arm only.
+- **Pass bar:** the hybrid beats a **fair vanilla DRL** and **no control** by ≥ 10 % each. Measured as the median paired difference with the CI lower bound > 0, on the primary metric, at the realistic demand level.
+- **Fair vanilla DRL:**
+  - a standard algorithm (PPO; SAC for continuous actions) acting directly on the same actuators, with the same observations;
+  - the same training and tuning budget;
+  - checkpoints chosen on validation only.
+- **Tuned proven controllers are always reported** next to the hybrid, per regime. They form the operating map (where the hybrid wins, ties or loses), not the pass bar. Never hide them.
+- **Design principle (author):** universal superiority is not required. Actively search for conditional advantages, adaptation benefits, robustness improvements and identifiable operating regimes.
+  - Pre-register before data: the regimes; the adaptation gain (the share of the fixed-tuned → per-day-tuned gap that the helper closes); the robustness rows.
+  - Report all of them, with multiplicity control.
+- **Why:** on a real corridor the literature caps any helper at ≈ 2–3 % over the strongest published logic controller, and ≈ 9 % over MTFC+PI-ALINEA (Frejo & De Schutter 2021, Seville; D5.1).
+
 In the v6 repo (`/run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v6`) VSL stays excluded:
 - **do not modify v6;**
 - read only `docs/handoff/lessons_learned.md`, `docs/feasibility/gate0_perimeter.md`, `docs/plans/phase7_novelty_check.md` and `feasibility/results/bench/parallel_sweet_spot_20261001.md`;
@@ -21,7 +34,7 @@ In the v6 repo (`/run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v6`) VS
 **Thesis**
 - title: "Adaptive driving algorithms for intelligent road traffic systems";
 - about 11 months left (submission ≈ Sept 2027); target 2 papers;
-- the thesis must show DRL beating or measurably improving rule-based, reactive or predictive control;
+- the thesis must show a proven controller helped by DRL or another neural network beating a fair vanilla DRL and no control by ≥ 10 %, with tuned proven controllers reported per regime (claim update 2026-10-10);
 - framing: the ARC-IT functional view, TM20 / TM21. Check PSpecs and flows against v6 `docs/arcitwebsite-20260715/`. No SOTIF.
 
 ## Repo state
@@ -48,7 +61,8 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 
 ## Method (binding)
 
-- **Headroom gate before any DRL *claim* involving a hybrid.** Since the 2026-10-01 scope update, exploratory DRL may run before it.
+- **Early KILL under the 2026-10-10 bar.** If no arm (a tuned proven controller, or an informed oracle) beats no control by ≥ 10 % at the realistic demand level, the hybrid claim on that plant is KILLed.
+- **Headroom H (report-only since 2026-10-10, D5.1).** H is measured as a diagnostic of where the room is; it is no longer a claim prerequisite. Its definition is unchanged:
   - H = (best non-learning − I) / best non-learning ≥ **10 %**, with the paired CI lower bound > 0.
   - **I** = the same validated controller, with its parameters or strategy taken from a lookup table (hidden condition → parameters) tuned on the tuning seeds. Never use the best grid point per gate seed.
   - "Best non-learning" must include the tuned validated controller, a **non-learning adaptive** scheduler, and an **MPC with a model or forecast fitted on separate seeds**. Never give the MPC the true model.
@@ -56,7 +70,7 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Tool checks first, with criteria committed BEFORE they run:**
   - **T0** the actuator binds (a limit change moves flow and density; check sensor reads: libsumo `getLastIntervalVehicleNumber`, not `getIntervalVehicleNumber`);
   - **T1** capacity drop exists without teleport artefacts, and control matters;
-  - **T2** the mechanism: the best parameter differs across hidden conditions by enough cost (G ≥ 10 %; biased upwards, so a FAIL is a conservative KILL);
+  - **T2** the mechanism: the best parameter differs across hidden conditions by enough cost (G ≥ 10 %; biased upwards, so a FAIL is a conservative KILL). Since 2026-10-10, G is report-only for claims: it shows the adaptation room, regime by regime;
   - **T3** determinism.
 - **Protocol before data.** Calibrate only on a throw-away seed, and disclose it. Every new round uses **fresh seeds**. Seed ranges must be approved by the author before use.
   - **Approved on 2026-10-01:** the layout in roadmap §10, inside 7,100,000–7,399,999.
@@ -65,7 +79,7 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
 - **Statistics:** paired seeds, medians, 95 % percentile bootstrap CIs; one convention (the median of paired differences). A bug after results means: fix, re-run everything affected, log both outcomes.
 - **Metrics:**
   - primary = door-to-door delay **including origin and insertion queues**, co-headlined with served throughput (see `docs/lessons_metric_gameability.md`);
-  - yardsticks = a constant-cap baseline and the **tuned** validated controllers, never no-control alone;
+  - yardsticks: the pass bar uses no control and a fair vanilla DRL (2026-10-10). A constant-cap baseline and the **tuned** validated controllers are always reported alongside. Never no-control alone in any table or text;
   - side constraints with stated tolerances.
 - **DRL budget (only after a GO):** ≥ 500 PPO updates per run, 3–5 training seeds, a convergence check, final policy only, checkpoints chosen on validation seeds only.
 - **Literature:** mark anything not read in full [VERIFY]. Never invent titles, authors or numbers. No "first/novel" claims.
