@@ -242,6 +242,9 @@ def test33_no_validation_input_on_calibration_side(monkeypatch, tmp_path):
     monkeypatch.setattr(FZ.V5, "FACTS5", type("F", (), {"read_text": staticmethod(lambda: _j.dumps(facts5))})())
     monkeypatch.setattr(FZ, "screen_data_path", lambda: tmp_path / "scr.npz")
     np.savez(tmp_path / "scr.npz", days=np.array(["SYN0"]), v=np.zeros((1, 2, NB)), mv=np.zeros((1, 2, NB), bool))
+    import hashlib as _h
+    monkeypatch.setattr(FZ.V5, "RUNS5", tmp_path)
+    (tmp_path / "calib_screen_data.sha256").write_text(_h.sha256((tmp_path / "scr.npz").read_bytes()).hexdigest())
     monkeypatch.setattr(C, "FACTS", type("F", (), {"read_text": staticmethod(lambda: '{"F8": 1, "F11": 2}')})())
     monkeypatch.setattr(G, "deterministic", lambda seed, ctx=None: {"rows": {"P1a": {"PASS": True}}})
     r = FZ.screen([0.5] * 17, True)

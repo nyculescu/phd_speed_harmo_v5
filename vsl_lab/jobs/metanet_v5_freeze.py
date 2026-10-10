@@ -134,14 +134,19 @@ def same_array(a, b) -> bool:
 
 def build_screen_data() -> dict:
     """calib_screen_data.npz (with exit flows, for P9); arrays shared with calib_data.npz must be equal bit for bit."""
+    import hashlib
+    import os
     cal = C.load_data()
     out = screen_data_path()
     V5.RUNS5.mkdir(parents=True, exist_ok=True)
-    C.build_data([str(d) for d in cal["days"]], out, exit_flows=True)
-    z = np.load(out)
+    tmp = out.with_name("calib_screen_data.tmp.npz")             # compared before it replaces anything
+    C.build_data([str(d) for d in cal["days"]], tmp, exit_flows=True)
+    z = np.load(tmp)
     same = {k: same_array(z[k], cal[k]) for k in cal if k in z.files}
     if not all(same.values()):
         raise RuntimeError(f"screen data differ from calib_data: {same}")
+    os.replace(tmp, out)
+    (V5.RUNS5 / "calib_screen_data.sha256").write_text(hashlib.sha256(out.read_bytes()).hexdigest())
     return same
 
 
@@ -150,6 +155,10 @@ def screen(x: list, stephalving_PASS: bool, seed: int | None = None) -> dict:
     calibration-derived substitutes for every F11 field; leave-one-day-out P1c nulls; bootstrap seed 7,192,099."""
     from vsl_lab.jobs import metanet_gate as G
     from vsl_lab.jobs.metanet_v5_facts import loo_nulls
+    import hashlib
+    shaf = V5.RUNS5 / "calib_screen_data.sha256"
+    if not shaf.exists() or hashlib.sha256(screen_data_path().read_bytes()).hexdigest() != shaf.read_text().strip():
+        raise SystemExit("calib_screen_data.npz missing or not the one 'build-data' verified (§B8 step 4)")
     z = np.load(screen_data_path())
     data = {k: z[k] for k in z.files}
     p = {k: float(v[0]) for k, v in C.to_params(np.array([x])).items()}
@@ -391,7 +400,8 @@ def stops_passed(nominal: int) -> bool:
     if not f.exists():
         return False
     st = json.loads(f.read_text())
-    return st.get("nominal") == nominal and len(st["results"]) == 4 and all(st["results"].values())
+    return (st.get("nominal") == nominal and st.get("code") == V5.code_commit() and len(st["results"]) == 4
+            and all(st["results"].values()))
 
 
 def finalize(partial_reason: str | None = None, stops: dict | None = None) -> dict:
@@ -409,6 +419,12 @@ def finalize(partial_reason: str | None = None, stops: dict | None = None) -> di
         if not f.exists():
             raise SystemExit("freeze_stops.json missing: run the 'stops' stage first")
         stops = json.loads(f.read_text())
+        code = V5.code_commit()
+        summ = json.loads((V5.RUNS5 / "cma_summary.json").read_text())
+        if stops.get("code") != code or summ.get("code_commit") != code:
+            raise SystemExit("freeze_stops.json or cma_summary.json was produced by other code: re-run (provenance)")
+        if not adm and stops["results"].get("no admissible restart", True):
+            raise SystemExit("freeze_stops.json does not match the current restarts")
     results, detail = dict(stops["results"]), dict(stops.get("detail", {}))
     nom = min(adm, key=lambda r: r["best_J5"]) if adm else None
     if nom:
@@ -438,6 +454,8 @@ def finalize(partial_reason: str | None = None, stops: dict | None = None) -> di
         if not f.exists():
             raise SystemExit("ensemble_checks.json missing: run the ensemble step (§B6) before finalize")
         ens = json.loads(f.read_text())
+        if ens.get("nominal") != res["nominal"] or ens.get("code") != stops.get("code"):
+            raise SystemExit("ensemble_checks.json belongs to another nominal or other code: re-run 'ensemble'")
         mem, mchk, mpar = [], {}, {}
         for sd in ens["gridded"]:
             cap_m = spread_v5(sd, data)
@@ -480,7 +498,8 @@ def ensemble_checks() -> dict:
         checks[str(c["seed"])] = ch
         if ch["screen"]:
             gridded.append(c["seed"])
-    out = {"nominal": nom["seed"], "candidates": cands, "checks": checks, "gridded": gridded}
+    out = {"nominal": nom["seed"], "code": V5.code_commit(), "candidates": cands, "checks": checks,
+           "gridded": gridded}
     (V5.RUNS5 / "ensemble_checks.json").write_text(json.dumps(_clean(out), indent=1))
     return out
 
@@ -593,11 +612,14 @@ def build_data() -> dict:
     cal = C.load_data()
     out = V5.RUNS5 / "calib_data.npz"
     V5.RUNS5.mkdir(parents=True, exist_ok=True)
-    C.build_data([str(d) for d in cal["days"]], out)
-    z = np.load(out)
+    tmp = out.with_name("calib_data.tmp.npz")
+    C.build_data([str(d) for d in cal["days"]], tmp)
+    z = np.load(tmp)
     same = {k: same_array(z[k], cal[k]) for k in cal}
     if set(z.files) != set(cal) or not all(same.values()):
         raise RuntimeError(f"rebuilt calib_data differs from v4's: {same}")
+    import os
+    os.replace(tmp, out)
     return {"calib_data": same, "screen_data": build_screen_data()}
 
 

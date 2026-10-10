@@ -235,6 +235,7 @@ def test_finalize_stop_order(monkeypatch, tmp_path):
     monkeypatch.setattr(FZ.V5, "RUNS5", tmp_path)
     monkeypatch.setattr(FZ.V5, "code_commit", lambda: "c")
     monkeypatch.setattr(FZ.V5, "FACTS5_SHA", type("P", (), {"read_text": staticmethod(lambda: "abc  f")})())
+    (tmp_path / "cma_summary.json").write_text('{"code_commit": "c"}')
     monkeypatch.setattr(FZ, "stephalving", lambda x, **k: called.append("sh") or {"PASS": True})
     monkeypatch.setattr(FZ, "p11_freeze", lambda x, d, n: called.append("p11") or {"PASS": False})
     monkeypatch.setattr(FZ, "screen", lambda *a: called.append("screen") or {"PASS": True})
@@ -277,6 +278,15 @@ def test_v5_gate_bindings_and_verdict(tmp_path, monkeypatch):
     monkeypatch.setattr(VG, "FREEZE5", f)
     (tmp_path / "gate_det_7192013.json").write_text(_j.dumps({"deterministic_PASS": True, "failed": []}))
     (tmp_path / "gate_sto_7192013.json").write_text(_j.dumps({"stochastic_PASS": True, "failed": []}))
+    now = {"code": "c", "freeze_blob": "b"}
+    monkeypatch.setattr(VG, "ledger_starts", lambda: {"7192013": now})
+    with pytest.raises(SystemExit):                                    # outputs without provenance are refused
+        VG.verdict()
+    (tmp_path / "gate_det_7192013.prov.json").write_text(_j.dumps(now))
+    (tmp_path / "gate_sto_7192013.prov.json").write_text(_j.dumps({"code": "old", "freeze_blob": "b"}))
+    with pytest.raises(SystemExit):                                    # stochastic rows from another start record
+        VG.verdict()
+    (tmp_path / "gate_sto_7192013.prov.json").write_text(_j.dumps(now))
     assert VG.verdict()["outcome"] == "PASS, substitute spread"
     (tmp_path / "gate_sto_7192013.json").write_text(_j.dumps({"stochastic_PASS": False, "failed": ["P8s"]}))
     assert VG.verdict()["outcome"].startswith("FAIL (stochastic")
@@ -408,7 +418,9 @@ def test_round2_guards(monkeypatch, tmp_path):
     (r / "g.json").write_text("{}")
     with pytest.raises(SystemExit):
         V5.committed([r / "g.json"])
-    # premise anchor blocks the launch
+    # premise anchor blocks the launch (the scheduler is stubbed: a regressed guard must not fork real workers)
+    from vsl_lab.ops import scheduler as _sch
+    monkeypatch.setattr(_sch, "run_batch", lambda *a, **k: (_ for _ in ()).throw(AssertionError("batch launched")))
     monkeypatch.setattr(V5, "code_commit", lambda: "c")
     monkeypatch.setattr(V5, "pre_batch_checks", lambda: None)
     monkeypatch.setattr(V5, "post_batch_checks", lambda: None)
@@ -429,3 +441,88 @@ def test_round2_guards(monkeypatch, tmp_path):
         FZ.grid_run(1, False)
     with pytest.raises(SystemExit):
         FZ.grid_run(2, False)
+
+
+
+def test_code_paths_cover_imports():
+    """Every vsl_lab module the v5 pipeline imports (incl. lazy imports) is part of the code identity."""
+    import importlib
+    import sys as _s
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    for m in ["vsl_lab.jobs.metanet_v5_gate", "vsl_lab.jobs.metanet_v5_freeze", "vsl_lab.jobs.metanet_v5_facts",
+              "vsl_lab.jobs.metanet_gate", "vsl_lab.jobs.metanet_freeze", "vsl_lab.jobs.metanet_postcal",
+              "vsl_lab.jobs.metanet_f1", "vsl_lab.ops.scheduler", "vsl_lab.ops.ledger", "vsl_lab.ops.thermal"]:
+        importlib.import_module(m)
+    root = str(V5.C.REPO) + "/"
+    loaded = {m.__file__.split(root)[1] for n, m in _s.modules.items()
+              if n.startswith("vsl_lab") and getattr(m, "__file__", None) and root in m.__file__}
+    v5_related = {f for f in loaded if not f.startswith(("vsl_lab/jobs/g1_", "vsl_lab/jobs/mrg3", "vsl_lab/plants/mrg3",
+                                                        "vsl_lab/netgen", "vsl_lab/sim", "vsl_lab/controllers",
+                                                        "vsl_lab/envs", "vsl_lab/train", "vsl_lab/eval"))}
+    assert v5_related <= set(V5.CODE_PATHS), sorted(v5_related - set(V5.CODE_PATHS))
+
+
+def test_guard_wiring(monkeypatch, tmp_path):
+    """pre_batch_checks / evaluator / post_batch_checks call the committed() and exact-manifest guards."""
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    calls = []
+    monkeypatch.setattr(V5, "committed", lambda paths: calls.append(("committed", [p.name for p in paths])))
+    monkeypatch.setattr(V5, "verify_mayfly", lambda *a: calls.append(("mayfly",)))
+    monkeypatch.setattr(V5, "verify_manifest_exact", lambda m, r: calls.append(("exact", m.name)))
+    V5.pre_batch_checks()
+    V5.post_batch_checks()
+    names = [c for c in calls if c[0] == "committed"]
+    assert any("metanet_v5_mayfly_calibration_manifest.json" in c[1] for c in names)
+    assert ("exact", "metanet_v4_raw_manifest.sha256") in calls and ("exact", "metanet_v3_raw_manifest.sha256") in calls
+    calls.clear()
+    monkeypatch.setattr(V5, "FACTS5_SHA", tmp_path / "missing.sha256")
+    with pytest.raises(FileNotFoundError):
+        V5.evaluator(data={"days": np.array([])})
+    assert ("mayfly",) in calls and any("metanet_v5_precal_facts.json" in c[1] for c in calls if c[0] == "committed")
+
+
+def test_draws_provenance_chain(monkeypatch, tmp_path):
+    """draws-run and rows refuse without a plan at the current identity; rows refuse without a complete draws-run."""
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    now = {"code": "c", "freeze_blob": "b"}
+    rec = {"nominal": 7192013}
+    monkeypatch.setattr(VG, "_enter", lambda seed, stage, need_val=True: (7192013, rec, now))
+    with pytest.raises(SystemExit):
+        VG.stochastic("rows", None)                                    # no plan
+    VG._stamp("gate_draws_7192013.prov.json", now)
+    with pytest.raises(SystemExit):
+        VG.stochastic("rows", None)                                    # plan but no complete draws-run
+    VG._stamp("gate_draws_7192013.prov.json", {"code": "old", "freeze_blob": "b"})
+    from vsl_lab.jobs import metanet_gate as G
+    monkeypatch.setattr(G, "val_days", lambda: ["d0", "d1"])
+    with pytest.raises(SystemExit):
+        VG.draws_run(None, False)                                      # plan made at other hashes
+
+
+def test_ensemble_route_gate_and_continue_provenance(monkeypatch, tmp_path):
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    from vsl_lab.ops import scheduler as _sch
+    monkeypatch.setattr(_sch, "run_batch", lambda *a, **k: (_ for _ in ()).throw(AssertionError("batch launched")))
+    monkeypatch.setattr(FZ.V5, "RUNS5", tmp_path)
+    monkeypatch.setattr(FZ.V5, "code_commit", lambda: "c")
+    monkeypatch.setattr(FZ.C, "load_data", lambda: {"days": []})
+    monkeypatch.setattr(FZ.M, "build_network", lambda v: None)
+    monkeypatch.setattr(FZ, "restarts", lambda: [{"seed": 1, "admissible": True, "best_J5": 0.3, "best_x": [0.5] * 17}])
+    with pytest.raises(SystemExit):
+        FZ.ensemble_checks()                                           # stops 1-4 not passed
+    (tmp_path / "freeze_stops.json").write_text('{"nominal": 1, "code": "other", "results": {"a": true, "b": true, '
+                                                '"c": true, "d": true}}')
+    assert not FZ.stops_passed(1)                                      # stops from other code do not count
+    # continue-only refuses when the code changed since the base batch
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    monkeypatch.setattr(V5, "pre_batch_checks", lambda: None)
+    monkeypatch.setattr(V5, "post_batch_checks", lambda: None)
+    monkeypatch.setattr(V5, "FACTS5_SHA", type("P", (), {"read_text": staticmethod(lambda: "abc  f")})())
+    (tmp_path / "premise_check.json").write_text('{"anchor": {"PASS": true}, "facts_sha256": "abc"}')
+    (tmp_path / "cma_base_summary.json").write_text('{"code_commit": "old", "restarts_base": []}')
+    monkeypatch.setattr(V5, "code_commit", lambda: "new")
+    with pytest.raises(SystemExit):
+        V5.run(False, continue_only=True)

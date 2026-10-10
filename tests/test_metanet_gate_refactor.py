@@ -344,30 +344,46 @@ def test_v5_gate_lock_two_way(monkeypatch, tmp_path):
 
 
 def test_code_commit_and_fix_rerun_in_a_real_repo(monkeypatch, tmp_path):
-    """Ledger appends never block (no deadlock); a code change does; a committed fix record is accepted only if its
-    fix commit is an ancestor of HEAD with no later vsl_lab code change."""
+    """Code identity = last commit touching the v5 code paths: ledger appends and docs commits do not change it (no
+    lock-out between gate stages); a code edit is refused until committed, then changes it. Fix records: only a
+    full-SHA fix commit that changed code, names a failing-before test present at it, postdates the old run and has
+    no later code change is accepted."""
+    import json as _j
     import subprocess as sp
     from vsl_lab.jobs import metanet_v5_calibrate as V5
     from vsl_lab.jobs import metanet_v5_gate as VG
     r = tmp_path / "repo"
     (r / "vsl_lab" / "runs").mkdir(parents=True)
+    (r / "vsl_lab" / "jobs").mkdir()
     g = lambda *a: sp.run(["git", "-C", str(r), *a], capture_output=True, text=True, check=True).stdout.strip()
     g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
-    (r / "vsl_lab" / "x.py").write_text("a = 1\n"); (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\n")
+    code = r / "vsl_lab" / "jobs" / "metanet_gate.py"
+    code.write_text("a = 1\n"); (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\n")
     g("add", "-A"); g("commit", "-qm", "base")
     monkeypatch.setattr(C, "REPO", r)
-    head0 = V5.code_commit()
-    (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\nstart row\n")       # a start record was appended
-    assert V5.code_commit() == head0
-    (r / "vsl_lab" / "x.py").write_text("a = 2\n")
+    id0 = V5.code_commit()
+    (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\nstart row\n")
+    assert V5.code_commit() == id0                                    # uncommitted ledger append
+    g("commit", "-qam", "ledger"); (r / "notes.md").write_text("x"); g("add", "-A"); g("commit", "-qm", "docs")
+    assert V5.code_commit() == id0                                    # ledger and docs commits keep the identity
+    code.write_text("a = 2\n")
     with pytest.raises(SystemExit):
-        V5.code_commit()
-    g("add", "vsl_lab/x.py"); g("commit", "-qm", "fix"); fix = g("rev-parse", "HEAD")
-    (r / "docs").mkdir(); (r / "docs" / "fix.json").write_text("{}")
-    g("add", "-A"); g("commit", "-qm", "fix record + ledger"); head = g("rev-parse", "HEAD")
-    assert VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": fix}, 1, head)
-    assert not VG.fix_rerun_ok({"rerun_seed": 2, "fix_commit": fix}, 1, head)
-    (r / "vsl_lab" / "x.py").write_text("a = 3\n"); g("commit", "-qam", "later code"); head2 = g("rev-parse", "HEAD")
-    assert not VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": fix}, 1, head2)   # code changed after the fix
-    g("checkout", "-q", "-b", "other", head0); (r / "y").write_text("y"); g("add", "-A"); g("commit", "-qm", "o")
-    assert not VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": g("rev-parse", "HEAD")}, 1, head)  # not an ancestor
+        V5.code_commit()                                              # uncommitted code change
+    (r / "tests").mkdir(); (r / "tests" / "t_fix.py").write_text("def test(): pass\n")
+    g("add", "-A"); g("commit", "-qm", "fix + failing-before test"); fix = g("rev-parse", "HEAD")
+    id1 = V5.code_commit()
+    assert id1 == fix != id0
+    good = {"rerun_seed": [7192013, 7192011], "fix_commit": fix, "failing_before_test": "tests/t_fix.py"}
+    (r / "docs").mkdir(); (r / "docs" / "fix.json").write_text(_j.dumps(good)); g("add", "-A"); g("commit", "-qm", "rec")
+    assert V5.code_commit() == id1                                    # committing the record keeps the identity
+    assert VG.fix_rerun_ok(good, 7192013, id1, old_code=id0)
+    assert not VG.fix_rerun_ok(good, 7192099, id1, old_code=id0)      # seed not named
+    assert not VG.fix_rerun_ok(dict(good, fix_commit="HEAD"), 7192013, id1, old_code=id0)   # symbolic ref
+    assert not VG.fix_rerun_ok(dict(good, failing_before_test=""), 7192013, id1, old_code=id0)
+    assert not VG.fix_rerun_ok(dict(good, failing_before_test="tests/none.py"), 7192013, id1, old_code=id0)
+    cur = g("rev-parse", "--abbrev-ref", "HEAD")
+    g("checkout", "-q", "-b", "side", id0); (r / "s.txt").write_text("s"); g("add", "-A"); g("commit", "-qm", "side")
+    side = g("rev-parse", "HEAD"); g("checkout", "-q", cur)
+    assert not VG.fix_rerun_ok(good, 7192013, id1, old_code=side)     # the run's code is not before the fix
+    code.write_text("a = 3\n"); g("commit", "-qam", "later code"); id2 = V5.code_commit()
+    assert not VG.fix_rerun_ok(good, 7192013, id2, old_code=id0)      # code changed after the fix

@@ -95,7 +95,9 @@ def pre_batch_checks() -> None:
 
 
 def post_batch_checks() -> None:
-    """§B8: the v3 and v4 manifests are re-verified after every v5 batch (exactly: no new file either)."""
+    """§B8: the v3 and v4 manifests are re-verified after every v5 batch (exactly: no new file either), against
+    committed manifests."""
+    committed([V4_MANIFEST, C.V3_MANIFEST])
     verify_v3()
     verify_v4()
 
@@ -131,17 +133,45 @@ class stage:
 
 
 LEDGER_REL = "vsl_lab/runs/ledger.csv"                          # append-only log: not code
+# The code identity of a v5 run: every vsl_lab module the v5 pipeline imports (test_code_paths_cover_imports keeps
+# this list complete) and every committed input it reads. A commit that touches none of these (docs, ledger, other
+# tracks, a sibling session) does not change the identity, so it cannot lock a run between stages.
+CODE_PATHS = [
+    "vsl_lab/__init__.py", "vsl_lab/config.py",
+    "vsl_lab/data/__init__.py", "vsl_lab/data/corridor_analysis.py", "vsl_lab/data/metanet_events.py",
+    "vsl_lab/data/metanet_facts.py", "vsl_lab/data/metanet_inputs.py", "vsl_lab/data/mndot.py",
+    "vsl_lab/jobs/__init__.py", "vsl_lab/jobs/metanet_calibrate.py", "vsl_lab/jobs/metanet_f1.py",
+    "vsl_lab/jobs/metanet_freeze.py", "vsl_lab/jobs/metanet_gate.py", "vsl_lab/jobs/metanet_items.py",
+    "vsl_lab/jobs/metanet_j5.py", "vsl_lab/jobs/metanet_j5_eval.py", "vsl_lab/jobs/metanet_postcal.py",
+    "vsl_lab/jobs/metanet_v5_calibrate.py", "vsl_lab/jobs/metanet_v5_facts.py", "vsl_lab/jobs/metanet_v5_freeze.py",
+    "vsl_lab/jobs/metanet_v5_gate.py",
+    "vsl_lab/ops/__init__.py", "vsl_lab/ops/guard.py", "vsl_lab/ops/ledger.py", "vsl_lab/ops/scheduler.py",
+    "vsl_lab/ops/thermal.py", "vsl_lab/plants/__init__.py", "vsl_lab/plants/metanet.py",
+    "docs/lab/day_pattern/metanet_precal_facts.json", "docs/lab/day_pattern/metanet_v4_precal_facts.json",
+    "docs/lab/day_pattern/metanet_v4_calibration.json", "docs/lab/day_pattern/metanet_v3_raw_manifest.sha256",
+    "docs/lab/day_pattern/metanet_v4_raw_manifest.sha256",
+    "docs/lab/day_pattern/metanet_v5_mayfly_calibration_manifest.json",
+    "docs/lab/day_pattern/metanet_v5_precal_facts.json", "docs/lab/day_pattern/metanet_v5_precal_masks.npz",
+    "docs/lab/day_pattern/metanet_v5_precal_facts.sha256",
+]
+
+
+def _git(*a) -> "subprocess.CompletedProcess":
+    import subprocess
+    return subprocess.run(["git", "-C", str(C.REPO), *a], capture_output=True, text=True)
 
 
 def code_commit() -> str:
-    """Provenance: refuse a v5 batch while vsl_lab has uncommitted or untracked changes other than the append-only
-    ledger (start records and batch rows are appended to it during a run)."""
-    import subprocess
-    dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--untracked-files=all", "--",
-                            "vsl_lab", f":(exclude){LEDGER_REL}"], capture_output=True, text=True).stdout.strip()
+    """Code identity for provenance (§B8): refuse while any CODE_PATHS file is uncommitted, modified or untracked;
+    return the last commit that changed one of them (not HEAD: unrelated commits must not lock a run)."""
+    dirty = _git("status", "--porcelain", "--untracked-files=all", "--", *CODE_PATHS).stdout.strip()
     if dirty:
-        raise SystemExit("vsl_lab has uncommitted changes: commit the code before a v5 batch (provenance)")
-    return subprocess.run(["git", "-C", str(C.REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        raise SystemExit("v5 code or committed inputs have uncommitted changes: commit them before a v5 batch")
+    return _git("log", "-1", "--format=%H", "--", *CODE_PATHS).stdout.strip()
+
+
+def head_commit() -> str:
+    return _git("rev-parse", "HEAD").stdout.strip()
 
 
 def evaluator(data: dict | None = None, net: M.Net | None = None) -> J5Eval:
@@ -339,6 +369,8 @@ def run(gate_ok: bool, continue_only: bool = False) -> dict:
     continued = bool(best["rel_improvement_last20pct"] is not None and best["rel_improvement_last20pct"] > 0.01)
     res = res_base
     if continued:
+        if code_commit() != commit:                             # 6-10 h later: the same code must run
+            raise SystemExit("the code changed during the base batch: continuation refused (provenance)")
         if not (continue_only or C._wait_for_load()):           # 6-10 h after launch: re-check the machine
             ledger.append("DP", "metanet-v5-calib", "S", "metanet_v5_cmaes_cont", {"code_commit": commit}, "-", 0,
                           {}, {"status": "continuation pending: load gate"}, notes=str(RUNS5))
