@@ -26,6 +26,7 @@ from vsl_lab.data import metanet_events as V
 from vsl_lab.data import metanet_facts as F
 from vsl_lab.data import metanet_inputs as I
 from vsl_lab.jobs import metanet_calibrate as C
+from vsl_lab.jobs import metanet_items as IT
 from vsl_lab.jobs import metanet_postcal as Q
 from vsl_lab.plants import metanet as M
 
@@ -301,22 +302,19 @@ def deterministic(seed: int | None = None) -> dict:
         # P4-k
         dts, nm_ = [], 0
         for d in days:
-            re = [tuple(e) for e in real_ev[d][k]]
-            me = md[d][k]["episodes"]
-            mt = V.match_episodes(re, me)
-            for i_, r in enumerate(re):
-                if i_ in mt:
-                    dts.append(abs(r[0] - me[mt[i_]][0]) * 5)
+            for dt_, _ in IT.p4_day([tuple(e) for e in real_ev[d][k]], md[d][k]["episodes"]):
+                if dt_ is not None:
+                    dts.append(dt_)
                     nm_ += 1
                 else:
-                    dts.append(90)
+                    dts.append(IT.UNMATCHED_ONSET_MIN)
         rows[f"P4-{kk}"] = {"n_episodes": len(dts), "matched_share": nm_ / len(dts) if dts else None,
                             "median_abs_onset_min": med(dts), "ci": boot_median_ci(dts),
                             "PASS": bool(dts and med(dts) <= 15 and nm_ / len(dts) >= 0.75)}
         # P5a-k, P5b-k
         heavy = [d for d in days if real_ev[d][k + "_long"] and real_ev[d][k + "_long"]["heavy"]]
         hm = [d for d in heavy if md[d][k]["c4"] is not None]
-        Dq = [md[d][k]["c4"]["Q_dis"] / real_ev[d][k + "_long"]["c4"]["Q_dis"] - 1 for d in hm]
+        Dq = [IT.p5a_day(real_ev[d][k + "_long"], md[d][k]["c4"]) for d in hm]
         dr = [md[d][k]["c4"]["r"] - real_ev[d][k + "_long"]["c4"]["r"] for d in hm]
         rm = [md[d][k]["c4"]["r"] for d in hm]
         enough = len(hm) >= need(len(heavy))
@@ -347,16 +345,11 @@ def deterministic(seed: int | None = None) -> dict:
         # P7a-k
         diffs, sdiff, unc = [], [], []
         for d in heavy:
-            lg = real_ev[d][k + "_long"]
-            re = [tuple(e) for e in real_ev[d][k]]
-            ri = re.index(tuple(lg["ep"]))
-            tc = real_ev[d]["censor"].get(ri) if k == "B1" else None
-            mep = md[d][k].get("matched")
-            dm = V.censored_duration(tuple(mep), tc) if mep else 0
-            diffs.append(abs(dm - lg["dur_min"]))
-            sdiff.append(dm - lg["dur_min"])
+            dm, dr0, tc = IT.p7a_day(real_ev[d], md[d][k], k)
+            diffs.append(abs(dm - dr0))
+            sdiff.append(dm - dr0)
             if k == "B1" and tc is None:
-                unc.append(abs(dm - lg["dur_min"]))
+                unc.append(abs(dm - dr0))
         rows[f"P7a-{kk}"] = {"n_H": len(heavy), "median_abs_min": med(diffs), "ci": boot_median_ci(diffs),
                              "signed_median_min": med(sdiff), "uncensored_median_abs_min": med(unc) if k == "B1" else None,
                              "n_uncensored": len(unc) if k == "B1" else None, "PASS": bool(diffs and med(diffs) <= 30)}
@@ -366,9 +359,9 @@ def deterministic(seed: int | None = None) -> dict:
     both_q = [d for d in both if all(rmerge[d])]                       # real merge section defined at both heads
     Dc = []
     for d in both_q:
-        mm = [md[d][k]["merge"] for k in ("B1", "B2")]
-        if all(x is not None for x in mm):
-            Dc.append((mm[1] / mm[0]) / (rmerge[d][1]["discharge"] / rmerge[d][0]["discharge"]) - 1)
+        dc = IT.p5c_day(rmerge[d], [md[d][k]["merge"] for k in ("B1", "B2")])
+        if dc is not None:
+            Dc.append(dc)
     gated = len(both) >= 6
     rows["P5c"] = {"n_H_both": len(both), "n_real_merge_defined": len(both_q), "n_matched": len(Dc),
                    "required": need(len(both_q)), "gated": gated, "median_D": med(Dc), "ci": boot_median_ci(Dc),
@@ -380,25 +373,9 @@ def deterministic(seed: int | None = None) -> dict:
         i = days.index(d)
         rsp = {s: I.event_station(d, s)["v"] for s in I.EVENT_STATIONS}
         rvl = {s: I.event_station(d, s)["valid"] for s in I.EVENT_STATIONS}
-        rk = "B1" if real_ev[d]["B1"] else "B2"
-        r_ext = extent(rsp, rvl, UPST[rk], [tuple(x) for x in list(real_ev[d]["B1"]) + list(real_ev[d]["B2"])])
         msp, mvl = Q.model_speeds(d, o.v_st[i], net, cs)
-        mm = {}
-        for k in ("B1", "B2"):
-            re = [tuple(e) for e in real_ev[d][k]]
-            me = md[d][k]["episodes"]
-            mm[k] = [me[j] for j in V.match_episodes(re, me).values()]
-        if not (mm["B1"] or mm["B2"]):
-            hit.append(False)
-        else:
-            mk = "B1" if mm["B1"] else "B2"
-            m_ext = extent(msp, mvl, UPST[mk], [tuple(x) for x in mm["B1"] + mm["B2"]])
-            order = [s for s in sorted(I.EVENT_STATIONS, key=lambda s: I.ST[s]["km"]) if rvl[s]]
-            j = order.index(r_ext) if r_ext in order else None
-            adj = {r_ext} | ({order[j - 1]} if j else set()) | ({order[j + 1]} if j is not None and j + 1 < len(order)
-                                                                else set())
-            hit.append(m_ext in adj)
-        dr_, dm_ = V.p7c_pair(real_ev[d]["B1"], real_ev[d]["B2"], md[d]["B1"]["episodes"], md[d]["B2"]["episodes"])
+        hit.append(IT.p7b_hit(IT.p7b_day(real_ev[d], md[d], rsp, rvl, msp, mvl, extent, UPST)))
+        dr_, dm_ = IT.p7c_day(real_ev[d], md[d])
         p7c.append(abs(dm_ - dr_))
     rows["P7b"] = {"n": len(hit), "share": float(np.mean(hit)) if hit else None, "wilson": wilson(sum(hit), len(hit)),
                    "PASS": bool(hit and np.mean(hit) >= 0.70)}
@@ -416,15 +393,15 @@ def deterministic(seed: int | None = None) -> dict:
             key = f"{pr[0]}->{pr[1]}"
             pair_m[key] = pair_m.get(key, 0) + bool(md[d]["pairs"].get(pr))
             pair_r[key] = pair_r.get(key, 0) + bool(rp.get(pr))
-        sp = Q.spurious(md[d]["pairs"], rp)
+        p8 = IT.p8_day(md[d], real_ev[d], rp, Q.spurious, Q.overlaps)
+        sp = p8["spurious"]
         if sp:
             spur_days += 1
             spur_list += [{"day": d, "pair": list(x), "episodes": md[d]["pairs"][x]} for x in sp]
         for k in ("B1", "B2"):
-            ex = [e for e in md[d][k]["episodes"] if not Q.overlaps([e], [tuple(x) for x in real_ev[d][k]])]
-            if ex:
+            if p8["extra"][k]:
                 extra[k] += 1
-                extra_min[k] += sum((e[1] - e[0] + 1) * 5 for e in ex)
+                extra_min[k] += p8["extra_min"][k]
     excess = {k: pair_m[k] - pair_r.get(k, 0) for k in pair_m}
     rows["P8"] = {"tolerance": tol8, "pair_model_minus_real": excess, "spurious_days": spur_days,
                   "extra_days": extra, "extra_minutes": extra_min, "spurious_list": spur_list[:60],
@@ -446,13 +423,7 @@ def deterministic(seed: int | None = None) -> dict:
             trunc += 1
         qr = I.event_station(d, Q.DOWN[b])["q"]
         qm = np.where(np.isfinite(qr), o.q_st[i][sids.index(Q.DOWN[b])][EV0:EV0 + NEV], np.nan)
-
-        def s1(q, s, e, qd):
-            e = e if cut is None else min(e, cut - 1)
-            seg = np.nan_to_num(q[max(0, s - 12):e + 1])
-            roll = np.convolve(seg, np.ones(3) / 3, mode="valid")
-            return float(roll.max() / qd) if roll.size else None
-        a, bb = s1(qr, rs, re_, rl["c4"]["Q_dis"]), s1(qm, ms, me_, md[d][b]["c4"]["Q_dis"])
+        a, bb = IT.s1_ratio(qr, rs, re_, rl["c4"]["Q_dis"], cut), IT.s1_ratio(qm, ms, me_, md[d][b]["c4"]["Q_dis"], cut)
         if a is not None and bb is not None:
             s1d.append(bb - a)
         qd_m = md[d][b]["c4"]["Q_dis"]

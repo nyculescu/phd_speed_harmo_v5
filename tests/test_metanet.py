@@ -267,7 +267,11 @@ def test_step_halving_runs(pmid):
 
 
 # ---------------------------------------------------------------- 15 relocation and c2* (§4.7)
-def test_relocation_flag_and_c2_star(net, pmid):
+def test_relocation_flag_and_c2_star(net, pmid, monkeypatch):
+    """v3 reading of relocation (a). The D4.10 addendum switch (acceleration-zone bins excluded) is pinned off here;
+    v4 test 15 covers both readings."""
+    from vsl_lab.jobs import metanet_postcal as _Q
+    monkeypatch.setattr(_Q, "RELOC_EXCLUDE_ADJACENT_JAM", False)
     from vsl_lab.jobs.metanet_postcal import RELOC_PAIR, c2_star, cell_rc, relocation
     hrs = 4.0 + np.arange(NB) / 12.0
     shape = np.where((hrs >= 15) & (hrs < 18), 1.0, 0.5)
