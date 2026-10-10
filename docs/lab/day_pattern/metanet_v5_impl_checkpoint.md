@@ -22,3 +22,4 @@ Rule for a resumed session: read this file and the protocol sections named in th
 - S0 demand extremes: done (168b2e6), `docs/lab/g1_demand_extremes.md`. Sharp transitions; H5 shows a capacity drop in several layouts, H3 none. Open check: lanedrop results identical across ramp levels (inert ramp?).
 - Next: S1 pre-registration (refine main_peak in 200 veh/h steps inside the H5 brackets, ≥ 10 seeds 7,170,100+), controllers nc + MTFC tuned + constant-VSL grid + "artificial DRL" oracles (O1 best constant per seed; O2 timed oracle around the seed's NC onset), labelled upper bounds; KILL if oracle gap over tuned classical < 10 %. Then length sweep (acceleration lane, downstream) only if S1 shows headroom.
 - S1 done: all 5 cells KILL (H ≤ 0.2 % in 4; Z9 5.8 % [0, 27]); `docs/lab/g1_s1.md`. Length sweep not licensed. Open: author decision on Z9 follow-up.
+- S2 done: Z9 KILL (H 1.6 % [0, 3.6]); **G-1 line closed** (`docs/lab/g1_s2.md`). Resume the main plan at slice B.
