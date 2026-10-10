@@ -173,3 +173,37 @@ def test39_route_labels():
     assert route({"no admissible restart": False})["route"] == "STOP (no admissible restart)"
     with pytest.raises(ValueError):
         route({"no admissible restart": True})
+
+
+def test36_gate_guard():
+    from vsl_lab.jobs.metanet_v5_gate import PROTOCOL, guard
+    rec = {"protocol": PROTOCOL, "stage": "freeze", "route": "continue to the plant gate", "nominal": 7192013,
+           "members": [7192011], "candidates": [7192011, 7192015]}
+    now = {"code": "c1", "freeze_blob": "b1"}
+    ok = dict(audit_committed=True, first_record=True, fix_names_record=False, lock=None, now=now,
+              fix_rerun_for_seed=False)
+    assert guard(rec, None, **ok) == 7192013 and guard(rec, 7192011, **ok) == 7192011
+    for bad in (dict(ok, audit_committed=False), dict(ok, first_record=False)):
+        with pytest.raises(SystemExit):
+            guard(rec, None, **bad)
+    assert guard(rec, None, **dict(ok, first_record=False, fix_names_record=True)) == 7192013
+    with pytest.raises(SystemExit):
+        guard(rec, 7192015, **ok)                                        # recorded candidate, not a member
+    with pytest.raises(SystemExit):
+        guard(dict(rec, route="STOP (P11-k)"), None, **ok)
+    lock = {"7192013": {"code": "c0", "freeze_blob": "b1"}}               # crashed / killed earlier run, other code
+    with pytest.raises(SystemExit):
+        guard(rec, None, **dict(ok, lock=lock))
+    assert guard(rec, None, **dict(ok, lock=lock, fix_rerun_for_seed=True)) == 7192013
+    assert guard(rec, None, **dict(ok, lock={"7192013": now})) == 7192013  # plain re-run, unchanged hashes
+
+
+def test_members_rule():
+    from vsl_lab.jobs.metanet_v5_gate import candidates, members
+    rs = [{"seed": s, "admissible": True, "best_J5": j, "best_x": [x] * 17}
+          for s, j, x in ((1, 0.30, 0.5), (2, 0.305, 0.9), (3, 0.31, 0.1), (4, 0.302, 0.6), (5, 0.40, 0.0))]
+    c = candidates(rs, 1, [0, 1, 2, 3, 4])
+    assert [x["seed"] for x in c] == [2, 4]                              # 3 and 5 outside 1.02; 2 farther than 4
+    m = members(c, {2: dict(stephalving=True, P11=True, screen=True, F_hat=False),
+                    4: dict(stephalving=True, P11=True, screen=True, F_hat=True)})
+    assert m == {"gridded": [2, 4], "members": [4]}
