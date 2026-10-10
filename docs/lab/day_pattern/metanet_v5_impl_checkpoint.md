@@ -47,6 +47,12 @@ Rule for a resumed session: read this file and the protocol sections named in th
 
 **Launch order (§B8):** `metanet_v5_facts build` → commit facts + masks + `.sha256` → `metanet_v5_freeze build-data` → `metanet_v5_freeze premise` → author's go → `metanet_v5_calibrate run --gate-ok` → `metanet_v5_freeze stops` → `grid-run --seed <nominal>` → `ensemble` (+ `grid-run` per gridded candidate) → `finalize` → commit record → freeze audit → gate stages (`metanet_v5_gate prep`, `deterministic`, `draws-plan`, `draws-run`, `stochastic`, `verdict`).
 
+**Premise check (§B7), run 2026-10-10 12:32 (ledger rows `metanet_v5_premise_started` / `metanet_v5_premise`; raw `metanet_v5/premise_check.json`):**
+- **Anchor: PASS.** J_v4 at the v4 nominal = 0.17801580823665977, equal to the committed value. The launch is not blocked.
+- **D4.12 comparison: consistent.** J_v4 = 0.187 / 0.224 / 0.455 at the 2,400 / 2,100 / 1,900 plants.
+- **Report-only warning.** J5 = 0.4933 (v4 nominal, never jams) < 0.4946 / 0.4975 / 0.5682 (D4.12 plants that jam; +0.3 %, +0.9 %, +15.2 %). J5 still ranks the never-jamming plant first, by small margins.
+- **Author's go: 2026-10-10** (after the pivot of the same day; decision D5.1).
+
 **Before the facts commit (§B8 step 4):** commit `metanet_v5_precal_facts.json`, `metanet_v5_precal_masks.npz` (the evaluator loads it next to the facts) and `metanet_v5_precal_facts.sha256`, rebuilt from committed code.
 **Launch blocker resolved (2026-10-10):** the sibling session committed its `vsl_lab/` changes (d4c736f thermal guard off by default; e0ca921 `vsl-cooling` systemd unit owns the pad and laptop fans). v5 batch and training code must not drive the pad or asusctl.
 
