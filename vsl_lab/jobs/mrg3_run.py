@@ -1,6 +1,7 @@
 """MRG3 job (Track 2): one run of one classical controller at the merge bottleneck.
 
-Controllers: nc | const:<b> (constant VSL rate b on the application area) | mtfc[:rho:kp:ki:ki2]
+Controllers: nc | const:<b> (constant VSL rate b on the application area) | win:<b>:<t0>:<t1> (b only for t0 <= t <= t1,
+else 1.0; G-1 S1 timed oracle) | mtfc[:rho:kp:ki:ki2]
 Upstream safety staircase (Carlson et al. "safety VSLs"): up2 = min(1, b+0.2), up3 = min(1, b+0.4);
 application area (up1, up0a) = b; acceleration area (up0b) = 0.9 while active. VSL = b x 120 km/h.
 Metrics: door-to-door mean time in system (all, mainline, ramp; incl. origin queue; drain until empty);
@@ -108,6 +109,7 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
     sens = P.Sensors(f["lanes"], merge_eff_lanes=3 if geom == "zipmerge" else None)
     mt = None
     b_const = None
+    win = None
     vslad = None
     spec = None
     cav_mode = None                                   # arm C controller kind
@@ -145,6 +147,9 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
         mt = MTFC(**dict(zip(names, vals)))
     elif ctrl.startswith("const:"):
         b_const = float(ctrl.split(":")[1])
+    elif ctrl.startswith("win:"):
+        _, b_w, t0_w, t1_w = ctrl.split(":")
+        b_const, win = float(b_w), (float(t0_w), float(t1_w))
     ts, bs, feats, probes = [], [], [], []
     dens_samples, qc_hist = [], []
     b_app, b_acc = 1.0, 1.0
@@ -259,7 +264,8 @@ def run(ctrl: str, seed: int, main_peak: float, ramp_peak: float, p_nc: float, t
                 b_app, b_acc = mt.step(rho, qc)
                 post(b_app, b_acc)
             elif b_const is not None:
-                b_app, b_acc = b_const, (0.9 if b_const < 1.0 else 1.0)
+                b_now = b_const if win is None or win[0] <= sim.t <= win[1] else 1.0
+                b_app, b_acc = b_now, (0.9 if b_now < 1.0 else 1.0)
                 post(b_app, b_acc)
             elif spec is not None:
                 q1m = [float(np.mean([r_[1 + 3 * i] for r_ in feats[-2:]])) for i in range(6)]
