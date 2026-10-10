@@ -18,6 +18,7 @@ from vsl_lab.jobs import metanet_v5_calibrate as V5
 from vsl_lab.plants import metanet as M
 
 T, T_HALF = C.T_RUN, C.T_RUN / 2
+J_INADM = 10.0
 STOPS = ["no admissible restart", "step-halving", "P11-k", "in-sample screen", "§4.7 (7)(b)"]
 J_V4_ANCHOR = 0.17801580823665977          # committed v4 nominal J (metanet_v4_calibration.json)
 D412_LEDGER = {"2400": 0.187, "2100": 0.224, "1900": 0.455}
@@ -51,20 +52,36 @@ def route(results: dict) -> dict:
 
 
 # ---------------------------------------------------------------- step-halving (§B4)
-def stephalving(x: list, ev=None, data=None, net=None) -> dict:
+def stephalving(x: list, ev=None, data=None, net=None, best_j5: float | None = None) -> dict:
+    """§B4 at a frozen point. Guards (v4 §A2): the point is A3-feasible, and J5 at T reproduces the restart's best J5
+    (plant reproduced). Report-only (kept from v4, cannot change the verdict): per-day margins at T and T/2, and J5,
+    J_v4 and the day sets at T/4."""
     data = data if data is not None else C.load_data()
     net = net or M.build_network(C.VARIANT)
     ev = ev or V5.evaluator(data, net)
     X = np.array([x])
+    days = [str(d) for d in data["days"]]
+    cs = Q.part1()["c_s"]
     res = {}
-    for name, ts in (("T", T), ("T2", T_HALF)):
+    for name, ts in (("T", T), ("T2", T_HALF), ("T4", T / 4)):
         j5, parts = ev(X, T_s=ts, return_parts=True)
+        if j5[0] > J_INADM:
+            raise RuntimeError("the frozen point is A3-infeasible: step-halving would pass vacuously")
+        if name == "T" and best_j5 is not None and abs(float(j5[0]) - best_j5) > 1e-12 * max(1.0, abs(best_j5)):
+            raise RuntimeError(f"J5(T) {float(j5[0])!r} != calibrated best J5 {best_j5!r}: plant not reproduced")
         jv4 = C.objective(X, data, net, T_s=ts)
         res[name] = {"J5": float(j5[0]), "J_v4": float(jv4[0]),
                      "sets": parts[0]["model_active_days"] if parts[0] else {"B1": [], "B2": []}}
+        if name != "T4":
+            p = {k: np.array([v]) for k, v in params_of(x).items()}
+            o = Q.simf(net, p, M.Inputs(data["d0"], data["d_o"], data["beta"]), record_cells=False, T_s=ts)
+            res[name]["speeds"] = {d: Q.model_speeds(d, o.v_st[i], net, cs)[0] for i, d in enumerate(days)}
     v = stephalving_pass((res["T"]["J5"], res["T2"]["J5"]), (res["T"]["J_v4"], res["T2"]["J_v4"]),
                          res["T"]["sets"], res["T2"]["sets"])
-    return {"T": res["T"], "T2": res["T2"], **v}
+    margins = {d: Q.margins_pair(res["T"]["speeds"][d], res["T2"]["speeds"][d]) for d in days}
+    for name in ("T", "T2"):
+        res[name].pop("speeds")
+    return {"T": res["T"], "T2": res["T2"], "T4_report_only": res["T4"], "margins_report_only": margins, **v}
 
 
 # ---------------------------------------------------------------- premise check (§B7)
@@ -291,7 +308,7 @@ def finalize(partial_reason: str | None = None) -> dict:
         x = nom["best_x"]
         res.update({"nominal": nom["seed"], "nominal_J5": nom["best_J5"], "nominal_rows": nom["best_rows"],
                     "frozen_params": params_of(x), "nominal_x": x})
-        steps = [("step-halving", lambda: stephalving(x, data=data, net=net)),
+        steps = [("step-halving", lambda: stephalving(x, data=data, net=net, best_j5=nom["best_J5"])),
                  ("P11-k", lambda: p11_freeze(x, data, net)),
                  ("in-sample screen", lambda: screen(x, True, nom["seed"])),
                  ("§4.7 (7)(b)", lambda: spread_v5(nom["seed"], data))]
@@ -350,8 +367,9 @@ def ensemble_checks() -> dict:
     for c in cands:
         if len(gridded) >= 2:
             break
-        x = next(r for r in rs if r["seed"] == c["seed"])["best_x"]
-        ch = {"stephalving": stephalving(x, data=data, net=net)["PASS"]}
+        rr = next(r for r in rs if r["seed"] == c["seed"])
+        x = rr["best_x"]
+        ch = {"stephalving": stephalving(x, data=data, net=net, best_j5=rr["best_J5"])["PASS"]}
         ch["P11"] = ch["stephalving"] and p11_freeze(x, data, net)["PASS"]
         ch["screen"] = ch["P11"] and screen(x, True, c["seed"])["PASS"]
         checks[str(c["seed"])] = ch
@@ -359,6 +377,59 @@ def ensemble_checks() -> dict:
             gridded.append(c["seed"])
     out = {"nominal": nom["seed"], "candidates": cands, "checks": checks, "gridded": gridded}
     (V5.RUNS5 / "ensemble_checks.json").write_text(json.dumps(_clean(out), indent=1))
+    return out
+
+
+# ---------------------------------------------------------------- §B1.7 sensitivities (report-only)
+SENS = {"caps_x2/3": {"caps": 2 / 3}, "caps_x4/3": {"caps": 4 / 3}, "taper_off": {"taper": False},
+        "eps_0": {"eps": 0.0}, "eps_1": {"eps": 1.0}, "equal_weights_no_parity": {"equal_w": True}}
+
+
+class _variant:
+    """Temporarily change J5's caps, taper, ε or weights (module constants read at call time)."""
+    CAPS = ("CAP_ONSET", "CAP_DUR", "CAP_QDIS", "CAP_RATIO", "CAP_EXT")
+
+    def __init__(self, ev, spec: dict):
+        self.ev, self.spec = ev, spec
+
+    def __enter__(self):
+        from vsl_lab.jobs import metanet_j5 as Jm
+        self.J = Jm
+        self.saved = {k: getattr(Jm, k) for k in self.CAPS + ("TAPER_A", "TAPER_B", "EPS")}
+        self.saved_rc, self.saved_w = dict(Jm.REALISM_CAP), dict(self.ev.w)
+        f = self.spec.get("caps")
+        if f:
+            for k in self.CAPS:
+                setattr(Jm, k, getattr(Jm, k) * f)
+            Jm.REALISM_CAP.update({k: v * f for k, v in Jm.REALISM_CAP.items()})
+        if self.spec.get("taper") is False:
+            Jm.TAPER_A, Jm.TAPER_B = 1e12, 1e12 + 1.0
+        if "eps" in self.spec:
+            Jm.EPS = self.spec["eps"]
+        if self.spec.get("equal_w"):
+            self.ev.w = {r: 1.0 for r in self.ev.w}
+        return self
+
+    def __exit__(self, *a):
+        for k, v in self.saved.items():
+            setattr(self.J, k, v)
+        self.J.REALISM_CAP.clear()
+        self.J.REALISM_CAP.update(self.saved_rc)
+        self.ev.w = self.saved_w
+
+
+def sensitivities() -> dict:
+    """Re-score the 8 restarts' best points under each variant; never used to select a plant."""
+    rs = [r for r in restarts() if r["admissible"]]
+    ev = V5.evaluator()
+    X = np.array([r["best_x"] for r in rs])
+    out = {"seeds": [r["seed"] for r in rs], "base": [float(j) for j in ev(X)]}
+    for name, spec in SENS.items():
+        with _variant(ev, spec):
+            out[name] = [float(j) for j in ev(X)]
+    out["rank_of_nominal"] = {k: int(np.argsort(np.argsort(v))[int(np.argmin(out["base"]))]) + 1
+                              for k, v in out.items() if k not in ("seeds",)}
+    (V5.RUNS5 / "sensitivities.json").write_text(json.dumps(out, indent=1))
     return out
 
 
@@ -390,7 +461,7 @@ def _clean(x):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["premise", "stephalving", "grid", "ensemble", "finalize"])
+    ap.add_argument("what", choices=["premise", "stephalving", "grid", "ensemble", "finalize", "sensitivities"])
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--c2-index", type=int, default=None)
     ap.add_argument("--partial", default=None)
@@ -398,6 +469,9 @@ def main(argv=None) -> int:
     if a.what == "grid":
         rs = {r["seed"]: r for r in restarts()}
         Q.grid_job(a.seed, a.c2_index, p=params_of(rs[a.seed]["best_x"]), runs=V5.RUNS5, jd=V5.evaluator())
+        return 0
+    if a.what == "sensitivities":
+        print(json.dumps(sensitivities()))
         return 0
     if a.what == "ensemble":
         print(json.dumps({k: v for k, v in ensemble_checks().items() if k != "candidates"}))

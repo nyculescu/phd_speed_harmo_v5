@@ -87,6 +87,9 @@ def evaluator(data: dict | None = None, net: M.Net | None = None) -> J5Eval:
     Every J5 job builds it, so the Mayfly-cache check runs before every J5 batch (§B1.1)."""
     pre_batch_checks()
     sha = FACTS5_SHA.read_text().split()[0]
+    f = json.loads(FACTS5.read_text())                          # the facts' masks and nulls index this file
+    if hashlib.sha256((C.RUNS / "calib_data.npz").read_bytes()).hexdigest() != f["calib_data_sha256"]:
+        raise RuntimeError("calib_data.npz differs from the file the v5 facts were built from")
     net = net or M.build_network(C.VARIANT)
     return J5Eval(FACTS5, sha, data if data is not None else C.load_data(), net, Q.part1()["c_s"])
 

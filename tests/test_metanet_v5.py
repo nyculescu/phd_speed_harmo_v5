@@ -326,3 +326,29 @@ def test_integrity_guards(tmp_path):
         V5.verify_mayfly(mm)
     a = np.array([1.0, np.nan]); b = a.copy()
     assert same_array(a, b) and not same_array(a, np.array([1.0, 2.0])) and same_array(np.array([1, 2]), np.array([1, 2]))
+
+
+def test32_stephalving_runner_guards(monkeypatch):
+    """§B4 runner: returns J5, J_v4 and both day sets at T and T/2 (test 32); refuses an A3-infeasible point and a
+    non-reproduced plant; T/4 and margins are report-only."""
+    import types as _t
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    vals = {FZ.T: 0.40, FZ.T_HALF: 0.41, FZ.T / 4: 0.42}
+
+    def ev(X, T_s=None, return_parts=False):
+        return np.array([vals[T_s]]), [{"model_active_days": {"B1": ["a"], "B2": []}}]
+    monkeypatch.setattr(FZ.C, "objective", lambda X, data, net, T_s=None: np.array([0.2]))
+    monkeypatch.setattr(FZ.Q, "part1", lambda: {"c_s": {}})
+    monkeypatch.setattr(FZ.Q, "simf", lambda *a, **k: _t.SimpleNamespace(v_st=np.zeros((1, 1, 1))))
+    monkeypatch.setattr(FZ.Q, "model_speeds", lambda *a, **k: ({}, {}))
+    monkeypatch.setattr(FZ.Q, "margins_pair", lambda a, b: {"m": 1})
+    monkeypatch.setattr(FZ, "params_of", lambda x: {"a": 1.0})
+    data = {"days": np.array(["a"]), "d0": None, "d_o": None, "beta": None}
+    r = FZ.stephalving([0.5] * 17, ev=ev, data=data, net=object(), best_j5=0.40)
+    assert r["PASS"] and r["T"]["J5"] == 0.40 and r["T2"]["sets"] == {"B1": ["a"], "B2": []}
+    assert r["T4_report_only"]["J5"] == 0.42 and r["margins_report_only"] == {"a": {"m": 1}}
+    with pytest.raises(RuntimeError):
+        FZ.stephalving([0.5] * 17, ev=ev, data=data, net=object(), best_j5=0.39)        # not reproduced
+    vals[FZ.T] = 10.4
+    with pytest.raises(RuntimeError):
+        FZ.stephalving([0.5] * 17, ev=ev, data=data, net=object())                        # A3-infeasible

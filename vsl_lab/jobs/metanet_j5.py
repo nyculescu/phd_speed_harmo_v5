@@ -62,13 +62,13 @@ def creditable(ep: tuple, cond: np.ndarray, cong: np.ndarray, k: str) -> bool:
 
 
 # ---------- per-bottleneck target items (§B1.3) ----------
-def p3_item(real: list, model: list, credit: list, s: float, eps: float = EPS) -> float:
+def p3_item(real: list, model: list, credit: list, s: float, eps: float | None = None) -> float:
     """Real-active day: 0 if a creditable model episode overlaps a real one, else 1 + ε·s.
     Real-inactive day (real == []): 1 if any model episode."""
     if not real:
         return float(bool(model))
     hit = any(c and overlaps(m, r) for m, c in zip(model, credit) for r in real)
-    return 0.0 if hit else 1.0 + eps * s
+    return 0.0 if hit else 1.0 + (EPS if eps is None else eps) * s
 
 
 def x_item(real: list, model: list) -> float | None:

@@ -244,3 +244,21 @@ def test33_no_validation_input_on_calibration_side(monkeypatch, tmp_path):
     assert r["P8_tolerance"] == 2 and r["Lc_k"]["B1"] == 0.95
     bad = [p for p in opened if "val_data" in p or "gate_det" in p or "gate_draw" in p or "gate_sto" in p]
     assert not bad, bad
+
+
+def test_sensitivity_variants_change_and_restore(monkeypatch):
+    """§B1.7 variants act through the module constants read at call time, and every constant is restored."""
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    ev_, _ = _evaluator()
+    _install(monkeypatch)                                              # a miss: P3-1 = 1 + eps*s
+    rho, rc = _cells(backed=False)
+    base = _day(ev_, rho, rc)["P3-1"][0]
+    saved = (J.EPS, J.CAP_DUR, J.TAPER_A, dict(J.REALISM_CAP), dict(ev_.w))
+    with FZ._variant(ev_, {"eps": 0.0}):
+        assert _day(ev_, rho, rc)["P3-1"][0] == 1.0
+    with FZ._variant(ev_, {"eps": 1.0}):
+        assert _day(ev_, rho, rc)["P3-1"][0] == pytest.approx(1.0 + 2 * (base - 1.0))
+    with FZ._variant(ev_, {"caps": 4 / 3, "taper": False, "equal_w": True}):
+        assert J.CAP_DUR == pytest.approx(120.0) and J.taper(0.2, 80.0) == pytest.approx(0.2)
+        assert set(ev_.w.values()) == {1.0}
+    assert (J.EPS, J.CAP_DUR, J.TAPER_A, dict(J.REALISM_CAP), dict(ev_.w)) == saved
