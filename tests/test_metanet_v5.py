@@ -221,3 +221,25 @@ def test_c1_inert_reports():
     r = c1_inert(rows, 1.2)
     assert r["c1_inert_days"] == ["a"]                       # c: same E/O but B1 cells congested -> not inert
     assert r["upper_half_c1_inert_days"] == ["a", "c"]       # b changes inside [1.0, 1.2]
+
+
+def test_finalize_stop_order(monkeypatch):
+    """Stops run in order and stop at the first failure; later stops are not evaluated (stubbed, no simulation)."""
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    from vsl_lab.jobs import metanet_calibrate as Cm
+    called = []
+    rs = [{"seed": 7192010, "admissible": True, "best_J5": 0.4, "best_x": [0.5] * 17, "best_rows": {}},
+          {"seed": 7192011, "admissible": True, "best_J5": 0.3, "best_x": [0.4] * 17, "best_rows": {}}]
+    monkeypatch.setattr(FZ, "restarts", lambda: rs)
+    monkeypatch.setattr(Cm, "load_data", lambda: {"days": []})
+    monkeypatch.setattr(FZ.M, "build_network", lambda v: None)
+    monkeypatch.setattr(FZ.V5, "FACTS5_SHA", type("P", (), {"read_text": staticmethod(lambda: "abc  f")})())
+    monkeypatch.setattr(FZ, "stephalving", lambda x, **k: called.append("sh") or {"PASS": True})
+    monkeypatch.setattr(FZ, "p11_freeze", lambda x, d, n: called.append("p11") or {"PASS": False})
+    monkeypatch.setattr(FZ, "screen", lambda *a: called.append("screen") or {"PASS": True})
+    monkeypatch.setattr(FZ, "spread_v5", lambda *a: called.append("spread") or {"usable_spread": True})
+    r = FZ.finalize()
+    assert r["nominal"] == 7192011 and r["route"] == "STOP (P11-k)" and called == ["sh", "p11"]
+    assert r["stops"]["§4.7 (7)(b)"].startswith("not run")
+    monkeypatch.setattr(FZ, "restarts", lambda: [dict(x, admissible=False) for x in rs])
+    assert FZ.finalize()["route"] == "STOP (no admissible restart)"

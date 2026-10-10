@@ -179,11 +179,146 @@ def c1_inert(rows: list, c2_max: float) -> dict:
     return {"c1_inert_days": inert, "upper_half_c1_inert_days": upper}
 
 
+# ---------------------------------------------------------------- freeze orchestration (§B8 step 6)
+CORR_BOOT = 7192098
+RECORD = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v5_calibration.json"
+
+
+def restarts() -> list:
+    out = []
+    for s in V5.SEEDS:
+        f = V5.RUNS5 / f"cma_restart_{s}_cont.json"
+        f = f if f.exists() else V5.RUNS5 / f"cma_restart_{s}.json"
+        if not f.exists():
+            raise SystemExit(f"restart {s} has no result file")
+        out.append(json.loads(f.read_text()))
+    return out
+
+
+def params_of(x: list) -> dict:
+    return {k: float(v[0]) for k, v in C.to_params(np.array([x])).items()}
+
+
+def p11_freeze(x: list, data: dict, net) -> dict:
+    cs = Q.part1()["c_s"]
+    days = [str(d) for d in data["days"]]
+    p = params_of(x)
+    o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
+               record_cells=True)
+    per = {d: Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs) for i, d in enumerate(days)}
+    return Q.p11_verdict(per)
+
+
+def grid_rows(seed: int) -> list:
+    rows = []
+    for i in range(len(Q.GRID)):
+        f = V5.RUNS5 / f"grid_{seed}_c2_{i:02d}.json"
+        if not f.exists():
+            raise SystemExit(f"grid file missing: {f.name} (run the grid batch first)")
+        rows += json.loads(f.read_text())
+    return rows
+
+
+def spread_v5(seed: int, data: dict) -> dict:
+    """v3 §4.7 unchanged on the v5 grid rows, selector J_d, correlation bootstrap seed 7,192,098."""
+    from vsl_lab.data import metanet_facts as F
+    from vsl_lab.jobs import metanet_freeze as FZ
+    days = [str(d) for d in data["days"]]
+    real_ev = {d: F.day_events(d) for d in days}
+    real_active = {d: {k: bool(real_ev[d][k]) for k in ("B1", "B2")} for d in days}
+    demand = {d: float(data["d0"][i, M.SCORE_FROM_BIN:].sum() * 5 / 60) for i, d in enumerate(days)}
+    rows = grid_rows(seed)
+    saved = FZ.SEED_BOOT
+    FZ.SEED_BOOT = CORR_BOOT
+    try:
+        cap = FZ.capacity_factors(seed, days, real_active, demand, real_ev, rows=rows, selector="J_d")
+    finally:
+        FZ.SEED_BOOT = saved
+    if cap.get("c2_star") is not None:
+        cap["reports_c1"] = c1_inert(rows, cap["c2_star"])
+    cap["usable_spread"] = cap.get("spread_used") in ("KM", "Tobit")
+    return cap
+
+
+def finalize(partial_reason: str | None = None) -> dict:
+    data = C.load_data()
+    net = M.build_network(C.VARIANT)
+    rs = restarts()
+    adm = [r for r in rs if r["admissible"]]
+    res = {"protocol": V5.PROTOCOL, "stage": "freeze", "T_s": T, "objective": "J5",
+           "facts_sha256": V5.FACTS5_SHA.read_text().split()[0],
+           "restarts": [{k: r.get(k) for k in ("seed", "evals", "best_J5", "admissible", "final_sigma", "counts",
+                                               "share_evals_with_credit_B1", "bound_active",
+                                               "rel_improvement_last20pct", "wall_s")} for r in rs]}
+    results, detail = {"no admissible restart": bool(adm)}, {}
+    nom = min(adm, key=lambda r: r["best_J5"]) if adm else None
+    if nom:
+        x = nom["best_x"]
+        res.update({"nominal": nom["seed"], "nominal_J5": nom["best_J5"], "nominal_rows": nom["best_rows"],
+                    "frozen_params": params_of(x), "nominal_x": x})
+        steps = [("step-halving", lambda: stephalving(x, data=data, net=net)),
+                 ("P11-k", lambda: p11_freeze(x, data, net)),
+                 ("in-sample screen", lambda: screen(x, True, nom["seed"])),
+                 ("§4.7 (7)(b)", lambda: spread_v5(nom["seed"], data))]
+        for name, fn in steps:
+            r = fn()
+            detail[name] = r
+            ok = r["usable_spread"] if name == "§4.7 (7)(b)" else r["PASS"]
+            results[name] = bool(ok)
+            if not ok:
+                break
+    rt = route(_complete(results))
+    res.update({"route": rt["route"], "stops": rt["stops"], "stop_detail": _clean(detail)})
+    if not rt["route"].startswith("STOP"):
+        res["ensemble"] = {"note": "members are added by the ensemble step (§B6) before the record is committed",
+                           "members": []}
+    if partial_reason:
+        res["not_run"] = {"reason": partial_reason}
+    return res
+
+
+def _complete(results: dict) -> dict:
+    """Stops after the first failure are not evaluated; route() labels them 'not run'."""
+    out, failed = {}, False
+    for s_ in STOPS:
+        if failed:
+            out[s_] = True                     # placeholder; route() reports it as 'not run' after the failure
+            continue
+        out[s_] = results.get(s_, True)
+        failed = s_ in results and not results[s_]
+    return out
+
+
+def _clean(x):
+    if isinstance(x, dict):
+        return {str(k): _clean(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_clean(v) for v in x]
+    if isinstance(x, (np.floating, np.integer)):
+        return x.item()
+    if isinstance(x, np.bool_):
+        return bool(x)
+    if isinstance(x, float) and not np.isfinite(x):
+        return None
+    return x
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["premise", "stephalving"])
+    ap.add_argument("what", choices=["premise", "stephalving", "grid", "finalize"])
     ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument("--c2-index", type=int, default=None)
+    ap.add_argument("--partial", default=None)
     a = ap.parse_args(argv)
+    if a.what == "grid":
+        rs = {r["seed"]: r for r in restarts()}
+        Q.grid_job(a.seed, a.c2_index, p=params_of(rs[a.seed]["best_x"]), runs=V5.RUNS5, jd=V5.evaluator())
+        return 0
+    if a.what == "finalize":
+        r = finalize(a.partial)
+        RECORD.write_text(json.dumps(_clean(r), indent=1, allow_nan=False))
+        print(json.dumps({"route": r["route"]}))
+        return 0
     if a.what == "premise":
         r = premise()
         (V5.RUNS5 / "premise_check.json").write_text(json.dumps(r, indent=1, default=float))
