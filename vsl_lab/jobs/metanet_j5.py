@@ -78,12 +78,8 @@ def x_item(real: list, model: list) -> float | None:
 
 def p4_items(real: list, model: list, credit: list) -> list:
     """One item per real episode: gate matching over all model episodes; a match to a non-creditable episode -> 1."""
-    m = E.match_episodes(real, model, MATCH)
-    out = []
-    for i, r in enumerate(real):
-        j = m.get(i)
-        out.append(capped((model[j][0] - r[0]) * BIN, CAP_ONSET) if j is not None and credit[j] else 1.0)
-    return out
+    from vsl_lab.jobs import metanet_items as IT
+    return [capped(dt, CAP_ONSET) if j is not None and credit[j] else 1.0 for dt, j in IT.p4_day(real, model)]
 
 
 def longest(eps: list) -> int | None:
@@ -155,11 +151,12 @@ def margins(v_u: np.ndarray, v_d: np.ndarray) -> np.ndarray:
     return np.where(np.isfinite(m), m, -np.inf)
 
 
-def windows(real: list, t_c: int | None, n_bins: int) -> list:
-    """Per real episode j: I_j = [onset − 60 min, end + 60 min]; censored B1: [onset − 60 min, t_c]. Returns the
-    7-bin window starts overlapping each I_j (clipped to the series)."""
+def windows(real: list, censor: dict | None, n_bins: int) -> list:
+    """Per real episode j: I_j = [onset − 60 min, end + 60 min]; a censored B1 episode (censor[j] = t_c):
+    [onset − 60 min, t_c]. Returns the 7-bin window starts overlapping each I_j (clipped to the series)."""
     out = []
-    for s, e in real:
+    for j, (s, e) in enumerate(real):
+        t_c = (censor or {}).get(j)
         a, b = s - 12, (t_c if t_c is not None else e + 12)
         out.append([w for w in range(max(0, a - 6), min(b, n_bins - 7) + 1)])
     return out

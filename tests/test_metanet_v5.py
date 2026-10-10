@@ -75,7 +75,9 @@ def test28_shaping():
     v_u[:] = 40.0; v_d[:] = 60.0
     assert J.g_value(J.margins(v_u, v_d), wins) == 0.0                         # v_u = 40.0 edge: margin 0
     # censored B1 window ends at t_c
-    assert max(J.windows([(100, 150)], 110, 228)[0]) == 110
+    assert max(J.windows([(100, 150)], {0: 110}, 228)[0]) == 110
+    w2 = J.windows([(40, 50), (100, 150)], {1: 110}, 228)                     # censoring per episode
+    assert max(w2[0]) == 62 and max(w2[1]) == 110
     assert len(J.windows([(10, 20), (100, 110)], None, 228)) == 2             # per-episode windows
 
 
@@ -127,3 +129,25 @@ def test_p7c_item_merge_effect():
     worse = J.p7c_item(real1, real2, [(80, 140)], [(104, 111)])
     assert worse > base
     assert J.p7c_item(real1, real2, [], []) == 1.0
+
+
+def test_v5_driver_with_stub_evaluator(tmp_path, monkeypatch):
+    """Driver mechanics only (stub J5, synthetic seed 1): budget, counts, state file, continuation, seed guard."""
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+
+    class Stub:
+        def __call__(self, X, return_parts=False):
+            J = np.sum((X - 0.3) ** 2, axis=1)
+            J[0] = 10.5                                              # an A3 violator
+            parts = [None] + [{"rows": {}, "J_d": [], "any_creditable_B1": bool(i % 2)} for i in range(1, len(X))]
+            return (J, parts) if return_parts else J
+
+    monkeypatch.setattr(V5, "SEEDS", [1])
+    monkeypatch.setattr(V5, "BUDGET", 36)
+    r = V5.restart(1, ev=Stub(), runs=tmp_path)
+    assert r["evals"] >= 36 and r["counts"]["a3"] == 3 and r["admissible"]
+    assert r["counts"]["first_a3_feasible"] == 2
+    r2 = V5.restart(1, continue_to=60, ev=Stub(), runs=tmp_path)
+    assert r2["evals"] >= 60 and r2["best_J5"] <= r["best_J5"]
+    with pytest.raises(SystemExit):
+        V5.restart(7192099, ev=Stub(), runs=tmp_path)
