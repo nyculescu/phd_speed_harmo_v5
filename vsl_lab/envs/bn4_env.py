@@ -31,6 +31,8 @@ OBS_PIECES = {"1": 1, "2": 3, "3": 3, "4": 3, "5": 1}
 VSL_GANTRIES = ("2", "3")          # posted VSL gantries (edge 2 = application area, edge 3 = acceleration area)
 METER_GRID = ((10.0, 6.0), (10.0, 8.0), (20.0, 6.0), (20.0, 8.0), (40.0, 6.0), (40.0, 8.0))   # (K_F, n_crit)
 ACT_PIECES = {"2": 2, "3": 2, "4": 3}
+# R6+ (t1_meter_gscan_protocol.md Addendum G): vanilla-DRL metering rates (veh/h), spanning FBMeter's clip range
+RATE_GRID = (200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1400.0, 1600.0, 1800.0, 2000.0, 2400.0, 2800.0, 3200.0, 4000.0)
 
 
 class FBMeter:
@@ -69,7 +71,8 @@ class BN4Env(gym.Env):
                  eval_seeds=None, drain_after: bool = False, meter: bool = False, t_drain_max: float = 7200.0,
                  quiet: bool = True, check_actuator: bool = True, action_map: str = "linear",
                  actuator: str = "av_caps", perturb: dict | None = None, perturb_mix: list | None = None,
-                 meter_grid: list | None = None, allow_off: bool = True, obs_stack: int = 1):
+                 meter_grid: list | None = None, allow_off: bool = True, obs_stack: int = 1,
+                 rate_grid: list | None = None):
         """perturb (meter headroom scan, docs/lab/t1_meter_gscan_protocol.md): {"kind": "slow"|"block"|"surge",
         "dur": s, ...}; start ~ U(warmup + 100, warmup + control - dur - 100) from rng(seed + 991).
         slow: bottleneck edge 5 speed limit -> v_mps; block: a vehicle on edge 4 lane 1 stops mid-edge for dur;
@@ -101,6 +104,7 @@ class BN4Env(gym.Env):
         self.action_map = action_map
         # actuator: "av_caps" (Lagrangian, Vinitsky) | "posted_vsl" (TM20: posted limit for ALL vehicles on gantries
         # at edges 2 and 3) | "meter_sched" (hybrid: DRL switches/schedules the tuned feedback meter)
+        # | "meter_rate" (R6+ vanilla DRL: DRL sets the metering rate itself, no feedback law; Addendum G)
         self.actuator = actuator
         self.check_actuator = check_actuator
         self.t_drain_max = t_drain_max
@@ -112,6 +116,7 @@ class BN4Env(gym.Env):
         self.perturb_mix = list(perturb_mix) if perturb_mix else None
         self.meter_grid = [tuple(float(x) for x in g.split(":")) for g in meter_grid] if meter_grid else list(METER_GRID)
         self.allow_off = allow_off
+        self.rate_grid = [float(x) for x in rate_grid] if rate_grid else list(RATE_GRID)
         self.obs_stack = max(1, int(obs_stack))   # P-M3a: concatenate the last k observations (oldest first)
         self._obs_hist = deque(maxlen=self.obs_stack)
         self.files = bn4.files()
@@ -128,6 +133,9 @@ class BN4Env(gym.Env):
             n_prev = len(VSL_GANTRIES)
         elif actuator == "meter_sched":
             n_prev = (1 if allow_off else 0) + len(self.meter_grid)
+            self.action_space = gym.spaces.Discrete(n_prev)
+        elif actuator == "meter_rate":
+            n_prev = len(self.rate_grid)
             self.action_space = gym.spaces.Discrete(n_prev)
         else:
             raise ValueError(actuator)
@@ -237,6 +245,15 @@ class BN4Env(gym.Env):
             self.meter.K_F, self.meter.n_crit = kf, nc
             self.meter_active = True
 
+    def set_meter_rate(self, k: int) -> None:
+        """meter_rate (Addendum G): the same signal head and cycle rule as FBMeter (6 s green, cycle 2 M 3600 / q), but
+        q = rate_grid[k] is set directly and K_F = 0, so FBMeter's 30-s update leaves q unchanged (no feedback law)."""
+        if self.meter is None:
+            self.meter = FBMeter()
+        self.meter.K_F = 0.0
+        self.meter.q = float(np.clip(self.rate_grid[k], self.meter.q_min, self.meter.q_max))
+        self.meter_active = True
+
     def _check_actuator(self) -> None:
         bad = 0
         capmap = {sl: float(c) for sl, c in zip(self.act_slots, self.slot_caps)}
@@ -335,7 +352,7 @@ class BN4Env(gym.Env):
         self.vsl_b = np.ones(len(VSL_GANTRIES), dtype=np.float64)
         self.meter_active = False
         self.ep_info = {"seed": ep_seed, "inflow": q, "ret": 0.0}
-        self.meter = FBMeter() if (self.meter_on or self.actuator == "meter_sched") else None
+        self.meter = FBMeter() if (self.meter_on or self.actuator in ("meter_sched", "meter_rate")) else None
         self.meter_active = bool(self.meter_on)
         if self.meter is not None:   # the TLS is now driven by the meter, not held at all-green
             self.sim.asserts.remove(bn4.assert_all_green)
@@ -358,6 +375,11 @@ class BN4Env(gym.Env):
             b = np.where(a >= 0.0, 1.0, 1.0 + 0.8 * a) if self.action_map == "nocap_center" else 0.6 + 0.4 * a
             self.apply_vsl_rates(b)
             self.prev_action = a
+        elif self.actuator == "meter_rate":
+            k = int(np.asarray(action).reshape(-1)[0])
+            self.set_meter_rate(k)
+            self.prev_action = np.zeros(self.n_prev, dtype=np.float32)
+            self.prev_action[k] = 1.0
         else:  # meter_sched
             k = int(np.asarray(action).reshape(-1)[0])
             self.set_meter_mode(k)

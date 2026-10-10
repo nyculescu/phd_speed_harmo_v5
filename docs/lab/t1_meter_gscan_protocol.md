@@ -264,3 +264,46 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
 4. The DRL FAIL share is ≤ 5 %.
 
 **Run once** (`jobs/t1_meter_r6.py`; it refuses to run a second time). The result is reported whatever it is.
+
+## Addendum G (2026-10-10): R6+, the R6 hybrid vs a fair vanilla DRL and no control (D5.3, bar D5.1), pre-registered before any vanilla training
+
+**Purpose.** Read R6 against the 2026-10-10 bar. Chapter-level only: BN4 fails the realism gate (drop ratio 0.77; discharge 900 veh/h/lane).
+
+**Arms**
+- **Hybrid:** the frozen R6 candidate (SHA-256 `d855ba4c…15c15`), unchanged.
+- **Vanilla DRL:** RecurrentPPO **setting the metering rate directly**. In `BN4Env`, `actuator = "meter_rate"`; `tests/test_bn4_meter_rate.py` covers it.
+  - Action: Discrete(14), q ∈ {200, 400, …, 2000, 2400, 2800, 3200, 4000} veh/h. This is FBMeter's clip range.
+  - The same signal head and cycle rule as the hybrid's meter: 6-s green, cycle 2·M·3600/q.
+  - **No feedback law** (K_F = 0).
+  - Decision every 30 s.
+- **Everything else is identical to the hybrid:**
+  - observations (`obs_stack` 1), reward `tts`, episode (40-s warm-up, 900-s control);
+  - inflow U(1,400, 1,800), the 4-kind perturbation mix;
+  - validation: 10 seeds per condition from 7,110,400, 4 conditions at 1,600, every 25 updates.
+- **Training budget = the hybrid's P-M4 learners:**
+  - 2,000 updates × 16 envs × 120 steps, batch 480, 10 epochs;
+  - lr 3e-4 **constant**: the hybrid candidate actually trained at a constant lr; the trainer bug was fixed in `34ae76f`;
+  - γ 0.99, GAE 0.95, net 128×128, LSTM 64.
+- **Learner seeds 2, 3, 4** (training pools 7,214,000–7,219,999).
+  - Pools 3 and 4 equal the hybrid learners' pools.
+  - The hybrid's learner-5 pool is now refused by the seed guard.
+- **Tuning disclosure:** the vanilla gets the hybrid's final configuration with no tuning of its own, while the hybrid's configuration came out of 7 pilots (P-M to P-M4). This asymmetry favours the hybrid, and it is stated with the result.
+- **Candidate rule** (as Addendum F): among the 3 learners' best-validation checkpoints, take the lowest validation score, on validation seeds only (`t1_meter_r6plus.py freeze`).
+  - It is frozen to `docs/lab/frozen/r6plus_vanilla_candidate.zip`, with its SHA-256 in `docs/lab/t1_meter_r6plus_candidate.json`.
+  - Both are committed before the evaluation.
+
+**Evaluation** (run once, `jobs/t1_meter_r6plus.py eval`)
+- **Seeds:** 7,112,700–7,112,909 (210) × the 4 kinds at q = 1,600.
+  - Block 7,112,000–7,112,999 is requested for author approval. It is unused, while the T1 test and reserved ranges are spent.
+  - **Not run before approval.**
+- **Arms:** hybrid, vanilla, NC, `evsched:7:20:1.15`, MPC-F (frozen), pooled `meter:40:8`, `meter:10:6`, and the lookup oracle (reported only).
+- **Metric:** J as in Addendum F. Statistic: the median of paired differences, 95 % percentile bootstrap (10,000 resamples), rel = Δ / the comparator's median J.
+- **Bar — PASS only if all hold:**
+  1. hybrid vs vanilla: rel ≤ −10 % and the CI upper bound < 0;
+  2. hybrid vs NC: rel ≤ −10 % and the CI upper bound < 0;
+  3. the hybrid's FAIL share is ≤ 5 %.
+- **Operating map** (report-only; the pre-registered regimes are the 4 kinds):
+  - hybrid vs vanilla, NC, `evsched` and MPC-F, per kind;
+  - each labelled "hybrid better", "tie" or "hybrid worse" from Bonferroni CIs over the 16 comparisons.
+- **Robustness** (report-only): the 90th-percentile J per arm; the share of seeds where the hybrid is worse than NC; the FAIL shares.
+- The result is reported whatever it is.
