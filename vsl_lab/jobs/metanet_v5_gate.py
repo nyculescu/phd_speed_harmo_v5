@@ -129,6 +129,66 @@ def deterministic(seed: int | None = None) -> dict:
     return res
 
 
+SEED_DRAW5 = 7192301
+
+
+class bindings:
+    """Temporarily point the gate's module-level hooks at the v5 record (plant, freeze view, seeds, raw dir)."""
+
+    def __init__(self, rec: dict):
+        self.rec = rec
+
+    def __enter__(self):
+        from vsl_lab.jobs import metanet_gate as G
+        self.G, rec = G, self.rec
+        self.saved = {k: getattr(G, k) for k in ("plant", "freeze", "SEED_DRAW", "SEED_BOOT", "RUNS")}
+        mem = rec.get("members", [])
+
+        def plant(seed):
+            seed = rec["nominal"] if seed is None else seed
+            if seed == rec["nominal"]:
+                return seed, dict(rec["frozen_params"])
+            if seed in mem:
+                return seed, dict(rec["member_params"][str(seed)])
+            raise SystemExit(f"seed {seed} is neither the nominal plant nor a member (§B6)")
+        view = {"capacity_factors": rec["capacity_factors"], "nominal_seed": rec["nominal"], "route": rec["route"],
+                "diagnostics": {"benchmarks": rec["benchmarks"]}, "structure": "base",
+                "stephalving": {"PASS": rec["stops"]["step-halving"] == "PASS"},
+                "ensemble_candidates": {"candidates": [{"seed": m, "stephalving_PASS": True} for m in mem]}}
+        G.plant, G.freeze = plant, (lambda: view)
+        G.SEED_DRAW, G.SEED_BOOT, G.RUNS = SEED_DRAW5, SEED_BOOT5, V5.RUNS5
+        return G
+
+    def __exit__(self, *a):
+        for k, v in self.saved.items():
+            setattr(self.G, k, v)
+
+
+def stochastic(stage: str, seed: int | None = None, day_index: int | None = None):
+    """draws-plan | draws (one day) | rows: the gate's stochastic rows unchanged, under the v5 bindings."""
+    seed, rec, lock, now = check(seed)
+    with bindings(rec) as G:
+        if stage == "draws-plan":
+            return G.draws_plan(seed)
+        if stage == "draws":
+            return G.draws_day(day_index, seed)
+        return G.stochastic(seed)
+
+
+def verdict() -> dict:
+    """§B11: the nominal plant alone decides; deterministic-only = FAIL; no F1."""
+    rec = json.loads(FREEZE5.read_text())
+    s = rec["nominal"]
+    det = json.loads((V5.RUNS5 / f"gate_det_{s}.json").read_text())
+    if not det["deterministic_PASS"]:
+        return {"outcome": "FAIL (deterministic rows; route stop → E)", "failed": det["failed"]}
+    sto = json.loads((V5.RUNS5 / f"gate_sto_{s}.json").read_text())
+    spread = rec["capacity_factors"]["nominal"].get("spread_used")
+    if not sto.get("stochastic_PASS"):
+        return {"outcome": "FAIL (stochastic rows; route stop → E)", "failed": sto.get("failed")}
+    return {"outcome": "PASS" if spread == "KM" else "PASS, substitute spread"}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["deterministic"])

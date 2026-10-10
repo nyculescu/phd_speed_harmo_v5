@@ -263,11 +263,20 @@ def finalize(partial_reason: str | None = None) -> dict:
         for name, fn in steps:
             r = fn()
             detail[name] = r
+            if name == "§4.7 (7)(b)":
+                res["capacity_factors"] = {"nominal": r}
             ok = r["usable_spread"] if name == "§4.7 (7)(b)" else r["PASS"]
             results[name] = bool(ok)
             if not ok:
                 break
     rt = route(_complete(results))
+    from vsl_lab.data import metanet_facts as Fm
+    from vsl_lab.jobs import metanet_freeze as FZ
+    if data.get("d0") is not None:
+        days = [str(d) for d in data["days"]]
+        rev = {d: Fm.day_events(d) for d in days}
+        dem = {d: float(data["d0"][i, M.SCORE_FROM_BIN:].sum() * 5 / 60) for i, d in enumerate(days)}
+        res["benchmarks"] = FZ.benchmarks(days, rev, dem)
     res.update({"route": rt["route"], "stops": rt["stops"], "stop_detail": _clean(detail)})
     if not rt["route"].startswith("STOP"):
         f = V5.RUNS5 / "ensemble_checks.json"
@@ -276,8 +285,10 @@ def finalize(partial_reason: str | None = None) -> dict:
         ens = json.loads(f.read_text())
         mem, mchk, mpar = [], {}, {}
         for sd in ens["gridded"]:
-            ok = spread_v5(sd, data)["usable_spread"]
+            cap_m = spread_v5(sd, data)
+            ok = cap_m["usable_spread"]
             mchk[str(sd)] = dict(ens["checks"][str(sd)], F_hat=ok)
+            res["capacity_factors"][str(sd)] = cap_m
             if ok:
                 mem.append(sd)
                 mpar[str(sd)] = params_of(next(r for r in rs if r["seed"] == sd)["best_x"])

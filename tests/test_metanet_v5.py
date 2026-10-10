@@ -243,3 +243,29 @@ def test_finalize_stop_order(monkeypatch):
     assert r["stops"]["§4.7 (7)(b)"].startswith("not run")
     monkeypatch.setattr(FZ, "restarts", lambda: [dict(x, admissible=False) for x in rs])
     assert FZ.finalize()["route"] == "STOP (no admissible restart)"
+
+
+def test_v5_gate_bindings_and_verdict(tmp_path, monkeypatch):
+    import json as _j
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    rec = {"nominal": 7192013, "members": [7192011], "frozen_params": {"a": 1.0}, "member_params": {"7192011": {"a": 2.0}},
+           "capacity_factors": {"nominal": {"spread_used": "Tobit"}}, "benchmarks": {}, "route": "continue",
+           "stops": {"step-halving": "PASS"}}
+    before = (G.plant, G.freeze, G.SEED_DRAW, G.SEED_BOOT, G.RUNS)
+    with VG.bindings(rec) as g:
+        assert g.SEED_DRAW == 7192301 and g.SEED_BOOT == 7192300 and g.RUNS == V5.RUNS5
+        assert g.plant(None) == (7192013, {"a": 1.0}) and g.plant(7192011)[1] == {"a": 2.0}
+        with pytest.raises(SystemExit):
+            g.plant(7192015)
+    assert (G.plant, G.freeze, G.SEED_DRAW, G.SEED_BOOT, G.RUNS) == before
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    f = tmp_path / "rec.json"
+    f.write_text(_j.dumps(rec))
+    monkeypatch.setattr(VG, "FREEZE5", f)
+    (tmp_path / "gate_det_7192013.json").write_text(_j.dumps({"deterministic_PASS": True, "failed": []}))
+    (tmp_path / "gate_sto_7192013.json").write_text(_j.dumps({"stochastic_PASS": True, "failed": []}))
+    assert VG.verdict()["outcome"] == "PASS, substitute spread"
+    (tmp_path / "gate_sto_7192013.json").write_text(_j.dumps({"stochastic_PASS": False, "failed": ["P8s"]}))
+    assert VG.verdict()["outcome"].startswith("FAIL (stochastic")

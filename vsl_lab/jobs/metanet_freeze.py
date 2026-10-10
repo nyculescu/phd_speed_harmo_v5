@@ -399,7 +399,13 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
                                     "real_median_same_days": float(np.median(rr)) if rr else None,
                                     "F8_real_median": facts["F8"]["merge_ratio_B2_over_B1"]["discharge"]["median"]}
     out["events"] = ev
-    # benchmarks (§4.8): threshold classifier ceiling and the demand-half climatology
+    out["benchmarks"] = benchmarks(days, real_ev, demand)
+    return out
+
+
+def benchmarks(days: list, real_ev: dict, demand: dict) -> dict:
+    """§4.8 benchmarks from real data only (plant-independent): threshold classifier ceiling and the demand-half
+    climatology (used by the gate's P10b)."""
     dem = np.array([demand[d] for d in days])
     med = float(np.median(dem))
     bm = {"daily_demand_median_veh": med}
@@ -420,8 +426,7 @@ def diagnostics(data: dict, net: M.Net, cs: dict, days: list, real_ev: dict, dem
                  "climatology": {"p_lower": pc["lower"], "p_upper": pc["upper"], "n_lower": int(lo.sum()),
                                  "n_upper": int(hi.sum()), "R_lower": int(y[lo].sum()), "R_upper": int(y[hi].sum()),
                                  "in_sample_brier": brier}}
-    out["benchmarks"] = bm
-    return out
+    return bm
 
 
 def origin_misfit_split(o, T_s: float) -> dict:
