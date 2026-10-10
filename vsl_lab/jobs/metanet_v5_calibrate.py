@@ -29,8 +29,63 @@ SEEDS = list(range(7192010, 7192018))
 BUDGET = C.BUDGET
 
 
+V4_MANIFEST = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v4_raw_manifest.sha256"
+MAYFLY_MANIFEST = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v5_mayfly_calibration_manifest.json"
+
+
+# ---------------------------------------------------------------- integrity guards (§B1.1, §B8)
+def verify_manifest(manifest: Path, root: Path) -> None:
+    """sha256sum-format manifest ('<sha>  ./<rel>') against the files under root; a mismatch stops the run."""
+    for line in manifest.read_text().splitlines():
+        h, f = line.split(None, 1)
+        f = f.strip().removeprefix("./")
+        p = root / f
+        if not p.exists() or hashlib.sha256(p.read_bytes()).hexdigest() != h:
+            raise RuntimeError(f"raw file changed or missing under {root}: {f}")
+
+
+def verify_v4() -> None:
+    verify_manifest(V4_MANIFEST, C.RUNS)
+
+
+def verify_mayfly(manifest: Path = MAYFLY_MANIFEST) -> None:
+    """§B1.1: the Mayfly cache files of the 22 calibration days (read live by the gate functions) against the
+    committed per-day digests; a mismatch stops the batch."""
+    m = json.loads(Path(manifest).read_text())
+    root = Path(m["root"])
+    for day, v in m["per_day"].items():
+        dd = root / "mayfly" / day[:4] / day
+        files = sorted(f for f in dd.iterdir() if f.is_file()) if dd.exists() else []
+        lines = [f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root)}" for f in files]
+        if len(lines) != v["n_files"] or \
+                hashlib.sha256(("\n".join(lines) + "\n").encode()).hexdigest() != v["sha256_of_lines"]:
+            raise RuntimeError(f"Mayfly cache of calibration day {day} differs from the committed manifest")
+
+
+def pre_batch_checks() -> None:
+    verify_mayfly()
+
+
+def post_batch_checks() -> None:
+    """§B8: the v3 and v4 manifests are re-verified after every v5 batch."""
+    C.verify_v3()
+    verify_v4()
+
+
+def code_commit() -> str:
+    """Provenance: refuse a v5 batch while vsl_lab has uncommitted changes."""
+    import subprocess
+    dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--", "vsl_lab"], capture_output=True,
+                           text=True).stdout.strip()
+    if dirty:
+        raise SystemExit("vsl_lab has uncommitted changes: commit the code before a v5 batch (provenance)")
+    return subprocess.run(["git", "-C", str(C.REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+
+
 def evaluator(data: dict | None = None, net: M.Net | None = None) -> J5Eval:
-    """The J5 evaluator on the committed facts (hash from the committed .sha256 file; J5 refuses otherwise)."""
+    """The J5 evaluator on the committed facts (hash from the committed .sha256 file; J5 refuses otherwise).
+    Every J5 job builds it, so the Mayfly-cache check runs before every J5 batch (§B1.1)."""
+    pre_batch_checks()
     sha = FACTS5_SHA.read_text().split()[0]
     net = net or M.build_network(C.VARIANT)
     return J5Eval(FACTS5, sha, data if data is not None else C.load_data(), net, Q.part1()["c_s"])
@@ -136,17 +191,92 @@ def timing(n_proc: int = 8, gens: int = 3, gate_ok: bool = False) -> dict:
     return out
 
 
+# ---------------------------------------------------------------- batch driver (§B2; v4 §A9 bookkeeping)
+def _batch(tag: str, suffix: str, extra: list, gate_ok: bool, commit: str) -> list:
+    """One CMA-ES batch: stale result files removed first, one ledger row whatever happens, the v3/v4 manifests
+    re-verified after the batch, a hard error if any seed produced no result."""
+    from vsl_lab.ops import ledger
+    from vsl_lab.ops.scheduler import Job, run_batch
+    for s in SEEDS:
+        (RUNS5 / f"cma_restart_{s}{suffix}.json").unlink(missing_ok=True)
+    jobs = [Job(jid=f"cma5_{s}{suffix}", argv=["vsl_lab.jobs.metanet_v5_calibrate", "restart", "--seed", str(s)] + extra)
+            for s in SEEDS]
+    rep, res, missing, post_ok = None, [], [], False
+    try:
+        rep = run_batch(jobs, RUNS5 / f"batch_cma5{suffix}_{int(time.time())}", max_workers=8, gate_ok=gate_ok)
+    finally:
+        for s in SEEDS:
+            f = RUNS5 / f"cma_restart_{s}{suffix}.json"
+            (res.append(json.loads(f.read_text())) if f.exists() else missing.append(s))
+        err = None
+        try:
+            post_batch_checks()
+            post_ok = True
+        except Exception as e:                                  # the ledger row is written whatever happens
+            err = e
+        ledger.append("DP", "metanet-v5-calib", "S", f"metanet_v5_cmaes{suffix or '_base'}",
+                      {"protocol": PROTOCOL, "seeds": SEEDS, "budget": BUDGET, "T_s": C.T_RUN, "extra": extra,
+                       "code_commit": commit},
+                      f"{SEEDS[0]}-{SEEDS[-1]} (optimizer); 22 calibration days; T = {C.T_RUN} s", len(SEEDS),
+                      {"proc_failed": rep.n_failed_proc if rep else None},
+                      {"missing_seeds": missing, "J5_by_seed": {r["seed"]: round(r["best_J5"], 5) for r in res},
+                       "v3_v4_manifests_ok": post_ok, "code_commit": commit}, notes=f"{tag}; {RUNS5}")
+        if err is not None:
+            raise err
+    if missing:
+        raise RuntimeError(f"{tag}: no result for seeds {missing}")
+    return res
+
+
+def run(gate_ok: bool, continue_only: bool = False) -> dict:
+    """§B2 driver: 8 restarts, the continuation rule (every restart to 8,000 if the best one improved by > 1 % over
+    its last 20 % of evaluations), the summary that the freeze reads."""
+    from vsl_lab.ops import ledger
+    commit = code_commit()
+    pre_batch_checks()
+    post_batch_checks()
+    RUNS5.mkdir(parents=True, exist_ok=True)
+    if continue_only:
+        res_base = json.loads((RUNS5 / "cma_base_summary.json").read_text())["restarts_base"]
+    else:
+        res_base = _batch("base", "", [], gate_ok, commit)
+        (RUNS5 / "cma_base_summary.json").write_text(json.dumps(
+            {"code_commit": commit, "restarts_base": [{k: r[k] for k in r if k != "history"} for r in res_base]},
+            indent=1, default=float))
+    best = min(res_base, key=lambda r: r["best_J5"])
+    continued = bool(best["rel_improvement_last20pct"] is not None and best["rel_improvement_last20pct"] > 0.01)
+    res = res_base
+    if continued:
+        res = _batch("continuation", "_cont", ["--continue-to", "8000"], gate_ok, commit)
+        best = min(res, key=lambda r: r["best_J5"])
+    summary = {"protocol": PROTOCOL, "objective": "J5", "T_s": C.T_RUN, "budget": BUDGET,
+               "continued_to_8000": continued, "code_commit": commit,
+               "files": {r["seed"]: f"cma_restart_{r['seed']}{'_cont' if continued else ''}.json" for r in res},
+               "no_admissible_restart": bool(best["best_J5"] >= J_INADMISSIBLE),
+               "nominal_seed": best["seed"], "nominal_J5": best["best_J5"]}
+    (RUNS5 / "cma_summary.json").write_text(json.dumps(summary, indent=1, default=float))
+    ledger.append("DP", "metanet-v5-calib", "S", "metanet_v5_cmaes_selection", {"code_commit": commit},
+                  "selection only", len(SEEDS), {},
+                  {"nominal_seed": best["seed"], "nominal_J5": round(best["best_J5"], 5), "continued": continued},
+                  notes=str(RUNS5 / "cma_summary.json"))
+    return summary
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["restart", "timing", "timing-worker"])
+    ap.add_argument("what", choices=["restart", "run", "timing", "timing-worker"])
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--continue-to", type=int, default=None)
     ap.add_argument("--gens", type=int, default=3)
     ap.add_argument("--wid", type=int, default=0)
     ap.add_argument("--gate-ok", action="store_true")
+    ap.add_argument("--continue-only", action="store_true")
     a = ap.parse_args(argv)
     if a.what == "timing-worker":
         print(json.dumps(timing_worker(a.gens, a.wid)))
+        return 0
+    if a.what == "run":
+        print(json.dumps({k: v for k, v in run(a.gate_ok, a.continue_only).items() if k != "files"}, default=float))
         return 0
     if a.what == "timing":
         print(json.dumps({k: v for k, v in timing(gens=a.gens, gate_ok=a.gate_ok).items() if k != "per_generation_s"}))

@@ -106,6 +106,11 @@ def screen_data_path():
     return V5.RUNS5 / "calib_screen_data.npz"
 
 
+def same_array(a, b) -> bool:
+    """Bit-identical arrays; NaN equals NaN for float arrays (the calibration q and v contain NaN)."""
+    return bool(np.array_equal(a, b, equal_nan=np.asarray(a).dtype.kind == "f"))
+
+
 def build_screen_data() -> dict:
     """calib_screen_data.npz (with exit flows, for P9); arrays shared with calib_data.npz must be equal bit for bit."""
     cal = C.load_data()
@@ -113,7 +118,7 @@ def build_screen_data() -> dict:
     V5.RUNS5.mkdir(parents=True, exist_ok=True)
     C.build_data([str(d) for d in cal["days"]], out, exit_flows=True)
     z = np.load(out)
-    same = {k: bool(np.array_equal(z[k], cal[k])) for k in cal if k in z.files}
+    same = {k: same_array(z[k], cal[k]) for k in cal if k in z.files}
     if not all(same.values()):
         raise RuntimeError(f"screen data differ from calib_data: {same}")
     return same
@@ -185,12 +190,16 @@ RECORD = C.REPO / "docs" / "lab" / "day_pattern" / "metanet_v5_calibration.json"
 
 
 def restarts() -> list:
+    """The restart results named by the batch driver's summary (no mixing of stale and current files)."""
+    summ = V5.RUNS5 / "cma_summary.json"
+    if not summ.exists():
+        raise SystemExit("cma_summary.json missing: run the v5 batch driver first")
+    files = json.loads(summ.read_text())["files"]
     out = []
     for s in V5.SEEDS:
-        f = V5.RUNS5 / f"cma_restart_{s}_cont.json"
-        f = f if f.exists() else V5.RUNS5 / f"cma_restart_{s}.json"
+        f = V5.RUNS5 / files[str(s)]
         if not f.exists():
-            raise SystemExit(f"restart {s} has no result file")
+            raise SystemExit(f"restart {s}: {f.name} missing")
         out.append(json.loads(f.read_text()))
     return out
 

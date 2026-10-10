@@ -295,3 +295,38 @@ def test24_zero_cost_items():
     assert J.p7b_item(0, 0.0) == 0.0 and J.p5c_item(1.1, 1.1, 0.0) == 0.0
     assert J.j5({"a": [0.0], "b": [0.0, 0.0]}, {"a": 1.0, "b": 5.8}) == 0.0
     assert J.p3_item(real, real, [False], s=1.0) == 1.5                   # no backing: the miss value
+
+
+def test_integrity_guards(tmp_path):
+    """§B1.1/§B8: manifests verified; a tampered or missing file stops the batch; screen-data equality is NaN-safe."""
+    import hashlib as _h
+    import json as _j
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs.metanet_v5_freeze import same_array
+    root = tmp_path / "raw"
+    (root / "sub").mkdir(parents=True)
+    (root / "a.json").write_text("1")
+    (root / "sub" / "b.json").write_text("2")
+    man = tmp_path / "m.sha256"
+    man.write_text("".join(f"{_h.sha256(p.read_bytes()).hexdigest()}  ./{p.relative_to(root)}\n"
+                           for p in sorted(root.rglob("*")) if p.is_file()))
+    V5.verify_manifest(man, root)
+    (root / "sub" / "b.json").write_text("3")
+    with pytest.raises(RuntimeError):
+        V5.verify_manifest(man, root)
+    # Mayfly per-day digests
+    mr = tmp_path / "mndot"
+    dd = mr / "mayfly" / "2023" / "20230118"
+    dd.mkdir(parents=True)
+    for n in ("1.counts.json", "1.occupancy.json"):
+        (dd / n).write_text(n)
+    lines = [f"{_h.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(mr)}" for f in sorted(dd.iterdir())]
+    mm = tmp_path / "mayfly.json"
+    mm.write_text(_j.dumps({"root": str(mr), "per_day": {"20230118": {
+        "n_files": 2, "sha256_of_lines": _h.sha256(("\n".join(lines) + "\n").encode()).hexdigest()}}}))
+    V5.verify_mayfly(mm)
+    (dd / "2.counts.json").write_text("x")                         # an added file
+    with pytest.raises(RuntimeError):
+        V5.verify_mayfly(mm)
+    a = np.array([1.0, np.nan]); b = a.copy()
+    assert same_array(a, b) and not same_array(a, np.array([1.0, 2.0])) and same_array(np.array([1, 2]), np.array([1, 2]))
