@@ -250,3 +250,32 @@ def test_v5_gate_wiring(monkeypatch, tmp_path):
     assert order[:2] == ["start", "val"]
     assert (v5dir / "gate_det_7192013.json").exists() and not list(v4dir.glob("*"))
     assert G.RUNS == v4dir and r["plant_seed"] == 7192013
+
+
+def test30b_j5_items_map_to_gate_statistics():
+    """On the synthetic worlds, with every episode creditable and no taper, J5's items are the capped gate per-day
+    statistics (same shared functions): P4 |Δonset|, P7a |Δdur|, P5a D, P7c |Δdur_sys|, P8 extra flags."""
+    from vsl_lab.jobs import metanet_items as IT
+    from vsl_lab.jobs import metanet_j5 as J
+    n = 0
+    for seed in (101, 202, 303):
+        w = World(seed)
+        for d in w.days:
+            ev, md = w.real[d], w.model[d]
+            for k in ("B1", "B2"):
+                real, model = [tuple(e) for e in ev[k]], md[k]["episodes"]
+                cr = [True] * len(model)
+                exp = [J.capped(dt, J.CAP_ONSET) if dt is not None else 1.0 for dt, _ in IT.p4_day(real, model)]
+                assert J.p4_items(real, model, cr) == exp
+                lg = ev[k + "_long"]
+                if lg and md[k].get("matched") is not None:
+                    dm, dr, _ = IT.p7a_day(ev, md[k], k)
+                    don = (md[k]["matched"][0] - lg["ep"][0]) * J.BIN
+                    if abs(don) <= J.TAPER_A:
+                        assert J.taper(J.capped(dm - dr, J.CAP_DUR), don) == J.capped(dm - dr, J.CAP_DUR)
+                        n += 1
+            dr_, dm_ = IT.p7c_day(ev, md)
+            it = J.p7c_item(ev["B1"], ev["B2"], md["B1"]["episodes"], md["B2"]["episodes"])
+            if it is not None and dm_ > 0:
+                assert it >= J.capped(dm_ - dr_, J.CAP_DUR) - 1e-12      # taper can only raise it
+    assert n > 0
