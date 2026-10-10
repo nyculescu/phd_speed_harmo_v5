@@ -241,13 +241,19 @@ def test_v5_gate_wiring(monkeypatch, tmp_path):
     monkeypatch.setattr(G, "RUNS", v4dir)
     order = []
     rec = {"nominal": 7192013, "frozen_params": {"vf1": 100.0}, "stops": {"step-halving": "PASS"}}
-    monkeypatch.setattr(VG, "check", lambda s: (7192013, rec, None, {"code": "c", "freeze_blob": "b"}))
+    monkeypatch.setattr(VG, "check", lambda s: (7192013, rec, {}, {"code": "c", "freeze_blob": "b"}))
+    from vsl_lab.ops import ledger as _ledger
+    monkeypatch.setattr(_ledger, "append", lambda *a, **k: order.append("ledger"))
     real_start = VG.start_record
     monkeypatch.setattr(VG, "start_record", lambda *a: order.append("start") or real_start(*a))
+    with pytest.raises(SystemExit):                                   # missing prep output: refused, no lock left
+        VG.deterministic(None)
+    assert not (v5dir / VG.LOCKF).exists() and order == []
+    (v5dir / "val_data.npz").write_bytes(b"placeholder")              # load_val itself is stubbed by the world
     lv = G.load_val
     monkeypatch.setattr(G, "load_val", lambda: order.append("val") or lv())
     r = VG.deterministic(None)
-    assert order[:2] == ["start", "val"]
+    assert order[:3] == ["start", "ledger", "val"]
     assert (v5dir / "gate_det_7192013.json").exists() and not list(v4dir.glob("*"))
     assert G.RUNS == v4dir and r["plant_seed"] == 7192013
 
@@ -279,3 +285,37 @@ def test30b_j5_items_map_to_gate_statistics():
             if it is not None and dm_ > 0:
                 assert it >= J.capped(dm_ - dr_, J.CAP_DUR) - 1e-12      # taper can only raise it
     assert n > 0
+
+
+def test_v5_gate_check_real(monkeypatch, tmp_path):
+    """check() itself (not stubbed): dirty code refuses before any lock; a ledger start record with a missing or
+    different raw-dir lock refuses; a consistent record at unchanged hashes passes."""
+    import json as _j
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    rec = {"protocol": VG.PROTOCOL, "stage": "freeze", "route": "continue", "nominal": 7192013, "members": []}
+    f = tmp_path / "rec.json"; f.write_text(_j.dumps(rec))
+    monkeypatch.setattr(VG, "FREEZE5", C.REPO / "docs" / "x.json")
+    monkeypatch.setattr(VG, "AUDIT5", C.REPO / "docs" / "a.json")
+    monkeypatch.setattr(VG.Path, "read_text", lambda self, *a, **k: _j.dumps(rec) if self.name == "x.json"
+                        else open(self).read(), raising=False)
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    git = {"ls-files": "x", "status": "", "log": "abc", "hash-object": "blob1"}
+    monkeypatch.setattr(VG, "_git", lambda *a: git[a[0]])
+    monkeypatch.setattr(VG, "FIXES5", tmp_path / "nofixes")
+    monkeypatch.setattr(G, "code_commit", lambda: (_ for _ in ()).throw(SystemExit("dirty")))
+    monkeypatch.setattr(VG, "ledger_starts", lambda: {})
+    with pytest.raises(SystemExit):
+        VG.check(None)
+    assert not (tmp_path / VG.LOCKF).exists()
+    monkeypatch.setattr(G, "code_commit", lambda: "c1")
+    assert VG.check(None)[0] == 7192013
+    monkeypatch.setattr(VG, "ledger_starts", lambda: {"7192013": {"code": "c1", "freeze_blob": "blob1"}})
+    with pytest.raises(SystemExit):                                   # ledger says started, lock file deleted
+        VG.check(None)
+    (tmp_path / VG.LOCKF).write_text(_j.dumps({"7192013": {"code": "c1", "freeze_blob": "blob1"}}))
+    assert VG.check(None)[0] == 7192013                               # plain re-run at unchanged hashes
+    monkeypatch.setattr(G, "code_commit", lambda: "c2")               # code changed since the start record
+    with pytest.raises(SystemExit):
+        VG.check(None)

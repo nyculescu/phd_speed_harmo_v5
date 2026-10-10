@@ -75,8 +75,30 @@ def _git(*a) -> str:
     return subprocess.run(["git", "-C", str(C.REPO), *a], capture_output=True, text=True).stdout.strip()
 
 
+LOCKF = "gate_start.lock.json"
+START_VARIANT = "metanet_v5_gate_start"
+
+
+def ledger_starts() -> dict:
+    """Gate start records already in the ledger: seed -> {"code", "freeze_blob"} (last row per seed)."""
+    import csv
+    from vsl_lab.config import LEDGER_PATH
+    out = {}
+    if not LEDGER_PATH.exists():
+        return out
+    with open(LEDGER_PATH, newline="") as f:
+        for row in csv.DictReader(f):
+            if row.get("variant") == START_VARIANT:
+                r = json.loads(row["result"])
+                out[str(r["seed"])] = {"code": r["code"], "freeze_blob": r["freeze_blob"]}
+    return out
+
+
 def check(seed: int | None) -> tuple:
-    """Impure wrapper: tracked and unchanged record, audit committed, first record, locks, hashes."""
+    """Impure wrapper: committed code (v4 §A6 (6) with v5 names), tracked and unchanged record, audit committed,
+    first record, start records (ledger = source of truth; the raw-dir lock must agree with it), hashes."""
+    from vsl_lab.jobs import metanet_gate as G
+    code = G.code_commit()                                     # raises if vsl_lab is dirty or untracked
     rel = str(FREEZE5.relative_to(C.REPO))
     if not _git("ls-files", rel) or _git("status", "--porcelain", "--", rel):
         raise SystemExit("v5 freeze record missing, untracked or modified against HEAD")
@@ -87,21 +109,38 @@ def check(seed: int | None) -> tuple:
     first = len(commits) == 1
     fixes = [json.loads(p.read_text()) for p in sorted(FIXES5.glob("*.json"))] if FIXES5.exists() else []
     names = any(f.get("freeze_record_commit") == (commits[0] if commits else None) for f in fixes)
-    lockf = V5.RUNS5 / "gate_start.lock.json"
-    lock = json.loads(lockf.read_text()) if lockf.exists() else None
-    now = {"code": _git("rev-parse", "HEAD"), "freeze_blob": _git("hash-object", str(FREEZE5))}
-    s = rec["nominal"] if seed is None else seed
-    rerun = any(f.get("rerun_seed") == s and f.get("fix_commit") == now["code"] for f in fixes)
-    seed = guard(rec, seed, audit, first, names, lock, now, rerun)
-    return seed, rec, lock, now
+    led = ledger_starts()
+    lockf = V5.RUNS5 / LOCKF
+    flock = json.loads(lockf.read_text()) if lockf.exists() else {}
+    for sd, v in led.items():
+        if flock.get(sd) != v:
+            raise SystemExit(f"start record of seed {sd} in the ledger but the raw-dir lock is missing or differs")
+    now = {"code": code, "freeze_blob": _git("hash-object", str(FREEZE5))}
+    s_ = rec["nominal"] if seed is None else seed
+    rerun = any(f.get("rerun_seed") == s_ and f.get("fix_commit") == now["code"] for f in fixes)
+    seed = guard(rec, seed, audit, first, names, led or None, now, rerun)
+    return seed, rec, led, now
 
 
-def start_record(seed: int, lock: dict | None, now: dict) -> None:
-    """Written before any validation input is read: per seed, the code commit and the freeze record's blob hash."""
-    lockf = V5.RUNS5 / "gate_start.lock.json"
-    lock = dict(lock or {})
-    lock[str(seed)] = now
-    lockf.write_text(json.dumps(lock, indent=1))
+def start_record(seed: int, lock: dict | None, now: dict, stage: str = "") -> None:
+    """Written before any validation input is read: a ledger row first (the source of truth), then the raw-dir lock."""
+    from vsl_lab.ops import ledger
+    ledger.append("DP", "metanet-v5-gate", "S", START_VARIANT, {"seed": seed, "stage": stage}, str(seed), 0, {},
+                  {"seed": seed, "stage": stage, **now}, notes=str(V5.RUNS5 / LOCKF))
+    lockf = V5.RUNS5 / LOCKF
+    lk = json.loads(lockf.read_text()) if lockf.exists() else {}
+    lk[str(seed)] = now
+    V5.RUNS5.mkdir(parents=True, exist_ok=True)
+    lockf.write_text(json.dumps(lk, indent=1))
+
+
+def _enter(seed: int | None, stage: str, need_val: bool = True) -> tuple:
+    """Guard, then input check (no lock is left if inputs are missing), then the start record."""
+    seed, rec, led, now = check(seed)
+    if need_val and not (V5.RUNS5 / "val_data.npz").exists():
+        raise SystemExit("val_data.npz missing in the v5 raw dir: run the v5 'prep' stage first")
+    start_record(seed, led, now, stage)
+    return seed, rec
 
 
 SEED_BOOT5 = 7192300
@@ -111,8 +150,7 @@ def deterministic(seed: int | None = None) -> dict:
     """§B8 step 7: guard, start record (before any validation input is read), then the gate's deterministic rows
     unchanged on the validation days, for the nominal plant or a member; outputs in the v5 raw directory only."""
     from vsl_lab.jobs import metanet_gate as G
-    seed, rec, lock, now = check(seed)
-    start_record(seed, lock, now)
+    seed, rec = _enter(seed, "deterministic")
     params = rec["frozen_params"] if seed == rec["nominal"] else rec["member_params"][str(seed)]
     sh = rec["stops"]["step-halving"] == "PASS" if seed == rec["nominal"] else \
         rec["member_checks"][str(seed)]["stephalving"]
@@ -166,7 +204,12 @@ class bindings:
 
 def stochastic(stage: str, seed: int | None = None, day_index: int | None = None):
     """draws-plan | draws (one day) | rows: the gate's stochastic rows unchanged, under the v5 bindings."""
-    seed, rec, lock, now = check(seed)
+    if stage == "draws":                                        # one day inside draws-run: no new start record,
+        seed, rec, led, now = check(seed)                       # but the batch's record must exist at these hashes
+        if led.get(str(seed)) != now:
+            raise SystemExit("no start record for this seed at these hashes: run 'draws-run'")
+    else:
+        seed, rec = _enter(seed, stage)
     with bindings(rec) as G:
         if stage == "draws-plan":
             return G.draws_plan(seed)
@@ -189,13 +232,47 @@ def verdict() -> dict:
     return {"outcome": "PASS" if spread == "KM" else "PASS, substitute spread"}
 
 
+def prep(seed: int | None = None) -> str:
+    """Validation inputs and targets (no model) into the v5 raw dir, after the guard and a start record."""
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.ops import ledger
+    seed, rec = _enter(seed, "prep", need_val=False)
+    out = C.build_data(G.val_days(), V5.RUNS5 / "val_data.npz", exit_flows=True)
+    ledger.append("DP", "metanet-v5-gate", "S", "metanet_v5_gate_prep", {"seed": seed}, "none", 0, {},
+                  {"file": str(out)}, notes="validation inputs; no model run")
+    return str(out)
+
+
+def draws_run(seed: int | None, gate_ok: bool) -> dict:
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.ops.scheduler import Job, run_batch
+    seed, rec = _enter(seed, "draws-run")
+    jobs = [Job(jid=f"draw5_{seed}_{i:03d}", argv=["vsl_lab.jobs.metanet_v5_gate", "draws", "--day-index", str(i),
+                                                  "--plant", str(seed)]) for i in range(len(G.val_days()))]
+    rep = run_batch(jobs, V5.RUNS5 / f"batch_draws5_{seed}", max_workers=32, gate_ok=gate_ok)
+    return {"n": rep.n_jobs, "ok": rep.n_ok, "failed": rep.n_failed_proc}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["deterministic"])
+    ap.add_argument("what", choices=["prep", "deterministic", "draws-plan", "draws", "draws-run", "stochastic",
+                                     "verdict"])
     ap.add_argument("--plant", type=int, default=None)
+    ap.add_argument("--day-index", type=int, default=0)
+    ap.add_argument("--gate-ok", action="store_true")
     a = ap.parse_args(argv)
-    r = deterministic(a.plant)
-    print(json.dumps({"plant": r["plant_seed"], "failed": r["failed"], "PASS": r["deterministic_PASS"]}))
+    if a.what == "prep":
+        print(prep(a.plant))
+    elif a.what == "deterministic":
+        r = deterministic(a.plant)
+        print(json.dumps({"plant": r["plant_seed"], "failed": r["failed"], "PASS": r["deterministic_PASS"]}))
+    elif a.what in ("draws-plan", "draws", "stochastic"):
+        r = stochastic(a.what if a.what != "stochastic" else "rows", a.plant, a.day_index)
+        print(json.dumps(r, default=float)[:2000])
+    elif a.what == "draws-run":
+        print(json.dumps(draws_run(a.plant, a.gate_ok)))
+    elif a.what == "verdict":
+        print(json.dumps(verdict()))
     return 0
 
 
