@@ -289,7 +289,69 @@ def spread_v5(seed: int, data: dict) -> dict:
     if cap.get("c2_star") is not None:
         cap["reports_c1"] = c1_inert(rows, cap["c2_star"])
     cap["usable_spread"] = cap.get("spread_used") in ("KM", "Tobit")
+    idx = {(r["day"], r["c1"], r["c2"]): r for r in rows}         # §B3 report: exact ĉ on non-creditable overlaps
+    nc = 0
+    for d, pdd in cap.get("per_day", {}).items():
+        if not pdd.get("reproducible"):
+            continue
+        r = idx.get((d, pdd["c1_hat"], pdd["c2_hat"]))
+        for k, comp in pdd.get("components", {}).items():
+            if comp["type"] == "exact" and r is not None and r.get("O" + k[1]) and not r.get("cred_overlap_" + k):
+                nc += 1
+    cap["exact_c_on_noncreditable_overlap"] = nc
     return cap
+
+
+def best_point_report(x: list, data: dict, net) -> dict:
+    """§B1.2/§B2 report-only, at a restart's best point (c = 1, plus relocation at (1.20, 1.00)): backing-cell
+    ρ/ρ̄_cr distribution, P11-backed-but-not-creditable episode share, days with a credited hit that P11-k counts as
+    unbacked, relocation days, and the screen's P5b/P9 medians (r̂ − r, Ŝ1 − S1)."""
+    from vsl_lab.jobs import metanet_j5 as Jm
+    cs = Q.part1()["c_s"]
+    days = [str(d) for d in data["days"]]
+    p = params_of(x)
+    inp = M.Inputs(data["d0"], data["d_o"], data["beta"])
+    o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, inp, record_cells=True)
+    o12 = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, inp, c1=1.20, c2=1.00, record_cells=True)
+    from vsl_lab.data import metanet_facts as Fm
+    ratios, n_ep, n_p11_not_cred, cred_unbacked, reloc1, reloc12 = [], 0, 0, [], 0, 0
+    for i, d in enumerate(days):
+        sp, _ = Q.model_speeds(d, o.v_st[i], net, cs)
+        mp = Q.model_pairs(d, o.v_st[i], net, cs)
+        cong = o.rho_cell[i][:, Q.EV0:Q.EV0 + Q.NEV] > o.rc_cell[i][:, Q.EV0:Q.EV0 + Q.NEV]
+        rat = o.rho_cell[i][:, Q.EV0:Q.EV0 + Q.NEV] / o.rc_cell[i][:, Q.EV0:Q.EV0 + Q.NEV]
+        p11 = Q.p11_day(d, o.v_st[i], o.rho_cell[i], o.rc_cell[i], net, cs, pairs=mp)
+        rev = Fm.day_events(d)
+        for k in ("B1", "B2"):
+            u, dn = Q.PAIR[k]
+            scell = {st["id"]: st["cell"] for st in net.stations}
+            between = list(range(scell[u] + 1, scell[dn]))
+            with np.errstate(invalid="ignore"):
+                cond = np.nan_to_num((sp[u] < 40.0) & ((sp[dn] - sp[u]) >= 20.0)).astype(bool)
+            hit = False
+            for e in mp.get(Q.PAIR[k], []):
+                qb = Jm.qualifying(cond, tuple(e))
+                ratios += [float(rat[c - 1, b]) for b in qb for c in Jm.BACK_CELLS[k]]
+                p11b = bool(qb) and sum(cong[between, b].any() for b in qb) / len(qb) >= 0.5
+                cr = Jm.creditable(tuple(e), cond, cong, k)
+                n_ep += 1
+                n_p11_not_cred += int(p11b and not cr)
+                hit |= cr and Q.overlaps([tuple(e)], [tuple(r) for r in rev[k]])
+            if hit and p11[k]["unbacked"]:
+                cred_unbacked.append(f"{d}:{k}")
+        rl = Q.relocation(mp, o.rho_cell[i][:, Q.EV0:], o.rc_cell[i][:, Q.EV0:], net.b2_cells[-1] + 1)
+        reloc1 += int(rl["flag"])
+        mp12 = Q.model_pairs(d, o12.v_st[i], net, cs)
+        rl12 = Q.relocation(mp12, o12.rho_cell[i][:, Q.EV0:], o12.rc_cell[i][:, Q.EV0:], net.b2_cells[-1] + 1)
+        reloc12 += int(rl12["flag"])
+    sc = screen(x, True)["rows"]
+    pct = (lambda v: [float(np.percentile(v, q)) for q in (5, 25, 50, 75, 95)] if v else None)
+    return {"backing_cell_ratio_pct_5_25_50_75_95": pct(ratios),
+            "share_P11_backed_not_creditable": (n_p11_not_cred / n_ep) if n_ep else None, "n_model_episodes": n_ep,
+            "credited_hit_but_P11_unbacked": cred_unbacked, "relocation_days_c_1": reloc1,
+            "relocation_days_c1_1.20_c2_1.00": reloc12,
+            "median_r_hat_minus_r": {k: sc[f"P5b-{kk}"]["median_r_diff"] for kk, k in ((1, "B1"), (2, "B2"))},
+            "median_S1_hat_minus_S1": sc["P9"]["median_S1_diff"]}
 
 
 def finalize(partial_reason: str | None = None) -> dict:
@@ -322,6 +384,8 @@ def finalize(partial_reason: str | None = None) -> dict:
             if not ok:
                 break
     rt = route(_complete(results))
+    if adm and data.get("d0") is not None:                      # §B2 report-only, every admissible restart
+        res["best_point_reports"] = {str(r["seed"]): best_point_report(r["best_x"], data, net) for r in adm}
     from vsl_lab.data import metanet_facts as Fm
     from vsl_lab.jobs import metanet_freeze as FZ
     if data.get("d0") is not None:

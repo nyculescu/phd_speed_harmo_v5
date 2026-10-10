@@ -310,6 +310,14 @@ def grid_job(seed: int, c2_index: int, p: dict | None = None, runs: Path | None 
                 cong = o.rho_cell[b][:, EV0:EV0 + NEV] > o.rc_cell[b][:, EV0:EV0 + NEV]
                 row["b1cells_qual"] = bool(any(cong[27:31, t].any() for s_, e_ in mp.get(PAIR["B1"], [])
                                                for t in range(s_, e_ + 1) if cond[t]))
+                for k in ("B1", "B2"):                               # §B3 report: is the overlap creditable (J5)?
+                    uk, dk = PAIR[k]
+                    with np.errstate(invalid="ignore"):
+                        ck = np.nan_to_num((sp_[uk] < 40.0) & ((sp_[dk] - sp_[uk]) >= 20.0)).astype(bool)
+                    rk = real[day].get(PAIR[k], [])
+                    row["cred_overlap_" + k] = bool(any(J5m.creditable(tuple(e), ck, cong, k)
+                                                        and overlaps([tuple(e)], [tuple(x) for x in rk])
+                                                        for e in mp.get(PAIR[k], [])))
             if a13_5 and rev[day]["B1"] and not rev[day]["B2"] and row["E1"] and not row["E2"] and not rl["flag"]:
                 md = model_day(day, o.q_st[b], o.v_st[b], o.exit_flow[b], net, cs, rev[day])
                 row["b1_discharge_vph"] = None if md["B1"]["merge"] is None else 2.0 * md["B1"]["merge"]

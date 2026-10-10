@@ -262,3 +262,27 @@ def test_sensitivity_variants_change_and_restore(monkeypatch):
         assert J.CAP_DUR == pytest.approx(120.0) and J.taper(0.2, 80.0) == pytest.approx(0.2)
         assert set(ev_.w.values()) == {1.0}
     assert (J.EPS, J.CAP_DUR, J.TAPER_A, dict(J.REALISM_CAP), dict(ev_.w)) == saved
+
+
+def test_best_point_report(monkeypatch):
+    """§B2 report on a constructed day: a credited B1 hit that P11-k counts as unbacked is listed; relocation at
+    c = 1 is counted; backing ratios and the screen medians are reported."""
+    from vsl_lab.data import metanet_facts as Fm
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    rho, rc = _cells(backed=True, extra=[(37, EV0 + 50, EV0 + 60)])
+    o = types.SimpleNamespace(v_st=np.zeros((1, NS, NB)), rho_cell=rho[None], rc_cell=rc[None])
+    monkeypatch.setattr(FZ.Q, "part1", lambda: {"c_s": {}})
+    monkeypatch.setattr(FZ.Q, "simf", lambda *a, **k: o)
+    monkeypatch.setattr(FZ, "params_of", lambda x: {"a": 1.0})
+    monkeypatch.setattr(FZ.Q, "model_speeds", lambda *a, **k: (_speeds(REAL_B1), {}))
+    monkeypatch.setattr(FZ.Q, "model_pairs", lambda *a, **k: {Q.PAIR["B1"]: [REAL_B1]})
+    monkeypatch.setattr(FZ.Q, "p11_day", lambda *a, **k: {"B1": {"unbacked": True}, "B2": {"unbacked": False}})
+    monkeypatch.setattr(Fm, "day_events", lambda d: {"B1": [list(REAL_B1)], "B2": []})
+    monkeypatch.setattr(FZ, "screen", lambda x, sh: {"rows": {"P5b-1": {"median_r_diff": -0.01},
+                                                                "P5b-2": {"median_r_diff": None},
+                                                                "P9": {"median_S1_diff": 0.02}}})
+    data = {"days": np.array(["SYN0"]), "d0": None, "d_o": None, "beta": None}
+    r = FZ.best_point_report([0.5] * 17, data, NET)
+    assert r["credited_hit_but_P11_unbacked"] == ["SYN0:B1"] and r["relocation_days_c_1"] == 1
+    assert r["backing_cell_ratio_pct_5_25_50_75_95"][2] == pytest.approx(1.1)
+    assert r["median_r_hat_minus_r"]["B1"] == -0.01 and r["median_S1_hat_minus_S1"] == 0.02
