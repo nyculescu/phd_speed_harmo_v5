@@ -82,46 +82,7 @@ def p4_items(real: list, model: list, credit: list) -> list:
     return [capped(dt, CAP_ONSET) if j is not None and credit[j] else 1.0 for dt, j in IT.p4_day(real, model)]
 
 
-def longest(eps: list) -> int | None:
-    return max(range(len(eps)), key=lambda i: (eps[i][1] - eps[i][0], -eps[i][0])) if eps else None
-
-
-def matched_longest(real: list, model: list, credit: list):
-    """(index of the real longest episode, matched model index or None, creditable?)"""
-    i = longest(real)
-    if i is None:
-        return None, None, False
-    j = E.match_episodes(real, model, MATCH).get(i)
-    return i, j, (j is not None and bool(credit[j]))
-
-
-def p5a_item(real: list, model: list, credit: list, qdis_real: float, qdis_model: list) -> float:
-    """Heavy day: min(|Q̂/Q − 1|, 0.15)/0.15 on the matched longest episode if creditable and C4-usable, tapered;
-    else 1. qdis_model[j] is the model C4 discharge of model episode j (None if unusable)."""
-    i, j, ok = matched_longest(real, model, credit)
-    if not ok or qdis_model[j] is None or not qdis_real:
-        return 1.0
-    return taper(capped(qdis_model[j] / qdis_real - 1.0, CAP_QDIS), (model[j][0] - real[i][0]) * BIN)
-
-
-def p7a_item(real: list, model: list, credit: list, t_c: int | None = None) -> float:
-    """Heavy day: min(|dur_m − dur_r|, 90)/90 on the matched longest episode if creditable (B1: both censored at the
-    real t_c), tapered; else 1."""
-    i, j, ok = matched_longest(real, model, credit)
-    if not ok:
-        return 1.0
-    dr = E.censored_duration(tuple(real[i]), t_c)
-    dm = E.censored_duration(tuple(model[j]), t_c)
-    return taper(capped(dm - dr, CAP_DUR), (model[j][0] - real[i][0]) * BIN)
-
-
 # ---------- system items (all model episodes, as the gate) ----------
-def p5c_item(ratio_real: float, ratio_model: float | None, donset_max_min: float) -> float:
-    if ratio_model is None or not ratio_real:
-        return 1.0
-    return taper(capped(ratio_model / ratio_real - 1.0, CAP_RATIO), donset_max_min)
-
-
 def p7b_item(index_error: int | None, donset_max_min: float) -> float:
     if index_error is None:
         return 1.0

@@ -94,7 +94,7 @@ def test26_parity_numbers():
 
 
 def test25_dominance_k_rows_random():
-    """Claim 1 (per (k, d)): P3-k, P4-k, P7a-k items never exceed the no-episode, s = 1 reference."""
+    """Claim 1 (per (k, d)) on the pure P3-k and P4-k items; P5a/P7a are checked through the evaluator (e2e tests)."""
     rng = np.random.default_rng(12345)          # non-protocol synthetic seed
     for _ in range(3000):
         real = sorted({(int(s), int(s) + int(rng.integers(3, 30))) for s in rng.integers(20, 180, rng.integers(1, 3))})
@@ -104,8 +104,6 @@ def test25_dominance_k_rows_random():
         t_c = int(rng.integers(30, 220)) if rng.random() < 0.3 else None
         assert J.p3_item(real, model, credit, s) <= J.p3_item(real, [], [], 1.0)
         assert all(a <= 1.0 for a in J.p4_items(real, model, credit))
-        assert J.p7a_item(real, model, credit, t_c) <= 1.0
-        assert J.p5a_item(real, model, credit, 1800.0, [float(rng.uniform(1000, 3000)) for _ in model]) <= 1.0
 
 
 def test_aggregation_and_unscored():
@@ -289,10 +287,8 @@ def test24_zero_cost_items():
     real = [(100, 130)]
     assert J.p3_item(real, real, [True], s=1.0) == 0.0
     assert J.p4_items(real, real, [True]) == [0.0]
-    assert J.p7a_item(real, real, [True]) == 0.0
-    assert J.p5a_item(real, real, [True], 1800.0, [1800.0]) == 0.0
     assert J.p7c_item(real, [], real, []) == 0.0
-    assert J.p7b_item(0, 0.0) == 0.0 and J.p5c_item(1.1, 1.1, 0.0) == 0.0
+    assert J.p7b_item(0, 0.0) == 0.0
     assert J.j5({"a": [0.0], "b": [0.0, 0.0]}, {"a": 1.0, "b": 5.8}) == 0.0
     assert J.p3_item(real, real, [False], s=1.0) == 1.5                   # no backing: the miss value
 
