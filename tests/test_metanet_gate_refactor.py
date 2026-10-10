@@ -202,3 +202,27 @@ def test_s1_empty_window_returns_none():
     q = np.arange(50, dtype=float)
     assert IT.s1_ratio(q, 40, 45, 10.0, cut=20) is None          # window [28, 19] is empty
     assert IT.s1_ratio(q, 10, 12, 10.0, cut=None) == pytest.approx(np.convolve(q[0:13], np.ones(3) / 3, "valid").max() / 10)
+
+
+def test34_screen_ctx_path(monkeypatch, tmp_path):
+    """v5 §B5 screen path of the gate: substitutes applied, no F11/freeze/val file read, per-day nulls, own boot seed."""
+    gate = current_module()
+    w = World(101)
+    w.install(monkeypatch, gate, tmp_path)
+    monkeypatch.setattr(C, "FACTS", tmp_path / "absent.json")          # any F11 read would raise
+    monkeypatch.setattr(gate, "freeze", lambda: (_ for _ in ()).throw(AssertionError("freeze read")))
+    monkeypatch.setattr(gate, "load_val", lambda: (_ for _ in ()).throw(AssertionError("val read")))
+    calls = []
+    ctx = {"seed": None, "p": {"vf1": 100.0}, "data": w.data, "stephalving_PASS": True, "boot_seed": 7192099,
+           "f11": {"P8_tolerance": 3, "floors": {"B1": {"L_r": 0.777}, "B2": {"L_r": 0.888}},
+                   "flow_null_N2_q": {"median_nrmse_q": None}},
+           "nulls_for": lambda i: calls.append(i) or w.nulls, "write": False}
+    res = gate.deterministic(None, ctx=ctx)
+    assert res["rows"]["P5b-1"]["L_r"] == 0.777 and res["rows"]["P5b-2"]["L_r"] == 0.888
+    assert res["rows"]["P8"]["tolerance"] == 3
+    assert calls and len(set(calls)) == len(calls)                    # nulls fetched per real-active day
+    assert gate.SEED_BOOT == 7191300                                  # restored after the screen
+    ctx2 = dict(ctx, boot_seed=1)
+    r2 = gate.deterministic(None, ctx=ctx2)["rows"]
+    assert any(r2[k]["ci"] != res["rows"][k]["ci"] for k in ("P1a", "P1b"))   # the boot seed is used (continuous rows)
+    assert not list(tmp_path.glob("gate_det_*.json"))                 # write=False

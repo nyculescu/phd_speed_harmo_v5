@@ -97,6 +97,68 @@ def premise() -> dict:
     return out
 
 
+# ---------------------------------------------------------------- in-sample screen (§B5)
+SCREEN_BOOT = 7192099
+MINIMA = {"n_val": 16, "n_A": 8, "n_H": 6, "n_H_first": 6}          # v3 §5.2, at the calibration n
+
+
+def screen_data_path():
+    return V5.RUNS5 / "calib_screen_data.npz"
+
+
+def build_screen_data() -> dict:
+    """calib_screen_data.npz (with exit flows, for P9); arrays shared with calib_data.npz must be equal bit for bit."""
+    cal = C.load_data()
+    out = screen_data_path()
+    V5.RUNS5.mkdir(parents=True, exist_ok=True)
+    C.build_data([str(d) for d in cal["days"]], out, exit_flows=True)
+    z = np.load(out)
+    same = {k: bool(np.array_equal(z[k], cal[k])) for k in cal if k in z.files}
+    if not all(same.values()):
+        raise RuntimeError(f"screen data differ from calib_data: {same}")
+    return same
+
+
+def screen(x: list, stephalving_PASS: bool, seed: int | None = None) -> dict:
+    """Every deterministic gate row on the 22 calibration days at c = 1, with the gate's code and thresholds;
+    calibration-derived substitutes for every F11 field; leave-one-day-out P1c nulls; bootstrap seed 7,192,099."""
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.jobs.metanet_v5_facts import loo_nulls
+    z = np.load(screen_data_path())
+    data = {k: z[k] for k in z.files}
+    p = {k: float(v[0]) for k, v in C.to_params(np.array([x])).items()}
+    f8 = json.loads(C.FACTS.read_text())["F8"]                         # calibration-day facts (no F11 field read)
+    n = len(data["days"])
+    f11_sub = {"P8_tolerance": max(2, int(np.ceil(0.10 * n))),
+               "floors": {k: {"L_r": f8[k]["ci_r"][0]} for k in ("B1", "B2")},
+               "flow_null_N2_q": {"median_nrmse_q": None}}
+    ctx = {"seed": seed, "p": p, "data": data, "f11": f11_sub, "stephalving_PASS": stephalving_PASS,
+           "nulls_for": lambda i: dict(zip(("N1", "N2"), loo_nulls(data["v"], data["mv"], i))),
+           "boot_seed": SCREEN_BOOT, "write": False}
+    res = G.deterministic(seed, ctx=ctx)
+    facts = json.loads(V5.FACTS5.read_text())
+    q = facts["qualifying"]
+    ev = {d: facts["per_day"][d] for d in facts["days"]}
+    n_a = {k: sum(1 for d in ev if ev[d][k]) for k in ("B1", "B2")}
+    n_h = {k: len(q["heavy"][k]) for k in ("B1", "B2")}
+    n_hf = sum(1 for d in ev if ev[d]["heavy_first"])
+    unmet = set()
+    if n < MINIMA["n_val"]:
+        unmet |= {"P6-1", "P6-2"}
+    for kk, k in ((1, "B1"), (2, "B2")):
+        if n_a[k] < MINIMA["n_A"]:
+            unmet |= {f"P3-{kk}", f"P4-{kk}"}
+        if n_h[k] < MINIMA["n_H"]:
+            unmet |= {f"P5a-{kk}", f"P5b-{kk}", f"P7a-{kk}"}
+    if n_hf < MINIMA["n_H_first"]:
+        unmet.add("P9")
+    screened = [r for r in res["rows"] if r not in unmet and (r != "P5c" or res["rows"]["P5c"]["gated"])]
+    failed = [r for r in screened if not res["rows"][r]["PASS"]]
+    return {"rows": res["rows"], "screened": screened, "reported_not_screened": sorted(unmet), "failed": failed,
+            "counts": {"n": n, "n_A": n_a, "n_H": n_h, "n_H_first": n_hf}, "P8_tolerance": f11_sub["P8_tolerance"],
+            "Lc_k": {k: v["L_r"] for k, v in f11_sub["floors"].items()}, "PASS": not failed}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["premise", "stephalving"])

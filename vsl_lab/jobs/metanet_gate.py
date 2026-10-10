@@ -222,22 +222,41 @@ def nulls() -> dict:
 
 
 # ---------------------------------------------------------------- deterministic rows (§5.3)
-def deterministic(seed: int | None = None) -> dict:
-    seed, p = plant(seed)
-    data = load_val()
+def deterministic(seed: int | None = None, ctx: dict | None = None) -> dict:
+    """ctx (protocol v5 §B5 in-sample screen; None = the validation gate unchanged): {"seed", "p", "data", "f11"
+    (calibration-derived substitutes: P8_tolerance, floors, flow_null_N2_q), "nulls_for" (day index -> nulls),
+    "stephalving_PASS", "boot_seed", "write"}."""
+    global SEED_BOOT
+    boot_saved = SEED_BOOT
+    if ctx is not None:
+        seed, p, data = ctx["seed"], ctx["p"], ctx["data"]
+        f11 = ctx["f11"]
+        sh = {"PASS": ctx["stephalving_PASS"]}
+        SEED_BOOT = ctx["boot_seed"]
+    else:
+        seed, p = plant(seed)
+        data = load_val()
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
     cs = Q.part1()["c_s"]
-    facts = json.loads(C.FACTS.read_text())
-    f11 = facts["F11"]
+    if ctx is None:
+        facts = json.loads(C.FACTS.read_text())
+        f11 = facts["F11"]
+        fz = freeze()
+        sh = fz["stephalving"] if seed == fz["nominal_seed"] else \
+            {"PASS": next(c for c in fz["ensemble_candidates"]["candidates"] if c["seed"] == seed)["stephalving_PASS"]}
     tol8 = f11["P8_tolerance"]
-    fz = freeze()
-    sh = fz["stephalving"] if seed == fz["nominal_seed"] else \
-        {"PASS": next(c for c in fz["ensemble_candidates"]["candidates"] if c["seed"] == seed)["stephalving_PASS"]}
+    try:
+        return _deterministic_rows(seed, p, data, days, net, cs, f11, tol8, sh, ctx)
+    finally:
+        SEED_BOOT = boot_saved
+
+
+def _deterministic_rows(seed, p, data, days, net, cs, f11, tol8, sh, ctx) -> dict:
     sids = [s["id"] for s in net.stations]
     o = Q.simf(net, {k: np.array([v]) for k, v in p.items()}, M.Inputs(data["d0"], data["d_o"], data["beta"]),
                    record_cells=True)
-    nl = nulls()
+    nl = nulls() if ctx is None else None
     qa = np.array([s in I.Q_A for s in sids])
     rows, per = {}, {}
     real_ev = {d: F.day_events(d) for d in days}
@@ -262,10 +281,11 @@ def deterministic(seed: int | None = None) -> dict:
         win = np.zeros(M.N_BINS, bool)
         for s, e in list(real_ev[d]["B1"]) + list(real_ev[d]["B2"]):
             win[max(0, EV0 + s - 6):min(M.N_BINS, EV0 + e + 7)] = True
-        m = data["mv"][i] & qa[:, None] & win[None, :] & np.isfinite(nl["N2"]) & np.isfinite(nl["N1"])[:, None]
+        nl_i = nl if ctx is None else ctx["nulls_for"](i)
+        m = data["mv"][i] & qa[:, None] & win[None, :] & np.isfinite(nl_i["N2"]) & np.isfinite(nl_i["N1"])[:, None]
         nm = V.nrmse(o.v_st[i], data["v"][i], m)
-        n1 = V.nrmse(np.broadcast_to(nl["N1"][:, None], m.shape), data["v"][i], m)
-        n2 = V.nrmse(nl["N2"], data["v"][i], m)
+        n1 = V.nrmse(np.broadcast_to(nl_i["N1"][:, None], m.shape), data["v"][i], m)
+        n2 = V.nrmse(nl_i["N2"], data["v"][i], m)
         if nm is None or n1 is None or n2 is None:
             unsc += 1
             continue
@@ -469,7 +489,8 @@ def deterministic(seed: int | None = None) -> dict:
            "deterministic_PASS": not failed,
            "F1_trigger": bool(set(failed) & F1_SET), "per_day_active": {
                d: {k: [bool(real_ev[d][k]), md[d][k]["active"]] for k in ("B1", "B2")} for d in days}}
-    (RUNS / f"gate_det_{seed}.json").write_text(json.dumps(res, indent=1, default=float))
+    if ctx is None or ctx.get("write", False):
+        (RUNS / f"gate_det_{seed}.json").write_text(json.dumps(res, indent=1, default=float))
     return res
 
 
