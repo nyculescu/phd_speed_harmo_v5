@@ -93,12 +93,64 @@ def restart(seed: int, continue_to: int | None = None, ev: J5Eval | None = None,
     return res
 
 
+def timing_worker(gens: int, wid: int) -> dict:
+    """§B12 re-measurement on SYNTHETIC model inputs (no candidate plant scored on real days): wall per generation
+    of λ = 12 near the v4 nominal (A3-feasible), after a warm-up call."""
+    data = C.load_data()
+    net = M.build_network(C.VARIANT)
+    syn = C.synthetic_inputs(net, D=len(data["days"]), seed=0)
+    data = dict(data, d0=syn.d0, d_o=syn.d_o, beta=syn.beta)
+    ev = evaluator(data, net) if FACTS5_SHA.exists() else _dev_evaluator(data, net)
+    rng = np.random.default_rng(1000 + wid)                   # non-protocol synthetic seed
+    x0 = np.array(Q.plant_record(None)["best_x"])
+    ev(np.clip(x0 + rng.normal(0, 0.01, (2, 17)), 0, 1))
+    walls = []
+    for _ in range(gens):
+        X = np.clip(x0 + rng.normal(0, 0.01, (12, 17)), 0, 1)
+        t0 = time.time()
+        ev(X)
+        walls.append(time.time() - t0)
+    return {"worker": wid, "walls": walls}
+
+
+def _dev_evaluator(data, net):
+    """Before the facts commit: the facts built in the raw directory (development and timing only)."""
+    f = RUNS5 / "metanet_v5_precal_facts.json"
+    return J5Eval(f, hashlib.sha256(f.read_bytes()).hexdigest(), data, net, Q.part1()["c_s"])
+
+
+def timing(n_proc: int = 8, gens: int = 3, gate_ok: bool = False) -> dict:
+    from vsl_lab.ops.scheduler import Job, run_batch
+    root = RUNS5 / f"timing_{int(time.time())}"
+    root.mkdir(parents=True, exist_ok=True)
+    jobs = [Job(f"t{w}", ["vsl_lab.jobs.metanet_v5_calibrate", "timing-worker", "--gens", str(gens), "--wid", str(w)])
+            for w in range(n_proc)]
+    rep = run_batch(jobs, root / "batch", n_proc, gate_ok=gate_ok)
+    walls = [w for r in rep.results if r["result"] for w in r["result"]["walls"]]
+    per_gen = float(np.median(walls))
+    gens_base, gens_cont = int(np.ceil(BUDGET / 12)), int(np.ceil(8000 / 12))
+    out = {"n_proc": n_proc, "per_generation_s_median": per_gen, "per_generation_s": walls,
+           "restart_h_base": per_gen * gens_base / 3600, "restart_h_with_continuation": per_gen * gens_cont / 3600,
+           "max_temp_c": rep.max_temp_c, "n_pauses": rep.n_pauses, "note": "synthetic model inputs; guard pauses excluded"}
+    (root / "timing.json").write_text(json.dumps(out, indent=1))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["restart"])
-    ap.add_argument("--seed", type=int, required=True)
+    ap.add_argument("what", choices=["restart", "timing", "timing-worker"])
+    ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--continue-to", type=int, default=None)
+    ap.add_argument("--gens", type=int, default=3)
+    ap.add_argument("--wid", type=int, default=0)
+    ap.add_argument("--gate-ok", action="store_true")
     a = ap.parse_args(argv)
+    if a.what == "timing-worker":
+        print(json.dumps(timing_worker(a.gens, a.wid)))
+        return 0
+    if a.what == "timing":
+        print(json.dumps({k: v for k, v in timing(gens=a.gens, gate_ok=a.gate_ok).items() if k != "per_generation_s"}))
+        return 0
     r = restart(a.seed, a.continue_to)
     print(json.dumps({k: r[k] for k in ("seed", "evals", "best_J5", "admissible", "wall_s")}))
     return 0
