@@ -83,16 +83,12 @@ Work in ONE of them, confirmed with the author, and keep the other untouched.
     - after 2 minutes above 90 %, the newest running job is paused (SIGSTOP), and one more every 30 s while the condition holds;
     - after 30 s at ≤ 87 %, paused jobs are resumed one per 30 s. One at a time, because our own 32 workers are the load and pausing everything would thrash;
     - training pauses all of its env workers together.
-  - **Thermal rule (the v6 `feasibility/cvsig/step2.py` design, re-implemented in v5; never imported across repos):**
-    - sensor: the CPU package temperature (coretemp "Package id 0"; TjMax 100 °C);
-    - band: centre **95 °C ± 3 °C**;
-    - stop launching when the temperature stays **≥ 98 °C for 150 s**;
-    - launch again when it stays **≤ 92 °C for 150 s**;
-    - at **≥ 99 °C** (emergency), stop launching at once and also pause one running job per 30 s;
-    - the limits live in `/home/catalin/work/phd/vsl_lab_runs/ops/thermal.json` (optional; keys `cpu_limit`, `cpu_hold_s`, `center`, `band`, `hold_s`, `emergency`, `step_s`). The runner re-reads it every poll, so limits can change while a job runs;
-    - every decision is logged in the batch's `thermal.csv` (CPU %, temperature, running, paused).
+  - **Thermal rule: removed (author, 2026-10-10: a proper cooling pad was bought).** The guard no longer pauses or blocks on temperature; the package temperature is still logged in each batch's `thermal.csv`. The old v6 hysteresis (95 ± 3 °C, 150 s holds, 99 °C emergency) can be turned back on with `"thermal": 1` in `/home/catalin/work/phd/vsl_lab_runs/ops/thermal.json` (re-read every poll), but only if the author asks.
   - **Code:** `vsl_lab/ops/guard.py` (unit-tested in `tests/test_guard.py`), used by `vsl_lab/ops/scheduler.py` and the `train_sb3.py` watchdog since 2026-10-05.
-  - Temperature is controlled **by worker throttling only.** No power-profile, fan or other system changes.
+  - **Fans: the cooling pad (llano V12 Ultra) and the laptop fans (asusctl) are software-controlled by one controller** (author, 2026-10-10), `vsl_lab/ops/cooling.py` (tests `tests/test_cooling.py`), run as the systemd user unit `vsl-cooling`. It acts only under batch load (CPU ≥ 50 % over 60 s) and puts back what it changed 2 min after the load ends.
+    - **Froonty's Focus** (Quick Settings; `~/.local/state/focus/mode.json`) picks the profile. Pad caps live in llano (`~/.config/llano/noise.json`): 1000 rpm by day, 600 rpm in quiet hours or Sleeping, none when Away. Laptop fans: firmware curves unless Away, then custom curves adjusted automatically (never weaker than firmware).
+    - Do not drive the pad or the laptop curves from batch or training code; leave it to the controller. By hand, only through `llano.py`/`Pad` (never raw hidraw) and `asusctl`. Never run `loud`/`unlock` without the author. A manual change (Froonty, CLI) makes the controller hand that device over until the batch ends.
+    - No power-profile, power-limit (`ppt_*`, `nv_temp_target`) or other system changes.
 - **DRL training:** L learners × E SubprocVecEnv envs ≤ N_max, with `torch.set_num_threads(1)`. Torch's default threads made training 7–50× slower.
 - **CUDA** (`venv314cu`) only for large GNN/LSTM policies.
 - **Do not overlap heavy simulations with v6 runs.** The CPU is the bottleneck and runs at its thermal limit.
