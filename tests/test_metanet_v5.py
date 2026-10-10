@@ -151,3 +151,25 @@ def test_v5_driver_with_stub_evaluator(tmp_path, monkeypatch):
     assert r2["evals"] >= 60 and r2["best_J5"] <= r["best_J5"]
     with pytest.raises(SystemExit):
         V5.restart(7192099, ev=Stub(), runs=tmp_path)
+
+
+def test37_stephalving_conjunction():
+    from vsl_lab.jobs.metanet_v5_freeze import stephalving_pass
+    s = {"B1": ["a", "b"], "B2": ["a"]}
+    assert stephalving_pass((0.5, 0.51), (0.2, 0.2), s, s)["PASS"]
+    assert not stephalving_pass((0.5, 0.5), (0.2, 0.2), s, {"B1": ["a"], "B2": ["a"]})["PASS"]      # one-day flip, ΔJ5 = 0
+    assert not stephalving_pass((0.5, 0.5), (0.2, 0.211), s, s)["PASS"]                              # J_v4 alone
+    assert not stephalving_pass((0.5, 0.53), (0.2, 0.2), s, s)["PASS"]
+
+
+def test39_route_labels():
+    from vsl_lab.jobs.metanet_v5_freeze import STOPS, route
+    ok = {s: True for s in STOPS}
+    assert route(ok)["route"] == "continue to the ensemble step"
+    r = route(dict(ok, **{"P11-k": False}))
+    assert r["route"] == "STOP (P11-k)"
+    assert r["stops"]["in-sample screen"] == "not run (route stopped at P11-k)"
+    assert r["stops"]["step-halving"] == "PASS"
+    assert route({"no admissible restart": False})["route"] == "STOP (no admissible restart)"
+    with pytest.raises(ValueError):
+        route({"no admissible restart": True})

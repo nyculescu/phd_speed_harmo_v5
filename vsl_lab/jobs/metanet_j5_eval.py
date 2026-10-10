@@ -52,6 +52,7 @@ class J5Eval:
     def day_items(self, i: int, q_st, v_st, x_flow, rho, rc) -> dict:
         d, ev, rec, net, cs = self.days[i], self.ev[self.days[i]], self.f["per_day"][self.days[i]], self.net, self.cs
         md = Q.model_day(d, q_st, v_st, x_flow, net, cs, ev)
+        self._active = {k: bool(md[k]["active"]) for k in ("B1", "B2")}
         msp, mvl = Q.model_speeds(d, v_st, net, cs)
         cong = rho[:, EV0:EV0 + NEV] > rc[:, EV0:EV0 + NEV]
         it: dict = {r: [] for r in self.rows}
@@ -143,7 +144,7 @@ class J5Eval:
                     Jv[pidx] = J_INADMISSIBLE
                     continue
                 rows = {r: [] for r in self.rows}
-                per_day, cb1 = [], False
+                per_day, cb1, act = [], False, {"B1": [], "B2": []}
                 for i in range(D):
                     b = a * D + i
                     it = self.day_items(i, o.q_st[b], o.v_st[b], o.exit_flow[b], o.rho_cell[b], o.rc_cell[b])
@@ -151,12 +152,15 @@ class J5Eval:
                         rows[r] += v
                     per_day.append(J.j_day(it, self.w))
                     cb1 |= self._credit_b1
+                    for k in act:
+                        if self._active[k]:
+                            act[k].append(self.days[i])
                 Jv[pidx] = J.j5(rows, self.w)
                 if not np.isfinite(Jv[pidx]):
                     Jv[pidx] = J_INADMISSIBLE
                 parts[pidx] = {"rows": {r: (float(np.mean([x for x in v if x is not None]))
                                             if any(x is not None for x in v) else None) for r, v in rows.items()},
-                               "J_d": per_day, "any_creditable_B1": cb1}
+                               "J_d": per_day, "any_creditable_B1": cb1, "model_active_days": act}
         if return_parts:
             return Jv, parts
         return Jv
