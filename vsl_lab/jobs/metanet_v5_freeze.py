@@ -270,11 +270,50 @@ def finalize(partial_reason: str | None = None) -> dict:
     rt = route(_complete(results))
     res.update({"route": rt["route"], "stops": rt["stops"], "stop_detail": _clean(detail)})
     if not rt["route"].startswith("STOP"):
-        res["ensemble"] = {"note": "members are added by the ensemble step (§B6) before the record is committed",
-                           "members": []}
+        f = V5.RUNS5 / "ensemble_checks.json"
+        if not f.exists():
+            raise SystemExit("ensemble_checks.json missing: run the ensemble step (§B6) before finalize")
+        ens = json.loads(f.read_text())
+        mem, mchk, mpar = [], {}, {}
+        for sd in ens["gridded"]:
+            ok = spread_v5(sd, data)["usable_spread"]
+            mchk[str(sd)] = dict(ens["checks"][str(sd)], F_hat=ok)
+            if ok:
+                mem.append(sd)
+                mpar[str(sd)] = params_of(next(r for r in rs if r["seed"] == sd)["best_x"])
+        res.update({"candidates": ens["candidates"], "members": mem, "member_checks": mchk, "member_params": mpar})
+    else:
+        res.update({"members": [], "candidates": "not run (route stopped)"})
     if partial_reason:
         res["not_run"] = {"reason": partial_reason}
     return res
+
+
+def ensemble_checks() -> dict:
+    """§B6 checks 1-3 per candidate (calibration days only), in candidate order; the first 2 passing get a grid
+    (run by the grid batch), check 4 (usable spread) is read at finalize. Written to the v5 raw directory."""
+    from vsl_lab.jobs import metanet_freeze as FZ
+    from vsl_lab.jobs.metanet_v5_gate import candidates
+    data = C.load_data()
+    net = M.build_network(C.VARIANT)
+    rs = restarts()
+    nom = min((r for r in rs if r["admissible"]), key=lambda r: r["best_J5"])
+    ki = [C.NAMES.index(k) for k in FZ.ENS_KEYS]
+    cands = candidates(rs, nom["seed"], ki)
+    checks, gridded = {}, []
+    for c in cands:
+        if len(gridded) >= 2:
+            break
+        x = next(r for r in rs if r["seed"] == c["seed"])["best_x"]
+        ch = {"stephalving": stephalving(x, data=data, net=net)["PASS"]}
+        ch["P11"] = ch["stephalving"] and p11_freeze(x, data, net)["PASS"]
+        ch["screen"] = ch["P11"] and screen(x, True, c["seed"])["PASS"]
+        checks[str(c["seed"])] = ch
+        if ch["screen"]:
+            gridded.append(c["seed"])
+    out = {"nominal": nom["seed"], "candidates": cands, "checks": checks, "gridded": gridded}
+    (V5.RUNS5 / "ensemble_checks.json").write_text(json.dumps(_clean(out), indent=1))
+    return out
 
 
 def _complete(results: dict) -> dict:
@@ -305,7 +344,7 @@ def _clean(x):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["premise", "stephalving", "grid", "finalize"])
+    ap.add_argument("what", choices=["premise", "stephalving", "grid", "ensemble", "finalize"])
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--c2-index", type=int, default=None)
     ap.add_argument("--partial", default=None)
@@ -313,6 +352,9 @@ def main(argv=None) -> int:
     if a.what == "grid":
         rs = {r["seed"]: r for r in restarts()}
         Q.grid_job(a.seed, a.c2_index, p=params_of(rs[a.seed]["best_x"]), runs=V5.RUNS5, jd=V5.evaluator())
+        return 0
+    if a.what == "ensemble":
+        print(json.dumps({k: v for k, v in ensemble_checks().items() if k != "candidates"}))
         return 0
     if a.what == "finalize":
         r = finalize(a.partial)

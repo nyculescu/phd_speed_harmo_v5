@@ -104,13 +104,39 @@ def start_record(seed: int, lock: dict | None, now: dict) -> None:
     lockf.write_text(json.dumps(lock, indent=1))
 
 
+SEED_BOOT5 = 7192300
+
+
+def deterministic(seed: int | None = None) -> dict:
+    """§B8 step 7: guard, start record (before any validation input is read), then the gate's deterministic rows
+    unchanged on the validation days, for the nominal plant or a member; outputs in the v5 raw directory only."""
+    from vsl_lab.jobs import metanet_gate as G
+    seed, rec, lock, now = check(seed)
+    start_record(seed, lock, now)
+    params = rec["frozen_params"] if seed == rec["nominal"] else rec["member_params"][str(seed)]
+    sh = rec["stops"]["step-halving"] == "PASS" if seed == rec["nominal"] else \
+        rec["member_checks"][str(seed)]["stephalving"]
+    facts = json.loads(C.FACTS.read_text())
+    nl = G.nulls()
+    saved = G.RUNS
+    G.RUNS = V5.RUNS5
+    try:
+        res = G.deterministic(seed, ctx={"seed": seed, "p": params, "data": G.load_val(), "f11": facts["F11"],
+                                         "nulls_for": lambda i: nl, "stephalving_PASS": sh,
+                                         "boot_seed": SEED_BOOT5, "write": True})
+    finally:
+        G.RUNS = saved
+    return res
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["deterministic"])
     ap.add_argument("--plant", type=int, default=None)
     a = ap.parse_args(argv)
-    raise SystemExit("the v5 gate runs only after the freeze record and the freeze audit are committed (§B8 step 7);"
-                     " wiring to metanet_gate.deterministic is completed with the freeze job")
+    r = deterministic(a.plant)
+    print(json.dumps({"plant": r["plant_seed"], "failed": r["failed"], "PASS": r["deterministic_PASS"]}))
+    return 0
 
 
 if __name__ == "__main__":

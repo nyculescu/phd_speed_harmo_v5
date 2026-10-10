@@ -226,3 +226,27 @@ def test34_screen_ctx_path(monkeypatch, tmp_path):
     r2 = gate.deterministic(None, ctx=ctx2)["rows"]
     assert any(r2[k]["ci"] != res["rows"][k]["ci"] for k in ("P1a", "P1b"))   # the boot seed is used (continuous rows)
     assert not list(tmp_path.glob("gate_det_*.json"))                 # write=False
+
+
+def test_v5_gate_wiring(monkeypatch, tmp_path):
+    """v5 gate: start record before any validation read, output only in the v5 raw dir, v4 RUNS restored (test 22)."""
+    from vsl_lab.jobs import metanet_gate as G
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    w = World(101)
+    w.install(monkeypatch, G, tmp_path)
+    v5dir, v4dir = tmp_path / "v5", tmp_path / "v4"
+    v5dir.mkdir(); v4dir.mkdir()
+    monkeypatch.setattr(V5, "RUNS5", v5dir)
+    monkeypatch.setattr(G, "RUNS", v4dir)
+    order = []
+    rec = {"nominal": 7192013, "frozen_params": {"vf1": 100.0}, "stops": {"step-halving": "PASS"}}
+    monkeypatch.setattr(VG, "check", lambda s: (7192013, rec, None, {"code": "c", "freeze_blob": "b"}))
+    real_start = VG.start_record
+    monkeypatch.setattr(VG, "start_record", lambda *a: order.append("start") or real_start(*a))
+    lv = G.load_val
+    monkeypatch.setattr(G, "load_val", lambda: order.append("val") or lv())
+    r = VG.deterministic(None)
+    assert order[:2] == ["start", "val"]
+    assert (v5dir / "gate_det_7192013.json").exists() and not list(v4dir.glob("*"))
+    assert G.RUNS == v4dir and r["plant_seed"] == 7192013
