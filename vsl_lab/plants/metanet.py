@@ -453,7 +453,7 @@ def free_flow_state(net: Net, vf, rc_cell, a_cell, q_cells):
 
 
 def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0, c2=1.0, f1: dict | None = None,
-             vsl: np.ndarray | None = None, alpha: float = 0.1, T_s: float | None = None, record_cells: bool = True,
+             vsl: np.ndarray | None = None, alpha: float = 0.1, T_s: float | None = None, record_cells: bool | tuple = True,
              cap_exit: dict | None = None) -> SimOut:
     """Replay simulation. Batch B = n_param_sets * D: parameter set p and day d sit at index p * D + d.
     params: dict of scalars or arrays of length n_param_sets. f1: {"Delta":..., "eta":...} enables F1 (cells B1 u B2).
@@ -545,8 +545,10 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
     ns = len(net.stations)
     q_st = np.zeros((B, ns, nb))
     vden = np.zeros((B, ns, nb))
+    part = isinstance(record_cells, tuple)                     # (lo, hi): record only cells lo..hi-1 (0-based),
+    c_lo, c_hi = record_cells if part else (0, N)              # same array layout; other rows stay 0; no v_rec
     rho_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
-    v_rec = np.zeros((B, N, nb)) if record_cells else np.zeros((B, 1, 1))
+    v_rec = np.zeros((B, N, nb)) if record_cells and not part else np.zeros((B, 1, 1))
     rc_rec = np.zeros((B, N, nb)) if record_cells else None
     w0_rec = np.zeros((B, nb))
     w0_cnt = np.zeros((B, nb))
@@ -644,7 +646,10 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
                     if (corr[si][0] or corr[si][1]) else q[:, c]
                 q_st[:, si, b] += qs
                 vden[:, si, b] += qs / v[:, c]
-            if record_cells:
+            if part:
+                rho_rec[:, c_lo:c_hi, b] += rho[:, c_lo:c_hi]
+                rc_rec[:, c_lo:c_hi, b] += rc[:, c_lo:c_hi]
+            elif record_cells:
                 rho_rec[:, :, b] += rho
                 v_rec[:, :, b] += v
                 rc_rec[:, :, b] += rc
@@ -664,7 +669,8 @@ def simulate(net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0,
         v_st = np.where(vden > 0, q_st * spb / vden, np.nan)
     if record_cells:
         rho_rec /= spb
-        v_rec /= spb
+        if not part:
+            v_rec /= spb
         rc_rec /= spb
     eflow /= spb
     xflow /= spb

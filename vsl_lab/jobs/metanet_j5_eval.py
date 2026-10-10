@@ -47,6 +47,7 @@ class J5Eval:
         self.rows, self.w = self.f["rows"], self.f["weights"]
         self.sids = [s["id"] for s in net.stations]
         self.scell = {st["id"]: st["cell"] for st in net.stations}
+        self.record = (24, 39)                 # §B2: cells 25-39 (1-based) recorded; same array layout
 
     # ------------------------------------------------------------ one model day
     def day_items(self, i: int, q_st, v_st, x_flow, rho, rc) -> dict:
@@ -137,7 +138,7 @@ class J5Eval:
         if feas.size:
             Xf = X[feas]
             o = M.simulate(self.net, C.to_params(Xf), M.Inputs(self.data["d0"], self.data["d_o"], self.data["beta"]),
-                           n_param_sets=len(feas), record_cells=True, T_s=T_s or C.T_RUN)
+                           n_param_sets=len(feas), record_cells=self.record, T_s=T_s or C.T_RUN)
             for a, pidx in enumerate(feas):
                 sl = slice(a * D, (a + 1) * D)
                 if (o.clipped_share[sl] > 0.01).any() or o.nonfinite[sl].any():
