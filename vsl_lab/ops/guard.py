@@ -9,7 +9,8 @@ Rules (defaults; overridable in RUNS_ROOT/ops/thermal.json):
   then one more every step_s (30 s) while the condition still holds; once cpu_util <= cpu_limit - resume_margin
   continuously for step_s, it resumes one paused job per step_s (one-at-a-time avoids pause/resume thrashing when
   our own workers are the load);
-- thermal (v6): launches pause when temp >= center + band continuously for hold_s (150 s) and resume when
+- thermal (v6; OFF by default since 2026-10-10, author: cooling pad bought; set "thermal": 1 in thermal.json to
+  re-enable; temperature is still logged by the callers): launches pause when temp >= center + band continuously for hold_s (150 s) and resume when
   temp <= center - band continuously for hold_s; temp >= emergency (99 C) pauses launches at once and also asks the
   caller to pause one running job per step_s.
 """
@@ -20,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 DEFAULTS = {"cpu_limit": 0.90, "cpu_hold_s": 120.0, "resume_margin": 0.03, "step_s": 30.0,
-            "center": 95.0, "band": 3.0, "hold_s": 150.0, "emergency": 99.0}
+            "thermal": 0.0, "center": 95.0, "band": 3.0, "hold_s": 150.0, "emergency": 99.0}
 
 
 def load_cfg(path: Path | None) -> dict:
@@ -69,9 +70,11 @@ class ComputeGuard:
         self.cpu_hot_since = (self.cpu_hot_since if self.cpu_hot_since is not None else now) if over else None
         cool = cpu_util <= c["cpu_limit"] - c["resume_margin"]
         self.cpu_cool_since = (self.cpu_cool_since if self.cpu_cool_since is not None else now) if cool else None
-        # thermal timers (NaN temperature = sensor missing: thermal rules inactive)
+        # thermal timers (rule off, or NaN temperature = sensor missing: thermal rules inactive)
         hi, lo = c["center"] + c["band"], c["center"] - c["band"]
-        t_ok = temp_c == temp_c
+        t_ok = bool(c["thermal"]) and temp_c == temp_c
+        if not c["thermal"]:
+            self.thermal_paused = False
         self.t_hot_since = (self.t_hot_since if self.t_hot_since is not None else now) if t_ok and temp_c >= hi else None
         self.t_cool_since = (self.t_cool_since if self.t_cool_since is not None else now) if t_ok and temp_c <= lo else None
         emergency = t_ok and temp_c >= c["emergency"]

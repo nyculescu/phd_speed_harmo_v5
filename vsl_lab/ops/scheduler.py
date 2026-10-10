@@ -155,7 +155,7 @@ def run_batch(jobs: list[Job], batch_dir: Path, max_workers: int, gate_ok: bool 
                     job.result = _last_json_line(job.log)
                     done.append(job)
             # compute guard (author rule 2026-10-05, vsl_lab/ops/guard.py): CPU > 90 % for 2 min -> pause one job per
-            # 30 s; v6 thermal hysteresis (98 C for 150 s pauses launches, <= 92 C for 150 s resumes, 99 C emergency)
+            # 30 s; v6 thermal hysteresis OFF by default since 2026-10-10 ("thermal": 1 in thermal.json re-enables it)
             active = [j for j in running if not j.paused]
             paused_jobs = [j for j in running if j.paused]
             dec = guard.update(now, util, raw, n_paused=len(paused_jobs))

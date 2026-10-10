@@ -43,8 +43,20 @@ def test_cpu_at_or_below_limit_allows_launch():
     assert not g.update(1, 0.901, 80.0).allow_launch
 
 
-def test_thermal_hysteresis_v6():
+def thermal_on(tmp_path):
+    f = tmp_path / "thermal.json"
+    f.write_text(json.dumps({"thermal": 1}))
+    return ComputeGuard(cfg_path=f)
+
+
+def test_thermal_off_by_default():
     g = ComputeGuard()
+    d = run(g, [(t, 0.5, 99.5) for t in range(0, 400)])
+    assert all(x.allow_launch and not x.pause_one for x in d)
+
+
+def test_thermal_hysteresis_v6(tmp_path):
+    g = thermal_on(tmp_path)
     d = run(g, [(t, 0.5, 98.0) for t in range(0, 151)])
     assert d[149].allow_launch and not d[150].allow_launch             # >= 98 C for 150 s
     assert not any(x.pause_one for x in d)                             # thermal pause stops launches only
@@ -54,14 +66,14 @@ def test_thermal_hysteresis_v6():
     assert not d[149].allow_launch and d[150].allow_launch             # <= 92 C for 150 s
 
 
-def test_emergency_pauses_at_once_and_pauses_jobs():
-    g = ComputeGuard()
+def test_emergency_pauses_at_once_and_pauses_jobs(tmp_path):
+    g = thermal_on(tmp_path)
     d = g.update(0, 0.5, 99.0)
     assert not d.allow_launch and d.pause_one and d.reason == "emergency"
 
 
-def test_missing_sensor_disables_thermal_only():
-    g = ComputeGuard()
+def test_missing_sensor_disables_thermal_only(tmp_path):
+    g = thermal_on(tmp_path)
     assert g.update(0, 0.5, float("nan")).allow_launch
 
 

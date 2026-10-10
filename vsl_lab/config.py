@@ -43,7 +43,7 @@ TEMP_SMOOTH_S = 10.0       # FAST window (logging; cap effectively off)
 TEMP_SLOW_S = 300.0        # SLOW window: 5-minute MEDIAN (author, 2026-10-02)
 TEMP_STEP_S = 30.0         # at most one pause or resume per step period on the slow loop
 # Compute rule of 2026-10-05 (author; CLAUDE.md "Limits"), implemented in vsl_lab/ops/guard.py: CPU > 90 % for 2 min ->
-# pause; v6 thermal hysteresis 95 +/- 3 C, 150 s holds, 99 C emergency. Live overrides (re-read every poll):
+# pause; v6 thermal hysteresis OFF by default since 2026-10-10 (cooling pad; "thermal": 1 re-enables). Live overrides:
 GUARD_CFG = RUNS_ROOT / "ops" / "thermal.json"
 # The TEMP_* / TARGET_CPU_UTIL constants above are the superseded 2026-10-02/03 rule, kept only for old docs/scripts.
 
