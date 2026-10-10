@@ -10,6 +10,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -229,9 +230,16 @@ def stochastic(stage: str, seed: int | None = None, day_index: int | None = None
             raise SystemExit("no start record for this seed at these hashes: run 'draws-run'")
     else:
         seed, rec = _enter(seed, stage)
+    prov = V5.RUNS5 / f"gate_draws_{seed}.prov.json"
+    now = {"code": V5.code_commit(), "freeze_blob": _git("hash-object", str(FREEZE5))}
+    if stage != "draws-plan":                                   # draws come from a plan made at these hashes
+        if not prov.exists() or json.loads(prov.read_text()) != now:
+            raise SystemExit("the draws plan is missing or was made at other hashes: run 'draws-plan' first")
     with bindings(rec) as G:
         if stage == "draws-plan":
-            return G.draws_plan(seed)
+            r = G.draws_plan(seed)
+            prov.write_text(json.dumps(now))
+            return r
         if stage == "draws":
             return G.draws_day(day_index, seed)
         return G.stochastic(seed)
@@ -268,7 +276,11 @@ def draws_run(seed: int | None, gate_ok: bool) -> dict:
     seed, rec = _enter(seed, "draws-run")
     jobs = [Job(jid=f"draw5_{seed}_{i:03d}", argv=["vsl_lab.jobs.metanet_v5_gate", "draws", "--day-index", str(i),
                                                   "--plant", str(seed)]) for i in range(len(G.val_days()))]
-    rep = run_batch(jobs, V5.RUNS5 / f"batch_draws5_{seed}", max_workers=32, gate_ok=gate_ok)
+    prov = V5.RUNS5 / f"gate_draws_{seed}.prov.json"
+    now = {"code": V5.code_commit(), "freeze_blob": _git("hash-object", str(FREEZE5))}
+    if not prov.exists() or json.loads(prov.read_text()) != now:
+        raise SystemExit("the draws plan is missing or was made at other hashes: run 'draws-plan' first")
+    rep = run_batch(jobs, V5.RUNS5 / f"batch_draws5_{seed}_{int(time.time())}", max_workers=32, gate_ok=gate_ok)
     return {"n": rep.n_jobs, "ok": rep.n_ok, "failed": rep.n_failed_proc}
 
 
@@ -280,18 +292,24 @@ def main(argv=None) -> int:
     ap.add_argument("--day-index", type=int, default=0)
     ap.add_argument("--gate-ok", action="store_true")
     a = ap.parse_args(argv)
-    if a.what == "prep":
-        print(prep(a.plant))
-    elif a.what == "deterministic":
-        r = deterministic(a.plant)
-        print(json.dumps({"plant": r["plant_seed"], "failed": r["failed"], "PASS": r["deterministic_PASS"]}))
-    elif a.what in ("draws-plan", "draws", "stochastic"):
-        r = stochastic(a.what if a.what != "stochastic" else "rows", a.plant, a.day_index)
-        print(json.dumps(r, default=float)[:2000])
-    elif a.what == "draws-run":
-        print(json.dumps(draws_run(a.plant, a.gate_ok)))
-    elif a.what == "verdict":
-        print(json.dumps(verdict()))
+    if a.what == "draws":                                      # one worker inside draws-run's batch
+        print(json.dumps(stochastic("draws", a.plant, a.day_index), default=float)[:2000])
+        return 0
+    with V5.stage("metanet-v5-gate", f"metanet_v5_gate_{a.what.replace('-', '_')}",
+                  {"stage": a.what, "plant": a.plant}) as st:
+        if a.what == "prep":
+            st.result = {"file": prep(a.plant)}
+        elif a.what == "deterministic":
+            r = deterministic(a.plant)
+            st.result = {"plant": r["plant_seed"], "failed": r["failed"], "PASS": r["deterministic_PASS"]}
+        elif a.what in ("draws-plan", "stochastic"):
+            r = stochastic(a.what if a.what != "stochastic" else "rows", a.plant, a.day_index)
+            st.result = {"stage": a.what, "PASS": r.get("stochastic_PASS") if isinstance(r, dict) else None}
+        elif a.what == "draws-run":
+            st.result = draws_run(a.plant, a.gate_ok)
+        elif a.what == "verdict":
+            st.result = verdict()
+        print(json.dumps(st.result, default=float))
     return 0
 
 

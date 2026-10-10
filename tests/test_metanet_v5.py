@@ -221,8 +221,9 @@ def test_c1_inert_reports():
     assert r["upper_half_c1_inert_days"] == ["a", "c"]       # b changes inside [1.0, 1.2]
 
 
-def test_finalize_stop_order(monkeypatch):
-    """Stops run in order and stop at the first failure; later stops are not evaluated (stubbed, no simulation)."""
+def test_finalize_stop_order(monkeypatch, tmp_path):
+    """Stops 1-4 run in order in the 'stops' stage and stop at the first failure; finalize adds stop 5 only if 1-4
+    passed; later stops are 'not run' (stubbed, no simulation)."""
     from vsl_lab.jobs import metanet_v5_freeze as FZ
     from vsl_lab.jobs import metanet_calibrate as Cm
     called = []
@@ -231,15 +232,27 @@ def test_finalize_stop_order(monkeypatch):
     monkeypatch.setattr(FZ, "restarts", lambda: rs)
     monkeypatch.setattr(Cm, "load_data", lambda: {"days": []})
     monkeypatch.setattr(FZ.M, "build_network", lambda v: None)
+    monkeypatch.setattr(FZ.V5, "RUNS5", tmp_path)
+    monkeypatch.setattr(FZ.V5, "code_commit", lambda: "c")
     monkeypatch.setattr(FZ.V5, "FACTS5_SHA", type("P", (), {"read_text": staticmethod(lambda: "abc  f")})())
     monkeypatch.setattr(FZ, "stephalving", lambda x, **k: called.append("sh") or {"PASS": True})
     monkeypatch.setattr(FZ, "p11_freeze", lambda x, d, n: called.append("p11") or {"PASS": False})
     monkeypatch.setattr(FZ, "screen", lambda *a: called.append("screen") or {"PASS": True})
     monkeypatch.setattr(FZ, "spread_v5", lambda *a: called.append("spread") or {"usable_spread": True})
+    st = FZ.freeze_stops()
+    assert st["nominal"] == 7192011 and called == ["sh", "p11"] and not FZ.stops_passed(7192011)
     r = FZ.finalize()
-    assert r["nominal"] == 7192011 and r["route"] == "STOP (P11-k)" and called == ["sh", "p11"]
+    assert r["route"] == "STOP (P11-k)" and called == ["sh", "p11"]
     assert r["stops"]["§4.7 (7)(b)"].startswith("not run")
+    called.clear()
+    monkeypatch.setattr(FZ, "p11_freeze", lambda x, d, n: called.append("p11") or {"PASS": True})
+    FZ.freeze_stops()
+    assert called == ["sh", "p11", "screen"] and FZ.stops_passed(7192011)
+    with pytest.raises(SystemExit):                                   # continue route needs the ensemble step
+        FZ.finalize()
+    assert called[-1] == "spread"
     monkeypatch.setattr(FZ, "restarts", lambda: [dict(x, admissible=False) for x in rs])
+    FZ.freeze_stops()
     assert FZ.finalize()["route"] == "STOP (no admissible restart)"
 
 
@@ -352,3 +365,67 @@ def test32_stephalving_runner_guards(monkeypatch):
     vals[FZ.T] = 10.4
     with pytest.raises(RuntimeError):
         FZ.stephalving([0.5] * 17, ev=ev, data=data, net=object())                        # A3-infeasible
+
+
+def test_round2_guards(monkeypatch, tmp_path):
+    import hashlib as _h
+    import json as _j
+    import subprocess as sp
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_freeze as FZ
+    from vsl_lab.ops import ledger
+    # exact manifest: a new file in a read-only dir is detected
+    root = tmp_path / "ro"; root.mkdir()
+    (root / "a").write_text("1")
+    man = tmp_path / "m"; man.write_text(f"{_h.sha256(b'1').hexdigest()}  ./a\n")
+    V5.verify_manifest_exact(man, root)
+    (root / "gate_det_7192013.json").write_text("{}")
+    with pytest.raises(RuntimeError):
+        V5.verify_manifest_exact(man, root)
+    # stage bookkeeping: started row, outcome row whatever happens, post-check failure raises
+    rows = []
+    monkeypatch.setattr(ledger, "append", lambda *a, **k: rows.append((a[3], a[8])))
+    monkeypatch.setattr(V5, "post_batch_checks", lambda: None)
+    with pytest.raises(ValueError):
+        with V5.stage("p", "v"):
+            raise ValueError("boom")
+    assert rows[0][0] == "v_started" and rows[1][0] == "v" and rows[1][1]["status"].startswith("error")
+    monkeypatch.setattr(V5, "post_batch_checks", lambda: (_ for _ in ()).throw(RuntimeError("v4 changed")))
+    with pytest.raises(RuntimeError):
+        with V5.stage("p", "w"):
+            pass
+    assert rows[-1][1]["v3_v4_manifests_ok"] is False
+    # committed(): untracked or modified integrity references are refused (throw-away repo)
+    r = tmp_path / "repo"; r.mkdir()
+    g = lambda *a: sp.run(["git", "-C", str(r), *a], capture_output=True, text=True, check=True)
+    g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+    (r / "f.json").write_text("{}"); g("add", "-A"); g("commit", "-qm", "x")
+    monkeypatch.setattr(V5.C, "REPO", r)
+    V5.committed([r / "f.json"])
+    (r / "f.json").write_text('{"x": 1}')
+    with pytest.raises(SystemExit):
+        V5.committed([r / "f.json"])
+    (r / "g.json").write_text("{}")
+    with pytest.raises(SystemExit):
+        V5.committed([r / "g.json"])
+    # premise anchor blocks the launch
+    monkeypatch.setattr(V5, "code_commit", lambda: "c")
+    monkeypatch.setattr(V5, "pre_batch_checks", lambda: None)
+    monkeypatch.setattr(V5, "post_batch_checks", lambda: None)
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    monkeypatch.setattr(V5, "FACTS5_SHA", type("P", (), {"read_text": staticmethod(lambda: "abc  f")})())
+    with pytest.raises(SystemExit):
+        V5.run(False)                                                  # no premise check
+    (tmp_path / "premise_check.json").write_text(_j.dumps({"anchor": {"PASS": False}, "facts_sha256": "abc"}))
+    with pytest.raises(SystemExit):
+        V5.run(False)                                                  # anchor failed
+    (tmp_path / "premise_check.json").write_text(_j.dumps({"anchor": {"PASS": True}, "facts_sha256": "zzz"}))
+    with pytest.raises(SystemExit):
+        V5.run(False)                                                  # other facts
+    # grid only after stops 1-4 passed (nominal) or for a gridded candidate
+    monkeypatch.setattr(FZ.V5, "RUNS5", tmp_path)
+    monkeypatch.setattr(FZ, "restarts", lambda: [{"seed": 1, "admissible": True, "best_J5": 0.3, "best_x": [0.5] * 17}])
+    with pytest.raises(SystemExit):
+        FZ.grid_run(1, False)
+    with pytest.raises(SystemExit):
+        FZ.grid_run(2, False)

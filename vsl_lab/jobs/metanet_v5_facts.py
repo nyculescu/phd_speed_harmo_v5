@@ -166,7 +166,11 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    f = build(out)
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    V5.pre_batch_checks()                                      # the cache the facts freeze = the committed manifest
+    with V5.stage("metanet-v5-facts", "metanet_v5_facts_build", {"out": str(out), "code_commit": V5.code_commit()}) as st:
+        f = build(out)
+        st.result = {"rows": len(f["rows"]), "omega_2": f["weights"].get("X-2")}
     print(json.dumps({"rows": f["rows"], "N": f["N"], "parity": f["parity"],
                       "P1c_low": [f["P1c_days_N1_minus_N2_below_0.02"], f["P1c_days_N1_minus_N2_below_0"]]}))
     return 0

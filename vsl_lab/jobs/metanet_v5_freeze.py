@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 
 import numpy as np
 
@@ -81,7 +82,10 @@ def stephalving(x: list, ev=None, data=None, net=None, best_j5: float | None = N
     margins = {d: Q.margins_pair(res["T"]["speeds"][d], res["T2"]["speeds"][d]) for d in days}
     for name in ("T", "T2"):
         res[name].pop("speeds")
-    return {"T": res["T"], "T2": res["T2"], "T4_report_only": res["T4"], "margins_report_only": margins, **v}
+    differ = sorted(set().union(*[set(res["T"]["sets"][k]) ^ set(res["T2"]["sets"][k]) for k in ("B1", "B2")]))
+    probe = Q.step_probe_days(differ, (T, T_HALF, T / 4), None, p=params_of(x)) if differ else {}
+    return {"T": res["T"], "T2": res["T2"], "T4_report_only": res["T4"], "margins_report_only": margins,
+            "T4_probe_report_only": probe, "differing_days": differ, **v}
 
 
 # ---------------------------------------------------------------- premise check (§B7)
@@ -354,7 +358,43 @@ def best_point_report(x: list, data: dict, net) -> dict:
             "median_S1_hat_minus_S1": sc["P9"]["median_S1_diff"]}
 
 
-def finalize(partial_reason: str | None = None) -> dict:
+STOPS_FILE = "freeze_stops.json"
+
+
+def freeze_stops() -> dict:
+    """§B8 step 6, stops 1-4 in order (no admissible restart, step-halving, P11-k, in-sample screen); the first
+    failure ends the sequence. Written to the raw dir; the grid (stop 5) and finalize read it."""
+    data = C.load_data()
+    net = M.build_network(C.VARIANT)
+    rs = restarts()
+    adm = [r for r in rs if r["admissible"]]
+    out = {"code": V5.code_commit(), "results": {"no admissible restart": bool(adm)}, "detail": {}}
+    if adm:
+        nom = min(adm, key=lambda r: r["best_J5"])
+        x = nom["best_x"]
+        out["nominal"] = nom["seed"]
+        for name, fn in (("step-halving", lambda: stephalving(x, data=data, net=net, best_j5=nom["best_J5"])),
+                         ("P11-k", lambda: p11_freeze(x, data, net)),
+                         ("in-sample screen", lambda: screen(x, True, nom["seed"]))):
+            r = fn()
+            out["detail"][name] = r
+            out["results"][name] = bool(r["PASS"])
+            if not r["PASS"]:
+                break
+    (V5.RUNS5 / STOPS_FILE).write_text(json.dumps(_clean(out), indent=1, allow_nan=False))
+    return out
+
+
+def stops_passed(nominal: int) -> bool:
+    """True iff the committed-code freeze stops 1-4 passed for this nominal (route still open before the grid)."""
+    f = V5.RUNS5 / STOPS_FILE
+    if not f.exists():
+        return False
+    st = json.loads(f.read_text())
+    return st.get("nominal") == nominal and len(st["results"]) == 4 and all(st["results"].values())
+
+
+def finalize(partial_reason: str | None = None, stops: dict | None = None) -> dict:
     data = C.load_data()
     net = M.build_network(C.VARIANT)
     rs = restarts()
@@ -362,27 +402,26 @@ def finalize(partial_reason: str | None = None) -> dict:
     res = {"protocol": V5.PROTOCOL, "stage": "freeze", "T_s": T, "objective": "J5",
            "facts_sha256": V5.FACTS5_SHA.read_text().split()[0],
            "restarts": [{k: r.get(k) for k in ("seed", "evals", "best_J5", "admissible", "final_sigma", "counts",
-                                               "share_evals_with_credit_B1", "bound_active",
-                                               "rel_improvement_last20pct", "wall_s")} for r in rs]}
-    results, detail = {"no admissible restart": bool(adm)}, {}
+                                               "share_evals_with_credit_B1", "bound_active", "cov_condition",
+                                               "a3_at_best", "rel_improvement_last20pct", "wall_s")} for r in rs]}
+    if stops is None:
+        f = V5.RUNS5 / STOPS_FILE
+        if not f.exists():
+            raise SystemExit("freeze_stops.json missing: run the 'stops' stage first")
+        stops = json.loads(f.read_text())
+    results, detail = dict(stops["results"]), dict(stops.get("detail", {}))
     nom = min(adm, key=lambda r: r["best_J5"]) if adm else None
     if nom:
+        if stops.get("nominal") != nom["seed"]:
+            raise SystemExit("freeze_stops.json belongs to another nominal plant")
         x = nom["best_x"]
         res.update({"nominal": nom["seed"], "nominal_J5": nom["best_J5"], "nominal_rows": nom["best_rows"],
                     "frozen_params": params_of(x), "nominal_x": x})
-        steps = [("step-halving", lambda: stephalving(x, data=data, net=net, best_j5=nom["best_J5"])),
-                 ("P11-k", lambda: p11_freeze(x, data, net)),
-                 ("in-sample screen", lambda: screen(x, True, nom["seed"])),
-                 ("§4.7 (7)(b)", lambda: spread_v5(nom["seed"], data))]
-        for name, fn in steps:
-            r = fn()
-            detail[name] = r
-            if name == "§4.7 (7)(b)":
-                res["capacity_factors"] = {"nominal": r}
-            ok = r["usable_spread"] if name == "§4.7 (7)(b)" else r["PASS"]
-            results[name] = bool(ok)
-            if not ok:
-                break
+        if len(results) == 4 and all(results.values()):
+            r = spread_v5(nom["seed"], data)
+            detail["§4.7 (7)(b)"] = r
+            res["capacity_factors"] = {"nominal": r}
+            results["§4.7 (7)(b)"] = bool(r["usable_spread"])
     rt = route(_complete(results))
     if adm and data.get("d0") is not None:                      # §B2 report-only, every admissible restart
         res["best_point_reports"] = {str(r["seed"]): best_point_report(r["best_x"], data, net) for r in adm}
@@ -425,6 +464,8 @@ def ensemble_checks() -> dict:
     net = M.build_network(C.VARIANT)
     rs = restarts()
     nom = min((r for r in rs if r["admissible"]), key=lambda r: r["best_J5"])
+    if not stops_passed(nom["seed"]) or not spread_v5(nom["seed"], data)["usable_spread"]:
+        raise SystemExit("the route does not reach the ensemble step (stops 1-5 must pass first; §B8 step 6)")
     ki = [C.NAMES.index(k) for k in FZ.ENS_KEYS]
     cands = candidates(rs, nom["seed"], ki)
     checks, gridded = {}, []
@@ -523,34 +564,84 @@ def _clean(x):
     return x
 
 
+def grid_run(seed: int, gate_ok: bool) -> dict:
+    """§4.7 grid batch (41 c2 slices) for the nominal (stops 1-4 passed) or a gridded ensemble candidate."""
+    from vsl_lab.ops.scheduler import Job, run_batch
+    rs = {r["seed"]: r for r in restarts()}
+    nom = min((r for r in rs.values() if r["admissible"]), key=lambda r: r["best_J5"])["seed"]
+    if seed == nom:
+        if not stops_passed(nom):
+            raise SystemExit("freeze stops 1-4 have not all passed: no grid (§B8 step 6)")
+    else:
+        f = V5.RUNS5 / "ensemble_checks.json"
+        if not f.exists() or seed not in json.loads(f.read_text())["gridded"]:
+            raise SystemExit(f"seed {seed} is not a gridded ensemble candidate (§B6)")
+    for i in range(len(Q.GRID)):
+        (V5.RUNS5 / f"grid_{seed}_c2_{i:02d}.json").unlink(missing_ok=True)
+    jobs = [Job(jid=f"grid5_{seed}_{i:02d}", argv=["vsl_lab.jobs.metanet_v5_freeze", "grid", "--seed", str(seed),
+                                                  "--c2-index", str(i)]) for i in range(len(Q.GRID))]
+    rep = run_batch(jobs, V5.RUNS5 / f"batch_grid5_{seed}_{int(time.time())}", max_workers=32, gate_ok=gate_ok)
+    missing = [i for i in range(len(Q.GRID)) if not (V5.RUNS5 / f"grid_{seed}_c2_{i:02d}.json").exists()]
+    if missing:
+        raise RuntimeError(f"grid {seed}: missing c2 slices {missing}")
+    return {"seed": seed, "n_jobs": rep.n_jobs, "failed": rep.n_failed_proc}
+
+
+def build_data() -> dict:
+    """§B8 step 4: calib_data.npz rebuilt into metanet_v5/ must equal v4's array for array; calib_screen_data.npz
+    (with exit flows) must equal it on the shared arrays."""
+    cal = C.load_data()
+    out = V5.RUNS5 / "calib_data.npz"
+    V5.RUNS5.mkdir(parents=True, exist_ok=True)
+    C.build_data([str(d) for d in cal["days"]], out)
+    z = np.load(out)
+    same = {k: same_array(z[k], cal[k]) for k in cal}
+    if set(z.files) != set(cal) or not all(same.values()):
+        raise RuntimeError(f"rebuilt calib_data differs from v4's: {same}")
+    return {"calib_data": same, "screen_data": build_screen_data()}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["premise", "stephalving", "grid", "ensemble", "finalize", "sensitivities"])
+    ap.add_argument("what", choices=["premise", "build-data", "stops", "grid", "grid-run", "ensemble", "finalize",
+                                     "sensitivities"])
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--c2-index", type=int, default=None)
     ap.add_argument("--partial", default=None)
+    ap.add_argument("--gate-ok", action="store_true")
     a = ap.parse_args(argv)
-    if a.what == "grid":
+    if a.what == "grid":                                       # one grid worker (inside grid-run's batch)
         rs = {r["seed"]: r for r in restarts()}
         Q.grid_job(a.seed, a.c2_index, p=params_of(rs[a.seed]["best_x"]), runs=V5.RUNS5, jd=V5.evaluator())
         return 0
-    if a.what == "sensitivities":
-        print(json.dumps(sensitivities()))
-        return 0
-    if a.what == "ensemble":
-        print(json.dumps({k: v for k, v in ensemble_checks().items() if k != "candidates"}))
-        return 0
-    if a.what == "finalize":
-        r = finalize(a.partial)
-        RECORD.write_text(json.dumps(_clean(r), indent=1, allow_nan=False))
-        print(json.dumps({"route": r["route"]}))
-        return 0
-    if a.what == "premise":
-        r = premise()
-        (V5.RUNS5 / "premise_check.json").write_text(json.dumps(r, indent=1, default=float))
-        print(json.dumps({"anchor": r["anchor"], "d412": r["d412_comparison"]}, default=float))
-        return 0 if r["anchor"]["PASS"] else 3
-    raise SystemExit("stephalving runs from the freeze job at the committed nominal (slice D, pending)")
+    code = V5.code_commit()
+    with V5.stage("metanet-v5-freeze", f"metanet_v5_{a.what.replace('-', '_')}",
+                  {"stage": a.what, "seed": a.seed, "code_commit": code}) as st:
+        if a.what == "premise":
+            r = premise()
+            r["code_commit"], r["facts_sha256"] = code, V5.FACTS5_SHA.read_text().split()[0]
+            (V5.RUNS5 / "premise_check.json").write_text(json.dumps(r, indent=1, default=float))
+            st.result = {"anchor_PASS": r["anchor"]["PASS"], "d412": r["d412_comparison"]}
+            print(json.dumps(st.result, default=float))
+            return 0 if r["anchor"]["PASS"] else 3
+        if a.what == "build-data":
+            st.result = {"ok": True, **{k: all(v.values()) for k, v in build_data().items()}}
+        elif a.what == "stops":
+            r = freeze_stops()
+            st.result = {"nominal": r.get("nominal"), "results": r["results"]}
+        elif a.what == "grid-run":
+            st.result = grid_run(a.seed, a.gate_ok)
+        elif a.what == "ensemble":
+            r = ensemble_checks()
+            st.result = {"gridded": r["gridded"], "checks": r["checks"]}
+        elif a.what == "finalize":
+            r = finalize(a.partial)
+            RECORD.write_text(json.dumps(_clean(r), indent=1, allow_nan=False))
+            st.result = {"route": r["route"], "members": r.get("members")}
+        elif a.what == "sensitivities":
+            st.result = {"seeds": sensitivities()["seeds"]}
+        print(json.dumps(st.result, default=float))
+    return 0
 
 
 if __name__ == "__main__":

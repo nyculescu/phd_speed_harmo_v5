@@ -316,3 +316,79 @@ def test25_e2e_miss_dominance_two_bottlenecks(monkeypatch):
             assert all(x is None or -1e-12 <= x <= cap + 1e-12 for x in it[r]), (r, it[r], b1, b2)
         n += 1
     assert n == 3000
+
+
+def test38_p8g_ii_extra_on_hit_day(monkeypatch):
+    """P8g (ii): on a real-active day where the gate's P3 agrees (any overlap, creditable or not), a model P_1
+    episode overlapping no real one is charged; rev2: also when the only overlap is non-creditable."""
+    ev_, _ = _evaluator()
+    _install(monkeypatch, model_b1=[REAL_B1, (180, 190)])
+    assert _day(ev_, *_cells(backed=True))["P8g"] == [1.0]
+    assert _day(ev_, *_cells(backed=False))["P8g"] == [1.0]
+    _install(monkeypatch, model_b1=[REAL_B1])
+    assert _day(ev_, *_cells(backed=True))["P8g"] == [0.0]
+
+
+def test_p2_side_creditable(monkeypatch):
+    """The P_2 path with a creditable episode (cell 33 congested) gives P3-2 = 0; cell 34 alone does not."""
+    real_b2 = [(140, 150)]
+    ev_, _ = _evaluator(real_b2=real_b2)
+    _install(monkeypatch, model_b1=[REAL_B1], model_b2=real_b2, real_b2=real_b2)
+    rho, rc = _cells(backed=True)
+    r33 = rho.copy(); r33[32, EV0 + 140:EV0 + 151] = 1.1
+    assert _day(ev_, r33, rc)["P3-2"] == [0.0]
+    r34 = rho.copy(); r34[33, EV0 + 140:EV0 + 151] = 1.1
+    assert _day(ev_, r34, rc)["P3-2"] == [1.0 + J.EPS]
+
+
+def test_batch_layout_two_sets_two_days(monkeypatch):
+    """__call__ slices simulate's (P*D) outputs per parameter set: set 0 perfect, set 1 unbacked on both days."""
+    ev_, d = _evaluator()
+    ev_.days = [d, d + "b"]
+    ev_.f["per_day"][d + "b"] = ev_.f["per_day"][d]
+    ev_.ev[d + "b"] = ev_.ev[d]
+    for k in ("q", "v", "mq", "mv"):
+        ev_.data[k] = np.repeat(ev_.data[k], 2, 0)
+    ev_.Fm, ev_.Pm = np.repeat(ev_.Fm, 2, 0), np.repeat(ev_.Pm, 2, 0)
+    ev_.data["days"] = np.array(ev_.days)
+    ev_.q = {"heavy": {"B1": ev_.days, "B2": []}, "both_q": [], "heavy_any": ev_.days, "P1c_days": ev_.days}
+    _install(monkeypatch, model_b1=[REAL_B1])
+    good, bad = _cells(backed=True), _cells(backed=False)
+
+    def fake_sim(net, params, inp, n_param_sets=1, **k):
+        rho = np.stack([good[0], good[0], bad[0], bad[0]])          # order: (set0,d0), (set0,d1), (set1,d0), (set1,d1)
+        return types.SimpleNamespace(clipped_share=np.zeros(4), nonfinite=np.zeros(4, bool),
+                                     q_st=np.repeat(ev_.data["q"][:1], 4, 0), v_st=np.repeat(ev_.data["v"][:1], 4, 0),
+                                     exit_flow=np.zeros((4, 5, NB)), rho_cell=rho, rc_cell=np.stack([good[1]] * 4))
+    monkeypatch.setattr(E.M, "simulate", fake_sim)
+    monkeypatch.setattr(C, "a3_thresholds", lambda net: {})
+    monkeypatch.setattr(C, "to_params", lambda X: {"x": X[:, 0]})
+    monkeypatch.setattr(C, "a3_shortfall", lambda p, thr: np.zeros(2))
+    Jv, parts = ev_(np.zeros((2, 17)), return_parts=True)
+    assert Jv[0] == 0.0 and Jv[1] > 0.0
+    assert parts[0]["J_d"] == [0.0, 0.0] and all(j > 0 for j in parts[1]["J_d"])
+
+
+def test_j5eval_init_hash_and_days(tmp_path):
+    """J5Eval.__init__: facts hash, masks hash and day list are enforced; record range is cells 25-39."""
+    import hashlib as _h
+    import json as _j
+    days = ["SYN0"]
+    np.savez_compressed(tmp_path / "metanet_v5_precal_masks.npz", F=np.zeros((1, NS, NB), bool),
+                        P1c=np.zeros((1, NS, NB), bool))
+    msha = _h.sha256((tmp_path / "metanet_v5_precal_masks.npz").read_bytes()).hexdigest()
+    rec = {"B1": [], "B2": [], "censor": {}, "B1_long": None, "B2_long": None, "first": None, "heavy_first": False}
+    f = tmp_path / "facts.json"
+    f.write_text(_j.dumps({"days": days, "per_day": {"SYN0": rec}, "qualifying": {}, "rows": ["P3-1"],
+                           "weights": {"P3-1": 1.0}, "masks_npz_sha256": msha}))
+    sha = _h.sha256(f.read_bytes()).hexdigest()
+    data = {"days": np.array(days)}
+    ev_ = E.J5Eval(f, sha, data, NET, {})
+    assert ev_.record == (24, 39) and ev_.rows == ["P3-1"]
+    with pytest.raises(RuntimeError):
+        E.J5Eval(f, "0" * 64, data, NET, {})
+    with pytest.raises(RuntimeError):
+        E.J5Eval(f, sha, {"days": np.array(["OTHER"])}, NET, {})
+    (tmp_path / "metanet_v5_precal_masks.npz").write_bytes(b"x")
+    with pytest.raises(RuntimeError):
+        E.J5Eval(f, sha, data, NET, {})

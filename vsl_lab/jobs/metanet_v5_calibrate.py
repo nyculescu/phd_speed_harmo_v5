@@ -44,8 +44,22 @@ def verify_manifest(manifest: Path, root: Path) -> None:
             raise RuntimeError(f"raw file changed or missing under {root}: {f}")
 
 
+def verify_manifest_exact(manifest: Path, root: Path) -> None:
+    """As verify_manifest, and no file under root outside the manifest (a new file in a read-only dir is a write)."""
+    verify_manifest(manifest, root)
+    listed = {line.split(None, 1)[1].strip().removeprefix("./") for line in manifest.read_text().splitlines()}
+    extra = sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file() and
+                   str(p.relative_to(root)) not in listed)
+    if extra:
+        raise RuntimeError(f"new files in the read-only dir {root}: {extra[:5]}")
+
+
 def verify_v4() -> None:
-    verify_manifest(V4_MANIFEST, C.RUNS)
+    verify_manifest_exact(V4_MANIFEST, C.RUNS)
+
+
+def verify_v3() -> None:
+    verify_manifest_exact(C.V3_MANIFEST, C.V3_RUNS)
 
 
 def verify_mayfly(manifest: Path = MAYFLY_MANIFEST) -> None:
@@ -62,14 +76,58 @@ def verify_mayfly(manifest: Path = MAYFLY_MANIFEST) -> None:
             raise RuntimeError(f"Mayfly cache of calibration day {day} differs from the committed manifest")
 
 
+def committed(paths: list) -> None:
+    """Integrity references must be tracked and unchanged against HEAD (an uncommitted edit would weaken a guard)."""
+    import subprocess
+    for p in paths:
+        rel = str(Path(p).relative_to(C.REPO))
+        tracked = subprocess.run(["git", "-C", str(C.REPO), "ls-files", "--error-unmatch", rel],
+                                 capture_output=True).returncode == 0
+        dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--", rel], capture_output=True,
+                               text=True).stdout.strip()
+        if not tracked or dirty:
+            raise SystemExit(f"integrity reference not committed or modified: {rel}")
+
+
 def pre_batch_checks() -> None:
+    committed([MAYFLY_MANIFEST, V4_MANIFEST, C.V3_MANIFEST])
     verify_mayfly()
 
 
 def post_batch_checks() -> None:
-    """§B8: the v3 and v4 manifests are re-verified after every v5 batch."""
-    C.verify_v3()
+    """§B8: the v3 and v4 manifests are re-verified after every v5 batch (exactly: no new file either)."""
+    verify_v3()
     verify_v4()
+
+
+class stage:
+    """Bookkeeping for every v5 batch or stage: a 'started' ledger row first (a killed run leaves a trace), then on
+    exit, whatever happens, the post-batch v3/v4 checks and an outcome ledger row; a failed check raises."""
+
+    def __init__(self, phase: str, variant: str, cfg: dict | None = None, seeds: str = "-"):
+        self.phase, self.variant, self.cfg, self.seeds = phase, variant, dict(cfg or {}), seeds
+        self.result: dict = {}
+
+    def __enter__(self):
+        from vsl_lab.ops import ledger
+        ledger.append("DP", self.phase, "S", self.variant + "_started", self.cfg, self.seeds, 0, {},
+                      {"status": "started"}, notes=str(RUNS5))
+        return self
+
+    def __exit__(self, et, ev, tb):
+        from vsl_lab.ops import ledger
+        err = None
+        try:
+            post_batch_checks()
+            ok = True
+        except Exception as e:
+            ok, err = False, e
+        ledger.append("DP", self.phase, "S", self.variant, self.cfg, self.seeds, 0, {},
+                      {**self.result, "status": "error: " + repr(ev)[:200] if et else "done",
+                       "v3_v4_manifests_ok": ok}, notes=str(RUNS5))
+        if err is not None and et is None:
+            raise err
+        return False
 
 
 LEDGER_REL = "vsl_lab/runs/ledger.csv"                          # append-only log: not code
@@ -90,6 +148,7 @@ def evaluator(data: dict | None = None, net: M.Net | None = None) -> J5Eval:
     """The J5 evaluator on the committed facts (hash from the committed .sha256 file; J5 refuses otherwise).
     Every J5 job builds it, so the Mayfly-cache check runs before every J5 batch (§B1.1)."""
     pre_batch_checks()
+    committed([FACTS5, FACTS5_SHA, FACTS5.with_name("metanet_v5_precal_masks.npz")])
     sha = FACTS5_SHA.read_text().split()[0]
     f = json.loads(FACTS5.read_text())                          # the facts' masks and nulls index this file
     if hashlib.sha256((C.RUNS / "calib_data.npz").read_bytes()).hexdigest() != f["calib_data_sha256"]:
@@ -141,7 +200,21 @@ def restart(seed: int, continue_to: int | None = None, ev: J5Eval | None = None,
     cut = evs.max() * 0.8
     j80 = bj[evs <= cut][-1] if (evs <= cut).any() else bj[0]
     bx = np.array(best[1]) if best[1] is not None else None
+    try:                                                        # v3 §4.4 report
+        cond = float(es.D.max() ** 2 / es.D.min() ** 2)
+    except Exception:
+        cond = None
+    a3rep = None
+    if bx is not None:                                          # v4 §A3 (g): v_c,g − thr_g at the best point
+        import math
+        bp = {k: float(v[0]) for k, v in C.to_params(bx[None]).items()}
+        thr = C.a3_thresholds(ev.net) if hasattr(ev, "net") else C.a3_thresholds(M.build_network(C.VARIANT))
+        vf = {0: bp["vf1"], 1: bp["vf2"], 2: bp["vf3"], 3: bp["vf3"]}
+        aa = {0: bp["a1"], 1: bp["a2"], 2: bp["a3"], 3: bp["a4"]}
+        a3rep = {f"G{g + 1}": {"vc_minus_thr": vf[g] * math.exp(-1 / aa[g]) - t,
+                               "a3_active": bool(vf[g] * math.exp(-1 / aa[g]) - t <= 0.01 * t)} for g, t in thr.items()}
     res = {"protocol": PROTOCOL, "objective": "J5", "T_s": C.T_RUN, "seed": seed, "evals": int(es.countevals),
+           "cov_condition": cond, "a3_at_best": a3rep,
            "best_J5": best[0], "best_x": best[1], "best_rows": best[2],
            "best_params": ({k: float(v[0]) for k, v in C.to_params(bx[None]).items()} if bx is not None else None),
            "bound_active": ([C.NAMES[j] for j in range(n) if bx[j] <= 1e-3 or bx[j] >= 1 - 1e-3]
@@ -209,6 +282,9 @@ def _batch(tag: str, suffix: str, extra: list, gate_ok: bool, commit: str) -> li
     jobs = [Job(jid=f"cma5_{s}{suffix}", argv=["vsl_lab.jobs.metanet_v5_calibrate", "restart", "--seed", str(s)] + extra)
             for s in SEEDS]
     rep, res, missing, post_ok = None, [], [], False
+    ledger.append("DP", "metanet-v5-calib", "S", f"metanet_v5_cmaes{suffix or '_base'}_started",
+                  {"seeds": SEEDS, "code_commit": commit}, f"{SEEDS[0]}-{SEEDS[-1]}", len(SEEDS), {},
+                  {"status": "started"}, notes=f"{tag}; {RUNS5}")
     try:
         rep = run_batch(jobs, RUNS5 / f"batch_cma5{suffix}_{int(time.time())}", max_workers=8, gate_ok=gate_ok)
     finally:
@@ -242,9 +318,18 @@ def run(gate_ok: bool, continue_only: bool = False) -> dict:
     commit = code_commit()
     pre_batch_checks()
     post_batch_checks()
+    pc = RUNS5 / "premise_check.json"                           # §B7: the anchor blocks the launch
+    if not pc.exists():
+        raise SystemExit("premise check not run: the J_v4 anchor blocks the CMA-ES launch (§B7)")
+    pr = json.loads(pc.read_text())
+    if not pr["anchor"]["PASS"] or pr.get("facts_sha256") != FACTS5_SHA.read_text().split()[0]:
+        raise SystemExit("premise anchor failed or was run on other facts: launch blocked (§B7)")
     RUNS5.mkdir(parents=True, exist_ok=True)
     if continue_only:
-        res_base = json.loads((RUNS5 / "cma_base_summary.json").read_text())["restarts_base"]
+        bs = json.loads((RUNS5 / "cma_base_summary.json").read_text())
+        if bs["code_commit"] != commit:
+            raise SystemExit("continue-only: the code changed since the base batch (provenance)")
+        res_base = bs["restarts_base"]
     else:
         res_base = _batch("base", "", [], gate_ok, commit)
         (RUNS5 / "cma_base_summary.json").write_text(json.dumps(
@@ -254,7 +339,11 @@ def run(gate_ok: bool, continue_only: bool = False) -> dict:
     continued = bool(best["rel_improvement_last20pct"] is not None and best["rel_improvement_last20pct"] > 0.01)
     res = res_base
     if continued:
-        res = _batch("continuation", "_cont", ["--continue-to", "8000"], gate_ok, commit)
+        if not (continue_only or C._wait_for_load()):           # 6-10 h after launch: re-check the machine
+            ledger.append("DP", "metanet-v5-calib", "S", "metanet_v5_cmaes_cont", {"code_commit": commit}, "-", 0,
+                          {}, {"status": "continuation pending: load gate"}, notes=str(RUNS5))
+            raise SystemExit("continuation pending: load gate (resume with run --continue-only --gate-ok)")
+        res = _batch("continuation", "_cont", ["--continue-to", "8000"], continue_only and gate_ok, commit)
         best = min(res, key=lambda r: r["best_J5"])
     summary = {"protocol": PROTOCOL, "objective": "J5", "T_s": C.T_RUN, "budget": BUDGET,
                "continued_to_8000": continued, "code_commit": commit,

@@ -403,14 +403,14 @@ def stephalving(seed: int | None = None) -> dict:
     return res
 
 
-def step_probe_days(days_: list, steps, seed) -> dict:
+def step_probe_days(days_: list, steps, seed, p: dict | None = None) -> dict:
     """Report-only: v_u and v_d - v_u per deciding bin at T, T/2, T/4 for the differing days, with
-    r = |x(T/2) - x(T/4)| / |x(T) - x(T/2)|."""
+    r = |x(T/2) - x(T/4)| / |x(T) - x(T/2)|. p: explicit plant parameters (protocol v5 §B4); default the v4 seed's."""
     data = C.load_data()
     days = [str(d) for d in data["days"]]
     net = M.build_network(C.VARIANT)
     cs = part1()["c_s"]
-    p = plant_params(seed)
+    p = plant_params(seed) if p is None else p
     out = {}
     for day in days_:
         i = days.index(day)
