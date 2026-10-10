@@ -72,11 +72,15 @@ def post_batch_checks() -> None:
     verify_v4()
 
 
+LEDGER_REL = "vsl_lab/runs/ledger.csv"                          # append-only log: not code
+
+
 def code_commit() -> str:
-    """Provenance: refuse a v5 batch while vsl_lab has uncommitted changes."""
+    """Provenance: refuse a v5 batch while vsl_lab has uncommitted or untracked changes other than the append-only
+    ledger (start records and batch rows are appended to it during a run)."""
     import subprocess
-    dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--", "vsl_lab"], capture_output=True,
-                           text=True).stdout.strip()
+    dirty = subprocess.run(["git", "-C", str(C.REPO), "status", "--porcelain", "--untracked-files=all", "--",
+                            "vsl_lab", f":(exclude){LEDGER_REL}"], capture_output=True, text=True).stdout.strip()
     if dirty:
         raise SystemExit("vsl_lab has uncommitted changes: commit the code before a v5 batch (provenance)")
     return subprocess.run(["git", "-C", str(C.REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()

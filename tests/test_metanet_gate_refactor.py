@@ -304,18 +304,70 @@ def test_v5_gate_check_real(monkeypatch, tmp_path):
     git = {"ls-files": "x", "status": "", "log": "abc", "hash-object": "blob1"}
     monkeypatch.setattr(VG, "_git", lambda *a: git[a[0]])
     monkeypatch.setattr(VG, "FIXES5", tmp_path / "nofixes")
-    monkeypatch.setattr(G, "code_commit", lambda: (_ for _ in ()).throw(SystemExit("dirty")))
+    monkeypatch.setattr(V5, "code_commit", lambda: (_ for _ in ()).throw(SystemExit("dirty")))
     monkeypatch.setattr(VG, "ledger_starts", lambda: {})
     with pytest.raises(SystemExit):
         VG.check(None)
     assert not (tmp_path / VG.LOCKF).exists()
-    monkeypatch.setattr(G, "code_commit", lambda: "c1")
+    monkeypatch.setattr(V5, "code_commit", lambda: "c1")
     assert VG.check(None)[0] == 7192013
     monkeypatch.setattr(VG, "ledger_starts", lambda: {"7192013": {"code": "c1", "freeze_blob": "blob1"}})
     with pytest.raises(SystemExit):                                   # ledger says started, lock file deleted
         VG.check(None)
     (tmp_path / VG.LOCKF).write_text(_j.dumps({"7192013": {"code": "c1", "freeze_blob": "blob1"}}))
     assert VG.check(None)[0] == 7192013                               # plain re-run at unchanged hashes
-    monkeypatch.setattr(G, "code_commit", lambda: "c2")               # code changed since the start record
+    monkeypatch.setattr(V5, "code_commit", lambda: "c2")               # code changed since the start record
     with pytest.raises(SystemExit):
         VG.check(None)
+
+
+
+def test_v5_gate_lock_two_way(monkeypatch, tmp_path):
+    """A lock entry with no ledger row (ledger reverted) is refused."""
+    import json as _j
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    rec = {"protocol": VG.PROTOCOL, "stage": "freeze", "route": "continue", "nominal": 7192013, "members": []}
+    monkeypatch.setattr(VG, "FREEZE5", C.REPO / "docs" / "x.json")
+    monkeypatch.setattr(VG, "AUDIT5", C.REPO / "docs" / "a.json")
+    monkeypatch.setattr(VG.Path, "read_text", lambda self, *a, **k: _j.dumps(rec) if self.name == "x.json"
+                        else open(self).read(), raising=False)
+    monkeypatch.setattr(V5, "RUNS5", tmp_path)
+    git = {"ls-files": "x", "status": "", "log": "abc", "hash-object": "blob1"}
+    monkeypatch.setattr(VG, "_git", lambda *a: git[a[0]])
+    monkeypatch.setattr(VG, "FIXES5", tmp_path / "nofixes")
+    monkeypatch.setattr(V5, "code_commit", lambda: "c1")
+    monkeypatch.setattr(VG, "ledger_starts", lambda: {})
+    (tmp_path / VG.LOCKF).write_text(_j.dumps({"7192013": {"code": "c1", "freeze_blob": "blob1"}}))
+    with pytest.raises(SystemExit):
+        VG.check(None)
+
+
+def test_code_commit_and_fix_rerun_in_a_real_repo(monkeypatch, tmp_path):
+    """Ledger appends never block (no deadlock); a code change does; a committed fix record is accepted only if its
+    fix commit is an ancestor of HEAD with no later vsl_lab code change."""
+    import subprocess as sp
+    from vsl_lab.jobs import metanet_v5_calibrate as V5
+    from vsl_lab.jobs import metanet_v5_gate as VG
+    r = tmp_path / "repo"
+    (r / "vsl_lab" / "runs").mkdir(parents=True)
+    g = lambda *a: sp.run(["git", "-C", str(r), *a], capture_output=True, text=True, check=True).stdout.strip()
+    g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+    (r / "vsl_lab" / "x.py").write_text("a = 1\n"); (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\n")
+    g("add", "-A"); g("commit", "-qm", "base")
+    monkeypatch.setattr(C, "REPO", r)
+    head0 = V5.code_commit()
+    (r / "vsl_lab" / "runs" / "ledger.csv").write_text("h\nstart row\n")       # a start record was appended
+    assert V5.code_commit() == head0
+    (r / "vsl_lab" / "x.py").write_text("a = 2\n")
+    with pytest.raises(SystemExit):
+        V5.code_commit()
+    g("add", "vsl_lab/x.py"); g("commit", "-qm", "fix"); fix = g("rev-parse", "HEAD")
+    (r / "docs").mkdir(); (r / "docs" / "fix.json").write_text("{}")
+    g("add", "-A"); g("commit", "-qm", "fix record + ledger"); head = g("rev-parse", "HEAD")
+    assert VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": fix}, 1, head)
+    assert not VG.fix_rerun_ok({"rerun_seed": 2, "fix_commit": fix}, 1, head)
+    (r / "vsl_lab" / "x.py").write_text("a = 3\n"); g("commit", "-qam", "later code"); head2 = g("rev-parse", "HEAD")
+    assert not VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": fix}, 1, head2)   # code changed after the fix
+    g("checkout", "-q", "-b", "other", head0); (r / "y").write_text("y"); g("add", "-A"); g("commit", "-qm", "o")
+    assert not VG.fix_rerun_ok({"rerun_seed": 1, "fix_commit": g("rev-parse", "HEAD")}, 1, head)  # not an ancestor

@@ -71,6 +71,21 @@ def guard(rec: dict, seed: int | None, audit_committed: bool, first_record: bool
     return seed
 
 
+def _git_rc(*a) -> int:
+    return subprocess.run(["git", "-C", str(C.REPO), *a], capture_output=True, text=True).returncode
+
+
+def fix_rerun_ok(f: dict, seed: int, head: str) -> bool:
+    """§B11.2 re-run accepted for a seed: the committed fix record names it, its fix commit is an ancestor of HEAD
+    (or HEAD), and vsl_lab has no change after the fix commit except the append-only ledger."""
+    fc = f.get("fix_commit")
+    if f.get("rerun_seed") != seed or not fc:
+        return False
+    if _git_rc("merge-base", "--is-ancestor", fc, head) != 0:
+        return False
+    return _git_rc("diff", "--quiet", fc, head, "--", "vsl_lab", f":(exclude){V5.LEDGER_REL}") == 0
+
+
 def _git(*a) -> str:
     return subprocess.run(["git", "-C", str(C.REPO), *a], capture_output=True, text=True).stdout.strip()
 
@@ -98,7 +113,7 @@ def check(seed: int | None) -> tuple:
     """Impure wrapper: committed code (v4 §A6 (6) with v5 names), tracked and unchanged record, audit committed,
     first record, start records (ledger = source of truth; the raw-dir lock must agree with it), hashes."""
     from vsl_lab.jobs import metanet_gate as G
-    code = G.code_commit()                                     # raises if vsl_lab is dirty or untracked
+    code = V5.code_commit()                                    # raises if vsl_lab (ledger excepted) is dirty
     rel = str(FREEZE5.relative_to(C.REPO))
     if not _git("ls-files", rel) or _git("status", "--porcelain", "--", rel):
         raise SystemExit("v5 freeze record missing, untracked or modified against HEAD")
@@ -107,17 +122,21 @@ def check(seed: int | None) -> tuple:
                                                                                str(AUDIT5.relative_to(C.REPO)))
     commits = _git("log", "--format=%H", "--", rel).split()
     first = len(commits) == 1
-    fixes = [json.loads(p.read_text()) for p in sorted(FIXES5.glob("*.json"))] if FIXES5.exists() else []
+    fixes = []                                                  # committed and unchanged fix records only
+    for p in (sorted(FIXES5.glob("*.json")) if FIXES5.exists() else []):
+        r_ = str(p.relative_to(C.REPO))
+        if _git("ls-files", r_) and not _git("status", "--porcelain", "--", r_):
+            fixes.append(json.loads(p.read_text()))
     names = any(f.get("freeze_record_commit") == (commits[0] if commits else None) for f in fixes)
     led = ledger_starts()
     lockf = V5.RUNS5 / LOCKF
     flock = json.loads(lockf.read_text()) if lockf.exists() else {}
-    for sd, v in led.items():
-        if flock.get(sd) != v:
-            raise SystemExit(f"start record of seed {sd} in the ledger but the raw-dir lock is missing or differs")
+    for sd in set(led) | set(flock):                            # both directions: a lock entry with no ledger row
+        if flock.get(sd) != led.get(sd):                        # (ledger reverted) is refused as well
+            raise SystemExit(f"start record of seed {sd}: ledger and raw-dir lock disagree (missing or changed)")
     now = {"code": code, "freeze_blob": _git("hash-object", str(FREEZE5))}
     s_ = rec["nominal"] if seed is None else seed
-    rerun = any(f.get("rerun_seed") == s_ and f.get("fix_commit") == now["code"] for f in fixes)
+    rerun = any(fix_rerun_ok(f, s_, now["code"]) for f in fixes)
     seed = guard(rec, seed, audit, first, names, led or None, now, rerun)
     return seed, rec, led, now
 
