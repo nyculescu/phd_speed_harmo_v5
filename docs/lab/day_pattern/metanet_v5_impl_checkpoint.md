@@ -26,6 +26,22 @@ Rule for a resumed session: read this file and the protocol sections named in th
 
 - 2026-10-10: slice D part 4 (grid J_d selector, c1-inert reports). Full METANET suite 71 passed.
 
+## Code review (2026-10-10, 11 agents; findings in /home/catalin/work/phd/vsl_lab_runs/day_pattern/metanet_v5_design/review/code_review_*.json)
+16 confirmed must-fix (5 groups) + 23 should-fix + 6 critic gaps. Status after the fix round (commits dfd50b8..HEAD):
+
+| Group | Status |
+|---|---|
+| 1 integrity guards (Mayfly manifest before every J5 job; v3/v4 manifests after every batch) | fixed + tests; real manifests verified OK |
+| 2 production J5 untested (tests 24 e2e, 25 e2e, 26, 28 h, 29, 32, 33, 38, 41) | fixed: `tests/test_metanet_j5_eval.py` + test 32; unused J5 helpers removed |
+| 3 v5 gate not runnable / unguarded | fixed: committed-code check, ledger start record (source of truth), inputs checked before the record, all stages + CLI; real `check()` tested |
+| 4 screen data NaN equality | fixed + test |
+| 5 no batch driver | fixed: `metanet_v5_calibrate run` (8 restarts, continuation rule, summary, ledger) |
+| should-fix done | step-halving guards + T/4 + margins; calib-data hash check; §B1.7 sensitivities; best-point reports (§B1.2/§B2); exact-ĉ non-creditable count (§B3); freeze reads the summary's files; retroactive ledger rows |
+| should-fix open (minor) | test 30(b) still item-level (mapping via shared functions); test 40 extra clauses; per-draw unbacked share next to P6s/P10; J5 unscored-item counts; §B3 'share of exact ĉ = 1.00' and signed re-centring 1/m_k (check if v4's capacity_factors already reports them) |
+
+**Before the facts commit (§B8 step 4):** commit `metanet_v5_precal_facts.json`, `metanet_v5_precal_masks.npz` (the evaluator loads it next to the facts) and `metanet_v5_precal_facts.sha256`, rebuilt from committed code.
+**Launch blocker outside this session:** the sibling session's uncommitted changes in `vsl_lab/` (guard, scheduler, config) make the v5 batch driver and the gate refuse to run (committed-code check) until they are committed.
+
 ## Side study G-1 (SUMO 3-lane merge geometry/demand; author 2026-10-09; seeds 7,170,000-999 approved)
 - S0 demand extremes: done (168b2e6), `docs/lab/g1_demand_extremes.md`. Sharp transitions; H5 shows a capacity drop in several layouts, H3 none. Open check: lanedrop results identical across ramp levels (inert ramp?).
 - Next: S1 pre-registration (refine main_peak in 200 veh/h steps inside the H5 brackets, ≥ 10 seeds 7,170,100+), controllers nc + MTFC tuned + constant-VSL grid + "artificial DRL" oracles (O1 best constant per seed; O2 timed oracle around the seed's NC onset), labelled upper bounds; KILL if oracle gap over tuned classical < 10 %. Then length sweep (acceleration lane, downstream) only if S1 shows headroom.

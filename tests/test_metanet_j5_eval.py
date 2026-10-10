@@ -43,16 +43,20 @@ def _cells(backed=True, extra=None):
     return rho, rc
 
 
-def _evaluator(real_b2=()):
+def _evaluator(real_b2=(), censor=None):
     """A J5Eval with a one-day real side built in memory (no facts file): B1 heavy and real-active; B2 as given."""
     d = "SYN0"
-    ev = {"B1": [list(REAL_B1)], "B2": [list(x) for x in real_b2], "censor": {},
+    ev = {"B1": [list(REAL_B1)], "B2": [list(x) for x in real_b2], "censor": dict(censor or {}),
           "B1_long": {"ep": list(REAL_B1), "heavy": True, "dur_min": 105, "censored": False,
                       "c4": {"Q_dis": 1800.0, "r": 0.1}}, "B2_long": None, "first": "B1", "heavy_first": True}
-    rec = dict(ev, censor={}, merge=[None, None], pairs={}, P1c_null_N1=0.30, P1c_null_N2=0.20)
+    rec = dict(ev, censor={str(k): v for k, v in (censor or {}).items()}, merge=[None, None], pairs={},
+               P1c_null_N1=0.30, P1c_null_N2=0.20)
+    if real_b2:
+        rec["B2_long"] = {"ep": list(real_b2[0]), "heavy": True, "dur_min": 5 * (real_b2[0][1] - real_b2[0][0] + 1),
+                          "censored": False, "c4": {"Q_dis": 1700.0, "r": 0.1}}
     ev_ = object.__new__(E.J5Eval)
     rows = ["P3-1", "P4-1", "P5a-1", "P7a-1", "P3-2", "X-2", "P7b", "P7c", "P8g", "P1a_h", "P1b_h", "P1a_ff",
-            "P1b_ff", "P1c_h"]
+            "P1b_ff", "P1c_h"] + (["P4-2", "P5a-2", "P7a-2"] if real_b2 else [])
     w = {r: 1.0 for r in rows}
     w["X-2"] = 5.0
     q = np.full((1, NS, NB), 1500.0)
@@ -66,7 +70,7 @@ def _evaluator(real_b2=()):
                                "beta": np.zeros((1, 5, NB))}
     ev_.net, ev_.cs = NET, {}
     ev_.ev = {d: E.real_events(rec)}
-    ev_.q = {"heavy": {"B1": [d], "B2": []}, "both_q": [], "heavy_any": [d], "P1c_days": [d]}
+    ev_.q = {"heavy": {"B1": [d], "B2": [d] if real_b2 else []}, "both_q": [], "heavy_any": [d], "P1c_days": [d]}
     ev_.rows, ev_.w = rows, w
     ev_.sids = [s["id"] for s in NET.stations]
     ev_.scell = {st["id"]: st["cell"] for st in NET.stations}
@@ -286,3 +290,29 @@ def test_best_point_report(monkeypatch):
     assert r["credited_hit_but_P11_unbacked"] == ["SYN0:B1"] and r["relocation_days_c_1"] == 1
     assert r["backing_cell_ratio_pct_5_25_50_75_95"][2] == pytest.approx(1.1)
     assert r["median_r_hat_minus_r"]["B1"] == -0.01 and r["median_S1_hat_minus_S1"] == 0.02
+
+
+def test25_e2e_miss_dominance_two_bottlenecks(monkeypatch):
+    """Claims 1-2 (§B1.6) on ≥ 3,000 randomized outcomes through day_items: two real-active bottlenecks, B1
+    censored at the B2 onset; model episodes at both pairs with random backing. Every target item stays ≤ its
+    reference value (no model episode, s = 1): 1 + ε on P3-k, 1 elsewhere."""
+    real_b2 = [(108, 118)]
+    ev_, _ = _evaluator(real_b2=real_b2, censor={0: 108})
+    rng = np.random.default_rng(2025)                                   # non-protocol synthetic seed
+    target = ["P3-1", "P4-1", "P5a-1", "P7a-1", "P3-2", "P4-2", "P5a-2", "P7a-2", "P7b", "P7c"]
+    n = 0
+    for _ in range(3000):
+        def eps(k):
+            out = []
+            for _ in range(int(rng.integers(0, 3))):
+                s0 = int(rng.integers(60, 170))
+                out.append((s0, s0 + int(rng.integers(2, 30))))
+            return sorted(out)
+        b1, b2 = eps(1), eps(2)
+        _install(monkeypatch, model_b1=b1, model_b2=b2, real_b2=real_b2)
+        it = _day(ev_, *_cells(backed=bool(rng.random() < 0.5)))
+        for r in target:
+            cap = 1.0 + J.EPS if r.startswith("P3") else 1.0
+            assert all(x is None or -1e-12 <= x <= cap + 1e-12 for x in it[r]), (r, it[r], b1, b2)
+        n += 1
+    assert n == 3000
