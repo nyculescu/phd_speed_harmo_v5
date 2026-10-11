@@ -11,6 +11,8 @@
 - **Out of distribution** (17 unseen perturbations, inflows 1,200 and 2,000): the vanilla stays best in every family; the hybrid shows no robustness advantage (degradation 1.21 vs 1.27).
 - These are post-result diagnostics on a plant that fails realism; no new claim is made.
 
+**Confirmatory under the conditional bar (Addendum I, D5.8, 2026-10-11; `t1_meter_bn4_confirm.md`): PASS.** The frozen plain-DRL meter beats no control by 49.3 %, every tuned meter controller pooled (−18.8 % vs the tuned constant rate, −31.4 % vs tuned ALINEA, −26.1 % vs evsched, −27.9 % vs MPC-F) and the R6 hybrid (−27.3 %). Per regime vs the best tuned non-learning arm: slowdown −17.0 % and blockage −27.9 % (wins); no perturbation −0.8 % and surge +4.5 % (ties, within 5 %). Chapter-level: the BN4 plant fails realism.
+
 **First confirmatory DRL claim (R6, 2026-10-03):** a hybrid RecurrentPPO policy scheduling the validated Vinitsky feedback meter on BN4 under perturbations beats the tuned event scheduler (−4.3 %, CI [−14.7, −4.9] s) and a fitted-model MPC (−2.5 %, CI [−14.9, −0.8] s) on 210 reserved seeds (`docs/lab/t1_meter_r6.md`, caveats there). Everything else is exploratory.
 
 **R6 caveats added 2026-10-04 (context-aware R6 gate, `docs/lab/gate_ctx_r6/`):**
