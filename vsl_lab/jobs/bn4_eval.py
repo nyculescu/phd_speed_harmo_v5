@@ -28,7 +28,7 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     kw = dict(inflow=(inflow, inflow), eval_seeds=[seed], warmup_s=warmup_s, control_s=control_s,
               drain_after=True, tag=f"eval_{tag}", reward="out")
     kw.update(env_kwargs or {})
-    meter = ctrl.startswith("meter") or ctrl.startswith("evsched")
+    meter = ctrl.startswith("meter") or ctrl.startswith("evsched") or ctrl.startswith("alinea:")
     if ctrl.startswith(("vsl:", "mtfcb:")):
         kw.setdefault("actuator", "posted_vsl")
     if ctrl.startswith(("madapt:", "msfix:")):
@@ -119,6 +119,14 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
     obs, _ = env.reset()
     if env_meter_params is not None:
         env.meter.K_F, env.meter.n_crit = env_meter_params
+    alinea = None
+    if ctrl.startswith("alinea:"):
+        # Addendum I: ALINEA on BN4 (Papageorgiou et al. 1991 [VERIFY]); r <- clip(r + K (o* - o), 200, 4000) every 30 s,
+        # o = mean spatial occupancy (%) of edge 4 (meter -> zipper) over the last 30 s; the FBMeter law is disabled (K_F = 0)
+        _, k_r, o_set = ctrl.split(":")
+        alinea = {"K": float(k_r), "o": float(o_set), "r": float(inflow), "t_last": None, "occ": []}
+        env.meter.K_F = 0.0
+        env.meter.q = alinea["r"]
     def _set_meter(setting: str) -> None:   # "meter:K:n" -> feedback meter on with (K, n); "nc" -> meter off
         from vsl_lab.plants import bn4 as _bn4
         if setting == "nc":
@@ -158,6 +166,17 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             act = madapt["k"] if madapt["on"] else 0
         elif msfix is not None:
             act = msfix
+        elif alinea is not None:
+            alinea["occ"].append(100.0 * float(np.mean([_ls.lane.getLastStepOccupancy(f"4_{i}") for i in range(2)])))
+            t_now = env.sim.t
+            if alinea["t_last"] is None:
+                alinea["t_last"] = t_now
+            elif t_now - alinea["t_last"] >= 30.0 - 1e-9:
+                o = float(np.mean(alinea["occ"])) if alinea["occ"] else 0.0
+                alinea["r"] = float(np.clip(alinea["r"] + alinea["K"] * (alinea["o"] - o), 200.0, 4000.0))
+                env.meter.q = alinea["r"]
+                alinea["occ"], alinea["t_last"] = [], t_now
+            act = const
         elif rate_k is not None:
             act = rate_k
         elif mpcf is not None:

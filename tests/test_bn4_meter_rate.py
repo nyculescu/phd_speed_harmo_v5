@@ -73,3 +73,11 @@ def test_eval_constant_rate_arm(tmp_path):
     import pytest as _pt
     with _pt.raises(ValueError):
         bn4_eval.run("rate:777", 1600.0, 7110000, "test_rate_bad", tmp_path, control_s=60.0)
+
+
+def test_eval_alinea_arm(tmp_path):
+    """Addendum I: ALINEA updates the meter rate from edge-4 occupancy (low set-point -> restrictive rate)."""
+    from vsl_lab.jobs import bn4_eval
+    lo = bn4_eval.run("alinea:200:2", 1600.0, 7110000, "t_al_lo", tmp_path, control_s=300.0)
+    hi = bn4_eval.run("alinea:200:60", 1600.0, 7110000, "t_al_hi", tmp_path, control_s=300.0)
+    assert lo["outflow_ctrl_vph"] < hi["outflow_ctrl_vph"]

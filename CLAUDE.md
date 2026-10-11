@@ -15,7 +15,13 @@
 
 **Claim update (author decisions, 2026-10-10; D5.1 in `docs/plans/day_pattern_decisions_v0.md`).** It supersedes the claim bullets above and the headroom gate below where they conflict.
 - **The helper may be DRL or any other neural network** on top of a proven controller: a forecaster, a demand reconstructor, a model-error correction, or a scheduler. DRL alone is a reference arm only.
-- **Pass bar:** the hybrid beats a **fair vanilla DRL** and **no control** by ≥ 10 % each. Measured as the median paired difference with the CI lower bound > 0, on the primary metric, at the realistic demand level.
+- **Pass bar (conditional bar, D5.8, 2026-10-11; replaces the D5.1 bar):**
+  - the candidate is the **best learning-based controller on validation**, DRL alone or a hybrid;
+  - it beats **no control by ≥ 10 %** (median paired difference, CI excluding 0, at the realistic demand level);
+  - it beats the **best tuned proven controller** in **at least one pre-registered regime** (Bonferroni CI excluding 0);
+  - it is **not significantly worse by > 5 %** in any pre-registered regime;
+  - the full operating map is reported.
+  - Why: R6+ showed a well-designed plain DRL meter beating every tuned meter controller and the hybrid on BN4, so the D5.1 bar (hybrid vs vanilla DRL) pointed the wrong way.
 - **Fair vanilla DRL:**
   - a standard algorithm (PPO; SAC for continuous actions) acting directly on the same actuators, with the same observations;
   - the same training and tuning budget;
@@ -34,7 +40,7 @@ In the v6 repo (`/run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v6`) VS
 **Thesis**
 - title: "Adaptive driving algorithms for intelligent road traffic systems";
 - about 11 months left (submission ≈ Sept 2027); target 2 papers;
-- the thesis must show a proven controller helped by DRL or another neural network beating a fair vanilla DRL and no control by ≥ 10 %, with tuned proven controllers reported per regime (claim update 2026-10-10);
+- the thesis must show a learning-based controller (DRL alone or a proven controller helped by DRL or another neural network) beating no control by ≥ 10 % and the best tuned proven controller in identifiable regimes (conditional bar, D5.8, 2026-10-11);
 - framing: the ARC-IT functional view, TM20 / TM21. Check PSpecs and flows against v6 `docs/arcitwebsite-20260715/`. No SOTIF.
 
 ## Repo state

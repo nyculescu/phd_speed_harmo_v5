@@ -343,3 +343,36 @@ Seeds come from the block approved in D5.7.
 
   Otherwise: "no robustness advantage of the hybrid on BN4".
 - **Disclosure:** the BN4 plant fails realism. This is a chapter-level map.
+
+## Addendum I (2026-10-11): BN4 confirmatory under the conditional bar (D5.8, D5.9), pre-registered before any ALINEA run
+
+**Candidate:** the frozen plain-DRL meter of R6+ (`docs/lab/frozen/r6plus_vanilla_candidate.zip`, SHA-256 in `t1_meter_r6plus_candidate.json`).
+- It is the best learning-based controller on validation: 12.93, against 13.92 for the R6 hybrid on the same validation seeds.
+- It was frozen before any test seed was seen.
+- Its later post-result diagnostics (Addenda G–H) used other seeds.
+
+**New comparator, ALINEA on BN4** (`bn4_eval` arm `alinea:K:o`):
+- The same signal head and cycle rule as the other meters (6-s green, cycle 2·M·3600/r).
+- Every 30 s: r ← clip(r + K·(o* − o), 200, 4,000) veh/h. Here o = the mean over the last 30 s of the spatial occupancy (%) of edge 4's two lanes, the section between the meter and the zipper. The start value is r(0) = the nominal inflow.
+- Spatial lane occupancy stands in for a point detector's time occupancy. This variant is disclosed. Formula: Papageorgiou et al. 1991 [VERIFY, not read in full].
+- **Tuning:** K ∈ {20, 40, 70, 120, 200} veh/h per % × o* ∈ {5, 8, 11, 14, 18, 22, 27} %, on seeds 7,112,200–7,112,299 (100) × the 4 training kinds at q_in = 1,600. Pick the lowest median over seeds of J (the mean over the 4 kinds).
+- **If the best point lies on the grid edge**, the grid is extended once by two steps in that direction, on the same seeds. The final choice is frozen to `t1_meter_alinea_tuned.json` before the test.
+
+**Arms on the test** (seeds 7,112,400–7,112,609, i.e. 210, × the 4 kinds at q_in = 1,600):
+- the candidate;
+- tuned ALINEA; the tuned constant rate 1,800 veh/h (Addendum H); `evsched:7:20:1.15`; MPC-F (frozen); the pooled feedback meter `meter:40:8`;
+- the R6 hybrid; NC.
+
+**Regimes (pre-registered):** the 4 kinds (none, slow, block, surge). For each regime k, **B_k** = the non-learning arm with the lowest median J on the test seeds in that regime. Choosing on the test favours the comparator, so the rule is conservative.
+
+**Conditional bar (D5.8) — PASS only if all four hold:**
+1. **vs NC, pooled:** candidate vs NC with rel ≤ −10 % and the 95 % CI upper bound < 0.
+2. **Beats the best:** in at least one regime k, the candidate vs B_k has a Bonferroni CI (level 1 − 0.05/4) upper bound < 0.
+3. **Never much worse:** in no regime is the candidate vs B_k at rel > +5 % with a Bonferroni CI lower bound > 0.
+4. **Health:** the candidate's FAIL share is ≤ 5 %.
+
+**Statistics:** the median of paired differences, percentile bootstrap (10,000 resamples pooled, 5,000 per regime), rel = Δ / the comparator's median J.
+
+**Operating map (report-only):** the candidate and the hybrid vs every arm, per regime.
+
+**Scope:** SUMO BN4 fails the realism gate. This is a chapter-level result and is reported whatever it is. Run once.
