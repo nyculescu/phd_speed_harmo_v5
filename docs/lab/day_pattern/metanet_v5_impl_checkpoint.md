@@ -53,6 +53,8 @@ Rule for a resumed session: read this file and the protocol sections named in th
 - **Report-only warning.** J5 = 0.4933 (v4 nominal, never jams) < 0.4946 / 0.4975 / 0.5682 (D4.12 plants that jam; +0.3 %, +0.9 %, +15.2 %). J5 still ranks the never-jamming plant first, by small margins.
 - **Author's go: 2026-10-10** (after the pivot of the same day; decision D5.1).
 
+**v5 outcome (2026-10-11 01:19; original outcome, committed before any audit or fix, §B11.2 item 2):** CMA-ES 8 restarts (8.3 h, no continuation), nominal 7,192,011, J5 = 0.2913. Freeze stops: admissible restart PASS, step-halving PASS, P11-k PASS, **in-sample screen FAIL → route STOP (in-sample screen)**. Record: `metanet_v5_calibration.json` (stage freeze, `--partial`). All B2 rows pass; B1 fails: P3-1 occurrence 16/22 (real 22/22), P4-1 onset 65 % matched, P5a-1 discharge −5.6 %, P7a-1 duration 62 min; also P1c, P2, P5b-1, P6-1, P5c, P7b, P7c, P9. The 97 validation days stay unlooked. Next (§B8 step 6): the freeze audit once with the pinned procedure, its record committed; then E (D4.13) unless a §B11.2 fix reverses the stop.
+
 **Before the facts commit (§B8 step 4):** commit `metanet_v5_precal_facts.json`, `metanet_v5_precal_masks.npz` (the evaluator loads it next to the facts) and `metanet_v5_precal_facts.sha256`, rebuilt from committed code.
 **Launch blocker resolved (2026-10-10):** the sibling session committed its `vsl_lab/` changes (d4c736f thermal guard off by default; e0ca921 `vsl-cooling` systemd unit owns the pad and laptop fans). v5 batch and training code must not drive the pad or asusctl.
 
