@@ -1,0 +1,36 @@
+{
+ "protocol": "docs/lab/t1_meter_gscan_protocol.md Addendum G",
+ "rule": "lowest validation score",
+ "learners": [
+  {
+   "run_dir": "/home/catalin/work/phd/vsl_lab_runs/t1/train/r6plus_vanilla/bn4_recurrentppo_tts_u2000_e16_s2_1791676513_pid62151",
+   "seed": 2,
+   "best_val_return": -12.931677083333335,
+   "val_score": 12.931677083333335,
+   "updates_done": 2000
+  },
+  {
+   "run_dir": "/home/catalin/work/phd/vsl_lab_runs/t1/train/r6plus_vanilla/bn4_recurrentppo_tts_u2000_e16_s3_1791691657_pid84975",
+   "seed": 3,
+   "best_val_return": -13.310062499999997,
+   "val_score": 13.310062499999997,
+   "updates_done": 2000
+  },
+  {
+   "run_dir": "/home/catalin/work/phd/vsl_lab_runs/t1/train/r6plus_vanilla/bn4_recurrentppo_tts_u2000_e16_s4_1791691696_pid85363",
+   "seed": 4,
+   "best_val_return": -13.124625,
+   "val_score": 13.124625,
+   "updates_done": 2000
+  }
+ ],
+ "chosen": {
+  "run_dir": "/home/catalin/work/phd/vsl_lab_runs/t1/train/r6plus_vanilla/bn4_recurrentppo_tts_u2000_e16_s2_1791676513_pid62151",
+  "seed": 2,
+  "best_val_return": -12.931677083333335,
+  "val_score": 12.931677083333335,
+  "updates_done": 2000
+ },
+ "file": "docs/lab/frozen/r6plus_vanilla_candidate.zip",
+ "sha256": "64a03374f320d528bae529ec13fcccfe9375716778f1c5344723098162909b0e"
+}
