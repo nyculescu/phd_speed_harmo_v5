@@ -1,0 +1,460 @@
+{
+ "protocol": "docs/plans/day_pattern_metanet_protocol_v5.md \u00a7B11.2 item 3 (freeze audit, one pass)",
+ "audited_freeze_record": "docs/lab/day_pattern/metanet_v5_calibration.json (route STOP (in-sample screen), commit 5a733be)",
+ "procedure": "docs/lab/day_pattern/metanet_v5_review_procedure/round1_pinned_procedure.js",
+ "procedure_sha256": "3853637eae7b48fc9ee89bd028705e572b044915e5b9a4a8e531fe51f1d4db35",
+ "run": {
+  "workflow_run_id": "wf_0c4eef99-a4a",
+  "date": "2026-10-11",
+  "agents": 11,
+  "note": "run unchanged as \u00a7B11.2 requires; its pinned context lines still say 'no v5 calibration has run yet' and 'git diff f7fe73b..HEAD' (critic gap 1 discloses that the freeze outputs themselves were reviewed by no lens)"
+ },
+ "counts": {
+  "findings": 39,
+  "skeptic_verdicts": {
+   "confirmed": 26,
+   "partly": 13
+  },
+  "final_severity": {
+   "should-fix": 15,
+   "note": 24
+  },
+  "critic_gaps": {
+   "should-fix": 3,
+   "note": 3
+  }
+ },
+ "must_fix": 0,
+ "findings": [
+  {
+   "id": "freeze-03",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_gate_refactor.py:207",
+   "issue": "The function that decided the route has no test of its own verdict logic. No test runs metanet_v5_freeze.screen() on a failing or below-minimum row: the real-data minima that move a row to 'reported, not screened', P5c gating, and failed rows giving PASS False. Separately, test_members_rule tests metanet_v5_gate.members(), which no production code calls. The production member rule (ensemble_checks lines 489-500 with finalize lines 459-468) has no test.",
+   "skeptic_reason": "No test calls metanet_v5_freeze.screen() with a failing row or an unmet minimum. The only call is test_metanet_j5_eval.py:250, which stubs a single passing row. test34_screen_ctx_path (test_metanet_gate_refactor.py:207-228) tests only G.deterministic's ctx path. test_finalize_stop_order stubs screen. Protocol test 34 requires that the screen \"... returns STOP for a synthetic failing plant\". `grep members(` finds only the definition and tests/test_metanet_v5.py:205. Production uses its own copy of the rule: ensemble_checks lines 489-500 (break at 2 gridded, gridded iff checks 1-3 pass) and finalize lines 459-468 (members = gridded with usable spread). I read both, and the logic matches members(), but it is untested. I re-ran the synthetic check: with B2 n_A = 7 and n_H = 5, P3-2, P4-2, P5a-2, P5b-2 and P7a-2 are reported, not screened; a failing P1a gives failed ['P1a'] and PASS False. In the committed STOP record, reported_not_screened is [] (B2 n_A = n_H = 9), and the failed rows come from G.deterministic, which test 30a pins bit for bit. So the gap does not undermine the STOP, but the function that decided the route lacks its protocol-required test. Tests are outside V5.CODE_PATHS, so adding them leaves code identity unchanged.",
+   "fix": "Add test 34 proper. Call FZ.screen() with a stubbed G.deterministic that returns a failing row, rows whose minima are unmet (n_A < 8, n_H < 6, n_H_first < 6, n < 16) and P5c with gated False/True. Assert screened, reported_not_screened, failed, PASS False and the Lc_k/P8_tolerance substitutes. Add a test of ensemble_checks()+finalize() with stephalving, p11_freeze, screen and spread_v5 stubbed, asserting at most 2 gridded and members = gridded \u2229 usable spread with no replacement. The test-only path is preferred: routing finalize through members() would be a code change, not a text-match fix."
+  },
+  {
+   "id": "freeze-04",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:202",
+   "issue": "Protocol test 33 has six required parts; the test covers three. It audits the J5 evaluator, the CMA-ES driver and the screen. It does not audit the \u00a74.7 grid with its J_d selector, the ensemble selection, or the premise check.",
+   "skeptic_reason": "test33_no_validation_input_on_calibration_side (test_metanet_j5_eval.py:202-253) has only three sections: evaluator, CMA-ES driver and screen. Protocol test 33 also names \"the \u00a74.7 grid and its selector J_d, ensemble selection, ... and the premise check\". The test's open audit matches only 'val_data' and 'gate_*' names; it would not catch raw validation-date files. I checked for a leak by reading the code and found none. metanet_postcal.py (grid_job lines 266-327, plant_record/plant_params) has no FACTS, F11 or validation read. In v4 metanet_freeze.py the only facts read is in diagnostics() (line 397), which v5 does not call. capacity_factors and benchmarks, used by spread_v5 and finalize, read no facts. premise() reads FACTS5 and the v4 plant record only. So the gap is in a protocol-required integrity test, not a leak. It cannot affect the committed STOP.",
+   "fix": "Under the same open and key-access hooks, add stubbed-simulate calls to Q.grid_job(..., jd=stub evaluator, runs=tmp), FZ.spread_v5 (synthetic grid rows), FZ.ensemble_checks/candidates and FZ.premise(). Widen the 'bad' filter to the raw validation-date files and the per-day validation facts. Test-only; no code identity change."
+  },
+  {
+   "id": "freeze-05",
+   "rev_sev": "should-fix",
+   "verdict": "partly",
+   "sev": "should-fix",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:192",
+   "issue": "Report-only outputs required by \u00a7B5 and \u00a7B3 are not produced. The committed STOP record lacks the \u00a7B5 ones. The record also does not store T/2.",
+   "skeptic_reason": "Confirmed: grep finds no excess vehicle-hours ratio and no median in-episode v_u error in any v5 module or in metanet_gate.py. \u00a7B5 'Reported alongside' requires both, and the committed record's screen detail has neither. T/2: v4's record stored T_half_s (metanet_freeze.py:685; v4 \u00a7A9 \"The v4 record stores T and T/2\"), while v5 finalize stores only T_s (metanet_v5_freeze.py:412). Weaker part: the guarded-row margins are derivable. The committed rows hold P1a/P1b median and CI, P1c median_D_N1/N2 with their CIs, and P8 tolerance, pair excess and spurious_days. Only the explicit margin field is missing, and P8 is a count with no CI by construction. The \u00a7B3 items (share of exact \u0109_k = 1.00, 1/m_k) apply only after \u00a74.7, which the STOP never reached, so they are not a defect of the committed record. All of these are report-only and cannot change the STOP.",
+   "fix": "Add the two \u00a7B5 reports (excess vehicle-hours model/real ratio, 15:00-20:00, extent station to head, v3 \u00a75.5; median in-episode v_u error) and T/2 to the record. These changes match the text. Add the \u00a7B3 items to spread_v5 for any continue path. Disclose that the committed STOP record lacks them. The author decides whether this is a \u00a7B11.2 fix (which formally requires the full re-run) or a disclosed report-only addendum computed on the frozen nominal from calibration days."
+  },
+  {
+   "id": "indexing-01",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:252",
+   "issue": "Test 33 (the read audit for validation-day data on the calibration side) cannot detect what the protocol says it must. (1) Its filter only flags paths containing 'val_data', 'gate_det', 'gate_draw' or 'gate_sto'. A raw validation-date Mayfly file (<root>/mayfly/YYYY/YYYYMMDD/...) never matches. (2) In the audited evaluator run, `_install` stubs I.event_station, Q.model_day and Q.model_speeds (lines 92-95), so no Mayfly file is opened at all. A production read of any date is therefore invisible. (3) The \u00a74.7 grid with its selector J_d, ensemble selection and the premise check are not audited at all.",
+   "skeptic_reason": "Confirmed by reading and by a mutation check. tests/test_metanet_j5_eval.py:252 flags only paths containing 'val_data', 'gate_det', 'gate_draw' or 'gate_sto'. Lines 92-95 stub Q.model_day, Q.model_speeds and I.event_station, so the evaluator under audit opens no Mayfly file at all. A grep shows that grid_job(jd=...), ensemble_checks (except a guard-raise test at test_metanet_v5.py:515) and premise() are never run under the audit. Protocol \u00a7B10 test 33 names all of these stages, plus 'the raw validation-date files'. Mutation (scratchpad v5codereview/sk_idx/test_mut33.py): I wrapped J5Eval.day_items so it reads a synthetic <tmp>/mayfly/2023/20230915/D123.v30.json, then ran test33 unchanged. It passed and the planted read executed. Separately I read the production paths: day_items (days come from the facts and are checked against data['days'] at metanet_j5_eval.py:42), grid_job (C.load_data days, postcal.py:269-276), premise (freeze.py:92-120), ensemble_checks and screen. All of them use only calibration days, and the screen reads only F8 from C.FACTS. So this is a gap in the integrity test, not an observed leak. It cannot reverse the committed STOP.",
+   "fix": "In test 33, replace I.event_station, I.event_pairs and metanet_inputs' Mayfly loader with recorders that raise on any date outside the calibration list, instead of stubs that hide the read. Call I.<loader>.cache_clear() first, because the lru_cache can hide reopened files. Flag any opened path that contains '/mayfly/' with a date outside the calibration set. Also run grid_job(jd=stub J5Eval) with simulate stubbed, premise() with stubbed simulate/objective, and ensemble_checks() with stubbed stephalving/p11/screen under the same recorder. Keep the _NoF11 key guard on every json.loads of C.FACTS in those stages."
+  },
+  {
+   "id": "indexing-02",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:298",
+   "issue": "The end-to-end test 25 (miss dominance) only asserts that each item stays within its cap (0 <= item <= 1 or 1+\u03b5). That follows from capped() and clip() alone, so the test almost cannot fail. The generator also misses the cases the protocol requires. (1) `_cells` only ever congests cells 26-28 (line 40), so model P_2 episodes are never creditable and the creditable-B2 branches of P4-2, P5a-2 and P7a-2 are never exercised. (2) The real side has exactly one B1 and one B2 episode, so there are no multi-episode days. (3) P5c is not among the rows and both_q is always [] (lines 58-59, 73). As a result, J5Eval's P5c branch (metanet_j5_eval.py:97-100, incl. don_long) is executed by no test anywhere. (4) The required bound J5(out) \u2212 J5(ref) \u2264 \u03a3 w_r\u00b7max(0, \u0394A_r)/\u03a3 w_r, the s_0 comparison and the violation-share and P7b+P7c report are absent. The pure variant in test_metanet_v5.py:104 draws a t_c that it never uses.",
+   "skeptic_reason": "Confirmed. tests/test_metanet_j5_eval.py:319 asserts only item \u2264 cap. That is the literal content of claims 1 and 2 (\u00a7B1.6: 'Each of these items takes its maximum at the reference'), so the assertion is not wrong. But it holds structurally through capped(), taper() and s\u2208[0,1], so for example a non-creditable match scored with capped(dt) instead of 1 would still pass. The protocol's other requirements for test 25 are missing:\n- J5(out) \u2212 J5(ref) \u2264 \u03a3 w_r\u00b7max(0, \u0394A_r)/\u03a3 w_r;\n- the s_0 comparison;\n- the violation share and the largest P7b + P7c report.\nThe generator gaps are also as stated:\n- _cells (line 40) congests only cells 26-28, and B2's BACK_CELLS is (33,), so no model P_2 episode is ever creditable;\n- the real side has exactly one B1 and one B2 episode;\n- both_q is [] at lines 73 and 357, and P5c is not in the rows.\nA grep confirms that no test reaches J5Eval's P5c branch (metanet_j5_eval.py:97-100), although P5c is a production row (the committed facts list P5c with 9 both_q days). t_c at test_metanet_v5.py:104 is drawn and never used. I ran the P5c branch myself (scratchpad sk_idx/test_p5c.py) and all 4 cases gave the expected values: equal ratio \u2192 0, D=+0.06 \u2192 0.4, model merge None \u2192 1, B1 matched onset +60 min \u2192 taper 1/3. So there is no production bug, only missing coverage.",
+   "fix": "Extend the test-25 generator:\n- back cell 33 on some P_2 draws so P_2 episodes can be creditable;\n- draw 1-2 real episodes per bottleneck, including multi-episode days;\n- add P5c to the rows, with a both_q day and a real merge record in rec['merge'];\n- vary model merges, including None.\nCompute the (k,d) reference and the day reference explicitly through day_items (no P_k episodes, s forced to 1 via J.EPS\u00b71), and assert the protocol's J5 bound per outcome. Add the s_0\u2208[0,1] comparison (every increase on a listed row), and print the violation share and the max P7b+P7c increase. Use t_c in the pure variant (censored windows) or delete it."
+  },
+  {
+   "id": "indexing-03",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_gate_refactor.py:275",
+   "issue": "Test 30(b) is largely tautological. The P4 assertion compares J.p4_items with values built from IT.p4_day, which is the very function J.p4_items calls internally. The P7a assertion only checks that taper(x, don) == x when |don| \u2264 45, which is a test of taper, not of the mapping. The docstring claims 'P5a D ... P8 extra flags', but neither is asserted. The protocol's equalities for the production evaluator (J5Eval.day_items) against the gate are never checked: D_i \u2192 P5c, index error \u2264 1 \u21d4 gate P7b hit, per-day P8 flags, and P8g (ii) = 1 exactly where the gate's P3 agrees and P8(iii) flags B_k. The checkpoint lists this as an open item.",
+   "skeptic_reason": "Confirmed by reading. tests/test_metanet_gate_refactor.py:274-275 builds the expected value with the same expression that metanet_j5.py:79-82 uses to implement p4_items (credit all True), so the P4 check is tautological. The P7a check (lines ~280-284) only tests the identity of taper below 45 min, and P7c is an inequality. Nothing about P5a D, P5c D, P7b err\u22641 \u21d4 p7b_hit, the P8 spurious and extra flags or P8g(ii) is asserted, and J5Eval.day_items is never called. That falls short of \u00a7B10 test 30(b). The impl checkpoint lists it as a known open item: 'test 30(b) still item-level (mapping via shared functions)'. Production impact appears nil. Another reviewer's fuller check (scratchpad v5codereview/t30b_full.py), which runs day_items against the gate's per-day statistics on the synthetic worlds 101-110, gave 0 mismatches over P4 280, P5a 62, P7a 62, P5c 12, P7b 85, P7c 66 and P8g 140 comparisons. I re-ran it with the same result. The mapping holds by construction through the shared metanet_items functions; only the required test is missing. It cannot reverse the STOP.",
+   "fix": "Commit the fuller mapping test in place of the item-level one. Run J5Eval.day_items on the World fixtures, with every episode that has a qualifying bin backed and the taper pushed out, and assert per day against the gate's per-day statistics:\n- P4 |\u0394onset|, P5a D, P5c D, P7a |\u0394dur| and P7c |\u0394dur_sys| (uncapped equality via capped\u207b\u00b9);\n- (P7b err \u2264 1) == IT.p7b_hit;\n- the P8 spurious and extra flags;\n- P8g(ii) == any_k(real-active \u2227 md.agree \u2227 p8.extra[k]).\nKeep a planted-mutation check."
+  },
+  {
+   "id": "j5-01",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_gate_refactor.py:261",
+   "issue": "Test 30(b) is tautological. It never runs the production J5 evaluator (J5Eval.day_items) against the gate's per-day statistics. It compares J.p4_items with IT.p4_day, which is the function J.p4_items itself calls (metanet_j5.py:82). For P7a it only checks that taper(x, |\u0394onset| \u2264 45) == x, and for P7c only that the item is at least the capped gate value. These protocol-required equalities are never checked: P5a D_i, P5c D_i, P7b index error \u2264 1 \u21d4 gate hit, the spurious and extra flags, and P8g (ii) = 1 exactly on days where the gate's P3 agrees and P8(iii) flags. The test cannot fail on a real J5/gate divergence. The code itself is correct (see evidence).",
+   "skeptic_reason": "I read the test at tests/test_metanet_gate_refactor.py:261-287, and it is tautological as claimed. The expected P4 value is built from IT.p4_day, which J.p4_items calls itself (metanet_j5.py:81-82). For P7a it only asserts taper(x, |don| <= 45) == x, which holds because t = 0 there. For P7c it only asserts item >= capped gate value. J5Eval.day_items (metanet_j5_eval.py:53-125) is never run against the gate's per-day statistics. So none of these \u00a7B10 30(b) clauses is checked: 'D_i -> P5c, index error <= 1 <=> gate P7b hit, |\u0394dur_sys| -> P7c, per-day spurious and extra flags -> P8; P8g (ii) = 1 exactly on the real-B_k-active days where the gate's P3 agrees and the gate's P8(iii) flags B_k'. A wiring change in day_items (which matched episode is used, the onset used by the taper, the P8g (ii) condition at line 113) would pass the test. The checkpoint (metanet_v5_impl_checkpoint.md, 'should-fix open' and 'Still open') lists this as open. No code defect: I re-ran the finder's harness scratchpad/v5codereview/j5_indep.py on a new seed (7, 300 synthetic days, unstubbed Q.model_day, model_speeds and model_pairs) and got 0 mismatches. It hit P3 values 0, 1, 1.5 and mid, tapered P5a/P7a/P5c/P7b/P7c, and P8g 0/1. Caveat: the harness reuses some shared primitives (match_episodes, c4, p7b_day, spurious, relocation), so it checks J5's wiring, not those primitives. Not must-fix, because the code is verified correct. It still matters before any \u00a7B11.2 fix re-run, since this test is the protocol's guard on the J5/gate mapping.",
+   "fix": "Add a day_items-level 30(b) test on the World fixtures, or on the j5_indep.py synthetic generator with I.event_station and I.element_flow stubbed. Make every episode creditable (backed cells) and neutralise the taper and caps through FZ._variant-style overrides. Then assert per day: |\u0394onset| == gate P4 dt; the P5a D from IT.p5a_day on the gate's hm days; P5c D_i on both_q; (err <= 1) == IT.p7b_hit; |dm - dr| from IT.p7c_day; and P8g (ii) == any(real_active_k and md[k]['agree'] and p8['extra'][k]). Include a planted-mutation check, for example swapping md[k]['agree'] for creditable agreement at line 113, to show the test can fail."
+  },
+  {
+   "id": "regression-01",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "vsl_lab/jobs/metanet_items.py:100",
+   "issue": "s1_ratio (P9 S1) returns a wrong value when the window [onset - 60 min, min(end, cut - 1)] has 1 or 2 bins. When seg is shorter than the 3-tap kernel, np.convolve(..., 'valid') swaps its arguments, so it returns 3 or 2 values equal to seg.sum()/3 instead of nothing. The refactor fixed only the 0-bin case (returns None, disclosed) and kept this latent case from the tag bit for bit.",
+   "skeptic_reason": "Reproduced in venv314: IT.s1_ratio(np.full(100,1800.),50,60,1800.,cut) gives 1.0 (cut=41), 0.667 (cut=40, 2-bin window), 0.333 (cut=39, 1-bin window) and None (cut=38). When seg is shorter than the kernel, np.convolve 'valid' returns max(M,N)-min(M,N)+1 values, each equal to seg.sum()/3. So metanet_items.py:100 zero-pads the window, which contradicts v3 \u00a75.4: \"S1 = the maximum 3-bin rolling 15-min flow ... in [onset \u2212 60 min, end]\". The tag's `if roll.size else None` cannot catch this case.\n\nWhy it does not reach the recorded STOP:\n- Real side: in the committed calibration facts (metanet_v5_precal_facts.json), 6 of 22 heavy-first days are truncated, and their real windows have 24-35 bins.\n- Model side: the window is cut - ms + 12 bins, with cut >= rs + 12 on those days and |ms - rs| <= 18 bins (match_episodes tol_bins=18). So it has at least 6 bins.\n- The screen's P9 failed on its count (n_matched 15 < required 17), and 11 other rows failed as well.\n\nThe defect is therefore latent for the validation gate only. It cannot reverse the stop and does not block launch.",
+   "fix": "In s1_ratio, return None when seg.size < 3, with the same disclosure as the empty-window fix. Extend test_s1_empty_window_returns_none to 1- and 2-bin windows (expect None). In test 30(a), count worlds that differ from the tag only through P9 on windows of fewer than 3 bins as disclosed fixes, the way crash worlds are counted. Record in the freeze audit that the defect is not outcome-relevant: give the calibration window sizes above and the P9 count failure."
+  },
+  {
+   "id": "regression-02",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:153",
+   "issue": "Test 34 never exercises screen(), the stop that decides the route, end to end with the real gate. Its wrapper logic is untested:\n- the minima/unmet logic (lines 180-190);\n- the P5c gated exclusion;\n- F8 Lc_k reaching rows P5b;\n- the LOO-nulls lambda;\n- 'returns STOP for a synthetic failing plant'.",
+   "skeptic_reason": "No test runs FZ.screen() with a failing plant or with an unmet minimum:\n- test34_screen_ctx_path (test_metanet_gate_refactor.py:207) calls gate.deterministic(ctx) directly;\n- test33 (test_metanet_j5_eval.py:248-251) stubs the gate to {'P1a': PASS} and asserts only P8_tolerance and Lc_k;\n- test_finalize_stop_order (test_metanet_v5.py:241) stubs screen.\n\n\u00a7B10 34 requires \"... and returns STOP for a synthetic failing plant\". This is a test gap, not a defect. A synthetic screen() run with the gate stubbed gave the expected results:\n- B2 at n_A=7 / n_H=5 moved P3-2, P4-2, P5a-2, P5b-2 and P7a-2 to reported_not_screened;\n- a failing P1a gave PASS False.\n\nThe minima mapping at metanet_v5_freeze.py:180-190 matches v3 \u00a75.2. In the committed record, every minimum was met and P5c was gated (n_H B2 = 9), so the untested branches did not decide the STOP.",
+   "fix": "Add the end-to-end screen() test as proposed:\n- a synthetic calib_screen_data.npz with its sha256;\n- stubbed FACTS5 and F8;\n- the real G.deterministic run on a World;\n- assertions on PASS False and on route 'STOP (in-sample screen)', on minima moving rows to reported_not_screened, on P5c with n_H,both < 6 not screened, on P5b L_r == F8 ci_r[0], and on P1c using loo_nulls.\nKeep the ctx-vs-default equivalence check as a regression test."
+  },
+  {
+   "id": "regression-03",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_gate_refactor.py:261",
+   "issue": "Test 30(b) is partial and in part tautological. Test 30(c) has no test.\n- The P7a branch never calls the production J5 P7a code: it only checks that taper(x, don) == x for |don| <= 45.\n- P5a (D_i), P5c, P7b (index error <= 1 iff gate hit), the P8 spurious/extra flags and P8g (ii) are not compared at all.\n- P7c is only an inequality.",
+   "skeptic_reason": "The P7a branch of test30b (test_metanet_gate_refactor.py:276-282) only asserts J.taper(x, don) == x for |don| <= 45. That holds by the definition of taper (metanet_j5.py:28-35: t = 0) and never runs production J5 P7a code. P7c is only an inequality (line 286). P5a, P5c, P7b and P8 are not compared. A grep finds no 30(c) test.\n\n\u00a7B10 30(b)/(c) require these equalities. The checkpoint itself lists 30(b) as still item-level.\n\nI re-ran the reviewer's t30b_full.py (production J5Eval.day_items against the metanet_items statistics, worlds 101-110). Compared: P4 280, P5a 62, P7a 62, P5c 12, P7b 85, P7c 66, P8g 140. Mismatches: 0. So this is a test gap with no defect, and it has no bearing on the STOP.",
+   "fix": "Replace test30b with a test that drives J5Eval.day_items on the World days with full backing and asserts the \u00a7B10 30(b) equalities for P4, P5a, P7a, P5c, P7b hit\u21d4item, P7c and P8g. Use cases with |\u0394onset| <= 45 min, and assert item\u00b7cap == min(|stat|, cap). Add 30(c): an unmatched or non-creditable item scores 1 (P3-k: 1+\u03b5\u00b7s), while the gate gives |0 \u2212 dur_r| or leaves the day out."
+  },
+  {
+   "id": "regression-04",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:298",
+   "issue": "Test 25 implements neither the miss-dominance bound nor the pre-registered report. Both variants (here and test_metanet_v5.py:96) only assert that each item lies in [0, cap], which holds by construction of capped()/taper(). The generator also never exercises matched B2 items or P5c.",
+   "skeptic_reason": "Both test-25 variants check only that each item is at or below its reference maximum (test_metanet_j5_eval.py:316-318; test_metanet_v5.py:105-106). That is \u00a7B1.6 claims 1-2, but it holds by construction of capped()/taper() and the 1+\u03b5\u00b7s form.\n\nThe pre-registered parts are missing (\u00a7B10 25):\n- \"J5(out) \u2212 J5(ref) \u2264 \u03a3 ... w_r\u00b7max(0, \u0394A_r)/\u03a3_r w_r\";\n- the s_0 comparison;\n- the report of the violation share and the largest P7b + P7c increase (a grep for 'violation' in the v5 code and tests is empty).\n\nThe bound has teeth only through row-denominator changes, which this test cannot see. Generator limits:\n- _install (lines 85-88) sets B2 matched=None and c4=None, so P5a-2 and P7a-2 are always 1.0;\n- B1 'matched' = model_b1[0], not the nearest-onset match;\n- both_q=[] (line 72), so P5c, which claim 1 lists, is never exercised.\n\nNo defect is shown. This is a missing pre-registered test and report.",
+   "fix": "Add the J5(out) \u2212 J5(ref) bound against the listed rows, using j5 with the real weights so that denominator effects show. Add the same-day comparison without the P_k episodes at a drawn s_0, with increases only on listed rows. Build the matched episodes with V.match_episodes, add B2-matched C4 and both_q days to the generator, and emit the violation share and the largest P7b+P7c increase."
+  },
+  {
+   "id": "regression-05",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:103",
+   "issue": "Test 24 bypasses the observation operator. Q.model_day and Q.model_speeds are stubbed to hand back the real episodes, so it does not test whether the gate's model-side event layer reproduces the facts' real side on a model equal to the real series. That is the zero-cost property the protocol pre-registers. Zero cost on P_2 (cell 33, B2 real-active) is also not covered end to end.",
+   "skeptic_reason": "test24_e2e (test_metanet_j5_eval.py:103) runs on stubs:\n- _install monkeypatches Q.model_day and Q.model_speeds (lines 89-91);\n- _evaluator() is B2 real-inactive;\n- test_metanet_v5.py:307-309 itself says the operator variant is pending.\n\nSo \u00a7B10 24 (\"through the inverse observation operator ... cells 26\u201328 (P_1) or cell 33 (P_2)\") is not tested.\n\nTo check for a defect, I ran the reviewer's j5_zero.py. Only I.event_station and I.element_flow are stubbed; Q.model_day, model_speeds, model_pairs and F.day_events are the real ones, with c_s = 1. Result: 200 synthetic days, about 60 % of them B2-active, 0 days with a nonzero target item. So zero cost holds at c_s = 1. A c_s \u2260 1 case was not checked. This is a test gap only.",
+   "fix": "Turn the j5_zero.py construction into the test: synthetic real series, model q_st/v_st = real series through the observation operator (include a c_s \u2260 1 station), and cells 26-28 and 33 at 1.1\u00b7\u03c1_cr on the qualifying bins. Assert J5 target items = 0 on days active at B1 only and at both B1 and B2."
+  },
+  {
+   "id": "regression-06",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:202",
+   "issue": "The test 33 integrity audit is narrower than the protocol's scope and partly blind.\n- In the evaluator, the Mayfly reads (I.event_station, Q.model_day) are stubbed and the facts are built in memory. So neither a raw validation-date file read nor an F11 key access by J5Eval can be observed.\n- The bad-path filter only matches val_data and gate_* names.\n- The \u00a74.7 grid with its J_d selector, ensemble selection and the premise check are not audited at all.",
+   "skeptic_reason": "In test33 (test_metanet_j5_eval.py:202-254):\n- the evaluator's real-side reads are stubbed (_install replaces I.event_station);\n- J5Eval is built with object.__new__ and an in-memory facts dict, so neither __init__'s file reads nor any F11 key access are observable;\n- the bad-path filter (line 252) matches only val_data and gate_* names;\n- the screen's gate call is stubbed;\n- the \u00a74.7 grid with J_d, ensemble selection and the premise check are absent.\n\n\u00a7B10 33 lists all of these. By reading, no leak:\n- J5Eval.__init__ (metanet_j5_eval.py:33-50) reads only the hash-checked facts and masks and refuses on a day mismatch;\n- grid_job's jd path uses C.load_data and calibration-day pairs;\n- screen reads F8 only.\n\nThis is an integrity-test scope gap, not a leak.",
+   "fix": "Run the real J5Eval(...) constructor on a synthetic facts and masks pair, and Q.grid_job(jd=...) and premise() on stubs. Wrap I.event_station and I.event_pairs to assert that d is in the facts' calibration days, and wrap the C.FACTS and FACTS5 loads in _NoF11. Extend the bad-path filter to the validation-date Mayfly directories and to the F11 day list."
+  },
+  {
+   "id": "robustness-03",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:412",
+   "issue": "The v5 freeze record (and every restart result) leaves out the pycma version, which v3 \u00a74.4 requires the record to hold. v4 recorded it. This is a provenance regression: the committed record cannot show that the pinned optimiser (\u00a7B2: pycma 4.5.0) ran. The installed version today is 4.5.0, but the shared venv314 can change.",
+   "skeptic_reason": "This is a genuine deviation from a text with one reading, but it changes no number. v3 \u00a74.4 is headed 'Optimiser (settings frozen; record the pycma version)', and v5 \u00a7B2 keeps v3 \u00a74.4 'unchanged except J and seeds'. The committed v5 record has these keys: protocol, stage, T_s, objective, facts_sha256, restarts, nominal, nominal_J5, nominal_rows, frozen_params, nominal_x, best_point_reports, benchmarks, route, stops, stop_detail, members, candidates, not_run. None of them is pycma: `grep -c pycma metanet_v5_calibration.json` gives 0, and the same grep on vsl_lab/runs/ledger.csv also gives 0. The restart JSONs do not record it either: metanet_v5_calibrate.py:246-256 has no version field, and the pickled CMAEvolutionStrategy holds no version attribute (checked). v4 wrote it at metanet_freeze.py:686, and the v4 record has \"pycma\": \"4.5.0\". The version string enters neither J5 nor any stop, so a fix cannot reverse the screen STOP. Evidence that 4.5.0 ran: venv314 has cma 4.5.0 and numpy 2.5.3, the cma-4.5.0.dist-info directory is dated 2026-10-05 22:48, before the 2026-10-10 launch, and the run's cma_state pickles load under it.",
+   "fix": "Disclose the gap in the freeze-audit record with the recovered evidence: pycma 4.5.0 and numpy 2.5.3 in venv314, dist-info mtime 2026-10-05. The lead decides whether this outcome-neutral deviation counts under \u00a7B11.2. For any re-run, write cma.__version__ and numpy.__version__ into each cma_restart_*.json and into finalize's record. Sharper, the same record also lacks items that v3 \u00a79 and v4 kept in the record: the calibration date list, the variant, bounds, network/cell tables and the optimiser settings (\u03c30, \u03bb, options). The protocol's records path names `metanet_v5_calibration.{json,md}`, but no metanet_v5_calibration.md exists. List all of these in the audit record."
+  },
+  {
+   "id": "robustness-04",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "should-fix",
+   "file": "tests/test_metanet_j5_eval.py:202",
+   "issue": "Test 33 covers less than the protocol specifies. It does not run the \u00a74.7 grid with its J_d selector, ensemble selection or the premise check. On the paths it does run, the real readers are stubbed: _install replaces Q.model_day, Q.model_speeds and I.event_station, and for the screen G.deterministic itself is replaced by a lambda. So the actual Mayfly/real-data reads are never audited. The leak filter only matches the names val_data/gate_det/gate_draw/gate_sto, not raw validation-date files. The protocol's 22 (extended) also has no v5 unit test; it is covered only by the runtime exact-manifest checks and a gate-wiring assertion. The code itself is clean: an independent audit found no leak.",
+   "skeptic_reason": "I verified each claim in the test source. tests/test_metanet_j5_eval.py:_install (lines 92-95) stubs Q.model_day, Q.model_speeds and I.event_station. The screen step replaces G.deterministic with a lambda (line 248), and the leak check (line 252) only matches the names val_data, gate_det, gate_draw and gate_sto, so a raw validation-date Mayfly read would not be caught. The test never calls the \u00a74.7 grid and J_d (Q.grid_job with jd), ensemble_checks/candidates or premise(), although \u00a7B10 test 33 names all of them. v5's '22 (extended): No v5 job writes to a v3 or v4 path' has no unit test. v4's test22_no_v4_job_writes_v3_paths only covers v4 jobs and v3 paths, and test_v5_gate_wiring only checks the gate's det output directory. The runtime verify_manifest_exact and the CODE_PATHS dirty check cover part of it. Tests 33 and 36 pass (2 passed). The scratch audit33.py ran the unstubbed paths on synthetic inputs and reports no leak; I did not re-run it. A gap in the tests cannot reverse the STOP. A test-only fix also cannot meet \u00a7B11.2's 'fails on the code that produced the result', so it is a disclosure item, not a re-run trigger.",
+   "fix": "Record the gap in the freeze-audit record, with the audit33 independent check as the evidence that the code is clean. Before any re-run, extend test 33 to run the unstubbed readers (Q.model_day, I.event_station, the gate's _deterministic_rows) on a temporary Mayfly root that holds calibration-date files and one decoy validation-date directory. Add the grid with J_d, ensemble_checks and premise() to the audited calls. Add a v5 test 22: a static and runtime check that every v5 write targets RUNS5, the v5 record or tmp."
+  },
+  {
+   "id": "freeze-01",
+   "rev_sev": "should-fix",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_gate.py:145",
+   "issue": "The gate guard only checks that the freeze-audit record exists. Any tracked, clean metanet_v5_freeze_audit.json passes. Nothing links the audit to the freeze record it audited: the audit names no freeze-record commit or blob, and nothing checks that it was committed after that record. Suppose a \u00a7B11.2 fix reverses the stop and the full re-run commits a new non-STOP freeze record (accepted when a fix record names it, lines 147-156). That record reaches the gate on the old audit of the STOP record, with no audit of its own.",
+   "skeptic_reason": "The facts hold. check() (metanet_v5_gate.py:145-146) only tests that the file is tracked and clean, and the audit names no freeze record. The tests stub `git log` with a single commit (test_metanet_gate_refactor.py:304, 336), so the two-commit fix-naming branch at lines 147-156 never runs against a real repo. test36 only exercises the pure guard() with booleans. It is not a deviation under \u00a7B11.2's one-reading rule, though. The binding guard text (\u00a7B8) is \"unless the freeze-audit record (\u00a7B11.2) is committed\", and the code meets that literally. The protocol reads two ways on this point: \u00a7B11.2 item 3 says \"Freeze audit: once, after the freeze record is committed\", while the summary table (line 39) says \"one pinned audit per freeze record\". \u00a7B11.2 item 1 covers this case: \"Where the text admits more than one reading, the reading of the code that passed the pre-launch code-review checkpoint stands ... only a later protocol can resolve it\", and \"Code may change only to match the text.\" So the proposed check() change is not a permitted \u00a7B11.2 fix while the result stands. The gap is reachable only if a fix reverses the committed STOP (5a733be), and the author is told before the next step in that case (\u00a7B11.2 item 4).",
+   "fix": "No code change now. Have the freeze-audit record itself (data, not code) name the freeze-record commit (5a733be) and the blob it audited. Log the once vs per-record ambiguity as \u00a7B11.2 requires. If a \u00a7B11.2 fix reverses the stop, the author decides whether a second freeze audit of the new record runs before any gate stage. Optionally add a test-only real-repo case for check()'s two-commit branch; tests/ is outside V5.CODE_PATHS, so code identity does not change."
+  },
+  {
+   "id": "freeze-02",
+   "rev_sev": "should-fix",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_gate.py:302",
+   "issue": "When a stochastic row fails, verdict() returns only 'FAIL (stochastic rows; route stop \u2192 E)'. It does not record the v3 label 'PASS, deterministic-only', which \u00a7B11.1 requires next to the v5 FAIL.",
+   "skeptic_reason": "Reproduced (scratchpad v5codereview/verdict_check.py, re-run): with deterministic PASS and stochastic FAIL, verdict() returns {'outcome': 'FAIL (stochastic rows; route stop \u2192 E)', 'failed': ['P10a-2']} with no v3 label (metanet_v5_gate.py:302-303). \u00a7B11.1: \"v3's 'PASS, deterministic-only' is recorded under its v3 label but counts as a v5 FAIL for the route\". v3 \u00a70.3 (lines 54-58) lists \"a stochastic row fails under F\u0302\" and \"... under F\u0302_T\" among the deterministic-only cases. The route decision is correct. The omission is a missing label in the output, and the gate cannot run under the committed STOP, so this is a note. Side issue seen in the same reproduction: verdict() requires the gate_sto provenance stamp (line 295) before it reads the deterministic result. A deterministic FAIL therefore raises SystemExit unless the stochastic stage was also run. That is a crash path only.",
+   "fix": "Add a 'v3_label' to the stochastic-FAIL branch: 'PASS, deterministic-only (stochastic row failed under F-hat)', or 'F-hat_T' when spread_used == 'Tobit'. This matches the text, so it is a permitted change. Alternatively, write the label into the committed gate-outcome record. Extend test_v5_gate_bindings_and_verdict to check it."
+  },
+  {
+   "id": "freeze-06",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:277",
+   "issue": "Capacity-grid slices carry no provenance. grid_rows() and spread_v5() read any grid_{seed}_c2_XX.json present, with no check of code identity or plant parameters. Stops, ensemble checks and the CMA summary are all identity-checked at finalize; grids are not.",
+   "skeptic_reason": "grid_job (metanet_postcal.py:325-326) writes only the rows. grid_rows (metanet_v5_freeze.py:277-284) checks only that the files exist. finalize checks code identity for stops and the CMA summary (424-425) and for ensemble_checks (457), but not for the grids. The scenario needs an operator to skip grid-run in a re-run. grid_run deletes old slices first (598-599), and \u00a7B11.2 lists \"the grids\" in the mandatory full re-run. The v5 raw directory holds 0 grid files today. Under \u00a7B11.2, \"Code may change only to match the text\", and a provenance manifest is defensive, not a text match.",
+   "fix": "Operational: in any \u00a7B11.2 re-run, always run grid-run before ensemble/finalize, and check that the slice mtimes postdate freeze_stops.json. Add the manifest only if it is part of an approved fix."
+  },
+  {
+   "id": "freeze-07",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:577",
+   "issue": "_clean() converts numpy scalars with .item() before its non-finite check, so a numpy NaN or inf passes through. The json.dumps(..., allow_nan=False) calls at lines 393 (freeze_stops) and 661 (finalize) then raise. This is a crash path only; it never writes a wrong value.",
+   "skeptic_reason": "Reproduced: _clean({'a': np.float64('nan'), 'b': [np.float64('inf')], 'c': float('nan')}) gives {'a': nan, 'b': [inf], 'c': None}, and json.dumps(..., allow_nan=False) then raises ValueError. That is because line 577-578 returns x.item() before the non-finite check at 581. The failure is a crash only (lines 393, 661) and never writes a wrong value. The committed STOP record was written without hitting it.",
+   "fix": "If it ever triggers: v = float(x); return v if math.isfinite(v) else None, for np.floating and float alike. A crash that blocks the required record commit (\u00a7B8 step 6) would then be a text-match fix."
+  },
+  {
+   "id": "freeze-08",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:602",
+   "issue": "The grid batch, and the gate draws batch (metanet_v5_gate.py:334), use max_workers=32. \u00a7B12 caps grid and member jobs at 16 processes.",
+   "skeptic_reason": "Confirmed for the grid: metanet_v5_freeze.py:602 uses max_workers=32, against \u00a7B12 \"Grid and member jobs may use up to 16 processes\". This is inherited from v4 (metanet_postcal.py:564). For the gate draws (metanet_v5_gate.py:334) the claim is weaker: \u00a7B12 states no process count for the gate row, and \"member jobs\" more naturally means the ensemble checks and grids, not the nominal's gate draws. Each slice and each day is deterministic and independent, so results cannot change. Under the STOP, grid-run never ran.",
+   "fix": "Set max_workers=16 in grid_run (this matches the text), or record the deviation. Leave the gate draws as they are unless the author reads 'member jobs' as covering them."
+  },
+  {
+   "id": "indexing-04",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:269",
+   "issue": "The \u00a7B5 head-cell report counts an episode with no congested run through cell 26 (head_cell returns None, i.e. 'none') as a day whose P_1 head lies 'outside cells 28-31'. This inflates days_P1_head_outside_28_31 with days that have no head at all. The report is report-only, so the verdict is unaffected.",
+   "skeptic_reason": "The behaviour is reproduced. In my own synthetic run, with one P_1 episode and no congested cell, head_report gives per_day {'B1': [None]} and days_P1_head_outside_28_31 == ['SYN'], from the condition at metanet_v5_freeze.py:269. Whether this is a deviation is debatable. \u00a7B5 says '\"none\" if no run; and the count of days whose P_1 head lies outside cells 28\u201331'. A missing head can be read as 'not inside 28-31', so the text arguably has two readings, and under \u00a7B11.2 the code's reading stands. The per-day list keeps the None, so no information is lost. The section is report-only, and in the committed freeze record (stop_detail/P11-k/head_cells) there are 0 None heads and 0 outside days, so the actual report is unaffected.",
+   "fix": "Optional, for clarity in later protocols: report the None days separately (days_P1_head_none) and count only existing heads outside 28-31. Disclose the convention; do not change it post-result."
+  },
+  {
+   "id": "indexing-05",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_gate.py:45",
+   "issue": "The pure members() rule is dead code in production. The real rule is inlined in ensemble_checks (metanet_v5_freeze.py:490-500) and finalize (:459-468), so test_members_rule tests a function the pipeline never calls. members() also looks up checks by int seed, while the production checks dict (ensemble_checks.json) is keyed by str(seed). If it were ever wired to the stored checks, it would silently return no gridded candidates and no members.",
+   "skeptic_reason": "Confirmed. members() (metanet_v5_gate.py:40-50) is called only from tests/test_metanet_v5.py:205. Production inlines the rule: ensemble_checks (freeze.py:476-504) builds 'gridded' with the short-circuit checks 1-3, and finalize (freeze.py:459-468) takes as members the gridded seeds with a usable spread. That inlined rule matches \u00a7B6 ('only the first 2 candidates that pass checks 1\u20133 get a capacity grid'; members pass 1\u20134). Reproduced: members(cands, {7192012: all True}) gives gridded [7192012], while the same dict after a JSON round-trip gives {'gridded': [], 'members': []}. The key mismatch is latent because the function is not wired in, but test_members_rule gives no coverage of the production rule. Moot for this run: the route stopped, so the ensemble step never ran.",
+   "fix": "Either have ensemble_checks/finalize call members() with checks keyed by str(seed) (normalise inside members() via checks.get(str(c['seed']), checks.get(c['seed'], {}))), or delete members() and test the inlined rule in ensemble_checks/finalize with stubbed stephalving/p11/screen/spread_v5."
+  },
+  {
+   "id": "indexing-06",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:31",
+   "issue": "stephalving_pass divides by J5(T) without a guard, so a frozen point with J5(T) == 0.0 raises ZeroDivisionError and crashes the freeze 'stops' stage instead of returning a verdict. In practice this is unreachable: J5 = 0 needs a perfect fit on every row.",
+   "skeptic_reason": "Reproduced: stephalving_pass((0.0, 0.0), (0.2, 0.2), sets, sets) raises ZeroDivisionError from line 31 (`abs(j5[1]-j5[0])/j5[0]`). J_v4 = 0 at line 32 would do the same. It is unreachable in practice: J5 = 0 needs every row's items to be 0, including the realism NRMSE rows on real data. In this run step-halving passed with J5 = 0.2913, so it has no effect on the result.",
+   "fix": "Use a guarded relative change: r = 0 if both values are 0, inf if only the T value is 0 (which gives FAIL), and disclose the convention. This is low priority."
+  },
+  {
+   "id": "j5-02",
+   "rev_sev": "should-fix",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "tests/test_metanet_j5_eval.py:298",
+   "issue": "Test 25 implements only the per-item upper bounds, which hold by construction because every item is capped at its reference value. Three protocol-required parts are missing: the J5(out) \u2212 J5(ref) bound over the listed rows, the comparison with the same day without its P_k episodes at a drawn s_0, and the report of the violation share and the largest P7b + P7c increase. The stub also makes most of the B_k rows trivially safe. B2 'matched' is always None (line 91), so P5a-2 and P7a-2 are always 1. The model C4 equals the real C4 (line 88), so P5a-1 is only ever 0 or 1. 'matched' is the first model episode rather than the one-to-one onset match (line 87). The pure variant (tests/test_metanet_v5.py:96-106) draws t_c (line 104) but never uses it.",
+   "skeptic_reason": "The gaps are real. test25_e2e (tests/test_metanet_j5_eval.py:298-321) asserts only -1e-12 <= x <= cap per item. It has no J5(out) \u2212 J5(ref) bound, no comparison with the same day at a drawn s_0, and no report of the violation share or the largest P7b + P7c increase, all of which \u00a7B10 test 25 requires. The _install stub hard-codes B2 'matched': None and 'c4': None (line 91), so P5a-2 and P7a-2 are always 1. It also takes 'matched' as model_b1[0] rather than the one-to-one onset match (line 87). The pure variant draws t_c and never uses it. Two qualifications. (1) One factual slip: P5a-1 is not 'only ever 0 or 1'. With model C4 = real C4, dq = 0, but taper(0, don) = t, which lies strictly between 0 and 1 for 45 < |don| < 90 min, so intermediate values occur. (2) The missing assertions cannot expose a code defect. Every target item is bounded by construction: capped() lies in [0, 1], taper keeps [0, 1], and p3_item is at most 1 + \u03b5 because shaping() is at most 1. The (k, d) and day references are exactly those maxima, so claims 1-2 and the J5-difference bound follow algebraically. The no-P_k comparison at s_0 also only adds increases on rows \u00a7B1.6 lists (P3-k through s, P7b, P7c, P8g, X-k). The real loss is the protocol-required report, a missing disclosure rather than a correctness risk. Downgraded to note.",
+   "fix": "Either implement the remaining test 25 parts or record the departure. Implementing them means: build the (k, d)- and day-reference outcomes through day_items, assert the J5-difference bound and the s_0 comparison, and print the violation share and the max P7b + P7c increase. Derive B2 'matched' and c4 from match_episodes on the real longest episode, using a model C4 that differs from the real one. Drop the unused t_c. Otherwise, record in the freeze-audit record that test 25 is item-level only, with the by-construction argument."
+  },
+  {
+   "id": "j5-03",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "tests/test_metanet_j5_eval.py:103",
+   "issue": "Test 24's end-to-end case does not pass through the observation operator, which the protocol requires. test24_e2e stubs Q.model_day and Q.model_speeds (lines 92-93), so the zero-cost property is never checked through model_speeds \u2192 model_pairs \u2192 model_day (c4, merge, matching). The pure item variant (tests/test_metanet_v5.py:307-317) also stops at the item level, and its docstring says 'pending'.",
+   "skeptic_reason": "test24_e2e_zero_cost_and_unbacked monkeypatches Q.model_day and Q.model_speeds (tests/test_metanet_j5_eval.py:92-93). The zero-cost property is therefore never exercised 'through the inverse observation operator', as \u00a7B10 test 24 requires. The pure variant (test_metanet_v5.py test24_zero_cost_items) stops at item level. I re-ran scratchpad/v5codereview/j5_zero.py, which uses unstubbed model_day, model_speeds and model_pairs, synthetic real series, model = real \u00d7 MPH, and cells 26-28 and 33 at 1.1\u00b7\u03c1_cr on the real episodes. Result: 200 trials with 0 nonzero target/P8g items. The code is correct and only the test is missing, so note.",
+   "fix": "Add the unstubbed variant to the suite: stub only I.event_station and I.element_flow, build the real side with F.day_events and F.merge_section plus a JSON round-trip, and assert that every target and P8g item is 0. Add the no-backing companion through the same path."
+  },
+  {
+   "id": "j5-04",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_j5_eval.py:162",
+   "issue": "Unscored items (None, from NRMSE rows with < 100 pairs, P1c_h, P7c) are silently dropped from the row means (metanet_j5.py:180). They are never counted in the J5 parts or the restart reports. The protocol requires them to be counted.",
+   "skeptic_reason": "Protocol \u00a7B1.3 (realism bullet list): 'v3's \u2265 100-pair rule applies to every NRMSE. An unscored item is left out of its row mean and counted.' V.nrmse returns None below 100 pairs (metanet_events.py:24-29). J.j5 drops None (metanet_j5.py:180), and parts (metanet_j5_eval.py:162-164) holds only row means, J_d, any_creditable_B1 and model_active_days. A grep for 'unscored' or 'scored' in the v5 job modules finds no count, and best_rows in metanet_v5_calibrate.py:248 is parts as-is. The leave-out half is implemented; the 'counted' half is a missing report. It cannot change J5 or the route, so note.",
+   "fix": "Add per-row None counts to parts[pidx] (e.g. 'unscored': {r: sum(x is None for x in v)}). Carry them into best_rows and the restart JSON, and report them for the nominal in the freeze record. Restricting the counts to the NRMSE rows (P1a_h, P1b_h, P1a_ff, P1b_ff, P1c_h) satisfies the protocol sentence."
+  },
+  {
+   "id": "j5-05",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:514",
+   "issue": "The \u00a7B1.7 'caps \u00d72/3 and \u00d74/3' sensitivity also scales CAP_ONSET. The onset cap is not one of the caps the protocol lists for this sensitivity; it is fixed to the match window. At \u00d74/3 the variant breaks the identity 'onset cap = unmatched score = match window': a creditable match at |\u0394onset| = 90 min scores 90/120 = 0.75 on P4, while a slightly later, unmatched onset scores 1. The reported caps sensitivity therefore differs from the pre-registered one. It is report-only and cannot select a plant or change the route.",
+   "skeptic_reason": "I reproduced the mechanism. _variant.CAPS includes CAP_ONSET (metanet_v5_freeze.py:514), and under {'caps': 4/3}, CAP_ONSET = 120. Real (100,120): a creditable match at \u0394onset = 90 min scores 0.75 on P4, while a model onset 95 min away, unmatched, scores 1.0, a 0.25 jump at the match window. Under 2/3, matches between 60 and 90 min score 1, the same as unmatched. \u00a7B1.7's 'Caps' bullet lists six caps (duration, Q_dis, P5c, extent, P1a, P1b) as '3 \u00d7 the row's gate tolerance'. The onset cap gets its own bullet, defined by an identity: 'Onset cap 90 min = P4's score for an unmatched episode = the match window'. It is also not 3 \u00d7 P4's 15-min tolerance. So the natural reading of 'the caps at \u00d72/3 and \u00d74/3' excludes it, but the protocol does not say so explicitly, hence 'partly'. It is report-only and never selects a plant. sensitivities.json does not exist yet in the v5 raw dir, so it can be corrected before the sensitivities are first run.",
+   "fix": "Remove CAP_ONSET from _variant.CAPS, so that the onset cap stays tied to the 18-bin match window, before sensitivities() is first run. If it is kept, disclose in sensitivities.json that the onset cap was scaled and that \u00d74/3 makes P4 non-monotone at the match window."
+  },
+  {
+   "id": "j5-06",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_facts.py:43",
+   "issue": "loo_nulls (the P1c^h leave-one-day-out nulls) and f_mask (F_d for the realism rows) have no unit test, although protocol test 31 requires checking that the P1c nulls leave out day d. test31_hinges (tests/test_metanet_v5.py:23-31) tests only the hinge and floor formulas, and grep finds no test that references loo_nulls or f_mask.",
+   "skeptic_reason": "A grep of tests/ for loo_nulls and f_mask finds nothing. test31_hinges (tests/test_metanet_v5.py:23-31) covers only the hinge, floor and realism formulas, while \u00a7B10 test 31 requires 'the P1c nulls leave out day d'. test29 snapshots only the stored facts constants. I re-ran scratchpad/v5codereview/j5_loo.py (6 days \u00d7 17 stations, random speeds and masks): loo_nulls(v, mv, d) equals metanet_gate.nulls() on the other days with NaN equality for every d. f_mask gave 145 bins, starting at EV0 = 12, with the \u00b16-bin (\u00b130 min) exclusion around the episode. The code is correct and the protocol-required test is missing, so note.",
+   "fix": "Add the j5_loo.py comparison as a unit test (stub C.load_data with the other days and compare with G.nulls()). Add an f_mask test that checks W_d removal, the \u00b16-bin exclusion at any pair, and no bins before EV0."
+  },
+  {
+   "id": "j5-07",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "tests/test_metanet_v5.py:40",
+   "issue": "Test 40 lacks several protocol clauses. Missing: the disclosed residuals (head at 26 with a zone over 27-28 \u2192 creditable; head at 27 with a one-cell zone over 28 \u2192 creditable; P_2 head at 32 with a one-cell zone over 33 \u2192 creditable); 'a backed extra does not make an unbacked overlapping episode creditable, and P3-k stays 1 + \u03b5' through day_items; 'an unbacked extra does not strip a backed P3-k hit (it can take a P4/P5a/P7a match by nearer onset, and that item then scores 1)'; the H1 spill-back case.",
+   "skeptic_reason": "test40_creditability_head_rule (tests/test_metanet_v5.py:40-51) does omit the listed \u00a7B10 test 40 clauses. Several omissions are immaterial, though. creditable() reads only the congested-cell matrix in the episode's own qualifying bins. Each residual (head at 26 with a zone over 27-28; head at 27 with a one-cell zone over 28), and the H1 spill-back to cell 25, all reduce to 'cells 26, 27, 28 congested', which the first assert already covers. The P_2 head at 32 with a zone over 33 reduces to 'cell 33 congested', also asserted. The clauses that are genuinely missing are the day-level ones. (a) A backed extra does not make an unbacked overlapping episode creditable, and P3-k stays 1 + \u03b5. This is only covered piecewise, by s_override in test28 and test_p3_items. (b) An unbacked extra does not strip a backed hit and takes the nearer-onset P4/P5a/P7a match, scoring 1. No test covers this. Behaviour is correct: j5_indep.py exercises random backing modes and multiple episodes per day, with 0 mismatches on 300 new-seed days.",
+   "fix": "Add (a) and (b) as day_items-level asserts on the e2e fixture. For (b), assert the P3-k value, the P4 item = 1 for the match taken by the nearer non-creditable episode, and the pooled P11-k share < 50 % via Q.p11_day on the same day. Optionally list the residual and H1 cases as explicitly named asserts for traceability."
+  },
+  {
+   "id": "j5-08",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "tests/test_metanet_j5_eval.py:202",
+   "issue": "The test 33 audit covers the J5 evaluator, the CMA-ES driver and the screen. It does not cover the \u00a74.7 grid with its J_d selector (postcal.grid_job with jd=V5.evaluator()), ensemble selection or the premise check, which the protocol lists. Its forbidden-path filter also checks only 'val_data' and 'gate_*' strings; the raw validation-date files are not checked.",
+   "skeptic_reason": "test33 (tests/test_metanet_j5_eval.py:202-253) exercises only J5Eval.__call__, V5.restart and FZ.screen. \u00a7B10 test 33 also names 'the \u00a74.7 grid and its selector J_d, ensemble selection, ... and the premise check'. The forbidden-path filter (line 252) matches only 'val_data' and 'gate_det', 'gate_draw' and 'gate_sto', not 'the raw validation-date files', which the protocol explicitly lists. A grep of metanet_v5_freeze, metanet_v5_calibrate, metanet_j5_eval, metanet_v5_facts and metanet_postcal finds no load_val, val_data or F11 access, apart from the F8-only read at metanet_v5_freeze.py:165. grid_job (metanet_postcal.py:266-325) reads only C.load_data and the calibration days' event_pairs and day_events. No leak is known, so this is a coverage gap only: note.",
+   "fix": "Extend the open/key-access audit to cover grid_job(jd=<stub J5Eval>) with a stubbed simf, the ensemble step and the premise check. Make the filter also flag any Mayfly cache path whose date is not among the facts' 22 calibration days."
+  },
+  {
+   "id": "regression-07",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_freeze.py:182",
+   "issue": "Two parts of test 35 are missing:\n- J_d equals the per-day form;\n- the \u00a74.7 selector uses J_d with the old tie rule.\nThe v5 grid hook in grid_job (J_d, b1cells_qual, cred_overlap_k; metanet_postcal.py:302-320) is also untested.",
+   "skeptic_reason": "A grep of tests/ finds no call of capacity_factors(..., selector='J_d') or grid_job(jd=...). The only J_d assert is J5Eval's batch list (test_metanet_j5_eval.py:372), and test35_facts_hash (test_metanet_v5.py:114) covers only the hash part of \u00a7B10 35.\n\nBy reading, the selector key (metanet_freeze.py:182) keeps the old tie rule (hypot to (1,1), then c1), and j_day == j5 on day rows (metanet_j5.py:187-189). The route stopped before \u00a74.7, so nothing recorded depends on this. It becomes required if any audit fix reverses the stop.",
+   "fix": "Add synthetic tests:\n- capacity_factors(rows=..., selector='J_d') with J_d ties, resolved nearest to (1,1) and then by smaller c1, with per_day carrying J_d;\n- J_d == J.j_day(day_items);\n- a stubbed grid_job(jd=...) run asserting J_d, b1cells_qual (cells 28-31 = indices 27:31) and cred_overlap_k.\nRequired before any \u00a74.7 run."
+  },
+  {
+   "id": "regression-08",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "tests/test_metanet_v5.py:40",
+   "issue": "Clause gaps in tests 31, 40 and 41:\n- test 31: no test that the P1c nulls leave out day d;\n- test 40: the interplay clauses are missing (a backed extra plus an unbacked overlapping episode keeps P3-k at 1+\u03b5; an unbacked extra that takes a nearer-onset P4/P5a/P7a match scores 1 while P11-k counts the day unbacked);\n- test 41: relocation (b) on a real-B2-active day is not tested.",
+   "skeptic_reason": "test31_hinges (test_metanet_v5.py:23) never calls loo_nulls. test40 (line 40) covers cell patterns only. test41 (test_metanet_j5_eval.py:140) uses a B2 real-inactive evaluator.\n\nNo defect:\n- I re-ran j5_loo.py: loo_nulls(v, mv, d) equals metanet_gate.nulls() on the other days, for every d of 6 synthetic days.\n- By reading, the test-40 interplay clauses hold by construction: p3_item hits only on a creditable overlap (metanet_j5.py:70), and s_override sets s=1 on any overlap (line 142).",
+   "fix": "Add:\n- a LOO-nulls equality assert in test 31;\n- the two test-40 interplay cases through J5Eval.day_items and Q.p11_core;\n- a test-41 case with _evaluator(real_b2=...) and RELOC_PAIR episodes, expecting P8g == 1."
+  },
+  {
+   "id": "regression-09",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "tests/test_metanet_gate_refactor.py:175",
+   "issue": "Test 30(a) is a real bit-for-bit test, with gaps:\n- the both-extents-None P7b branch is never reached;\n- the ensemble-candidate step-halving branch of deterministic() is never run, because the freeze stub has only the nominal;\n- the tag module runs against the current metanet_postcal/events/facts/inputs/plant modules, so it isolates metanet_gate.py only.",
+   "skeptic_reason": "Two of the three gaps are not real gaps.\n\n(1) The 'both-None extents' P7b branch is unreachable. extent() always returns a station string: it starts at `start` and returns ext (metanet_gate.py:139-152, identical at the tag). So the 'escaped' mutant (requiring m_ext is not None) is an equivalent mutant, not a test weakness.\n\n(2) The ensemble-candidate step-halving line is textually unchanged from the tag; it only moved under `if ctx is None` (git diff metanet-v4-stop..HEAD). A bit-for-bit risk there is negligible.\n\n(3) The tag running against the current helper modules is true, but test 30(a) is defined as a gate refactor test.\n\nA real but small weakness the finding missed: test30a catches any ValueError from the tag as 'the latent crash' (test_metanet_gate_refactor.py:184-185) without checking its cause, so a different tag-only ValueError would be skipped silently. Only 1 of 30 worlds crashes.",
+   "fix": "Drop the both-None clause. Narrow the except in test30a to the empty-S1-window crash: assert np.convolve's 'v cannot be empty' message, or check that the world has an empty P9 window. Optionally add one world whose plant seed is an ensemble candidate."
+  },
+  {
+   "id": "regression-10",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_calibrate.py:98",
+   "issue": "The extended test 22 (no v5 job writes to a v3 or v4 path) has no unit or static counterpart for the v5 modules, the way v4 test22 has for the v4 modules. Enforcement is at runtime only: exact v3/v4 manifest checks after every stage, plus the committed-CODE_PATHS check for repo files.",
+   "skeptic_reason": "A static v5 counterpart of v4 test22 (tests/test_metanet_v4.py:345) is indeed missing: no assert that RUNS5 != C.RUNS/V3_RUNS, and no source scan.\n\nBut the runtime enforcement is unit-tested, so 'no unit counterpart' overstates it:\n- test_guard_wiring (test_metanet_v5.py:465) checks that post_batch_checks calls the exact v3/v4 manifest checks;\n- test_metanet_v5.py:391-394 checks that verify_manifest_exact rejects a changed or added file;\n- test_v5_gate_wiring checks that gate_det goes to the v5 dir and that the v4 RUNS is restored.\n\nBy grep, every write in metanet_v5_*/metanet_j5* goes to RUNS5, RECORD or the facts out dir. The guard detects a stray write after it happens (it fails the stage), and it does not prevent one.",
+   "fix": "Add a cheap static test:\n- RUNS5 (defined twice: metanet_v5_facts.py:32 and metanet_v5_calibrate.py:25) equal in both modules and distinct from C.RUNS and C.V3_RUNS;\n- RECORD and FACTS5 names distinct from the v3/v4 records;\n- no `C.RUNS /` or `V3_RUNS /` write pattern in the v5 sources;\n- grid_job called with runs=V5.RUNS5."
+  },
+  {
+   "id": "robustness-01",
+   "rev_sev": "should-fix",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_gate.py:145",
+   "issue": "The gate guard's freeze-audit condition is not tied to any freeze record. check() sets audit=True whenever docs/lab/day_pattern/metanet_v5_freeze_audit.json is tracked and clean. It does not check which freeze record (commit or blob) the audit covered, or that the audit was committed after that record. After a \u00a7B11.2 fix re-run that reverses the stop (the case this audit can trigger), a second freeze record, once named by a fix record, would pass the guard on the first record's audit, which reviewed the old code. An audit file committed before the freeze record would also pass. verdict() (line 292) also reads FREEZE5 without the tracked/unchanged check, and takes the PASS vs 'PASS, substitute spread' label from it.",
+   "skeptic_reason": "The guard does what \u00a7B8's text says: 'unless the freeze-audit record (\u00a7B11.2) is committed'. With the route at 'STOP (in-sample screen)', guard() refuses at line 59 before the audit check, so this code is reachable only if a \u00a7B11.2 fix reverses the stop. In that case the question is whether a second freeze record needs its own audit. The protocol has two readings: \u00a7B11.2 item 3 says 'Freeze audit: once, after the freeze record is committed', while the header table says 'one pinned audit per freeze record'. Under \u00a7B11.2 item 1, the checkpointed code's reading stands (any committed audit), so this is not a deviation. The case 'audit committed before the freeze record' cannot happen now: the record was committed at 5a733be and no audit file exists yet. It is true that verdict() (line 292) reads FREEZE5 without the tracked and unchanged check, but exploiting that needs a hand edit of the committed record, and it would only change the PASS label.",
+   "fix": "No code change is needed now. When writing the freeze-audit record, put freeze_record_commit = 5a733be and the git blob hash of metanet_v5_calibration.json in it, and log the 'once' vs 'per freeze record' ambiguity as disclosed. If a fix reverses the stop, the audit record then names which record it covered. Binding the guard to it, and the tracked check in verdict(), belong to a later protocol or a disclosed hardening."
+  },
+  {
+   "id": "robustness-02",
+   "rev_sev": "should-fix",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:635",
+   "issue": "Worker processes never check the code identity; only the drivers do, at launch. The CMA-ES restart worker (metanet_v5_calibrate.restart) and the grid worker import whatever is on disk when the scheduler starts them. evaluator() runs pre_batch_checks, which checks only the manifests, not code_commit(). Jobs launched late import that disk state, including uncommitted edits by a sibling session to CODE_PATHS modules: the grid has 41 jobs on 32 workers, and the CPU guard can hold any job back. The draws workers do check. Grid outputs carry no identity stamp. grid_rows(), which feeds spread_v5 in finalize and ensemble_checks, reads them without the provenance check that stops, the summary and ensemble_checks.json all get. So a stale or mixed grid could decide stop 5 under a record that names the current code.",
+   "skeptic_reason": "The code reading is accurate. restart() and the grid worker (metanet_v5_freeze.py:635-638) never call code_commit(), and grid_rows() only checks that the files exist. No committed text requires per-worker identity checks on calibration-side jobs, though. v4 \u00a7A6 (6), 'only committed gate code reads validation-day real data', applies to gate code, and the gate draws workers do check (metanet_v5_gate.py:268-271). In this run: thermal.csv shows launch events at 0.0 s and 0.5 s, with running=8 by 0.5 s, so all 8 restarts imported the code right after the driver's code_commit(). That identity, 3d4402f, equals today's code_commit() (reproduced). finalize compared cma_summary's code_commit and freeze_stops' code with the current identity. The grid never ran, because the route stopped at stop 4. So the outcome is unaffected. The remaining risk is a sibling session's uncommitted edit during a future re-run grid (41 jobs on 32 workers). \u00a7B11.2 says 'Code may change only to match the text', so this is not a deviation to fix now.",
+   "fix": "Disclose it in the audit record. In a later protocol, or as a disclosed hardening before any re-run: pass the driver's identity to every job, have restart(), the grid worker and timing refuse a mismatch, stamp the identity into cma_restart_*.json and grid_*.json, and have grid_rows, _batch and finalize refuse stamps that differ from the current identity."
+  },
+  {
+   "id": "robustness-05",
+   "rev_sev": "note",
+   "verdict": "confirmed",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_calibrate.py:167",
+   "issue": "code_commit() fails open. Any git error leaves stdout empty, which is read as 'clean', and the identity becomes the empty string ''. Every launch path also calls committed(), which raises on a git error, so the risk today is low. But freeze_stops() (code stamp), stops_passed() and finalize() all compare identities that could both be '' if git fails while committed() is skipped or succeeds transiently.",
+   "skeptic_reason": "Reproduced. With C.REPO pointed at a non-git scratch directory, V5.code_commit() returns '' and raises nothing, because lines 167-170 read .stdout and never check returncode. On the same directory, committed() raises SystemExit. Every J5 path goes through evaluator(), which calls committed(), and every stage's __exit__ calls post_batch_checks(), which also calls committed(). The identities stored by this run are real SHAs (3d4402f), so a transient '' would mismatch and refuse rather than pass. There is no effect on the current outcome.",
+   "fix": "In code_commit(), raise SystemExit when git status or git log returns non-zero, or when the identity is not a 40-hex SHA. Apply it with any re-run, or adopt it as a disclosed hardening."
+  },
+  {
+   "id": "robustness-06",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_freeze.py:602",
+   "issue": "The capacity-grid batch, and the gate's draws batch, run with max_workers=32. Protocol v5 \u00a7B12 caps grid and member jobs at 16 processes. Results are unaffected (the jobs are independent and deterministic). It is still a code-vs-text deviation, and \u00a7B11.2 lets code change only to match the text.",
+   "skeptic_reason": "For the grid there is a literal mismatch: metanet_v5_freeze.py:602 sets max_workers=32, and \u00a7B12 Layout says 'Grid and member jobs may use up to 16 processes.' The grid never ran in this run (route STOP at stop 4), and its jobs are independent and deterministic, so no output changes. The sentence also sits in the compute-projection paragraph. For gate draws (metanet_v5_gate.py:334) it is ambiguous whether 'member jobs' covers them: they are gate jobs, the nominal's included. So the checkpointed reading stands.",
+   "fix": "Disclose it in the audit record. Set the grid to max_workers=16 before any re-run reaches the grid. Log the gate-draws reading as a disclosed ambiguity."
+  },
+  {
+   "id": "robustness-07",
+   "rev_sev": "note",
+   "verdict": "partly",
+   "sev": "note",
+   "file": "vsl_lab/jobs/metanet_v5_facts.py:157",
+   "issue": "The v5 facts record the git blob hashes of the reused v3 and v4 facts files, but no v5 job checks them at use. The screen reads F8 floors from C.FACTS (metanet_v5_freeze.py:165), and other paths read the v4 facts and record. A committed change to either file would only change the code identity; nothing compares it with the recorded blobs. Both files match today.",
+   "skeptic_reason": "Not a deviation. \u00a7B8 step 4 only requires 'Both git blob hashes are recorded in the v5 facts', and that is done: reused_facts_blobs = {v3: c3ed7041..., v4: 8b8dc558...}, which equal `git hash-object` of both files today. Their last commits (91603bf and 549ab7b) predate v5. Both files are in CODE_PATHS, so an uncommitted edit blocks code_commit() at every driver and stage, and a committed edit changes the identity that freeze_stops, finalize and the gate start records compare. Checking at the point of use would only be a hardening.",
+   "fix": "Optional hardening for a later protocol: in evaluator() and screen(), compare the git hash-object of C.FACTS and C.FACTS_V4 with facts['reused_facts_blobs'] and refuse on a mismatch. State in the audit record that the blobs matched at audit time."
+  }
+ ],
+ "critic_gaps": [
+  {
+   "area": "Freeze-audit scope (\u00a7B11.2 item 3, \u00a7B8 step 6): the outputs under audit were reviewed by no lens",
+   "severity": "should-fix",
+   "what": "This freeze audit ran the pinned prompt with its pre-launch scope and context lines unchanged. round1_pinned_procedure.js:11 still reads 'Code under review = git diff f7fe73b..HEAD', and line 12 still reads 'Context: no v5 calibration has run yet; this review is the pre-launch checkpoint'. The checkpoint record says otherwise (metanet_v5_code_review.md:3): 'For an audit, the prompt's scope line names the diff from the last reviewed commit and the outputs under audit'. As a result:\n- no lens was pointed at the committed STOP record (5a733be), freeze_stops.json or cma_summary.json;\n- line 13 ('NEVER simulate a real calibration day with a candidate plant') stopped anyone reproducing the recorded verdict;\n- the unchanged imported modules that \u00a7B11.2 item 3 puts in audit scope (metanet_events/inputs/facts, corridor_analysis, mndot) were outside every lens's diff.\nMy own check was read-only, with no simulation, and found the record consistent with the code:\n- cma_restart_7192011 best_x equals nominal_x, and the facts sha matches;\n- freeze_stops 'code' and cma_summary code_commit are both 3d4402f, the last CODE_PATHS commit. The only CODE_PATHS change after the checkpoint's fix commit d64b3f7 is the facts commit;\n- the screen used the P8 tolerance 3 and Lc_k equal to F8 ci_r[0] (0.99397 and 0.92609); no real-data minimum was unmet (n_A 22/9, n_H 22/9, n_H_first 22); need() gives 17 and 7;\n- every failed row is beyond its \u00a75.3 threshold: P3-1 16/22 = 0.727 < 0.75; P4-1 matched share 0.654; P5a-1 15 < 17 matched; P6-1 upper half |8 \u2212 11| = 3 > k = 2; P7b 3/22; P1c CI upper bound 0.26 > 0;\n- the nominal J5 rows agree with the gate: P3-1 0.289 equals 6 misses with mean s \u2248 0.12; P7b 0.862 against a gate hit share of 0.136; P8g 0, because the one B1 extra falls on a miss day.",
+   "why": "Each \u00a7B11.2 audit runs once and cannot be repeated. Its record will be read as having audited the freeze outcome, but by construction it did not reproduce or review that outcome or the unchanged imported modules. The audit record should say so, and include the consistency checks above, before E is recorded."
+  },
+  {
+   "area": "\u00a7B11.2 item 4 (W13 strict) and item 2: outcome labels after a fix are not implemented",
+   "severity": "should-fix",
+   "what": "Neither metanet_v5_gate.verdict() (lines 290-304) nor metanet_v5_freeze.finalize() (lines 407-473) contains any logic or field for the labels the protocol requires:\n- 'second look on the same validation days' (KILL-only) for any post-look FAIL \u2192 PASS;\n- 'after post-result fix' with both outcomes, for a fix that leaves the outcome unchanged or changes only the nominal or the members;\n- the 'Disclosed' citation of the original outcome when a fix reverses a pre-look stop ('Every later result cites both outcomes').\nAfter a fix re-run, verdict() returns a bare 'PASS' or 'PASS, substitute spread'. Nothing reads the fix records except the guard. No test covers these labels; test 36 covers only the guard.",
+   "why": "The freeze audit can open exactly this path: a fix plus a full re-run that reverses the stop. A post-fix record or gate verdict without these labels would present a KILL-only or post-fix result as an ordinary GO-capable PASS, which is the integrity failure W13 strict exists to prevent."
+  },
+  {
+   "area": "\u00a7B11.2 item 1 re-run path on the calibration side (no archive, no fix-record precondition)",
+   "severity": "should-fix",
+   "what": "A \u00a7B11.2 full re-run on the original seeds destroys the original outcome's raw data:\n- _batch unlinks cma_restart_{s}.json (metanet_v5_calibrate.py:310-311);\n- restart() overwrites cma_state_{s}.pkl (line 227);\n- run() overwrites cma_base_summary.json and cma_summary.json (lines 365, 385);\n- freeze_stops() overwrites freeze_stops.json (metanet_v5_freeze.py:393);\n- grid_run unlinks the grid files (lines 598-599).\nThe committed record keeps only the nominal's x: its restarts list omits best_x and best_rows (lines 414-416). The gate path, by contrast, archives superseded draws (metanet_v5_gate.py:325-330).\nThe re-run is also not guarded:\n- run() does not require a committed fix record before re-running seeds 7,192,010-017. \u00a7B11.2 item 1 says the record is 'committed with the test below, before the re-run', but the only fix-record check sits at the gate;\n- fix_record_valid (metanet_v5_gate.py:88-94) only checks that the named test path exists at the fix commit, not that it 'fails on the code that produced the result';\n- run() refuses to launch whenever the facts hash changed since the premise check (line 355). A facts-code fix therefore forces a premise re-run, although \u00a7B11.2 says 'The premise check is repeated only to confirm a fix to its own anchor'.",
+   "why": "This is the next path if the audit finds a deviation. 'Both outcomes are logged' and the audit trail of the original STOP (the 7 non-nominal restarts, their histories and states) would be lost on the first re-run, and an unrecorded re-run is not blocked on the calibration side."
+  },
+  {
+   "area": "Freeze record contents and provenance (v3 \u00a78.3, \u00a74.5, \u00a74.8; v4 \u00a7A13; \u00a7B8 Paths; \u00a7B13 item 1; checkpoint promise)",
+   "severity": "note",
+   "what": "metanet_v5_calibration.json omits several items:\n- the code identity: stops['code'] and the summary's code_commit are compared at finalize (metanet_v5_freeze.py:422-425) but never written into the record;\n- the \u00a7B13 item 1 statement 'plant selected after 3 attempts (listed)';\n- the pre-look P9 S1 change (the tag's ValueError, now returning None). The impl checkpoint's slice-B log says this is 'to disclose in the v5 freeze record'; grep finds no disclosure;\n- the v3 \u00a78.3 contents that v4's record carried through FZ.diagnostics: date lists, bounds and settings, the \u00a74.5 restart-spread identifiability ('not assessable' here), and the \u00a74.8/\u00a7A13 calibration diagnostics (per-bottleneck Q_dis and r, \u03b81 head-cell capacity, clip counts with non-jam v_min, origin misfits, the station/cell backing shares). finalize only calls FZ.benchmarks (lines 446-450).\nThere is also no metanet_v5_calibration.md, although \u00a7B8 Paths lists 'records: docs/lab/day_pattern/metanet_v5_calibration.{json,md}'. robustness-03 covers pycma, and freeze-05 covers \u00a7B5, \u00a7B3 and T/2; these items are separate.",
+   "why": "'Every v3/v4 text not amended here applies word for word.' These items are report-only and cannot change the route, but the audit and any later result (including a post-fix one) depend on them. The identity of the producing code can now be recovered only from ledger rows."
+  },
+  {
+   "area": "\u00a7B1.7 and \u00a7B1.4 sensitivities: implemented but never scheduled or run",
+   "severity": "note",
+   "what": "metanet_v5_freeze.sensitivities() exists (lines 545-557, CLI 'sensitivities'), but no step in the launch order in metanet_v5_impl_checkpoint.md runs it. The ledger has no sensitivities row, and the raw dir /home/catalin/work/phd/vsl_lab_runs/day_pattern/metanet_v5/ has no sensitivities.json. \u00a7B1.4 says 'The sensitivities \u03b5 = 0 and \u03b5 = 1 are reported (\u00a7B1.7)', and \u00a7B1.7 re-scores 'the 8 restarts' best points'. Neither is conditioned on a PASS; \u00a7B8 step 8 restricts only the profiles to 'only after a PASS'. The function also re-scores only the admissible restarts, and its caps variant has the j5-05 defect.",
+   "why": "After the STOP, nothing will produce these pre-registered report-only numbers unless the author decides how \u00a7B8 step 8 reads after a pre-look stop. That is a \u00a7B11.2 ambiguity to log, not to fix silently."
+  },
+  {
+   "area": "\u00a7B8 step 7 and v3 \u00a78.3: committing the gate outcome conflicts with the first-record guard",
+   "severity": "note",
+   "what": "No v5 code commits the gate outcome. verdict() only returns a dict, and the outputs stay in the raw dir. v3 \u00a78.3, however, has the calibration record 'committed in two stages: the freeze ... then the gate results', and \u00a7B8 step 7 says 'Commit the outcome, then run the gate audit'. If the outcome goes into metanet_v5_calibration.json, check() sets first = len(git log -- record) == 1 (metanet_v5_gate.py:147-148), and guard() requires stage == 'freeze' (line 57). Every later gate stage would then be refused: member runs, stochastic rows, or a \u00a7B11.2 post-look re-run. The exception is a fix record whose freeze_record_commit names that non-freeze commit.",
+   "why": "This is reachable only if a fix reverses the stop and the route reaches the gate. Without a defined place for the gate outcome, a session could commit it so that the guard locks the remaining pre-registered gate stages, or misuse a fix record to get past the guard."
+  }
+ ],
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/day_pattern/metanet_v5_design/review/freeze_audit_20261011_raw* and _journal_results.json",
+ "status": "findings committed before any fix (\u00a7B11.2 item 2); route-impact verification and any \u00a7B11.2 fix records follow in separate commits"
+}
