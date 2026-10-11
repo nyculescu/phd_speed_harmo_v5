@@ -63,3 +63,13 @@ def test_restrictive_rate_holds_back_traffic():
         finally:
             env.close()
     assert out[0] < 0.7 * out[13]
+
+
+def test_eval_constant_rate_arm(tmp_path):
+    """Addendum H: bn4_eval 'rate:q' holds the metering rate at q for the whole control period."""
+    from vsl_lab.jobs import bn4_eval
+    out = bn4_eval.run("rate:800", 1600.0, 7110000, "test_rate", tmp_path, control_s=120.0)
+    assert out["mean_time_in_system_s"] > 0 and out["ctrl"] == "rate:800"
+    import pytest as _pt
+    with _pt.raises(ValueError):
+        bn4_eval.run("rate:777", 1600.0, 7110000, "test_rate_bad", tmp_path, control_s=60.0)

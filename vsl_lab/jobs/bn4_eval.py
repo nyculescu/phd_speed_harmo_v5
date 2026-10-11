@@ -39,9 +39,15 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
         kw.setdefault("meter_grid", ["40:6", "40:8", "20:12", "5:8"])
         kw.setdefault("allow_off", False)
         kw.setdefault("decision_s", 30.0)
+    rate_k = None
+    if ctrl.startswith("rate:"):   # Addendum H: constant metering rate on the meter_rate actuator (non-learning)
+        kw.setdefault("actuator", "meter_rate")
+        kw.setdefault("decision_s", 30.0)
     if kw.get("actuator", "av_caps") != "av_caps":
         kw.setdefault("decision_s", 10.0 if kw["actuator"] == "posted_vsl" else 30.0)
     env = BN4Env(meter=meter, **kw)
+    if ctrl.startswith("rate:"):
+        rate_k = env.rate_grid.index(float(ctrl.split(":")[1]))
     if ctrl.startswith("meter") and ":" in ctrl:
         _, kf, nc = ctrl.split(":")
         env_meter_params = (float(kf), float(nc))
@@ -152,6 +158,8 @@ def run(ctrl: str, inflow: float, seed: int, tag: str, out_root: Path, control_s
             act = madapt["k"] if madapt["on"] else 0
         elif msfix is not None:
             act = msfix
+        elif rate_k is not None:
+            act = rate_k
         elif mpcf is not None:
             act = mpcf.choose(env, obs)
         elif evs is not None:

@@ -307,3 +307,39 @@ P-M3b's final policy also: vs pooled −10.2 % (CI excludes 0), vs lookup −1.0
   - each labelled "hybrid better", "tie" or "hybrid worse" from Bonferroni CIs over the 16 comparisons.
 - **Robustness** (report-only): the 90th-percentile J per arm; the share of seeds where the hybrid is worse than NC; the FAIL shares.
 - The result is reported whatever it is.
+
+## Addendum H (2026-10-11): post-result diagnostics of R6+ (author: "Yes, run (a) and (b)"), pre-registered before they run
+
+**Status.** Diagnostics only. They are labelled post-result and **cannot change the R6+ FAIL**. They answer two questions:
+- (a) Is the vanilla DRL's win mostly a good constant rate?
+- (b) Does the proven-controller structure buy robustness outside the training conditions?
+
+Seeds come from the block approved in D5.7.
+
+**(a) Constant-rate baseline** (`jobs/t1_meter_r6plus_diag.py const-tune` / `const-test`)
+- **Arm** `rate:q`: the `meter_rate` actuator held at one rate q for the whole control period, q ∈ the 14 vanilla rates. Non-learning.
+- **Tuning:** seeds 7,112,100–7,112,199 (100) × the 4 training kinds at q_in = 1,600.
+- **Pooled-best rate** = the lowest median over seeds of J (the mean over the 4 kinds).
+- **Per-kind best rates** (an oracle that knows the kind): reported only.
+- **Test:** the pooled-best rate and the per-kind best rates on the R6+ test seeds 7,112,700–7,112,909 × 4 kinds, paired by seed with the frozen R6+ runs (vanilla, hybrid, NC).
+- **Reading, fixed now:**
+  - vanilla vs the pooled-best rate: rel ≤ −5 % with the CI upper bound < 0 → **"adaptive learning beyond a constant rate"**;
+  - otherwise → **"mostly a good constant rate"**.
+  - The same comparison is reported for the hybrid.
+  - If the pooled-best rate beats the hybrid (CI upper bound < 0), R6's tuned non-learning set is disclosed as **missing a strong baseline**.
+
+**(b) Out-of-distribution robustness** (`jobs/t1_meter_r6plus_diag.py ood`)
+- **Conditions** (q_in = 1,600 unless stated):
+  - the Lead 1 mix of 21 conditions: none; slow v ∈ {3, 5, 8} m/s × d ∈ {150, 300, 600} s; block d ∈ {60, 180} s; surge f ∈ {1.15, 1.3, 1.5} × d ∈ {150, 300, 600} s;
+  - **inflow shift:** the 4 training kinds at q_in = 1,200 and at 2,000.
+  - In-distribution: none, slow_v5_d300, block_d180 and surge_f1.3_d300 at 1,600. All other conditions are out of distribution.
+- **Seeds:** 7,112,300–7,112,399 (100).
+- **Arms:** hybrid (frozen R6), vanilla (frozen R6+), NC, `evsched:7:20:1.15`, MPC-F (frozen), and the pooled-best constant rate from (a).
+- **Families:** in-distribution; slow-OOD; block-OOD; surge-OOD; inflow-1,200; inflow-2,000.
+- **Statistic:** J per family (the mean over the family's conditions), the median of paired differences with a 95 % percentile bootstrap. Regime labels from Bonferroni CIs over 6 families × 4 comparisons (hybrid vs vanilla, NC, `evsched`, constant rate).
+- **Reading, fixed now:** "robustness advantage of the hybrid" only if **both** hold:
+  1. in at least one OOD family, the hybrid beats the vanilla (Bonferroni CI upper bound < 0);
+  2. the hybrid's degradation ratio (median J, OOD families pooled / in-distribution) is smaller than the vanilla's.
+
+  Otherwise: "no robustness advantage of the hybrid on BN4".
+- **Disclosure:** the BN4 plant fails realism. This is a chapter-level map.
