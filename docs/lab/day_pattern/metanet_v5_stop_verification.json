@@ -1,0 +1,796 @@
+{
+ "what": "route-impact verification of the v5 STOP (in-sample screen) before recording E; extra to the pinned freeze audit (not a \u00a7B11.2 audit)",
+ "workflow_run_id": "wf_af8a1af5-d8b",
+ "date": "2026-10-11",
+ "agents": "3 independent checkers (independent recomputation of P2, P3-1, P4-1, P5a-1, P7a-1; screen() vs text for all failed rows; route-impact sweep of the 39 findings + 6 gaps) + 1 judge",
+ "stop_reversible": "no",
+ "decisive_reasons": [
+  "No screen-only fix can turn this STOP into a PASS. v5 \u00a7B5 (docs/plans/day_pattern_metanet_protocol_v5.md:368) says: 'If any screened row fails, the route STOPs at the freeze'. The committed record docs/lab/day_pattern/metanet_v5_calibration.json has route 'STOP (in-sample screen)', and I checked that its stop_detail screen is byte-identical (as sorted JSON) to freeze_stops.json detail['in-sample screen'] (code 3d4402fd). 12 screened rows fail. Reversal needs all 12 to pass, and several fail on point statistics that no disputed item touches: P7b share 3/22 = 0.136 against '>= 70 %' (vsl_lab/jobs/metanet_gate.py:399-400); P7a-1 median 62.5 min against 'median <= 30 min' (gate.py:375); P7c 55 min against <= 30 (gate.py:401-402); P1c median_D_N2 = +0.198 against 'vs N2: median paired difference < 0' (v3:895; gate.py:297, a point median with no CI); P6-1 with R = 11/11, M = 9/8, k_h = 2. P6-1 needs >= 18 model-active days, and the model has 17, so no demand split can pass it.",
+  "Every real-data minimum is met, so no row can move to 'reported, not screened'. The minima are v3 \u00a75.2 (v3:849-852): n_val >= 16, n_A,k >= 8, n_H,k >= 6, n_H,first >= 6. The recorded counts are n = 22, n_A 22/9, n_H 22/9 and n_H,first 22, with reported_not_screened = []. v5:363 reads 'A row whose real-data minimum (\u00a75.2) is not met ... is reported, not screened', and that does not apply here. v3:880 has one reading: 'When the real minima are met, a model-dependent shortfall is a FAIL ... never INCONCLUSIVE'. So the count failures stand: P5a-1 and P5b-1 (15 < 17), P9 (15 < 17) and P5c (4 < 7).",
+  "The only way to reverse the STOP is a fix on the calibration/J5 path that moves the nominal, because \u00a7B11.2 item 1 re-runs 'CMA-ES, the freeze stops, the screen ...' on the original seeds. No one-reading deviation was found on that path. s1_ratio is called only at gate.py:446 (P9), and no J5 module uses it (grep). J5's P5c day set is both_q, exactly as v5:127 says ('the gate's `both_q`'). j5-04 concerns only a missing count; the items are still 'left out of its row mean' (v5:164). j5-05 acts only inside sensitivities(), which never ran. According to report 3, loo_nulls equals G.nulls on the other 21 days, bit for bit, on all 22 days.",
+  "The candidate items on the J5 path admit more than one reading, so the code's reading stands. v5 \u00a7B11.2 item 1 (v5:539): 'Where the text admits more than one reading, the reading of the code that passed the pre-launch code-review checkpoint (\u00a7B8 step 3) stands, before and after any result ... It is never \"fixed\" after a result'. The items are:\n- A1: c = 1 at S453. v3:518 computes c_s only for 'every interior station and for T.H.101', and v3:241 calls S453 the 'upstream boundary (input only)'. The text gives no c_s for S453; the code discloses this at metanet_postcal.py:100-101.\n- A2: the merge gap. The code counts empty bins, s - prev_end - 1 < 6, which is the natural reading of 'separated by < 30 min'.\n- A4: the t_c window end.\n- A3: the tie order.\nAccording to report 1, the A3 and A4 alternatives change nothing on the 22 calibration days.",
+  "The headline numbers were reproduced independently. Report 1 used its own implementation and rebuilt the real event layer from raw calibration-day Mayfly data, which matched the committed facts. It got P2 16/22, P3-1 16/22, P4-1 17/26 with a 20-min median, P5a-1 15/17 with median D -0.0561, and P7a-1 62.5 min, all equal to the record. Report 2 re-ran screen() at HEAD and got every row identical to 1e-12. No alternative reading the checkers tested flips any row: overlap \u00b155/\u00b165 min, match window \u00b195 min, the merge-gap alternative (P7a-1 goes to 67.5, which is worse), unmasked model flow, and the t_c window at e+7."
+ ],
+ "route_changing_deviations": [],
+ "real_deviations_not_route_changing": [
+  "regression-01: vsl_lab/jobs/metanet_items.py:96-101, s1_ratio. For a 1-2-bin window it returns seg.sum()/3 (verified), against v3 \u00a75.4 'the maximum 3-bin rolling 15-min flow ... in [onset \u2212 60 min, end]'. Latent; not exercised on the calibration days; reaches P9 only. Two notes for the fix record:\n- The replacement value is itself a reading choice. Returning None matches the code's own 'valid' convention and its empty-window rule (docstring at :94-95).\n- A synthetic 1-bin test fails before the fix.",
+  "P5c minimum denominator: gate.py:387-388 uses need(len(both_q)) where v3:884 requires max(6, \u23080.75\u00b7n_H,both\u2309), with n_H,both = 'heavy at B1 and at B2' (v3:843). Equal (9) on the calibration days; at the gate it can only make the row stricter. A synthetic test with both_q a strict subset of both fails before the fix.",
+  "freeze-05: \u00a7B5 'Reported alongside ... the excess vehicle-hours ratio (v3 \u00a75.5) and the median in-episode v_u error' (v5:375) is missing from screen() (metanet_v5_freeze.py:153-194) and from the committed record. The text marks these 'report-only; cannot change the verdict'.",
+  "j5-04: v5:164 says 'An unscored item is left out of its row mean and counted'. The leave-out is done (metanet_j5.py:180), but the count is reported nowhere. J5's value does not change.",
+  "robustness-03: v3 \u00a74.4 'Optimiser (settings frozen; record the pycma version)' (v3:722). The v5 record and the restart results carry no pycma version.",
+  "freeze-08 / robustness-06: v5:587 'Grid and member jobs may use up to 16 processes', but the grid batch uses max_workers=32 (metanet_v5_freeze.py:602). The grid never ran. Whether the cap also binds the gate draws (metanet_v5_gate.py:334) is contested.",
+  "freeze-02: \u00a7B11.1 requires v3's 'PASS, deterministic-only' to be recorded under its v3 label, but verdict() lacks it (metanet_v5_gate.py:302-303). Gate path only; not reached under STOP.",
+  "Critic gap 2: the \u00a7B11.2 item 4 labels ('second look on the same validation days', 'after post-result fix') are not implemented in verdict() or finalize(). They act only after a fix or on the gate path.",
+  "Critic gap 4: the record set lacks docs/lab/day_pattern/metanet_v5_calibration.md (v5:453 'records: ...metanet_v5_calibration.{json,md}'; I confirmed only the .json exists). \u00a7B13 item 1's statement 'plant selected after 3 attempts (listed)' (v5:597) is also absent. Report-only.",
+  "Procedural consequence for all of the above: \u00a7B11.2 item 1 requires each fix to be followed by 'calibration and the gate ... re-run in full on the original seeds'. None of these fixes touches J5, so the re-run should reproduce nominal 7192011 and the same STOP if the pipeline is deterministic. That determinism was not re-checked: not determined."
+ ],
+ "disagreements_resolved": [
+  "P4-1 CI resampling unit. Report 1 calls it not one-reading; reports 2 and 3 are silent. v3:1006 says 'percentile bootstrap over days for medians'. The code resamples the 26 per-episode values instead (gate.py:332, boot_median_ci(dts)). Judge: the literal reading would be a day-cluster bootstrap, but 'over days' can fairly be read as a general convention written for the per-day rows, so I treat it as contested. Either way the CI is report-only: the P4 criterion is 'median <= 15 min and >= 75 % of them matched' (v3:898; gate.py:333). Not route-changing. Disclose it as an ambiguity. If the author rules it one-reading, it becomes a fix to a reported CI only.",
+  "P5c minimum denominator. Report 2 calls it one-reading, with a caveat; report 1 did not cover P5c. Judge: one reading.\n- v3:843 'Heavy at both: heavy at B1 and at B2 (n_H,both; P5c)'.\n- v3:884 '>= max(6, \u23080.75 \u00b7 n_H,both\u2309)'.\n- v5:127 itself separates 'the days heavy at both' (row kept if >= 6) from both_q.\nThe code uses need(len(both_q)) (gate.py:387-388). On the calibration days both = both_q = 9, so the requirement is 7 either way and 4 matched days fail. A real deviation, not route-changing.",
+  "regression-01 (s1_ratio). Reports 2 and 3 call it one-reading; report 1 is silent. Judge: a real deviation. I checked it directly: np.convolve([900], ones(3)/3, 'valid') returns [300, 300, 300]. For 1-2-bin windows the code therefore returns sum/3, which matches no reading of v3 \u00a75.4 'the maximum 3-bin rolling 15-min flow ... in [onset \u2212 60 min, end]'. Not route-changing:\n- it is called only at gate.py:446, for P9;\n- P9 fails on its count alone, 15 < 17 (gate.py:467, 471);\n- the shortest windows are 20 bins real and 23 model (report 2's reproduction), with a \u2265 6-bin analytic bound (report 3).",
+  "Report 1 found 'no one-reading deviation' while reports 2 and 3 list several. This is not a conflict: report 1 was scoped to five rows (P2, P3-1, P4-1, P5a-1, P7a-1), and the deviations the others found lie in P5c, P9, report-only output, the record, the grid/gate stages or the tests.",
+  "P9 truncation count. Report 3 gives 6 truncated days, against truncated = 3 in the record. Both are right: report 3 counts over all 22 real heavy-first days, while the code counts only the 15 matched days (gate.py:433-441), and 0607, 0621 and 1115 are among the unmatched days.",
+  "P5a matching. Report 1 tested matching the 'longest real alone'; report 2 describes the matched partner of the longest episode. No conflict: the code matches all real episodes one-to-one and takes the partner of the longest (metanet_postcal.py:246-251), which is v3 \u00a75.1 'the C4 formulas applied to the model episode matched to the real longest episode'. Both variants give the same values.",
+  "P2 ties and the P7b start-station test. Report 2 lists both as two-reading, and I agree, so the code's reading stands. Neither can matter on these days: report 2 found 0 tie days, and the real start station was congested on 22/22 days. A stricter reading could only lower these shares.",
+  "Test-suite gaps. Report 3 treats them as one-reading deviations, and I agree they fall short of \u00a7B10. But no production code changes with them, so no test can 'fail on the code that produced the result' (v5 \u00a7B11.2 item 1). They are therefore disclosures and required test additions, not fixes that could reverse the route."
+ ],
+ "disclose": [
+  "Audit scope (critic gap 1). The pinned procedure ran unchanged with a scope line naming only the checkpoint diff, so the unchanged imported modules were reviewed by no lens. These are vsl_lab/data/metanet_{events,inputs,facts}.py, corridor_analysis.py, mndot.py and vsl_lab/plants/metanet.py, which v5:552 puts in scope. Whether they hold a one-reading deviation is not determined. Partial mitigation: report 1 rebuilt the real event layer from raw calibration-day data, and it matched the committed facts. Nobody has independently checked the model inputs (model_inputs, fit_targets, the c_s table) or the plant equations against the v3 text.",
+  "Ambiguities logged; the code's reading stands under \u00a7B11.2 item 1:\n- A1: c = 1 at boundary station S453 (v3:518 vs v3:524; metanet_postcal.py:100-101).\n- A2: the merge-gap measure (corridor_analysis.py:85).\n- A3: the tie order in matching (metanet_events.py:96).\n- A4: the t_c window end, e+6 vs e+7 (metanet_events.py:75).\n- P2 ties (gate.py:310).\n- P7b start station not tested for congestion (gate.py:144).\n- P4 CI: episodes vs days (v3:1006; gate.py:332).\n- indexing-04: a None head counted as 'outside 28-31'.\n- freeze-01 / robustness-01: the audit-to-record link (v5:39 vs v5:550).\n- j5-05: the onset cap in the \u00a7B1.7 sensitivity.\n- T/2 in the v5 record (v4:361).\n- regression-09 and regression-10.\n- Critic gaps 5 (sensitivities not run after a pre-look stop) and 6 (where the gate outcome is committed).\nAccording to report 1, A3 and A4 change nothing on the 22 calibration days. Under report 1's test, the A2 alternative leaves P2, P3-1, P4-1 and P5a-1 unchanged and moves P7a-1 from 62.5 to 67.5 min (still a FAIL).",
+  "Test-suite shortfalls against \u00a7B10 (tests 24, 25, 30(b)/(c), 31, 33, 34, 35, 40, 41):\n- the findings: freeze-03, freeze-04, indexing-01, indexing-02, indexing-03, j5-01, j5-02, j5-03, j5-06, j5-07, j5-08, regression-02 to regression-08, robustness-04;\n- the tests must still be added;\n- they cannot serve as the 'fails on the code that produced the result' test, because no production code changes with them;\n- the production numbers they guard were checked another way: screen re-run identical to 1e-12 (report 2), loo_nulls bit-for-bit (report 3);\n- the reviewer harnesses t30b_full, j5_indep and j5_zero were not re-run by the judge or the checkers.",
+  "Re-run path (critic gap 3). A \u00a7B11.2 full re-run on the original seeds overwrites the original raw outputs: cma_restart_{s}.json is unlinked (metanet_v5_calibrate.py:310-311), and cma_state and the summaries are overwritten. Archive the original raw directory before any re-run. Whether a full re-run is bit-deterministic has not been re-verified.",
+  "Data handling by the checkers under the single-look rule.\n- Report 2 loaded the v3 facts file, which contains F11, and precal_part1.json. It printed F8, the top-level key names (which name F11), and the first six date keys of part1['exclusions'], which may include validation dates. It reports reading no values.\n- Report 1 read precal_part1.json into memory and decoded only the c_s object.\n- No checker opened val_data.npz or any raw validation-date file.\n- The judge read no validation data. Its reads were the protocol, the code, freeze_stops.json, the committed record and the audit rows file.",
+  "Coverage limits:\n- Seven failing rows (P1c, P5b-1, P6-1, P5c, P7b, P7c, P9) were reproduced only through the committed code itself (report 2) and re-derived from recorded statistics (report 3). Report 1's own implementation did not recompute them.\n- The judge did not simulate the nominal. The judge's own checks were: the committed record equals freeze_stops.json and is route-consistent; the s1_ratio short-window behaviour; and the protocol and code quotes.",
+  "Already in the protocol and repeated here: the in-sample screen's false-STOP rate at n = 22 is not computed (v5:370-371). The STOP is therefore a pre-registered stop on in-sample statistics, not evidence about validation-day performance. The 97 validation days stay unlooked."
+ ],
+ "checkers": [
+  {
+   "stop_reversible": "no",
+   "summary": "I went through all 39 findings and 6 critic gaps in freeze_audit_20261011_rows.json, and on the audit's findings the STOP (in-sample screen) cannot be reversed. No item can change J5, and so none can change the nominal: 7192011 (J5 0.2913) remains, ahead of 7192014 (0.3522). No item can change step-halving, which passes with relative changes of 1.1e-5 on J5 and 3.4e-5 on J_v4 and identical day sets. No item can change P11-k (0 unbacked days) or any screen verdict.\n\n**What reversal would need.** 12 screened rows fail. I re-derived all 24 row verdicts from the recorded statistics using the gate's conditions (metanet_gate.py:267-471), and all of them agree with the record. The committed record's screen is identical to freeze_stops.json. A screen-only fix would have to flip all 12 failing rows, and many fail by wide margins: P7b 3/22, P7c 55 min, P7a-1 62.5 min, P1c with median D_N2 of +0.198. Moving the plant would need a fix that changes J5, and no finding alters any J5 item value:\n- `s1_ratio` is called only by P9 (metanet_gate.py:446), and P9 is not a J5 row.\n- `_variant` runs only inside `sensitivities()`.\n- j5-04 concerns only a count that is not reported. The items are still left out of the row mean as the protocol says.\n- `loo_nulls`: I checked on the real calibration data that it equals `metanet_gate.nulls()` run on the other 21 days, bit for bit for all 22 days.\n\n**regression-01.** The code does contradict v3 \u00a75.4 on windows of 1-2 bins. It never acts on the calibration days:\n- All 22 heavy-first days are B1.\n- Real P9 windows are 20-58 bins. On the 6 truncated days, cut \u2212 rs is 12-23 bins and the real windows are 24-35 bins.\n- The model window is at least min(13, cut \u2212 rs \u2212 6) \u2265 6 bins, because the match tolerance is 18 bins (metanet_events.py:94).\n- The live `F.day_events` output equals the committed facts on all 22 days.\n\nSo the fix gives bit-identical results there. P9 also fails on its count alone (15 matched, 17 needed). The 0-bin path from the tag was not reached either.\n\n**The other one-reading deviations** in production code or record content touch only reports, labels, the record, or the grid and gate stages, which never ran: freeze-05, robustness-03, j5-04, freeze-02, freeze-08 / robustness-06, and critic gaps 2 and 4. The 19 test-gap findings are deviations of the test suite only: in each case the protocol text has one reading and the tests fall short of it. The production code that produced the result is consistent with the text. A test-only fix cannot meet \u00a7B11.2's requirement of a test that \"fails on the code that produced the result\" (v5 line 541), so these are items to disclose, not triggers for a re-run.\n\n**Limits of this sweep:**\n- Critic gap 1: the imported modules unchanged since the checkpoint (metanet_events, metanet_inputs, metanet_facts, corridor_analysis, mndot) were not reviewed by any lens. Whether they hold a deviation is not determined.\n- A \u00a7B11.2 re-run with only these text-match fixes would use an unchanged J5 on the original seeds. It would reproduce the STOP if the run is deterministic, which I did not re-check.\n- I did not simulate the nominal; the model-window bound comes from the code, not from a run.\n- I did not re-run the reviewers' harnesses (t30b_full, j5_indep, j5_zero). For those I rely on the audit's recorded results.\n\nThe repo was not modified, and I read no validation-day data. The scratch scripts are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5/06097ac8-c9f1-4c3e-b217-abb0461bbd07/scratchpad/v5stopverify/:\n- p9_windows_real.py\n- facts_vs_live.py (with a guard that raises on any read of a non-calibration Mayfly date)\n- loo_check.py\n- rederive.py",
+   "rows": [
+    {
+     "row": "stop 2: step-halving",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v5 \u00a7B4: \"PASS iff all three hold: |\u0394J5|/J5 \u2264 0.05; |\u0394J_v4|/J_v4 \u2264 0.05 ...; the P_1 and P_2 model-episode day sets are identical (no tolerance).\"",
+     "code_ref": "vsl_lab/jobs/metanet_v5_freeze.py:29-35, :56-88",
+     "note": "freeze_stops.json: rel \u0394J5 1.11e-5, rel \u0394J_v4 3.36e-5, day sets identical (B1 17 days, B2 8 days), no differing days. The only finding that touches this code is indexing-06 (division by zero when J5(T) = 0), which cannot trigger because J5(T) = 0.29130 and J_v4 = 0.27142."
+    },
+    {
+     "row": "stop 3: P11-k",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v5 \u00a7B1.2: \"The gated P11-k (at the freeze and at the gate) stays v4 \u00a7A12 unchanged\"",
+     "code_ref": "vsl_lab/jobs/metanet_v5_freeze.py:241-250",
+     "note": "0 unbacked days at both B1 and B2 (tolerance 3). The head report shows 0 None heads and days_P1_head_outside_28_31 = [], so indexing-04 has no effect. No audit finding changes P11 code."
+    },
+    {
+     "row": "N0",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a70.3/\u00a75.3 N0: clipping \u2264 1 %, finite, step-halving PASS",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:265-267",
+     "note": "clip_max 0.0077 \u2264 0.01; 0 non-finite days; stephalving_PASS True (passed as True at metanet_v5_freeze.py:387, only after step-halving passed)."
+    },
+    {
+     "row": "P1a",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 0.10\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:272-273",
+     "note": "median 0.0768."
+    },
+    {
+     "row": "P1b",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 0.20\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:274-275",
+     "note": "median 0.1966."
+    },
+    {
+     "row": "P1c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"vs N1: upper bound of the 95 % bootstrap CI of the median paired difference (model \u2212 N1) < 0; vs N2: median paired difference < 0\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:277-297; vsl_lab/jobs/metanet_v5_freeze.py:171",
+     "note": "Fails both criteria: ci_D_N1 = [\u22120.097, 0.261] and median_D_N2 = +0.198. I re-checked on the calibration data that loo_nulls equals metanet_gate.nulls() run on the other 21 days, bit for bit on all 22 days. This covers the function shared by J5 (through the facts) and the screen, i.e. j5-06/regression-08."
+    },
+    {
+     "row": "P2",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"\u2265 80 % of n_A\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:299-312",
+     "note": "share 16/22 = 0.727."
+    },
+    {
+     "row": "P3-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"agreement \u2265 75 %\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:315-321",
+     "note": "agreement 16/22 = 0.727 (6 real-active misses); passing needs 17/22."
+    },
+    {
+     "row": "P4-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 15 min and \u2265 75 % of them matched\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:323-333",
+     "note": "median 20 min and matched share 0.654 (17/26): fails both."
+    },
+    {
+     "row": "P5a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"heavy matched days at B_k (\u2265 max(6, \u23080.75 n_H,k\u2309)) | |median D_i| \u2264 0.05\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:335-344",
+     "note": "n_matched 15 < need(22) = 17, and |median D| = 0.056 > 0.05: fails both."
+    },
+    {
+     "row": "P5b-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"(i) \u2265 \u22120.02 ...; and (ii) \u2265 L_r,k\"; v5 \u00a7B5: \"P5b(ii) uses F8's calibration-day floor Lc_k\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:345-348; vsl_lab/jobs/metanet_v5_freeze.py:168",
+     "note": "Fails on count (15 < 17), on (i) (median r diff \u22120.030) and on (ii) (median r_model 0.977 < Lc 0.994)."
+    },
+    {
+     "row": "P6-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"(a) |M_h \u2212 R_h| \u2264 k_h in both halves\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:350-364",
+     "note": "Upper half: |8 \u2212 11| = 3 > k = 2."
+    },
+    {
+     "row": "P7a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 30 min\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:366-375",
+     "note": "median 62.5 min."
+    },
+    {
+     "row": "P3-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"agreement \u2265 75 %\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:315-321",
+     "note": "agreement 21/22."
+    },
+    {
+     "row": "P4-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 15 min and \u2265 75 % ... matched\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:323-333",
+     "note": "median 15 min; matched share 8/9."
+    },
+    {
+     "row": "P5a-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"|median D_i| \u2264 0.05\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:335-344",
+     "note": "n_matched 8 \u2265 7; |median D| 0.045."
+    },
+    {
+     "row": "P5b-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 P5b (i) \u2265 \u22120.02, (ii) \u2265 floor",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:345-348",
+     "note": "median r diff \u22120.0154; r_model 0.955 \u2265 Lc 0.926."
+    },
+    {
+     "row": "P6-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 P6 (a)-(c)",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:350-364",
+     "note": "Halves |2\u22122| and |6\u22127| are within k = 3. Model gradient 0.364 \u2265 0.5 \u00d7 0.455."
+    },
+    {
+     "row": "P7a-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 30 min\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:366-375",
+     "note": "median 20 min."
+    },
+    {
+     "row": "P5c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"days heavy matched at both (\u2265 max(6, \u23080.75 n_H,both\u2309)); gated only if n_H,both \u2265 6\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:377-388; vsl_lab/jobs/metanet_v5_freeze.py:190",
+     "note": "Gated (n_H,both = 9). Fails on count alone: n_matched 4 < 7. |median D| = 0.038 would pass."
+    },
+    {
+     "row": "P7b",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"... on \u2265 70 % of the days\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:390-401",
+     "note": "share 3/22 = 0.136."
+    },
+    {
+     "row": "P7c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"median \u2264 30 min\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:398-403",
+     "note": "median 55 min."
+    },
+    {
+     "row": "P8",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v5 \u00a7B5: \"the P8 tolerance max(2, \u23080.10\u00b722\u2309) = 3\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:405-429; vsl_lab/jobs/metanet_v5_freeze.py:167",
+     "note": "Pair excess \u2264 0, 0 spurious days, extra days B1 1 / B2 0."
+    },
+    {
+     "row": "P9",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3: \"heavy matched first-active days (\u2265 max(6, \u23080.75 n_H,first\u2309)) | (1) median of (S1_model \u2212 S1_real) \u2264 +0.03 ...; (2) median \u2265 1.2, with \u2265 5 qualifying days\"",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:431-471 (s1_ratio call at :446; count at :433, :467)",
+     "note": "Fails on count alone: n_matched 15 < need(22) = 17. S1 diff \u22120.0063 and S2 1.5 over 15 days would pass. s1_ratio (regression-01) feeds only S1 and is never called on a window shorter than 6 bins on these days (see the deviation entry)."
+    },
+    {
+     "row": "P11-1",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v5 \u00a7B5 rows include P11-k",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:481-485",
+     "note": "0 unbacked days."
+    },
+    {
+     "row": "P11-2",
+     "recorded_pass": true,
+     "your_pass": true,
+     "agrees": true,
+     "protocol_quote": "v5 \u00a7B5 rows include P11-k",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:481-485",
+     "note": "0 unbacked days."
+    }
+   ],
+   "deviations": [
+    {
+     "id": "regression-01",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Text: v3 \u00a75.4 \"S1 = the maximum 3-bin rolling 15-min flow at b's downstream station in [onset \u2212 60 min, end]\". A 1- or 2-bin window holds no 3-bin rolling flow under either reading (window fully inside, or rolling value at times inside). Yet metanet_items.py:100 returns seg.sum()/3, reproduced: [300,300,300] for a 1-bin seg of 900. So the code contradicts the text, although the replacement (None) is a choice.\n\nWhere it can act: s1_ratio is called only at metanet_gate.py:446, i.e. only P9's S1. It is not used by J5: the facts rows list has no P9, and J5 uses only p4/p5a/p7a/p5c/p7b/p8 items (metanet_j5_eval.py:89-112, metanet_j5.py:82). It is not used by step-halving or P11-k either.\n\nCalibration days (committed facts; live F.day_events equals the facts on 22/22 days, 0 mismatches):\n- All 22 days are heavy-first with b = B1.\n- Real P9 windows are 20-58 bins.\n- 6 days are truncated (20230517, 0531, 0607, 0621, 0920, 1115). Their cut \u2212 rs is 16, 23, 20, 14, 13 and 12 bins, giving real windows of 24-35 bins.\n- Model window = min(me \u2212 ms + 13, cut \u2212 ms + 12). Here me \u2265 ms and |ms \u2212 rs| \u2264 18 (match_episodes tol_bins=18, metanet_events.py:94), so the window is \u2265 min(13, cut \u2212 rs \u2212 6) \u2265 6 bins.\n\nSo the 1-2-bin (and 0-bin) path is never reached, and a fix is bit-identical on calibration days. I did not simulate the nominal; the bound is analytic.\n\nP9 also fails on its count alone (15 < 17, metanet_gate.py:467,471), and 11 other rows fail. Latent for the validation gate only."
+    },
+    {
+     "id": "freeze-03",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "This is a test-suite gap against \u00a7B10 34 (\"...and returns STOP for a synthetic failing plant\"); one reading, and no test does it. The production screen() (metanet_v5_freeze.py:153-194) matches \u00a7B5 lines 354-363:\n- P8 tolerance 3 (:167);\n- Lc_k = F8 ci_r[0] (:168);\n- LOO nulls (:171);\n- boot seed 7,192,099 (:122);\n- minima and the P5c gate (:180-190).\n\nThe untested branches were not taken: n = 22 \u2265 16; n_A 22/9 \u2265 8; n_H 22/9 \u2265 6; n_H_first 22 \u2265 6. So reported_not_screened = [], and P5c is gated (n_H_both 9). failed is exactly the rows whose G.deterministic PASS is False; I re-derived all 24 verdicts from the recorded statistics and they agree.\n\nThe members() part concerns the ensemble, which never ran. A test-only fix cannot meet \u00a7B11.2 \"fails on the code that produced the result\" (v5 line 541)."
+    },
+    {
+     "id": "regression-02",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Same as freeze-03: test 34 lacks the end-to-end screen() case, a gap in the test suite only. The screen wrapper's inputs:\n- the P8 tolerance (P8 passes);\n- Lc_k (P5b-1 also fails on count and on (i));\n- the nulls (P1c fails med D_N2 = +0.198 too; loo_nulls verified equal to G.nulls on the other 21 days, 22/22);\n- the boot seed (only CIs; P1c fails without its CI).\nNone of these can flip any of the 12 failed rows. Their failure margins are listed in rows."
+    },
+    {
+     "id": "freeze-04",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test-33 scope gap against \u00a7B10 33 (one reading). The audit's skeptic found no validation read in grid_job, premise or screen by reading. A test cannot change J5, a stop or a screen value. A test-only fix cannot meet v5 line 541."
+    },
+    {
+     "id": "freeze-05",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "\u00a7B5 \"Reported alongside (report-only; cannot change the verdict): ... the excess vehicle-hours ratio (v3 \u00a75.5) and the median in-episode v_u error\" is missing from the record. That is a one-reading deviation in report output.\n\nT/2: v4 line 361 says \"The v4 record stores T and T/2\". Whether it binds the v5 record is a reading question.\n\nBy the text itself, neither can change the verdict. Neither enters J5 or any stop."
+    },
+    {
+     "id": "indexing-01",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test-33 filter and stub gap (test suite only). I independently ran F.day_events on the 22 calibration days with an open hook that raises on any non-calibration Mayfly date or on val_data/gate_*: 0 forbidden reads, 0 mismatches against the facts. This covers only my own calls. No route effect."
+    },
+    {
+     "id": "indexing-02",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 25 lacks parts required by \u00a7B10 25 (one reading). This is a test gap; the J5 item bounds hold by construction (capped/taper, metanet_j5.py:28-40). No production change, so J5, the nominal and the screen are unchanged."
+    },
+    {
+     "id": "indexing-03",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 30(b) is tautological against \u00a7B10 30(b) (one reading). This is a test gap. The audit's skeptic re-ran t30b_full.py with 0 mismatches over 707 comparisons; I did not re-run it. Shared item functions are unchanged, so J5 and the screen are unchanged."
+    },
+    {
+     "id": "j5-01",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Same as indexing-03 (test 30(b)). The skeptic's j5_indep.py gave 0 mismatches on 300 days; I did not re-run it. No production change."
+    },
+    {
+     "id": "regression-03",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Tests 30(b) and 30(c) are partial or absent (test suite only). There is no production defect, and J5 and the screen are unchanged."
+    },
+    {
+     "id": "regression-04",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 25 bound and report are missing (test suite only). J5 code is unchanged by any fix."
+    },
+    {
+     "id": "regression-05",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 24 stubs the observation operator (test suite only). The skeptic's j5_zero.py found 0 nonzero items; I did not re-run it. No production change."
+    },
+    {
+     "id": "regression-06",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 33 scope gap (test suite only). No leak was found by reading. No route effect."
+    },
+    {
+     "id": "robustness-04",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 33 scope gap, plus no static v5 test 22 (test suite only). The audit itself notes that a test-only fix cannot meet v5 line 541. No route effect."
+    },
+    {
+     "id": "j5-02",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 25 parts are missing (test suite only). The skeptic showed the bound follows algebraically from capped items in [0,1] and p3_item \u2264 1 + \u03b5 (metanet_j5.py:65-71). No production change."
+    },
+    {
+     "id": "j5-03",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 24 does not pass through the operator (test suite only). No production change."
+    },
+    {
+     "id": "j5-06",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "There is no test that the P1c nulls leave out day d (\u00a7B10 31, one reading). loo_nulls feeds J5 (the facts' P1c_null_N1/N2, metanet_v5_facts.py:93-99) and the screen (metanet_v5_freeze.py:171). I verified on the real calibration data that loo_nulls(v, mv, i) equals metanet_gate.nulls() on the other 21 days, bit for bit, for all 22 i. So neither J5 nor P1c can change."
+    },
+    {
+     "id": "j5-07",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 40's day-level clauses (a) and (b) are missing (test suite only). creditable() (metanet_j5.py:57-61) is unchanged, so J5 is unchanged."
+    },
+    {
+     "id": "j5-08",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Test 33 scope gap (test suite only). No route effect."
+    },
+    {
+     "id": "regression-07",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "The test 35 J_d and selector parts are missing (test suite only). The \u00a74.7 stage never ran: the route stopped at stop 4."
+    },
+    {
+     "id": "regression-08",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Clause gaps in tests 31, 40 and 41 (test suite only). loo_nulls is verified on real calibration data (see j5-06). No production change."
+    },
+    {
+     "id": "regression-09",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "Test 30(a) does what \u00a7B10 30(a) says: bit for bit against the tag on \u2265 3 synthetic sets. Of its 3 gaps, the skeptic found 2 unreal: the both-None extent branch is unreachable (extent() always returns a station, metanet_gate.py:139-152). The loose except is a robustness note, not a contradiction of the text. No route effect."
+    },
+    {
+     "id": "regression-10",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "\u00a7B10 '22 (extended) No v5 job writes to a v3 or v4 path'. Enforcement is the runtime manifest check, which is unit-tested (per the skeptic), so whether a static unit test is also required is arguable. Writes cannot change J5, a stop or a screen row."
+    },
+    {
+     "id": "robustness-03",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "v3 \u00a74.4 heading \"Optimiser (settings frozen; record the pycma version)\" (v3 line 722) is kept by v5 \u00a7B2, and the v5 record has no pycma field. This is a one-reading omission in record content. The version string enters neither J5 nor any stop."
+    },
+    {
+     "id": "freeze-01",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "The text has two readings: v5 line 39 \"one pinned audit per freeze record\" against line 550 \"Freeze audit: once, after the freeze record is committed\". So the checkpointed reading stands (v5 line 539). This is gate guard code, unreachable under a STOP route (the guard refuses STOP)."
+    },
+    {
+     "id": "robustness-01",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "Same ambiguity as freeze-01; gate-only, unreachable under STOP. The point that verdict() reads FREEZE5 unchecked could only change a PASS label."
+    },
+    {
+     "id": "freeze-02",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "\u00a7B11.1 \"v3's 'PASS, deterministic-only' is recorded under its v3 label but counts as a v5 FAIL\". verdict() (metanet_v5_gate.py:302-303) lacks the label. This is gate code, not reached under STOP, and it is a label only."
+    },
+    {
+     "id": "freeze-06",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "No committed text requires grid provenance stamps. The grid never ran (stop 4); the v5 raw dir has 0 grid files per the audit."
+    },
+    {
+     "id": "freeze-07",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "_clean NaN is a crash path only; no text is contradicted. The committed record was written without hitting it."
+    },
+    {
+     "id": "freeze-08",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "For the grid: \u00a7B12 \"Grid and member jobs may use up to 16 processes\" against metanet_v5_freeze.py:602 max_workers=32. For gate draws, the reading is ambiguous. The grid never ran, and its jobs are deterministic and independent."
+    },
+    {
+     "id": "robustness-06",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Same as freeze-08 (grid only one-reading). Not run, and it does not affect results."
+    },
+    {
+     "id": "indexing-04",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "\u00a7B5 '\"none\" if no run; and the count of days whose P_1 head lies outside cells 28\u201331' admits counting None as outside, so the reading is ambiguous. It is report-only. freeze_stops head report: 0 None heads, days_P1_head_outside_28_31 = []."
+    },
+    {
+     "id": "indexing-05",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "The inlined \u00a7B6 rule matches the text, and dead code is not a deviation. The ensemble step never ran."
+    },
+    {
+     "id": "indexing-06",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "No text is contradicted. It is unreachable: J5(T) = 0.29130 and J_v4(T) = 0.27142, so step-halving's ratios are 1.1e-5 and 3.4e-5."
+    },
+    {
+     "id": "j5-04",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "\u00a7B1.3 \"An unscored item is left out of its row mean and counted\". The leave-out is implemented (metanet_j5.py:180); the count is not reported. J5's value is unchanged by adding a count. On the calibration days, p7c_item returns None only if dr == 0 (metanet_j5.py:96-97), which cannot happen on heavy_any days. The screen shows 0 unscored for P1a/P1b/P1c."
+    },
+    {
+     "id": "j5-05",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "\u00a7B1.7 lists the onset cap in its own bullet, apart from the 'Caps' list, but never says to exclude it, so the text is ambiguous. _variant applies only inside sensitivities() (metanet_v5_freeze.py:545-557), never in CMA-ES. The protocol says sensitivities are \"never used to select a plant\", and they have not run."
+    },
+    {
+     "id": "robustness-02",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "No text requires per-worker identity checks. freeze_stops 'code' = 3d4402fd09..., which equals the committed identity; the restarts launched within 0.5 s per the audit. The grid never ran."
+    },
+    {
+     "id": "robustness-05",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "code_commit failing open is a hardening issue, not a contradiction of the text. The stored identities are real SHAs (3d4402fd092619f3f710374d53beef2b1ba4a0b5 in freeze_stops.json)."
+    },
+    {
+     "id": "robustness-07",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "\u00a7B8 step 4 requires only that the blobs be recorded. I checked git hash-object today: v3 c3ed7041..., v4 8b8dc558..., both equal to facts reused_facts_blobs."
+    },
+    {
+     "id": "critic-gap-1 (audit scope)",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "This is about audit procedure, not code. The pinned prompt ran 'unchanged' (\u00a7B11.2 item 3) while its scope line named only the diff. The tension between 'unchanged procedure' and 'Scope: ... every vsl_lab module they import' (v5 line 552) is an ambiguity. The gap itself cannot change any number. But the unchanged imported modules (metanet_events/inputs/facts, corridor_analysis, mndot) were in no lens's diff, so whether they hold a deviation is NOT DETERMINED by this sweep."
+    },
+    {
+     "id": "critic-gap-2 (post-fix labels)",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "\u00a7B11.2 item 4 labels ('second look...', 'after post-result fix') are absent from verdict() and finalize(). They act only after a fix, and only on labels."
+    },
+    {
+     "id": "critic-gap-3 (re-run path)",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "Archiving raw files and enforcing a fix-record precondition in code are not text requirements on code. One sub-item may conflict with v5 line 544 (\"The premise check is repeated only to confirm a fix to its own anchor\"): run() refuses on a changed facts hash, which forces a premise re-run. That is reachable only after a facts-code fix. None of it changes J5, a stop or a screen row."
+    },
+    {
+     "id": "critic-gap-4 (record contents)",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "Two one-reading omissions in the record: \u00a7B8 Paths \"records: ...metanet_v5_calibration.{json,md}\" (no .md) and \u00a7B13 item 1 \"Every result states 'plant selected after 3 attempts (listed)'\". Both are report-only. The pre-look P9 0-bin change was also not exercised on the calibration days (all P9 windows \u2265 6 bins, see regression-01), so the screen's P9 equals what the tag code would give."
+    },
+    {
+     "id": "critic-gap-5 (sensitivities not run)",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "Whether \u00a7B8 step 8 runs after a pre-look stop is ambiguous. Sensitivities are report-only and never select a plant (\u00a7B1.7)."
+    },
+    {
+     "id": "critic-gap-6 (gate outcome commit)",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "Gate-only, reachable only if the route reaches the gate; where the gate outcome is recorded is not fixed by the text. No effect under STOP."
+    }
+   ]
+  },
+  {
+   "stop_reversible": "no",
+   "summary": "I recomputed P2, P3-1, P4-1, P5a-1 and P7a-1 independently on the 22 calibration days for nominal 7192011. All five match freeze_stops.json exactly, and all five FAIL. I found no deviation in these rows where the committed text has one reading and the code contradicts it. Nothing here can reverse the STOP (in-sample screen).\n\n**What I recomputed.** Each statistic and pass rule comes from the protocol text: v3 \u00a75.1-\u00a75.4, the \u00a75.2 minima at the calibration n, and v5 \u00a7B5. Thresholds: P2 \u2265 80 % of n_A; P3-1 \u2265 75 %; P4-1 median \u2264 15 min and \u2265 75 % matched; P5a-1 needs \u2265 max(6, \u23080.75\u00b722\u2309) = 17 heavy matched days and |median D| \u2264 0.05; P7a-1 median \u2264 30 min. The calibration counts meet every real-data minimum (n_A,1 = n_H,1 = n_H,first = 22), so all five rows are screened. No pass rule uses a Wilson bound: P2 and P3 are gated on the point share, and their Wilson intervals are reported only.\n\n**Plant run.** I simulated the frozen parameters (equal to C.to_params(nominal_x)) with the committed vsl_lab/plants/metanet.py at T = 0.75 s. The inputs come from C.load_data(); their sha256 matches the facts, and d0/d_o/beta equal the screen's calib_screen_data.npz bit for bit. Clipping max is 0.0077 and no value is non-finite.\n\n**Own code.** The event rule, observation operator, matching, \u00b160-min overlap, censoring, C4 and every row statistic are my own implementation; no gate/postcal/items/events row function is called. I also rebuilt the real event layer from the raw Mayfly files of the 22 calibration days. It reproduces the committed facts exactly: episodes at every pair, station validity, and the B1 Q_dis and censored durations.\n\n**Recorded vs mine (identical in every case):**\n- **P2:** 16/22 = 0.727; needs 18.\n- **P3-1:** 16/22 = 0.727; needs 17.\n- **P4-1:** 17 of 26 matched (0.654), median 20 min.\n- **P5a-1:** 15 matched, 17 required; median D \u22120.0561.\n- **P7a-1:** median 62.5 min. Signed median, uncensored median and all bootstrap CIs (seed 7,192,099) also match.\n\n**Why the margins cannot close.** On 5 of the 6 miss days the model has no P_1 episode at all. On 20230607 its only P_1 episode starts 100 min after the real one ends. The P5a-1 count shortfall fails the row on its own, and P7a-1 is more than 2 \u00d7 its threshold.\n\n**Alternative readings tested, model and real side alike.** None changes a verdict:\n- the merge-gap measure (only P7a-1 moves, to 67.5);\n- overlap \u00b155 and \u00b165 min;\n- match window \u00b195 min;\n- unmasked model flow;\n- matching the longest real episode alone;\n- the t_c window at e + 7 bins;\n- the order of tied matches.\n\nThe candidate items listed are ambiguities or a report-only CI; none could change the route.\n\n**Could any difference turn the screen into a PASS?** No. None was found, and each of the five rows fails the screen by itself. Seven further rows also failed in the record (P1c, P5b-1, P6-1, P5c, P7b, P7c, P9); I did not recompute them.\n\n**Limits.** I did not independently verify the plant, the replay input arrays or the c_s table; I used them as committed. I extracted the c_s table by decoding only the 'c_s' object at its byte offset in precal_part1.json. The file was read into memory, but no other part was decoded or shown.\n\n**Validation data.** None was opened: no val_data.npz, no validation-date raw files, no F11 field.\n\n**Repo.** Read-only; no edit, commit or git state change.\n\nFiles are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5/06097ac8-c9f1-4c3e-b217-abb0461bbd07/scratchpad/v5stopverify/:\n- sim_nominal.py\n- recompute.py\n- sens.py\n- cs_table.json\n- sim_and_real.npz\n- recompute_out.json\n- sens_out.json",
+   "rows": [
+    {
+     "row": "P2",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 (line 896): 'P2 where | the n_A real-active days; a day without a model episode overlapping the real earliest episode fails | \u2265 80 % of n_A'. \u00a75.4 (line 947): 'let e* be the day's earliest real B1 or B2 episode (ties: B1). Among the model episodes, at any pair, that overlap e* (\u00b160 min), the one with the earliest onset must be at e*'s pair.' v5 \u00a7B5 (lines 354-357): the \u00a75.3 thresholds at the calibration n.",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:298-312; vsl_lab/jobs/metanet_postcal.py:229-230 (overlaps)",
+     "note": "Recorded: share 0.7273, Wilson [0.518, 0.868]. Mine: 16/22 = 0.7273, with the same Wilson interval. The pass rule is the point share \u2265 0.80, so 18 of 22 days are needed; the Wilson interval is reported only. Six days fail: 20230503, 20230607, 20230621, 20230705, 20230802, 20231115. On all six, e* is a B1 episode. On 0503, 0621 and 0705 no model episode at any pair overlaps e*, and the text fails such a day outright. On 0607, 0802 and 1115 the only overlapping model episode is at P_2, the wrong pair. No day has a tie for the earliest onset. Same result under every alternative reading I tested."
+    },
+    {
+     "row": "P3-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 (line 897): 'P3-k whether | all usable validation days | agreement \u2265 75 %; confusion matrix and Wilson CI reported'. \u00a75.4 (line 949): 'A real-B_k-active day agrees only if a model B_k episode overlaps (\u00b160 min) a real B_k episode.' \u00a75.2 (line 850): minimum n_A,k \u2265 8.",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:314-321; vsl_lab/jobs/metanet_postcal.py:244",
+     "note": "Recorded: agreement 0.7273, confusion 16 agree / 6 miss / 0 / 0. Mine: identical. B1 is real-active on all 22 days, so the n_A,1 = 22 \u2265 8 minimum is met and the row is screened. A pass needs 17 of 22. On five of the miss days (0503, 0621, 0705, 0802, 1115) the model has no P_1 episode at all. On 20230607 the model's only P_1 episode (17:50-18:35) lies 100 min after the real episode (14:15-16:10), far outside \u00b160 min. No reading of the overlap tolerance can bridge either case; \u00b155 and \u00b165 min both give 16/22. The Wilson interval is reported, not gated."
+    },
+    {
+     "row": "P4-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 (line 898): '|model onset \u2212 real onset| over all real B_k episodes; an unmatched episode scores 90 min | median \u2264 15 min and \u2265 75 % of them matched'. \u00a75.1 (line 840): 'matched to the model B_k episode with the nearest onset within \u00b190 min, one-to-one (smallest |\u0394onset| first)'. \u00a75.2 (line 881).",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:322-333; vsl_lab/jobs/metanet_items.py:16-19; vsl_lab/data/metanet_events.py:94-104",
+     "note": "Recorded: 26 episodes, matched share 0.6538, median 20 min, CI [7.5, 90]. Mine: identical, and my own resampler at seed 7,192,099 gives the same CI. Both conditions fail. A pass needs 20 of 26 matched and a median \u2264 15. Nine real episodes are unmatched: seven on the six miss days (20230621 has two), the 20231018 episode (\u0394onset 100 min > 90), and the second real episode of 20230830 (the model's single episode is matched to the first). Tied |\u0394onset| candidates occur on 20230531 and 20230920, but reversing the tie order leaves the matching unchanged. A \u00b195-min window also gives 17/26."
+    },
+    {
+     "row": "P5a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 (line 899): 'P5a-k discharge | D_i = Q_dis,model,i / Q_dis,real,i \u2212 1 | heavy matched days at B_k (\u2265 max(6, \u23080.75 n_H,k\u2309)) | |median D_i| \u2264 0.05 (two-sided)'. \u00a75.1 (lines 841, 843): heavy matched = matched to a model episode usable by the C4 estimator, same window rule (B1 window ends at min(end, t_c)). \u00a75.2 (line 882). v5 \u00a7B5: minima at the calibration n.",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:334-344; vsl_lab/jobs/metanet_postcal.py:247-257; vsl_lab/data/metanet_events.py:136-150",
+     "note": "Recorded: n_H 22, matched 15, required 17, median D \u22120.05610, CI [\u22120.0703, \u22120.0306]. Mine: identical, including the CI. Required = max(6, \u230816.5\u2309) = 17. Seven heavy days have no matched, C4-usable model episode: 0503, 0607, 0621, 0705, 0802, 1018 and 1115. Even with a median inside \u00b10.05 the row would fail on the count. The median also misses, by 0.0061. Reading v3 \u00a75.1 per bin, the model flow is masked by the real NaN bins; without that mask the values are the same. Matching the longest real episode alone, instead of one-to-one, also gives the same values. My real Q_dis, rebuilt from the raw data, equals the facts on every heavy day."
+    },
+    {
+     "row": "P7a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "protocol_quote": "v3 \u00a75.3 (line 903): '|dur_model \u2212 dur_real|; dur_model = the matched model episode's duration of any length, or 0 if unmatched. B1 on censored days: both durations censored at the real B2 onset | all n_H,k heavy days at B_k | median \u2264 30 min'. \u00a75.1 (line 836): censored duration = min(end, t_c) \u2212 onset, 0 if starting at or after t_c, 0 if unmatched.",
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:365-375; vsl_lab/jobs/metanet_items.py:27-33; vsl_lab/data/metanet_events.py:81-91",
+     "note": "Recorded: median 62.5 min, CI [32.5, 82.56], signed median 0, uncensored median 75 (n = 13). Mine: identical on all four. The 22 values sorted: 0,0,5,15,20,25,30,40,50,60,60,65,70,75,80,85,85,100,100,125,195,230. The median is (60 + 65)/2 = 62.5, against a 30-min threshold, so the row fails by far. Alternative readings: the label-difference merge-gap reading, applied to both sides, gives 67.5; counting duration as (e \u2212 s) bins gives 62.5. The censoring window t_c \u2264 end + 7 bins, instead of + 6, changes no calibration day."
+    }
+   ],
+   "deviations": [
+    {
+     "id": "D1-P4-CI-resampling-unit",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "v3 \u00a75.5 (line 1006): 'Every P statistic with its n and a 95 % interval (percentile bootstrap over days for medians, Wilson for shares)'. The code resamples the 26 per-episode values, not days (metanet_gate.py:332, boot_median_ci(dts); metanet_gate.py:58-65). 'Over days' may be shorthand for the statistic's own units, so I do not claim a single reading. The CI is reported only, and P4-1 fails on its point median (20 > 15) and matched share (0.654 < 0.75)."
+    },
+    {
+     "id": "A1-boundary-station-c_s",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "v3 \u00a73.2.4 (line 518) defines c_s for 'every interior station and for T.H.101'. Line 524 applies the observation operator 'at every station the event layer reads', which includes S453 in the pair (S453, S455). The code uses c = 1 for S453 (metanet_postcal.py:102-108, disclosed in its docstring). The text gives no value, so it has more than one reading. It cannot rescue P2: P2's failing days lack any overlapping model P_1 episode, and an extra episode at another pair can only add failures."
+    },
+    {
+     "id": "A2-merge-gap-measure",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "v3 \u00a75.1 (line 832): 'episodes separated by < 30 min are merged'. The code counts empty bins between episodes (corridor_analysis.py:85: s[0] \u2212 prev_end \u2212 1 < 6). The alternative reading, onset label minus end label < 30 min, applied to both sides, leaves P2, P3-1, P4-1 and P5a-1 unchanged and moves P7a-1 from 62.5 to 67.5 min. Every row still fails."
+    },
+    {
+     "id": "A3-matching-tie-order",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "v3 \u00a75.1 (line 840): 'one-to-one (smallest |\u0394onset| first)'. The text does not order equal |\u0394onset| candidates; the code sorts by (\u0394, real index, model index) (metanet_events.py:96). Ties exist on 20230531 and 20230920. Reversing the tie order gives the same matching on every day."
+    },
+    {
+     "id": "A4-censor-window-end",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "v3 \u00a75.1 (line 835): t_c 'inside it or within 30 min after its end'. The code tests s \u2264 t_c \u2264 e + 6 bins (metanet_events.py:75); counting from the end of the last bin gives e + 7. On the 22 calibration days both readings give the same censoring (checked)."
+    }
+   ]
+  },
+  {
+   "stop_reversible": "no",
+   "summary": "The stop cannot be reversed. I found no place where the code contradicts a one-reading text in a way that would change any of the 12 failing rows, so the code's verdicts stand.\n\n**What I checked.** I read v5 \u00a7B5 (lines 350-375) and the texts it points to: v3 \u00a75.1-\u00a75.4 (lines 824-1007), v3 R4(b), F8, v4 \u00a7A1/\u00a7A12 and the v4 addendum. I then read screen() (metanet_v5_freeze.py:153-194), G.deterministic and _deterministic_rows (metanet_gate.py:225-494), metanet_items.py, model_day/overlaps/model_speeds in metanet_postcal.py, metanet_events.py, day_events in metanet_facts.py, and loo_nulls in metanet_v5_facts.py.\n\n**What the code does, row by row against \u00a7B5.**\n- Real-data minima (v3:849-852): all are met at n = 22. n_A,1 = 22 and n_A,2 = 9 (\u2265 8); n_H,1 = 22 and n_H,2 = 9 (\u2265 6); n_H,first = 22. So no row is \"reported, not screened\", and P5c is gated (n_H,both = 9 \u2265 6).\n- Model-side minima (v3:880-884): \"a model-dependent shortfall is a FAIL\", and \u00a7B5 applies them \"at the calibration n\". This has one reading. P5a-1 and P5b-1 (15 < 17), P9 (15 < 17) and P5c (4 < 7) are therefore FAILs, which is what the code records.\n- Thresholds are point statistics except P1c-vs-N1, which uses the upper bound of a 10,000-resample percentile bootstrap (seed 7,192,099). Wilson intervals are reported only, as the text says.\n- P5b(ii) uses F8 B1 ci_r[0] = 0.99397, computed over 22 heavy days, as \u00a7B5 requires.\n- P6-1: the real gradient is 0, so (b)-(c) are not applied, as the text requires.\n- P1c: the nulls leave the scored day out; N1 is the median of speeds \u2265 45 mph and N2 the per-bin median, on scaled speeds.\n- P7b and P7c follow v3 \u00a75.4.\n\n**Rows that fail on their own statistics.** None of these is touched by any deviation:\n- P1c: median D_N1 = +0.107, median D_N2 = +0.198.\n- P2: 16/22.\n- P3-1: 16/22.\n- P4-1: 65 % matched, median 20 min.\n- P5a-1: |D| = 0.056.\n- P5b-1: (i) \u22120.030 and (ii) 0.977.\n- P6-1: cannot pass under any split, because the model is B1-active on only 17 days.\n- P7a-1: 62.5 min.\n- P7b: 3/22; the model's B1 queue spills 3-11 stations too far upstream.\n- P7c: 55 min.\n\n**Deviations found.** None of them can change the route:\n- P5c's denominator is n_real_merge_defined instead of n_H,both. Both equal 9 here, and a correction would only make the row stricter.\n- s1_ratio mishandles windows of 1-2 bins (audit regression-01). No window here is shorter than 20 bins, and P9 fails on its count anyway.\n- Two two-reading points, so the code's reading stands: P2 ties (none occurred) and P7b not testing the start station for congestion (the real start was congested on every day).\n- Missing report-only items, which \u00a7B5 says cannot change the verdict.\n- Missing tests 34 and 31 (test gaps only).\n\nThis agrees with the freeze audit's \"0 must-fix\".\n\n**Reproduction.** I re-ran the screen at HEAD; the metanet code is unchanged since 3d4402f. It used calibration days only: C.FACTS was patched to a file holding F8 only, and part1 to c_s only. Every row was identical to freeze_stops.json (to 1e-12), with the same failed list, in about 42 s on one process. The machine was idle (0.3 % CPU) when it ran.\n\n**Disclosure.** To build those two files I loaded the v3 facts file and precal_part1.json once. I printed F8 only, plus the top-level key names (which name F11) and the first six date keys of part1['exclusions'], which may include validation dates. I read no values from them, and did not open val_data.npz or any validation-date file.\n\nFiles are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5/06097ac8-c9f1-4c3e-b217-abb0461bbd07/scratchpad/v5stopverify/:\n- repro_screen.py\n- repro_out.json\n- facts_F8_only.json\n- part1_cs_only.json",
+   "rows": [
+    {
+     "row": "P1c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:277-297 (window 283, mask 285, PASS 297); metanet_v5_freeze.py:171 (nulls_for = loo_nulls); vsl_lab/jobs/metanet_v5_facts.py:43-54; metanet_gate.py:58-65 (10,000 resamples, 2.5/97.5 percentiles; seed from SEED_BOOT set to 7192099 at gate.py:235)",
+     "protocol_quote": "v3:895 'vs N1: upper bound of the 95 % bootstrap CI of the median paired difference (model \u2212 N1) < 0; vs N2: median paired difference < 0'; v3:945 'N1 = per station, the median of all 05:00\u201323:00 speeds \u2265 45 mph ... N2 = per station and 5-min bin, the median calibration-day speed'; v5:361-362 'leave-one-day-out P1c nulls; bootstrap seed 7,192,099'",
+     "note": "The code matches the text. The window is bins s-6..e+6, i.e. [onset \u2212 30, end + 30]. The set is Q_A on scaled speeds (fit_targets multiplies by c_s, metanet_inputs.py:556). The nulls are built from the other 21 days. The denominator is n_A = 22, all of them scored; \u00a75.2 sets no minimum for P1c. Recorded: median D_N1 = +0.107 (CI \u22120.097 to 0.261) and median D_N2 = +0.198. Both parts fail, and the N2 part fails whatever the bootstrap seed. No contradiction found."
+    },
+    {
+     "row": "P2",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:299-312 (ties 310, threshold 312); metanet_postcal.py:229-230 (\u00b112 bins)",
+     "protocol_quote": "v3:896 '\u2265 80 % of n_A' and 'a day without a model episode overlapping the real earliest episode fails'; v3:947 'let e* be the day's earliest real B1 or B2 episode (ties: B1) ... the one with the earliest onset must be at e*'s pair'",
+     "note": "Share 16/22 = 0.727; 18 are needed. Wilson is reported only, and the criterion is a point share, as the text says. The tie handling (passes if e*'s pair is among the tied earliest) has two readings, but my reproduction found 0 tie days. The failing days are 0503, 0621 and 0705 (no overlapping model episode) and 0607, 0802 and 1115 (the earliest overlapping model episode is at P_2)."
+    },
+    {
+     "row": "P3-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:315-321; metanet_postcal.py:244 (agree = overlaps), 229-230",
+     "protocol_quote": "v3:897 'agreement \u2265 75 %; confusion matrix and Wilson CI reported'; v3 \u00a75.4 P3-k 'A real-B_k-active day agrees only if a model B_k episode overlaps (\u00b160 min) a real B_k episode'",
+     "note": "16/22 = 0.727 < 0.75 (17 needed). The real minimum is met: n_A,1 = 22 \u2265 8 (v3:850), so the row is screened. On the 6 non-agreeing days (0503, 0607, 0621, 0705, 0802, 1115) the model has no P_1 episode, or (on 0607) only one at [154,163] against a real one at [111,134], outside \u00b160 min. No contradiction found."
+    },
+    {
+     "row": "P4-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:323-333; metanet_items.py:13-19; metanet_events.py:94-104 (tol_bins 18 = 90 min)",
+     "protocol_quote": "v3:898 'an unmatched episode scores 90 min ... median \u2264 15 min and \u2265 75 % of them matched'; v3:881 'P4-k needs \u2265 75 % of the real B_k episodes matched'",
+     "note": "17 of 26 real episodes are matched (65.4 %), and the median |\u0394onset| is 20 min. Both parts fail. The matching (one-to-one, nearest onset, \u00b190 min) and the 90-min unmatched score match the text."
+    },
+    {
+     "row": "P5a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:335-344 (enough 340), need() 86-87; metanet_postcal.py:246-256 (model C4 on the episode matched to the real longest one, B1 capped at the real t_c)",
+     "protocol_quote": "v3:880 'When the real minima are met, a model-dependent shortfall is a FAIL ... never INCONCLUSIVE'; v3:882 'P5-k needs heavy matched days \u2265 max(6, \u23080.75 \u00b7 n_H,k\u2309)'; v5:356 'the \u00a75.2 model-side minima at the calibration n'; v5:363 'A row whose real-data minimum (\u00a75.2) is not met ... is reported, not screened'",
+     "note": "The real minimum n_H,1 = 22 \u2265 6 is met, so the row is screened. The model-side minimum is need(22) = 17, and 15 days are matched. Only one reading is possible: FAIL, not 'reported, not screened'. The statistic fails too: |median D| = 0.056 > 0.05. The 7 unmatched days are 0503, 0607, 0621, 0705, 0802, 1115 and 1018 (onset 100 min away, beyond \u00b190)."
+    },
+    {
+     "row": "P5b-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:341, 345-348; metanet_v5_freeze.py:165-168 (L_r = F8[k]['ci_r'][0])",
+     "protocol_quote": "v3:901 '(i) \u2265 \u22120.02, CI reported; and (ii) \u2265 L_r,k'; v5:358 'P5b(ii) uses F8's calibration-day floor Lc_k (the lower limit of the CI of the real median r on calibration heavy days; v3 R4(b))'",
+     "note": "Lc_1 = 0.99397 is F8 B1 ci_r[0], computed over n_heavy = 22, as the text requires. The row fails three ways: count 15 < 17, (i) median r_model \u2212 r_real = \u22120.0304 < \u22120.02, and (ii) median r_model = 0.977 < 0.994. Correcting any single item, the floor included, cannot flip it."
+    },
+    {
+     "row": "P6-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:350-364 (halves 352, (a) 361, gradient rule 362); binom_tol 68-75",
+     "protocol_quote": "v3:902 '(a) |M_h \u2212 R_h| \u2264 k_h in both halves ... (b) if the real gradient > 0, the model's gradient > 0 and (c) \u2265 0.5 \u00d7 the real gradient'; v3:951 'If the real gradient is \u2264 0, (b)\u2013(c) are not applied'",
+     "note": "R = 11 in both halves and M = 9 / 8, with k_h = 2 (checked by hand: p\u0303 = 11.5/12). (a) fails in U (|8 \u2212 11| = 3). The real gradient is 0, so (b)\u2013(c) are correctly not applied. The model is B1-active on 17 days (record model_active_days). (a) needs at least 9 per half, i.e. 18 or more, so no split of the days could pass. The row is robust."
+    },
+    {
+     "row": "P7a-1",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:366-375; metanet_items.py:27-33; metanet_events.py:81-91",
+     "protocol_quote": "v3:903 'dur_model = the matched model episode's duration of any length, or 0 if unmatched. B1 on censored days: both durations censored at the real B2 onset ... all n_H,k heavy days ... median \u2264 30 min'",
+     "note": "The median |\u0394dur| is 62.5 min, far above 30. Both sides are censored at the real t_c, an unmatched day scores 0, and the set is all 22 heavy days, all as the text says. No contradiction found."
+    },
+    {
+     "row": "P5c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:377-388 (gated 385, required = need(len(both_q)) 387-388); metanet_items.py:36-40; metanet_v5_freeze.py:190 (screened only if gated)",
+     "protocol_quote": "v3:854 'if n_H,both < 6, P5c is reported, not gated'; v3:884 'P5c (when gated, n_H,both \u2265 6) needs days heavy matched at both \u2265 max(6, \u23080.75 \u00b7 n_H,both\u2309)'",
+     "note": "n_H,both = 9 \u2265 6, so the row is gated and screened. need(9) = 7, and only 4 days are heavy-matched at both, so it fails on the model-side minimum, which the text (one reading) makes a FAIL. |median D| = 0.038 would pass. The code's denominator is n_real_merge_defined rather than n_H,both. Both are 9 here, and the correction could only raise the requirement."
+    },
+    {
+     "row": "P7b",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:127-152 (congested, extent), 390-401; metanet_items.py:53-75 (start station, matched windows, hit = err \u2264 1 in the real-valid order)",
+     "protocol_quote": "v3:956-960 'Start station: real side, the upstream station of the most upstream bottleneck with a real episode ... Model side, the same for ... a model episode matched to a real episode'; 'Congested station: event-layer speed < 40 mph for \u2265 15 consecutive minutes overlapping the window'; v3:904 'model extent = the real extent station or an adjacent speed-valid station on \u2265 70 % of the days'",
+     "note": "3 of 22 hits (0816, 0830, 0920). The reproduction shows the mechanism. Real extents are S1771\u2013S1773. The model's B1 queue spills to S459, S460, S461 or S453 (err 3\u201311 stations), and 3 days have no matched model episode. Units are consistent (both sides in mph, metanet_events.py:53). The start station not being tested for congestion is a two-reading point. The real start station was congested on 22/22 days, and a stricter reading could only remove hits."
+    },
+    {
+     "row": "P7c",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:398-403; metanet_items.py:78-80; metanet_events.py:107-133",
+     "protocol_quote": "v3:963-964 'Real union interval: merge the day's real P_1 and P_2 episodes ... with the < 30-min gap rule ... dur_sys,model = the length of the longest model union interval that overlaps (\u00b160 min) the real one, or 0 if none overlaps'; v3:905 'median \u2264 30 min'",
+     "note": "The median is 55 min. I recomputed it from the reproduced per-day values (5 to 230 min). The construction (all model P_1 and P_2 episodes, gap < 6 empty bins, \u00b112-bin overlap, 0 if none) matches the text."
+    },
+    {
+     "row": "P9",
+     "recorded_pass": false,
+     "your_pass": false,
+     "agrees": true,
+     "code_ref": "vsl_lab/jobs/metanet_gate.py:431-471 (enough9 467, PASS 471); metanet_facts.py:61-69 (heavy_first); metanet_items.py:93-101 (s1_ratio)",
+     "protocol_quote": "v3:883 'P9 needs heavy matched first-active days \u2265 max(6, \u23080.75 \u00b7 n_H,first\u2309), and P9(2) needs \u2265 5 days with model excess'; v3:880 'a model-dependent shortfall is a FAIL'; v5:359 'P9 reads its replayed exit flows from metanet_v5/calib_screen_data.npz'",
+     "note": "n_H,first = 22 \u2265 6, so the row is screened. need = 17 and only 15 days are matched, so it fails on the count alone. The statistics would pass: S1 diff \u22120.006 \u2264 +0.03, and S2 1.5 \u2265 1.2 on 15 days (5 needed). The s1_ratio defect for windows of 1\u20132 bins (audit regression-01) does not apply here: the shortest windows are 20 bins (real) and 23 (model). It cannot change the count in any case."
+    }
+   ],
+   "deviations": [
+    {
+     "id": "P5c-denominator",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "metanet_gate.py:379 and 387-388 use need(len(both_q)), where both_q = days heavy at both with the real merge section defined. v3:884 says '\u2265 max(6, \u23080.75 \u00b7 n_H,both\u2309)'. The recorded row has n_H_both = 9 = n_real_merge_defined, so the requirement is 7 either way. Correcting it can only raise the requirement, never turn the FAIL (4 < 7) into a PASS. Caveat: one could argue the text does not cover days without a real merge value, so 'one reading' is my judgement."
+    },
+    {
+     "id": "P9-s1_ratio-short-window (audit regression-01)",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "metanet_items.py:96-101: np.convolve 'valid' on a window of 1\u20132 bins returns seg.sum()/3, against v3 \u00a75.4 'the maximum 3-bin rolling 15-min flow ... in [onset \u2212 60 min, end]'. In the reproduction the shortest P9 window is 20 bins (real) and 23 (model), so no value changes. P9 fails on its count (15 < 17), which s1_ratio does not touch."
+    },
+    {
+     "id": "P2-ties",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "metanet_gate.py:310 passes a day if e*'s pair is among several model episodes tied at the earliest onset. v3:947 'the one with the earliest onset must be at e*'s pair' does not settle ties, so the code's reading stands (\u00a7B11.2). The reproduction found 0 tie days, and a stricter reading could only lower the share."
+    },
+    {
+     "id": "P7b-start-station-not-tested",
+     "one_reading": false,
+     "could_change_route": false,
+     "evidence": "metanet_gate.py:144 sets the extent to the start station before walking upstream, without testing that the start station is congested. v3:959 'the unbroken run of congested stations that starts at the start station' admits both readings. The real start station was congested on 22/22 days in the reproduction. A stricter reading could only turn hits into misses, and P7b is 3/22."
+    },
+    {
+     "id": "B5-reported-alongside-missing (audit freeze-05)",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "v5:375 requires 'the excess vehicle-hours ratio (v3 \u00a75.5) and the median in-episode v_u error'. They are absent from screen() (metanet_v5_freeze.py:153-194) and from the record. \u00a7B5 labels them 'report-only; cannot change the verdict'."
+    },
+    {
+     "id": "test34/test31-gaps (audit freeze-03, regression-02, j5-06)",
+     "one_reading": true,
+     "could_change_route": false,
+     "evidence": "v5 \u00a7B10 test 34 requires that the screen 'returns STOP for a synthetic failing plant', and test 31 that 'the P1c nulls leave out day d'. No test calls screen() with a failing or below-minimum row, or tests loo_nulls. These are test gaps and change no number. My reproduction of the real screen gave every row identical (to 1e-12) to freeze_stops.json."
+    }
+   ]
+  }
+ ],
+ "raw": "/home/catalin/work/phd/vsl_lab_runs/day_pattern/metanet_v5_design/review/stop_verify_20261011.json"
+}
