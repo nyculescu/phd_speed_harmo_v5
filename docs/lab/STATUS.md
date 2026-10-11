@@ -4,6 +4,13 @@
 
 ## Bottom line so far (honest)
 
+**Update 2026-10-11 (R6+, Addenda G-H; `t1_meter_r6plus.md`, `t1_meter_r6plus_diag.md`):**
+- **R6+ bar FAIL:** a fair vanilla DRL (the same RecurrentPPO setting the meter rate directly) beats the R6 hybrid by 43.8 % (median J 153 vs 235 s), in every kind.
+- **R6's comparator set missed a strong simple baseline:** a tuned constant metering rate (1,800 veh/h, chosen on tuning seeds) beats the R6 hybrid by 8.0 % (CI excludes 0). The R6 claim stands as pre-registered, but it must be read with this caveat.
+- **The vanilla DRL learns beyond a constant rate:** −16.6 % vs the best constant rate (CI [−43.3, −25.4] s); −31 % vs `evsched`, −37 % vs MPC-F, −49 % vs NC (levels).
+- **Out of distribution** (17 unseen perturbations, inflows 1,200 and 2,000): the vanilla stays best in every family; the hybrid shows no robustness advantage (degradation 1.21 vs 1.27).
+- These are post-result diagnostics on a plant that fails realism; no new claim is made.
+
 **First confirmatory DRL claim (R6, 2026-10-03):** a hybrid RecurrentPPO policy scheduling the validated Vinitsky feedback meter on BN4 under perturbations beats the tuned event scheduler (−4.3 %, CI [−14.7, −4.9] s) and a fitted-model MPC (−2.5 %, CI [−14.9, −0.8] s) on 210 reserved seeds (`docs/lab/t1_meter_r6.md`, caveats there). Everything else is exploratory.
 
 **R6 caveats added 2026-10-04 (context-aware R6 gate, `docs/lab/gate_ctx_r6/`):**
