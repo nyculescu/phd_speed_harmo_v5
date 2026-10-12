@@ -45,6 +45,16 @@ class Acc:
     r_eff: np.ndarray                # (B, n_ctrl, bins) bin-mean effective meter rate (veh/h; inf = unmetered)
     layer_steps: np.ndarray          # (B, n_ctrl, bins) steps with r_eff > r_cmd (queue layer active)
     net_steps: np.ndarray            # (B, n_ctrl, bins) steps with the hard net active
+    q_cell: np.ndarray = None        # (B, N, bins) bin-mean cell outflow q_i (veh/h; flow from cell i into i+1)
+
+
+def pad_drain(inp: Inputs, n_bins: int = 24) -> Inputs:
+    """Append n_bins of zero demand at every origin, with the split ratios held at the last bin (the drain)."""
+    D = inp.d0.shape[0]
+    d0 = np.concatenate([inp.d0, np.zeros((D, n_bins))], axis=1)
+    d_o = np.concatenate([inp.d_o, np.zeros(inp.d_o.shape[:2] + (n_bins,))], axis=2)
+    beta = np.concatenate([inp.beta, np.repeat(inp.beta[:, :, -1:], n_bins, axis=2)], axis=2)
+    return Inputs(d0, d_o, beta)
 
 
 class Stepper:
@@ -52,7 +62,7 @@ class Stepper:
 
     def __init__(self, net: Net, params: dict, inp: Inputs, n_param_sets: int = 1, c1=1.0, c2=1.0,
                  f1: dict | None = None, T_s: float | None = None, controlled: tuple = CONTROLLED,
-                 queue: QueueLayer | None = None, record_cells: bool | tuple = True):
+                 queue: QueueLayer | None = None, record_cells: bool | tuple = True, stations: bool = True):
         if T_s is None:
             T_s = M.T_S_V4 if net.variant.startswith("v4") else M.T_S
         assert_numerics(net, params, T_s)
@@ -115,6 +125,10 @@ class Stepper:
         self.ctrl_idx = np.array([eid[c] for c in controlled], dtype=int)
         self.controlled = tuple(controlled)
         self.queue = queue
+        self.stations = stations          # False: skip the station aggregation (output-only; the state is unchanged)
+        self.last_r_eff = np.full((B, len(controlled)), np.inf)
+        self.last_layer = np.zeros((B, len(controlled)), dtype=bool)
+        self.last_net = np.zeros((B, len(controlled)), dtype=bool)
         if queue is not None:
             assert len(queue.storage_veh) == len(controlled)
             self.S = np.asarray(queue.storage_veh, float)[None, :]
@@ -169,7 +183,7 @@ class Stepper:
         self.wlong = np.zeros((B, 1 + ne))
         nc = len(controlled)
         self.acc = Acc(np.zeros((B, nb)), np.zeros((B, 1 + ne, nb)), np.zeros((B, nb)), np.zeros((B, nc, nb)),
-                       np.zeros((B, nc, nb)), np.zeros((B, nc, nb)))
+                       np.zeros((B, nc, nb)), np.zeros((B, nc, nb)), np.zeros((B, N, nb)))
         self.k = 0                     # global step index (bin = k // spb)
         self.r_cmd = np.full((B, nc), np.inf)
 
@@ -287,7 +301,7 @@ class Stepper:
             pos = w > 1e-9
             self.wrun = np.where(pos, self.wrun + T_s / 60.0, 0.0)
             self.wlong = np.maximum(self.wlong, self.wrun)
-            for si in range(len(self.st_cells)):
+            for si in (range(len(self.st_cells)) if self.stations else ()):
                 c = self.st_cells[si]
                 cr = self.corr[si]
                 qs = q[:, c] - sum(qo[:, k] for k in cr[0]) + sum(sx[:, k] for k in cr[1]) if (cr[0] or cr[1]) else q[:, c]
@@ -310,6 +324,10 @@ class Stepper:
             self.acc.tts_queues[:, :, b] += T * self.w
             self.acc.fft[:, b] += T * (q * L / vf).sum(axis=1)
             self.acc.r_eff[:, :, b] += np.where(np.isfinite(r_e), r_e, 0.0)
+            self.acc.q_cell[:, :, b] += q
+            self.last_r_eff = r_e
+            if layer is not None:
+                self.last_layer, self.last_net = layer, neton
             if layer is not None:
                 self.acc.layer_steps[:, :, b] += layer
                 self.acc.net_steps[:, :, b] += neton
@@ -320,6 +338,10 @@ class Stepper:
                 rcf = rc0[:, self.f1_cells]
                 self.mem = (self.rho[:, self.f1_cells] > rcf) | (self.mem & (self.rho[:, self.f1_cells] > self.eta * rcf))
             self.k += 1
+
+    def q_cell_bins(self) -> np.ndarray:
+        """Bin-mean cell outflows (veh/h) for the bins stepped so far."""
+        return self.acc.q_cell / self.spb
 
     def run_to_end(self) -> None:
         self.step(self.nb * self.spb - self.k)

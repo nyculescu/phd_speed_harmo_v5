@@ -92,3 +92,31 @@ def test_queue_layer_bounds_wait_and_storage():
     wq = st.acc.tts_queues[0, 1 + st.ctrl_idx, :] / (st.T * st.spb)     # bin-mean queue (veh)
     assert wq.max() <= max(S) * 1.2
     assert st.acc.layer_steps[0].sum() > 0
+
+
+def test_padded_drain_identical_then_empty():
+    """24 appended zero-demand bins: the first 228 bins are bit-identical to replay; cells and queues empty at the end;
+    an arm switched to NC at bin 228 drains too."""
+    net, p, inp = _setup(slice(0, 2))
+    a = MC.Stepper(net, p, inp)
+    a.run_to_end()
+    b = MC.Stepper(net, p, MC.pad_drain(inp, 24))
+    b.step(228 * b.spb)
+    assert _eq(a.acc.tts_cells, b.acc.tts_cells[:, :228]) and _eq(a.rho, b.rho) and _eq(a.w, b.w)
+    b.step(24 * b.spb)
+    assert (b.rho * b.L * b.lam).sum(axis=1).max() < 0.5 and b.w.max() < 1e-6
+    c = MC.Stepper(net, p, MC.pad_drain(inp, 24), queue=MC.QueueLayer(storage_veh=(15.0,) * 4))
+    c.set_rates(np.full(4, 240.0))
+    c.step(228 * c.spb)
+    c.set_rates(np.full(4, np.inf))
+    c.step(24 * c.spb)
+    assert (c.rho * c.L * c.lam).sum(axis=1).max() < 0.5 and c.w.max() < 1e-6
+
+
+def test_stations_flag_does_not_change_state():
+    net, p, inp = _setup(slice(0, 1))
+    a = MC.Stepper(net, p, inp, record_cells=False)
+    b = MC.Stepper(net, p, inp, record_cells=False, stations=False)
+    a.step(4000)
+    b.step(4000)
+    assert _eq(a.rho, b.rho) and _eq(a.w, b.w) and _eq(a.acc.tts_cells, b.acc.tts_cells)
