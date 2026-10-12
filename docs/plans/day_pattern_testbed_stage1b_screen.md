@@ -165,3 +165,35 @@ rel_d = (E_d − J_NC,d) / J_NC,d. For each storage row (S×1, S_gen), m = the m
 | F6 | T0 inflow definition and consequences, T1, T3, seeds, guards, the drain test |
 | F7 | E_d includes NC; the 20230705 row |
 | F8 | the disclosures of §9 |
+
+## 11. Implementation readings (code check wf_932c84c8-fe9, fixed before any run)
+The check found two blocking bugs, both fixed and covered by tests:
+- the ALINEA arms read a density buffer that was cleared before use, so they never metered;
+- per-day arms built a ragged batch, so they crashed at generation 1.
+
+It found one major gap, also fixed: worker failures and stale results went unseen. Every opt file now carries the run id, HEAD and J_nc; the run asserts that every worker succeeded and refuses foreign results; a failure writes a ledger row.
+
+The readings below are fixed now:
+
+**Optimiser**
+- **TOD-fine-day windows** are evaluated per 60-s period (t_on ≤ minute < t_off; minutes from 04:00), not per 5-min bin.
+- **Box tops:** TOD-day and TOD-fine-day use the ramp-day's 05–23 h maximum 5-min demand; the drop rule still uses the window's maximum. CONST's box top is the maximum over the 12 days (it is pooled).
+- **Warm starts, as coded:**
+	- CONST starts at the box top (the max-demand corner, ≈ NC);
+	- TOD-day starts at the CONST rate, clipped to its box;
+	- TOD-fine-day starts with its window over all of 12:00–20:00 at the CONST rate (NC outside);
+	- ALINEA arms start at K = 38.7 (log-centre) and ρ* = ρ_cr.
+	- The warm start is **evaluated at generation 0**, so best-so-far starts there and the first convergence test falls at generation 50.
+- **Seeds:** each CMA-ES instance draws from its own generator `np.random.default_rng(seed_for(...))`, passed through pycma's `randn` option with `seed = nan`, so the global RNG plays no part. Pooled CONST uses day_index 99. Seeds are shared across the two storage rows (independent runs, as §4 states).
+
+**ALINEA arms**
+- **Anti-windup:** if the queue layer or the hard net bound at **any** step of the 60-s period, r_prev ← the last bound applied r_eff.
+- **E14 in ALINEA-B-day** senses the maximum of the 60-s means of cells 32 and 33.
+
+**Checks and run layout**
+- **T1** counts steps with ρ > ρ_cr (05–23 h).
+- **T3** compares NC twice, plus fixed CONST, TOD-fine and ALINEA-B candidates evaluated alone and inside a mixed batch, all bitwise. The run also asserts that each day's re-evaluated best equals its recorded best.
+- **Layout:** one process per (set, storage row, arm), each batching its 12 days × 2 restarts × population. That is 4 CONST processes, then 16 arm processes, against §7's "per (day, set, arm)".
+- **Gate:** a load gate (load < 15 % within 30 min) runs before the arms batch. On a timeout the run pauses with a ledger row and resumes by run id.
+- **Provenance:** the calib_data hash must equal the committed facts; no screen day may be a v5 validation day; the padded inputs' hash must equal the committed listing; the prereg, the listing, the split and both code files must be committed and unchanged.
+- **Smoke:** times one full TOD-day generation (12 days × 2 restarts) on seeds 7,193,000–023.
