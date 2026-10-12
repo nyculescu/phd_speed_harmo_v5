@@ -1,0 +1,523 @@
+{
+ "days": [
+  "20230118",
+  "20230215",
+  "20230329",
+  "20230503",
+  "20230517",
+  "20230607",
+  "20230705",
+  "20230802",
+  "20230816",
+  "20231101",
+  "20231115",
+  "20231220"
+ ],
+ "listing": {
+  "20230118": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.003886925795053
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0119910067449414
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue_rescaled",
+    "ratio": 1.0685727568572756
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.00503663003663
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.980614170526677
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0002915451895045
+   },
+   "E12": {
+    "source": "queue",
+    "ratio": 1.0219594594594594
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9789830508474576
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230215": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0051527419948472
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0023189899510436
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.037911122269646
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 0.9995327102803738
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9740639269406393
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 0.9993827160493827
+   },
+   "E12": {
+    "source": "queue",
+    "ratio": 1.025573192239859
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9940119760479041
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230329": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0038367631670735
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0016611295681064
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0282996984458361
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9839469551561683
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 0.9996816300541229
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.0660550458715596
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9935483870967742
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230503": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0048076923076923
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.006779661016949
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0241214389686006
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0081426909654905
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9811365807067812
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0091042584434655
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.124203821656051
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9748050389922016
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230517": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0015332720024532
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.015058926233086
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0183430759927434
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0015082956259427
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9818225304950968
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0082392432102534
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.2010233918128654
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9879912663755459
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230607": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0018484288354899
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0016810254255095
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0235008103727714
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0003691399040235
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9788912085363025
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0006146281499693
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.163340724316334
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9878177966101694
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230705": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0114695340501791
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 0.9813036887316827
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.011896591169069
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0059037238873751
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9834923910239877
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0003869969040247
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.0864197530864197
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9752731454859115
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230802": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0039577836411608
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0105239075726378
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.013941445927106
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0019817677368212
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9818610129564194
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 0.9996946564885496
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.1503115264797508
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9977753058954394
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20230816": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0070281124497993
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 0.9903668784587005
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0338235294117648
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9794168096054888
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0018738288569644
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.154367469879518
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9907908992416035
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20231101": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.000659848234906
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.001569154898005
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.029654403567447
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 1.0
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9787798408488063
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 0.9996734160679295
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.0825688073394495
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9848573092603378
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20231115": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0019367333763718
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0024341668510732
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.0241781548250266
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 0.9991721854304636
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9798430253300036
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.0
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.0906389301634472
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9908088235294118
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  },
+  "20231220": {
+   "E1": {
+    "source": "queue",
+    "ratio": 1.0012670256572695
+   },
+   "E2": {
+    "source": "queue",
+    "ratio": 1.0019493177387915
+   },
+   "E3": {
+    "source": "replay",
+    "ratio": null
+   },
+   "E4": {
+    "source": "queue",
+    "ratio": 1.031893236824248
+   },
+   "E5": {
+    "source": "queue",
+    "ratio": 0.998719590268886
+   },
+   "E6": {
+    "source": "queue",
+    "ratio": 0.9727619047619047
+   },
+   "E9": {
+    "source": "queue",
+    "ratio": 1.000309119010819
+   },
+   "E12": {
+    "source": "queue_rescaled",
+    "ratio": 1.0780669144981412
+   },
+   "E13": {
+    "source": "queue",
+    "ratio": 0.9768321513002364
+   },
+   "E14": {
+    "source": "queue",
+    "ratio": 1.0
+   }
+  }
+ },
+ "rule": "\u00a73 of the screen v1"
+}
