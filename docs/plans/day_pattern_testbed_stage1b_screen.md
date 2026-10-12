@@ -196,4 +196,8 @@ The readings below are fixed now:
 - **Layout:** one process per (set, storage row, arm), each batching its 12 days × 2 restarts × population. That is 4 CONST processes, then 16 arm processes, against §7's "per (day, set, arm)".
 - **Gate:** a load gate (load < 15 % within 30 min) runs before the arms batch. On a timeout the run pauses with a ledger row and resumes by run id.
 - **Provenance:** the calib_data hash must equal the committed facts; no screen day may be a v5 validation day; the padded inputs' hash must equal the committed listing; the prereg, the listing, the split and both code files must be committed and unchanged.
-- **Smoke:** times one full TOD-day generation (12 days × 2 restarts) on seeds 7,193,000–023.
+- **Smoke:** times one full TOD-day generation (12 days × 2 restarts). Its only seed entropy is 7,193,000, used as `SeedSequence([7193000, day, restart])`.
+- **Code pin (re-check wf_70ed4239-124):** the run stamps the SHA-256 of both code files, the plant code, this prereg, the inputs listing and the split. Every worker, every resume and `decide()` must find the same hashes. HEAD is not used, because the tracked ledger moves it.
+- **Re-evaluation:** a mismatch between a re-evaluated best and its recorded best is written into the result file and fails the decision, so the search is not lost. The pooled CONST median is checked the same way.
+- **Resume:** refused after a T3 FAIL; re-runs CONST if its batch did not finish. An interrupted run is ledgered.
+- **Generations:** reported per (day, restart) as the median, the maximum and the number at the cap.

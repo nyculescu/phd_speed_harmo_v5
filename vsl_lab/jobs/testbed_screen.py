@@ -35,6 +35,12 @@ PREREG = REPO_ROOT / "docs/plans/day_pattern_testbed_stage1b_screen.md"
 OUT = LAB / "testbed_screen.json"
 RAW = RUNS_ROOT / "day_pattern" / "testbed_screen"
 CODE = [Path(__file__), REPO_ROOT / "vsl_lab/plants/metanet_ctrl.py"]
+PINNED = CODE + [REPO_ROOT / "vsl_lab/plants/metanet.py", PREREG, INPUTS_LIST, SPLIT]
+
+
+def pinned_hashes() -> dict:
+    """File hashes the whole run must share (HEAD is not used: the tracked ledger moves it during a run)."""
+    return {str(f.relative_to(REPO_ROOT)): hashlib.sha256(f.read_bytes()).hexdigest() for f in PINNED}
 
 METERS = {"10": ("E1", "E2", "E3", "E4", "E5", "E6", "E9", "E12", "E13", "E14"), "4": ("E9", "E12", "E13", "E14")}
 QDETS = {"E1": ["3685"], "E2": ["3678"], "E4": ["3673", "3674", "3675"], "E5": ["3669"], "E6": ["2000"],
@@ -459,13 +465,14 @@ def optimise(arm, set_, srow, net, p, inp, days, J_nc, const_rates=None, cap=GEN
                 scale = 1.0 if pooled else float(J_nc[key[0]])
                 if len(tr) > GEN_BLOCK and (tr[-GEN_BLOCK - 1] - tr[-1]) < IMPROVE_TOL * scale:
                     done[key] = True
-    out = {"arm": arm, "set": set_, "storage": srow, "generations": gen, "units": {}}
+    out = {"arm": arm, "set": set_, "storage": srow, "wall_generations": gen, "units": {}}
     for u_ in units:
         rs = [best[(u_, r)] for r in range(RESTARTS)]
         b = min(rs, key=lambda t: t[0])
         name = "pooled" if pooled else days[u_]
         out["units"][name] = {"best": b[0], "x": np.asarray(b[1]).tolist(), "restart_values": [t[0] for t in rs],
                               "restart_spread": float(max(t[0] for t in rs) - min(t[0] for t in rs)),
+                              "generations": [len(trace[(u_, r)]) - 1 for r in range(RESTARTS)],
                               "traces": [trace[(u_, r)] for r in range(RESTARTS)],
                               "ctx_coords": [list(c) for c in ctxs[0 if pooled else u_]["coords"]]}
     # final evaluation of each day's best: per-day J (pooled CONST), queue-layer / hard-net minutes, vehicles left
@@ -490,8 +497,13 @@ def optimise(arm, set_, srow, net, p, inp, days, J_nc, const_rates=None, cap=GEN
             fin["layer_min"][d] = float(st.acc.layer_steps[j].sum() * st.T_s / 60)
             fin["net_min"][d] = float(st.acc.net_steps[j].sum() * st.T_s / 60)
             fin["left_veh"][d] = float(left_of(st)[j])
-            if not pooled:
-                assert fin["J_d"][d] == out["units"][d]["best"], f"re-evaluation of the best differs on {d} (T3)"
+            if not pooled and fin["J_d"][d] != out["units"][d]["best"]:
+                fin.setdefault("reeval_mismatch", []).append(d)
+    if pooled and len(fin["J_d"]) == D and best[(units[0], 0)][1] is not None:
+        jd = np.array([fin["J_d"][d] for d in days])
+        if float(np.median((jd - J_nc) / J_nc)) != out["units"]["pooled"]["best"]:
+            fin["reeval_mismatch"] = ["pooled"]
+    fin["reeval_ok"] = "reeval_mismatch" not in fin
     out["final"] = fin
     return out
 
@@ -551,12 +563,13 @@ def t3(net, p, inp, J_nc, J_nc2) -> dict:
     ok = bool(np.array_equal(J_nc, J_nc2))
     ctxs = {d: context("CONST", net, p, inp, list(range(inp.d0.shape[0])), meters) for d in range(inp.d0.shape[0])}
     detail = {"nc": ok}
-    for arm, cx in (("CONST", ctxs), ("TOD-fine-day", {0: context("TOD-fine-day", net, p, inp, [0], meters)}),
-                    ("ALINEA-B-day", {0: context("ALINEA-B-day", net, p, inp, [0], meters)})):
-        x = np.full(len(cx[0]["x0"]), 0.4)
-        a = evaluate(arm, net, p, inp, meters, "x1", [0], [x], cx)
-        b = evaluate(arm, net, p, inp, meters, "x1", [0, 0, 0], [x, np.full(len(x), 0.9), x], cx)
-        same = bool(a[0] == b[0] == b[2])
+    for arm in ("CONST", "TOD-fine-day", "ALINEA-B-day"):
+        cx = ctxs if arm == "CONST" else {d: context(arm, net, p, inp, [d], meters) for d in (0, 3, 5)}
+        pat = {"CONST": [0.4], "TOD-fine-day": [0.1, 0.8, 0.5], "ALINEA-B-day": [0.4]}[arm]
+        xs = {d: np.tile(pat, int(np.ceil(len(cx[d]["x0"]) / len(pat))))[:len(cx[d]["x0"])] for d in (0, 3, 5)}
+        a = evaluate(arm, net, p, inp, meters, "x1", [0], [xs[0]], cx)
+        b = evaluate(arm, net, p, inp, meters, "x1", [5, 0, 3, 0], [xs[5], xs[0], xs[3], xs[0]], cx)
+        same = bool(a[0] == b[1] == b[3])
         detail[arm] = same
         ok &= same
     return {"PASS": ok, "detail": detail}
@@ -601,6 +614,7 @@ def cmd_opt(set_, srow, arm, run_id) -> int:
     rd = _run_dir(run_id)
     assert (rd / "stamp.json").exists(), "unknown run id"
     stamp = json.loads((rd / "stamp.json").read_text())
+    assert pinned_hashes() == stamp["hashes"], "code or inputs changed since the run started (hash pin)"
     days, net, inp = _load_all()
     p = params()
     J_nc = J_of(nc_run(net, p, inp, METERS[set_], srow))
@@ -611,7 +625,7 @@ def cmd_opt(set_, srow, arm, run_id) -> int:
         assert cres["run_id"] == run_id
         const = const_rates_from(cres, context("CONST", net, p, inp, list(range(len(days))), METERS[set_]))
     res = optimise(arm, set_, srow, net, p, inp, days, J_nc, const)
-    res |= {"run_id": run_id, "head": _head(), "J_nc": J_nc.tolist()}
+    res |= {"run_id": run_id, "head": _head(), "J_nc": J_nc.tolist(), "hashes": pinned_hashes()}
     (rd / f"opt_{set_}_{srow}_{arm}.json").write_text(json.dumps(res, default=float))
     print(json.dumps({"ok": True, "arm": arm, "set": set_, "storage": srow, "generations": res["generations"]}))
     return 0
@@ -630,7 +644,7 @@ def cmd_smoke(gate_ok) -> int:
     rows, U = [], []
     for d in range(len(days)):
         for r in range(RESTARTS):
-            es = make_es(ctxs[d]["x0"], SMOKE_SEED + 2 * d + r)
+            es = make_es(ctxs[d]["x0"], int(np.random.SeedSequence([SMOKE_SEED, d, r]).generate_state(1)[0] % (2 ** 31 - 2) + 1))
             for x in es.ask():
                 rows.append(d)
                 U.append(np.asarray(x))
@@ -687,16 +701,24 @@ def cmd_run(gate_ok, resume_id=None) -> int:
             J_nc2 = J_of(nc_run(net, p, inp, METERS["10"], "x1"))
             checks = {"T3": t3(net, p, inp, J_nc, J_nc2), "T0": t0(net, p, inp, J_nc, head_inflow(st_nc, net)),
                       "T1": t1(net, p, inp), "left_nc": left_of(st_nc).tolist()}
-            (rd / "stamp.json").write_text(json.dumps({"run_id": run_id, "head": _head(), "J_nc": J_nc.tolist()}))
+            (rd / "stamp.json").write_text(json.dumps({"run_id": run_id, "head": _head(), "J_nc": J_nc.tolist(),
+                                                       "hashes": pinned_hashes()}))
             (rd / "checks.json").write_text(json.dumps(checks, default=float))
             if not checks["T3"]["PASS"]:
                 ledger.append("DP", "testbed-1b", "S", "testbed_screen_T3_fail", {"run_id": run_id}, "-", 0, {},
                               checks["T3"], notes=str(rd))
                 raise SystemExit("T3 FAIL: stop, fix, re-run everything affected, log both")
             _batch(_jobs(run_id, ("CONST",)), rd / "batch_const", 4)
+            (rd / "const_done").write_text("ok")
         else:
             checks = json.loads((rd / "checks.json").read_text())
-            J_nc = np.array(json.loads((rd / "stamp.json").read_text())["J_nc"])
+            stamp = json.loads((rd / "stamp.json").read_text())
+            assert checks["T3"]["PASS"], "resume refused: T3 failed in this run"
+            assert pinned_hashes() == stamp["hashes"], "resume refused: code or inputs changed (hash pin)"
+            J_nc = np.array(stamp["J_nc"])
+            if not (rd / "const_done").exists():
+                _batch(_jobs(run_id, ("CONST",)), rd / "batch_const", 4)
+                (rd / "const_done").write_text("ok")
         if not (rd / "arms_done").exists():
             if not _wait_load():
                 ledger.append("DP", "testbed-1b", "S", "testbed_screen_paused", {"run_id": run_id}, "-", 0, {},
@@ -713,7 +735,7 @@ def cmd_run(gate_ok, resume_id=None) -> int:
         return 0
     except SystemExit:
         raise
-    except Exception as exc:
+    except BaseException as exc:                    # incl. KeyboardInterrupt / SIGTERM: an abandoned run is ledgered
         ledger.append("DP", "testbed-1b", "S", "testbed_screen_failed", {"run_id": run_id}, "-", 0, {},
                       {"error": f"{type(exc).__name__}: {exc}"}, notes=str(rd))
         raise
@@ -726,8 +748,11 @@ def decide(days, J_nc, checks, rd: Path, run_id: str) -> dict:
     for set_ in ("10", "4"):
         for srow in ("x1", "gen"):
             arms = {a: json.loads((rd / f"opt_{set_}_{srow}_{a}.json").read_text()) for a in ("CONST",) + ARMS}
+            stamp = json.loads((rd / "stamp.json").read_text())
             for a, r in arms.items():
                 assert r["run_id"] == run_id and r["J_nc"] == list(map(float, J_nc)), f"stale or foreign result: {a}"
+                assert r["hashes"] == stamp["hashes"], f"result produced by other code or inputs: {a}"
+                assert r["final"].get("reeval_ok", True), f"re-evaluation of the best differs (T3): {a}"
             Jc = {a: np.array([arms[a]["final"]["J_d"][d] for d in days]) for a in ("CONST",) + ARMS}
             E = np.min(np.stack([J_nc] + [Jc[a] for a in ("CONST",) + ARMS]), axis=0)
             rel = (E - J_nc) / J_nc
@@ -743,7 +768,10 @@ def decide(days, J_nc, checks, rd: Path, run_id: str) -> dict:
                 "layer_min_median": {a: float(np.median(list(fin[a]["layer_min"].values()))) for a in fin},
                 "net_min_median": {a: float(np.median(list(fin[a]["net_min"].values()))) for a in fin},
                 "max_left_veh": {a: max([v for v in fin[a]["left_veh"].values() if v is not None] + [0.0]) for a in fin},
-                "generations": {a: arms[a]["generations"] for a in arms},
+                "generations": {a: {"median": float(np.median([g for u in arms[a]["units"].values() for g in u["generations"]])),
+                                    "max": int(max(g for u in arms[a]["units"].values() for g in u["generations"])),
+                                    "at_cap": int(sum(g >= GEN_CAP for u in arms[a]["units"].values() for g in u["generations"])),
+                                    "wall": arms[a]["wall_generations"]} for a in arms},
                 "restart_spread_median": {a: float(np.median([u["restart_spread"] for u in arms[a]["units"].values()])) for a in arms}}
     m = {r: out["rows"][f"10_{r}"]["median"] for r in ("x1", "gen")}
     best = min(m.values())
@@ -772,7 +800,8 @@ def report(res: dict, rd: Path) -> None:
     for k, r in res["rows"].items():
         for a in ("CONST",) + ARMS:
             L.append(f"| {k} | {a} | {r['arm_median_rel'][a]:+.1%} | {r['layer_min_median'][a]:.0f} | {r['net_min_median'][a]:.0f} | "
-                     f"{r['max_left_veh'][a]:.1f} | {r['generations'][a]} | {r['restart_spread_median'][a]:.3g} |")
+                     f"{r['max_left_veh'][a]:.1f} | med {r['generations'][a]['median']:.0f}, max {r['generations'][a]['max']}, "
+                     f"at cap {r['generations'][a]['at_cap']} | {r['restart_spread_median'][a]:.3g} |")
     c = res["checks"]
     L += ["", f"T0: B1 {'PASS' if c['T0']['B1']['PASS'] else 'FAIL'} ({c['T0']['B1']['days_ok']}/12 days), "
           f"B2 {'PASS' if c['T0']['B2']['PASS'] else 'FAIL'} ({c['T0']['B2']['days_ok']}/12) · T3: {c['T3']}",
