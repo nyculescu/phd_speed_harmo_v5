@@ -27,7 +27,7 @@ Nothing is implemented yet. The network is not chosen (CORR2X is one candidate).
 ## Running
 ```bash
 unset SUMO_HOME; export OMP_NUM_THREADS=1
-/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314/bin/python -m pytest
+/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python -m pytest
 ```
 
 ## History

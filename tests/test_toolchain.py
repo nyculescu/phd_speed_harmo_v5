@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-PINS = {"libsumo": "1.27.1", "sumolib": "1.27.1", "stable_baselines3": "2.8.0", "gymnasium": "1.2.3"}
+PINS = {"libsumo": "1.27.1", "sumolib": "1.27.1", "stable_baselines3": "2.8.0", "gymnasium": "1.2.3", "pettingzoo": "1.27.0"}
 
 
 def test_package_imports():

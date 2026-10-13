@@ -72,7 +72,7 @@
 
 ## Toolchain (measured 2026-10-01 and 2026-10-13; i9-13980HX 32 threads, 62 GB, RTX 4080)
 
-- **Environment:** `/home/catalin/work/phd/phd_speed_harmo_v6_toolchain/venv314` (Python 3.14.4, CPU torch 2.11, SUMO / libsumo 1.27.1, SB3 2.8.0, Gymnasium 1.2.3, pytest 9.1.1; PettingZoo not installed). Before runs: `unset SUMO_HOME; export OMP_NUM_THREADS=1`.
+- **Environment (own, separate from v6 since 2026-10-13, V14):** `/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv` (ext4). Python 3.14.4, CPU torch 2.11, SUMO / libsumo 1.27.1, SB3 2.8.0, Gymnasium 1.2.3, PettingZoo 1.27.0, pytest 9.1.1; exact pins in `toolchain/requirements_lock.txt`. Never install into v6's `venv314`. Before runs: `unset SUMO_HOME; export OMP_NUM_THREADS=1`.
 - **libsumo,** one simulation per process, unique file names that include every varying parameter and the PID.
 - **Limits (author, 2026-10-05):**
   - **≤ 100 worker processes.** Plain runs use **32 workers on all hardware threads**.
