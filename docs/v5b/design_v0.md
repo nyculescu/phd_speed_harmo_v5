@@ -164,5 +164,10 @@ The candidate model for later is a small set of strategies, with shares updated 
 - Zone lengths: one per zone (author); Z3 = 1000 m before merge2 (author), which reaches past the 3→2 zipper unless merge2 moves downstream (pending decision).
 - Δt_d, the decision interval; H_plan, the plan horizon.
 - Readings (a)–(e) above.
-- Demand regimes; CAV-share sweep.
+- **Demand (author, 2026-10-13):** a daily commuter M, with a morning and an afternoon peak hours apart, not a 75-min episode.
+  - Pending: shape from a real MnDOT weekday (recommended) or synthetic; the day window (e.g. 05:00-21:00).
+- **DRL trains on the peak windows only (author, 2026-10-13):** free flow needs no optimisation.
+  - Each window covers onset, breakdown and recovery, after an unscored warm-up taken from the same profile.
+  - Pending: whether scoring is per peak window only, or per peak plus a report-only full-day "does no harm" check.
+- CAV-share sweep.
 - Seed block for v5.B, to be approved before any protocol run.
