@@ -160,8 +160,8 @@ The candidate model for later is a small set of strategies, with shares updated 
 | `eval/` | stop-and-go index, SSM/TTC, per-zone TTS |
 
 ## 10. Open parameters (author)
-- X km/h, the CAV command step (e.g. 2, 5 or 10).
-- X1z / X2z / X3z m, the zone lengths (≤ 750 m for Z3).
+- ~~X km/h, the CAV command step~~ **5 km/h** (author, 2026-10-13).
+- Zone lengths: one per zone (author); Z3 = 1000 m before merge2 (author), which reaches past the 3→2 zipper unless merge2 moves downstream (pending decision).
 - Δt_d, the decision interval; H_plan, the plan horizon.
 - Readings (a)–(e) above.
 - Demand regimes; CAV-share sweep.
