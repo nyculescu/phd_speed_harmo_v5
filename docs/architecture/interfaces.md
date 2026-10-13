@@ -27,7 +27,7 @@
 | Rule | Specification |
 |---|---|
 | Entry | When a CAV enters a zone: target = its current speed, rounded to the nearest 5 km/h and clipped to [v_min, 100] |
-| Command | target ← clip(target + 5·u, v_min, 100), with u ∈ {−1, 0, +1}. v_min = 30 km/h **[PROPOSAL]** |
+| Command | target ← clip(target + 5·u, v_min, 100), with u ∈ {−1, 0, +1}. v_min = 50 km/h (V47) |
 | Apply | `vehicle.slowDown(id, target, 2.0)` at every boundary, so a ramp over 2 s is followed by the next ramp or hold. A ±5 km/h change over 2 s is about ±0.69 m/s² |
 | Hold | Re-issuing `slowDown(target, 2.0)` with an unchanged target holds it. **T0 must verify** that SUMO does not release the vehicle to its desired speed between boundaries (the critic saw release after `slowDown` ends) |
 | Safety | speedMode stays at the default (31): safe-gap car-following overrides any target. A command never forces a collision. There are no lane limits, so speedMode 95 (V5) is not needed |

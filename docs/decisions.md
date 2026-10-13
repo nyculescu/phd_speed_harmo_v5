@@ -51,3 +51,4 @@ Author decisions, newest last. "Open" items need the author before they bind. B1
 | V44 | 2026-10-13 | **D5.8 bar baseline:** ≥ 10 % vs the **all-HDV** fleet, AND the controller must beat the **same CAVs on plain ACC without commands** (control, not automation, must carry the gain). Both rows are reported | decided |
 | V45 | 2026-10-13 | **"Worth controlling" threshold g = 10 %** (V31): an inflow level is in the band when the best non-learning arm or the informed oracle cuts the generalised cost by ≥ 10 % vs the all-HDV baseline | decided |
 | V46 | 2026-10-13 | **PHEV electric-mode share 50 %** (V38), a labelled assumption | decided |
+| V47 | 2026-10-13 | **CAV target floor 50 km/h** (author: below 50 km/h the jam cannot be optimised); the ceiling is 100 km/h; on zone entry the target starts at the current speed rounded to 5 km/h. Whether the floor should be higher stays open: the tool checks log how often targets sit at the floor | decided; open: a higher floor |
