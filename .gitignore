@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv*/
+build/
+dist/
+# raw simulation output belongs under /home/catalin/work/phd/ (ext4), never in the repo
+runs/raw/
+*.sumocfg.tmp
+.DS_Store

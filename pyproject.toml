@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "v5b"
+version = "0.0.0"
+description = "v5.B.1: coordinated zone control on a multi-bottleneck freeway (PhD research platform)"
+requires-python = ">=3.14"
+
+[tool.setuptools]
+packages = ["v5b"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
