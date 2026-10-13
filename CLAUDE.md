@@ -32,6 +32,18 @@
   - Report all of them, with multiplicity control.
 - **Why:** on a real corridor the literature caps any helper at ≈ 2–3 % over the strongest published logic controller, and ≈ 9 % over MTFC+PI-ALINEA (Frejo & De Schutter 2021, Seville; D5.1).
 
+**v5.B (author decisions, 2026-10-13).** v5 was closed by D6.0 (2026-10-12); it now continues as **v5.B**, a secondary, new version, alongside the v6 traffic-signal work.
+- Branch `claude/v5b-core`. Design: `docs/v5b/design_v0.md`.
+- Topic: three communicating zone controllers on CORR2X (`--net corr2x`).
+- Actuators:
+  - per-CAV ±X km/h / hold commands in the zones before each merge point (about 50 % CAVs);
+  - ramp meters on R1 and R2;
+  - per-lane speed limits for HDVs only: lanes at most ±10 km/h apart, shown rounded to 5 km/h.
+- Zones exchange state and planned speed profiles.
+- Headline: door-to-door delay including ramp queues, plus a stop-and-go index; safety is a constraint.
+- Adaptive drivers: a placeholder interface only, for now.
+- The method rules below apply unchanged (protocol before data, tuned comparators, approved seeds, the conditional bar).
+
 In the v6 repo (`/run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v6`) VSL stays excluded:
 - **do not modify v6;**
 - read only `docs/handoff/lessons_learned.md`, `docs/feasibility/gate0_perimeter.md`, `docs/plans/phase7_novelty_check.md` and `feasibility/results/bench/parallel_sweet_spot_20261001.md`;
