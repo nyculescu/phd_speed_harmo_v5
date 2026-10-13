@@ -32,7 +32,7 @@
   - Report all of them, with multiplicity control.
 - **Why:** on a real corridor the literature caps any helper at ≈ 2–3 % over the strongest published logic controller, and ≈ 9 % over MTFC+PI-ALINEA (Frejo & De Schutter 2021, Seville; D5.1).
 
-**v5.B (author decisions, 2026-10-13).** v5 was closed by D6.0 (2026-10-12); it now continues as **v5.B**, a secondary, new version, alongside the v6 traffic-signal work.
+**v5.B (author decisions, 2026-10-13).** v5 was closed by D6.0 (2026-10-12); it now continues as **v5.B**, a new version and, since 2026-10-13, the **PRIMARY** PhD line (v6 traffic-signal work is secondary: v5.B runs take CPU priority), alongside the v6 traffic-signal work.
 - Branch `claude/v5b-core`. Design: `docs/v5b/design_v0.md`.
 - Topic: three communicating zone controllers on CORR2X (`--net corr2x`).
 - Actuators:

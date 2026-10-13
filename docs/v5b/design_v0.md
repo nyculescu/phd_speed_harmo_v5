@@ -2,7 +2,7 @@
 
 *2026-10-13 · branch `claude/v5b-core` (from `claude/day-pattern-core` at `8eb0343`) · status: design draft, no data*
 
-v5.B is a secondary, new version of the v5 project (author, 2026-10-13). It runs alongside the v6 traffic-signal work
+v5.B is a new version of the v5 project (author, 2026-10-13) and, by a later author decision the same day (B15), the **primary** PhD line; v6 is secondary. It runs alongside the v6 traffic-signal work
 (`phd_v6`, `claude/tsc-foundation`). The v5 close-out (`docs/handoff/v5_closeout_2026-10-13.md`) stays valid for
 everything v5 recorded before this point.
 
@@ -41,6 +41,7 @@ The method rules of `CLAUDE.md` apply unchanged:
 | B12 | **Demand revised (supersedes the M in B6 and the window in B7):** one direction carries one commuter peak. The day is a single **morning triangle-ish peak**: the morning part of the fitted MnDOT shape, a fast rise to about 07:50 and a slower fall, with the same per-day noise. **Window 06:00-10:00.** Training and evaluation share this window; the B7 pause rule stays. |
 | B13 | **Higher on-ramp demand:** peaks R1 1,200 veh/h, R2 1,000 veh/h, mainline about 4,000 veh/h. Ramp storage is about 50 vehicles per ramp, so metering faces a real trade-off. |
 | B14 | **Safety counted at speed:** TTC < 1.5 s and hard braking above about 10 m/s. Raw SUMO "emergency braking" warnings are mostly zipper-queue creeping. A 2026-10-13 replay of the M day: all 730 vehicles braked in the last 125 m before the zipper, at about 0 m/s afterwards, 2.5 m gap. |
+| B15 | **Priority:** v5.B is the PRIMARY PhD line and v6 (traffic signals) is secondary. v5.B work and runs come first, including CPU. |
 
 ### My readings of B2 and B4, to be confirmed by the author
 - **(a)** "At most ±10 km/h gap": any two lanes of the same cross-section differ by ≤ 10 km/h. The alternative reading, adjacent lanes only, allows up to 20 km/h across 3 lanes.
