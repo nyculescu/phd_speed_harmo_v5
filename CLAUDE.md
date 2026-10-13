@@ -40,7 +40,7 @@
   - ramp meters on R1 and R2;
   - per-lane speed limits for HDVs only: lanes at most ±10 km/h apart, shown rounded to 5 km/h.
 - Zones exchange state and planned speed profiles.
-- Headline: door-to-door delay including ramp queues, plus a stop-and-go index; safety is a constraint.
+- Headline: average door-to-door delay including ramp queues, plus a stop-and-go index; TTT is always reported alongside; safety is a constraint.
 - Adaptive drivers: a placeholder interface only, for now.
 - The method rules below apply unchanged (protocol before data, tuned comparators, approved seeds, the conditional bar).
 

@@ -31,6 +31,7 @@ The method rules of `CLAUDE.md` apply unchanged:
 | B3 | Adaptive driver model: **placeholder** for now (interface only, §6) |
 | B4 | Zones exchange **planned speed profiles** as well as state, so each controller can learn the effects of its own actions downstream and upstream |
 | B5 | Headline: door-to-door delay **including on-ramp queues**, co-headlined with a stop-and-go index; safety (TTC, hard braking) is a constraint |
+| B5a | **TTT** (total travel time, veh·h) is reported alongside average door-to-door delay: TTT measures the aggregate time consumed by all vehicles, delay measures how much longer journeys take than their reference (author, 2026-10-13) |
 
 ### My readings of B2 and B4, to be confirmed by the author
 - **(a)** "At most ±10 km/h gap": any two lanes of the same cross-section differ by ≤ 10 km/h. The alternative reading, adjacent lanes only, allows up to 20 km/h across 3 lanes.
@@ -112,7 +113,14 @@ class DriverPopulation:
 The candidate model for later is a small set of strategies, with shares updated by imitation dynamics across episodes, starting from a small non-compliant seed. A separate design is written when the author opens B3.
 
 ## 7. Metrics (B5)
-- **Headline:** door-to-door delay including on-ramp queues (`jobs/corr_run.py` d2d).
+- **Headline: average door-to-door delay**, including on-ramp and insertion queues. It answers: *how much longer is a journey than its reference?*
+  - Per vehicle: door-to-door time minus the free-flow (reference) time of its own route.
+  - Averaged over the cohort; `jobs/corr_run.py` computes the d2d times.
+- **Reported alongside: total travel time (TTT)** (author, 2026-10-13). It answers: *how much time does all traffic consume in aggregate?*
+  - Definition: the sum over all vehicles of time spent in the system, including origin and insertion queues, over a fixed window [t0, t1], in veh·h.
+  - Vehicles still queued or unfinished at t1 count up to t1, so an arm cannot lower TTT by serving fewer vehicles.
+  - TTT is reported with served throughput next to it, because it scales with how many vehicles the window covers.
+  - The two can disagree: TTT weighs where most vehicle-hours go, while average delay weighs each journey equally. Both are reported per arm and per regime.
 - **Co-headline: stop-and-go index.** Pre-registered candidates:
   - share of vehicle-time inside stop-and-go oscillations;
   - stops per vehicle-km;
@@ -120,7 +128,6 @@ The candidate model for later is a small set of strategies, with shares updated 
   
   The protocol picks one and reports the others.
 - **Reported alongside:**
-  - TTT/TTS;
   - throughput;
   - **per-zone TTS against NC**, to show congestion shifting;
   - ramp queues and spillback.
