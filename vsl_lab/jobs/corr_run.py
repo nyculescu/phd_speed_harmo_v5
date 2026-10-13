@@ -103,11 +103,12 @@ def post_vsl(b: float) -> None:
         P.set_vsl((accel,), acc * vmax)
 
 
-def _group_stats(dem, arrival_t: dict, t_censor: float, bin_s: float = 300.0, t_end: float = 3900.0) -> dict:
+def _group_stats(dem, arrival_t: dict, t_censor: float, bin_s: float = 300.0, t_end: float = 3900.0,
+                 variant: str = "corr2") -> dict:
     tt = {}
     for dep, vid, rid, _ in dem.vehicles:
         tt.setdefault(rid, []).append((dep, arrival_t.get(vid, t_censor) - dep))
-    groups = dict(P.GROUPS, all=tuple(tt))
+    groups = dict(P.groups(variant), all=tuple(tt))
     groups.update({f"route:{r}": (r,) for r in tt})
     nb = int(round(t_end / bin_s))
     out = {}
@@ -131,18 +132,18 @@ def _group_stats(dem, arrival_t: dict, t_censor: float, bin_s: float = 300.0, t_
 def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str, out_root: Path,
         stops: bool = False, off_share: float = P.OFF_SHARE, p_nc: float = 0.3, truck: float = 0.1,
         driver: str = "H5", step: float = P.STEP_LENGTH, t_end: float = 3900.0, t_ctrl0: float = 300.0,
-        t_max: float = 10800.0) -> dict:
+        t_max: float = 10800.0, variant: str = "corr2") -> dict:
     w_all = time.time()
     cfg = parse_ctrl(ctrl)
     dt = step
-    run_id = (f"corr2{driver}_{ctrl.replace(':', '_')}_s{seed}_m{int(q_main)}_r{int(q_r1)}_{int(q_r2)}"
+    run_id = (f"{variant}{driver}_{ctrl.replace(':', '_')}_s{seed}_m{int(q_main)}_r{int(q_r1)}_{int(q_r2)}"
               f"_off{off_share:g}_nc{p_nc:g}_tr{truck:g}_dt{dt:g}_pid{os.getpid()}")
     run_dir = out_root / tag / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    f = P.files()
+    f = P.files(variant)
     lanes = f["lanes"]
     dem = P.demand(seed, q_main, q_r1, q_r2, off_share=off_share, p_noncompliant=p_nc, truck_share=truck,
-                   driver=driver, step_length=dt, t_end=t_end)
+                   driver=driver, step_length=dt, t_end=t_end, variant=variant)
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     trip_file = run_dir / f"tripinfo_pid{os.getpid()}.xml"
@@ -223,7 +224,7 @@ def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str,
     t_close = sim.t
     out = sim.close(drained=drained)
     n = out["generated"]
-    d2d = _group_stats(dem, arrival_t, t_close, t_end=t_end)
+    d2d = _group_stats(dem, arrival_t, t_close, t_end=t_end, variant=variant)
     ramp = {}
     for r in N.RAMPS:
         a = np.array(qs[r]) if qs[r] else np.zeros((1, 5))
@@ -290,7 +291,7 @@ def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str,
             out["time_loss_per_veh_s"] = float(np.mean([x[2] for x in allr])) if allr else None
             out["n_tripinfo"] = len(allr)
             out["stops_by_group"] = {}
-            for g, rids in dict(P.GROUPS, **{f"route:{r}": (r,) for r in per}).items():
+            for g, rids in dict(P.groups(variant), **{f"route:{r}": (r,) for r in per}).items():
                 rows = [x for r in rids for x in per.get(r, [])]
                 if rows:
                     out["stops_by_group"][g] = {"stops_per_veh": float(np.mean([x[0] for x in rows])),
@@ -320,6 +321,8 @@ def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str,
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ctrl", default="nc")
+    ap.add_argument("--net", default="corr2", choices=["corr2", "corr2x"],
+                    help="corr2x: auxiliary lane + off-ramp after each merge instead of a forced merge")
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--q-main", type=float, default=4500.0)
     ap.add_argument("--q-r1", type=float, default=600.0)
@@ -334,7 +337,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t4"))
     a = ap.parse_args(argv)
     out = run(a.ctrl, a.seed, a.q_main, a.q_r1, a.q_r2, a.tag, Path(a.out_root), stops=a.stops,
-              off_share=a.off_share, p_nc=a.p_nc, truck=a.truck, driver=a.driver, step=a.step)
+              off_share=a.off_share, p_nc=a.p_nc, truck=a.truck, driver=a.driver, step=a.step, variant=a.net)
     d = out["door_to_door"]
     print(json.dumps({"run_id": out["run_id"], "mean_time_in_system_s": round(out["mean_time_in_system_s"], 1),
                       "d2d": {g: round(d[g]["mean_s"], 1) for g in ("all", "main", "r1", "r2", "offramp") if g in d},

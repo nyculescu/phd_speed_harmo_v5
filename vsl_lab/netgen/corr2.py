@@ -44,6 +44,12 @@ SPEC = {
     "off": {"id": "O1", "x": 4500.0, "len": 300.0, "from": "m3"},
     "loop_period": 30.0, "alinea_period": 60.0, "alinea_offset": 40.0,
 }
+# CORR2X (author, 2026-10-13): no forced merge. The acceleration lane 0 of each merge edge continues as an auxiliary lane
+# and leaves at the merge end as a 1-lane off-ramp (X1 after merge1, X2 after merge2); mainline lanes 1-3 continue as
+# 0-2 as in CORR2. On-ramp traffic bound for the mainline must change left within the 250-m auxiliary section, and
+# mainline traffic bound for X1 / X2 must change right into it (a weaving section). Opt-in: CORR2's SPEC, cache and
+# recorded results are unchanged.
+SPEC_AUX = dict(SPEC, name="CORR2X", aux_exit={"merge1": "X1", "merge2": "X2"}, aux_len=300.0)
 MAIN_EDGES = tuple(e[0] for e in SPEC["main"])
 N_LANES = {e[0]: e[3] for e in SPEC["main"]}
 MERGES = ("merge1", "merge2")
@@ -59,6 +65,8 @@ ROUTES = {
     "r1_off": "R1o R1 merge1 m3 O1",
     "r2_ex": "R2o R2 merge2 m6 down",
 }
+ROUTES_AUX = dict(ROUTES, main_x1="m0 m1 m2 merge1 X1", main_x2="m0 m1 m2 merge1 m3 m4 m5 merge2 X2",
+                  r1_x2="R1o R1 merge1 m3 m4 m5 merge2 X2")
 # the ramp direction vector (unit length: 0.96^2 + 0.28^2 = 1), as MRG3's ramp node placement
 _DX, _DY = 0.96, 0.28
 
@@ -92,6 +100,10 @@ def _write_plain(d: Path, spec: dict) -> None:
         nodes.append(f'  <node id="{k.lower()}a" x="{xb - Lo * _DX:.2f}" y="{yb - Lo * _DY:.2f}" type="dead_end"/>')
     o = spec["off"]
     nodes.append(f'  <node id="o1e" x="{o["x"] + o["len"] * _DX:.2f}" y="{-o["len"] * _DY:.2f}" type="dead_end"/>')
+    merge_end = {e[0]: e[2] for e in spec["main"]}
+    for m, xid in spec.get("aux_exit", {}).items():
+        xe, La = merge_end[m], spec["aux_len"]
+        nodes.append(f'  <node id="{xid.lower()}e" x="{xe + La * _DX:.2f}" y="{-La * _DY:.2f}" type="dead_end"/>')
     nodes.append("</nodes>")
     (d / "corr2.nod.xml").write_text("\n".join(nodes) + "\n")
 
@@ -106,6 +118,9 @@ def _write_plain(d: Path, spec: dict) -> None:
                      f'length="{L:.2f}"/>')
     edges.append(f'  <edge id="{o["id"]}" from="{_node_id(o["x"])}" to="o1e" numLanes="1" speed="{vr}" '
                  f'length="{o["len"]:.2f}"/>')
+    for m, xid in spec.get("aux_exit", {}).items():
+        edges.append(f'  <edge id="{xid}" from="{_node_id(merge_end[m])}" to="{xid.lower()}e" numLanes="1" '
+                     f'speed="{vr}" length="{spec["aux_len"]:.2f}"/>')
     edges.append("</edges>")
     (d / "corr2.edg.xml").write_text("\n".join(edges) + "\n")
 
@@ -117,7 +132,7 @@ def _write_plain(d: Path, spec: dict) -> None:
             for i in range(na):
                 con.append(f'  <connection from="{a}" to="{b}" fromLane="{i}" toLane="{i + 1}" uncontrolled="true"/>')
         elif a in merge_of:          # merge edge -> downstream: lanes 1..3 -> 0..2; lane 0 (acceleration lane) ends
-            for i in range(nb):
+            for i in range(nb):      # (CORR2X: lane 0 continues into the auxiliary off-ramp instead, below)
                 con.append(f'  <connection from="{a}" to="{b}" fromLane="{i + 1}" toLane="{i}"/>')
         else:
             for i in range(min(na, nb)):
@@ -126,6 +141,8 @@ def _write_plain(d: Path, spec: dict) -> None:
         con.append(f'  <connection from="{k}o" to="{k}" fromLane="0" toLane="0"/>')
         con.append(f'  <connection from="{k}" to="{r["merge"]}" fromLane="0" toLane="0"/>')
     con.append(f'  <connection from="{o["from"]}" to="{o["id"]}" fromLane="0" toLane="0"/>')
+    for m, xid in spec.get("aux_exit", {}).items():
+        con.append(f'  <connection from="{m}" to="{xid}" fromLane="0" toLane="0"/>')
     con.append("</connections>")
     (d / "corr2.con.xml").write_text("\n".join(con) + "\n")
 
@@ -154,6 +171,9 @@ def _write_additional(d: Path, spec: dict, lanes: dict) -> None:
         Lo = lanes[f"{r}o_0"]
         add.append(f'  <laneAreaDetector id="e2_{r}o_0" lane="{r}o_0" pos="0" length="{Lo:.2f}" period="{per}" '
                    'file="NUL"/>')
+    for xid in spec.get("aux_exit", {}).values():
+        add.append(f'  <inductionLoop id="e1_{xid}_0" lane="{xid}_0" pos="{lanes[f"{xid}_0"] - 5.0:.2f}" '
+                   f'period="{per}" file="NUL"/>')
     o = spec["off"]["id"]
     add.append(f'  <inductionLoop id="e1_{o}_0" lane="{o}_0" pos="{lanes[f"{o}_0"] - 5.0:.2f}" period="{per}" '
                'file="NUL"/>')

@@ -47,13 +47,24 @@ OFF_SHARE = 0.2
 GROUPS = {"main": ("main_ex", "main_off"), "r1": ("r1_ex", "r1_off"), "r2": ("r2_ex",),
           "offramp": ("main_off", "r1_off"), "through_main": ("main_ex",)}
 RAMP_ROUTES = {"R1": ("r1_ex", "r1_off"), "R2": ("r2_ex",)}
+# CORR2X (netgen SPEC_AUX): X_SHARE of mainline-origin vehicles leave at X1 and X_SHARE at X2; X_SHARE of R1 vehicles
+# leave at X2 (no on-ramp -> its own auxiliary exit; R2 vehicles all continue)
+X_SHARE = 0.1
+GROUPS_AUX = {"main": ("main_ex", "main_off", "main_x1", "main_x2"), "r1": ("r1_ex", "r1_off", "r1_x2"),
+              "r2": ("r2_ex",), "offramp": ("main_off", "r1_off", "main_x1", "main_x2", "r1_x2"),
+              "through_main": ("main_ex",)}
+RAMP_ROUTES_AUX = {"R1": ("r1_ex", "r1_off", "r1_x2"), "R2": ("r2_ex",)}
+
+
+def groups(variant: str = "corr2") -> dict:
+    return GROUPS_AUX if variant == "corr2x" else GROUPS
 profile = _mrg3.profile
 vtypes_xml = _mrg3.vtypes_xml
 DRIVERS = _mrg3.DRIVERS
 
 
-def files() -> dict:
-    d = net.build()
+def files(variant: str = "corr2") -> dict:
+    d = net.build(net.SPEC_AUX if variant == "corr2x" else net.SPEC)
     lanes = json.loads((d / "lanes.json").read_text())
     return {"net": d / "corr2.net.xml", "add": d / "corr2.det.add.xml", "dir": d, "lanes": lanes}
 
@@ -64,16 +75,23 @@ def _scaled(prof: list, s: float) -> list:
 
 def demand(seed: int, q_main: float, q_r1: float, q_r2: float, off_share: float = OFF_SHARE,
            p_noncompliant: float = 0.3, truck_share: float = 0.1, driver: str = "H5",
-           step_length: float = STEP_LENGTH, t_end: float = 3900.0, base_frac: float = 0.5) -> Demand:
+           step_length: float = STEP_LENGTH, t_end: float = 3900.0, base_frac: float = 0.5,
+           variant: str = "corr2", x_share: float = X_SHARE) -> Demand:
     pm = profile(base_frac * q_main, q_main, 600.0, 1200.0, 3000.0, t_end)
     p1 = profile(base_frac * q_r1, q_r1, 600.0, 1200.0, 3000.0, t_end)
     p2 = profile(base_frac * q_r2, q_r2, 600.0, 1200.0, 3000.0, t_end)
-    R = net.ROUTES
-    routes = [Route("main_ex", R["main_ex"], _scaled(pm, 1.0 - off_share), depart_lane="best", depart_speed="avg"),
+    R = net.ROUTES_AUX if variant == "corr2x" else net.ROUTES
+    xm = 2 * x_share if variant == "corr2x" else 0.0          # mainline origin: X1 and X2
+    x1 = x_share if variant == "corr2x" else 0.0              # R1: X2
+    routes = [Route("main_ex", R["main_ex"], _scaled(pm, 1.0 - off_share - xm), depart_lane="best", depart_speed="avg"),
               Route("main_off", R["main_off"], _scaled(pm, off_share), depart_lane="best", depart_speed="avg"),
-              Route("r1_ex", R["r1_ex"], _scaled(p1, 1.0 - off_share), depart_lane="0", depart_speed="avg"),
+              Route("r1_ex", R["r1_ex"], _scaled(p1, 1.0 - off_share - x1), depart_lane="0", depart_speed="avg"),
               Route("r1_off", R["r1_off"], _scaled(p1, off_share), depart_lane="0", depart_speed="avg"),
               Route("r2_ex", R["r2_ex"], p2, depart_lane="0", depart_speed="avg")]
+    if variant == "corr2x":
+        routes += [Route("main_x1", R["main_x1"], _scaled(pm, x_share), depart_lane="best", depart_speed="avg"),
+                   Route("main_x2", R["main_x2"], _scaled(pm, x_share), depart_lane="best", depart_speed="avg"),
+                   Route("r1_x2", R["r1_x2"], _scaled(p1, x_share), depart_lane="0", depart_speed="avg")]
     d = Demand(vtypes_xml=vtypes_xml(p_noncompliant, truck_share, driver=driver), routes=routes,
                step_length=step_length, seed=seed, human_type="mix", av_type="mix")
     d.generate()

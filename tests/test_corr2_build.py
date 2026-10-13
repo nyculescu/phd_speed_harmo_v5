@@ -114,3 +114,20 @@ def test_sumo_loads(built, tmp_path):
                        env=clean_sumo_env(), capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stderr[-1000:]
     assert "Error" not in log.read_text()
+
+
+def test_corr2x_aux_lane_exits():
+    """CORR2X (author, 2026-10-13): each merge edge's lane 0 continues into a 1-lane off-ramp (X1 / X2) instead of
+    ending; mainline lanes 1-3 continue as 0-2; the meters still control exactly the ramp links."""
+    import xml.etree.ElementTree as ET
+    from vsl_lab.netgen import corr2 as N
+    d = N.build(N.SPEC_AUX)
+    c = N.check_net(d / "corr2.net.xml")
+    assert c["n_lanes"]["X1"] == 1 and c["n_lanes"]["X2"] == 1 and not c["main_controlled"]
+    assert sorted(c["tl_links"]) == ["meter_R1", "meter_R2"] and all(len(v) == 1 for v in c["tl_links"].values())
+    con = {(x.get("from"), x.get("fromLane"), x.get("to"), x.get("toLane"))
+           for x in ET.parse(d / "corr2.net.xml").getroot().iter("connection") if x.get("from") in ("merge1", "merge2")}
+    assert con == {("merge1", "0", "X1", "0"), ("merge1", "1", "m3", "0"), ("merge1", "2", "m3", "1"),
+                   ("merge1", "3", "m3", "2"), ("merge2", "0", "X2", "0"), ("merge2", "1", "m6", "0"),
+                   ("merge2", "2", "m6", "1"), ("merge2", "3", "m6", "2")}
+    assert N.build(N.SPEC).name != d.name                      # CORR2 itself is unchanged (own cache)
