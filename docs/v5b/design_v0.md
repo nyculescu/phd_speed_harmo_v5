@@ -32,6 +32,12 @@ The method rules of `CLAUDE.md` apply unchanged:
 | B4 | Zones exchange **planned speed profiles** as well as state, so each controller can learn the effects of its own actions downstream and upstream |
 | B5 | Headline: door-to-door delay **including on-ramp queues**, co-headlined with a stop-and-go index; safety (TTC, hard braking) is a constraint |
 | B5a | **TTT** (total travel time, veh·h) is reported alongside average door-to-door delay: TTT measures the aggregate time consumed by all vehicles, delay measures how much longer journeys take than their reference (author, 2026-10-13) |
+| B6 | **Demand:** a synthetic M fitted to the real MnDOT weekday shape (US-169 SB, station S460 at T.H.62, median of 156 Tue-Thu weekdays 2023). **Every day differs:** noise on peak timing, height and width plus stochastic arrivals. The noise level is a parameter, raised later to stress the system. |
+| B7 | **Day window 06:00-19:00** (one full M). In free-flow or fully congested stretches there is nothing to optimise. **Controllers must detect this and pause learning, inference and activity**: one gate rule shared by every arm. |
+| B8 | **Zones of 1000 m each:** Z1 2.0-3.0 km, Z2 3.5-4.5 km, Z3 4.75-5.75 km. merge2 / R2 / X2 moved to 5.75 km (CORR2X v3). |
+| B9 | **Intervals:** CAV commands every 2 s (±5 km/h); HDV lane limits and ramp meters every 60 s; plan horizon 120 s. |
+| B10 | **Seed block approved:** 7,400,000-009 throw-away calibration; 010-099 plant and tool checks; 100-299 tuning; 300-499 validation; 500-699 test; 700-999 reserved confirmatory; 7,410,000-7,419,999 DRL training. |
+| B11 | **DRL trains on the peak windows only** (free flow needs no optimisation) |
 
 ### My readings of B2 and B4, to be confirmed by the author
 - **(a)** "At most ±10 km/h gap": any two lanes of the same cross-section differ by ≤ 10 km/h. The alternative reading, adjacent lanes only, allows up to 20 km/h across 3 lanes.

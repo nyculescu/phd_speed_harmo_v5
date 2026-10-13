@@ -47,16 +47,17 @@ SPEC = {
 # CORR2X (author, 2026-10-13; v2 the same day). No forced merges and a shorter corridor:
 #   m0-m2 (3 lanes) - merge1 (aux lane 0 + 3, 250 m; lane 0 leaves as off-ramp X1) - m3 (3 lanes) - 3->2 lane drop at
 #   4500 m (zipper node: lanes 0 and 1 merge into lane 0) - m4 (2 lanes, VSL area 2) - m5 (2) - merge2 (aux lane 0 + 2,
-#   250 m; lane 0 leaves as off-ramp X2) - m6 (2) - down (2). The off-ramp O1 is removed; R2 / merge2 sit 750 m closer.
+#   250 m; lane 0 leaves as off-ramp X2) - m6 (2) - down (2). The off-ramp O1 is removed. v3 (author, 2026-10-13):
+#   merge2 / R2 / X2 at 5750 m, so the three 1000-m control zones (2.0-3.0, 3.5-4.5, 4.75-5.75 km) do not overlap.
 # On-ramp traffic bound for the mainline changes left within the auxiliary section; mainline traffic bound for X1 / X2
 # changes right into it (weaving). Opt-in: CORR2's SPEC, cache and recorded results are unchanged.
 SPEC_AUX = {
-    "name": "CORR2X", "version": 2, "v_main": 33.33, "v_ramp": 25.0,
+    "name": "CORR2X", "version": 3, "v_main": 33.33, "v_ramp": 25.0,
     "main": [("m0", 0.0, 1500.0, 3), ("m1", 1500.0, 2500.0, 3), ("m2", 2500.0, 3000.0, 3),
              ("merge1", 3000.0, 3250.0, 4), ("m3", 3250.0, 4500.0, 3), ("m4", 4500.0, 5000.0, 2),
-             ("m5", 5000.0, 5250.0, 2), ("merge2", 5250.0, 5500.0, 3), ("m6", 5500.0, 6750.0, 2),
-             ("down", 6750.0, 8750.0, 2)],
-    "ramps": {"R1": {"merge": "merge1", "x": 3000.0}, "R2": {"merge": "merge2", "x": 5250.0}},
+             ("m5", 5000.0, 5750.0, 2), ("merge2", 5750.0, 6000.0, 3), ("m6", 6000.0, 7250.0, 2),
+             ("down", 7250.0, 9250.0, 2)],
+    "ramps": {"R1": {"merge": "merge1", "x": 3000.0}, "R2": {"merge": "merge2", "x": 5750.0}},
     "ramp_len": 400.0, "ramp_origin_len": 200.0,
     "off": None,
     "lane_drop": {"m3": [[0, 0], [1, 0], [2, 1]]},           # from-lane -> to-lane at the zipper node

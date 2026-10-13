@@ -42,6 +42,8 @@
 - Zones exchange state and planned speed profiles.
 - Headline: average door-to-door delay including ramp queues, plus a stop-and-go index; TTT is always reported alongside; safety is a constraint.
 - Adaptive drivers: a placeholder interface only, for now.
+- **Approved v5.B seed block (2026-10-13):** 7,400,000-009 calibration; 010-099 plant and tool checks; 100-299 tuning; 300-499 validation; 500-699 test; 700-999 reserved confirmatory; DRL training 7,410,000-7,419,999.
+- Demand: a noisy synthetic M fitted to a real MnDOT weekday, 06:00-19:00. DRL trains on the peaks only. Controllers pause in free flow and in full congestion.
 - The method rules below apply unchanged (protocol before data, tuned comparators, approved seeds, the conditional bar).
 
 In the v6 repo (`/run/media/catalin/Shared/Workspace/phd/phd_speed_harmo_v6`) VSL stays excluded:
