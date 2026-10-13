@@ -10,8 +10,8 @@ the best tuned conventional control in identifiable regimes (the D5.8 conditiona
 
 ## Status
 ```
-project_init ─► architecture review ─► §11 design artifacts ─► gap analysis vs the archive ─► protocol (P0/P1) ─► code
-     ▲ here
+project_init ─► review ─► decisions V1–V46 ─► contracts v0.1 ─► protocol (P0/P1) ─► port + T0–T3 ─► band sweep ─► RL
+                                                    ▲ here (author review)
 ```
 Nothing is implemented yet. The network is not chosen (CORR2X is one candidate).
 
