@@ -38,6 +38,9 @@ The method rules of `CLAUDE.md` apply unchanged:
 | B9 | **Intervals:** CAV commands every 2 s (±5 km/h); HDV lane limits and ramp meters every 60 s; plan horizon 120 s. |
 | B10 | **Seed block approved:** 7,400,000-009 throw-away calibration; 010-099 plant and tool checks; 100-299 tuning; 300-499 validation; 500-699 test; 700-999 reserved confirmatory; 7,410,000-7,419,999 DRL training. |
 | B11 | **DRL trains on the peak windows only** (free flow needs no optimisation) |
+| B12 | **Demand revised (supersedes the M in B6 and the window in B7):** one direction carries one commuter peak. The day is a single **morning triangle-ish peak**: the morning part of the fitted MnDOT shape, a fast rise to about 07:50 and a slower fall, with the same per-day noise. **Window 06:00-10:00.** Training and evaluation share this window; the B7 pause rule stays. |
+| B13 | **Higher on-ramp demand:** peaks R1 1,200 veh/h, R2 1,000 veh/h, mainline about 4,000 veh/h. Ramp storage is about 50 vehicles per ramp, so metering faces a real trade-off. |
+| B14 | **Safety counted at speed:** TTC < 1.5 s and hard braking above about 10 m/s. Raw SUMO "emergency braking" warnings are mostly zipper-queue creeping. A 2026-10-13 replay of the M day: all 730 vehicles braked in the last 125 m before the zipper, at about 0 m/s afterwards, 2.5 m gap. |
 
 ### My readings of B2 and B4, to be confirmed by the author
 - **(a)** "At most ±10 km/h gap": any two lanes of the same cross-section differ by ≤ 10 km/h. The alternative reading, adjacent lanes only, allows up to 20 km/h across 3 lanes.
