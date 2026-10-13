@@ -132,7 +132,7 @@ def _group_stats(dem, arrival_t: dict, t_censor: float, bin_s: float = 300.0, t_
 def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str, out_root: Path,
         stops: bool = False, off_share: float = P.OFF_SHARE, p_nc: float = 0.3, truck: float = 0.1,
         driver: str = "H5", step: float = P.STEP_LENGTH, t_end: float = 3900.0, t_ctrl0: float = 300.0,
-        t_max: float = 10800.0, variant: str = "corr2") -> dict:
+        t_max: float = 10800.0, variant: str = "corr2", m_day: bool = False, noise: float = 1.0) -> dict:
     w_all = time.time()
     cfg = parse_ctrl(ctrl)
     dt = step
@@ -143,7 +143,7 @@ def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str,
     f = P.files(variant)
     lanes = f["lanes"]
     dem = P.demand(seed, q_main, q_r1, q_r2, off_share=off_share, p_noncompliant=p_nc, truck_share=truck,
-                   driver=driver, step_length=dt, t_end=t_end, variant=variant)
+                   driver=driver, step_length=dt, t_end=t_end, variant=variant, m_day=m_day, noise=noise)
     rou = run_dir / f"routes_s{seed}_pid{os.getpid()}.rou.xml"
     dem.write(rou)
     trip_file = run_dir / f"tripinfo_pid{os.getpid()}.xml"
@@ -333,11 +333,15 @@ def main(argv=None) -> int:
     ap.add_argument("--driver", default="H5", choices=sorted(P.DRIVERS))
     ap.add_argument("--step", type=float, default=P.STEP_LENGTH)
     ap.add_argument("--stops", action="store_true", help="tripinfo stop metrics")
+    ap.add_argument("--demand", default="trapezoid", choices=["trapezoid", "m_day"],
+                    help="m_day: v5.B daily commuter M 06:00-19:00 (q_* = nominal peaks), with day-to-day noise")
+    ap.add_argument("--noise", type=float, default=1.0, help="m_day noise scale (0 = nominal day)")
     ap.add_argument("--tag", default="smoke")
     ap.add_argument("--out-root", default=str(RUNS_ROOT / "t4"))
     a = ap.parse_args(argv)
     out = run(a.ctrl, a.seed, a.q_main, a.q_r1, a.q_r2, a.tag, Path(a.out_root), stops=a.stops,
-              off_share=a.off_share, p_nc=a.p_nc, truck=a.truck, driver=a.driver, step=a.step, variant=a.net)
+              off_share=a.off_share, p_nc=a.p_nc, truck=a.truck, driver=a.driver, step=a.step, variant=a.net,
+              **(dict(m_day=True, noise=a.noise, t_end=46800.0, t_max=46800.0 + 7200.0) if a.demand == "m_day" else {}))
     d = out["door_to_door"]
     print(json.dumps({"run_id": out["run_id"], "mean_time_in_system_s": round(out["mean_time_in_system_s"], 1),
                       "d2d": {g: round(d[g]["mean_s"], 1) for g in ("all", "main", "r1", "r2", "offramp") if g in d},

@@ -77,10 +77,18 @@ def _scaled(prof: list, s: float) -> list:
 def demand(seed: int, q_main: float, q_r1: float, q_r2: float, off_share: float = OFF_SHARE,
            p_noncompliant: float = 0.3, truck_share: float = 0.1, driver: str = "H5",
            step_length: float = STEP_LENGTH, t_end: float = 3900.0, base_frac: float = 0.5,
-           variant: str = "corr2", x_share: float = X_SHARE) -> Demand:
-    pm = profile(base_frac * q_main, q_main, 600.0, 1200.0, 3000.0, t_end)
-    p1 = profile(base_frac * q_r1, q_r1, 600.0, 1200.0, 3000.0, t_end)
-    p2 = profile(base_frac * q_r2, q_r2, 600.0, 1200.0, 3000.0, t_end)
+           variant: str = "corr2", x_share: float = X_SHARE, m_day: bool = False, noise: float = 1.0) -> Demand:
+    """m_day: v5.B daily commuter M (plants/m_day.py, 06:00-19:00, t_end must be m_day.DAY_S); q_* are then the
+    nominal PEAK rates and each stream draws its own day-to-day noise from `seed`."""
+    if m_day:
+        from vsl_lab.plants import m_day as M
+        assert abs(t_end - M.DAY_S) < 1e-6, "an M day spans 06:00-19:00"
+        pm, p1, p2 = (M.day_profile(np.random.default_rng([seed, k]), q, noise) for k, q in
+                      enumerate((q_main, q_r1, q_r2)))
+    else:
+        pm = profile(base_frac * q_main, q_main, 600.0, 1200.0, 3000.0, t_end)
+        p1 = profile(base_frac * q_r1, q_r1, 600.0, 1200.0, 3000.0, t_end)
+        p2 = profile(base_frac * q_r2, q_r2, 600.0, 1200.0, 3000.0, t_end)
     if variant == "corr2x":
         R, x = net.ROUTES_AUX, x_share
         routes = [Route("main_ex", R["main_ex"], _scaled(pm, 1.0 - 2 * x), depart_lane="best", depart_speed="avg"),
