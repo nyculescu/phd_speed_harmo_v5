@@ -44,12 +44,25 @@ SPEC = {
     "off": {"id": "O1", "x": 4500.0, "len": 300.0, "from": "m3"},
     "loop_period": 30.0, "alinea_period": 60.0, "alinea_offset": 40.0,
 }
-# CORR2X (author, 2026-10-13): no forced merge. The acceleration lane 0 of each merge edge continues as an auxiliary lane
-# and leaves at the merge end as a 1-lane off-ramp (X1 after merge1, X2 after merge2); mainline lanes 1-3 continue as
-# 0-2 as in CORR2. On-ramp traffic bound for the mainline must change left within the 250-m auxiliary section, and
-# mainline traffic bound for X1 / X2 must change right into it (a weaving section). Opt-in: CORR2's SPEC, cache and
-# recorded results are unchanged.
-SPEC_AUX = dict(SPEC, name="CORR2X", aux_exit={"merge1": "X1", "merge2": "X2"}, aux_len=300.0)
+# CORR2X (author, 2026-10-13; v2 the same day). No forced merges and a shorter corridor:
+#   m0-m2 (3 lanes) - merge1 (aux lane 0 + 3, 250 m; lane 0 leaves as off-ramp X1) - m3 (3 lanes) - 3->2 lane drop at
+#   4500 m (zipper node: lanes 0 and 1 merge into lane 0) - m4 (2 lanes, VSL area 2) - m5 (2) - merge2 (aux lane 0 + 2,
+#   250 m; lane 0 leaves as off-ramp X2) - m6 (2) - down (2). The off-ramp O1 is removed; R2 / merge2 sit 750 m closer.
+# On-ramp traffic bound for the mainline changes left within the auxiliary section; mainline traffic bound for X1 / X2
+# changes right into it (weaving). Opt-in: CORR2's SPEC, cache and recorded results are unchanged.
+SPEC_AUX = {
+    "name": "CORR2X", "version": 2, "v_main": 33.33, "v_ramp": 25.0,
+    "main": [("m0", 0.0, 1500.0, 3), ("m1", 1500.0, 2500.0, 3), ("m2", 2500.0, 3000.0, 3),
+             ("merge1", 3000.0, 3250.0, 4), ("m3", 3250.0, 4500.0, 3), ("m4", 4500.0, 5000.0, 2),
+             ("m5", 5000.0, 5250.0, 2), ("merge2", 5250.0, 5500.0, 3), ("m6", 5500.0, 6750.0, 2),
+             ("down", 6750.0, 8750.0, 2)],
+    "ramps": {"R1": {"merge": "merge1", "x": 3000.0}, "R2": {"merge": "merge2", "x": 5250.0}},
+    "ramp_len": 400.0, "ramp_origin_len": 200.0,
+    "off": None,
+    "lane_drop": {"m3": [[0, 0], [1, 0], [2, 1]]},           # from-lane -> to-lane at the zipper node
+    "aux_exit": {"merge1": "X1", "merge2": "X2"}, "aux_len": 300.0,
+    "loop_period": 30.0, "alinea_period": 60.0, "alinea_offset": 40.0,
+}
 MAIN_EDGES = tuple(e[0] for e in SPEC["main"])
 N_LANES = {e[0]: e[3] for e in SPEC["main"]}
 MERGES = ("merge1", "merge2")
@@ -65,8 +78,22 @@ ROUTES = {
     "r1_off": "R1o R1 merge1 m3 O1",
     "r2_ex": "R2o R2 merge2 m6 down",
 }
-ROUTES_AUX = dict(ROUTES, main_x1="m0 m1 m2 merge1 X1", main_x2="m0 m1 m2 merge1 m3 m4 m5 merge2 X2",
-                  r1_x2="R1o R1 merge1 m3 m4 m5 merge2 X2")
+ROUTES_AUX = {
+    "main_ex": "m0 m1 m2 merge1 m3 m4 m5 merge2 m6 down",
+    "main_x1": "m0 m1 m2 merge1 X1",
+    "main_x2": "m0 m1 m2 merge1 m3 m4 m5 merge2 X2",
+    "r1_ex": "R1o R1 merge1 m3 m4 m5 merge2 m6 down",
+    "r1_x2": "R1o R1 merge1 m3 m4 m5 merge2 X2",
+    "r2_ex": "R2o R2 merge2 m6 down",
+}
+
+
+def activate(spec) -> None:
+    """Point the module's per-network constants (MAIN_EDGES, N_LANES) at `spec` for this process (the plant and the
+    job read them; one simulation per process)."""
+    global MAIN_EDGES, N_LANES
+    MAIN_EDGES = tuple(e[0] for e in spec["main"])
+    N_LANES = {e[0]: e[3] for e in spec["main"]}
 # the ramp direction vector (unit length: 0.96^2 + 0.28^2 = 1), as MRG3's ramp node placement
 _DX, _DY = 0.96, 0.28
 
@@ -77,13 +104,14 @@ def spec_hash(spec=SPEC) -> str:
 
 def _node_id(x: float) -> str:
     return {0.0: "n0", 1500.0: "n1", 2500.0: "n2", 3000.0: "nm1", 3250.0: "nm1e", 4500.0: "nd1", 5500.0: "n4e",
-            6000.0: "nm2", 6250.0: "nm2e", 7500.0: "n6", 9500.0: "n7"}[x]
+            6000.0: "nm2", 6250.0: "nm2e", 7500.0: "n6", 9500.0: "n7"}.get(x, f"n{int(x)}")
 
 
 def _write_plain(d: Path, spec: dict) -> None:
     vm, vr = spec["v_main"], spec["v_ramp"]
     xs = sorted({e[1] for e in spec["main"]} | {e[2] for e in spec["main"]})
     meter_nodes = {_node_id(r["x"]): k for k, r in spec["ramps"].items()}
+    drop_x = {e[2] for e in spec["main"] if e[0] in spec.get("lane_drop", {})}
     nodes = ["<nodes>"]
     for x in xs:
         nid = _node_id(x)
@@ -91,15 +119,16 @@ def _write_plain(d: Path, spec: dict) -> None:
             nodes.append(f'  <node id="{nid}" x="{x}" y="0" type="traffic_light" tl="{TLS[meter_nodes[nid]]}" '
                          'tlType="static"/>')
         else:
-            t = "dead_end" if x in (xs[0], xs[-1]) else "priority"
+            t = "zipper" if x in drop_x else ("dead_end" if x in (xs[0], xs[-1]) else "priority")
             nodes.append(f'  <node id="{nid}" x="{x}" y="0" type="{t}"/>')
     L, Lo = spec["ramp_len"], spec["ramp_origin_len"]
     for k, r in spec["ramps"].items():
         xb, yb = r["x"] - L * _DX, -L * _DY
         nodes.append(f'  <node id="{k.lower()}b" x="{xb:.2f}" y="{yb:.2f}" type="priority"/>')
         nodes.append(f'  <node id="{k.lower()}a" x="{xb - Lo * _DX:.2f}" y="{yb - Lo * _DY:.2f}" type="dead_end"/>')
-    o = spec["off"]
-    nodes.append(f'  <node id="o1e" x="{o["x"] + o["len"] * _DX:.2f}" y="{-o["len"] * _DY:.2f}" type="dead_end"/>')
+    o = spec.get("off")
+    if o:
+        nodes.append(f'  <node id="o1e" x="{o["x"] + o["len"] * _DX:.2f}" y="{-o["len"] * _DY:.2f}" type="dead_end"/>')
     merge_end = {e[0]: e[2] for e in spec["main"]}
     for m, xid in spec.get("aux_exit", {}).items():
         xe, La = merge_end[m], spec["aux_len"]
@@ -116,8 +145,9 @@ def _write_plain(d: Path, spec: dict) -> None:
                      f'length="{Lo:.2f}"/>')
         edges.append(f'  <edge id="{k}" from="{k.lower()}b" to="{_node_id(r["x"])}" numLanes="1" speed="{vr}" '
                      f'length="{L:.2f}"/>')
-    edges.append(f'  <edge id="{o["id"]}" from="{_node_id(o["x"])}" to="o1e" numLanes="1" speed="{vr}" '
-                 f'length="{o["len"]:.2f}"/>')
+    if o:
+        edges.append(f'  <edge id="{o["id"]}" from="{_node_id(o["x"])}" to="o1e" numLanes="1" speed="{vr}" '
+                     f'length="{o["len"]:.2f}"/>')
     for m, xid in spec.get("aux_exit", {}).items():
         edges.append(f'  <edge id="{xid}" from="{_node_id(merge_end[m])}" to="{xid.lower()}e" numLanes="1" '
                      f'speed="{vr}" length="{spec["aux_len"]:.2f}"/>')
@@ -134,13 +164,17 @@ def _write_plain(d: Path, spec: dict) -> None:
         elif a in merge_of:          # merge edge -> downstream: lanes 1..3 -> 0..2; lane 0 (acceleration lane) ends
             for i in range(nb):      # (CORR2X: lane 0 continues into the auxiliary off-ramp instead, below)
                 con.append(f'  <connection from="{a}" to="{b}" fromLane="{i + 1}" toLane="{i}"/>')
+        elif a in spec.get("lane_drop", {}):
+            for i, j in spec["lane_drop"][a]:
+                con.append(f'  <connection from="{a}" to="{b}" fromLane="{i}" toLane="{j}"/>')
         else:
             for i in range(min(na, nb)):
                 con.append(f'  <connection from="{a}" to="{b}" fromLane="{i}" toLane="{i}"/>')
     for k, r in spec["ramps"].items():
         con.append(f'  <connection from="{k}o" to="{k}" fromLane="0" toLane="0"/>')
         con.append(f'  <connection from="{k}" to="{r["merge"]}" fromLane="0" toLane="0"/>')
-    con.append(f'  <connection from="{o["from"]}" to="{o["id"]}" fromLane="0" toLane="0"/>')
+    if o:
+        con.append(f'  <connection from="{o["from"]}" to="{o["id"]}" fromLane="0" toLane="0"/>')
     for m, xid in spec.get("aux_exit", {}).items():
         con.append(f'  <connection from="{m}" to="{xid}" fromLane="0" toLane="0"/>')
     con.append("</connections>")
@@ -155,12 +189,13 @@ def lane_lengths(net_file: Path) -> dict:
 def _write_additional(d: Path, spec: dict, lanes: dict) -> None:
     per, pa, off = spec["loop_period"], spec["alinea_period"], spec["alinea_offset"]
     add = ["<additional>"]
-    for e in MAIN_EDGES:
-        for i in range(N_LANES[e]):
+    n_lanes = {e[0]: e[3] for e in spec["main"]}
+    for e in n_lanes:
+        for i in range(n_lanes[e]):
             L = lanes[f"{e}_{i}"]
             add.append(f'  <inductionLoop id="e1_{e}_{i}" lane="{e}_{i}" pos="{L - 5.0:.2f}" period="{per}" file="NUL"/>')
     for r, e in ALINEA_LOOPS.items():
-        for i in range(N_LANES[e]):
+        for i in range(n_lanes[e]):
             add.append(f'  <inductionLoop id="e1a_{e}_{i}" lane="{e}_{i}" pos="{off:.2f}" period="{pa}" file="NUL"/>')
     for r in RAMPS:
         L = lanes[f"{r}_0"]
@@ -174,9 +209,10 @@ def _write_additional(d: Path, spec: dict, lanes: dict) -> None:
     for xid in spec.get("aux_exit", {}).values():
         add.append(f'  <inductionLoop id="e1_{xid}_0" lane="{xid}_0" pos="{lanes[f"{xid}_0"] - 5.0:.2f}" '
                    f'period="{per}" file="NUL"/>')
-    o = spec["off"]["id"]
-    add.append(f'  <inductionLoop id="e1_{o}_0" lane="{o}_0" pos="{lanes[f"{o}_0"] - 5.0:.2f}" period="{per}" '
-               'file="NUL"/>')
+    if spec.get("off"):
+        o = spec["off"]["id"]
+        add.append(f'  <inductionLoop id="e1_{o}_0" lane="{o}_0" pos="{lanes[f"{o}_0"] - 5.0:.2f}" period="{per}" '
+                   'file="NUL"/>')
     # netconvert's default static program would meter every no-control run: load an all-green program per meter
     for r in RAMPS:
         add.append(f'  <tlLogic id="{TLS[r]}" type="static" programID="allgreen" offset="0">')

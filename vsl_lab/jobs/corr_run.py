@@ -189,7 +189,7 @@ def run(ctrl: str, seed: int, q_main: float, q_r1: float, q_r2: float, tag: str,
             for e in N.MAIN_EDGES:
                 row += [round(P.Sensors.flow_vph_per_lane(e), 1), round(P.Sensors.speed_kmh(e), 2)]
             row.append(round(P.Sensors.speed_kmh("m3", lanes=[0]), 2))
-            row.append(round(P.Sensors.loop_vph("e1_O1_0"), 1))
+            row.append(round(P.Sensors.loop_vph("e1_O1_0"), 1) if variant == "corr2" else float("nan"))
             for r in N.RAMPS:
                 q_out = P.Sensors.loop_vph(f"e1_{r}out_0")
                 qout30[r].append(q_out)

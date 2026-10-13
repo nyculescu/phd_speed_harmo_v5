@@ -118,7 +118,7 @@ def test_sumo_loads(built, tmp_path):
 
 def test_corr2x_aux_lane_exits():
     """CORR2X (author, 2026-10-13): each merge edge's lane 0 continues into a 1-lane off-ramp (X1 / X2) instead of
-    ending; mainline lanes 1-3 continue as 0-2; the meters still control exactly the ramp links."""
+    ending; the other merge lanes continue; the meters still control exactly the ramp links."""
     import xml.etree.ElementTree as ET
     from vsl_lab.netgen import corr2 as N
     d = N.build(N.SPEC_AUX)
@@ -129,5 +129,12 @@ def test_corr2x_aux_lane_exits():
            for x in ET.parse(d / "corr2.net.xml").getroot().iter("connection") if x.get("from") in ("merge1", "merge2")}
     assert con == {("merge1", "0", "X1", "0"), ("merge1", "1", "m3", "0"), ("merge1", "2", "m3", "1"),
                    ("merge1", "3", "m3", "2"), ("merge2", "0", "X2", "0"), ("merge2", "1", "m6", "0"),
-                   ("merge2", "2", "m6", "1"), ("merge2", "3", "m6", "2")}
+                   ("merge2", "2", "m6", "1")}
+    # v2: O1 removed; 3 -> 2 zipper lane drop m3 -> m4; R2's section is 2 + 1 lanes
+    assert "O1" not in c["n_lanes"] and c["n_lanes"]["m4"] == 2 and c["n_lanes"]["merge2"] == 3
+    root = ET.parse(d / "corr2.net.xml").getroot()
+    drop = {(x.get("fromLane"), x.get("toLane")) for x in root.iter("connection")
+            if x.get("from") == "m3" and x.get("to") == "m4"}
+    assert drop == {("0", "0"), ("1", "0"), ("2", "1")}
+    assert any(j.get("type") == "zipper" for j in root.iter("junction"))
     assert N.build(N.SPEC).name != d.name                      # CORR2 itself is unchanged (own cache)
