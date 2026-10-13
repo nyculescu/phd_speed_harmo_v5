@@ -27,13 +27,13 @@ The method rules of `CLAUDE.md` apply unchanged:
 | # | Decision |
 |---|---|
 | B1 | v5 continues as **v5.B**, a secondary, new version |
-| B2 | **Actuators.** CAVs: per-vehicle *accelerate / hold / brake* commands in steps of X km/h, given to every CAV inside a controlled zone (the X m before each merge point). Ramp meters on R1 and R2. Posted speed limits are for **HDVs only**: one regulated speed per lane, at most ±10 km/h apart; HDVs see it rounded to 5 km/h. |
+| B2 | **Actuators.** CAVs: per-vehicle *accelerate / hold / brake* commands in steps of 5 km/h (§10), given to every CAV inside a controlled zone (the X m before each merge point). Ramp meters on R1 and R2. Posted speed limits are for **HDVs only**: one regulated speed per lane, at most ±10 km/h apart; HDVs see it rounded to 5 km/h. |
 | B3 | Adaptive driver model: **placeholder** for now (interface only, §6) |
 | B4 | Zones exchange **planned speed profiles** as well as state, so each controller can learn the effects of its own actions downstream and upstream |
 | B5 | Headline: door-to-door delay **including on-ramp queues**, co-headlined with a stop-and-go index; safety (TTC, hard braking) is a constraint |
 | B5a | **TTT** (total travel time, veh·h) is reported alongside average door-to-door delay: TTT measures the aggregate time consumed by all vehicles, delay measures how much longer journeys take than their reference (author, 2026-10-13) |
-| B6 | **Demand:** a synthetic M fitted to the real MnDOT weekday shape (US-169 SB, station S460 at T.H.62, median of 156 Tue-Thu weekdays 2023). **Every day differs:** noise on peak timing, height and width plus stochastic arrivals. The noise level is a parameter, raised later to stress the system. |
-| B7 | **Day window 06:00-19:00** (one full M). In free-flow or fully congested stretches there is nothing to optimise. **Controllers must detect this and pause learning, inference and activity**: one gate rule shared by every arm. |
+| B6 | ~~superseded by B12 (the M)~~ **Demand:** a synthetic M fitted to the real MnDOT weekday shape (US-169 SB, station S460 at T.H.62, median of 156 Tue-Thu weekdays 2023). **Every day differs:** noise on peak timing, height and width plus stochastic arrivals. The noise level is a parameter, raised later to stress the system. |
+| B7 | ~~Day window 06:00-19:00 (one full M): superseded by B12 (06:00-10:00)~~. The pause rule stays (its "full congestion" part is open, Q5). In free-flow or fully congested stretches there is nothing to optimise. **Controllers must detect this and pause learning, inference and activity**: one gate rule shared by every arm. |
 | B8 | **Zones of 1000 m each:** Z1 2.0-3.0 km, Z2 3.5-4.5 km, Z3 4.75-5.75 km. merge2 / R2 / X2 moved to 5.75 km (CORR2X v3). |
 | B9 | **Intervals:** CAV commands every 2 s (±5 km/h); HDV lane limits and ramp meters every 60 s; plan horizon 120 s. |
 | B10 | **Seed block approved:** 7,400,000-009 throw-away calibration; 010-099 plant and tool checks; 100-299 tuning; 300-499 validation; 500-699 test; 700-999 reserved confirmatory; 7,410,000-7,419,999 DRL training. |
@@ -50,21 +50,24 @@ The method rules of `CLAUDE.md` apply unchanged:
 - **(d)** Per-lane regulated speeds are set by the zone controllers too, as part of their action. CAVs are not bound by them.
 - **(e)** Planned speed profile = each zone's intended per-lane regulated speeds and CAV speed targets over the next H_plan s, published every decision. Messages arrive with no delay or loss in v0; delay and loss are robustness rows later.
 
-## 3. Plant: CORR2X (`vsl_lab/netgen/corr2.py` SPEC_AUX, built 2026-10-13)
+## 3. Plant: CORR2X v3 (`vsl_lab/netgen/corr2.py` SPEC_AUX)
 ```
-x (km): 0 ─────── 3.0 ── 3.25 ────── 4.5 ───── 5.0 ── 5.25 ── 5.5 ──────── 6.75 ────── 8.75
-        [3 lanes ]⋈merge1[ 3 lanes ]Z[ 2 lanes ][ 2 ]⋈merge2[ 2 lanes  ][ 2 lanes ]
-                  ▲  4 lanes   │      3→2                  ▲ 3 lanes  │
-            R1 + meter   aux ─►X1   zipper           R2 + meter   aux ─►X2
-zones:  Z1 ◄── X1z m ──┤3.0      Z2 ◄── X2z m ──┤4.5   Z3 ◄─ X3z m ─┤5.25
+x (km): 0 ──── 2.0 ════ 3.0 ─ 3.25 ── 3.5 ════ 4.5 ── 4.75 ════ 5.75 ─ 6.0 ──────── 7.25 ────── 9.25
+        [ 3 lanes  ]⋈merge1[ 3 lanes      ]Z[ 2 lanes          ]⋈merge2[ 2 lanes ][ 2 lanes ]
+             [  Z1   ]  4 lanes    [  Z2   ] 3→2     [  Z3   ]   3 lanes
+                      ▲  │aux→X1            zipper            ▲  │aux→X2
+                     R1 + meter                              R2 + meter
 ```
-- **Merge points:**
-  - Z1: weaving section merge1, at 3.0 km;
-  - Z2: 3→2 zipper, at 4.5 km;
-  - Z3: weaving section merge2, at 5.25 km.
-- **Zone lengths:** zones must not overlap a neighbour's bottleneck. Z3 has only 750 m between the zipper and merge2, so X3z ≤ 750 m; X1z and X2z can be up to about 1.25 km. To decide: one common X, or one per zone.
-- **No-control baseline:** your GUI screenshots show stop-and-go waves at all three points. This still has to be **measured** against the realism checks (§8 P0). v5's realism gate never achieved a capacity drop without simulation artefacts, so this is the first risk.
-- Demand: default 4,500 / 600 / 900 veh/h overloads the 2-lane section (smoke run: 932 s mean time in system). The demand levels (regimes) are set in the protocol.
+- **Merge points and zones (B8, 1000 m each, non-overlapping):**
+  - Z1 is 2.0-3.0 km, before the weaving section merge1 at 3.0 km;
+  - Z2 is 3.5-4.5 km, before the 3→2 zipper at 4.5 km;
+  - Z3 is 4.75-5.75 km, before the weaving section merge2 at 5.75 km.
+  
+  merge2 / R2 / X2 were moved from 5.25 km to 5.75 km so that Z3 starts 250 m after the zipper.
+- **No-control baseline:** the GUI runs show stop-and-go waves at all three points. This still has to be **measured** against the realism checks (§8 P0). v5's realism gate never achieved a capacity drop without simulation artefacts, so this is the first risk.
+- **Demand (B12, B13):** one morning peak, 06:00-10:00, peaks of about 4,000 veh/h on the mainline (upstream of merge1), 1,200 on R1 and 1,000 on R2.
+  - Desk estimate at the peak: about 4,800 veh/h reach the 2-lane zipper (≈ 4,000 + 1,200 − 400 to X1), against a capacity of roughly 3,800-4,000. So it is over capacity only around the peak. To be checked on paper before any run.
+  - Exit shares: X1 10 % and X2 10 % of the mainline, X2 10 % of R1; trucks 10 %.
 
 ## 4. Control architecture
 ```
@@ -169,15 +172,22 @@ The candidate model for later is a small set of strategies, with shares updated 
 | `train/` | extend `train_sb3` for the CORR2X env; add a multi-agent trainer (choice of library in the protocol) |
 | `eval/` | stop-and-go index, SSM/TTC, per-zone TTS |
 
-## 10. Open parameters (author)
-- ~~X km/h, the CAV command step~~ **5 km/h** (author, 2026-10-13).
-- Zone lengths: one per zone (author); Z3 = 1000 m before merge2 (author), which reaches past the 3→2 zipper unless merge2 moves downstream (pending decision).
-- Δt_d, the decision interval; H_plan, the plan horizon.
-- Readings (a)–(e) above.
-- **Demand (author, 2026-10-13):** a daily commuter M, with a morning and an afternoon peak hours apart, not a 75-min episode.
-  - Pending: shape from a real MnDOT weekday (recommended) or synthetic; the day window (e.g. 05:00-21:00).
-- **DRL trains on the peak windows only (author, 2026-10-13):** free flow needs no optimisation.
-  - Each window covers onset, breakdown and recovery, after an unscored warm-up taken from the same profile.
-  - Pending: whether scoring is per peak window only, or per peak plus a report-only full-day "does no harm" check.
-- CAV-share sweep.
-- Seed block for v5.B, to be approved before any protocol run.
+## 10. Parameters
+**Decided (author, 2026-10-13):**
+- CAV command step 5 km/h.
+- Zones 1000 m each (B8).
+- Intervals Δt: CAV commands 2 s; HDV lane limits and ramp meters 60 s.
+- Plan horizon H_plan 120 s (B9).
+- Demand: one morning peak 06:00-10:00 with per-day noise; peaks: mainline about 4,000, R1 1,200, R2 1,000 veh/h (B12, B13).
+- DRL trains on the peak (B11). Seed block 7,400,000 (B10). Safety counted at speed (B14). v5.B primary (B15).
+
+**Open (author), as numbered in the v5.B session's report of 2026-10-13:**
+- Q1: readings (a)-(e) in §2.
+- Q2: confirm exit shares (X1 / X2 10 % each) and trucks 10 %.
+- Q3: is the ≥ 10 % bar on delay only, with stop-and-go as co-headline (recommended)?
+- Q4: do controllers output lane/segment targets, with a shared per-CAV ±5 / 0 rule (recommended)?
+- Q5: pause in free flow only (recommended), or also in full congestion?
+- Q6: is no control = CAVs on plain ACC, no limits, no meters?
+- Q7: MPC arm: build it, or drop it with disclosure (optional under D5.8)?
+- Q9: regime candidates: demand level, CAV share (50 / 25 / 10 %), driver mix, noise?
+- Implementation: reshape `plants/m_day.py` from the M to the B12 morning peak.
