@@ -61,3 +61,4 @@ Author decisions, newest last. "Open" items need the author before they bind. B1
 | V54 | 2026-10-13 | **Truck value of time** = Irish work VTT × 1.03 occupancy, uplifted to 2026 € | decided |
 | V55 | 2026-10-13 | **VSL comparator signs** change every 60 s: the zone's mean CAV-probe speed over the last minute, rounded up to the next 10 km/h, capped at 100 km/h | decided; open: 10 km/h steps vs 5 |
 | V56 | 2026-10-13 | **Zone positions** Z1–Z3 kept for now, but open to change if that helps the controller learn. Any change applies to every arm and is frozen before the confirmatory run | decided |
+| V57 | 2026-10-13 | **External research runs** on the Claude Console Workbench (author budget $200): Opus 5.5 + web search for source research, Fable 5.1 without tools for second-angle reviews of fully described ideas. Never codebase work. Prompts and pasted answers live in `docs/research/external/`; Claude Code spot-checks citations before use | decided |
