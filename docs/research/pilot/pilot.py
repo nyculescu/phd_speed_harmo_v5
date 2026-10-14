@@ -128,9 +128,9 @@ def routes_xml(lam, seed, arm):
         s.append(f'<route id="{rid}" edges="{edges}"/>\n')
     for v in m:
         if v["cat"] == "truck": ty = "truck"
-        elif v["cav"] and arm == "B1": ty = f"cav_{v['pt']}"
+        elif v["cav"] and arm in ("B1", "B1s"): ty = f"cav_{v['pt']}"
         else: ty = f"hdv_{v['pt']}"
-        sf = 1.0 if (v["cav"] and arm == "B1") else v["sf"]
+        sf = 1.0 if (v["cav"] and arm == "B1") else v["sf"]      # B1s (V72): CAV keeps its driver's desired speed
         dl = "0" if v["r"].startswith("or") else "random"
         s.append(f'<vehicle id="{v["id"]}" type="{ty}" route="{v["r"]}" depart="{v["t"]:.2f}" departLane="{dl}" '
                  f'departSpeed="avg" speedFactor="{sf:.4f}"/>\n')

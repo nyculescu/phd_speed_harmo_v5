@@ -32,7 +32,7 @@ def loops(run, meta):
 
 def summarize(tag):
     run = RUNS / tag
-    v, arm, l, s = re.match(r"(\w+?)_(B\d)_l([\d.]+)_s(\d+)", tag).groups()
+    v, arm, l, s = re.match(r"(\w+?)_(B\d\w*)_l([\d.]+)_s(\d+)", tag).groups()
     meta = json.load(open(D / "nets" / v / "meta.json")); X = meta["x"]
     st = ET.parse(run / "stat.xml").getroot()
     tel = st.find("teleports").attrib; saf = st.find("safety").attrib; veh = st.find("vehicles").attrib
@@ -115,7 +115,20 @@ def summarize(tag):
                 if c > best[0]: best = (c, lag)
             if best[0] > 0.3: ws = -(xs[iw] - xs[iu]) / 1000 / (best[1] / 60)   # km/h, negative = upstream
     sg_share = float(np.nanmean(vq < 20)) if len(vq) else 0.0
-    return dict(tag=tag, variant=v, arm=arm, lam=float(l), seed=int(s), inserted=int(veh["inserted"]),
+    # capacity drop per bottleneck: active minutes = >=1 congested loop in [xb-750, xb) AND downstream speed >= 70 km/h
+    bns = {"M1": X["merge1"] + 250, "M2": X["merge2"] + 250, "LD": X["drop"]}
+    cd = {}
+    for name, xb in bns.items():
+        idn = np.where(xs > xb + 100)[0][0]; iup = (xs >= xb - 750) & (xs < xb)
+        qd = Q[idn] / nlan[idn]; vd = V[idn]
+        act = np.array([bool(np.nanmax(cong[iup, t])) and (vd[t] >= 70) for t in ts])
+        ia = np.where(act)[0]
+        if len(ia) < 10: cd[name] = dict(active_min=int(len(ia))); continue
+        t0 = int(ia[0])
+        pre_ = float(max(np.mean(qd[t:t + 15]) for t in range(0, t0 - 15))) if t0 > 15 else np.nan
+        dis_ = float(np.mean(qd[ia[:60]]))
+        cd[name] = dict(active_min=int(len(ia)), onset=t0, pre=pre_, dis=dis_, ratio=(dis_ / pre_ if pre_ == pre_ else np.nan))
+    return dict(cd=cd, tag=tag, variant=v, arm=arm, lam=float(l), seed=int(s), inserted=int(veh["inserted"]),
                 loaded=int(veh["loaded"]), teleports=int(tel["total"]), collisions=int(saf["collisions"]),
                 ebrake=int(saf["emergencyBraking"]), cohort=len(coh), unfinished=unfinished,
                 d2d_mean=float(d2d.mean()), loss_mean=float(loss.mean()), dd_mean=float(np.mean([r["dd"] for r in coh])),

@@ -2,7 +2,9 @@ import itertools, os, subprocess, sys, time
 from multiprocessing import Pool
 D = os.path.dirname(os.path.abspath(__file__)); PY = sys.executable
 RUNS = "/home/catalin/work/phd/v5b1_runs/pilot_20261013"
-jobs = [("base", a, l, s) for l in [0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00] for s in range(1,6) for a in ("B0","B1")]
+jobs = [("base", "B0", l, s) for l in (1.1, 1.2, 1.3, 1.4, 1.5) for s in (1, 2, 3)]
+jobs += [("base", "B1s", l, s) for l in (0.8, 0.9, 1.0, 1.2) for s in (1, 2, 3)]
+_old = [("base", a, l, s) for l in [0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00] for s in range(1,6) for a in ("B0","B1")]
 jobs += [(v, a, l, s) for v in ("laneend","gap3k") for l in (0.70,0.80,0.90) for s in range(1,4) for a in ("B0","B1")]
 def one(j):
     v,a,l,s = j
