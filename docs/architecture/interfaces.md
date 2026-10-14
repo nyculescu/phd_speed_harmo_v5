@@ -97,7 +97,7 @@ The definitions of §5.1–§5.6 are those of protocol §3.1, which close V18 (A
   - zone-wide: the same values.
   
   Empty lanes carry an explicit `n = 0` and fall back to a defined value (the last value, plus age).
-- **Downstream unit Z3+ (protocol A30 (b), V65; V64 layout):** a probe-summary unit on [6,000, 7,000) m, just downstream of the 3 → 2 lane drop at Z3's downstream end (BN-LD, the expected first bottleneck). Same fields and fallback as a zone unit; no commands there. It serves as Z3's "next downstream zone" (Z1's is Z2, Z2's is Z3), with the same information for every zone-spec arm (R2, R3, L2).
+- **Downstream unit Z3+ (protocol A30 (b), V65; V68 layout):** a probe-summary unit on [15,000, 16,000) m (V68; was [6,000, 7,000) under V64), just downstream of the 3 → 2 lane drop at Z3's downstream end (BN-LD, the expected first bottleneck). Same fields and fallback as a zone unit; no commands there. It serves as Z3's "next downstream zone" (Z1's is Z2, Z2's is Z3), with the same information for every zone-spec arm (R2, R3, L2).
 - **V2V (V50):** a CAV hears every CAV within 300 m. This is the DSRC range in NHTSA's V2V fact sheet; standard broadcasts are 1–10 Hz. The observation keeps the 5 nearest CAVs ahead individually, plus the count and mean speed of all CAVs heard within 300 m ahead.
 - **v0 delivery** is perfect and synchronous (zero delay, no loss), so the message carries no expiry or confidence fields (they cannot be exercised yet). Delay and loss are later robustness rows. Only then are age fields added.
 - **Planned profiles (B4) are deferred** **[PROPOSAL]**. With per-CAV learned agents there is no zone-level plan to publish; coordination comes from shared summaries and, in L2, a centralised critic.
