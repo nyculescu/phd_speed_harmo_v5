@@ -1192,3 +1192,38 @@ The author lengthened the plain sections (V68). Order, lane counts, routes and f
 - Free-flow trip times roughly double, so the reference times r(route, class) are re-measured on this network (as §5.2 requires anyway).
 - The CPU estimate per episode (§10.1) grows with vehicle-km and is re-measured in P0-S.
 - The 30-min drain cap (V49) is kept; the drain arithmetic of §2.1 is unchanged, because it depends on flows, not lengths.
+
+### Addendum Z1 (2026-10-13, before any project seed): zones on the drop's approach (V71) and CAV desired speed (V72)
+**Why.** The pre-P0 pilot (V69, V73; non-project seeds, no controller, not data) showed that merges 1 and 2 never become active bottlenecks for λ ≤ 1.0, and that zones before them sit in free flow while the only queue grows upstream from the drop. The author therefore moved the zones onto the drop's approach (V71). No PASS rule, bound, sample size or seed allocation changes.
+
+**Zones (V71), replacing the zone rows of Addendum G1:**
+
+| Zone | Position (m) | Distance before the drop | Ends at |
+|---|---|---|---|
+| Z1 | 8,000–9,000 | 6–7 km | the start of merge 2 (9,000) |
+| Z2 | 11,000–12,000 | 3–4 km | plain 3-lane section |
+| Z3 | 14,000–15,000 | 0–1 km | the lane drop (15,000) |
+| Z3+ (A30 V2X unit, observation only) | 15,000–16,000 | downstream | — |
+
+**Consequences, read into the protocol:**
+1. **No zone lies upstream of merge 1.** Merge 1 stays a road feature with its detectors and health checks (§2.7, §3.2), but no CAV is commanded there.
+2. **Z1 ends where merge 2 starts.** CAVs are released (`setSpeed(−1)`, V36/A10) at the first boundary after leaving Z1, before the merge-2 weave.
+3. **V2X "next downstream zone"** (`interfaces.md` §6/§7): Z1 → Z2, Z2 → Z3, Z3 → Z3+.
+4. **T0a micro-scenarios:**
+   - the gaps between zones are now 2,000 m (Z1→Z2: 9,000–11,000, which contains merge 2; Z2→Z3: 12,000–14,000);
+   - zone entry and exit tests use these positions;
+   - the zone-entry ramp rule is unchanged.
+5. **R3 (FHWA / Ghiasi-family harmonisation):** with only Z1 upstream of a merge, R3 harmonises towards the speed of the active downstream bottleneck (the drop) in every zone. How it chooses its target is fixed in Addendum C [VERIFY against X01 when available], as already required.
+6. **P0 is unaffected**, because B0 and B1 carry no commands. P1 and P2 run on the V71 zones from the start, so no re-run is needed (zones were never used on project seeds).
+
+**CAV desired speed (V72, final reading (b)):**
+- CAVs obey the 100 km/h limit (speed factor 1.0), as already written in §2.3 and A13 (iii). §2.3 stands unchanged.
+- The B1 − B0 rows report the part of the B1 delay that comes from automation obeying the limit.
+- The pilot variant with CAVs keeping their driver's speed (B1s) is not part of this protocol.
+
+**Expectations from the pilot (not data; no rule changes):**
+- Critical level λ_c ≈ 0.75–0.80 of the B13 peak.
+- Above λ ≈ 1.05 the queue reaches the network entry.
+- At any λ ≤ 1.5, the drop's discharge (≈ 1,920 veh/h/lane) is **not** below the pre-queue flow, i.e. no capacity drop with the default HDV model.
+
+The C1 ladder, the P2 grid rule (anchored on the measured λ_c) and P0-G1's band [0.82, 0.97] stay as written. Without a capacity-drop-producing HDV model (V70, pending), **P0-G1 is expected to FAIL**, and §9.2 then applies.
