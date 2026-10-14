@@ -37,4 +37,4 @@ Claude Code spot-checks the key citations and numbers before anything enters the
 | X01_cav_controller_laws.md | Opus 5.5 + web | ready to run |
 | X02_vsl_compliance.md | Opus 5.5 + web | ready to run |
 | X03_redteam_design.md | Fable 5.1, no web | ready to run |
-| X04_sumo_capacity_drop.md | Opus 5.5 + web | runs 1–2 failed (no search; stopped on the browser tool). Run 3 with browser_toolset OFF |
+| X04_sumo_capacity_drop.md | Opus 5.5 + web | abandoned after 3 failed runs; done in Claude Code instead |

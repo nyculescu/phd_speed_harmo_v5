@@ -135,4 +135,5 @@ Candidate sets in Section 5 therefore borrow from comparable models whose capaci
 | **Reaction delay / action step** | Treiber et al. 2006 (HDM); Krauß | `actionStepLength` (vehicles update decisions only every *n* s; generic); EIDM `treaction` with `tPersDrive` (how long drivers maintain an action) | Documented features. Quantitative capacity effect in SUMO not published as far as I know. Large values raise collision risk |
 | **Estimation and driving errors** | HDM 2006 
 
-## Output of run 3 (pasted by the author, date: )
+## Run 3 (2026-10-13): stopped again on the browser tool; X04 abandoned
+6 web searches and 1 fetch were made, then `stop_reason: tool_use` (browser `navigate`), with no answer text; 141,863 input tokens. Author decision: stop using the Console for X04 and do the research in Claude Code (`docs/research/capacity_drop_lit_v0.md`).
