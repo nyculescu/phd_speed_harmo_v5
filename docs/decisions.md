@@ -73,3 +73,6 @@ Author decisions, newest last. "Open" items need the author before they bind. B1
 | V18 | 2026-10-13 | (update) **Metric definitions** are closed by the protocol's metric section (protocol A35) | decided |
 | V22 | 2026-10-13 | (update) The **M50-inspired network vs the earlier MnDOT-based values** is answered as a disclosed mismatch: the inflow is synthetic (V31), and values and prices are Irish (V21, V29) (protocol A35) | decided |
 | V42 | 2026-10-13 | (update, protocol A13 via V65) The five SIMI shares sum to 98.39 %; they are **renormalised**: petrol 25.52 %, diesel 17.37 %, HEV 22.85 %, PHEV 15.06 %, BEV 19.20 % of cars. CAVs ≈ 28.6 % of cars; HDV cars **60.0 % ICE** (was "about 59 %") | decided |
+| V59 | 2026-10-13 | (update) **Six setting changes after the original plant** (k ≤ 7 counting the original); a plant-model variant may be a road or driver-model variant (recommended; not objected to) | decided |
+| V61 | 2026-10-13 | (update) **Reading (a):** paired median gain vs B1 ≥ 5 % **and** its 95 % CI excludes 0 | decided |
+| V66 | 2026-10-13 | **Protocol P0–P2 v1 approved by the author** (`docs/research/protocol_p0p2_v1.md`). Binding before seed 7,400,000; changes only by dated addenda that never relax a bound | decided |

@@ -1,4 +1,4 @@
-> **STATUS: v1 (2026-10-13): all [AUTHOR] items answered (V58–V65); pending the author's final approval commit before seed 7,400,000.** The answers are in the Decision column of §11 and in the Amendment log at the end; v1 also carries the road redesign of V64 (the 3 → 2 lane drop moved to 6,000 m, the downstream end of Z3). It was made by a 21-agent workflow: evidence → 3 drafts → 3 judges → synthesis → 5-lens review (51 findings, verified) → revision.
+> **STATUS: v1, APPROVED by the author on 2026-10-13 (V66). Binding before seed 7,400,000.** All [AUTHOR] items are answered (V58–V66, §11). Changes need a dated addendum that never relaxes a bound (§9.4).
 
 # Protocol P0–P2 (v5.B.1): plant realism, tool checks T0–T3, inflow band and early KILL
 
@@ -26,7 +26,7 @@
 
 | Phase | Question | Possible outcomes |
 |---|---|---|
-| **P0** plant realism | Does F3Z with the V42 fleet break down at its bottlenecks like a real freeway (drop, discharge, onset location, waves)? Does it receive its inflow without insertion artefacts and run free of simulator artefacts? Are its energy levels plausible? Do uncommanded CAVs (B1) avoid model artefacts? Is the 0.2-s step converged enough? | PASS → P1. FAIL → STOP; pre-registered ladders only: at most two plant-model variants and at most six plant settings in all, each on fresh seeds (§9.2), then **P0 KILL**. |
+| **P0** plant realism | Does F3Z with the V42 fleet break down at its bottlenecks like a real freeway (drop, discharge, onset location, waves)? Does it receive its inflow without insertion artefacts and run free of simulator artefacts? Are its energy levels plausible? Do uncommanded CAVs (B1) avoid model artefacts? Is the 0.2-s step converged enough? | PASS → P1. FAIL → STOP; pre-registered ladders only: at most two plant-model variants (road or driver model) and at most six setting changes after the original plant (k ≤ 7 counting the original, V59), each on fresh seeds (§9.2), then **P0 KILL**. |
 | **P1** tool checks | T0: commands are executed as V26/V36 specify, and they bind on traffic. T1: a drop exists in the experiment scenario on fresh seeds, and control matters. T2 (report-only): best parameters vary with the inflow level. T3: determinism and common random numbers. | PASS → P2. Code FAIL → fix, no seed spent. Actuator FAIL → [AUTHOR A34], decided now. T1a FAIL → P0 FAIL path. T1b FAIL → [AUTHOR A17], decided now. |
 | **P2** inflow band | At which inflow levels does the informed oracle O(ℓ) or the best fixed tuned rule F cut the generalised cost by ≥ 10 % vs B0 (V45), within the guards? | Band non-empty → **GO** for the learning phases (band and designated level frozen). Band empty → **KILL**. Two futility KILLs come earlier (§6.5, §6.6). |
 
@@ -50,7 +50,7 @@
  P0-G2  onset location, waves, artefacts, insertion, desired speeds, B0 triangle (040–059)
  P0-G3  uncommanded CAV artefacts, B1 vs the same vehicles in B0 (040–059)
  P0-G4  energy (deterministic)          P0-G5  step 0.1 s vs 0.2 s, paired by seed (040–059)
-   │    any FAIL ──► STOP ──► pre-registered ladders on a new seed range (≤ 2 plant variants, ≤ 6 settings) ──► P0 KILL
+   │    any FAIL ──► STOP ──► pre-registered ladders on a new seed range (≤ 2 plant variants, ≤ 6 changes after the original, k ≤ 7) ──► P0 KILL
    ▼ PASS     (exec, V2X and R4 are built only now; Addendum C committed before seed 060)
  P1 (060–089): T0a exec · T0b authority (directional) · T0c bottleneck authority · T0d sensing
                T1a drop on fresh seeds · T1b control matters · T3 determinism + CRN
@@ -823,7 +823,7 @@ Every share-based gate states its minimum n and tolerance (the archive stopped l
 
 ### 9.2 Plant-variant ladder and the settings counter (fixed now; each use needs the author's approval and a dated deviation note)
 - **At most two plant-model variants after the specified plant (V0).** Each variant re-runs calibration C1–C8 on 002–009 ([AUTHOR A16d]) and **all** of P0 on fresh seeds from the requested range ([AUTHOR A16c]), then P1.
-- **Settings counter k.** k counts every plant setting whose check ran on check seeds: the first plant counts 1, and every later insertion configuration, ACC candidate checked on fresh seeds, step change and plant-model variant adds 1. **k ≤ 6** (ASSUMPTION, [AUTHOR A24]); a seventh would be a **P0 KILL**. Candidates rejected in calibration only (the ACC pre-screen, C3, C4) do not count in k but are listed in the P0 report. k appears in every P0 verdict sentence and in the thesis text (principle 11).
+- **Settings counter k.** k counts every plant setting whose check ran on check seeds: the first plant counts 1, and every later insertion configuration, ACC candidate checked on fresh seeds, step change and plant-model variant adds 1. **k ≤ 7**: the original plus at most six changes (V59, author 2026-10-13); an eighth would be a **P0 KILL**. Candidates rejected in calibration only (the ACC pre-screen, C3, C4) do not count in k but are listed in the P0 report. k appears in every P0 verdict sentence and in the thesis text (principle 11).
 - **Order rule (fixed now, not chosen after seeing the failure):** if the failing check is G1 or T1a and BN* is a merge (BN-M1 or BN-M2), V-1 comes first; otherwise (BN* is the lane drop, or a G2 failure) V-2 comes first. The other variant is second. On paper BN* is expected to be BN-LD, the lane drop at the end of Z3 (V64, §2.1), so V-2 is the likely first variant (v0 expected BN-M2 and V-1).
 - **V-1: zipper-type junctions at the OR1 and OR2 merges.** Archive ZM3 produced the only measurable merge drop (ρ = 0.967), but its discharge (1,528 veh/h/lane) failed the floor (ARCH t2_zipmerge_protocol.md:31-38). Expected effect on F3Z: unknown.
 - **V-2: HDV cars on SUMO IDM defaults.** In the archive P3 pre-check, IDM at its defaults discharged a standing single-lane queue at 2,323–2,335 veh/h/lane with 0 teleports (ARCH docs/lab/day_pattern/p3_precheck.md:9-18). This shows that IDM's car-following does not by itself hold discharge below the floor. It is not a merge discharge: every archive merge plant discharged less, and 2,323–2,335 lies above this protocol's 2,300 bound, so whether F3Z passes with IDM is exactly what V-2 tests. IDM stranded ramp vehicles at a dead-end acceleration lane in MRG3 (ARCH round2_protocol.md:119-123); F3Z has no dead-end acceleration lane, but stranding remains possible (§2.1) and the detector stays.
@@ -1162,3 +1162,8 @@ The synthesis (`protocol_v0_synth.md`) was reviewed through five lenses: statist
 - **V65.** Every other item takes its recommendation (§11, last column); the non-project seeds 1–999 approved (§7, A16a); truck length 16.5 m [VERIFY] (§2.3, A13); the §1 rows for V18 and V22 follow the updates in `decisions.md`; A26 superseded by V58/V64.
 - **Companion edits, same date, outside this file:** `docs/architecture/interfaces.md` §2, §3 (A9, A10), §4 pointer (A12), §5 (A8, A14, A19, A27, A29, A35), §6 and §7 (A30 under V64); `docs/architecture/system_context.md` §3 (V64, V60), §4 (V61, V63), §8.
 - **Not changed:** bounds, seed roles, statistics and sample sizes.
+
+### Amendment 2026-10-13 (approval, V66)
+- **A7 / V61 reading (a):** the candidate passes the B1 criterion when its paired median gain vs B1 is ≥ 5 % **and** the 95 % CI of the gain excludes 0 (as written in §6.8 (d)).
+- **V59 reading:** six setting changes after the original plant (k ≤ 7 counting the original); a plant-model variant may be a road variant or a driver-model variant.
+- **Approved:** the author approved v1 on 2026-10-13. The protocol is binding from this commit.
