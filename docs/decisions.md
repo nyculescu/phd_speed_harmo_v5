@@ -62,3 +62,9 @@ Author decisions, newest last. "Open" items need the author before they bind. B1
 | V55 | 2026-10-13 | **VSL comparator signs** change every 60 s: the zone's mean CAV-probe speed over the last minute, rounded up to the next 10 km/h, capped at 100 km/h | decided; open: 10 km/h steps vs 5 |
 | V56 | 2026-10-13 | **Zone positions** Z1–Z3 kept for now, but open to change if that helps the controller learn. Any change applies to every arm and is frozen before the confirmatory run | decided |
 | V57 | 2026-10-13 | **External research runs** on the Claude Console Workbench (author budget $200): Opus 5.5 + web search for source research, Fable 5.1 without tools for second-angle reviews of fully described ideas. Never codebase work. Prompts and pasted answers live in `docs/research/external/`; Claude Code spot-checks citations before use | decided |
+| V58 | 2026-10-13 | **Redesign the road so the first jam forms inside the zones** (protocol A26 option b). The desk estimate showed that the 2-lane section after merge 2, downstream of every zone, binds first | decided; open: which redesign (options in the reply of 2026-10-13) |
+| V59 | 2026-10-13 | **Realism FAIL rule (A1):** at most 2 road variants and 6 setting changes in all, each on fresh seeds, then P0 KILL; never continue with a disclosed realism FAIL | decided |
+| V60 | 2026-10-13 | **ACC candidate A3 allowed (A11):** an IDM-based ACC without driver noise (Kesting et al. 2008 [VERIFY]) may be selected if A0–A2 fail, although it departs from "SUMO ACC" | decided |
+| V61 | 2026-10-13 | **Beating plain-ACC CAVs (B1) means at least 5 % better** in generalised cost (A7), not merely a significant improvement | decided |
+| V62 | 2026-10-13 | **Seed range 7,401,000–7,401,999 approved** for re-rounds (A16c) | decided |
+| V63 | 2026-10-13 | **The non-learning adaptive scheduler is dropped from P2 (A31)**, disclosed; the headroom figure is relabelled accordingly | decided |
