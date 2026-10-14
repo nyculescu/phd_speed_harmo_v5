@@ -1167,3 +1167,28 @@ The synthesis (`protocol_v0_synth.md`) was reviewed through five lenses: statist
 - **A7 / V61 reading (a):** the candidate passes the B1 criterion when its paired median gain vs B1 is ≥ 5 % **and** the 95 % CI of the gain excludes 0 (as written in §6.8 (d)).
 - **V59 reading:** six setting changes after the original plant (k ≤ 7 counting the original); a plant-model variant may be a road variant or a driver-model variant.
 - **Approved:** the author approved v1 on 2026-10-13. The protocol is binding from this commit.
+
+### Addendum G1 (2026-10-13, before any project seed): geometry V68
+The author lengthened the plain sections (V68). Order, lane counts, routes and flows are unchanged, so the §2.1 per-section desk table, the critical levels and every PASS rule stay as written. **Every position in this protocol is read through this table** (old V64 position → new V68 position):
+
+| Item | V64 (m) | V68 (m) |
+|---|---|---|
+| Entry, Z1 | 0–3,000; Z1 2,000–3,000 | unchanged |
+| Merge 1 (BN-M1), X1 diverge | 3,000–3,250 | unchanged |
+| Plain section after merge 1 | 3,250–3,500 | 3,250–8,000 |
+| Z2 | 3,500–4,500 | 8,000–9,000 |
+| Merge 2 (BN-M2), X2 diverge | 4,500–4,750 | 9,000–9,250 |
+| Plain section after merge 2 | 4,750–5,000 | 9,250–14,000 |
+| Z3 | 5,000–6,000 | 14,000–15,000 |
+| Lane drop (BN-LD) | 6,000 | 15,000 |
+| 2-lane exit section | 6,000–9,250 | 15,000–18,250 |
+| Measurement sections (§3.2) | 3,400 / 4,900 / 6,100 | 3,400 / 9,400 / 15,100 |
+| Metronome probe (§2.7) | 6,100 | 15,100 |
+| A30 downstream V2X unit | 6,000–7,000 | 15,000–16,000 |
+| Bottleneck groups [x_k − 750, x_k + 250] | around 3,250 / 4,750 / 6,000 | around 3,250 / 9,250 / 15,000 |
+
+**Consequences:**
+- The distance from the drop back to merge 2 grows from 1,250 m to 5,750 m. Queue spillback to merge 2 needs a much longer queue, so BN-M2 interaction appears later and at higher inflow.
+- Free-flow trip times roughly double, so the reference times r(route, class) are re-measured on this network (as §5.2 requires anyway).
+- The CPU estimate per episode (§10.1) grows with vehicle-km and is re-measured in P0-S.
+- The 30-min drain cap (V49) is kept; the drain arithmetic of §2.1 is unchanged, because it depends on flows, not lengths.
