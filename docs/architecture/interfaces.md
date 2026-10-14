@@ -19,7 +19,7 @@
 | **invalid run** | more than 2 collisions or any teleport (V6). It counts as that arm's failure on that seed |
 
 ## 2. Time base and schedule (resolves BD-2, IF-C1, CX-F5)
-- **SUMO step:** Δt = 0.2 s. **Decision period:** T_d = 2 s. There is no slower layer: no VSL or meter in our system. The I1/I2 arms update their posted limits every 60 s **[PROPOSAL]**.
+- **SUMO step:** Δt = 0.2 s. **Decision period:** T_d = 2 s. There is no slower layer: no VSL or meter in our system. The I1/I2 arms update their posted limits every 60 s. The limit is the zone's mean CAV-probe speed over the last 60 s, rounded **up** to the next 10 km/h and capped at 100 km/h (V55).
 - **Owner:** the `exp` episode loop. At each boundary it builds the snapshot, then calls v2x, then the arm, then exec, then the logger, in that order. Nothing commands SUMO between boundaries except `exec` hold logic.
 - **Time-of-day:** never in any arm's observation **[PROPOSAL]**. The controller must learn when to act from what it measures (V8, V9), not from the clock.
 
@@ -58,14 +58,14 @@ All metrics come from the simulator's ground-truth trace, the inflow manifest an
 ### 5.3 Energy (V10, V34)
 - Per vehicle and step, from SUMO HBEFA4 for cars: fuel in mg/s, electricity in Wh/s, × 0.2 s. Trucks use the road-load + Willans model, from the trace's speed and acceleration.
 - **Conversion to kWh:** petrol 41.5 MJ/kg and 748 kg/m³ (E10); diesel 42.7 MJ/kg and 836 kg/m³ (B7) (JEC WTW v5; the Irish blend is [VERIFY]).
-- **Electricity** is net of regeneration, at the battery. Grid energy = battery energy ÷ 0.90 charging efficiency (a labelled assumption) **[PROPOSAL]**.
+- **Electricity** is net of regeneration, at the battery, and priced as is. There is no charging-loss factor for now (V53); it may be added later.
 - **Energy cost:** petrol €1.98/L, diesel €2.15/L, electricity €0.4042/kWh (V21).
 - **Reported:** kWh per vehicle-km, the network total in kWh, € per scenario (V24), and CAV and HDV splits. HDV energy is labelled "estimated".
 
 ### 5.4 Generalised cost (headline, V29)
 C = [Σ_v VoT_class · d_v + Σ_v € energy_v] / D, in € per vehicle-km.
 - **VoT for cars:** €8.90 per person-hour (commuting, 2016 market prices) × 1.23 AM-peak occupancy. Uplifted to 2026 € with the TII real growth and the CSO price index. **[TBD: the computation is to be recorded step by step]**
-- **VoT for trucks:** work VTT × 1.03 occupancy, uplifted the same way **[PROPOSAL]**.
+- **VoT for trucks:** work VTT × 1.03 occupancy, uplifted the same way (V54).
 
 ### 5.5 Guards and constraints
 - **Delay guard:** network delay must not exceed B0's by more than 2 % (V37). It is a one-sided paired test.
@@ -89,7 +89,7 @@ C = [Σ_v VoT_class · d_v + Σ_v € energy_v] / D, in € per vehicle-km.
   - zone-wide: the same values.
   
   Empty lanes carry an explicit `n = 0` and fall back to a defined value (the last value, plus age).
-- **V2V:** each CAV receives the speeds and gaps of up to k = 3 CAVs ahead within 300 m on its own and adjacent lanes **[PROPOSAL]**.
+- **V2V (V50):** a CAV hears every CAV within 300 m. This is the DSRC range in NHTSA's V2V fact sheet; standard broadcasts are 1–10 Hz. The observation keeps the 5 nearest CAVs ahead individually, plus the count and mean speed of all CAVs heard within 300 m ahead.
 - **v0 delivery** is perfect and synchronous (zero delay, no loss), so the message carries no expiry or confidence fields (they cannot be exercised yet). Delay and loss are later robustness rows. Only then are age fields added.
 - **Planned profiles (B4) are deferred** **[PROPOSAL]**. With per-CAV learned agents there is no zone-level plan to publish; coordination comes from shared summaries and, in L2, a centralised critic.
 
@@ -109,7 +109,7 @@ class Arm:                                   # B1, R1–R4, I1–I2 and the PPO 
 **CAV observation (`zone` spec) [PROPOSAL]:**
 - own: speed, acceleration, current target, lane (one-hot), position in zone (0–1), zone id (one-hot);
 - leader (radar): present flag, gap, closing speed;
-- V2V: up to 3 CAVs ahead (relative position, speed, mask);
+- V2V: the 5 nearest CAVs ahead within 300 m (relative position, speed, mask), plus the count and mean speed of all CAVs within 300 m ahead;
 - V2X: own zone + the next downstream zone, zone-wide mean speed and standard deviation + per-lane mean speeds.
 
 All values are normalised to [−1, 1] with fixed constants (not running statistics) so that every arm and seed sees the same scaling.

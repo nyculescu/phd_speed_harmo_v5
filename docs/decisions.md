@@ -52,3 +52,12 @@ Author decisions, newest last. "Open" items need the author before they bind. B1
 | V45 | 2026-10-13 | **"Worth controlling" threshold g = 10 %** (V31): an inflow level is in the band when the best non-learning arm or the informed oracle cuts the generalised cost by ≥ 10 % vs the all-HDV baseline | decided |
 | V46 | 2026-10-13 | **PHEV electric-mode share 50 %** (V38), a labelled assumption | decided |
 | V47 | 2026-10-13 | **CAV target floor 50 km/h** (author: below 50 km/h the jam cannot be optimised); the ceiling is 100 km/h; on zone entry the target starts at the current speed rounded to 5 km/h. Whether the floor should be higher stays open: the tool checks log how often targets sit at the floor | decided; open: a higher floor |
+| V48 | 2026-10-13 | **No clock in any arm's observation**: controllers learn when to act from measurements, not time of day | decided |
+| V49 | 2026-10-13 | **Episode:** 15 min warm-up (fills the road; past controllers were confused by an empty road followed by high inflow), 2.5 h scored window, drain capped at 30 min | decided (initial values) |
+| V50 | 2026-10-13 | **V2V:** range 300 m (DSRC range in NHTSA's V2V fact sheet); a CAV hears all CAVs in range. The observation keeps the 5 nearest CAVs ahead plus the count and mean speed of all heard within 300 m ahead. "3 cars" was not a standard and is dropped | decided |
+| V51 | 2026-10-13 | **Planned profiles between zones (B4) postponed**; zones share traffic summaries | decided |
+| V52 | 2026-10-13 | **The reward and the controller type stay open to change** during the exploratory phase, because the reward is where such systems usually fail. Other controller types may be adopted (ADR-001 keeps the trainer replaceable). Every variant goes into the ledger; the candidate, reward included, is frozen before the confirmatory run | decided |
+| V53 | 2026-10-13 | **No charging-loss factor for now**: electricity is priced at the battery value. It may be added later. First prove the setup works | decided |
+| V54 | 2026-10-13 | **Truck value of time** = Irish work VTT × 1.03 occupancy, uplifted to 2026 € | decided |
+| V55 | 2026-10-13 | **VSL comparator signs** change every 60 s: the zone's mean CAV-probe speed over the last minute, rounded up to the next 10 km/h, capped at 100 km/h | decided; open: 10 km/h steps vs 5 |
+| V56 | 2026-10-13 | **Zone positions** Z1–Z3 kept for now, but open to change if that helps the controller learn. Any change applies to every arm and is frozen before the confirmatory run | decided |
