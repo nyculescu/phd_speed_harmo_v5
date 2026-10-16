@@ -279,3 +279,13 @@ Fetched myself. These notes override the text above where they differ.
   - It covers 424 M switching cycles over four weeks.
   - Its context is cyclist GLOSA in the PrioBike-HH project.
   - **Forecasting the green window is their topic. #2 must stay on the vehicle's decision layer**: online calibration of the commit/stop margin and the energy and violation trade-off, for cars or EVs.
+
+### Data checks (same night; structure only, no analysis)
+
+- **WaveX downloaded** to `/home/catalin/work/phd/v5b1_data/wavex/raw.zip`. Its MD5, `39af23ff…f9280`, matches Zenodo.
+  - **Confirmed:** 33 dates (2024-05-17 to 2024-07-17).
+  - Each date has one `MOTION/<date>/lane_1_speed_matrix.csv` and one `RDS/<date>.csv`.
+  - So it is **lane 1 only**: 66 files, 885 MB unzipped.
+  - Not extracted, and the data have not been looked at, so no outcome is seen before a protocol.
+- **NGSIM:** CC BY-SA 3.0 (data.gov).
+- **TGSIM:** data.gov says only `rights: public`, no named licence. The "CC0" in the text above is unconfirmed [VERIFY].

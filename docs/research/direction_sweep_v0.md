@@ -354,7 +354,7 @@ Fetched myself; overrides the text above where they differ.
 - **WaveX, Zenodo 17122740: confirmed.**
   - CC BY 4.0, 885.6 MB, one `raw.zip` with MOTION and RDS folders.
   - Collected 17 May – 17 Jul 2024.
-  - "Lane 1 only, 33 dates" is **not stated on the landing page** [VERIFY by opening the zip].
+  - "Lane 1 only, 33 dates" is not on the landing page, but **confirmed from the zip listing** (2026-10-15 night): 33 dates, lane 1 only.
   - The page says the RDS lane data "needs further processing".
 - **Coifman & Liu, TR-C 183:105497 (13 Dec 2025): the closest prior work, and closer than the text above suggests.**
   - The journal abstract is not available. The related Ohio State reports are on ROSAP (Phase 1, dot:77501, Jul 2024, plus Phases 2 and 3).
