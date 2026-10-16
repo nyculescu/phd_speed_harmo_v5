@@ -259,3 +259,23 @@ Fetched myself. These notes override the text above where they differ.
 - **#2, Shafik, Eteifa & Rakha 2022 (arXiv 2208.13709): confirmed.** It reports 37 % fuel savings (deterministic SPaT) and 28 % (stochastic) against uninformed drivers, in simulation.
 - **#3, Li, Yanagisawa & Nishinari, TR-C 158 (2023): exists.** Title: "A Jam-Absorption Driving System for Reducing Multiple Moving Jams by Estimating Moving Jam Propagation". Close to #3; abstract not read [VERIFY].
 - **Overall reading (mine).** All three survivors scored 3–4/10 on novelty. With a simple testbed and one person, the field is crowded. The realistic contribution is an incremental but rigorous one: online calibration of a known controller, tested on real data. A PhD can rest on that, but there is no headline breakthrough.
+
+### Further checks (same night)
+
+- **#1, Zhou et al. 2026, full text (arXiv HTML v1):**
+  - The leaders are **scripted profiles** (brake and stop-go phases with random offsets); no dataset is used.
+  - The calibrated score is the error of a full-state, one-step predictor that assumes a constant leader speed.
+  - The main quantile is a **single global value**, not one per regime. ACI is a baseline, which Adaptive RACF beats by 5.21 pp.
+  - **No RSS:** the filter uses constant-time-headway spacing.
+  - The authors' own limitation: "Evidence remains limited to simulated ACC…".
+  - **So #1's gap is real but narrow:** behind real leaders, an RSS leader-braking envelope, and per-regime coverage across sites.
+- **#2's data: historical Hamburg signal data are already public.** No 6–8-week recording is needed.
+  - Jeschor, Matthes, Springer, Pape & Fröhlich, "Traffic Light Data of Hamburg collected in September and October 2023 (Observations from SensorThings API)", TU Dresden OPARA, published 2024-05-03.
+  - Content: `observations.csv.zip`, 31.49 GB. Primary and secondary signal, cycle second, program, and detector observations.
+  - Licence: CC BY 4.0, with source data under dl-de/by-2-0.
+  - Completeness is "not fully guaranteed".
+  - URL: https://opara.zih.tu-dresden.de/items/5ab10b56-679b-4943-8278-dd923427e883/full
+- **#2's prior work on forecasting:** the same group published Jeschor et al., "Cloudy with a Chance of Green: Measuring the Predictability of 18,009 Traffic Lights in Hamburg", IEEE IV 2024, pp. 2882–2889 (arXiv 2403.18830).
+  - It covers 424 M switching cycles over four weeks.
+  - Its context is cyclist GLOSA in the PrioBike-HH project.
+  - **Forecasting the green window is their topic. #2 must stay on the vehicle's decision layer**: online calibration of the commit/stop margin and the energy and violation trade-off, for cars or EVs.
