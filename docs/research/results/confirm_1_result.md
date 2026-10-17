@@ -1,6 +1,6 @@
 # Confirmatory protocol #1: result (VALID-ONLY)
 
-Draft for author approval (2026-10-16). It becomes final with decision V85, together with the two open items in §7.
+**Final (V85, 2026-10-16).** Author decisions: (i) gated lists in the sentence, per-cell flags of other cells disclosed as report-only; (ii) the d_safe grid end is not a §7 bug, so there is no re-run and the label is final.
 
 ## 1. Outcome and provenance
 
@@ -105,11 +105,11 @@ The protocol forbids adding cells afterwards (§6.1), and no unread TGSIM freewa
 - **Open question, formed after seeing report-only cells (not a finding):** does recalibration help where a transferred margin is badly wrong? In the one well-populated new-road cell (L1 R3), F was badly wrong, but the simple freeze rival W fixed it with half of O's gap. That points against O.
 - **Something to reconcile:** CLAUDE.md still states the D5.8 bar, which V83 replaced for this line.
 
-## 7. Open author items and options
+## 7. Author items (settled in V85) and options
 
-**Open items for V85:**
+**Items settled in V85 (defaults chosen):**
 - **(i) Scope of the result lists.** The run named "harm not excluded" and "clearly worse" for gated cells only. The literal per-cell reading would add L1 R1 and R2 (harm not excluded) and L1 R3 (clearly worse than W). The outcome label is the same either way. **Default:** keep the gated lists in the sentence, and disclose the per-cell flags as report-only (done in §5).
-- **(ii) d_safe grid end.** The run's 0.01-s grid runs to the batch's latest ego stop, not to each window's own stop. Measured effect: mean gaps change by at most 1.5e-8 m, single gaps by at most 1.7e-5 m, and E by at most 4.8e-9. **Default:** not a §7 bug, because both are 0.01-s grids that cover the ego's stop. **Alternative:** treat it as a bug: fix it, add a failing test, re-run with the same seeds (about 1 min); the corrected run decides, and both runs are reported. The label stays provisional until this is settled.
+- **(ii) d_safe grid end.** The run's 0.01-s grid runs to the batch's latest ego stop, not to each window's own stop. Measured effect: mean gaps change by at most 1.5e-8 m, single gaps by at most 1.7e-5 m, and E by at most 4.8e-9. **Default:** not a §7 bug, because both are 0.01-s grids that cover the ego's stop. **Alternative:** treat it as a bug: fix it, add a failing test, re-run with the same seeds (about 1 min); the corrected run decides, and both runs are reported. Settled: not a bug.
 
 **Options for the next step:**
 1. **Close out:** V85 and the ledger entry.
@@ -123,4 +123,4 @@ The protocol forbids adding cells afterwards (§6.1), and no unread TGSIM freewa
 
 **Not allowed:** re-gating L1, re-scoring TGSIM, tuning on it, or writing a paper from this run.
 
-**Recommendation:** option 1 now, option 2 in parallel. Option 3 only if option 2 decides that line #1 deserves fresh data.
+**Chosen (V85):** option 1 done; option 2 next. Option 3 only if option 2 decides that line #1 deserves fresh data.

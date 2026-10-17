@@ -9,6 +9,8 @@
 - **Topic (as drafted):** coordinated zone controllers on a multi-bottleneck freeway. Actuators: per-CAV speed commands, ramp meters, per-lane speed limits for HDVs. Conventional versus learning-based control. Heterogeneous and, later, adaptive human drivers. The network is **not chosen yet**; CORR2X is one candidate.
 - **Architecture draft:** Notion page "v5.B.1 system architecture: from research concept to implementable software". Its §11 deliverables live under `docs/architecture/`, `docs/testing/` and `docs/research/`.
 
+**Claim rules: update (V83, V85, 2026-10-16).** For the algorithm-first line #1 (self-calibrating safety margin), **V83 claim rule A replaced D5.8** and **DRL was dropped**. Rule A: A1 valid in every gated cell; A2 a win over every A1-valid opponent in at least one gated cell, never clearly worse by more than the harm margin; headroom and the full operating map always reported (protocol `docs/research/protocols/confirmatory_1.md`). Line #1 closed VALID-ONLY (V85): no paper. **The thesis-level claim bar is under review** with the academic supervisor (V85, option 2). Until that decision, the D5.8 text below is the historical bar for the SUMO/DRL lines only.
+
 **Claim rules (author decisions 2026-10-10/11; D5.1, D5.8 in `docs/plans/day_pattern_decisions_v0.md` on `claude/day-pattern-core`).**
 - **The helper may be DRL or any other neural network** on top of a proven controller: a forecaster, a demand reconstructor, a model-error correction, or a scheduler. DRL alone is also a candidate under D5.8.
 - **Pass bar (conditional bar, D5.8, 2026-10-11):**
@@ -31,7 +33,7 @@
 **Thesis**
 - title: "Adaptive driving algorithms for intelligent road traffic systems";
 - submission ≈ Sept 2027; target 2 papers;
-- the thesis must show a learning-based controller beating no control by ≥ 10 % and the best tuned proven controller in identifiable regimes (D5.8);
+- thesis-level claim bar: **under review** (V85). Historical bar (D5.8): a learning-based controller beating no control by ≥ 10 % and the best tuned proven controller in identifiable regimes;
 - framing: the ARC-IT functional view, TM20 / TM21 [VERIFY codes against the ARC-IT site]. No SOTIF.
 
 ## Repo state
