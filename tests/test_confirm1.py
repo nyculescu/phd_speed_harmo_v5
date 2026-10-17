@@ -113,6 +113,7 @@ def _windows(n_per=1500, seed=27):
                 for k, t in enumerate(st):
                     rows.append((ds, 1, 1000 + k, int(t), 1 * c1.RUN_SPAN + int(t), reg, unit, False, 15.0))
     W = pd.DataFrame(rows, columns=["dataset", "run", "id", "step", "gtime", "regime", "unit", "test", "v0"])
+    W["known"] = W.gtime + c1.DELAY
     return W
 
 
@@ -172,3 +173,112 @@ def test_stage2_smoke():
         c1.B_BOOT = old
     assert res["outcome"]["outcome"] in {"KILL", "INCONCLUSIVE", "VALID-ONLY", "PASS, new road", "PASS, same road"}
     assert len(res["cells"]) == 9
+
+
+# ---------------------------------------------------------------- review fixes (pre-download)
+from v5b import screen1 as s1
+
+
+def test_req_gap_equals_screen1_and_is_finite_at_zero():
+    rng = np.random.default_rng(31)
+    b = rng.uniform(0.3, 10, 500); v = rng.uniform(0, 35, 500)
+    assert np.allclose(c1.req_gap(b, v), s1.req_gap(b, v), atol=1e-12)
+    z = c1.req_gap(np.array([0.0, 1e-4, 1e-3]), 20.0)
+    assert np.isfinite(z).all() and z[0] <= z[1] <= z[2]     # milder leader braking -> smaller gap
+
+
+def test_known_time_delays_feedback_over_sample_gaps():
+    gt = np.array([0, 10, 2000]); s = np.array([9.0, 9.0, 0.0])
+    late = np.array([105, 2500, 2105])               # window 1's outcome known only at 2500
+    q_default = c1.track(gt, s, 3.0, 1.0, floor=0.0)
+    q_late = c1.track(gt, s, 3.0, 1.0, floor=0.0, known=late)
+    assert q_late[2] < q_default[2]                  # one miss fewer applied before t = 2000
+    assert c1.freeze_time(np.arange(0, 3010, 10), 300, np.r_[np.arange(0, 3010, 10)[:299] + 105, 9999, np.zeros(1)]) == 9999
+
+
+def test_longest_miss_run_follows_time_not_vehicle_order():
+    W = _windows(n_per=700, seed=32)
+    W = W[(W.dataset == "i294_l1") & (W.regime == "R1")].copy()
+    W = W.sample(frac=1.0, random_state=1)           # vehicle-major / random row order
+    W["s"] = 0.0; W["clipped"] = False
+    o = c1.time_order(W)
+    W.loc[W.index[o[-8:]], "s"] = 50.0               # last 8 windows in time: consecutive misses for F, H
+    fit = W.assign(dataset="i395")
+    st1 = {"J": 1, "c": {"R1": 1.0}, "stop_data": False,
+           "cells": [{"dataset": "i294_l1", "regime": "R1", "gated": True}]}
+    res = c1.stage2(W, fit, st1)
+    assert res["cells"][0]["longest_miss_run"]["F"] == 8
+
+
+def test_placebo_bound_is_bootstrap_only():
+    rng = np.random.default_rng(33)
+    m = rng.random(2000) * 0.1; blocks = np.repeat(np.arange(20), 100)
+    b = c1.miss_bounds(m, blocks, 2, cp=False)
+    assert b["ub"] == b["ub_boot"] and b["ub_cp"] is None and not c1.clearly_invalid(b)
+
+
+def test_boot_b_override_is_effective():
+    old = c1.B_BOOT
+    try:
+        c1.B_BOOT = 17
+        assert c1.boot_idx(5).shape == (17, 5)
+    finally:
+        c1.B_BOOT = old
+
+
+def test_power_matches_protocol_figures():
+    assert 0.95 <= c1.power_a1(1000, 10) <= 0.97 and 0.97 <= c1.power_a1(1000, 40) <= 0.99
+    assert 0.70 <= c1.power_a1(1000, 10, p=0.05) <= 0.72
+
+
+def test_l1_probe_md5_and_pairs(tmp_path):
+    body = b'"id","time","run_index"\n"5","0.1","2"\n"6","0.1","2"\n'
+    p = tmp_path / "probe.csv"; p.write_bytes(body)
+    old = c1.L1_PROBE_MD5
+    try:
+        import hashlib
+        c1.L1_PROBE_MD5 = hashlib.md5(body).hexdigest()
+        info, pairs = c1.l1_probe(str(p))
+        assert info["match"] and pairs == {(2, 5), (2, 6)}
+    finally:
+        c1.L1_PROBE_MD5 = old
+    info, _ = c1.l1_probe(str(tmp_path / "missing.csv"))
+    assert info["available"] is False
+
+
+def test_stage2_floor0_with_zero_heavy_scores_runs():
+    W = _windows(n_per=500, seed=34)
+    W = W[W.dataset == "i294_l1"].copy()
+    rng = np.random.default_rng(35)
+    W["s"] = np.where(rng.random(len(W)) < 0.9, 0.0, rng.exponential(1.0, len(W))); W["clipped"] = False
+    fit = W.assign(dataset="i395")
+    st1 = {"J": 2, "c": {"R1": 6.0, "R2": 6.0, "R3": 6.0}, "stop_data": False,
+           "cells": [{"dataset": "i294_l1", "regime": r, "gated": r != "R3"} for r in ("R1", "R2", "R3")]}
+    old = c1.B_BOOT
+    try:
+        c1.B_BOOT = 200
+        res = c1.stage2(W, fit, st1, floor=0.0)
+    finally:
+        c1.B_BOOT = old
+    assert all(np.isfinite(c["mean_gap"]["O"]) for c in res["cells"] if "mean_gap" in c)
+
+
+def test_window_meta_matches_screen1b_windows():
+    rng = np.random.default_rng(36)
+    rows = []
+    v = 8 + np.cumsum(rng.normal(0, 0.3, 600))                     # same profile: the pair stays matched
+    for vid, x0 in ((1, 0.0), (2, 30.0)):
+        steps = np.r_[np.arange(0, 300), np.arange(301, 601)]       # one missing sample (kept in segment)
+        x = x0 + np.cumsum(np.abs(v)) * 0.1
+        for k, st in enumerate(steps):
+            rows.append((1, vid, st / 10, x[k], 0.0, 2, abs(v[k]), False))
+    df = pd.DataFrame(rows, columns=["run_index", "id", "time", "xloc_kf", "yloc_kf", "lane_kf", "speed_kf", "test_row"])
+    df["step"] = np.rint(df.time * 10).astype(np.int64)
+    df = df.sort_values(["run_index", "id", "step"]).reset_index(drop=True)
+    lead = sb_leaders = __import__("v5b.screen1b", fromlist=["x"]).leaders(df)
+    W, S = c1.window_meta(df, lead, set(), "x")
+    s, clip = c1.scores(S)
+    ref = __import__("v5b.screen1b", fromlist=["x"]).windows(df, lead)
+    assert len(W) == len(ref) > 0
+    assert np.allclose(np.sort(s), np.sort(ref.s.to_numpy())) and (W.regime.value_counts().sort_index() == ref.regime.value_counts().sort_index()).all()
+    assert (W.known >= W.gtime + c1.DELAY).all() and (W.known > W.gtime + c1.DELAY).any()
