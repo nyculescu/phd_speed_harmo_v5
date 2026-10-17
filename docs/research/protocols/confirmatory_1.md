@@ -2,13 +2,13 @@
 
 Body: 1,498 words, without the title, this line, Markdown list and heading markers, and the constants table (plain `wc -w` of the same text: 1,588).
 
-Fixed on 2026-10-16, before any trajectory row of the three confirmatory sets is read, except the disclosed L1 probe (§7). It binds once the author approves it in a V entry that records this file's hash. Later changes are dated addenda that never relax a rule. Other rules: `screen_1b.md`, `v5b/screen1b.py` (commit `ca48b58`).
+Fixed on 2026-10-16, before any trajectory row of the three confirmatory sets is read, except the disclosed L1 probe (§7). **Approved by the author on 2026-10-16 as V84** ("0 yes, 1 b, 2 default, 3 approve"), which records this file's hash. Later changes are dated addenda that never relax a rule. Other rules: `screen_1b.md`, `v5b/screen1b.py` (commit `ca48b58`).
 
 ## 1. Claim
 
 As in the screens: open-loop replay behind real recorded leaders, scoring only the leader's braking against the assumed limit b̂ (m/s²); a miss is not a crash.
 
-- **Rule A (V83),** tested against the transferred margin F, the freeze rival W and the shuffled placebo P (item 2):
+- **Rule A (V83),** tested against the transferred margin F and the freeze rival W. The shuffled placebo P gates only the secondary tracking claim (§5; V84 item 1b):
   - **A1:** the online margin O is A1-valid (§4) in every gated cell;
   - **A2:** O wins (§5) in at least one gated cell and is clearly worse in none.
 - **Always reported:**
@@ -62,9 +62,10 @@ Every arm uses the gap d = d_safe(b̂, v) + s0, the floor and the quantile rank 
 - **Stage 2:** compute scores. A cell with clip share > 5 % becomes report-only (J unchanged).
 - **Intervals** (constants table): the same bootstrap draws for all arms. Thresholds stay fixed in every resample, so the CI ignores the luck of W's 300 calibration windows (disclosed).
 - **O beats X:** E(O, X) ≥ 3 %, and the lower end of its two-sided (1 − 0.05/J) CI is > 0.
-- **Win** in a cell: O is A1-valid and beats P, and F and W are each clearly invalid or beaten. P's validity does not count, because its misses are means over permutations.
+- **Win** in a cell: O is A1-valid, and F and W are each clearly invalid or beaten.
+- **Secondary (tracking) claim,** tested only if rule A passes: O beats P (same rule, same J) in at least one gated cell. P's validity does not count, because its misses are means over permutations.
 - **Clearly worse:** compare O with the A1-valid opponent in {F, W} that has the smallest mean gap. O is clearly worse if the whole uncorrected 95 % CI of E lies below −5 %. If only part of it does, the cell is named "harm not excluded".
-- **Accepted risk:** a threshold at the true 95 % quantile passes A1 in a 1,000-window cell with probability 0.71–0.78 (10–40 blocks; design effect 2, assumed). Passing in all four cells: 0.26–0.37 (cells assumed independent).
+- **Accepted risk:** a threshold at the true 96 % quantile (α = 0.04, V84 item 0) passes A1 in a 1,000-window cell with probability 0.96–0.98 (10–40 blocks; design effect 2, assumed). Passing in all four cells: 0.85–0.91 (cells assumed independent). At α = 0.05 these were 0.71–0.78 and 0.26–0.37.
 
 ## 6. Outcomes (first match wins)
 
@@ -72,7 +73,7 @@ Every arm uses the gap d = d_safe(b̂, v) + s0, the floor and the quantile rank 
 2. **KILL:** O clearly invalid in a gated cell (either window set). No sentence, no paper; decision entry.
 3. **INCONCLUSIVE:** O not A1-valid in some gated cell, or clipping left no gated cell. No sentence and no re-run (no unread TGSIM freeway set remains).
 4. **VALID-ONLY:** A1 passes; A2 fails. Thesis chapter only: "valid in every gated regime; no win was shown". Add "clearly more wasteful in <cells>" where O was clearly worse.
-5. **PASS, new road:** rule A passes with a win on L1. Allowed sentence: "On recordings of a freeway it was not fitted on, the self-calibrating margin kept misses within the 7.5 % limit (target 5 %) in every gated regime. Its gaps were at least x % [CI] shorter than those of the transferred margin, a margin fitted on the road's first 300 windows, and its shuffled placebo, except where the first two clearly broke that limit." x = the smallest E(O, X) among the "beats" in winning cells.
+5. **PASS, new road:** rule A passes with a win on L1. Allowed sentence: "On recordings of a freeway it was not fitted on, the self-calibrating margin kept misses within the 7.5 % limit (target 4 %) in every gated regime. Its gaps were at least x % [CI] shorter than those of the transferred margin and of a margin fitted on the road's first 300 windows, except where those two clearly broke that limit." x = the smallest E(O, X) among the "beats" in winning cells. The secondary claim adds either "and it beat its shuffled placebo" or "tracking over time was not shown (no win over its shuffled placebo)".
 6. **PASS, same road:** all wins are on Moving. The same sentence, but "on the same freeway on another day".
 
 Every sentence names the floor-bound, "harm not excluded" and report-only cells, and the collection mode. Only a PASS becomes a paper (ITSC 2027).
@@ -101,20 +102,18 @@ Every sentence names the floor-bound, "harm not excluded" and report-only cells,
   - (b) Claude build and verify: 1–2 h;
   - (c) download (about 210 MB): minutes; compute: 10–30 min.
 
-## 8. Author items (default applies if unanswered)
+## 8. Author decisions (V84, 2026-10-16)
 
-1. **Test-vehicle windows.**
-   - Default: not scored (cruise-control braking; 5.8 % of L1 rows), with a sensitivity row that scores them.
-   - Alternative: score them.
-2. **Placebo role.**
-   - Default (approved, "3 yes"): every win needs O to beat P.
-   - Alternative, only by explicit answer (proposed after #1b's placebo matched O): P leaves the win and the PASS sentence. If rule A passes, a secondary claim, "O beats P in a gated cell" (same J), is tested. The sentence then adds "and it beat its shuffled placebo", or else "tracking over time was not shown (no win over its shuffled placebo)".
+- **Item 0:** every arm aims at α = 0.04 (quantile rank and tracker target). The validity limit stays 0.075.
+- **Item 1b:** P leaves the win and the PASS sentence. It gates only the secondary tracking claim (§5, §6).
+- **Item 2:** test-vehicle windows are not scored (5.8 % of L1 rows), with a sensitivity row that scores them.
+- **Item 3:** protocol approved, including seeds 7,420,200 and 7,420,201–7,420,220.
 
 ## Constants (fixed before data)
 
 | Constant | Value | Source |
 |---|---|---|
-| α; validity limit | 0.05; 0.075 | screens |
+| α; validity limit | 0.04; 0.075 | screens (α changed by V84 item 0) |
 | Window; history; look-ahead; tick | 8 s; 5 s; 2 s; 1 s | screens |
 | Score | max over the window and h ∈ {1, 2} s of (v(t) − v(t+h))/h, on the centred 1-s mean of `speed_kf`, clipped to [0, 10] m/s² | screens |
 | Regimes | from `speed_kf` in the 5 s before the window. This is the provider's Kalman smoothing, possibly two-sided [VERIFY], so the label may see into the window. R1 min < 2 m/s; R2 mean < 10 m/s; R3 otherwise (report-only) | screens |
@@ -138,15 +137,3 @@ Every sentence names the floor-bound, "harm not excluded" and report-only cells,
 | Bonferroni | two-sided 1 − 0.05/J over the J gated cells, used one-sided: the routes "clearly invalid" and "beaten" together spend 0.05/J per cell, and "every opponent" needs no correction. Harm at uncorrected 95 % | drafts |
 | Guards (report-only) | longest run of misses per arm; matched-leader share per dataset; excluded windows | new |
 | Seeds | 7,420,200 bootstrap; 7,420,201–7,420,220 placebo; approving this protocol approves them | drafts' confirmatory reservation |
-
----
-## Main-session note (2026-10-16): DRAFT, not binding
-
-- **Power check (main session, same formula as the workflow's `power.py`).**
-  - Setup: a threshold exactly at its target quantile, design effect 2 (assumed), t-scaled bounds.
-  - Pass probability for A1 per cell / in all 4 cells:
-    - target 5 %, n = 1,000: 0.71–0.78 / **0.26–0.37**;
-    - target 4 %, n = 1,000: 0.96–0.98 / **0.85–0.91**;
-    - target 5 %, n = 2,000, G = 20: 0.96 / 0.83.
-  - **Proposed author item 0:** every arm aims at α = 0.04 (quantile rank, tracker target), with the 7.5 % validity limit unchanged.
-- **Item 2 (placebo role)** must be settled in the approving V entry. The workflow defaulted to the author's literal "3 yes", which conflicts with V83's recorded hierarchy.
