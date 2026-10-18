@@ -28,3 +28,23 @@ The method was a workflow of 10 agents. Five scouts searched from different angl
    - The shared web-search budget ran out, so the prior-art checks for C3–C8 were thin.
    - The medical-device half of the ChatGPT sentence was not researched.
    - Non-English literature and patent claims were not read.
+
+## Addendum (2026-10-17): five-year check, Oct 2021 – Oct 2026
+
+**arXiv.** 10 query phrasings returned 141 unique papers (`cracks_arxiv_5y.json`).
+- By year: 1, 12, 15, 34, 32, 47.
+- By content: 66 mention simulation, 18 mention real data, 18 are longitudinal or car-following.
+- Only 4 combine online adjustment, a statistical guarantee and a margin. None of the 4 is about car-following or uses real traffic data.
+- The keyword tagging misses some papers; it missed Zhou 2026, for example.
+
+**The closest longitudinal work:**
+
+| Paper | What it does | How it differs from a leader-behaviour margin |
+|---|---|---|
+| arXiv 2412.03792 / 2403.15577 | Perception-uncertainty ACC (conformal tube / chance-constrained MPC) | Simulator; the uncertainty is the ego's own perception, not the leader's behaviour |
+| Zhou 2026 (arXiv 2609.35415) | Conformal residual margin | Scripted leaders; residuals of the ego's own model |
+| VLM-CASE (arXiv 2607.05180) | Context-adaptive RSS envelope from a camera (weather, friction) | |
+| arXiv 2512.05682 | Per-scenario conformal intervals for trajectory prediction | A prediction method, not a margin |
+| arXiv 2609.07251 | Theory of adaptive conformal inference under delayed feedback | Relevant to line #1's delayed, batched updates |
+
+**Patents.** Google Patents refused all automated requests from this machine and from the web-fetch tool (HTTP 503). An official API is needed (EPO OPS or USPTO), and only the author can create the key.
