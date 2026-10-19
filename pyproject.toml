@@ -9,7 +9,7 @@ description = "v5.B.1: coordinated zone control on a multi-bottleneck freeway (P
 requires-python = ">=3.14"
 
 [tool.setuptools]
-packages = ["v5b"]
+packages = ["v5b", "v5b.d1", "v5b.ops"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
