@@ -1,6 +1,6 @@
 # P1 protocol: how much incident information does metering need?
 
-Status: **DRAFT (V98), revised after the design review (design, fairness and feasibility lenses, 2026-10-19). Awaiting the author decisions A1–A10 (end of page) and author approval.** No tool-check, tuning or evaluation seed is run before approval. Claim bar: set by the author and Claude (V95), fixed here before data.
+Status: **APPROVED (V99, 2026-10-19): author decisions A1–A10 = all defaults.** Revised after the design review (design, fairness and feasibility lenses). No tool-check or evaluation seed is run before the code is committed and has passed its code review.
 
 **Paper question.** During non-recurring incidents at a freeway bottleneck, how much of the attainable delay reduction from metering needs incident information, and which information?
 - **L0, none:** strong always-on control.
@@ -139,7 +139,7 @@ Statements:
   - range over A5 and A7: about 210k–460k runs, 6.5–14 h; A1(b) roughly doubles it;
   - build about 2–3 days (PI, AD, ID, replicate redraw, imperfection hooks, mixtures, VSL port, intersection-union statistics), plus a review; author about 1 h.
 
-## Author decisions needed (before approval)
+## Author decisions (resolved V99: all defaults)
 
 | # | Question | Options | Default |
 |---|---|---|---|
