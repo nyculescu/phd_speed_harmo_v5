@@ -1,11 +1,15 @@
-"""Screen D2 runner (docs/research/protocols/screen_D2_incidents.md, V91).
+"""Screen D2 runner (docs/research/protocols/screen_D2_incidents.md, V91; approved V92 with Addendum A12).
+
+Post-onset action set (V92(c), Addendum D2-A12): A = G x {stay, back}. A switch run 'N before onset, a after onset'
+for a = g (stay) keeps g to the end of control; for a = g+back it runs g until the incident clears, then N again.
+IP, OR, ORX and T0's OR_t / IP_t select over A; N is the action (N, stay). FX, FB, NC and T4 are unchanged.
 
 Stages (each a set of one-process SUMO runs, v5b/d2/episode.py, at most --workers at a time under the CPU guard):
 1. Tool checks on seeds 7,400,080-099 (Rule 1), before any tuning. The arms are formed in hindsight on these
    seeds: N_t = best of G without incident; FX_t / FB_t = best constant / feedback controller on the pooled slow +
    block runs (no switching); IP_t = best switch target per incident type; OR_t = per-seed best switch target.
    A: every g in G and NC x {none, slow, block} x q x seed (fixed controllers), plus the T3 repeat pairs;
-   B: 'N_t before onset, g after onset' for every g x {slow, block} x q x seed.
+   B: 'N_t before onset, a after onset' for every action a in G x {stay, back} x {slow, block} x q x seed.
    T0 every incident cell: the best arm by median beats NC by >= 10 % (CI of the median difference > 0);
    T1 every (condition, q) cell: share of runs with a teleport < 5 %; T3 the repeat pairs are identical;
    T4 every incident cell (Addendum D2-A5): N_t's delay exceeds the hindsight-best fixed controller's by >= 10 %
@@ -60,20 +64,32 @@ TCHECK_RECORD = Path("/home/catalin/work/phd/v5b1_runs/D2_TCHECK_RECORD.json")
 CPU_LIMIT_DEFAULT = 0.70   # V89 author constraint (CPU < 70 %)
 ALLOWED_ROOT = Path("/home/catalin/work/phd")
 G_SMOKE = ("c800", "c1200", "c1600", "c2000", "f10_6", "f20_8", "f70_12")
-T3_RUNS = (("c1200", None, "block"), ("f20_8", None, "slow"), ("NC", None, "block"),
-           ("c1600", "f40_10", "block"), ("f20_8", "c800", "slow"))
+T3_RUNS = (("c1200", None, "block", False), ("f20_8", None, "slow", False), ("NC", None, "block", False),
+           ("c1600", "f40_10", "block", False), ("f20_8", "c800", "slow", False),
+           ("c1600", "c800", "block", True))   # A12: a switch-back run
 T3_Q = 2000.0
 ARMS = ("OR", "IP", "N", "FX", "FB", "NC")
-SPEC_FIELDS = ("pre", "post", "incident", "q", "seed", "xf")
+SPEC_FIELDS = ("pre", "post", "incident", "q", "seed", "xf", "back")
 
 
 def qk(q) -> str:
     return str(int(q))
 
 
-def spec(pre, post, incident, q, seed, rep=None, xf=False) -> dict:
-    return {"key": run_key(pre, post, incident, q, seed, rep, xf), "pre": pre, "post": post, "incident": incident,
-            "q": float(q), "seed": int(seed), "xf": bool(xf)}
+def spec(pre, post, incident, q, seed, rep=None, xf=False, back=False) -> dict:
+    return {"key": run_key(pre, post, incident, q, seed, rep, xf, back), "pre": pre, "post": post,
+            "incident": incident, "q": float(q), "seed": int(seed), "xf": bool(xf), "back": bool(back)}
+
+
+def sw_key(N, a, incident, q, seed, xf=False) -> str:
+    """Run key of the switch run 'N before onset, action a after onset' (a = g or g+back; A12)."""
+    g, back = ctl.parse_action(a)
+    return run_key(N, g, incident, q, seed, xf=xf, back=back)
+
+
+def action_of(r: dict) -> str:
+    """The action label of a stored switch run."""
+    return ctl.action(r["post"], bool(r.get("back")))
 
 
 def uniq(specs: list) -> list:
@@ -91,11 +107,13 @@ def fixed_specs(G_, conds, seeds, with_nc: bool) -> list:
 
 
 def switch_specs(N: dict, G_, seeds, xf=False) -> list:
-    return [spec(N[qk(q)], g, inc, q, s, xf=xf) for q in QS for s in seeds for inc in INCIDENTS for g in G_]
+    """Every action of G_ x {stay, back} (A12) after N's pre-onset trajectory."""
+    return [spec(N[qk(q)], g, inc, q, s, xf=xf, back=b) for q in QS for s in seeds for inc in INCIDENTS
+            for b in (False, True) for g in G_]
 
 
 def t3_specs(seed) -> list:
-    return [[spec(p, po, inc, T3_Q, seed, rep=r) for r in (0, 1)] for p, po, inc in T3_RUNS]
+    return [[spec(p, po, inc, T3_Q, seed, rep=r, back=b) for r in (0, 1)] for p, po, inc, b in T3_RUNS]
 
 
 def eval_specs(arms: dict, G_, seeds) -> list:
@@ -231,25 +249,29 @@ def fit_fixed_arms(res, seeds, G_, q) -> dict:
 
 
 def fit_ip(res, seeds, G_, q, N) -> dict:
-    """IP per incident type: the switch target g with the lowest median delay of 'N before onset, g after'."""
+    """IP per incident type: the action a in G_ x {stay, back} (A12) with the lowest median delay of
+    'N before onset, a after'."""
     out, tab = {}, {}
+    A = ctl.actions(G_)
     for inc in INCIDENTS:
-        per = {g: [_d(res, k) for s in seeds if (k := run_key(N, g, inc, q, s)) in res] for g in G_}
-        out[inc] = ctl.best_by_median(per, G_)
+        per = {a: [_d(res, k) for s in seeds if (k := sw_key(N, a, inc, q, s)) in res] for a in A}
+        out[inc] = ctl.best_by_median(per, A)
         tab[inc] = {g: float(np.median(v)) for g, v in per.items() if v}
     return {"IP": out, "median_switch": tab}
 
 
 def cell_keys(res, seeds, G_, q, inc, arms, xfit: bool = False) -> tuple:
-    """Per seed: the run keys of every arm in one incident cell; OR = per-seed best of the switch runs (page).
+    """Per seed: the run keys of every arm in one incident cell; OR = per-seed best of the switch runs over the
+    action set G_ x {stay, back} (page, A12).
     xfit (Addendum D2-A1): also ORX = the main switch run of the target that is best on the seed's cross-fit
-    replicates, and IPX = IP's replicate run (noise report). A seed enters only if all its runs exist (all |G| switch
-    runs, with xfit also all |G| replicates, FX, FB, NC). Returns (seeds, keys, or_pick)."""
+    replicates, and IPX = IP's replicate run (noise report). A seed enters only if all its runs exist (all 2|G| switch
+    runs, with xfit also all 2|G| replicates, FX, FB, NC). Returns (seeds, keys, or_pick)."""
     N, ip = arms["N"], arms["IP"][inc]
+    A = ctl.actions(G_)
     ok, keys, pick = [], {a: [] for a in ARMS + (("ORX", "IPX") if xfit else ())}, []
     for s in seeds:
-        sw = {g: run_key(N, g, inc, q, s) for g in G_}
-        swx = {g: run_key(N, g, inc, q, s, xf=True) for g in G_} if xfit else {}
+        sw = {a: sw_key(N, a, inc, q, s) for a in A}
+        swx = {a: sw_key(N, a, inc, q, s, xf=True) for a in A} if xfit else {}
         k = {"N": sw[N], "IP": sw[ip], "FX": run_key(arms["FX"], None, inc, q, s),
              "FB": run_key(arms["FB"], None, inc, q, s), "NC": run_key(ctl.NC, None, inc, q, s)}
         if not all(x in res for x in list(sw.values()) + list(swx.values()) + list(k.values())):
@@ -312,16 +334,19 @@ def incident_cells(res, seeds, G_, arms_by_q, xfit: bool = False) -> tuple:
             for a in shown:
                 if a != "OR":
                     rows[a]["vs_OR"] = stats.paired(dl[a], dl["OR"])   # rel = (arm - OR) / arm
-            sw_med = {g: float(np.median([_d(res, run_key(arms["N"], g, inc, q, s)) for s in ok])) for g in G_}
+            A = ctl.actions(G_)
+            sw_med = {a: float(np.median([_d(res, sw_key(arms["N"], a, inc, q, s)) for s in ok])) for a in A}
             opmap[name] = {"n_seeds": len(ok), "controllers": {a: (arms[a] if a != "IP" else arms["IP"][inc])
                                                                for a in ("N", "FX", "FB", "IP")},
                            "arms": rows, "or_picks": dict(Counter(pick).most_common()),
                            "median_switch_by_target": sw_med,
-                           "n_invalid_switch_runs": int(sum(not res[run_key(arms["N"], g, inc, q, s)]["valid"]
-                                                            for g in G_ for s in ok))}
+                           "n_back_picks": {"OR": sum(ctl.parse_action(p)[1] for p in pick)},
+                           "n_invalid_switch_runs": int(sum(not res[sw_key(arms["N"], a, inc, q, s)]["valid"]
+                                                            for a in A for s in ok))}
             if xfit:
                 c = cells[name]
-                opmap[name]["orx_picks"] = dict(Counter(res[k]["post"] for k in keys["ORX"]).most_common())
+                opmap[name]["orx_picks"] = dict(Counter(action_of(res[k]) for k in keys["ORX"]).most_common())
+                opmap[name]["n_back_picks"]["ORX"] = sum(bool(res[k].get("back")) for k in keys["ORX"])
                 opmap[name]["replicate_noise_IP"] = {   # IP's main run vs its replicate (same demand and incident)
                     "median_abs_rel": float(np.median(np.abs(dl["IP"] - dl["IPX"]) / dl["IP"])),
                     "p90_abs_rel": float(np.percentile(np.abs(dl["IP"] - dl["IPX"]) / dl["IP"], 90))}
@@ -441,7 +466,8 @@ def summary_md(result: dict) -> str:
     smoke = result["args"]["smoke"]
     L = [f"# Screen D2 {'SMOKE (build check, not a result)' if smoke else 'result'}: **{result.get('decision', '-')}**",
          "", f"Page `{PAGE}` (sha256 {result['page_sha256'][:12]}), code {result['code_commit'][:10]}"
-         f"{' (dirty)' if result['code_dirty'] else ''}. G = {len(result['G'])} controllers. Metric: door-to-door "
+         f"{' (dirty)' if result['code_dirty'] else ''}. G = {len(result['G'])} controllers; IP / OR / ORX choose "
+         f"among G x {{stay, back to N at clearance}} ({2 * len(result['G'])} actions, A12). Metric: door-to-door "
          "delay (s) incl. origin and ramp (meter) queue; served = arrivals in the control period (veh/h); TTT ctrl "
          "= veh h in [0, control end].", ""]
     tc = result["tcheck"]
@@ -639,9 +665,10 @@ def run_counts(n_g: int = len(ctl.G)) -> dict:
     """Runs per stage of the real screen (before de-duplication of coinciding eval controllers)."""
     nq, ninc, ncond = len(QS), len(INCIDENTS), len(CONDITIONS)
     s = {k: len(v) for k, v in SEEDS.items()}
-    tc = (n_g + 1) * ncond * nq * s["tcheck"] + 2 * len(T3_RUNS) + n_g * ninc * nq * s["tcheck"]
-    tu = n_g * ncond * nq * s["tune"] + n_g * ninc * nq * s["tune"]
-    ev = 2 * n_g * ninc * nq * s["eval"] + 3 * ninc * nq * s["eval"] + 4 * nq * s["eval"]   # x2: replicates
+    na = 2 * n_g   # A12: actions G x {stay, back}
+    tc = (n_g + 1) * ncond * nq * s["tcheck"] + 2 * len(T3_RUNS) + na * ninc * nq * s["tcheck"]
+    tu = n_g * ncond * nq * s["tune"] + na * ninc * nq * s["tune"]
+    ev = 2 * na * ninc * nq * s["eval"] + 3 * ninc * nq * s["eval"] + 4 * nq * s["eval"]   # x2: replicates
     return {"tcheck": tc, "tune": tu, "eval": ev, "total": tc + tu + ev}
 
 

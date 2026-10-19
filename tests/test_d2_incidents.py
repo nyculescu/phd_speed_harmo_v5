@@ -127,12 +127,17 @@ def test_run_checks():
         episode.check_run("c1650", None, "block")
     episode.check_run("NC", None, "slow")
     episode.check_run("f70_12", "c600", "slow")
+    episode.check_run("f70_12", "c600", "slow", back=True)
+    with pytest.raises(ValueError):
+        episode.check_run("f70_12", None, "slow", back=True)          # back needs a switch at onset
 
 
 # ---------------------------------------------------------------- SUMO smoke (smoke seed only)
 SUMO_RUNS = {"block_fixed": ("c1600", None, "block"), "slow_fixed": ("c1600", None, "slow"),
              "block_to_c800": ("c1600", "c800", "block"), "slow_to_f40": ("c1600", "f40_10", "slow"),
-             "block_to_c800_xf": ("c1600", "c800", "block")}   # cross-fit replicate (Addendum D2-A1)
+             "block_to_c800_xf": ("c1600", "c800", "block"),   # cross-fit replicate (Addendum D2-A1)
+             "block_to_c800_back": ("c1600", "c800", "block"),  # switch back to N at clearance (A12)
+             "slow_f20_to_c800_back": ("f20_8", "c800", "slow")}
 
 
 @pytest.fixture(scope="module")
@@ -141,7 +146,7 @@ def sumo_runs(tmp_path_factory):
     procs = {}
     for name, (pre, post, inc) in SUMO_RUNS.items():
         s = {"pre": pre, "post": post, "incident": inc, "q": 2000.0, "seed": SMOKE_SEED, "key": name,
-             "xf": name.endswith("_xf")}
+             "xf": name.endswith("_xf"), "back": name.endswith("_back")}
         procs[name] = subprocess.Popen([PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(s),
                                         "--out", str(d / f"{name}.json"), "--run-dir", str(d / name)],
                                        cwd=REPO_ROOT, env=clean_sumo_env(), stdout=subprocess.DEVNULL,
@@ -201,3 +206,25 @@ def test_sumo_emergency_by_edge_recorded(sumo_runs):
         e = r["emergency_by_edge"]
         assert set(e) == {"all", "incident"}, name
         assert sum(e["all"].values()) >= sum(e["incident"].values())
+
+
+def test_sumo_switch_back_at_clearance(sumo_runs):
+    """A12 (V92(c)): 'g+back' runs g from onset until the incident clears, then N again, exactly at clearance."""
+    st, bk = sumo_runs["block_to_c800"], sumo_runs["block_to_c800_back"]
+    assert st["t_back"] is None and st["back"] is False
+    assert bk["back"] is True and bk["t_switch"] == bk["t_on"] and bk["t_back"] == bk["t_off"] > bk["t_on"]
+    assert bk["q_at_switch"] == 1600.0 and bk["q_at_back"] == 800.0
+    log = bk["meter_log"]
+    assert {e[2] for e in log if e[0] < bk["t_on"]} == {1600.0}
+    assert {e[2] for e in log if bk["t_on"] <= e[0] < bk["t_off"]} == {800.0}
+    assert {e[2] for e in log if e[0] >= bk["t_off"]} == {1600.0}            # back to N = c1600
+    assert [e for e in log if e[0] < bk["t_off"]] == [e for e in st["meter_log"] if e[0] < st["t_off"]]
+    assert bk["hash"] != st["hash"]
+    r = sumo_runs["slow_f20_to_c800_back"]                                   # N feedback: its law resumes from 800
+    assert r["t_back"] == r["t_off"] and r["q_at_back"] == 800.0
+    after = [e for e in r["meter_log"] if e[0] >= r["t_back"]]
+    assert after and after[0][2] == pytest.approx(800.0, abs=1e-3)
+    q = 800.0
+    for t, n4, q_before in after:
+        assert q_before == pytest.approx(q, abs=1e-3)
+        q = min(max(q + 20.0 * (8.0 - n4), 200.0), 4000.0)

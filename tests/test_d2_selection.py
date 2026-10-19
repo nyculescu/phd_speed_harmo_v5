@@ -29,8 +29,9 @@ def test_oracle_pick():
     assert ctl.oracle_pick({"c800": 5.0, "f20_8": 4.0, "c600": 4.0}) == ("c600", 4.0)
 
 
-def _run(pre, post, inc, q, s, delay, valid=True):
-    return {"key": run_key(pre, post, inc, q, s), "pre": pre, "post": post, "incident": inc, "q": q, "seed": s,
+def _run(pre, post, inc, q, s, delay, valid=True, back=False):
+    return {"key": run_key(pre, post, inc, q, s, back=back), "pre": pre, "post": post, "back": back, "incident": inc,
+            "q": q, "seed": s,
             "delay_s": float(delay), "served_ctrl_vph": 1500.0, "ttt_ctrl_vehh": 10.0, "ttt_full_vehh": 12.0,
             "valid": valid, "teleports": 0}
 
@@ -57,6 +58,7 @@ def _synthetic():
             for inc, tab in sw.items():
                 for g, vals in tab.items():
                     add(_run("c1600", g, inc, q, s, vals[s - 1]))
+                    add(_run("c1600", g, inc, q, s, 999, back=True))   # A12: switch-back runs, never best here
     return res
 
 
@@ -92,3 +94,81 @@ def test_incident_cells_end_to_end_synthetic():
     assert c["n"] == 3 and c["med_OR"] == 310.0 and set(c["per_fallback"]) == {"FX", "FB", "IP"}
     assert opmap["block_q2000"]["or_picks"] == {"f20_8": 2, "c800": 1}
     assert np.isclose(opmap["slow_q2000"]["arms"]["NC"]["median_delay_s"], 900.0)
+
+
+# ---------------------------------------------------------------- A12 (V92(c)): G x {stay, back}
+def test_action_set_labels_order_and_ties():
+    A = ctl.actions(G3)
+    assert A == ("c800", "c1600", "f20_8", "c800+back", "c1600+back", "f20_8+back")
+    assert len(ctl.actions()) == 70 and ctl.parse_action("f20_8+back") == ("f20_8", True)
+    assert ctl.parse_action("c800") == ("c800", False) and ctl.action("c800", True) == "c800+back"
+    with pytest.raises(ValueError):
+        ctl.parse_action("NC+back")
+    assert ctl.best_by_median({"c800+back": [2], "c1600": [2]}, A) == "c1600"     # tie: stay before back
+    assert ctl.best_by_median({"c800+back": [1], "c1600": [2]}, A) == "c800+back"
+    assert ctl.oracle_pick({"f20_8+back": 3.0, "c800+back": 3.0, "f20_8": 3.0}) == ("f20_8", 3.0)
+    assert ctl.oracle_pick({"f20_8+back": 3.0, "c800+back": 3.0}) == ("c800+back", 3.0)
+    assert ctl.grid_edges("c600+back") == ["rate=600"]
+    assert rs.sw_key("c1600", "c800+back", "slow", 2000.0, 1) == "c1600-c800+back_slow_q2000_s1"
+    assert rs.sw_key("c1600", "c800", "slow", 2000.0, 1, xf=True) == run_key("c1600", "c800", "slow", 2000.0, 1, xf=True)
+
+
+def _with_back(xf_too=False):
+    """_synthetic() plus back runs: slow -> 'c800+back' best on every seed (200 + s); block -> back runs never best.
+    With xf_too, replicates of every switch run (main + 1, except block 'f20_8+back' which is best on the replicate)."""
+    res = _synthetic()
+    for k in [k for k, r in res.items() if r.get("back")]:
+        del res[k]
+    for q in rs.QS:
+        for s in SEEDS:
+            for g in G3:
+                res[run_key("c1600", g, "slow", q, s, back=True)] = _run("c1600", g, "slow", q, s,
+                                                                         200 + s if g == "c800" else 600, back=True)
+                res[run_key("c1600", g, "block", q, s, back=True)] = _run("c1600", g, "block", q, s, 700, back=True)
+    if xf_too:
+        for k, r in list(res.items()):
+            if r["post"] is not None:
+                x = dict(r, xf=True, key=run_key(r["pre"], r["post"], r["incident"], r["q"], r["seed"], xf=True,
+                                                  back=r["back"]), delay_s=r["delay_s"] + 1)
+                if r["incident"] == "block" and rs.action_of(r) == "f20_8+back":
+                    x["delay_s"] = 1.0
+                res[x["key"]] = x
+    return res
+
+
+def test_a12_selection_over_doubled_set_ip_or_orx():
+    res = _with_back(xf_too=True)
+    ip = rs.fit_ip(res, SEEDS, G3, 2000.0, "c1600")
+    assert ip["IP"] == {"slow": "c800+back", "block": "f20_8"} and len(ip["median_switch"]["slow"]) == 6
+    arms = {"N": "c1600", "FX": "c800", "FB": "f20_8", "IP": ip["IP"]}
+    ok, keys, pick = rs.cell_keys(res, SEEDS, G3, 2000.0, "slow", arms, xfit=True)
+    assert ok == [1, 2, 3] and pick == ["c800+back"] * 3
+    assert keys["IP"][0] == run_key("c1600", "c800", "slow", 2000.0, 1, back=True)
+    assert keys["N"][0] == run_key("c1600", "c1600", "slow", 2000.0, 1)          # N = (N, stay)
+    assert keys["OR"] == keys["ORX"] == keys["IP"]
+    ok, keys, pick = rs.cell_keys(res, SEEDS, G3, 2000.0, "block", arms, xfit=True)
+    assert pick == ["f20_8", "f20_8", "c800"]                                    # back runs not best on the main run
+    assert keys["ORX"] == [run_key("c1600", "f20_8", "block", 2000.0, s, back=True) for s in SEEDS]   # picked on xf
+    assert all(not res[k].get("xf") for k in keys["ORX"])
+    del res[run_key("c1600", "c1600", "block", 2000.0, 2, xf=True, back=True)]  # a missing back replicate drops the seed
+    ok, _, _ = rs.cell_keys(res, SEEDS, G3, 2000.0, "block", arms, xfit=True)
+    assert ok == [1, 3]
+    cells, opmap = rs.incident_cells(_with_back(xf_too=True), SEEDS, G3, {rs.qk(q): arms for q in rs.QS}, xfit=True)
+    assert opmap["slow_q2000"]["n_back_picks"] == {"OR": 3, "ORX": 3}
+    assert opmap["block_q2000"]["orx_picks"] == {"f20_8+back": 3}
+    assert "c800+back" in opmap["slow_q2000"]["median_switch_by_target"]
+
+
+def test_a12_switch_and_t3_specs_cover_back():
+    N = {"1600": "c1600", "2000": "c1600"}
+    sp = rs.switch_specs(N, G3, SEEDS)
+    assert len(sp) == 2 * 3 * 2 * 2 * 3 and {(s["post"], s["back"]) for s in sp} == \
+        {(g, b) for g in G3 for b in (False, True)}
+    assert all(s["key"] == rs.sw_key(s["pre"], ctl.action(s["post"], s["back"]), s["incident"], s["q"], s["seed"])
+               for s in sp)
+    t3 = rs.t3_specs(7_400_080)
+    assert any(p[0]["back"] and p[1]["back"] and p[0]["key"] != p[1]["key"] for p in t3)
+    assert rs.run_counts(n_g=1) == {"tcheck": 2 * 3 * 2 * 20 + 12 + 2 * 2 * 2 * 20,
+                                    "tune": 3 * 2 * 20 + 2 * 2 * 2 * 20,
+                                    "eval": 2 * 2 * 2 * 2 * 50 + 3 * 2 * 2 * 50 + 4 * 2 * 50,
+                                    "total": 412 + 280 + 1800}

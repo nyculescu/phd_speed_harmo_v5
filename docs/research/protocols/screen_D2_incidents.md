@@ -1,6 +1,6 @@
 # Screen D2: is there headroom for incident-adaptive ramp metering?
 
-Status: **DRAFT (V91).** The run waits for the author's approval of this page. The outcome is **CONTINUE** or **STOP**; no claim.
+Status: **APPROVED (V92); addenda A1-A12 below.** The outcome is **CONTINUE** or **STOP**; no claim.
 
 **Question.** When an incident hits the bottleneck (a slowdown or a blocked lane), can a controller that adapts to *this particular* incident beat the best simple responses? The particular incident means its own start time and duration. The simple responses are a fixed rate, a tuned feedback meter, and a plan stored per incident **type**.
 
@@ -78,7 +78,7 @@ If even a perfectly informed per-incident response gains less than 10 %, a table
 - **The archive's BN4 results were seen.** A learned meter beat the best tuned non-learning arm by 17–28 % under slow and block (D5.10, chapter level, old seeds). This screen asks whether that headroom comes from **per-incident** adaptation or is already captured by a per-type plan.
 - **D1's STOP was seen:** on constant demand, a constant rate beats the paper-gain feedback meter.
 
-## Addendum (2026-10-19), pending author approval
+## Addendum (2026-10-19), A1-A11 approved by the author (V92)
 
 Written after a two-lens review (protocol, plant) of the build at commit `bc69707`, before any tool-check, tuning or evaluation seed ran. Each item states what the code runs, adds a check or report, or narrows a conclusion. **None makes CONTINUE easier than the page as written**, except that the meaning of "block" (A2) changes. That effect has no known direction, so the author decides it. Review probes and smoke runs used only seeds 7,400,000–009, and their outcomes were seen (disclosed). The numbers quoted from the review's probes were not re-run by the builder.
 
@@ -121,3 +121,24 @@ Written after a two-lens review (protocol, plant) of the build at commit `bc6970
   - Launch command, after approval and a commit:
     `systemd-run --user --unit d2-screen --working-directory=/srv/shared/Workspace/phd/phd_speed_harmo_v5b1 env -u SUMO_HOME OMP_NUM_THREADS=1 nice -n 19 /home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python -m v5b.d2.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d2/v91 --confirm-run-once --workers 16 --cpu-limit 0.70`
 - **A11. Status.** The page stays DRAFT. This addendum is pending author approval, together with the page.
+
+## Addendum A12 (2026-10-19, author-approved V92)
+
+Author decision V92(c): switch-back at clearance is allowed for IP and OR. Written and built before any tool-check, tuning or evaluation seed ran.
+
+- **Action set.** After onset, IP and OR choose from A = G × {stay, back}: 70 actions.
+  - **stay** (`g`): keep g until the end of control (as before).
+  - **back** (`g+back`): run g from onset until the incident clears (onset + duration, perfect detection: the same 1-s tick at which the incident is removed), then switch back to N with the A4 d rule (to a constant: q = its rate; to a feedback meter: its K_F and n_crit, the law continuing from the current q).
+  - Ties go to stay before back, then G order.
+- **Arms.**
+  - **IP:** per (incident type, demand), the action of A with the lowest median delay on the tuning seeds.
+  - **OR:** per seed, the best action of A on the main run.
+  - **ORX (A1):** per seed, the action of A that is best on the replicate (SUMO seed = seed + 10,000,000; 17,400,140–17,400,189), scored on the main run.
+  - **N** stays the action (N, stay). **FX, FB and NC are unchanged** (no switching).
+- **Tool checks.** T0's OR_t and IP_t choose over A (A4 f). T4 is unchanged: the hindsight-best fixed controller versus N_t, in every incident cell (A5). T1 counts every run, back runs included. T3 adds one switch-back repeat pair.
+- **Reading (replaces A3's restriction).** A STOP now means: *no informed per-incident response (onset plus clearance), chosen per incident from A, beats the per-type plan* (≥ 10 % with CI > 0 against FX, FB and IP). Responses that act at other times, or use controllers outside G, are still not covered.
+- **Never easier.** Every A1–A11 rule stays: a cell passes only with both OR and ORX, with and without invalid seeds, against every fallback; T0, T1, T3 and T4 as written; the run-once rules. The larger action set is the author's decision. It strengthens OR, and also IP (the per-type plan may switch back too), so its effect on HD_IP has no known direction. It raises the page OR's selection optimism (best of 70 runs instead of 35); ORX's cross-fitting is the guard, and the report keeps HD(OR) − HD(ORX) per fallback. The number of OR, ORX and IP picks that are back actions is reported per cell.
+- **Cost.** 48,732 runs instead of 29,130 (A7): tool checks 9,932, tuning 9,800, evaluation 29,000 (14,000 of them A1 replicates). The back actions add 35 post-onset runs per seed, incident cell and replicate; every other run is reused. The linear estimate from the build smoke (4.7 runs/s at 8 workers) is about 86 min at 16 workers.
+- **Build smoke** (seeds 7,400,000–003 with SUMO replicate seeds 17,400,000–003, 7-controller subset, 8 workers; outcomes seen, disclosed): 652 runs, median 1.1 s per run, 0 teleports, 0 invalid runs, the T3 pairs identical (the back pair included), and every back run returned to N at the tick the incident cleared. On these seeds the per-type plan in both slow cells was `c800+back`, and OR picked back actions on every slow seed and on no block seed. With the 7-controller subset, smoke T4 failed (as in A5 with the subset); not a result.
+- **Launch command** (replaces A10's; after the commit):
+  `systemd-run --user --unit d2-screen --working-directory=/srv/shared/Workspace/phd/phd_speed_harmo_v5b1 env -u SUMO_HOME OMP_NUM_THREADS=1 nice -n 19 /home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python -m v5b.d2.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d2/v92 --confirm-run-once --workers 16 --cpu-limit 0.70`

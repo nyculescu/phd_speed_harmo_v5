@@ -16,9 +16,9 @@ SEEDS = tuple(range(1, 21))
 Q = 2000.0
 
 
-def _run(pre, post, inc, q, s, delay, xf=False, valid=True):
-    return {"key": run_key(pre, post, inc, q, s, xf=xf), "pre": pre, "post": post, "incident": inc, "q": q,
-            "seed": s, "xf": xf, "delay_s": float(delay), "served_ctrl_vph": 1500.0, "ttt_ctrl_vehh": 10.0,
+def _run(pre, post, inc, q, s, delay, xf=False, valid=True, back=False):
+    return {"key": run_key(pre, post, inc, q, s, xf=xf, back=back), "pre": pre, "post": post, "incident": inc, "q": q,
+            "seed": s, "xf": xf, "back": back, "delay_s": float(delay), "served_ctrl_vph": 1500.0, "ttt_ctrl_vehh": 10.0,
             "ttt_full_vehh": 12.0, "valid": valid, "teleports": 0}
 
 
@@ -33,8 +33,9 @@ def _noise_only(seed=0, G_=G3, sd=40.0):
         for s in SEEDS:
             for inc in ("slow", "block"):
                 for g in G_:
-                    add(_run("c1600", g, inc, q, s, 400 + r.normal(0, sd)))
-                    add(_run("c1600", g, inc, q, s, 400 + r.normal(0, sd), xf=True))
+                    for b in (False, True):   # A12: every action of G x {stay, back} is equally good
+                        add(_run("c1600", g, inc, q, s, 400 + r.normal(0, sd), back=b))
+                        add(_run("c1600", g, inc, q, s, 400 + r.normal(0, sd), xf=True, back=b))
                 add(_run("c800", None, inc, q, s, 533))
                 add(_run("f20_8", None, inc, q, s, 533))
                 add(_run("NC", None, inc, q, s, 900))
@@ -49,8 +50,9 @@ def test_a1_crossfit_or_is_picked_on_the_replicate_and_scored_on_the_main_run():
     ok, keys, pick = rs.cell_keys(res, SEEDS, G3, Q, "block", ARMS, xfit=True)
     assert ok == list(SEEDS)
     for i, s in enumerate(ok):
-        best_x = min(G3, key=lambda g: (res[run_key("c1600", g, "block", Q, s, xf=True)]["delay_s"], G3.index(g)))
-        assert keys["ORX"][i] == run_key("c1600", best_x, "block", Q, s)          # a main run, not a replicate
+        best_x = min(ctl.actions(G3), key=lambda a: (res[rs.sw_key("c1600", a, "block", Q, s, xf=True)]["delay_s"],
+                                                     ctl.rank(a)))
+        assert keys["ORX"][i] == rs.sw_key("c1600", best_x, "block", Q, s)       # a main run, not a replicate
         assert keys["IPX"][i] == run_key("c1600", "c1600", "block", Q, s, xf=True)
         assert res[keys["OR"][i]]["delay_s"] <= res[keys["ORX"][i]]["delay_s"]   # page OR is the per-seed min
     del res[run_key("c1600", "f20_8", "block", Q, 3, xf=True)]                   # a missing replicate drops the seed
