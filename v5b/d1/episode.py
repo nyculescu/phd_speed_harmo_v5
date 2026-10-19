@@ -1,4 +1,4 @@
-"""Screen D1 episode: one SUMO run per process (docs/research/protocols/screen_D1_detector_faults_draft.md).
+"""Screen D1 episode: one SUMO run per process (docs/research/protocols/screen_D1_detector_faults.md).
 
 Port: claude/vsl-lab-core@2a79e5e
 - vsl_lab/envs/bn4_env.py: FBMeter (unchanged control law; changes: the reading is injectable and a missing
@@ -175,6 +175,7 @@ def main(argv=None) -> int:
     res = run_episode(spec["arm"], spec["fault"], float(spec["q"]), int(spec["seed"]), Path(a.run_dir),
                       keep_files=a.keep_files, **kw)
     res["key"] = spec.get("key")
+    res["code_commit"] = spec.get("code_commit")   # Addendum A6: checked before any reuse
     out = Path(a.out)
     tmp = out.with_suffix(f".tmp{os.getpid()}")
     tmp.write_text(json.dumps(res))

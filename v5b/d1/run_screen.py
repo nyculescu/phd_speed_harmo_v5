@@ -1,16 +1,17 @@
-"""Screen D1 runner (docs/research/protocols/screen_D1_detector_faults_draft.md, approved V89).
+"""Screen D1 runner (docs/research/protocols/screen_D1_detector_faults.md, approved V89, Addendum 2026-10-19).
 
 Stages: tool checks (T0, T1, T3) -> STOP on failure; tuning (FX rate per demand, RF ratio per demand) on seeds
-7,400,100-119; evaluation on 7,400,030-079 (5 arms x 4 faults x 2 demands); decision (Rule 5) and the full
-operating map. One SUMO run per child process (v5b/d1/episode.py), at most --workers at a time, under the CPU
+7,400,100-119 (halt before evaluation if a tuned FX rate is at a grid edge, A1); evaluation on 7,400,030-079
+(5 arms x 4 faults x 2 demands); decision (Rule 5 against every fallback FX, RF, HL, A2; invalid-seed check, A5)
+and the full operating map. Run once (A6): a global sentinel is written before the evaluation stage. One SUMO run per child process (v5b/d1/episode.py), at most --workers at a time, under the CPU
 guard (v5b/ops/guard.py) with --cpu-limit. Raw runs and results go to --out under /home/catalin/work/phd/.
 
 Under perfect detection O, FX, RF and NC never use the faulty reading (enforced: their fault type is 'any',
 whose read() raises), so their runs are identical across fault types; by default they run once per (q, seed)
 and are reused in the four fault cells. --literal runs all 2,000 combinations instead.
 
-  screen:  python -m v5b.d1.run_screen --out /home/catalin/work/phd/v5b1_runs/d1_<tag> --confirm-run-once \
-             --workers 8 --cpu-limit 0.70
+  screen:  python -m v5b.d1.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d1/<tag> --confirm-run-once \
+             --workers 16 --cpu-limit 0.70
   smoke:   python -m v5b.d1.run_screen --smoke --out /home/catalin/work/phd/v5b1_runs/d1_smoke_<tag> --workers 4
 """
 from __future__ import annotations
@@ -31,15 +32,18 @@ from v5b.d1 import netgen_bn4 as net
 from v5b.d1 import stats
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 from v5b.d1.episode import ARMS
-from v5b.d1.faults import ANY, FAULTS, ratio_fit
+from v5b.d1.faults import ANY, FAULTS, fill_diagnostics, ratio_fit
 from v5b.ops.guard import ComputeGuard
 
-PAGE = "docs/research/protocols/screen_D1_detector_faults_draft.md"
+PAGE = "docs/research/protocols/screen_D1_detector_faults.md"
 QS = (1600.0, 2000.0)
 SEEDS = {"smoke": tuple(range(7_400_000, 7_400_003)), "tcheck": tuple(range(7_400_010, 7_400_030)),
          "tune": tuple(range(7_400_100, 7_400_120)), "eval": tuple(range(7_400_030, 7_400_080))}
 CALIB_ONLY = range(7_400_000, 7_400_010)
-FX_GRID = (600.0, 800.0, 1000.0, 1200.0, 1400.0, 1600.0, 2000.0, 2400.0)
+# Addendum (2026-10-19) A1: {600, 800} + 1000-2600 in 100 veh/h steps (19 rates), a superset of the build grid.
+FX_GRID = (600.0, 800.0) + tuple(float(r) for r in range(1000, 2601, 100))
+FALLBACKS = ("FX", "RF", "HL")   # A2; HL = hold the last healthy rate = the NV-dropout runs (identical by construction)
+SENTINEL = Path("/home/catalin/work/phd/v5b1_runs/D1_EVAL_STARTED.json")   # A6: run once, across --out dirs
 FX_PROBE, RF_PROBE = 1200.0, 1.0      # placeholder values for the T3 determinism runs (before tuning)
 T3_SEED, T3_Q = 7_400_010, 2000.0
 ALLOWED_ROOT = Path("/home/catalin/work/phd")
@@ -90,8 +94,8 @@ def pkg_temp() -> float:
 
 
 class Pool:
-    def __init__(self, out: Path, workers: int, cpu_limit: float, log):
-        self.out, self.workers, self.log = out, workers, log
+    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = ""):
+        self.out, self.workers, self.log, self.commit = out, workers, log, commit
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
         self.cpu = CpuSampler()
         (out / "runs").mkdir(parents=True, exist_ok=True)
@@ -103,7 +107,7 @@ class Pool:
         rd = self.out / "sumo" / s["key"]
         rd.mkdir(parents=True, exist_ok=True)
         fh = open(rd / f"child_a{attempt}.log", "w")
-        cmd = [PYTHON_BIN, "-m", "v5b.d1.episode", "--spec", json.dumps(s),
+        cmd = [PYTHON_BIN, "-m", "v5b.d1.episode", "--spec", json.dumps({**s, "code_commit": self.commit}),
                "--out", str(self.out / "runs" / f"{s['key']}.json"), "--run-dir", str(rd)]
         p = subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=fh, stderr=subprocess.STDOUT)
         return {"proc": p, "spec": s, "attempt": attempt, "paused": False, "t0": time.time(), "fh": fh}
@@ -113,7 +117,12 @@ class Pool:
         for s in specs:
             p = self.out / "runs" / f"{s['key']}.json"
             if p.exists():
-                res[s["key"]] = json.loads(p.read_text())
+                stored = json.loads(p.read_text())
+                bad = reuse_mismatch(stored, s, self.commit)
+                if bad:
+                    raise SystemExit(f"{s['key']}: the stored run differs in {bad}; refusing to mix configurations "
+                                     "(Addendum A6): start a fresh --out")
+                res[s["key"]] = stored
             else:
                 todo.append((s, 0))
         n_total, t_start, t_log = len(todo), time.time(), 0.0
@@ -171,6 +180,18 @@ class Pool:
         return res, failed
 
 
+def reuse_mismatch(stored: dict, s: dict, commit: str) -> list:
+    """Addendum A6: the fields in which a stored run differs from this invocation's spec (empty: reusable)."""
+    want = {k: s[k] for k in ("arm", "fault", "q", "seed", "q_fx", "ratio", "kf", "ncrit")}
+    want["code_commit"] = commit
+    return [k for k, v in want.items() if stored.get(k) != v]
+
+
+def grid_edge_hits(q_fx: dict, grid) -> list:
+    """Addendum A1: demands whose tuned FX rate lies at a grid edge; the screen then halts before evaluation."""
+    return sorted(qk for qk, r in q_fx.items() if r in (min(grid), max(grid)))
+
+
 def _metric(res, keys, m="delay_s"):
     return np.array([res[k][m] for k in keys], float)
 
@@ -208,15 +229,17 @@ def stage_tune(pool, grid, kf, ncrit):
     for q in QS:
         qk = str(int(q))
         logs = [e for s in SEEDS["tune"] if (k := f"O_{ANY}_q{qk}_s{s}") in res for e in res[k]["meter_log"]]
-        out["ratio"][qk] = ratio_fit([e[2] for e in logs], [e[1] for e in logs])
+        n4, n3 = [e[1] for e in logs], [e[2] for e in logs]
+        out["ratio"][qk] = ratio_fit(n3, n4)
+        out.setdefault("rf_fill", {})[qk] = fill_diagnostics(out["ratio"][qk], n3, n4)   # A3, report only
         med = {}
         for r in grid:
             keys = [k for s in SEEDS["tune"] if (k := f"FX_{ANY}_q{qk}_s{s}_fx{int(r)}") in res]
             med[r] = float(np.median(_metric(res, keys)))
         out["fx_median_delay_s"][qk] = {str(int(r)): v for r, v in med.items()}
         out["q_fx"][qk] = stats.best_rate(med)
-        if out["q_fx"][qk] in (min(grid), max(grid)):
-            out.setdefault("warnings", []).append(f"q={qk}: tuned FX rate {out['q_fx'][qk]} at the grid edge")
+    out["grid"] = list(grid)
+    out["grid_edge"] = grid_edge_hits(out["q_fx"], grid)
     return out
 
 
@@ -233,20 +256,27 @@ def eval_specs(q_fx, ratio, literal, kf, ncrit):
 
 
 def build_cells(res, sp_index, literal):
-    """sp_index: (arm, fault, q, seed) -> key. Returns cells and the operating map."""
+    """sp_index: (arm, fault, q, seed) -> key. Returns cells and the operating map. HL (A2) is read from the
+    NV-dropout runs. A seed enters a cell only if all of its O, FX, RF, NV and HL runs exist."""
     cells, opmap = {}, {}
+    cols = ARMS + ("HL",)
     for f in FAULTS:
         for q in QS:
             qk = str(int(q))
-            fl = {a: (f if (literal or a == "NV") else ANY) for a in ARMS}
-            seeds = [s for s in SEEDS["eval"] if all(sp_index[(a, fl[a], q, s)] in res for a in ARMS)]
-            keys = {a: [sp_index[(a, fl[a], q, s)] for s in seeds] for a in ARMS}
-            dl = {a: _metric(res, keys[a]) for a in ARMS}
-            c = stats.headroom_cell(dl["O"], dl["FX"], dl["RF"])
+            src = {a: (a, f if (literal or a == "NV") else ANY) for a in ARMS}
+            src["HL"] = ("NV", "dropout")
+            seeds = [s for s in SEEDS["eval"] if all(sp_index[(*src[a], q, s)] in res for a in cols)]
             name = f"{f}_q{qk}"
-            cells[name] = c
+            if not seeds:
+                cells[name] = {"n": 0, "pass": False, "note": "no seed with all runs"}
+                opmap[name] = {"n_seeds": 0, "arms": {}}
+                continue
+            keys = {a: [sp_index[(*src[a], q, s)] for s in seeds] for a in cols}
+            dl = {a: _metric(res, keys[a]) for a in cols}
+            invalid = [any(not res[keys[a][i]]["valid"] for a in ("O",) + FALLBACKS) for i in range(len(seeds))]
+            cells[name] = stats.cell_with_invalid_check(dl["O"], {a: dl[a] for a in FALLBACKS}, invalid)
             rows = {}
-            for a in ARMS:
+            for a in cols:
                 rows[a] = {"median_delay_s": float(np.median(dl[a])),
                            "median_served_vph": float(np.median(_metric(res, keys[a], "served_ctrl_vph"))),
                            "median_ttt_ctrl_vehh": float(np.median(_metric(res, keys[a], "ttt_ctrl_vehh"))),
@@ -272,23 +302,45 @@ def summary_md(result: dict) -> str:
               f"({'PASS' if tc['T1']['pass'] else 'FAIL'}); T3 {'PASS' if tc['T3_pass'] else 'FAIL'} {tc['T3']}", ""]
     if "tune" in result:
         t = result["tune"]
-        L += ["## Tuning", "", f"FX rate per q: {t['q_fx']}; RF ratio per q: "
-              f"{ {k: round(v, 4) for k, v in t['ratio'].items()} }; warnings: {t.get('warnings', [])}", ""]
+        L += ["## Tuning", "", f"FX rate per q: {t['q_fx']} (grid {min(t['grid']):.0f}-{max(t['grid']):.0f}, "
+              f"{len(t['grid'])} rates; at an edge: {t['grid_edge'] or 'none'}); RF ratio per q: "
+              f"{ {k: round(v, 4) for k, v in t['ratio'].items()} }", ""]
+        for qk, d in t["rf_fill"].items():
+            L.append(f"- RF fill q={qk} (tuning seeds, A3): RMSE {d['rmse']:.2f} vs SD of the true edge-4 count "
+                     f"{d['sd_down']:.2f}, corr(edge 3, edge 4) {d['corr']:.2f}: "
+                     + ("informative" if d["informative"] else "no better than a constant (RF uninformative on BN4)"))
+        L.append("")
     if "eval" in result:
-        L += ["## Headroom HF = (best of FX, RF - O) / best (Rule 5)", "",
-              "| cell | n | best | O | best | HF | 95 % CI | pass |", "|---|---|---|---|---|---|---|---|"]
+        def hf(c, a):
+            p = c["per_fallback"][a]
+            return f"{100 * p['HF']:.1f} [{100 * p['HF_ci'][0]:.1f}, {100 * p['HF_ci'][1]:.1f}]"
+
+        L += ["## Headroom HF_f = (f - O) / f, % [95 % CI] (Rule 5; Addendum A2, A5)", "",
+              "A cell passes only if HF >= 10 % with CI lower bound > 0 against every fallback (FX, RF, HL), "
+              "with and without seeds that have an invalid O/FX/RF/HL run. 'Rule 5 best' = best of FX, RF by median.",
+              "", "| cell | n | O | FX | RF | HL | Rule 5 best | binding | inv seeds | pass all | pass valid | pass |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        yn = lambda b: "yes" if b else "no"
         for name, c in result["eval"]["cells"].items():
-            L.append(f"| {name} | {c['n']} | {c['best']} | {c['med_O']:.1f} | {c['med_best']:.1f} | "
-                     f"{100 * c['HF']:.1f} % | [{100 * c['HF_ci'][0]:.1f}, {100 * c['HF_ci'][1]:.1f}] % | "
-                     f"{'yes' if c['pass'] else 'no'} |")
-        L += ["", "## Operating map (median delay s / served veh/h / TTT ctrl veh h; invalid runs)", "",
-              "| cell | " + " | ".join(ARMS) + " |", "|---" * (len(ARMS) + 1) + "|"]
+            if not c["n"]:
+                L.append(f"| {name} | 0 | " + " | ".join(["-"] * 9) + " | no |")
+                continue
+            L.append(f"| {name} | {c['n']} | {c['med_O']:.1f} | {hf(c, 'FX')} | {hf(c, 'RF')} | {hf(c, 'HL')} | "
+                     f"{c['best']} {'pass' if c['rule5_pass'] else 'fail'} | {c['binding']} | {c['n_invalid_seeds']} | "
+                     f"{yn(c['pass_all_seeds'])} | {yn(c['pass_valid_only'])} | {yn(c['pass'])} |")
+        if not result["args"]["literal"]:
+            L += ["", "Under perfect detection O, FX, RF and HL do not depend on the fault type: the 4 fault cells of a "
+                  "demand share these runs, so the decision has 2 independent cells (one per demand); only NV differs."]
+        cols = ARMS + ("HL",)
+        L += ["", "## Operating map (median delay s / served veh/h / TTT ctrl veh h; invalid runs; HL = NV-dropout runs)",
+              "", "| cell | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
         def cell(r):
             inv = f"; inv {r['n_invalid']}" if r["n_invalid"] else ""
             return f"{r['median_delay_s']:.1f} / {r['median_served_vph']:.0f} / {r['median_ttt_ctrl_vehh']:.1f}{inv}"
 
         for name, m in result["eval"]["operating_map"].items():
-            L.append(f"| {name} | " + " | ".join(cell(m["arms"][a]) for a in ARMS) + " |")
+            if m["arms"]:
+                L.append(f"| {name} | " + " | ".join(cell(m["arms"][a]) for a in cols) + " |")
     return "\n".join(L) + "\n"
 
 
@@ -304,6 +356,37 @@ def check_out_dir(out: Path, resume: bool) -> None:
         raise SystemExit(f"{out} already holds a result: screen D1 runs once")
     if (out / "runs").exists() and any((out / "runs").iterdir()) and not resume:
         raise SystemExit(f"{out}/runs is not empty; pass --resume to reuse finished runs of an interrupted run")
+
+
+def check_screen_args(a) -> None:
+    """Addendum A6: a non-smoke run uses the page's meter law (K_F = 20, n_crit = 8) and the fixed FX grid."""
+    if a.kf != 20.0 or a.ncrit != 8.0:
+        raise SystemExit("the screen uses K_F = 20 and n_crit = 8 (page, Rule 3); other values only with --smoke")
+
+
+def check_sentinel(out: Path, resume: bool, commit: str, sentinel: Path = None) -> None:
+    """Addendum A6: once the evaluation stage has started anywhere, refuse every non-smoke invocation except
+    --resume of the same --out at the same commit."""
+    sentinel = sentinel or SENTINEL
+    if not sentinel.exists():
+        return
+    d = json.loads(sentinel.read_text())
+    if not (resume and Path(d["out"]) == out.resolve()):
+        raise SystemExit(f"screen D1 evaluation already started ({sentinel}: out {d['out']}, commit "
+                         f"{d['code_commit'][:10]}): it runs once; only --resume of that --out is allowed")
+    if d["code_commit"] != commit:
+        raise SystemExit(f"--resume refused: commit {commit[:10]} differs from {d['code_commit'][:10]} in {sentinel}")
+
+
+def write_sentinel(out: Path, commit: str, page_sha: str, args: dict, sentinel: Path = None) -> None:
+    """Addendum A6: written just before the evaluation stage; kept as-is on a valid --resume."""
+    sentinel = sentinel or SENTINEL
+    if sentinel.exists():
+        return   # check_sentinel already allowed this invocation (same --out, --resume, same commit)
+    sentinel.parent.mkdir(parents=True, exist_ok=True)
+    with open(sentinel, "x") as fh:
+        json.dump({"out": str(out.resolve()), "code_commit": commit, "page_sha256": page_sha, "args": args,
+                   "time": time.strftime("%Y-%m-%d %H:%M:%S %z")}, fh, indent=1)
 
 
 def smoke(pool, out, kf, ncrit, log) -> dict:
@@ -345,14 +428,19 @@ def main(argv=None) -> int:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--kf", type=float, default=20.0)
     ap.add_argument("--ncrit", type=float, default=8.0)
-    ap.add_argument("--fx-grid", default=",".join(str(int(x)) for x in FX_GRID))
     a = ap.parse_args(argv)
     if not 1 <= a.workers <= 100:
         raise SystemExit("--workers must be in 1..100")
     out = Path(a.out)
     check_out_dir(out, a.resume)
-    if not a.smoke and not a.confirm_run_once:
-        raise SystemExit("the screen touches the evaluation seeds once: pass --confirm-run-once")
+    commit, dirty = _git("rev-parse", "HEAD"), bool(_git("status", "--porcelain"))
+    if not a.smoke:
+        if not a.confirm_run_once:
+            raise SystemExit("the screen touches the evaluation seeds once: pass --confirm-run-once")
+        check_screen_args(a)
+        if dirty:
+            raise SystemExit("the work tree is dirty: commit first (Addendum A6)")
+        check_sentinel(out, a.resume, commit)
     os.nice(max(0, a.nice - os.nice(0)))
     out.mkdir(parents=True, exist_ok=True)
     logf = out / "run.log"
@@ -365,10 +453,10 @@ def main(argv=None) -> int:
 
     net.build()   # build the cached network once, before any worker starts
     workers = min(a.workers, 4) if a.smoke else a.workers
-    pool = Pool(out, workers, a.cpu_limit, log)
+    pool = Pool(out, workers, a.cpu_limit, log, commit=commit)
     page = REPO_ROOT / PAGE
     result = {"screen": "D1", "page": PAGE, "page_sha256": hashlib.sha256(page.read_bytes()).hexdigest(),
-              "code_commit": _git("rev-parse", "HEAD"), "code_dirty": bool(_git("status", "--porcelain")),
+              "code_commit": commit, "code_dirty": dirty,
               "args": vars(a), "seeds": {k: [v[0], v[-1]] for k, v in SEEDS.items()}, "qs": QS}
     t0 = time.time()
     if a.smoke:
@@ -383,9 +471,13 @@ def main(argv=None) -> int:
         result["decision"] = "STOP (tool check)" if not (tc["T0_pass"] and tc["T1"]["pass"]) \
             else "FIX CODE (T3 determinism)"
     else:
-        grid = tuple(float(x) for x in a.fx_grid.split(","))
-        tune = stage_tune(pool, grid, a.kf, a.ncrit)
+        tune = stage_tune(pool, FX_GRID, a.kf, a.ncrit)
         result["tune"] = tune
+    if tc["pass"] and tune["grid_edge"]:
+        result["decision"] = "HALT (extend FX grid)"   # A1: before any evaluation seed is touched
+    elif tc["pass"]:
+        write_sentinel(out, commit, result["page_sha256"], vars(a))
+        log(f"sentinel {SENTINEL} written: evaluation seeds start now")
         sp = eval_specs(tune["q_fx"], tune["ratio"], a.literal, a.kf, a.ncrit)
         res, failed = pool.run(sp, "eval")
         idx = {(s["arm"], s["fault"], s["q"], s["seed"]): s["key"] for s in sp}

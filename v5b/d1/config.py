@@ -1,6 +1,6 @@
 # Port: claude/vsl-lab-core@2a79e5e vsl_lab/config.py, subset (tool paths, run root, clean child environment);
 # paths moved to the v5.B.1 toolchain and run root; the superseded thermal / launch constants are dropped.
-"""Paths and tool locations for screen D1 (docs/research/protocols/screen_D1_detector_faults_draft.md)."""
+"""Paths and tool locations for screen D1 (docs/research/protocols/screen_D1_detector_faults.md)."""
 from __future__ import annotations
 
 import os

@@ -67,3 +67,15 @@ def ratio_fit(n_up, n_down) -> float:
 def rf_fill(ratio: float, n_up: float) -> float:
     """RF fill-in of the faulty reading from the healthy upstream count."""
     return float(ratio) * float(n_up)
+
+
+def fill_diagnostics(ratio: float, n_up, n_down) -> dict:
+    """Addendum (2026-10-19) A3, report only: quality of the RF fill ratio x n_up against the true n_down on the
+    tuning seeds. 'informative' = the fill RMSE is below SD(n_down), i.e. better than a constant at the mean."""
+    u, d = np.asarray(n_up, float), np.asarray(n_down, float)
+    if u.shape != d.shape or u.size < 2:
+        raise ValueError("need >= 2 paired readings")
+    rmse = float(np.sqrt(np.mean((float(ratio) * u - d) ** 2)))
+    sd = float(np.std(d))
+    corr = float(np.corrcoef(u, d)[0, 1]) if np.std(u) > 0 and sd > 0 else float("nan")
+    return {"n": int(u.size), "rmse": rmse, "sd_down": sd, "corr": corr, "informative": bool(rmse < sd)}

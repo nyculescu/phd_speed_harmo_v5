@@ -1,4 +1,4 @@
-"""Screen D1 Rules 1, 4 and 5 on numbers (pure; no SUMO).
+"""Screen D1 Rules 1, 4 and 5 and Addendum (2026-10-19) A2, A5 on numbers (pure; no SUMO).
 
 Convention (CLAUDE.md, Statistics): paired seeds, the median of paired differences, 95 % percentile bootstrap,
 B = 2,000. Delays: lower is better. For a baseline b and a treatment o, d_i = b_i - o_i (> 0: o better) and
@@ -46,14 +46,49 @@ def t1_check(teleports) -> dict:
             "pass": bool(t.size and share < T1_MAX_TELEPORT_SHARE)}
 
 
-def headroom_cell(o, fx, rf) -> dict:
-    """Rule 5 in one cell: best of FX, RF = the lower median delay (FX on a tie);
-    HF = median(best - O) / median(best); pass if HF >= 10 % and the HF CI lower bound > 0."""
-    best = "FX" if np.median(fx) <= np.median(rf) else "RF"
-    r = paired(fx if best == "FX" else rf, o)
-    return {"best": best, "HF": r["rel"], "HF_ci": r["rel_ci"], "med_diff_s": r["med_diff"],
-            "diff_ci": r["diff_ci"], "n": r["n"], "med_best": r["med_base"], "med_O": r["med_treat"],
-            "pass": bool(r["rel"] >= HF_MIN and r["rel_ci"][0] > 0.0)}
+RULE5_SET = ("FX", "RF")   # the page's Rule 5 "best of FX, RF" (by median delay, FX on a tie): reported
+
+
+def _hf(base, o) -> dict:
+    r = paired(base, o)
+    return {"HF": r["rel"], "HF_ci": r["rel_ci"], "med_diff_s": r["med_diff"], "diff_ci": r["diff_ci"],
+            "med": r["med_base"], "pass": bool(r["rel"] >= HF_MIN and r["rel_ci"][0] > 0.0)}
+
+
+def headroom_cell(o, fallbacks: dict) -> dict:
+    """Rule 5 with Addendum (2026-10-19) A2, in one cell. For every fallback f (FX, RF, HL):
+    HF_f = median(f - O) / median(f); the cell passes only if HF_f >= 10 % and its CI lower bound > 0 against
+    EVERY fallback. The page's Rule 5 HF against the best of FX, RF (lower median delay) is reported as 'HF'."""
+    o = np.asarray(o, float)
+    per = {a: _hf(x, o) for a, x in fallbacks.items()}
+    rule5 = [a for a in RULE5_SET if a in fallbacks] or list(fallbacks)
+    best = min(rule5, key=lambda a: (float(np.median(fallbacks[a])), rule5.index(a)))
+    binding = min(per, key=lambda a: (per[a]["HF_ci"][0], a))
+    return {"n": int(o.size), "med_O": float(np.median(o)), "per_fallback": per,
+            "best": best, "HF": per[best]["HF"], "HF_ci": per[best]["HF_ci"], "med_best": per[best]["med"],
+            "med_diff_s": per[best]["med_diff_s"], "diff_ci": per[best]["diff_ci"], "rule5_pass": per[best]["pass"],
+            "binding": binding, "pass": all(p["pass"] for p in per.values())}
+
+
+def cell_with_invalid_check(o, fallbacks: dict, invalid) -> dict:
+    """Addendum (2026-10-19) A5: if any O or fallback run of a seed is invalid, the cell is also computed without
+    those seeds; it passes only if it passes both with and without them (no valid seed left: it fails)."""
+    inv = np.asarray(invalid, bool)
+    c = headroom_cell(o, fallbacks)
+    c["n_invalid_seeds"] = int(inv.sum())
+    c["pass_all_seeds"] = c["pass"]
+    c["valid_only"] = None
+    if not inv.any():
+        c["pass_valid_only"] = c["pass"]
+    elif inv.all():
+        c["pass_valid_only"] = False
+    else:
+        keep = ~inv
+        v = headroom_cell(np.asarray(o, float)[keep], {a: np.asarray(x, float)[keep] for a, x in fallbacks.items()})
+        c["valid_only"] = v
+        c["pass_valid_only"] = v["pass"]
+    c["pass"] = bool(c["pass_all_seeds"] and c["pass_valid_only"])
+    return c
 
 
 def decide(cells: dict) -> str:
