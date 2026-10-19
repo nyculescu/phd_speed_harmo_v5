@@ -226,7 +226,7 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
         arms[qk(q)] = {"N": f["N"], "FX": f["FX"], "FB": f["FB"], "AD": fam.ad_id(1.0, f["FB"]), "IP": s_["IP"],
                        "ID": s_["ID"]}
     order = ("ID", "IP", "N", "FX", "FB", "AD")
-    best, ncs, best_name, t4, tad, tv_nc, tv_v = {}, {}, {}, {}, {}, {}, {}
+    best, ncs, best_name, t4, tad, tv_nc, tv_v, tv_alone = {}, {}, {}, {}, {}, {}, {}, {}
     for inc in INCIDENTS:
         for q in QS:
             name, a = cell_name(inc, q), arms[qk(q)]
@@ -248,6 +248,8 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
                    fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"] in res]
             tv_nc[name] = [res[fixed(fam.NC, inc, q, s)["key"]]["entered_e4_incident"] for s in okv]
             tv_v[name] = [res[fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"]]["entered_e4_incident"] for s in okv]
+            tv_alone[name] = st.paired([res[fixed(fam.NC, inc, q, s)["key"]]["delay_s"] for s in okv],
+                                       [res[fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"]]["delay_s"] for s in okv])
     tele = {}
     for k, r in res.items():
         if r.get("rep") is None:
@@ -257,7 +259,8 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
     tvb = st.tv_binding(tv_nc, tv_v)
     out = {"seeds": [seeds[0], seeds[-1]], "arms": arms, "T0": st.t0_cells(best, ncs, best_name),
            "T1": st.t1_cells(tele), "T3": t3r, "T3_pass": all(t3r.values()), "T4": st.t4_overall(t4),
-           "T_AD": st.tad_cells(tad), "TV_T0": tvb, "failed_runs": failA + failB,
+           "T_AD": st.tad_cells(tad), "TV_T0": tvb, "TV_alone_vs_NC_delay_b0.4_report_only": tv_alone,
+           "failed_runs": failA + failB,
            "PI_note": "PI is not run on the tool-check seeds (page §8 cost: tool checks 15k); T0's best-of excludes it"}
     if tvb["pass"] or force_tv:
         spC = [sw(arms[qk(q)]["N"], arms[qk(q)]["IP"][inc], inc, q, s, vsl=b) for b in VSL_B for q in QS
