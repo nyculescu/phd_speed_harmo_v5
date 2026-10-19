@@ -16,8 +16,10 @@ A run spec (all fields are part of the run key and of the resume check):
 - vsl_b: posted VSL target on gantry edges 2-3 from onset to clearance (page §3 TV);
 - rep: T3 repeat index (None outside T3).
 New outputs: max_queue (largest origin backlog + vehicles on edges 1-2 over the 1-s control ticks), entered_e4_incident
-(vehicles entering edge 4 between the incident's on and off ticks, counted every 0.5-s step), AD's n_hat log and
-T-AD deviation, the VSL log.
+(vehicles entering edge 4 between the incident's on and off ticks, counted every 0.5-s step), entered_e4_ext120 (the
+same from the on tick to the off tick + 120 s; addendum 2026-10-19, D3), AD's n_hat log and T-AD deviation, the VSL log.
+The meter signal ('d2' or 'continuous', v5b/p1/meters.py) is not part of the spec or key: the runner passes it with
+every run ('signal' in the run JSON, required, no default) and refuses to reuse a run made with another signal.
 """
 from __future__ import annotations
 
@@ -31,15 +33,16 @@ import libsumo as ls
 import numpy as np
 
 from v5b.d1 import plant
-from v5b.d1.episode import FBMeter, parse_tripinfo
+from v5b.d1.episode import parse_tripinfo
 from v5b.d1.sumo_runner import SumoSim
 from v5b.d2.episode import emergency_by_edge
 from v5b.d2.incidents import CONDITIONS, NONE, Incident, incident_window
 from v5b.p1 import family as fam
-from v5b.p1.meters import (ADMeter, PIMeter, PostedVSL, ad_max_dev, fa_schedule, fa_window, replicate_seeds,
-                           switch_schedule)
+from v5b.p1.meters import (SIGNALS, ADMeter, FBSignalMeter, PIMeter, PostedVSL, ad_max_dev, fa_schedule, fa_window,
+                           replicate_seeds, switch_schedule)
 
 SPEC_FIELDS = ("pre", "post", "back", "incident", "q", "seed", "k", "d", "c", "fa", "vsl_b", "rep")
+EXT_S = 120.0   # entered_e4_ext120: the count window runs to the off tick + 120 s (addendum 2026-10-19, D3)
 
 
 def _num(x) -> str:
@@ -108,9 +111,11 @@ def schedule(spec: dict, onset: float, duration: float) -> tuple:
     return switch_schedule(onset, duration, spec["d"], spec["c"], spec["back"])
 
 
-def run_episode(spec: dict, run_dir: Path, warmup_s: float = 40.0, control_s: float = 900.0,
+def run_episode(spec: dict, run_dir: Path, *, signal: str, warmup_s: float = 40.0, control_s: float = 900.0,
                 t_drain_max: float = 7200.0, av_share: float = 0.1, keep_files: bool = False) -> dict:
     check_spec(spec)
+    if signal not in SIGNALS:
+        raise ValueError(f"signal must be one of {SIGNALS}: {signal!r}")
     pre, post, inc_kind, q, seed = spec["pre"], spec["post"], spec["incident"], float(spec["q"]), int(spec["seed"])
     t_wall0 = time.time()
     run_dir = Path(run_dir)
@@ -146,22 +151,25 @@ def run_episode(spec: dict, run_dir: Path, warmup_s: float = 40.0, control_s: fl
     if pre != fam.NC:   # the TLS is driven by the meter, not held at all-green
         p = fam.parse(pre)
         if p[0] == "const":
-            meter = FBMeter(read=reader("4"), K_F=0.0, q0=p[1])
+            meter = FBSignalMeter(read=reader("4"), K_F=0.0, q0=p[1], signal=signal)
         elif p[0] == "fb":
-            meter = FBMeter(read=reader("4"), K_F=p[1], n_crit=p[2])
+            meter = FBSignalMeter(read=reader("4"), K_F=p[1], n_crit=p[2], signal=signal)
         elif p[0] == "pi":
-            meter = PIMeter(p[1], p[2], p[3], read=reader(p[4]))
+            meter = PIMeter(p[1], p[2], p[3], read=reader(p[4]), signal=signal)
         else:
-            meter = ADMeter(p[1], p[2], p[3], read=reader("4"), cum_out=lambda t: sim.arrived)
+            meter = ADMeter(p[1], p[2], p[3], read=reader("4"), cum_out=lambda t: sim.arrived, signal=signal)
         sim.asserts.remove(plant.assert_all_green)
     sim.run_until(sim.t + warmup_s)   # uncontrolled warm-up
     t_ctrl0, arr0 = sim.t, sim.arrived
-    e4 = {"prev": set(ls.edge.getLastStepVehicleIDs("4")), "n": 0}
+    e4 = {"prev": set(ls.edge.getLastStepVehicleIDs("4")), "n": 0, "n_ext": 0}
 
     def count_e4():
         ids = set(ls.edge.getLastStepVehicleIDs("4"))
+        new = len(ids - e4["prev"])
         if inc.on:
-            e4["n"] += len(ids - e4["prev"])
+            e4["n"] += new
+        if inc.on or (inc.t_off is not None and sim.t <= inc.t_off + EXT_S + 1e-9):
+            e4["n_ext"] += new
         e4["prev"] = ids
 
     sim.hook = count_e4
@@ -227,6 +235,7 @@ def run_episode(spec: dict, run_dir: Path, warmup_s: float = 40.0, control_s: fl
            "delay_s": float(np.mean(delays)) if delays else float("nan"),
            "depart_delay_s": float(np.mean([d for d, _ in trips])) if trips else float("nan"),
            **m, "max_queue": max_queue, "entered_e4_incident": e4["n"] if inc.t_on is not None else None,
+           "entered_e4_ext120": e4["n_ext"] if inc.t_on is not None else None, "signal": signal,
            "generated": gen, "n_trips": len(trips), "drained": drained, "valid": valid,
            "teleports": res["teleports"], "collisions": res["collisions"], "emergency_stops": res["emergency_stops"],
            "emergency_warnings": n_eb, "emergency_by_edge": eb_edge, "health": res["health"]["status"],
@@ -252,7 +261,10 @@ def main(argv=None) -> int:
     ap.add_argument("--keep-files", action="store_true")
     a = ap.parse_args(argv)
     spec = json.loads(a.spec)
-    res = run_episode({f: spec.get(f) for f in SPEC_FIELDS}, Path(a.run_dir), keep_files=a.keep_files)
+    if spec.get("signal") not in SIGNALS:
+        raise SystemExit(f"the spec must carry 'signal' in {SIGNALS} (no default: author decision)")
+    res = run_episode({f: spec.get(f) for f in SPEC_FIELDS}, Path(a.run_dir), signal=spec["signal"],
+                      keep_files=a.keep_files)
     res["key"] = spec.get("key")
     res["code_commit"] = spec.get("code_commit")   # checked before any reuse (resume)
     out = Path(a.out)

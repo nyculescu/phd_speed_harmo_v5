@@ -1,5 +1,6 @@
-"""P1 episodes in SUMO on smoke seed 7,400,000 only: D2 equivalence, replicate redraw keeps the incident window,
-PI / AD / VSL / false alarm / delayed switches run, are valid and teleport-free."""
+"""P1 episodes in SUMO on smoke seed 7,400,000 only (at most 8 processes at a time): D2 equivalence (signal 'd2'),
+replicate redraw keeps the incident window, PI / AD / VSL / false alarm / delayed switches run, are valid and
+teleport-free; the 'continuous' signal leaves a constant-rate run unchanged (addendum 2026-10-19, D1)."""
 import json
 import subprocess
 from pathlib import Path
@@ -13,8 +14,13 @@ from v5b.p1.meters import fa_schedule, incident_ticks
 
 SEED = 7_400_000
 Q = 2000.0
+MAX_PROCS = 8
 SPECS = {
     "sw": make_spec("c1600", "c800", True, "block", Q, SEED),
+    "c_d2": make_spec("c1600", None, False, "block", Q, SEED),
+    "c_cont": make_spec("c1600", None, False, "block", Q, SEED),
+    "sw_cont": make_spec("c1600", "c800", True, "block", Q, SEED),
+    "ad_cont": make_spec("ad1_f20_8", None, False, "block", Q, SEED),
     "rep1": make_spec("c1600", "c800", True, "block", Q, SEED, k=1),
     "pi5": make_spec("p40_20_6_e5", None, False, "slow", Q, SEED),
     "ad": make_spec("ad1_f20_8", None, False, "block", Q, SEED),
@@ -28,23 +34,41 @@ SPECS = {
 @pytest.fixture(scope="module")
 def runs(tmp_path_factory):
     d = tmp_path_factory.mktemp("p1sumo")
-    procs = {}
+    cmds = {}
     for name, s in SPECS.items():
-        procs[name] = subprocess.Popen([PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps(s), "--out",
-                                        str(d / f"{name}.json"), "--run-dir", str(d / name)], cwd=REPO_ROOT,
-                                       env=clean_sumo_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        sig = "continuous" if name.endswith("_cont") else "d2"
+        cmds[name] = [PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps({**s, "signal": sig}), "--out",
+                      str(d / f"{name}.json"), "--run-dir", str(d / name)]
     d2spec = {"pre": "c1600", "post": "c800", "incident": "block", "q": Q, "seed": SEED, "back": True}
-    procs["d2"] = subprocess.Popen([PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(d2spec), "--out",
-                                    str(d / "d2.json"), "--run-dir", str(d / "d2")], cwd=REPO_ROOT,
-                                   env=clean_sumo_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for p in procs.values():
-        assert p.wait(timeout=600) == 0
-    return {n: json.loads((d / f"{n}.json").read_text()) for n in procs}
+    cmds["d2"] = [PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(d2spec), "--out", str(d / "d2.json"),
+                  "--run-dir", str(d / "d2")]
+    todo, running = list(cmds.items()), []
+    while todo or running:
+        while todo and len(running) < MAX_PROCS:
+            name, cmd = todo.pop(0)
+            running.append(subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=subprocess.DEVNULL,
+                                            stderr=subprocess.DEVNULL))
+        assert running.pop(0).wait(timeout=600) == 0
+    no_signal = subprocess.run([PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps(SPECS["nc"]), "--out",
+                                str(d / "x.json"), "--run-dir", str(d / "x")], cwd=REPO_ROOT, env=clean_sumo_env(),
+                               capture_output=True, text=True)
+    assert no_signal.returncode != 0 and "signal" in no_signal.stderr        # no default signal
+    return {n: json.loads((d / f"{n}.json").read_text()) for n in cmds}
 
 
 def test_all_valid_no_teleports(runs):
     for n, r in runs.items():
         assert r["valid"] and r["teleports"] == 0, n
+
+
+def test_signal_modes(runs):
+    assert runs["c_d2"]["signal"] == "d2" and runs["c_cont"]["signal"] == "continuous"
+    for k in ("hash", "delay_s", "meter_log", "entered_e4_incident"):          # constant rate: the same signal
+        assert runs["c_d2"][k] == runs["c_cont"][k], k
+    assert runs["sw_cont"]["t_switch"] == runs["sw"]["t_switch"] and runs["ad_cont"]["nhat_log"]
+    for n, r in runs.items():
+        if n != "d2":
+            assert r["entered_e4_ext120"] is None or r["entered_e4_ext120"] >= r["entered_e4_incident"], n
 
 
 def test_d2_spec_reproduces_the_d2_run(runs):

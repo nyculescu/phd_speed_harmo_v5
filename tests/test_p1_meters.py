@@ -13,7 +13,7 @@ def _seq_reader(vals):
 
 def test_pi_law():
     states = []
-    pi = m.PIMeter(K_P=40.0, K_I=20.0, n_crit=8.0, read=_seq_reader([10, 12, 12, 5]), set_state=states.append)
+    pi = m.PIMeter(K_P=40.0, K_I=20.0, n_crit=8.0, read=_seq_reader([10, 12, 12, 5]), signal="d2", set_state=states.append)
     pi.step(40.0)                 # control start: no update
     assert pi.q == 1500.0
     pi.step(70.0)                 # first update: n(k-1) := n(k) (no P kick); q = 1500 + 20 (8 - 10)
@@ -24,7 +24,7 @@ def test_pi_law():
     assert pi.q == pytest.approx(1220.0)
     pi.step(160.0)                # q = 1220 - 40 (5 - 12) + 20 (8 - 5) = 1560
     assert pi.q == pytest.approx(1560.0)
-    lo = m.PIMeter(K_P=70.0, K_I=120.0, n_crit=2.0, read=_seq_reader([2, 90]), set_state=states.append)
+    lo = m.PIMeter(K_P=70.0, K_I=120.0, n_crit=2.0, read=_seq_reader([2, 90]), signal="d2", set_state=states.append)
     lo.step(0.0), lo.step(30.0), lo.step(60.0)
     assert lo.q == 200.0          # clipped at q_min as FB
     assert set(states) <= {"GGGG", "rrrr"} and "rrrr" in states
@@ -34,7 +34,7 @@ def test_ad_adapts_with_sign_rule_and_clip():
     cum = {"v": 0}
     n_seq = iter([10, 12, 12, 9, 11])
     ad = m.ADMeter(eta=1.0, K_F=20.0, n_crit=8.0, read=lambda t: next(n_seq), cum_out=lambda t: cum["v"],
-                   set_state=lambda s: None)
+                   signal="d2", set_state=lambda s: None)
     ad.step(40.0)
     assert ad.nhat_log == [(40.0, 8.0)]
     cum["v"] = 10
@@ -54,12 +54,12 @@ def test_ad_adapts_with_sign_rule_and_clip():
     assert ad.n_crit == 9.0
     assert [v for _, v in ad.nhat_log] == [8.0, 8.0, 9.0, 9.0, 10.0, 9.0]
     hi = m.ADMeter(eta=2.0, K_F=10.0, n_crit=19.0, read=lambda t: 5.0 + t / 30.0, cum_out=lambda t: t * t / 30.0,
-                   set_state=lambda s: None)
+                   signal="d2", set_state=lambda s: None)
     for t in np.arange(0.0, 400.0, 30.0):
         hi.step(float(t))
     assert hi.n_crit == 20.0      # flow and count both rising: up, clipped to [4, 20]
     lo = m.ADMeter(eta=2.0, K_F=10.0, n_crit=5.0, read=lambda t: 50.0 - t / 30.0, cum_out=lambda t: t * t / 30.0,
-                   set_state=lambda s: None)
+                   signal="d2", set_state=lambda s: None)
     for t in np.arange(0.0, 400.0, 30.0):
         lo.step(float(t))
     assert lo.n_crit == 4.0
@@ -158,3 +158,84 @@ def test_replicate_seeds_redraw_sumo_and_demand_keep_window():
         assert r["sumo_seed"] == r["demand_seed"] == s + k * 10_000_000 and r["window_seed"] == s
     with pytest.raises(ValueError):
         m.replicate_seeds(s, -1)
+
+
+# ---------------------------------------------------------------- meter signal (addendum 2026-10-19: R3, decision D1)
+def _drive(mode, qs, t0=40.0, n=900, T=30):
+    """1-s ticks of a constant-rate meter (K_F = 0) whose q is set to qs[k // T] at every 30-s step; returns the
+    signal states."""
+    states = []
+    mt = m.FBSignalMeter(K_F=0.0, q0=float(qs[0]), read=lambda t: 0.0, signal=mode, set_state=states.append)
+    for k in range(n):
+        if k and k % T == 0:
+            mt.q = float(qs[k // T])
+        mt.step(t0 + k)
+    return states
+
+
+def _runs(states, val):
+    out, cur = [], 0
+    for s in states + ["end"]:
+        if s == val:
+            cur += 1
+        elif cur:
+            out.append(cur)
+            cur = 0
+    return out
+
+
+def test_signal_mode_is_explicit():
+    with pytest.raises(ValueError):
+        m.FBSignalMeter(K_F=0.0, q0=1600.0, read=lambda t: 0.0, signal=None, set_state=lambda s: None)
+    with pytest.raises(TypeError):
+        m.PIMeter(40.0, 20.0, 8.0, read=lambda t: 0.0, set_state=lambda s: None)
+    with pytest.raises(TypeError):
+        m.ADMeter(1.0, 20.0, 8.0, read=lambda t: 0.0, cum_out=lambda t: 0, set_state=lambda s: None)
+
+
+def test_d2_signal_reproduces_d1_fbmeter(monkeypatch):
+    import types
+    import v5b.d1.episode as d1e
+    got = []
+    monkeypatch.setattr(d1e, "ls", types.SimpleNamespace(
+        trafficlight=types.SimpleNamespace(setRedYellowGreenState=lambda tls, s: got.append(s))))
+    seq = np.random.default_rng(3).integers(0, 25, 100)
+    i1, i2 = iter(seq), iter(seq)
+    a = d1e.FBMeter(K_F=20.0, n_crit=8.0, read=lambda t: float(next(i1)))
+    mine = []
+    b = m.FBSignalMeter(K_F=20.0, n_crit=8.0, read=lambda t: float(next(i2)), signal="d2", set_state=mine.append)
+    for k in range(900):
+        a.step(40.0 + k)
+        b.step(40.0 + k)
+    assert got == mine and a.q == b.q and len(set(got)) == 2
+
+
+def test_constant_rate_signal_is_the_same_in_both_modes():
+    for q in m.fam.RATES + (4000.0,):
+        assert _drive("d2", [q] * 31) == _drive("continuous", [q] * 31), q
+
+
+def test_continuous_signal_bounds_the_red_and_keeps_full_greens():
+    """Fails on the D1/D2 phase rule: with q in [200, 420] veh/h every 30 s it holds red far beyond
+    c(q_min) - green = 138 s (smoke: 322 s); the continuous rule never does, and every green lasts 6 s."""
+    rng = np.random.default_rng(1)
+    worst = {"d2": 0, "continuous": 0}
+    for _ in range(50):
+        qs = rng.uniform(200.0, 420.0, 31)
+        for mode in worst:
+            s = _drive(mode, qs)
+            worst[mode] = max(worst[mode], max(_runs(s, "rrrr")))
+            if mode == "continuous":
+                assert set(_runs(s, "GGGG")[:-1]) == {6}
+    assert worst["continuous"] <= 144.0 - 6.0 + 1.0
+    assert worst["d2"] > 250
+
+
+def test_continuous_signal_delivers_the_commanded_rate():
+    """Piecewise-constant q (300 s each): green starts per block = 300 / c(q) within one cycle."""
+    qs = [300.0] * 10 + [1000.0] * 10 + [2400.0] * 10 + [2400.0]
+    s = _drive("continuous", qs)
+    starts = [k for k in range(len(s)) if s[k] == "GGGG" and (k == 0 or s[k - 1] == "rrrr")]
+    for b, q in enumerate((300.0, 1000.0, 2400.0)):
+        n = sum(300 * b <= k < 300 * (b + 1) for k in starts)
+        assert abs(n - 300.0 / (8.0 * 3600.0 / q)) <= 1.0 + 1e-9, (q, n)

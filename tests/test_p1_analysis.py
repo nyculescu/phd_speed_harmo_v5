@@ -176,3 +176,54 @@ def test_evaluate_intersection_union_and_invalid_runs():
     assert ev2["S1"]["per_cell_stats"]["block_q1600"]["ID_vs"]["N"]["n_invalid_seeds"] == 0
     assert ev2["S2"]["slow_q1600"]["n_invalid_seeds"]["OR_in"] == 1          # the ID run is one of the A runs
     assert ev2["S1"]["S1a_pass"]
+
+
+# ---------------------------------------------------------------- addendum 2026-10-19: R1, R5, R8
+def test_s1_fails_closed_when_a_claim_cell_has_no_data():
+    """R1: on the build code S1 was decided on the cells that remained (3 of 4) and printed PASS."""
+    arms = _arms()
+    sp = an.eval_specs(arms, A3, SEEDS, vsl=False)
+    res = _res(sp, _world(arms))
+    for s in SEEDS:                                       # every NC run of one claim cell failed twice
+        del res[an.fixed(fam.NC, "block", 2000.0, s)["key"]]
+    ev = an.evaluate(res, SEEDS, A3, arms, log=lambda m: None)
+    assert ev["cells"]["block_q2000"] == {"n_seeds": 0}
+    assert ev["S1"]["missing_cells"] == ["block_q2000"]
+    assert not ev["S1"]["S1a_pass"] and not ev["S1"]["S1b_pass"] and "fails closed" in ev["S1"]["S1a_text"]
+
+
+def _cellstat(rel, lo):
+    return {"rel": rel, "diff_ci": [lo, lo + 1.0]}
+
+
+def test_s1_needs_the_same_a_cell_in_both_views():
+    """R5: S1a / S1b passed with (a) in cell X on all seeds and in cell Y on the valid seeds only."""
+    good, weak = _cellstat(0.2, 1.0), _cellstat(0.02, -1.0)
+    cells = ("slow_q1600", "slow_q2000", "block_q1600", "block_q2000")
+
+    def stats(a_all, a_val):
+        one = lambda c: {"all_seeds": good if c == a_all else weak, "valid_only": good if c == a_val else weak}
+        return {c: {r: one(c) for r in an.L0} for c in cells}, {c: one(c) for c in cells}
+
+    s1, s1b = stats("slow_q1600", "block_q2000")
+    d = an.s1_decision(s1, s1b, expected=cells)
+    assert d["all_seeds"]["S1a"]["pass"] and d["valid_only"]["S1a"]["pass"]        # each view alone passes
+    assert not d["S1a_pass"] and not d["S1b_pass"] and d["S1a_cells_both_views"] == []
+    s1, s1b = stats("block_q2000", "block_q2000")
+    d = an.s1_decision(s1, s1b, expected=cells)
+    assert d["S1a_pass"] and d["S1b_pass"] and d["S1a_cells_both_views"] == ["block_q2000"]
+
+
+def test_imperfection_rows_drop_a_seed_not_the_cell():
+    """R8: one missing imperfection run dropped the whole cell's S3 output; now only its seed is dropped."""
+    arms = _arms()
+    sp = an.eval_specs(arms, A3, SEEDS, vsl=False)
+    res = _res(sp, _world(arms))
+    a = arms["2000"]
+    s = next(s for s in SEEDS if an.canon_sw(a["N"], a["IP"]["block"], "block", 2000.0, s, d=30.0)["d"] == 30.0)
+    del res[an.canon_sw(a["N"], a["IP"]["block"], "block", 2000.0, s, d=30.0)["key"]]
+    ev = an.evaluate(res, SEEDS, A3, arms, log=lambda m: None)
+    s3 = ev["S3"]["block_q2000"]
+    assert s3["n_dropped_seeds"] == 1 and s3["n_seeds"] == len(SEEDS) - 1
+    assert s3["d_star"]["all_seeds"]["n"] == len(SEEDS) - 1 and "combined_row" in s3
+    assert ev["S3"]["block_q1600"]["n_dropped_seeds"] == 0 and ev["S1"]["S1a_pass"]

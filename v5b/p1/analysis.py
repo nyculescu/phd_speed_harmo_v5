@@ -336,7 +336,7 @@ def evaluate(res, seeds, A_, arms: dict, rmax: int = RMAX, vsl: bool = False, lo
                            "controllers": {**{x: a[x] for x in L0}, "ID": a["ID"], "IP": a["IP"][inc]}}
             cells[name] = {"n_seeds": len(ok), "n_dropped_seeds": len(seeds) - len(ok), "IP_vs_L0": ip_vs_l0}
             log(f"[analysis] {name}: n {len(ok)}")
-    s1 = s1_decision(s1_stats, s1b_stats)
+    s1 = s1_decision(s1_stats, s1b_stats, expected=[cell_name(i, q) for i in INCIDENTS for q in QS])
     per_q = {qk(q): clean_and_prevalence(res, seeds, q, arms[qk(q)]) for q in QS}
     return {"cells": cells, "S1": s1, "S2": s2, "TP": tp, "S3": s3, "per_q": per_q, "fig1_ladder": ladder,
             "table1_operating_map": opmap}
@@ -373,9 +373,13 @@ def _slim_s2(v):
     return {k: v[k] for k in ("OR_in", "ORX", "x", "y", "y_hat", "plateau", "plateau_holds", "Rmax")}
 
 
-def s1_decision(s1_stats: dict, s1b_stats: dict) -> dict:
-    """S1a and S1b (page §6) from per-cell two-view statistics; each must pass in both views."""
+def s1_decision(s1_stats: dict, s1b_stats: dict, expected) -> dict:
+    """S1a and S1b (page §6) from per-cell two-view statistics; each must pass in both views.
+    Addendum 2026-10-19 (R1, R5): fails closed if a pre-registered claim cell in `expected` has no statistic (no seed
+    with every run it needs); the (a) cell must be the same in both views (S1a: the same cell for every L0 arm and
+    both views; S1b: one cell meeting (a) in both views), so the paper can name it."""
     cells = [c for c in s1_stats]
+    missing = [c for c in expected if c not in s1_stats]
 
     def view(stats_by_cell, v):
         return {c: stats_by_cell[c][v] for c in cells}
@@ -384,29 +388,49 @@ def s1_decision(s1_stats: dict, s1b_stats: dict) -> dict:
     for v in ("all_seeds", "valid_only"):
         per_r = {r: {c: s1_stats[c][r][v] for c in cells} for r in L0}
         out[v] = {"S1a": st.s1a(per_r), "S1b": st.rule_R(view(s1b_stats, v))}
-    s1a_pass = bool(cells) and out["all_seeds"]["S1a"]["pass"] and out["valid_only"]["S1a"]["pass"]
-    s1b_pass = bool(cells) and out["all_seeds"]["S1b"]["pass"] and out["valid_only"]["S1b"]["pass"]
-    out["S1a_pass"], out["S1b_pass"] = s1a_pass, s1b_pass
+    a_both = [c for c in out["all_seeds"]["S1a"]["common_a_cells"] if c in out["valid_only"]["S1a"]["common_a_cells"]]
+    b_both = [c for c in out["all_seeds"]["S1b"]["a_cells"] if c in out["valid_only"]["S1b"]["a_cells"]]
+    full = bool(cells) and not missing
+    s1a_pass = full and out["all_seeds"]["S1a"]["pass"] and out["valid_only"]["S1a"]["pass"] and bool(a_both)
+    s1b_pass = full and out["all_seeds"]["S1b"]["pass"] and out["valid_only"]["S1b"]["pass"] and bool(b_both)
+    out["S1a_pass"], out["S1b_pass"] = bool(s1a_pass), bool(s1b_pass)
+    out["S1a_cells_both_views"], out["S1b_cells_both_views"] = a_both, b_both
+    out["missing_cells"] = missing
     out["S1a_text"] = ("presence and timing pay: ID beats every L0 arm" if s1a_pass else
                        "knowing that an incident is on did not pay >= 10 % beyond strong always-on control")
     out["S1b_text"] = ("the type pays: IP beats ID" if s1b_pass else
                        "the incident type added no detected >= 10 % gain beyond presence and timing")
+    if missing:
+        out["S1a_text"] += f" (S1 fails closed: claim cells without data {missing})"
+        out["S1b_text"] += f" (S1 fails closed: claim cells without data {missing})"
     out["per_cell_stats"] = {c: {"ID_vs": s1_stats[c], "IP_vs_ID": s1b_stats[c]} for c in cells}
     return out
 
 
 def imperfection_cell(res, ok, q, inc, a, D, I) -> dict:
-    """Page §4 rows for IP in one incident cell, against each L0 arm, both views."""
+    """Page §4 rows for IP in one incident cell, against each L0 arm, both views. A seed of `ok` (aligned with D, I)
+    enters only if all its imperfection runs exist (addendum 2026-10-19, R8, as I11); the dropped seeds are counted."""
     N, ip, ot = a["N"], a["IP"][inc], a["IP"][other(inc)]
+
+    def need(s):
+        return ([canon_sw(N, ip, inc, q, s, d=d)["key"] for d in D_GRID] +
+                [canon_sw(N, ip, inc, q, s, c=c)["key"] for c in C_GRID] +
+                [sw(N, ot, inc, q, s)["key"], sw(N, fam.parse_action(ip)[0], inc, q, s)["key"]] +
+                [canon_sw(N, x, inc, q, s, d=COMBINED["d"], c=COMBINED["c"])["key"] for x in (ip, ot)])
+
+    pos = [i for i, s in enumerate(ok) if all(k in res for k in need(s))]
+    n_drop = len(ok) - len(pos)
+    if not pos:
+        return {"n_dropped_seeds": n_drop, "note": "imperfection runs missing for every seed"}
+    if n_drop:
+        ok = [ok[i] for i in pos]
+        D = {x: np.asarray(v)[pos] for x, v in D.items()}
+        I = {x: np.asarray(v)[pos] for x, v in I.items()}
     kd = {d: [canon_sw(N, ip, inc, q, s, d=d)["key"] for s in ok] for d in D_GRID}
     kc = {c: [canon_sw(N, ip, inc, q, s, c=c)["key"] for s in ok] for c in C_GRID}
     k_ot = [sw(N, ot, inc, q, s)["key"] for s in ok]
     k_nb = [sw(N, fam.parse_action(ip)[0], inc, q, s)["key"] for s in ok]
     k_cb = [[canon_sw(N, x, inc, q, s, d=COMBINED["d"], c=COMBINED["c"])["key"] for s in ok] for x in (ip, ot)]
-    need = [k for v in list(kd.values()) + list(kc.values()) + [k_ot, k_nb] + k_cb for k in v]
-    missing = [k for k in need if k not in res]
-    if missing:
-        return {"n_missing_runs": len(missing), "note": "imperfection runs missing"}
     Dd = np.stack([_arr(res, kd[d]) for d in D_GRID], axis=1)
     Dc = np.stack([_arr(res, kc[c]) for c in C_GRID], axis=1)
     Dot = _arr(res, k_ot)
@@ -414,7 +438,7 @@ def imperfection_cell(res, ok, q, inc, a, D, I) -> dict:
     inv_d = np.any([_inv(res, kd[d]) for d in D_GRID], axis=0)
     inv_c = np.any([_inv(res, kc[c]) for c in C_GRID], axis=0)
     inv_p = I["IP"] | _inv(res, k_ot)
-    out = {}
+    out = {"n_seeds": len(ok), "n_dropped_seeds": n_drop}
     for lab, Mx, grid, kind, inv in (("d_star", Dd, D_GRID, "linear", inv_d), ("c_star", Dc, C_GRID, "linear", inv_c),
                                      ("p_star", Dp, P_GRID, "first", inv_p)):
         X = {r: D[r][:, None] - Mx for r in L0}

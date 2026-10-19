@@ -21,8 +21,13 @@ every stage and before result.json (D2-A10).
 
   run:   systemd-run --user --unit p1-run --working-directory=<repo> env -u SUMO_HOME OMP_NUM_THREADS=1 nice -n 19 \
            <venv>/bin/python -m v5b.p1.run --out /home/catalin/work/phd/v5b1_runs/p1/v99 --confirm-run-once \
-           --workers 32 --cpu-limit 0.90
-  smoke: python -m v5b.p1.run --smoke --out /home/catalin/work/phd/v5b1_runs/p1_smoke_<tag> --workers 8 --cpu-limit 0.70
+           --workers 32 --cpu-limit 0.90 <the four author decisions below>
+  smoke: python -m v5b.p1.run --smoke [--smoke-n 4] --out /home/catalin/work/phd/v5b1_runs/p1_smoke_<tag> --workers 8 \
+           --cpu-limit 0.70 <the four author decisions below>
+Author decisions (addendum 2026-10-19; required flags, no defaults, recorded in result.json and the tool-check record,
+and a --resume must repeat them): --meter-signal {d2,continuous} (D1), --t3-replicate {run,drop} (D2),
+--tv-t0-window {page,ext120} (D3), --gate-views {all_seeds,both} (D4: T0, T4, TV-T0 and TV entry on all seeds only, or
+in both views of page §5 with the same cell / (b, cell) in both).
 """
 from __future__ import annotations
 
@@ -49,12 +54,18 @@ from v5b.p1 import family as fam
 from v5b.p1 import stats as st
 from v5b.p1.analysis import CONDITIONS, QS, RMAX, TV_B0, VSL_B, cell_name, fixed, qk, sw
 from v5b.p1.episode import SPEC_FIELDS, make_spec
+from v5b.p1.meters import SIGNALS
 
 PAGE = "docs/research/protocols/p1_incident_information.md"
 SEEDS = {"tcheck": tuple(range(7_400_240, 7_400_260)), "tune": tuple(range(7_400_200, 7_400_240)),
          "eval": tuple(range(7_400_500, 7_400_600))}
 SMOKE_SEEDS = {"tcheck": tuple(range(7_400_000, 7_400_003)), "tune": tuple(range(7_400_003, 7_400_006)),
                "eval": tuple(range(7_400_006, 7_400_010))}
+SMOKE_SEEDS_4 = {"tcheck": (7_400_000, 7_400_001), "tune": (7_400_002, 7_400_003),     # --smoke-n 4: 7,400,000-003
+                 "eval": tuple(range(7_400_000, 7_400_004))}
+DECISIONS = {"meter_signal": SIGNALS, "t3_replicate": ("run", "drop"), "tv_t0_window": ("page", "ext120"),
+             "gate_views": ("all_seeds", "both")}
+TV_FIELD = {"page": "entered_e4_incident", "ext120": "entered_e4_ext120"}
 CALIB_ONLY = range(7_400_000, 7_400_010)
 SENTINEL = Path("/home/catalin/work/phd/v5b1_runs/P1_EVAL_STARTED.json")
 TCHECK_RECORD = Path("/home/catalin/work/phd/v5b1_runs/P1_TCHECK_RECORD.json")
@@ -65,12 +76,13 @@ PI_SMOKE = ("p40_20_8_e4", "p20_10_6_e5", "p70_120_16_e4", "p40_40_4_e5")
 T3_Q = 2000.0
 KEEP = SPEC_FIELDS + ("key", "code_commit", "delay_s", "served_ctrl_vph", "ttt_ctrl_vehh", "ttt_full_vehh", "max_queue",
                       "valid", "teleports", "hash", "wall_s", "entered_e4_incident", "ad_max_dev", "t_on", "t_off",
-                      "t_switch", "t_back", "health", "emergency_warnings", "drained")
+                      "t_switch", "t_back", "health", "emergency_warnings", "drained", "entered_e4_ext120", "signal")
 
 
-def t3_specs(seed) -> list:
+def t3_specs(seed, *, replicate: bool) -> list:
     """D2's six pairs, plus one pair each for PI (both detector variants), AD, a delayed switch (d and c), a VSL run,
-    a replicate (k = 1) and a false alarm."""
+    a replicate (k = 1; only if `replicate`: its SUMO / demand seed is seed + 10,000,000, decision D2) and a false
+    alarm."""
     q, base = T3_Q, []
     for pre, post, inc, back in (("c1200", None, "block", False), ("f20_8", None, "slow", False),
                                  ("NC", None, "block", False), ("c1600", "f40_10", "block", False),
@@ -82,20 +94,26 @@ def t3_specs(seed) -> list:
              dict(pre="c1600", post="c800", back=True, incident="slow", vsl_b=0.4),
              dict(pre="c1600", post="c800", back=True, incident="block", k=1),
              dict(pre="c1600", post="c800", incident=NONE, fa=True)]
+    if not replicate:
+        base = [b for b in base if not b.get("k")]
     return [[make_spec(q=q, seed=seed, rep=r, **b) for r in (0, 1)] for b in base]
 
 
-def reuse_mismatch(stored: dict, s: dict, commit: str) -> list:
+def reuse_mismatch(stored: dict, s: dict, commit: str, signal: str) -> list:
     want = {k: s[k] for k in SPEC_FIELDS}
     want["code_commit"] = commit
+    want["signal"] = signal
     return [k for k, v in want.items() if stored.get(k) != v]
 
 
 class Pool:
     """D2's pool (v5b/d2/run_screen.py) for the P1 episode; stored runs are slimmed in memory (KEEP)."""
 
-    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = "", verify=None):
+    def __init__(self, out: Path, workers: int, cpu_limit: float, log, *, signal: str, commit: str = "", verify=None):
+        if signal not in SIGNALS:
+            raise ValueError(f"meter signal must be one of {SIGNALS}: {signal!r}")
         self.out, self.workers, self.log, self.commit, self.verify = out, workers, log, commit, verify
+        self.signal = signal
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
         self.cpu = CpuSampler()
         (out / "runs").mkdir(parents=True, exist_ok=True)
@@ -112,7 +130,8 @@ class Pool:
         rd = self.out / "sumo" / s["key"]
         rd.mkdir(parents=True, exist_ok=True)
         fh = open(rd / f"child_a{attempt}.log", "w")
-        cmd = [PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps({**s, "code_commit": self.commit}),
+        cmd = [PYTHON_BIN, "-m", "v5b.p1.episode", "--spec",
+               json.dumps({**s, "code_commit": self.commit, "signal": self.signal}),
                "--out", str(self.out / "runs" / f"{s['key']}.json"), "--run-dir", str(rd)]
         p = subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=fh, stderr=subprocess.STDOUT)
         return {"proc": p, "spec": s, "attempt": attempt, "paused": False, "t0": time.time(), "fh": fh}
@@ -124,7 +143,7 @@ class Pool:
             p = self.out / "runs" / f"{s['key']}.json"
             if p.exists():
                 stored = json.loads(p.read_text())
-                bad = reuse_mismatch(stored, s, self.commit)
+                bad = reuse_mismatch(stored, s, self.commit, self.signal)
                 if bad:
                     raise SystemExit(f"{s['key']}: the stored run differs in {bad}; refusing to mix configurations: "
                                      "start a fresh --out")
@@ -205,9 +224,24 @@ def _first(order, D: dict) -> str:
 
 
 # ---------------------------------------------------------------- stage 1: tool checks
-def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
+def _keep(valid_lists) -> np.ndarray:
+    """Positions of the seeds without an invalid run among the runs entering one statistic (page §5)."""
+    return np.all(np.asarray(valid_lists, bool).reshape(len(valid_lists), -1), axis=0)
+
+
+def _sub(x, keep):
+    return np.asarray(x, float)[keep] if keep.any() else None
+
+
+def stage_tcheck(pool, seeds, G_, *, gate_views: str, tv_window: str, t3_replicate: bool, force_tv: bool = False) -> dict:
+    """Decision D4 (gate_views): T0, T4, TV-T0 and TV entry are computed in both views of page §5; the hindsight arm
+    (T0's best, T4's g*) is the one chosen on all seeds. 'all_seeds' gates on all seeds (the valid-only view is
+    reported); 'both' needs every cell in both views (T0, T4) or one cell / (b, cell) passing in both (TV-T0, entry)."""
+    if gate_views not in DECISIONS["gate_views"] or tv_window not in DECISIONS["tv_t0_window"]:
+        raise ValueError((gate_views, tv_window))
+    both = gate_views == "both"
     A_ = fam.actions(G_)
-    t3 = t3_specs(seeds[0])
+    t3 = t3_specs(seeds[0], replicate=t3_replicate)
     resA, failA = pool.run(an.fixed_specs(tuple(G_) + (fam.NC,), CONDITIONS, seeds) + [x for p in t3 for x in p],
                            "tcheck-A")
     fx = {qk(q): an.fit_fixed(resA, seeds, G_, (), q) for q in QS}
@@ -226,7 +260,10 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
         arms[qk(q)] = {"N": f["N"], "FX": f["FX"], "FB": f["FB"], "AD": fam.ad_id(1.0, f["FB"]), "IP": s_["IP"],
                        "ID": s_["ID"]}
     order = ("ID", "IP", "N", "FX", "FB", "AD")
+    fld = TV_FIELD[tv_window]
+    fld_o = TV_FIELD["ext120" if tv_window == "page" else "page"]
     best, ncs, best_name, t4, tad, tv_nc, tv_v, tv_alone = {}, {}, {}, {}, {}, {}, {}, {}
+    best_v, ncs_v, t4_v, tvv_nc, tvv_v, tvo_nc, tvo_v = {}, {}, {}, {}, {}, {}, {}
     for inc in INCIDENTS:
         for q in QS:
             name, a = cell_name(inc, q), arms[qk(q)]
@@ -237,38 +274,61 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
             if not ok:
                 raise SystemExit(f"tool checks: no seed with all runs in cell {name} (failed runs: {failA + failB})")
             D = {x: np.array([res[f(s)]["delay_s"] for s in ok], float) for x, f in kk.items()}
+            V = {x: [res[f(s)]["valid"] for s in ok] for x, f in kk.items()}
             b = _first(order, D)
             best[name], ncs[name], best_name[name] = D[b], D["NC"], b
+            kv = _keep([V[b], V["NC"]])
+            best_v[name], ncs_v[name] = _sub(D[b], kv), _sub(D["NC"], kv)
             okf = [s for s in seeds if all(fixed(g, inc, q, s)["key"] in res for g in G_)]
             per = {g: [res[fixed(g, inc, q, s)["key"]]["delay_s"] for s in okf] for g in G_}
             gstar = fam.best_by_median(per, G_)
             t4[name] = st.t4_cell(per[a["N"]], per[gstar], a["N"], gstar)
+            kf = _keep([[res[fixed(g, inc, q, s)["key"]]["valid"] for s in okf] for g in (a["N"], gstar)])
+            t4_v[name] = st.t4_cell(_sub(per[a["N"]], kf), _sub(per[gstar], kf), a["N"], gstar)
             tad[name] = [res[k]["ad_max_dev"] for s in seeds if (k := fixed(a["AD"], inc, q, s)["key"]) in res]
             okv = [s for s in seeds if fixed(fam.NC, inc, q, s)["key"] in res and
                    fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"] in res]
-            tv_nc[name] = [res[fixed(fam.NC, inc, q, s)["key"]]["entered_e4_incident"] for s in okv]
-            tv_v[name] = [res[fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"]]["entered_e4_incident"] for s in okv]
-            tv_alone[name] = st.paired([res[fixed(fam.NC, inc, q, s)["key"]]["delay_s"] for s in okv],
-                                       [res[fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"]]["delay_s"] for s in okv])
+            rn = [res[fixed(fam.NC, inc, q, s)["key"]] for s in okv]
+            rv = [res[fixed(fam.NC, inc, q, s, vsl=TV_B0)["key"]] for s in okv]
+            tv_nc[name], tv_v[name] = [r[fld] for r in rn], [r[fld] for r in rv]
+            tvo_nc[name], tvo_v[name] = [r[fld_o] for r in rn], [r[fld_o] for r in rv]
+            kt = _keep([[r["valid"] for r in rn], [r["valid"] for r in rv]])
+            tvv_nc[name], tvv_v[name] = _sub(tv_nc[name], kt), _sub(tv_v[name], kt)
+            tv_alone[name] = st.paired([r["delay_s"] for r in rn], [r["delay_s"] for r in rv])
     tele = {}
     for k, r in res.items():
         if r.get("rep") is None:
             tele.setdefault(f"{r['incident']}_q{qk(r['q'])}", []).append(r["teleports"])
     t3r = {p[0]["key"]: (p[0]["key"] in res and p[1]["key"] in res and same_run(pool.out, p[0]["key"], p[1]["key"]))
            for p in t3}
-    tvb = st.tv_binding(tv_nc, tv_v)
-    out = {"seeds": [seeds[0], seeds[-1]], "arms": arms, "T0": st.t0_cells(best, ncs, best_name),
-           "T1": st.t1_cells(tele), "T3": t3r, "T3_pass": all(t3r.values()), "T4": st.t4_overall(t4),
-           "T_AD": st.tad_cells(tad), "TV_T0": tvb, "TV_alone_vs_NC_delay_b0.4_report_only": tv_alone,
+    t0a, t0v = st.t0_cells(best, ncs, best_name), st.t0_cells(best_v, ncs_v, best_name)
+    t4a, t4v = st.t4_overall(t4), st.t4_overall(t4_v)
+    tba, tbv = st.tv_binding(tv_nc, tv_v), st.tv_binding(tvv_nc, tvv_v)
+    bind_cells = [c for c, r in tba["cells"].items() if r["binds"] and (not both or tbv["cells"][c]["binds"])]
+    tv_pass = bool(bind_cells)
+    T0 = {**t0a, "pass_all_seeds": t0a["pass"], "valid_only": t0v, "gate_views": gate_views,
+          "pass": bool(t0a["pass"] and (t0v["pass"] or not both))}
+    T4 = {**t4a, "pass_all_seeds": t4a["pass"], "valid_only": t4v, "gate_views": gate_views,
+          "pass": bool(t4a["pass"] and (t4v["pass"] or not both))}
+    TVT0 = {**tba, "pass_all_seeds": tba["pass"], "valid_only": tbv, "gate_views": gate_views, "window": tv_window,
+            "count_field": fld, "binding_cells": bind_cells, "pass": tv_pass,
+            "text": "" if tv_pass else st.TV_NO_BIND_TEXT,
+            f"other_window_{fld_o}_report_only": st.tv_binding(tvo_nc, tvo_v)}
+    if tv_window == "page" and tv_pass and not TVT0[f"other_window_{fld_o}_report_only"]["pass"]:
+        TVT0["caveat"] = ("binds in the onset-clearance window but not over [onset, clearance + 120 s): the change may "
+                          "be a travel-time shift of arrivals (VSL slows edges 2-3), not a flow restriction")
+    out = {"seeds": [seeds[0], seeds[-1]], "arms": arms, "T0": T0,
+           "T1": st.t1_cells(tele), "T3": t3r, "T3_pass": all(t3r.values()), "T4": T4,
+           "T_AD": st.tad_cells(tad), "TV_T0": TVT0, "TV_alone_vs_NC_delay_b0.4_report_only": tv_alone,
            "failed_runs": failA + failB,
            "PI_note": "PI is not run on the tool-check seeds (page §8 cost: tool checks 15k); T0's best-of excludes it"}
-    if tvb["pass"] or force_tv:
+    if tv_pass or force_tv:
         spC = [sw(arms[qk(q)]["N"], arms[qk(q)]["IP"][inc], inc, q, s, vsl=b) for b in VSL_B for q in QS
                for inc in INCIDENTS for s in seeds]
         resC, failC = pool.run(spC, "tcheck-C")
         res.update(resC)
         out["failed_runs"] += failC
-        ip, ipv = {}, {}
+        ip, ipv, ip_v, ipv_v = {}, {}, {}, {}
         for b in VSL_B:
             for inc in INCIDENTS:
                 for q in QS:
@@ -276,13 +336,20 @@ def stage_tcheck(pool, seeds, G_, force_tv: bool = False) -> dict:
                     ok = [s for s in seeds if sw(a["N"], a["IP"][inc], inc, q, s)["key"] in res and
                           sw(a["N"], a["IP"][inc], inc, q, s, vsl=b)["key"] in res]
                     key = f"b{b:g}_{cell_name(inc, q)}"
-                    ip[key] = [res[sw(a["N"], a["IP"][inc], inc, q, s)["key"]]["delay_s"] for s in ok]
-                    ipv[key] = [res[sw(a["N"], a["IP"][inc], inc, q, s, vsl=b)["key"]]["delay_s"] for s in ok]
-        out["TV_entry"] = st.tv_entry(ip, ipv)
-        out["TV_entry"]["forced_in_smoke"] = bool(force_tv and not tvb["pass"])
+                    r0 = [res[sw(a["N"], a["IP"][inc], inc, q, s)["key"]] for s in ok]
+                    r1 = [res[sw(a["N"], a["IP"][inc], inc, q, s, vsl=b)["key"]] for s in ok]
+                    ip[key], ipv[key] = [r["delay_s"] for r in r0], [r["delay_s"] for r in r1]
+                    ke = _keep([[r["valid"] for r in r0], [r["valid"] for r in r1]])
+                    ip_v[key], ipv_v[key] = _sub(ip[key], ke), _sub(ipv[key], ke)
+        ea, ev_ = st.tv_entry(ip, ipv), st.tv_entry(ip_v, ipv_v)
+        entering = [k for k, r in ea["cells"].items() if r["pass"] and (not both or ev_["cells"][k]["pass"])]
+        out["TV_entry"] = {**ea, "enters_all_seeds": ea["enters"], "valid_only": ev_, "gate_views": gate_views,
+                           "entering": entering, "enters": bool(entering),
+                           "text": "" if entering else st.TV_NO_ENTRY_TEXT}
+        out["TV_entry"]["forced_in_smoke"] = bool(force_tv and not tv_pass)
     else:
         out["TV_entry"] = {"enters": False, "text": "TV ended at TV-T0 (not binding)"}
-    out["vsl_enters"] = bool(tvb["pass"] and out["TV_entry"]["enters"])
+    out["vsl_enters"] = bool(tv_pass and out["TV_entry"]["enters"])
     out["n_runs"] = len(res)
     out["pass"] = bool(out["T0"]["pass"] and out["T1"]["pass"] and out["T3_pass"] and out["T4"]["pass"])
     return out
@@ -365,7 +432,7 @@ def run_counts(n_g: int = len(fam.G), n_pi: int = len(fam.PI), seeds: dict = Non
     S = {k: len(v) for k, v in (seeds or SEEDS).items()}
     nq, ni, nc = len(QS), len(INCIDENTS), len(CONDITIONS)
     na = 2 * n_g
-    tc = (n_g + 1) * nc * nq * S["tcheck"] + 2 * len(t3_specs(0)) + na * ni * nq * S["tcheck"] + \
+    tc = (n_g + 1) * nc * nq * S["tcheck"] + 2 * len(t3_specs(0, replicate=True)) + na * ni * nq * S["tcheck"] + \
         2 * ni * nq * S["tcheck"] + (len(VSL_B) * ni * nq * S["tcheck"] if tv_binds else 0)
     tu = (n_g + n_pi) * nc * nq * S["tune"] + na * ni * nq * S["tune"] + len(fam.ETA_GRID) * nc * nq * S["tune"] + \
         (len(VSL_B) * ni * nq * S["tune"] if vsl else 0)
@@ -399,8 +466,14 @@ def summary_md(result: dict) -> str:
                  f"{'PASS' if r['pass'] else 'FAIL'} | {t4['N']} / {t4['best_fixed']} {_pct(t4['rel'])} % | "
                  f"{'PASS' if t4['pass'] else 'fail'} | {tad['median_max_dev']:.1f} {tad['note']} | "
                  f"{_pct(tv.get('rel'))} % |")
-    L += ["", f"T1 {'PASS' if tc['T1']['pass'] else 'FAIL'}; T3 {'PASS' if tc['T3_pass'] else 'FAIL'}; "
-          f"TV-T0 {'binds' if tc['TV_T0']['pass'] else 'does not bind: ' + tc['TV_T0']['text']}; "
+    L += ["", f"Author decisions: {result.get('decisions')}. Gates ({tc['T0'].get('gate_views')}): T0 "
+          f"{'PASS' if tc['T0']['pass'] else 'FAIL'} (all seeds {tc['T0'].get('pass_all_seeds')}, valid only "
+          f"{tc['T0'].get('valid_only', {}).get('pass')}); T4 {'PASS' if tc['T4']['pass'] else 'FAIL'} (all seeds "
+          f"{tc['T4'].get('pass_all_seeds')}, valid only {tc['T4'].get('valid_only', {}).get('pass')}); TV-T0 window "
+          f"{tc['TV_T0'].get('window')}.",
+          "", f"T1 {'PASS' if tc['T1']['pass'] else 'FAIL'}; T3 {'PASS' if tc['T3_pass'] else 'FAIL'}; "
+          f"TV-T0 {'binds' if tc['TV_T0']['pass'] else 'does not bind: ' + tc['TV_T0']['text']}"
+          f"{' (caveat: ' + tc['TV_T0']['caveat'] + ')' if tc['TV_T0'].get('caveat') else ''}; "
           f"TV entry: {'VSL enters' if tc['vsl_enters'] else tc['TV_entry'].get('text', '')}"
           f"{' (forced in smoke)' if tc['TV_entry'].get('forced_in_smoke') else ''}.", ""]
     if "tune" in result:
@@ -413,8 +486,11 @@ def summary_md(result: dict) -> str:
         ev = result["eval"]
         s1 = ev["S1"]
         L += ["## S1 (information ladder)", "",
-              f"- S1a: **{'PASS' if s1['S1a_pass'] else 'FAIL'}**: {s1['S1a_text']}",
-              f"- S1b: **{'PASS' if s1['S1b_pass'] else 'FAIL'}**: {s1['S1b_text']}", "",
+              f"- S1a: **{'PASS' if s1['S1a_pass'] else 'FAIL'}**: {s1['S1a_text']} (cell in both views: "
+              f"{s1['S1a_cells_both_views']})",
+              f"- S1b: **{'PASS' if s1['S1b_pass'] else 'FAIL'}**: {s1['S1b_text']} (cell in both views: "
+              f"{s1['S1b_cells_both_views']})"] + \
+             ([f"- claim cells missing (S1 fails closed): {s1['missing_cells']}"] if s1["missing_cells"] else []) + ["",
               "| cell | ID vs N | vs FX | vs FB | vs PI | vs AD | IP vs ID | (rel %, all seeds; S1 level) |",
               "|---|---|---|---|---|---|---|---|"]
         for c, v in s1["per_cell_stats"].items():
@@ -465,7 +541,7 @@ def check_out_dir(out: Path, resume: bool) -> None:
         raise SystemExit(f"{out}/runs is not empty; pass --resume to reuse finished runs of an interrupted run")
 
 
-def check_sentinel(out: Path, resume: bool, commit: str, sentinel: Path = None) -> None:
+def check_sentinel(out: Path, resume: bool, commit: str, sentinel: Path = None, args: dict = None) -> None:
     sentinel = sentinel or SENTINEL
     if not sentinel.exists():
         return
@@ -475,6 +551,10 @@ def check_sentinel(out: Path, resume: bool, commit: str, sentinel: Path = None) 
                          "it runs once; only --resume of that --out is allowed")
     if d["code_commit"] != commit:
         raise SystemExit(f"--resume refused: commit {commit[:10]} differs from {d['code_commit'][:10]} in {sentinel}")
+    if args is not None:
+        diff = [f for f in DECISIONS if (d.get("args") or {}).get(f) != args.get(f)]
+        if diff:
+            raise SystemExit(f"--resume refused: the author-decision flags {diff} differ from {sentinel}")
 
 
 def write_sentinel(out: Path, commit: str, page_sha: str, args: dict, sentinel: Path = None) -> None:
@@ -504,7 +584,7 @@ def append_tcheck_record(out: Path, commit: str, page_sha: str, tc: dict, decisi
                     "pass": bool(tc["pass"]), "T0_pass": bool(tc["T0"]["pass"]), "T1_pass": bool(tc["T1"]["pass"]),
                     "T3_pass": bool(tc["T3_pass"]), "T4_pass": bool(tc["T4"]["pass"]),
                     "TV_T0_binds": bool(tc["TV_T0"]["pass"]), "vsl_enters": bool(tc["vsl_enters"]),
-                    "time": time.strftime("%Y-%m-%d %H:%M:%S %z")})
+                    "decisions": tc.get("decisions"), "time": time.strftime("%Y-%m-%d %H:%M:%S %z")})
     record.parent.mkdir(parents=True, exist_ok=True)
     tmp = record.with_suffix(f".tmp{os.getpid()}")
     tmp.write_text(json.dumps(entries, indent=1))
@@ -512,6 +592,9 @@ def append_tcheck_record(out: Path, commit: str, page_sha: str, tc: dict, decisi
 
 
 def check_launch(a, dirty: bool) -> None:
+    for f, ok in DECISIONS.items():
+        if getattr(a, f, None) not in ok:
+            raise SystemExit(f"--{f.replace('_', '-')} must be one of {ok}: an author decision, no default")
     if not 1 <= a.workers <= 100:
         raise SystemExit("--workers must be in 1..100")
     if not 0.0 < a.cpu_limit <= 0.90:
@@ -519,7 +602,7 @@ def check_launch(a, dirty: bool) -> None:
     if a.smoke:
         if a.workers > 8:
             raise SystemExit("--smoke uses at most 8 workers")
-        if not all(s in CALIB_ONLY for v in SMOKE_SEEDS.values() for s in v):
+        if not all(s in CALIB_ONLY for v in smoke_seeds(a.smoke_n).values() for s in v):
             raise SystemExit("smoke seeds must be calibration seeds 7,400,000-009")
         return
     if not a.confirm_run_once:
@@ -563,9 +646,23 @@ def _kind(r: dict) -> str:
     return "NC" if p == "NC" else ("PI" if p.startswith("p") else "AD" if p.startswith("ad") else "fixed")
 
 
+def smoke_seeds(n: int) -> dict:
+    if n == 10:
+        return SMOKE_SEEDS
+    if n == 4:
+        return SMOKE_SEEDS_4
+    raise SystemExit("--smoke-n must be 4 or 10")
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
+    for f, ch in DECISIONS.items():
+        ap.add_argument(f"--{f.replace('_', '-')}", choices=ch, required=True,
+                        help="author decision (addendum 2026-10-19), no default")
+    ap.add_argument("--smoke-n", type=int, choices=(4, 10), default=10,
+                    help="smoke seeds: 10 = 7,400,000-009 (I16); 4 = 7,400,000-003 (tool checks 000-001, tuning "
+                         "002-003, evaluation 000-003)")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--cpu-limit", type=float, default=CPU_LIMIT_DEFAULT)
     ap.add_argument("--nice", type=int, default=19)
@@ -583,7 +680,7 @@ def main(argv=None) -> int:
     check_launch(a, dirty)
     check_out_dir(out, a.resume)
     if not a.smoke:
-        check_sentinel(out, a.resume, commit)
+        check_sentinel(out, a.resume, commit, args=vars(a))
         if not SENTINEL.exists():
             check_tcheck_record(commit)
     os.nice(max(0, a.nice - os.nice(0)))
@@ -598,15 +695,19 @@ def main(argv=None) -> int:
 
     net.build()
     verify = make_verify(state0, log)
-    pool = Pool(out, a.workers, a.cpu_limit, log, commit=commit, verify=verify)
+    pool = Pool(out, a.workers, a.cpu_limit, log, signal=a.meter_signal, commit=commit, verify=verify)
     G_, PI_ = (G_SMOKE, PI_SMOKE) if a.smoke else (fam.G, fam.PI)
-    seeds = SMOKE_SEEDS if a.smoke else SEEDS
+    seeds = smoke_seeds(a.smoke_n) if a.smoke else SEEDS
+    decisions = {f: getattr(a, f) for f in DECISIONS}
     page = REPO_ROOT / PAGE
     result = {"study": "P1", "page": PAGE, "page_sha256": hashlib.sha256(page.read_bytes()).hexdigest(),
               "code_commit": commit, "code_dirty": dirty, "args": vars(a), "G": list(G_), "PI": list(PI_),
-              "seeds": {k: [v[0], v[-1]] for k, v in seeds.items()}, "qs": QS, "R_set": list(an.R_SET)}
+              "seeds": {k: [v[0], v[-1]] for k, v in seeds.items()}, "qs": QS, "R_set": list(an.R_SET),
+              "decisions": decisions}
     t0 = time.time()
-    tc = stage_tcheck(pool, seeds["tcheck"], G_, force_tv=a.smoke)
+    tc = stage_tcheck(pool, seeds["tcheck"], G_, gate_views=a.gate_views, tv_window=a.tv_t0_window,
+                      t3_replicate=a.t3_replicate == "run", force_tv=a.smoke)
+    tc["decisions"] = decisions
     result["tcheck"] = tc
     if not a.smoke and not SENTINEL.exists():
         append_tcheck_record(out, commit, result["page_sha256"], tc, "PASS" if tc["pass"] else tcheck_decision(tc))

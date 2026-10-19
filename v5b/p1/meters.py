@@ -11,6 +11,12 @@
   the first update at the onset tick, target b while the incident is on, then target 1 (ramping back up at the same
   rate) after clearance; the 23 m/s limit is restored before the drain.
 - Schedules on the 1-s control tick grid t_ctrl0 + k (the tick rule of v5b/d2/incidents.Incident.tick).
+- The meter signal (addendum 2026-10-19, R3; the mode is an author decision, passed explicitly, no default):
+  'd2'         green iff (t - t_cycle0) mod c(q) < green, with the CURRENT c (D1/D2's FBMeter). When q changes the
+               phase jumps, so greens can be skipped and a red can exceed c(q_min) - green (smoke: 322 s);
+  'continuous' green iff (t - g) mod c(q) < green, where g, the anchor, is the start of the last green: when c changes,
+               the time since that green start carries over (a new green starts at once if it already reaches the
+               new c). With a constant c both modes give the same signal; a red is at most c(q_min) - green.
 """
 from __future__ import annotations
 
@@ -35,10 +41,29 @@ def sgn(x: float) -> int:
     return (x > 0) - (x < 0)
 
 
+SIGNALS = ("d2", "continuous")
+
+
 class _Signal:
+    def _init_signal(self, signal: str, set_state) -> None:
+        if signal not in SIGNALS:
+            raise ValueError(f"meter signal must be one of {SIGNALS} (no default: author decision): {signal!r}")
+        self.signal = signal
+        self.set_state = set_state or _default_setter()
+        self._anchor = self._anchor_c = None
+
     def _signal(self, t: float) -> None:
         c = self.cycle()
-        phase_t = (t - self.t_cycle0) % c
+        if self.signal == "d2":
+            phase_t = (t - self.t_cycle0) % c
+        else:
+            if self._anchor is None:
+                self._anchor, self._anchor_c = self.t_cycle0, c
+            elif c != self._anchor_c:
+                since = (t - self._anchor) % self._anchor_c      # time since the last green start
+                self._anchor = t - since if since < c - 1e-9 else t
+                self._anchor_c = c
+            phase_t = (t - self._anchor) % c
         self.set_state("GGGG" if phase_t < self.green else "rrrr")
 
 
@@ -48,12 +73,31 @@ def _default_setter():
     return lambda s: ls.trafficlight.setRedYellowGreenState(plant.TLS_ID, s)
 
 
+class FBSignalMeter(FBMeter, _Signal):
+    """D1's FBMeter (constant rate: K_F = 0) with the selectable signal. The control law is FBMeter.step's, unchanged;
+    with signal 'd2' the signal is FBMeter's too (tested: identical states)."""
+
+    def __init__(self, *, signal: str, set_state=None, **kw):
+        super().__init__(**kw)
+        self._init_signal(signal, set_state)
+
+    def step(self, t: float) -> None:
+        if self.t_update is None:
+            self.t_update, self.t_cycle0 = t, t
+        if t - self.t_update >= self.T - 1e-9:
+            n_hat = self.read(t)
+            if n_hat is not None:
+                self.q = float(np.clip(self.q + self.K_F * (self.n_crit - n_hat), self.q_min, self.q_max))
+            self.t_update = t
+        self._signal(t)
+
+
 class PIMeter(FBMeter, _Signal):
-    def __init__(self, K_P: float, K_I: float, n_crit: float, read, set_state=None, **kw):
+    def __init__(self, K_P: float, K_I: float, n_crit: float, read, *, signal: str, set_state=None, **kw):
         super().__init__(K_F=K_I, n_crit=n_crit, read=read, **kw)
         self.K_P, self.K_I = float(K_P), float(K_I)
         self.n_prev = None
-        self.set_state = set_state or _default_setter()
+        self._init_signal(signal, set_state)
 
     def step(self, t: float) -> None:
         if self.t_update is None:
@@ -69,14 +113,14 @@ class PIMeter(FBMeter, _Signal):
 
 
 class ADMeter(FBMeter, _Signal):
-    def __init__(self, eta: float, K_F: float, n_crit: float, read, cum_out, set_state=None, **kw):
+    def __init__(self, eta: float, K_F: float, n_crit: float, read, cum_out, *, signal: str, set_state=None, **kw):
         super().__init__(K_F=K_F, n_crit=n_crit, read=read, **kw)
         self.eta, self.n_hat0 = float(eta), float(n_crit)
         self.cum_out = cum_out
         self.cum_prev = None
         self.prev = None          # (phi, n) at the previous update
         self.nhat_log = []        # (t, n_hat) at control start and after every update
-        self.set_state = set_state or _default_setter()
+        self._init_signal(signal, set_state)
 
     def step(self, t: float) -> None:
         if self.t_update is None:

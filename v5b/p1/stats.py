@@ -24,6 +24,10 @@ TV_BIND = 0.05        # TV-T0: entries into edge 4 change by >= 5 %
 TAD_MIN = 2.0         # T-AD: vehicles
 PLATEAU_Z = 0.01      # A8: z = 1 point
 CHUNK = 1000
+TV_NO_BIND_TEXT = ("posted VSL cannot bind on BN4 (the gantry capacity is far above the incident bottleneck): a plant "
+                   "limit, not evidence against VSL")
+TV_NO_ENTRY_TEXT = "no >= 10 % gain detected on 20 seeds"
+NO_SEED = "no seed left in this view"
 
 _IDX = {}
 
@@ -218,9 +222,13 @@ def breakeven(X_by_arm: dict, grid, kind: str, level: float = LEVEL_95, B: int =
 
 # ---------------------------------------------------------------- tool checks (page §3)
 def t0_cells(best_by_cell: dict, nc_by_cell: dict, best_name: dict) -> dict:
-    """T0: in every incident cell the best non-oracle arm beats NC: rel >= 10 % and 95 % CI of median(NC - best) > 0."""
+    """T0: in every incident cell the best non-oracle arm beats NC: rel >= 10 % and 95 % CI of median(NC - best) > 0.
+    A cell given as None (no seed left in a view) fails."""
     per = {}
     for c in best_by_cell:
+        if best_by_cell[c] is None:
+            per[c] = {"n": 0, "best_arm": best_name[c], "pass": False, "note": NO_SEED}
+            continue
         r = paired(nc_by_cell[c], best_by_cell[c], LEVEL_95)
         r["best_arm"] = best_name[c]
         r["pass"] = bool(r["rel"] >= REL_MIN and r["diff_ci"][0] > 0.0)
@@ -229,7 +237,11 @@ def t0_cells(best_by_cell: dict, nc_by_cell: dict, best_name: dict) -> dict:
 
 
 def t4_cell(n_delays, best_delays, n_id: str, best_id: str) -> dict:
-    """T4 (D2-A5): N_t vs the hindsight-best fixed controller of G in this cell: rel >= 10 % (point; CI reported)."""
+    """T4 (D2-A5): N_t vs the hindsight-best fixed controller of G in this cell: rel >= 10 % (point; CI reported).
+    None delays (no seed left in a view) fail."""
+    if n_delays is None:
+        return {"n": 0, "N": n_id, "best_fixed": best_id, "same_controller": n_id == best_id, "pass": False,
+                "note": NO_SEED}
     r = paired(n_delays, best_delays, LEVEL_95)
     r.update({"N": n_id, "best_fixed": best_id, "same_controller": n_id == best_id,
               "pass": bool(n_id != best_id and r["rel"] >= T4_MIN)})
@@ -258,13 +270,14 @@ def tv_binding(nc_counts: dict, vsl_counts: dict) -> dict:
     between onset and clearance changes by >= 5 % (|rel|) with the 95 % CI of the median paired difference excluding 0."""
     per = {}
     for c in nc_counts:
+        if nc_counts[c] is None:
+            per[c] = {"n": 0, "binds": False, "note": NO_SEED}
+            continue
         r = paired(nc_counts[c], vsl_counts[c], LEVEL_95)
         r["binds"] = bool(abs(r["rel"]) >= TV_BIND and (r["diff_ci"][0] > 0.0 or r["diff_ci"][1] < 0.0))
         per[c] = r
     ok = any(p["binds"] for p in per.values())
-    return {"cells": per, "pass": ok,
-            "text": "" if ok else ("posted VSL cannot bind on BN4 (the gantry capacity is far above the incident "
-                                   "bottleneck): a plant limit, not evidence against VSL")}
+    return {"cells": per, "pass": ok, "text": "" if ok else TV_NO_BIND_TEXT}
 
 
 def tv_entry(ip_by_bc: dict, ipv_by_bc: dict) -> dict:
@@ -272,8 +285,11 @@ def tv_entry(ip_by_bc: dict, ipv_by_bc: dict) -> dict:
     bound of median(IP - IP+VSL) > 0 in >= 1 (b, cell)."""
     per = {}
     for k in ip_by_bc:
+        if ip_by_bc[k] is None:
+            per[k] = {"n": 0, "pass": False, "note": NO_SEED}
+            continue
         r = paired(ip_by_bc[k], ipv_by_bc[k], LEVEL_TV)
         r["pass"] = bool(r["rel"] >= REL_MIN and r["diff_ci"][0] > 0.0)
         per[k] = r
     ok = any(p["pass"] for p in per.values())
-    return {"cells": per, "enters": ok, "text": "" if ok else "no >= 10 % gain detected on 20 seeds"}
+    return {"cells": per, "enters": ok, "text": "" if ok else TV_NO_ENTRY_TEXT}
