@@ -44,10 +44,10 @@ def t4_cell(n_delays, best_delays, n_id: str, best_id: str) -> dict:
 
 
 def t4_overall(cells: dict) -> dict:
-    """T4 passes if at least one incident cell passes (Rule 5 needs only one cell; reading recorded in the
-    build report). Per-cell results are always reported."""
+    """T4 passes only if EVERY incident cell passes (page Addendum D2-A5: the page gives no quantifier, so the
+    strictest reading, as for T0). Per-cell results are always reported."""
     return {"cells": cells, "n_pass": int(sum(c["pass"] for c in cells.values())),
-            "pass": any(c["pass"] for c in cells.values())}
+            "pass": bool(cells) and all(c["pass"] for c in cells.values())}
 
 
 def _hd(base, o) -> dict:
@@ -85,6 +85,16 @@ def cell_with_invalid_check(o, fallbacks: dict, invalid) -> dict:
         c["pass_valid_only"] = v["pass"]
     c["pass"] = bool(c["pass_all_seeds"] and c["pass_valid_only"])
     return c
+
+
+def combine_crossfit(c_in: dict, c_xf: dict) -> dict:
+    """Page Addendum D2-A1: a cell passes only if it passes with the page's OR (per-seed best switch run, scored on
+    the same run) AND with the cross-fitted OR (target picked on the SUMO-RNG replicate, scored on the main run),
+    each with and without invalid seeds. Never easier than the page alone."""
+    out = dict(c_in)
+    out.update({"pass_in_sample": bool(c_in["pass"]), "crossfit": c_xf, "pass_crossfit": bool(c_xf["pass"]),
+                "pass": bool(c_in["pass"] and c_xf["pass"])})
+    return out
 
 
 def decide(cells: dict) -> str:

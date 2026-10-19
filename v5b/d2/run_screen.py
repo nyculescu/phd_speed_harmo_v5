@@ -8,18 +8,23 @@ Stages (each a set of one-process SUMO runs, v5b/d2/episode.py, at most --worker
    B: 'N_t before onset, g after onset' for every g x {slow, block} x q x seed.
    T0 every incident cell: the best arm by median beats NC by >= 10 % (CI of the median difference > 0);
    T1 every (condition, q) cell: share of runs with a teleport < 5 %; T3 the repeat pairs are identical;
-   T4 >= 1 incident cell: N_t's delay exceeds the hindsight-best fixed controller's by >= 10 % (paired median).
-   Any failure ends the screen (STOP; T3: FIX CODE) before the tuning and evaluation seeds are touched.
+   T4 every incident cell (Addendum D2-A5): N_t's delay exceeds the hindsight-best fixed controller's by >= 10 %
+   (paired median). Any failure ends the screen (STOP; T3: FIX CODE) before the tuning and evaluation seeds are
+   touched, and every non-smoke outcome is appended to TCHECK_RECORD (Addendum D2-A9): after a T0 or T4 failure
+   (with T3 passed) the checks never run again; after a T1 or T3 failure only at another commit.
 2. Tuning on seeds 7,400,120-139: N per q (no-incident runs); FX, FB per q (pooled slow + block runs, the whole
    episode, no switching); IP per (type, q) from the runs 'N before onset, g after onset'.
 3. Evaluation on seeds 7,400,140-189 (run once: the global sentinel is written first). Runs 'N before onset, g after
-   onset' for every g (IP, OR and N itself are read from these), FX, FB and NC per incident cell, and N, FX, FB, NC
-   without incident (report-only cell). Rule 5: HD_f = (f - OR) / f for f in {FX, FB, IP}; CONTINUE if some
-   incident cell has HD >= 10 % with CI lower bound > 0 against every f, with and without invalid seeds.
+   onset' for every g (IP, OR and N itself are read from these), the same runs again as cross-fit replicates
+   (SUMO RNG seed + XF_SUMO_OFFSET, Addendum D2-A1), FX, FB and NC per incident cell, and N, FX, FB, NC without
+   incident (report-only cell). Rule 5: HD_f = (f - OR) / f for f in {FX, FB, IP}; a cell passes if HD >= 10 % with
+   CI lower bound > 0 against every f, with and without invalid seeds, both with the page's OR (per-seed best run)
+   and with the cross-fitted ORX (target picked on the replicate, scored on the main run); CONTINUE if some cell
+   passes. HEAD and the work tree are re-checked after every stage and before result.json (Addendum D2-A10).
 Raw runs and results go to --out under /home/catalin/work/phd/ (never in the repo).
 
   screen: python -m v5b.d2.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d2/<tag> --confirm-run-once \
-            --workers 16 --cpu-limit 0.70
+            --workers 16 --cpu-limit 0.70   (0.70 is also the default)
   smoke:  python -m v5b.d2.run_screen --smoke --out /home/catalin/work/phd/v5b1_runs/d2_smoke_<tag> --workers 8
 """
 from __future__ import annotations
@@ -41,7 +46,7 @@ from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 from v5b.d1.run_screen import CpuSampler, pkg_temp, same_run
 from v5b.d2 import controllers as ctl
 from v5b.d2 import stats
-from v5b.d2.episode import run_key
+from v5b.d2.episode import XF_SUMO_OFFSET, run_key  # noqa: F401
 from v5b.d2.incidents import CONDITIONS, INCIDENTS, NONE
 from v5b.ops.guard import ComputeGuard
 
@@ -51,22 +56,24 @@ SEEDS = {"smoke": tuple(range(7_400_000, 7_400_004)), "tcheck": tuple(range(7_40
          "tune": tuple(range(7_400_120, 7_400_140)), "eval": tuple(range(7_400_140, 7_400_190))}
 CALIB_ONLY = range(7_400_000, 7_400_010)
 SENTINEL = Path("/home/catalin/work/phd/v5b1_runs/D2_EVAL_STARTED.json")
+TCHECK_RECORD = Path("/home/catalin/work/phd/v5b1_runs/D2_TCHECK_RECORD.json")
+CPU_LIMIT_DEFAULT = 0.70   # V89 author constraint (CPU < 70 %)
 ALLOWED_ROOT = Path("/home/catalin/work/phd")
 G_SMOKE = ("c800", "c1200", "c1600", "c2000", "f10_6", "f20_8", "f70_12")
 T3_RUNS = (("c1200", None, "block"), ("f20_8", None, "slow"), ("NC", None, "block"),
            ("c1600", "f40_10", "block"), ("f20_8", "c800", "slow"))
 T3_Q = 2000.0
 ARMS = ("OR", "IP", "N", "FX", "FB", "NC")
-SPEC_FIELDS = ("pre", "post", "incident", "q", "seed")
+SPEC_FIELDS = ("pre", "post", "incident", "q", "seed", "xf")
 
 
 def qk(q) -> str:
     return str(int(q))
 
 
-def spec(pre, post, incident, q, seed, rep=None) -> dict:
-    return {"key": run_key(pre, post, incident, q, seed, rep), "pre": pre, "post": post, "incident": incident,
-            "q": float(q), "seed": int(seed)}
+def spec(pre, post, incident, q, seed, rep=None, xf=False) -> dict:
+    return {"key": run_key(pre, post, incident, q, seed, rep, xf), "pre": pre, "post": post, "incident": incident,
+            "q": float(q), "seed": int(seed), "xf": bool(xf)}
 
 
 def uniq(specs: list) -> list:
@@ -83,8 +90,8 @@ def fixed_specs(G_, conds, seeds, with_nc: bool) -> list:
     return [spec(g, None, c, q, s) for q in QS for s in seeds for c in conds for g in pres]
 
 
-def switch_specs(N: dict, G_, seeds) -> list:
-    return [spec(N[qk(q)], g, inc, q, s) for q in QS for s in seeds for inc in INCIDENTS for g in G_]
+def switch_specs(N: dict, G_, seeds, xf=False) -> list:
+    return [spec(N[qk(q)], g, inc, q, s, xf=xf) for q in QS for s in seeds for inc in INCIDENTS for g in G_]
 
 
 def t3_specs(seed) -> list:
@@ -93,7 +100,8 @@ def t3_specs(seed) -> list:
 
 def eval_specs(arms: dict, G_, seeds) -> list:
     """arms: q -> {'N', 'FX', 'FB', 'IP': {inc: cid}}."""
-    sp = switch_specs({k: v["N"] for k, v in arms.items()}, G_, seeds)
+    N = {k: v["N"] for k, v in arms.items()}
+    sp = switch_specs(N, G_, seeds) + switch_specs(N, G_, seeds, xf=True)   # main runs + cross-fit replicates
     for q in QS:
         a = arms[qk(q)]
         for s in seeds:
@@ -113,8 +121,9 @@ def reuse_mismatch(stored: dict, s: dict, commit: str) -> list:
 class Pool:
     """D1's pool (v5b/d1/run_screen.py) for the D2 episode; launches up to max(2, workers // 4) runs per 0.25 s."""
 
-    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = ""):
+    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = "", verify=None):
         self.out, self.workers, self.log, self.commit = out, workers, log, commit
+        self.verify = verify   # called after every stage: code unchanged since launch (Addendum D2-A10)
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
         self.cpu = CpuSampler()
         (out / "runs").mkdir(parents=True, exist_ok=True)
@@ -199,6 +208,8 @@ class Pool:
         wall = time.time() - t_start
         self.stage_wall[stage] = {"runs": n_total, "wall_s": round(wall, 1)}
         self.log(f"[{stage}] finished {n_total} runs in {wall:.0f} s, failed {len(failed)}")
+        if self.verify is not None:
+            self.verify(stage)
         return res, failed
 
 
@@ -229,51 +240,76 @@ def fit_ip(res, seeds, G_, q, N) -> dict:
     return {"IP": out, "median_switch": tab}
 
 
-def cell_keys(res, seeds, G_, q, inc, arms) -> tuple:
-    """Per seed: the run keys of every arm in one incident cell; OR = per-seed best of the switch runs.
-    A seed enters only if all its runs exist (all |G| switch runs, FX, FB, NC). Returns (seeds, keys, or_pick)."""
+def cell_keys(res, seeds, G_, q, inc, arms, xfit: bool = False) -> tuple:
+    """Per seed: the run keys of every arm in one incident cell; OR = per-seed best of the switch runs (page).
+    xfit (Addendum D2-A1): also ORX = the main switch run of the target that is best on the seed's cross-fit
+    replicates, and IPX = IP's replicate run (noise report). A seed enters only if all its runs exist (all |G| switch
+    runs, with xfit also all |G| replicates, FX, FB, NC). Returns (seeds, keys, or_pick)."""
     N, ip = arms["N"], arms["IP"][inc]
-    ok, keys, pick = [], {a: [] for a in ARMS}, []
+    ok, keys, pick = [], {a: [] for a in ARMS + (("ORX", "IPX") if xfit else ())}, []
     for s in seeds:
         sw = {g: run_key(N, g, inc, q, s) for g in G_}
+        swx = {g: run_key(N, g, inc, q, s, xf=True) for g in G_} if xfit else {}
         k = {"N": sw[N], "IP": sw[ip], "FX": run_key(arms["FX"], None, inc, q, s),
              "FB": run_key(arms["FB"], None, inc, q, s), "NC": run_key(ctl.NC, None, inc, q, s)}
-        if not all(x in res for x in list(sw.values()) + list(k.values())):
+        if not all(x in res for x in list(sw.values()) + list(swx.values()) + list(k.values())):
             continue
         g_or, _ = ctl.oracle_pick({g: _d(res, x) for g, x in sw.items()})
         k["OR"] = sw[g_or]
+        if xfit:
+            g_x, _ = ctl.oracle_pick({g: _d(res, x) for g, x in swx.items()})
+            k["ORX"], k["IPX"] = sw[g_x], swx[ip]
         ok.append(s)
         pick.append(g_or)
-        for a in ARMS:
+        for a in keys:
             keys[a].append(k[a])
     return ok, keys, pick
 
 
+def eb_counts(r: dict) -> dict:
+    """Emergency braking / stop warnings by location (Addendum D2-A8, report only): at the meter (edge 2), on the
+    bottleneck edges 4 and 5, and on edges 4 and 5 while the incident is on. None if the run has no such record."""
+    e = r.get("emergency_by_edge")
+    if not e:
+        return {"meter_e2": None, "bottleneck_e45": None, "bottleneck_e45_incident": None}
+    a, i = e.get("all", {}), e.get("incident", {})
+    return {"meter_e2": a.get("2", 0), "bottleneck_e45": a.get("4", 0) + a.get("5", 0),
+            "bottleneck_e45_incident": i.get("4", 0) + i.get("5", 0)}
+
+
 def arm_row(res, keys) -> dict:
     v = lambda m: np.array([_d(res, k, m) for k in keys], float)
+    eb = [eb_counts(res[k]) for k in keys]
+    ebm = {f"median_eb_{x}": (float(np.median([e[x] for e in eb])) if all(e[x] is not None for e in eb) else None)
+           for x in ("meter_e2", "bottleneck_e45", "bottleneck_e45_incident")}
     return {"median_delay_s": float(np.median(v("delay_s"))), "median_served_vph": float(np.median(v("served_ctrl_vph"))),
             "median_ttt_ctrl_vehh": float(np.median(v("ttt_ctrl_vehh"))),
             "median_ttt_full_vehh": float(np.median(v("ttt_full_vehh"))),
             "n_invalid": int(sum(not res[k]["valid"] for k in keys)),
-            "n_teleport_runs": int(sum(res[k]["teleports"] > 0 for k in keys))}
+            "n_teleport_runs": int(sum(res[k]["teleports"] > 0 for k in keys)), **ebm}
 
 
-def incident_cells(res, seeds, G_, arms_by_q) -> tuple:
-    """Rule 5 cells and the operating map for every incident type x demand."""
+def incident_cells(res, seeds, G_, arms_by_q, xfit: bool = False) -> tuple:
+    """Rule 5 cells and the operating map for every incident type x demand. xfit: the cell must also pass with
+    the cross-fitted ORX (Addendum D2-A1); the replicate noise and the selection optimism are reported."""
     cells, opmap = {}, {}
     for inc in INCIDENTS:
         for q in QS:
             name, arms = f"{inc}_q{qk(q)}", arms_by_q[qk(q)]
-            ok, keys, pick = cell_keys(res, seeds, G_, q, inc, arms)
+            ok, keys, pick = cell_keys(res, seeds, G_, q, inc, arms, xfit=xfit)
             if not ok:
                 cells[name] = {"n": 0, "pass": False, "note": "no seed with all runs"}
                 opmap[name] = {"n_seeds": 0, "arms": {}}
                 continue
-            dl = {a: np.array([_d(res, k) for k in keys[a]], float) for a in ARMS}
-            invalid = [any(not res[keys[a][i]]["valid"] for a in ("OR",) + stats.FALLBACKS) for i in range(len(ok))]
-            cells[name] = stats.cell_with_invalid_check(dl["OR"], {a: dl[a] for a in stats.FALLBACKS}, invalid)
-            rows = {a: arm_row(res, keys[a]) for a in ARMS}
-            for a in ARMS:
+            dl = {a: np.array([_d(res, k) for k in keys[a]], float) for a in keys}
+            fb = {a: dl[a] for a in stats.FALLBACKS}
+            invalid = lambda o: [any(not res[keys[a][i]]["valid"] for a in (o,) + stats.FALLBACKS) for i in range(len(ok))]
+            cells[name] = stats.cell_with_invalid_check(dl["OR"], fb, invalid("OR"))
+            if xfit:
+                cells[name] = stats.combine_crossfit(cells[name], stats.cell_with_invalid_check(dl["ORX"], fb, invalid("ORX")))
+            shown = ARMS + (("ORX",) if xfit else ())
+            rows = {a: arm_row(res, keys[a]) for a in shown}
+            for a in shown:
                 if a != "OR":
                     rows[a]["vs_OR"] = stats.paired(dl[a], dl["OR"])   # rel = (arm - OR) / arm
             sw_med = {g: float(np.median([_d(res, run_key(arms["N"], g, inc, q, s)) for s in ok])) for g in G_}
@@ -283,6 +319,14 @@ def incident_cells(res, seeds, G_, arms_by_q) -> tuple:
                            "median_switch_by_target": sw_med,
                            "n_invalid_switch_runs": int(sum(not res[run_key(arms["N"], g, inc, q, s)]["valid"]
                                                             for g in G_ for s in ok))}
+            if xfit:
+                c = cells[name]
+                opmap[name]["orx_picks"] = dict(Counter(res[k]["post"] for k in keys["ORX"]).most_common())
+                opmap[name]["replicate_noise_IP"] = {   # IP's main run vs its replicate (same demand and incident)
+                    "median_abs_rel": float(np.median(np.abs(dl["IP"] - dl["IPX"]) / dl["IP"])),
+                    "p90_abs_rel": float(np.percentile(np.abs(dl["IP"] - dl["IPX"]) / dl["IP"], 90))}
+                opmap[name]["selection_optimism_HD"] = {   # page OR minus cross-fitted ORX, per fallback
+                    a: c["per_fallback"][a]["HD"] - c["crossfit"]["per_fallback"][a]["HD"] for a in stats.FALLBACKS}
     return cells, opmap
 
 
@@ -370,9 +414,10 @@ def stage_tune(pool, seeds, G_) -> dict:
         arms[qk(q)] = {"N": f["N"], "FX": f["FX"], "FB": f["FB"], "IP": ip["IP"]}
         tables[qk(q)] = {"median_none": f["median_none"], "median_incident_pooled": f["median_incident_pooled"],
                          "median_switch": ip["median_switch"]}
-    edge = {c for c in (ctl.CONST[0], ctl.CONST[-1])}
-    at_edge = sorted({f"{k}:{x}={v[x]}" for k, v in arms.items() for x in ("N", "FX") if v[x] in edge} |
-                     {f"{k}:IP_{i}={c}" for k, v in arms.items() for i, c in v["IP"].items() if c in edge})
+    at_edge = sorted({f"{k}:{x}={v[x]} ({', '.join(ctl.grid_edges(v[x]))})" for k, v in arms.items()
+                      for x in ("N", "FX", "FB") if ctl.grid_edges(v[x])} |
+                     {f"{k}:IP_{i}={c} ({', '.join(ctl.grid_edges(c))})" for k, v in arms.items()
+                      for i, c in v["IP"].items() if ctl.grid_edges(c)})
     return {"seeds": [seeds[0], seeds[-1]], "arms": arms, "tables": tables, "grid_edge_report_only": at_edge,
             "failed_runs": failA + failB, "n_runs": len(res)}
 
@@ -380,7 +425,7 @@ def stage_tune(pool, seeds, G_) -> dict:
 def stage_eval(pool, seeds, G_, arms) -> dict:
     sp = eval_specs(arms, G_, seeds)
     res, failed = pool.run(sp, "eval")
-    cells, opmap = incident_cells(res, seeds, G_, arms)
+    cells, opmap = incident_cells(res, seeds, G_, arms, xfit=True)
     return {"seeds": [seeds[0], seeds[-1]], "cells": cells, "operating_map": opmap,
             "none_cell_report_only": none_cell(res, seeds, arms), "failed_runs": failed, "n_runs": len(sp),
             "teleport_runs": int(sum(r["teleports"] > 0 for r in res.values())),
@@ -410,7 +455,7 @@ def summary_md(result: dict) -> str:
                  f"{t4['N']} / {t4['best_fixed']} | {_pct(t4['rel'])} [{_pct(t4['rel_ci'][0])}, {_pct(t4['rel_ci'][1])}] | "
                  f"{'PASS' if t4['pass'] else 'fail'} |")
     t1 = tc["T1"]["cells"]
-    L += ["", "T0 must pass in every incident cell; T4 in at least one. T1 teleport runs per cell: " +
+    L += ["", "T0 and T4 must pass in every incident cell (T4: Addendum D2-A5). T1 teleport runs per cell: " +
           ", ".join(f"{c} {v['n_with_teleports']}/{v['n_runs']}" for c, v in t1.items()) +
           f" ({'PASS' if tc['T1']['pass'] else 'FAIL'}). T3 {'PASS' if tc['T3_pass'] else 'FAIL'}. "
           f"Tool-check arms: {tc['arms']}", ""]
@@ -427,20 +472,28 @@ def summary_md(result: dict) -> str:
             return f"{_pct(p['HD'])} [{_pct(p['HD_ci'][0])}, {_pct(p['HD_ci'][1])}]"
 
         yn = lambda b: "yes" if b else "no"
-        L += ["## Headroom HD_f = (f - OR) / f, % [95 % CI] (Rule 5)", "",
+        L += ["## Headroom HD_f = (f - OR) / f, % [95 % CI] (Rule 5 and Addendum D2-A1)", "",
               "A cell passes only if HD >= 10 % with CI lower bound > 0 against every fallback (FX, FB, IP), with and "
-              "without seeds that have an invalid OR/FX/FB/IP run.", "",
-              "| cell | n | OR | vs FX | vs FB | vs IP | binding | inv seeds | pass all | pass valid | pass |",
-              "|---|---|---|---|---|---|---|---|---|---|---|"]
+              "without seeds that have an invalid OR/FX/FB/IP run, BOTH with the page's OR (per-seed best run, scored "
+              "on that run) and with the cross-fitted ORX (target picked on the SUMO-RNG replicate, scored on the "
+              "main run).", "",
+              "| cell | OR used | n | median | vs FX | vs FB | vs IP | binding | inv seeds | pass all | pass valid | pass |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for name, c in ev["cells"].items():
             if not c["n"]:
-                L.append(f"| {name} | 0 | " + " | ".join(["-"] * 8) + " | no |")
+                L.append(f"| {name} | - | 0 | " + " | ".join(["-"] * 8) + " | no |")
                 continue
-            L.append(f"| {name} | {c['n']} | {c['med_OR']:.1f} | {hd(c, 'FX')} | {hd(c, 'FB')} | {hd(c, 'IP')} | "
-                     f"{c['binding']} | {c['n_invalid_seeds']} | {yn(c['pass_all_seeds'])} | "
-                     f"{yn(c['pass_valid_only'])} | {yn(c['pass'])} |")
+            for lab, x in (("OR (page)", c), ("ORX (cross-fit)", c.get("crossfit"))):
+                if x is None:
+                    continue
+                L.append(f"| {name} | {lab} | {x['n']} | {x['med_OR']:.1f} | {hd(x, 'FX')} | {hd(x, 'FB')} | "
+                         f"{hd(x, 'IP')} | {x['binding']} | {x['n_invalid_seeds']} | {yn(x['pass_all_seeds'])} | "
+                         f"{yn(x['pass_valid_only'])} | {yn(x['pass'])} |")
+            L.append(f"| {name} | **cell** | | | | | | | | | | **{yn(c['pass'])}** |")
+        arms_shown = ARMS + (("ORX",) if any("ORX" in m["arms"] for m in ev["operating_map"].values()) else ())
         L += ["", "## Operating map (median delay s / served veh/h / TTT ctrl veh h; invalid runs)", "",
-              "| cell | " + " | ".join(ARMS) + " | controllers | OR picks (top 3) |", "|---" * (len(ARMS) + 3) + "|"]
+              "| cell | " + " | ".join(arms_shown) + " | controllers | OR picks (top 3) |",
+              "|---" * (len(arms_shown) + 3) + "|"]
 
         def cell(r):
             inv = f"; inv {r['n_invalid']}" if r["n_invalid"] else ""
@@ -449,8 +502,22 @@ def summary_md(result: dict) -> str:
         for name, m in ev["operating_map"].items():
             if m["arms"]:
                 top = dict(list(m["or_picks"].items())[:3])
-                L.append(f"| {name} | " + " | ".join(cell(m["arms"][a]) for a in ARMS) +
+                L.append(f"| {name} | " + " | ".join(cell(m["arms"][a]) for a in arms_shown) +
                          f" | {m['controllers']} | {top} |")
+        L += ["", "Noise and selection (report only, Addendum D2-A1): IP main vs replicate |rel diff| median / p90; "
+              "HD(OR) - HD(ORX) per fallback, points:", ""]
+        for name, m in ev["operating_map"].items():
+            if "replicate_noise_IP" in m:
+                n_, so = m["replicate_noise_IP"], m["selection_optimism_HD"]
+                L.append(f"- {name}: {_pct(n_['median_abs_rel'])} / {_pct(n_['p90_abs_rel'])} %; "
+                         + ", ".join(f"{a} {_pct(v)}" for a, v in so.items()))
+        L += ["", "Emergency braking / stops, median per run (Addendum D2-A8, report only): meter edge 2 / "
+              "bottleneck edges 4+5 / edges 4+5 during the incident:", ""]
+        for name, m in ev["operating_map"].items():
+            if m["arms"]:
+                L.append(f"- {name}: " + "; ".join(
+                    f"{a} {r.get('median_eb_meter_e2')} / {r.get('median_eb_bottleneck_e45')} / "
+                    f"{r.get('median_eb_bottleneck_e45_incident')}" for a, r in m["arms"].items()))
         L += ["", "No-incident cell (report only; IP = OR = N):", ""]
         for name, m in ev["none_cell_report_only"].items():
             if m.get("n_seeds"):
@@ -498,6 +565,61 @@ def write_sentinel(out: Path, commit: str, page_sha: str, args: dict, sentinel: 
                    "time": time.strftime("%Y-%m-%d %H:%M:%S %z")}, fh, indent=1)
 
 
+def tcheck_block_reason(entries: list, commit: str):
+    """Addendum D2-A9: the reason the tool checks may not run again, or None. A recorded failure of T0 or T4 with
+    T3 passed is final (STOP). After a T1 or T3 failure (page: fix the code, then repeat), the checks may run again
+    only at another commit than the failed attempt."""
+    for e in entries:
+        if e.get("T3_pass") and not (e.get("T0_pass") and e.get("T4_pass")):
+            return f"the tool checks ended in {e.get('decision')} at {str(e.get('code_commit'))[:10]}: STOP is final"
+    fails = [e for e in entries if not e.get("pass")]
+    if fails and fails[-1].get("code_commit") == commit:
+        return (f"the tool checks failed ({fails[-1].get('decision')}) at this commit {commit[:10]}: "
+                "fix the code (T1: the incident code, with a test) and commit before repeating them")
+    return None
+
+
+def _read_record(record: Path) -> list:
+    return json.loads(record.read_text()) if record.exists() else []
+
+
+def check_tcheck_record(commit: str, record: Path = None) -> None:
+    why = tcheck_block_reason(_read_record(record or TCHECK_RECORD), commit)
+    if why:
+        raise SystemExit(f"screen D2 tool checks refused: {why} ({record or TCHECK_RECORD})")
+
+
+def append_tcheck_record(out: Path, commit: str, page_sha: str, tc: dict, decision: str, record: Path = None) -> None:
+    """Append every non-smoke tool-check outcome (pass or not) to the record (atomic replace)."""
+    record = record or TCHECK_RECORD
+    entries = _read_record(record)
+    entries.append({"out": str(out.resolve()), "code_commit": commit, "page_sha256": page_sha, "decision": decision,
+                    "pass": bool(tc["pass"]), "T0_pass": bool(tc["T0"]["pass"]), "T1_pass": bool(tc["T1"]["pass"]),
+                    "T3_pass": bool(tc["T3_pass"]), "T4_pass": bool(tc["T4"]["pass"]),
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S %z")})
+    record.parent.mkdir(parents=True, exist_ok=True)
+    tmp = record.with_suffix(f".tmp{os.getpid()}")
+    tmp.write_text(json.dumps(entries, indent=1))
+    tmp.replace(record)
+
+
+def tree_state() -> tuple:
+    """(HEAD, sha256 of git status --porcelain + git diff HEAD): changes when a commit, checkout or edit happens."""
+    h = hashlib.sha256((_git("status", "--porcelain") + "\0" + _git("diff", "HEAD")).encode()).hexdigest()
+    return _git("rev-parse", "HEAD"), h
+
+
+def make_verify(state0: tuple, log=print):
+    """Addendum D2-A10: children import the work-tree code, so the tree must not change during the screen."""
+    def verify(where: str) -> None:
+        now = tree_state()
+        if now != state0:
+            log(f"code changed during the screen ({where}): HEAD {state0[0][:10]} -> {now[0][:10]}")
+            raise SystemExit(f"FIX/rerun: HEAD or the work tree changed during the screen (at {where}); "
+                             "the stored runs may mix code versions")
+    return verify
+
+
 def check_launch(a, dirty: bool) -> None:
     if not 1 <= a.workers <= 100:
         raise SystemExit("--workers must be in 1..100")
@@ -519,7 +641,7 @@ def run_counts(n_g: int = len(ctl.G)) -> dict:
     s = {k: len(v) for k, v in SEEDS.items()}
     tc = (n_g + 1) * ncond * nq * s["tcheck"] + 2 * len(T3_RUNS) + n_g * ninc * nq * s["tcheck"]
     tu = n_g * ncond * nq * s["tune"] + n_g * ninc * nq * s["tune"]
-    ev = n_g * ninc * nq * s["eval"] + 3 * ninc * nq * s["eval"] + 4 * nq * s["eval"]
+    ev = 2 * n_g * ninc * nq * s["eval"] + 3 * ninc * nq * s["eval"] + 4 * nq * s["eval"]   # x2: replicates
     return {"tcheck": tc, "tune": tu, "eval": ev, "total": tc + tu + ev}
 
 
@@ -553,22 +675,29 @@ def smoke_report(out: Path, pool) -> dict:
             "screen_wall_estimate_16w_s": rc["total"] / (thr * 16 / pool.workers) if thr == thr else None}
 
 
-def main(argv=None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--cpu-limit", type=float, default=0.90)
+    ap.add_argument("--cpu-limit", type=float, default=CPU_LIMIT_DEFAULT)
     ap.add_argument("--nice", type=int, default=19)
     ap.add_argument("--smoke", action="store_true", help="smoke seeds 7,400,000-003, G subset, <= 8 workers")
     ap.add_argument("--confirm-run-once", action="store_true", help="required for the screen (evaluation seeds)")
     ap.add_argument("--resume", action="store_true")
-    a = ap.parse_args(argv)
+    return ap
+
+
+def main(argv=None) -> int:
+    a = build_parser().parse_args(argv)
     out = Path(a.out)
     commit, dirty = _git("rev-parse", "HEAD"), bool(_git("status", "--porcelain"))
+    state0 = tree_state()
     check_launch(a, dirty)
     check_out_dir(out, a.resume)
     if not a.smoke:
         check_sentinel(out, a.resume, commit)
+        if not SENTINEL.exists():   # evaluation not started: the tool checks will (re)run or be reused
+            check_tcheck_record(commit)
     os.nice(max(0, a.nice - os.nice(0)))
     out.mkdir(parents=True, exist_ok=True)
     logf = out / "run.log"
@@ -580,7 +709,8 @@ def main(argv=None) -> int:
             fh.write(line + "\n")
 
     net.build()   # build the cached network once, before any worker starts
-    pool = Pool(out, a.workers, a.cpu_limit, log, commit=commit)
+    verify = make_verify(state0, log)
+    pool = Pool(out, a.workers, a.cpu_limit, log, commit=commit, verify=verify)
     page = REPO_ROOT / PAGE
     G_ = G_SMOKE if a.smoke else ctl.G
     seeds = {k: SEEDS["smoke"] for k in ("tcheck", "tune", "eval")} if a.smoke else SEEDS
@@ -590,6 +720,8 @@ def main(argv=None) -> int:
     t0 = time.time()
     tc = stage_tcheck(pool, seeds["tcheck"], G_)
     result["tcheck"] = tc
+    if not a.smoke and not SENTINEL.exists():
+        append_tcheck_record(out, commit, result["page_sha256"], tc, "PASS" if tc["pass"] else tcheck_decision(tc))
     if not tc["pass"] and not a.smoke:
         result["decision"] = tcheck_decision(tc)
     else:
@@ -611,6 +743,7 @@ def main(argv=None) -> int:
         (out / "summary.md").write_text(summary_md(result))
         log(f"smoke done: {out / 'smoke.json'}")
         return 0
+    verify("before result.json")
     (out / "summary.md").write_text(summary_md(result))
     tmp = out / "result.json.tmp"
     tmp.write_text(json.dumps(result, indent=1))

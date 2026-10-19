@@ -60,6 +60,16 @@ def best_by_median(delays: dict, among=G) -> str:
     return min(cand, key=lambda c: (float(np.median(np.asarray(delays[c], float))), G.index(c)))
 
 
+def grid_edges(cid: str) -> list:
+    """The grid edges controller cid sits on (report only; page Addendum D2-A6): the lowest / highest constant rate,
+    or the lowest / highest K_F or n_crit of the feedback grid. Empty for an interior controller."""
+    p = parse(cid)
+    if p[0] == "const":
+        return [f"rate={int(p[1])}"] if p[1] in (RATES[0], RATES[-1]) else []
+    out = [f"K_F={int(p[1])}"] if p[1] in (KF_GRID[0], KF_GRID[-1]) else []
+    return out + ([f"n_crit={int(p[2])}"] if p[2] in (NCRIT_GRID[0], NCRIT_GRID[-1]) else [])
+
+
 def oracle_pick(per_g: dict) -> tuple:
     """OR for one seed: per_g = cid -> delay of the run 'N before onset, cid after onset'.
     Returns (cid, delay) with the lowest delay (hindsight); ties go to the earlier one in G order."""

@@ -10,6 +10,9 @@ A run is (pre, post, incident, q, seed):
 - post in G or None: at the incident onset (perfect detection: the tick at which the incident is applied),
   switch to `post` (v5b/d2/controllers.py: switch). None = no switching.
 Per 1-s tick: incident.tick -> switch (if 'on' and post) -> meter.step -> advance 1 s.
+Cross-fit replicate (page Addendum D2-A1): xf=True runs the same demand file and the same incident window (both
+from `seed`) with SUMO's own RNG seeded by seed + XF_SUMO_OFFSET (redraws speedFactor and departLane="random").
+Emergency braking / stops are also counted by edge from the SUMO log (page Addendum D2-A8; report only).
 Primary metric (Rule 4): door-to-door delay = mean over all generated vehicles of tripinfo departDelay
 (origin / insertion queue) + timeLoss (incl. waiting at the meter), after the drain.
 """
@@ -18,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -31,9 +35,28 @@ from v5b.d2 import controllers as ctl
 from v5b.d2.incidents import CONDITIONS, NONE, Incident, incident_window
 
 
-def run_key(pre: str, post, incident: str, q: float, seed: int, rep=None) -> str:
+XF_SUMO_OFFSET = 10_000_000   # SUMO --seed of a cross-fit replicate = seed + this (outside every seed block)
+_EMERG = re.compile(r"performs emergency (braking|stop).*?lane '([^']+)'.*?time=([-+\d.]+)")
+
+
+def run_key(pre: str, post, incident: str, q: float, seed: int, rep=None, xf: bool = False) -> str:
     k = f"{pre}" + (f"-{post}" if post else "") + f"_{incident}_q{int(q)}_s{seed}"
-    return k + (f"_rep{rep}" if rep is not None else "")
+    return k + (f"_rep{rep}" if rep is not None else "") + ("_xf" if xf else "")
+
+
+def emergency_by_edge(lines, t_on=None, t_off=None) -> dict:
+    """SUMO 'performs emergency braking / stop' warnings counted by edge (lane id without its index):
+    'all' over the run, 'incident' only those with t_on <= time < t_off (empty without an incident)."""
+    out = {"all": {}, "incident": {}}
+    for line in lines:
+        m = _EMERG.search(line)
+        if not m:
+            continue
+        edge, t = m.group(2).rsplit("_", 1)[0], float(m.group(3).rstrip("."))
+        out["all"][edge] = out["all"].get(edge, 0) + 1
+        if t_on is not None and t_off is not None and t_on <= t < t_off:
+            out["incident"][edge] = out["incident"].get(edge, 0) + 1
+    return out
 
 
 def check_run(pre: str, post, incident: str) -> None:
@@ -51,7 +74,7 @@ def check_run(pre: str, post, incident: str) -> None:
 
 def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Path, warmup_s: float = 40.0,
                 control_s: float = 900.0, t_drain_max: float = 7200.0, av_share: float = 0.1,
-                keep_files: bool = False) -> dict:
+                keep_files: bool = False, xf: bool = False) -> dict:
     check_run(pre, post, incident)
     t_wall0 = time.time()
     run_dir = Path(run_dir)
@@ -59,12 +82,13 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
     files = plant.files()
     t_total = warmup_s + control_s
     dem = plant.demand(seed, [(0.0, t_total, q)], av_share=av_share)
-    tag = run_key(pre, post, incident, q, seed) + f"_pid{os.getpid()}"
+    tag = run_key(pre, post, incident, q, seed, xf=xf) + f"_pid{os.getpid()}"
+    sumo_seed = seed + XF_SUMO_OFFSET if xf else seed
     rou = run_dir / f"routes_{tag}.rou.xml"
     trip = run_dir / f"tripinfo_{tag}.xml"
     dem.write(rou)
     sim = SumoSim(files["net"], rou, run_dir, dem, additional=[files["add"]], step_length=plant.STEP_LENGTH,
-                  checkpoint_s=300.0, seed=seed, extra_args=["--tripinfo-output", str(trip)])
+                  checkpoint_s=300.0, seed=sumo_seed, extra_args=["--tripinfo-output", str(trip)])
     onset, duration = incident_window(seed, warmup_s, control_s)
     inc = Incident(incident, onset, duration, api=ls)
     log = []   # meter updates: (t, n4 = vehicles on edge 4, q before the update)
@@ -112,7 +136,11 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
     delays = [dd + tl for dd, tl in trips]
     valid = bool(drained) and len(trips) == gen and res["health"]["status"] != "FAIL"
     n_eb = sum(v for k, v in res["sumo_warning_categories"].items() if "emergency" in k)
-    out = {"pre": pre, "post": post, "incident": incident, "q": q, "seed": seed,
+    try:
+        eb_edge = emergency_by_edge(sim.log_file.read_text(errors="replace").splitlines(), inc.t_on, inc.t_off)
+    except OSError:
+        eb_edge = None
+    out = {"pre": pre, "post": post, "incident": incident, "q": q, "seed": seed, "xf": bool(xf), "sumo_seed": sumo_seed,
            "onset_s": onset, "duration_s": duration, "t_on": inc.t_on, "t_off": inc.t_off,
            "incident_on_at_control_end": still_on, "incident_log": inc.log,
            "t_switch": t_switch, "q_at_switch": q_at_switch,
@@ -120,7 +148,7 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
            "depart_delay_s": float(np.mean([d for d, _ in trips])) if trips else float("nan"),
            **m, "generated": gen, "n_trips": len(trips), "drained": drained, "valid": valid,
            "teleports": res["teleports"], "collisions": res["collisions"], "emergency_stops": res["emergency_stops"],
-           "emergency_warnings": n_eb, "health": res["health"]["status"], "health_codes": sorted(res["health"]["by_code"]),
+           "emergency_warnings": n_eb, "emergency_by_edge": eb_edge, "health": res["health"]["status"], "health_codes": sorted(res["health"]["by_code"]),
            "hash": res["hash"], "sim_wall_s": res["wall_s"], "meter_log": log}
     if not keep_files:
         for f in (rou, trip):
@@ -134,14 +162,14 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--spec", required=True, help="JSON: pre, post, incident, q, seed [, key, code_commit]")
+    ap.add_argument("--spec", required=True, help="JSON: pre, post, incident, q, seed [, xf, key, code_commit]")
     ap.add_argument("--out", required=True)
     ap.add_argument("--run-dir", required=True)
     ap.add_argument("--keep-files", action="store_true")
     a = ap.parse_args(argv)
     spec = json.loads(a.spec)
     res = run_episode(spec["pre"], spec.get("post"), spec["incident"], float(spec["q"]), int(spec["seed"]),
-                      Path(a.run_dir), keep_files=a.keep_files)
+                      Path(a.run_dir), keep_files=a.keep_files, xf=bool(spec.get("xf", False)))
     res["key"] = spec.get("key")
     res["code_commit"] = spec.get("code_commit")   # checked before any reuse (resume)
     out = Path(a.out)

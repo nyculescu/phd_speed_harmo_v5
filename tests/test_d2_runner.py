@@ -25,13 +25,16 @@ def test_seed_blocks_as_approved_and_disjoint():
 
 def test_job_lists():
     rc = rs.run_counts()
-    assert rc == {"tcheck": 7130, "tune": 7000, "eval": 8000, "total": 22130}
+    assert rc == {"tcheck": 7130, "tune": 7000, "eval": 15000, "total": 29130}   # Addendum D2-A1: +7,000 replicates
     arms = {"1600": {"N": "c1600", "FX": "c1400", "FB": "f20_8", "IP": {}},
             "2000": {"N": "c1600", "FX": "c1600", "FB": "f20_8", "IP": {}}}
     ev = rs.eval_specs(arms, ctl.G, rs.SEEDS["eval"])
-    assert len({s["key"] for s in ev}) == len(ev) == 8000 - 50   # q=2000: FX == N without incident (de-duplicated)
+    assert len({s["key"] for s in ev}) == len(ev) == 15000 - 50   # q=2000: FX == N without incident (de-duplicated)
     assert all(s["seed"] in rs.SEEDS["eval"] for s in ev)
-    sw = [s for s in ev if s["post"]]
+    sw = [s for s in ev if s["post"] and not s["xf"]]
+    xf = [s for s in ev if s["xf"]]
+    assert len(xf) == len(sw) and {(s["pre"], s["post"], s["incident"], s["q"], s["seed"]) for s in xf} == \
+        {(s["pre"], s["post"], s["incident"], s["q"], s["seed"]) for s in sw} and all(s["key"].endswith("_xf") for s in xf)
     assert len(sw) == 35 * 2 * 2 * 50 and {s["pre"] for s in sw} == {"c1600"} and {s["incident"] for s in sw} == set(INCIDENTS)
     fx = rs.fixed_specs(ctl.G, ("none", "slow", "block"), rs.SEEDS["tcheck"], True)
     assert len(fx) == 36 * 3 * 2 * 20 and {s["pre"] for s in fx} == set(ctl.G) | {"NC"}

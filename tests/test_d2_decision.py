@@ -82,9 +82,12 @@ def test_t4_logic():
     c = stats.t4_cell(n, n, "c1600", "c1600")                    # the incident-best is N itself
     assert not c["pass"] and c["same_controller"]
     cells = {"slow_q1600": stats.t4_cell(n, n * 0.95, "a", "b"), "block_q2000": stats.t4_cell(n, n * 0.8, "a", "b")}
-    assert stats.t4_overall(cells)["pass"] and stats.t4_overall(cells)["n_pass"] == 1
+    assert not stats.t4_overall(cells)["pass"] and stats.t4_overall(cells)["n_pass"] == 1   # D2-A5: every cell
+    cells["slow_q1600"] = stats.t4_cell(n, n * 0.85, "a", "b")
+    assert stats.t4_overall(cells)["pass"] and stats.t4_overall(cells)["n_pass"] == 2
     cells["block_q2000"] = stats.t4_cell(n, n, "a", "a")
     assert not stats.t4_overall(cells)["pass"]
+    assert not stats.t4_overall({})["pass"]
 
 
 def test_t0_every_cell_and_t1_per_cell():

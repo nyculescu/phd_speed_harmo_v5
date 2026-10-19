@@ -8,6 +8,10 @@ Kinds come from the archive's perturbations (claude/vsl-lab-core@2a79e5e vsl_lab
   the paper), so the feeders 3_2 / 3_3 have no way out; a build probe on smoke seed 7,400,000 (q = 2000, NC,
   480 s) gave 54 teleports, an undrained network, and stuck vehicles even after the permission was restored.
   The crawl keeps the lane physically passable at walking pace (0 teleports in the probes, 4 smoke seeds x 2 q).
+  It is NOT a closure (page Addendum D2-A2): each vehicle applies its speedFactor to BLOCK_MPS, the lane keeps
+  admitting traffic, and vehicles on the lanes that feed 4_1 must cross it at a crawl (no lane changing). The
+  review's probes found it more severe than a closure; a near-zero speed closure with --time-to-teleport above
+  the block duration ran without teleports in those probes (an author option, not implemented).
 
 Timing (Rule 2): onset ~ U(t_ctrl0, t_ctrl0 + control_s / 3), duration ~ U(120, 480) s, from one seeded stream
 rng(seed + INCIDENT_SALT). They depend on the seed only, so every arm and both incident types of a seed share the

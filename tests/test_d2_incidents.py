@@ -131,7 +131,8 @@ def test_run_checks():
 
 # ---------------------------------------------------------------- SUMO smoke (smoke seed only)
 SUMO_RUNS = {"block_fixed": ("c1600", None, "block"), "slow_fixed": ("c1600", None, "slow"),
-             "block_to_c800": ("c1600", "c800", "block"), "slow_to_f40": ("c1600", "f40_10", "slow")}
+             "block_to_c800": ("c1600", "c800", "block"), "slow_to_f40": ("c1600", "f40_10", "slow"),
+             "block_to_c800_xf": ("c1600", "c800", "block")}   # cross-fit replicate (Addendum D2-A1)
 
 
 @pytest.fixture(scope="module")
@@ -139,7 +140,8 @@ def sumo_runs(tmp_path_factory):
     d = tmp_path_factory.mktemp("d2_sumo")
     procs = {}
     for name, (pre, post, inc) in SUMO_RUNS.items():
-        s = {"pre": pre, "post": post, "incident": inc, "q": 2000.0, "seed": SMOKE_SEED, "key": name}
+        s = {"pre": pre, "post": post, "incident": inc, "q": 2000.0, "seed": SMOKE_SEED, "key": name,
+             "xf": name.endswith("_xf")}
         procs[name] = subprocess.Popen([PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(s),
                                         "--out", str(d / f"{name}.json"), "--run-dir", str(d / name)],
                                        cwd=REPO_ROOT, env=clean_sumo_env(), stdout=subprocess.DEVNULL,
@@ -182,3 +184,20 @@ def test_sumo_switch_at_onset(sumo_runs):
     for t, n4, q_before in after:                                # the K_F = 40, n_crit = 10 law after the switch
         assert q_before == pytest.approx(q, abs=1e-3)
         q = min(max(q + 40.0 * (10.0 - n4), 200.0), 4000.0)
+
+
+def test_sumo_crossfit_replicate(sumo_runs):
+    """Addendum D2-A1: same demand and incident window, SUMO RNG seeded by seed + XF_SUMO_OFFSET, so the run differs."""
+    m, x = sumo_runs["block_to_c800"], sumo_runs["block_to_c800_xf"]
+    assert (m["xf"], m["sumo_seed"]) == (False, SMOKE_SEED)
+    assert (x["xf"], x["sumo_seed"]) == (True, SMOKE_SEED + episode.XF_SUMO_OFFSET)
+    assert (x["t_on"], x["t_off"], x["generated"]) == (m["t_on"], m["t_off"], m["generated"])
+    assert x["t_switch"] == m["t_switch"] and x["hash"] != m["hash"]
+
+
+def test_sumo_emergency_by_edge_recorded(sumo_runs):
+    """Addendum D2-A8: per-edge counts from the SUMO log add up to SUMO's emergency warnings."""
+    for name, r in sumo_runs.items():
+        e = r["emergency_by_edge"]
+        assert set(e) == {"all", "incident"}, name
+        assert sum(e["all"].values()) >= sum(e["incident"].values())
