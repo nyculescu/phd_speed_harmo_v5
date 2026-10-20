@@ -1,6 +1,6 @@
 # P1b addendum to the P1 protocol (realism and fairness re-run)
 
-Status: **DRAFT (V107), awaiting one lean review and the author's approval.**
+Status: **APPROVED (V108, 2026-10-20): author decisions 1–5 = all defaults; the review fixes R1–R7 below override the sections above where they differ.**
 - Everything not changed here is exactly as in `p1_incident_information.md`, V99 plus the V100 addenda: arms, statements S1a/S1b/S2/S3, statistics, both views, bracket, placebo, imperfection map, run-once, frozen worktree.
 - P1 stays in the record as the earlier run. P1b becomes the paper's main result. Both are reported.
 
@@ -56,3 +56,26 @@ Status: **DRAFT (V107), awaiting one lean review and the author's approval.**
 - **Time:** about 12–18 h at 32 workers.
 - **Mitigations if needed:** drop R = 4, or the runner rows at s = 10 %.
 - **Lean mode (V107):** one reviewer for this page; one build agent; one code reviewer; one verifier.
+
+## Review fixes (lean review, V108; these override B1–B6 where they differ)
+
+- **R1 (B3/B6, cost):**
+  - G_PI = the **10 PI controllers with the lowest pooled median on the P1b tuning seeds, per q**, fixed before evaluation.
+  - A = (G ∪ G_PI) × {stay, back} = 120 actions; ties are broken in the order G, then G_PI.
+  - Estimate: about 11–13 h at 32 workers.
+- **R2 (B1, buildability):**
+  - c(q) = max(11, 28,800 / q) s;
+  - **every law clips q to [q_min, 2,618] veh/h** (anti-windup);
+  - signal: G if phase < 6, y if 6 ≤ phase < 9, otherwise r;
+  - a unit test checks that the continuous rule never cuts an amber, or a red shorter than 2 s.
+- **R3 (switch into a PI plan):** the commanded q, the signal anchor and the 30-s update grid carry over; n(k−1) = n(k) at the plan's first update.
+- **R4 (runners):**
+  - runners are drawn **per vehicle in the route file** from rng(seed + a new salt), so the same vehicles run in every arm;
+  - `jmDriveAfterRedTime` ≥ 0 also makes them always drive at amber (SUMO docs);
+  - the pre-data test must show that the red age counts from the actual onset of `r`, even though the state is set every tick;
+  - report the realised red-crossing share and collisions.
+  - The share s is a model parameter, not a field violation rate. **Context:** Madison Beltline (WisDOT, 2005): 0.9–9.0 % of single-occupant vehicles did not stop at metered red; temporary work-zone meters: 45.5–75.0 % compliance (Edara et al. 2012). s ∈ {10 %, 30 %} brackets these; no third row.
+- **R5 (B2 scope):** at each s, run every L0 arm (N, FX, FB, PI, AD), ID and IP. Rows: ID vs each L0 arm, IP vs ID, and each arm vs itself at s = 0. 95 % CIs; descriptive.
+- **R6:** report the realised discharge (vehicles crossing on green, amber and red) against the commanded rate, per arm.
+- **R7:** queue metres = the distance from the stop line to the last halted vehicle on edges 1–2.
+- **Seeds (decision 5):** approved as in B5, all inside the approved v5.B block, with 700–999 untouched. Disclosed: the tool-check range sits in the block's tuning range, and tuning in its validation range.
