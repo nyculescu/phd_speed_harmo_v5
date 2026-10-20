@@ -32,6 +32,7 @@ import numpy as np
 
 from v5b.d1 import plant
 from v5b.d1.episode import DET_EDGE, FBMeter, parse_tripinfo
+from v5b.d1.meter_signal import LEGACY
 from v5b.d1.sumo_runner import SumoSim
 from v5b.d2 import controllers as ctl
 from v5b.d2.incidents import CONDITIONS, NONE, Incident, incident_window
@@ -78,7 +79,7 @@ def check_run(pre: str, post, incident: str, back: bool = False) -> None:
 
 def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Path, warmup_s: float = 40.0,
                 control_s: float = 900.0, t_drain_max: float = 7200.0, av_share: float = 0.1,
-                keep_files: bool = False, xf: bool = False, back: bool = False) -> dict:
+                keep_files: bool = False, xf: bool = False, back: bool = False, meter_signal: str = LEGACY) -> dict:
     check_run(pre, post, incident, back)
     t_wall0 = time.time()
     run_dir = Path(run_dir)
@@ -108,7 +109,7 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
     sim.asserts.append(plant.assert_all_green)
     sim.asserts.append(inc.assert_state)
     if pre != ctl.NC:   # the TLS is driven by the meter, not held at all-green
-        meter = FBMeter(read=reader, **ctl.meter_kwargs(pre))
+        meter = FBMeter(read=reader, signal=meter_signal, **ctl.meter_kwargs(pre))
         sim.asserts.remove(plant.assert_all_green)
     sim.run_until(sim.t + warmup_s)   # uncontrolled warm-up
     t_ctrl0, arr0 = sim.t, sim.arrived
@@ -151,7 +152,7 @@ def run_episode(pre: str, post, incident: str, q: float, seed: int, run_dir: Pat
     out = {"pre": pre, "post": post, "back": bool(back), "incident": incident, "q": q, "seed": seed, "xf": bool(xf), "sumo_seed": sumo_seed,
            "onset_s": onset, "duration_s": duration, "t_on": inc.t_on, "t_off": inc.t_off,
            "incident_on_at_control_end": still_on, "incident_log": inc.log,
-           "t_switch": t_switch, "q_at_switch": q_at_switch, "t_back": t_back, "q_at_back": q_at_back,
+           "meter_signal": meter_signal, "t_switch": t_switch, "q_at_switch": q_at_switch, "t_back": t_back, "q_at_back": q_at_back,
            "delay_s": float(np.mean(delays)) if delays else float("nan"),
            "depart_delay_s": float(np.mean([d for d, _ in trips])) if trips else float("nan"),
            **m, "generated": gen, "n_trips": len(trips), "drained": drained, "valid": valid,
@@ -178,7 +179,7 @@ def main(argv=None) -> int:
     spec = json.loads(a.spec)
     res = run_episode(spec["pre"], spec.get("post"), spec["incident"], float(spec["q"]), int(spec["seed"]),
                       Path(a.run_dir), keep_files=a.keep_files, xf=bool(spec.get("xf", False)),
-                      back=bool(spec.get("back", False)))
+                      back=bool(spec.get("back", False)), meter_signal=spec.get("meter_signal") or LEGACY)
     res["key"] = spec.get("key")
     res["code_commit"] = spec.get("code_commit")   # checked before any reuse (resume)
     out = Path(a.out)

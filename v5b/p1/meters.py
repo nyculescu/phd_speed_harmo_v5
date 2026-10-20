@@ -25,6 +25,7 @@ import math
 import numpy as np
 
 from v5b.d1.episode import FBMeter
+from v5b.d1.meter_signal import SIGNALS, SignalClock
 from v5b.p1 import family as fam
 
 T_CTRL0, CONTROL_S = 40.0, 900.0
@@ -41,29 +42,16 @@ def sgn(x: float) -> int:
     return (x > 0) - (x < 0)
 
 
-SIGNALS = ("d2", "continuous")
-
-
 class _Signal:
     def _init_signal(self, signal: str, set_state) -> None:
         if signal not in SIGNALS:
             raise ValueError(f"meter signal must be one of {SIGNALS} (no default: author decision): {signal!r}")
         self.signal = signal
+        self._clock = SignalClock(signal)   # shared with D1/D2's FBMeter (V100)
         self.set_state = set_state or _default_setter()
-        self._anchor = self._anchor_c = None
 
     def _signal(self, t: float) -> None:
-        c = self.cycle()
-        if self.signal == "d2":
-            phase_t = (t - self.t_cycle0) % c
-        else:
-            if self._anchor is None:
-                self._anchor, self._anchor_c = self.t_cycle0, c
-            elif c != self._anchor_c:
-                since = (t - self._anchor) % self._anchor_c      # time since the last green start
-                self._anchor = t - since if since < c - 1e-9 else t
-                self._anchor_c = c
-            phase_t = (t - self._anchor) % c
+        phase_t = self._clock.phase(t, self.t_cycle0, self.cycle())
         self.set_state("GGGG" if phase_t < self.green else "rrrr")
 
 

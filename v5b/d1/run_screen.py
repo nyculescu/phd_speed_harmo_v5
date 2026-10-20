@@ -13,6 +13,10 @@ and are reused in the four fault cells. --literal runs all 2,000 combinations in
   screen:  python -m v5b.d1.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d1/<tag> --confirm-run-once \
              --workers 16 --cpu-limit 0.70
   smoke:   python -m v5b.d1.run_screen --smoke --out /home/catalin/work/phd/v5b1_runs/d1_smoke_<tag> --workers 4
+  V100 bug re-run (v5b/bugrerun.py: same seeds, arms, grid, tuning and rules; only the meter signal changes; new
+  --out; its own run-once sentinel D1_BUGRERUN_V100.json instead of D1_EVAL_STARTED.json):
+           python -m v5b.d1.run_screen --bug-rerun V100 --meter-signal continuous --confirm-run-once \
+             --out /home/catalin/work/phd/v5b1_runs/screen_d1/v100_bugrerun --workers 32 --cpu-limit 0.90
 """
 from __future__ import annotations
 
@@ -28,11 +32,13 @@ from pathlib import Path
 
 import numpy as np
 
+from v5b import bugrerun
 from v5b.d1 import netgen_bn4 as net
 from v5b.d1 import stats
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 from v5b.d1.episode import ARMS
 from v5b.d1.faults import ANY, FAULTS, fill_diagnostics, ratio_fit
+from v5b.d1.meter_signal import LEGACY
 from v5b.ops.guard import ComputeGuard
 
 PAGE = "docs/research/protocols/screen_D1_detector_faults.md"
@@ -94,8 +100,9 @@ def pkg_temp() -> float:
 
 
 class Pool:
-    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = ""):
+    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = "", meter_signal: str = LEGACY):
         self.out, self.workers, self.log, self.commit = out, workers, log, commit
+        self.meter_signal = meter_signal   # V100: passed to every child run, checked on reuse
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
         self.cpu = CpuSampler()
         (out / "runs").mkdir(parents=True, exist_ok=True)
@@ -107,7 +114,8 @@ class Pool:
         rd = self.out / "sumo" / s["key"]
         rd.mkdir(parents=True, exist_ok=True)
         fh = open(rd / f"child_a{attempt}.log", "w")
-        cmd = [PYTHON_BIN, "-m", "v5b.d1.episode", "--spec", json.dumps({**s, "code_commit": self.commit}),
+        cmd = [PYTHON_BIN, "-m", "v5b.d1.episode",
+               "--spec", json.dumps({**s, "code_commit": self.commit, "meter_signal": self.meter_signal}),
                "--out", str(self.out / "runs" / f"{s['key']}.json"), "--run-dir", str(rd)]
         p = subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=fh, stderr=subprocess.STDOUT)
         return {"proc": p, "spec": s, "attempt": attempt, "paused": False, "t0": time.time(), "fh": fh}
@@ -118,7 +126,7 @@ class Pool:
             p = self.out / "runs" / f"{s['key']}.json"
             if p.exists():
                 stored = json.loads(p.read_text())
-                bad = reuse_mismatch(stored, s, self.commit)
+                bad = reuse_mismatch(stored, s, self.commit, self.meter_signal)
                 if bad:
                     raise SystemExit(f"{s['key']}: the stored run differs in {bad}; refusing to mix configurations "
                                      "(Addendum A6): start a fresh --out")
@@ -180,11 +188,13 @@ class Pool:
         return res, failed
 
 
-def reuse_mismatch(stored: dict, s: dict, commit: str) -> list:
-    """Addendum A6: the fields in which a stored run differs from this invocation's spec (empty: reusable)."""
+def reuse_mismatch(stored: dict, s: dict, commit: str, meter_signal: str = LEGACY) -> list:
+    """Addendum A6: the fields in which a stored run differs from this invocation's spec (empty: reusable).
+    A stored run without 'meter_signal' ran the legacy signal (before V100)."""
     want = {k: s[k] for k in ("arm", "fault", "q", "seed", "q_fx", "ratio", "kf", "ncrit")}
     want["code_commit"] = commit
-    return [k for k, v in want.items() if stored.get(k) != v]
+    bad = [k for k, v in want.items() if stored.get(k) != v]
+    return bad + (["meter_signal"] if stored.get("meter_signal", LEGACY) != meter_signal else [])
 
 
 def grid_edge_hits(q_fx: dict, grid) -> list:
@@ -389,6 +399,12 @@ def write_sentinel(out: Path, commit: str, page_sha: str, args: dict, sentinel: 
                    "time": time.strftime("%Y-%m-%d %H:%M:%S %z")}, fh, indent=1)
 
 
+def identity(orig: dict, page_sha: str) -> dict:
+    """V100 bug re-run: what must equal between the original result and the current code."""
+    return {"seeds": (orig.get("seeds"), {k: [v[0], v[-1]] for k, v in SEEDS.items()}), "qs": (orig.get("qs"), QS),
+            "fx_grid": ((orig.get("tune") or {}).get("grid"), FX_GRID), "page_sha256": (orig.get("page_sha256"), page_sha)}
+
+
 def smoke(pool, out, kf, ncrit, log) -> dict:
     s0, q0 = SEEDS["smoke"][0], 2000.0
     assert all(s in CALIB_ONLY for s in SEEDS["smoke"])
@@ -428,19 +444,25 @@ def main(argv=None) -> int:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--kf", type=float, default=20.0)
     ap.add_argument("--ncrit", type=float, default=8.0)
+    bugrerun.add_args(ap)
     a = ap.parse_args(argv)
     if not 1 <= a.workers <= 100:
         raise SystemExit("--workers must be in 1..100")
     out = Path(a.out)
     check_out_dir(out, a.resume)
     commit, dirty = _git("rev-parse", "HEAD"), bool(_git("status", "--porcelain"))
+    page_sha = hashlib.sha256((REPO_ROOT / PAGE).read_bytes()).hexdigest()
+    bug = bugrerun.check(a, "D1", lambda o: identity(o, page_sha))
     if not a.smoke:
         if not a.confirm_run_once:
             raise SystemExit("the screen touches the evaluation seeds once: pass --confirm-run-once")
         check_screen_args(a)
         if dirty:
             raise SystemExit("the work tree is dirty: commit first (Addendum A6)")
-        check_sentinel(out, a.resume, commit)
+        if bug:   # V100: the bug re-run bypasses D1_EVAL_STARTED and is run once through its own sentinel
+            check_sentinel(out, a.resume, commit, bugrerun.sentinel_path(a, "D1"))
+        else:
+            check_sentinel(out, a.resume, commit)
     os.nice(max(0, a.nice - os.nice(0)))
     out.mkdir(parents=True, exist_ok=True)
     logf = out / "run.log"
@@ -453,11 +475,15 @@ def main(argv=None) -> int:
 
     net.build()   # build the cached network once, before any worker starts
     workers = min(a.workers, 4) if a.smoke else a.workers
-    pool = Pool(out, workers, a.cpu_limit, log, commit=commit)
-    page = REPO_ROOT / PAGE
-    result = {"screen": "D1", "page": PAGE, "page_sha256": hashlib.sha256(page.read_bytes()).hexdigest(),
-              "code_commit": commit, "code_dirty": dirty,
+    pool = Pool(out, workers, a.cpu_limit, log, commit=commit, meter_signal=a.meter_signal)
+    result = {"screen": "D1", "page": PAGE, "page_sha256": page_sha,
+              "code_commit": commit, "code_dirty": dirty, "meter_signal": a.meter_signal,
               "args": vars(a), "seeds": {k: [v[0], v[-1]] for k, v in SEEDS.items()}, "qs": QS}
+    if bug:
+        result["bug_rerun"] = bug
+        if not a.smoke:
+            write_sentinel(out, commit, page_sha, vars(a), bugrerun.sentinel_path(a, "D1"))
+            log(f"bug re-run {a.bug_rerun}: sentinel {bug['sentinel']} written before the first run")
     t0 = time.time()
     if a.smoke:
         result["smoke"] = smoke(pool, out, a.kf, a.ncrit, log)
@@ -476,8 +502,9 @@ def main(argv=None) -> int:
     if tc["pass"] and tune["grid_edge"]:
         result["decision"] = "HALT (extend FX grid)"   # A1: before any evaluation seed is touched
     elif tc["pass"]:
-        write_sentinel(out, commit, result["page_sha256"], vars(a))
-        log(f"sentinel {SENTINEL} written: evaluation seeds start now")
+        if not bug:
+            write_sentinel(out, commit, result["page_sha256"], vars(a))
+            log(f"sentinel {SENTINEL} written: evaluation seeds start now")
         sp = eval_specs(tune["q_fx"], tune["ratio"], a.literal, a.kf, a.ncrit)
         res, failed = pool.run(sp, "eval")
         idx = {(s["arm"], s["fault"], s["q"], s["seed"]): s["key"] for s in sp}
@@ -488,7 +515,7 @@ def main(argv=None) -> int:
         result["decision"] = stats.decide(cells)
     result["wall_total_s"] = round(time.time() - t0, 1)
     result["guard"] = {"cpu_limit": a.cpu_limit, "pauses": pool.n_pauses, "pkg_temp_max_c": pool.temp_max}
-    (out / "summary.md").write_text(summary_md(result))
+    (out / "summary.md").write_text((bugrerun.summary_header(bug) if bug else "") + summary_md(result))
     tmp = out / "result.json.tmp"
     tmp.write_text(json.dumps(result, indent=1))
     tmp.replace(out / "result.json")

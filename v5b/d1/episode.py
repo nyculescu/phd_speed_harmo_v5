@@ -27,6 +27,7 @@ import numpy as np
 from v5b.d1 import netgen_bn4 as net
 from v5b.d1 import plant
 from v5b.d1.faults import ANY, DetectorFault, onset_time, rf_fill, saturated_count
+from v5b.d1.meter_signal import LEGACY, SignalClock
 from v5b.d1.sumo_runner import SumoSim
 
 ARMS = ("O", "FX", "RF", "NV", "NC")
@@ -38,15 +39,19 @@ class FBMeter:
     q(k+1) = q(k) + K_F (n_crit - n_hat), n_hat = vehicles on segment 4, updated every T s; cycle =
     fixed 6 s green + variable red, c = 2 M 3600 / q (2 vehicles per lane per green, M = 4 lanes).
     Paper values T = 30, K_F = 20, n_crit = 8 ("tuned empirically ... there may be better values").
-    D1 changes: read(t) supplies n_hat (default: the archive's edge-4 count); read(t) -> None (no data) holds q."""
+    D1 changes: read(t) supplies n_hat (default: the archive's edge-4 count); read(t) -> None (no data) holds q.
+    signal (V100): the phase rule of v5b/d1/meter_signal.py; default 'd2' = the rule D1 and D2 ran with (kept so
+    their results stay reproducible); 'continuous' = the corrected rule (the V100 bug re-runs)."""
 
     def __init__(self, K_F=20.0, n_crit=8.0, T=30.0, green=6.0, q0=1500.0, q_min=200.0, q_max=4000.0, M=4,
-                 read=None):
+                 read=None, signal=LEGACY):
         self.K_F, self.n_crit, self.T, self.green, self.M = K_F, n_crit, T, green, M
         self.q, self.q_min, self.q_max = q0, q_min, q_max
         self.t_update = None
         self.t_cycle0 = None
         self.read = read or (lambda t: ls.edge.getLastStepVehicleNumber(DET_EDGE))
+        self.signal = signal
+        self._clock = SignalClock(signal)
 
     def cycle(self) -> float:
         return max(self.green, 2.0 * self.M * 3600.0 / self.q)
@@ -60,7 +65,7 @@ class FBMeter:
                 self.q = float(np.clip(self.q + self.K_F * (self.n_crit - n_hat), self.q_min, self.q_max))
             self.t_update = t
         c = self.cycle()
-        phase_t = (t - self.t_cycle0) % c
+        phase_t = self._clock.phase(t, self.t_cycle0, c)
         ls.trafficlight.setRedYellowGreenState(plant.TLS_ID, "GGGG" if phase_t < self.green else "rrrr")
 
 
@@ -77,7 +82,7 @@ def parse_tripinfo(path: Path) -> list:
 def run_episode(arm: str, fault: str, q: float, seed: int, run_dir: Path, q_fx: float | None = None,
                 ratio: float | None = None, kf: float = 20.0, ncrit: float = 8.0, warmup_s: float = 40.0,
                 control_s: float = 900.0, t_drain_max: float = 7200.0, av_share: float = 0.1,
-                keep_files: bool = False) -> dict:
+                keep_files: bool = False, meter_signal: str = LEGACY) -> dict:
     if arm not in ARMS:
         raise ValueError(arm)
     if arm == "FX" and q_fx is None or arm == "RF" and ratio is None:
@@ -119,7 +124,7 @@ def run_episode(arm: str, fault: str, q: float, seed: int, run_dir: Path, q_fx: 
     plant.set_all_green()
     sim.asserts.append(plant.assert_all_green)
     if arm != "NC":   # the TLS is driven by the meter, not held at all-green
-        meter = FBMeter(K_F=kf, n_crit=ncrit, read=reader)
+        meter = FBMeter(K_F=kf, n_crit=ncrit, read=reader, signal=meter_signal)
         sim.asserts.remove(plant.assert_all_green)
     sim.run_until(sim.t + warmup_s)   # uncontrolled warm-up
     t_ctrl0, arr0 = sim.t, sim.arrived
@@ -146,7 +151,7 @@ def run_episode(arm: str, fault: str, q: float, seed: int, run_dir: Path, q_fx: 
     delays = [dd + tl for dd, tl in trips]
     valid = bool(drained) and len(trips) == gen and res["health"]["status"] != "FAIL"
     out = {"arm": arm, "fault": fault, "q": q, "seed": seed, "q_fx": q_fx, "ratio": ratio, "kf": kf, "ncrit": ncrit,
-           "onset_s": onset, "t_fx": t_fx,
+           "onset_s": onset, "t_fx": t_fx, "meter_signal": meter_signal,
            "delay_s": float(np.mean(delays)) if delays else float("nan"),
            "depart_delay_s": float(np.mean([d for d, _ in trips])) if trips else float("nan"),
            **m, "generated": gen, "n_trips": len(trips), "drained": drained, "valid": valid,
@@ -171,7 +176,7 @@ def main(argv=None) -> int:
     ap.add_argument("--keep-files", action="store_true")
     a = ap.parse_args(argv)
     spec = json.loads(a.spec)
-    kw = {k: spec[k] for k in ("q_fx", "ratio", "kf", "ncrit") if spec.get(k) is not None}
+    kw = {k: spec[k] for k in ("q_fx", "ratio", "kf", "ncrit", "meter_signal") if spec.get(k) is not None}
     res = run_episode(spec["arm"], spec["fault"], float(spec["q"]), int(spec["seed"]), Path(a.run_dir),
                       keep_files=a.keep_files, **kw)
     res["key"] = spec.get("key")

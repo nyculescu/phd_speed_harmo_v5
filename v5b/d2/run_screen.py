@@ -30,6 +30,12 @@ Raw runs and results go to --out under /home/catalin/work/phd/ (never in the rep
   screen: python -m v5b.d2.run_screen --out /home/catalin/work/phd/v5b1_runs/screen_d2/<tag> --confirm-run-once \
             --workers 16 --cpu-limit 0.70   (0.70 is also the default)
   smoke:  python -m v5b.d2.run_screen --smoke --out /home/catalin/work/phd/v5b1_runs/d2_smoke_<tag> --workers 8
+  V100 bug re-run (v5b/bugrerun.py: same seeds, G, arms, tuning and rules incl. A1-A12; only the meter signal
+  changes; new --out; its own run-once sentinel D2_BUGRERUN_V100.json, written before the first run, instead of
+  D2_EVAL_STARTED.json; the tool-check record D2_TCHECK_RECORD.json governs the original screen only and is
+  neither checked nor appended):
+          python -m v5b.d2.run_screen --bug-rerun V100 --meter-signal continuous --confirm-run-once \
+            --out /home/catalin/work/phd/v5b1_runs/screen_d2/v100_bugrerun --workers 32 --cpu-limit 0.90
 """
 from __future__ import annotations
 
@@ -45,8 +51,10 @@ from pathlib import Path
 
 import numpy as np
 
+from v5b import bugrerun
 from v5b.d1 import netgen_bn4 as net
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b.d1.meter_signal import LEGACY
 from v5b.d1.run_screen import CpuSampler, pkg_temp, same_run
 from v5b.d2 import controllers as ctl
 from v5b.d2 import stats
@@ -129,18 +137,22 @@ def eval_specs(arms: dict, G_, seeds) -> list:
     return uniq(sp)
 
 
-def reuse_mismatch(stored: dict, s: dict, commit: str) -> list:
-    """The fields in which a stored run differs from this invocation's spec (empty: reusable). As D1 A6."""
+def reuse_mismatch(stored: dict, s: dict, commit: str, meter_signal: str = LEGACY) -> list:
+    """The fields in which a stored run differs from this invocation's spec (empty: reusable). As D1 A6.
+    A stored run without 'meter_signal' ran the legacy signal (before V100)."""
     want = {k: s[k] for k in SPEC_FIELDS}
     want["code_commit"] = commit
-    return [k for k, v in want.items() if stored.get(k) != v]
+    bad = [k for k, v in want.items() if stored.get(k) != v]
+    return bad + (["meter_signal"] if stored.get("meter_signal", LEGACY) != meter_signal else [])
 
 
 class Pool:
     """D1's pool (v5b/d1/run_screen.py) for the D2 episode; launches up to max(2, workers // 4) runs per 0.25 s."""
 
-    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = "", verify=None):
+    def __init__(self, out: Path, workers: int, cpu_limit: float, log, commit: str = "", verify=None,
+                 meter_signal: str = LEGACY):
         self.out, self.workers, self.log, self.commit = out, workers, log, commit
+        self.meter_signal = meter_signal   # V100: passed to every child run, checked on reuse
         self.verify = verify   # called after every stage: code unchanged since launch (Addendum D2-A10)
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
         self.cpu = CpuSampler()
@@ -154,7 +166,8 @@ class Pool:
         rd = self.out / "sumo" / s["key"]
         rd.mkdir(parents=True, exist_ok=True)
         fh = open(rd / f"child_a{attempt}.log", "w")
-        cmd = [PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps({**s, "code_commit": self.commit}),
+        cmd = [PYTHON_BIN, "-m", "v5b.d2.episode",
+               "--spec", json.dumps({**s, "code_commit": self.commit, "meter_signal": self.meter_signal}),
                "--out", str(self.out / "runs" / f"{s['key']}.json"), "--run-dir", str(rd)]
         p = subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=fh, stderr=subprocess.STDOUT)
         return {"proc": p, "spec": s, "attempt": attempt, "paused": False, "t0": time.time(), "fh": fh}
@@ -165,7 +178,7 @@ class Pool:
             p = self.out / "runs" / f"{s['key']}.json"
             if p.exists():
                 stored = json.loads(p.read_text())
-                bad = reuse_mismatch(stored, s, self.commit)
+                bad = reuse_mismatch(stored, s, self.commit, self.meter_signal)
                 if bad:
                     raise SystemExit(f"{s['key']}: the stored run differs in {bad}; refusing to mix configurations: "
                                      "start a fresh --out")
@@ -711,7 +724,14 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--smoke", action="store_true", help="smoke seeds 7,400,000-003, G subset, <= 8 workers")
     ap.add_argument("--confirm-run-once", action="store_true", help="required for the screen (evaluation seeds)")
     ap.add_argument("--resume", action="store_true")
+    bugrerun.add_args(ap)
     return ap
+
+
+def identity(orig: dict, page_sha: str) -> dict:
+    """V100 bug re-run: what must equal between the original result and the current code."""
+    return {"seeds": (orig.get("seeds"), {k: [v[0], v[-1]] for k, v in SEEDS.items()}), "qs": (orig.get("qs"), QS),
+            "G": (orig.get("G"), ctl.G), "page_sha256": (orig.get("page_sha256"), page_sha)}
 
 
 def main(argv=None) -> int:
@@ -721,7 +741,11 @@ def main(argv=None) -> int:
     state0 = tree_state()
     check_launch(a, dirty)
     check_out_dir(out, a.resume)
-    if not a.smoke:
+    page_sha = hashlib.sha256((REPO_ROOT / PAGE).read_bytes()).hexdigest()
+    bug = bugrerun.check(a, "D2", lambda o: identity(o, page_sha))
+    if bug and not a.smoke:   # V100: bypasses D2_EVAL_STARTED and the tool-check record; run once on its own sentinel
+        check_sentinel(out, a.resume, commit, bugrerun.sentinel_path(a, "D2"))
+    elif not a.smoke:
         check_sentinel(out, a.resume, commit)
         if not SENTINEL.exists():   # evaluation not started: the tool checks will (re)run or be reused
             check_tcheck_record(commit)
@@ -737,17 +761,21 @@ def main(argv=None) -> int:
 
     net.build()   # build the cached network once, before any worker starts
     verify = make_verify(state0, log)
-    pool = Pool(out, a.workers, a.cpu_limit, log, commit=commit, verify=verify)
-    page = REPO_ROOT / PAGE
+    pool = Pool(out, a.workers, a.cpu_limit, log, commit=commit, verify=verify, meter_signal=a.meter_signal)
     G_ = G_SMOKE if a.smoke else ctl.G
     seeds = {k: SEEDS["smoke"] for k in ("tcheck", "tune", "eval")} if a.smoke else SEEDS
-    result = {"screen": "D2", "page": PAGE, "page_sha256": hashlib.sha256(page.read_bytes()).hexdigest(),
+    result = {"screen": "D2", "page": PAGE, "page_sha256": page_sha, "meter_signal": a.meter_signal,
               "code_commit": commit, "code_dirty": dirty, "args": vars(a), "G": list(G_),
               "seeds": {k: [v[0], v[-1]] for k, v in seeds.items()}, "qs": QS}
+    if bug:
+        result["bug_rerun"] = bug
+        if not a.smoke:
+            write_sentinel(out, commit, page_sha, vars(a), bugrerun.sentinel_path(a, "D2"))
+            log(f"bug re-run {a.bug_rerun}: sentinel {bug['sentinel']} written before the first run")
     t0 = time.time()
     tc = stage_tcheck(pool, seeds["tcheck"], G_)
     result["tcheck"] = tc
-    if not a.smoke and not SENTINEL.exists():
+    if not a.smoke and not bug and not SENTINEL.exists():
         append_tcheck_record(out, commit, result["page_sha256"], tc, "PASS" if tc["pass"] else tcheck_decision(tc))
     if not tc["pass"] and not a.smoke:
         result["decision"] = tcheck_decision(tc)
@@ -756,7 +784,7 @@ def main(argv=None) -> int:
             result["tcheck_decision_if_real"] = tcheck_decision(tc)
         tune = stage_tune(pool, seeds["tune"], G_)
         result["tune"] = tune
-        if not a.smoke:
+        if not a.smoke and not bug:
             write_sentinel(out, commit, result["page_sha256"], vars(a))
             log(f"sentinel {SENTINEL} written: evaluation seeds start now")
         result["eval"] = stage_eval(pool, seeds["eval"], G_, tune["arms"])
@@ -771,7 +799,7 @@ def main(argv=None) -> int:
         log(f"smoke done: {out / 'smoke.json'}")
         return 0
     verify("before result.json")
-    (out / "summary.md").write_text(summary_md(result))
+    (out / "summary.md").write_text((bugrerun.summary_header(bug) if bug else "") + summary_md(result))
     tmp = out / "result.json.tmp"
     tmp.write_text(json.dumps(result, indent=1))
     tmp.replace(out / "result.json")
