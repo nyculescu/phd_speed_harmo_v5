@@ -99,19 +99,21 @@ def t3_specs(seed, *, replicate: bool) -> list:
     return [[make_spec(q=q, seed=seed, rep=r, **b) for r in (0, 1)] for b in base]
 
 
-def reuse_mismatch(stored: dict, s: dict, commit: str, signal: str) -> list:
-    want = {k: s[k] for k in SPEC_FIELDS}
+def reuse_mismatch(stored: dict, s: dict, commit: str, signal: str, fields=SPEC_FIELDS) -> list:
+    want = {k: s[k] for k in fields}
     want["code_commit"] = commit
     want["signal"] = signal
     return [k for k, v in want.items() if stored.get(k) != v]
 
 
 class Pool:
-    """D2's pool (v5b/d2/run_screen.py) for the P1 episode; stored runs are slimmed in memory (KEEP)."""
+    """D2's pool (v5b/d2/run_screen.py) for the P1 episode; stored runs are slimmed in memory (KEEP).
+    The class attributes let P1b (v5b/p1b/run.py) reuse it with its own episode module; P1's values are unchanged."""
+    MODULE, FIELDS, KEEP_FIELDS, SIGNAL_SET = "v5b.p1.episode", SPEC_FIELDS, KEEP, SIGNALS
 
     def __init__(self, out: Path, workers: int, cpu_limit: float, log, *, signal: str, commit: str = "", verify=None):
-        if signal not in SIGNALS:
-            raise ValueError(f"meter signal must be one of {SIGNALS}: {signal!r}")
+        if signal not in self.SIGNAL_SET:
+            raise ValueError(f"meter signal must be one of {self.SIGNAL_SET}: {signal!r}")
         self.out, self.workers, self.log, self.commit, self.verify = out, workers, log, commit, verify
         self.signal = signal
         self.guard = ComputeGuard(overrides={"cpu_limit": cpu_limit})
@@ -122,15 +124,15 @@ class Pool:
         self.n_pauses = 0
         self.stage_wall = {}
 
-    @staticmethod
-    def slim(r: dict) -> dict:
-        return {k: r.get(k) for k in KEEP}
+    @classmethod
+    def slim(cls, r: dict) -> dict:
+        return {k: r.get(k) for k in cls.KEEP_FIELDS}
 
     def _launch(self, s: dict, attempt: int) -> dict:
         rd = self.out / "sumo" / s["key"]
         rd.mkdir(parents=True, exist_ok=True)
         fh = open(rd / f"child_a{attempt}.log", "w")
-        cmd = [PYTHON_BIN, "-m", "v5b.p1.episode", "--spec",
+        cmd = [PYTHON_BIN, "-m", self.MODULE, "--spec",
                json.dumps({**s, "code_commit": self.commit, "signal": self.signal}),
                "--out", str(self.out / "runs" / f"{s['key']}.json"), "--run-dir", str(rd)]
         p = subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=fh, stderr=subprocess.STDOUT)
@@ -143,7 +145,7 @@ class Pool:
             p = self.out / "runs" / f"{s['key']}.json"
             if p.exists():
                 stored = json.loads(p.read_text())
-                bad = reuse_mismatch(stored, s, self.commit, self.signal)
+                bad = reuse_mismatch(stored, s, self.commit, self.signal, self.FIELDS)
                 if bad:
                     raise SystemExit(f"{s['key']}: the stored run differs in {bad}; refusing to mix configurations: "
                                      "start a fresh --out")
