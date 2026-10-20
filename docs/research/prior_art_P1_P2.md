@@ -41,3 +41,26 @@ Two agents, each with ≤ 15 web searches plus Crossref, arXiv and OpenAlex. Mos
 ## Consequence for D2 (V94 corrected in V97)
 
 ORX (one-replicate cross-fit) is a double estimator and is biased low. So D2's "per-incident adds 0–1 %" is a **lower bound**. Honest reading: per-incident headroom over the per-type plan lies between ~0–1 % (lower bound) and 5–40 % (inflated upper bound), and was **not shown** to reach 10 %. The STOP stands under the pre-registered rule.
+
+## Mainline metering (V104, 2026-10-20)
+
+One agent; 15 web searches plus Crossref, arXiv and FHWA PDFs. Mostly abstracts were read, so treat items as [VERIFY] unless noted.
+
+**Closest works:**
+- **Tympakianaki, Spiliopoulou, Kouvelas, Papamichail, Papageorgiou, TR-C 44 (2014), doi:10.1016/j.trc.2014.04.006.** Mainstream green-red signals upstream of a work-zone lane drop, under ALINEA-like PI control. This is the closest work to P1.
+- **Merging control at lane drops:**
+  - Papageorgiou et al., TR-C 16 (2008), doi:10.1016/j.trc.2007.11.002 (ALINEA-based merging for toll plazas and work zones);
+  - Spiliopoulou et al., JTE 136(1) (2010) (ALINEA at toll plazas).
+- **Mainline metering in practice:**
+  - **Haboian, TRR 1494 (1995)** (relevant sections read): mainline metering in practice (Bay Bridge, Baltimore Harbor Tunnel with 3–5 s amber, engaged only at 20–25 mph);
+  - **FHWA-HRT-20-008 (2020) and Ghiasi et al., ITSC 2018** (report sections read): mainline-plus-ramp signals at I-35 in Vissim, activated below 6 mph "for safety", delay down by up to 20.9 %;
+  - Amini, Skabardonis & Varaiya, TRB 2016: an evaluation of the Bay Bridge meters.
+- **Incident and MTFC work:** Dabiri & Kulcsár 2014 (full text read; incident parameters assumed known); the MTFC / PI-ALINEA line (Carlson et al. 2010, 2011; Wang et al. 2014).
+
+**Under incidents with information levels:** none found. The work-zone studies cover static lane drops; the FHWA controller is triggered by a recurrent speed drop.
+
+**Modelling the meter:** field mainline meters use amber, or engage only at low speed. P1 has neither.
+- **Amber: necessary.** Add 3–4 s amber plus minimum green and red; report the approach speed at red.
+- **Queue limit: optional.** Report the maximum queue against the available length.
+
+**Positioning:** the always-on PI meter is an established baseline (Tympakianaki 2014; Papageorgiou 2008). P1's contribution is only the information ladder. A likely reviewer question: why one signal across all lanes rather than per-lane staggered release?
