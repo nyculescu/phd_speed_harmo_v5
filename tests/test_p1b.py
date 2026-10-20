@@ -365,3 +365,13 @@ def test_t3_and_run_counts():
     rc = rs.run_counts()
     assert rc["eval_runner_rows"] == 5600 and rc["eval_replicates"] == 4 * 120 * 2 * 2 * 100
     assert 300_000 < rc["total"] < 360_000
+
+
+def test_tool_checks_run_on_a_synthetic_world(tmp_path):
+    """P1's tool-check stage, carried over to P1b (A = G x {stay, back}; fixed V100 decisions)."""
+    from test_p1_runner import _FakePool, _tc_world
+    seeds = tuple(range(7_400_000, 7_400_006))
+    pool = _FakePool(lambda s: {**_tc_world()(s), "rs": s["rs"]}, tmp_path)
+    tc = rs.stage_tcheck(pool, seeds, ("c800", "c1600", "f20_8"), gate_views=rs.DECISIONS["gate_views"],
+                         tv_window=rs.DECISIONS["tv_t0_window"], t3_replicate=True)
+    assert tc["T0"]["pass"] and tc["TV_T0"]["pass"] and len(tc["T3"]) == 15

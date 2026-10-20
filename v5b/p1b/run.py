@@ -37,7 +37,7 @@ from v5b.d2.run_screen import make_verify, tree_state
 from v5b.p1 import family as fam
 from v5b.p1 import run as p1run
 from v5b.p1 import stats as st
-from v5b.p1.run import (_first, _git, _keep, _pct, _sub, append_tcheck_record, check_sentinel, check_tcheck_record,
+from v5b.p1.run import (TV_FIELD, _first, _git, _keep, _pct, _sub, append_tcheck_record, check_sentinel, check_tcheck_record,
                         same_run, tcheck_decision, write_sentinel)
 from v5b.p1b import analysis as an
 from v5b.p1b import family as fb
