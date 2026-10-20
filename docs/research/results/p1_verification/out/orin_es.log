@@ -1,0 +1,4 @@
+slow_q1600: OR_in median delay 136.1 (result.json 136.1); emergency stops median 3, share>0 92/100
+block_q1600: OR_in median delay 186.1 (result.json 186.1); emergency stops median 4, share>0 96/100
+slow_q2000: OR_in median delay 269.8 (result.json 269.8); emergency stops median 1, share>0 76/100
+block_q2000: OR_in median delay 329.8 (result.json 329.8); emergency stops median 2, share>0 87/100

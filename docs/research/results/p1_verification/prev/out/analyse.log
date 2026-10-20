@@ -1,0 +1,405 @@
+invalid runs among loaded: 0  teleport runs: 0
+
+================ q 1600  (N=c2000, ID=f70_8, IP={'slow': 'f70_8', 'block': 'f40_14'})
+main arms re-derived from tuning runs: {'FX': 'c2400', 'FB': 'f40_10', 'PI': 'p40_40_10_e4', 'AD': 'ad0p5_f40_10', 'N': 'c2000'}  stored: {'N': 'c2000', 'FX': 'c2400', 'FB': 'f40_10', 'PI': 'p40_40_10_e4', 'AD': 'ad0p5_f40_10'}
+retune pi=0.05: {'N': 'c2000', 'FX': 'c2000', 'FB': 'f10_8', 'PI': 'p20_10_10_e4', 'AD': 'ad2_f40_10'}  (not in run)
+retune pi=0.1: {'N': 'c2000', 'FX': 'c2000', 'FB': 'f20_8', 'PI': 'p20_10_10_e4', 'AD': 'ad2_f40_10'}  stored: {'N': 'c2000', 'FX': 'c2000', 'FB': 'f20_8', 'PI': 'p20_10_10_e4', 'AD': 'ad2_f40_10'}  match=True
+retune pi=0.25: {'N': 'f120_6', 'FX': 'c2000', 'FB': 'f120_6', 'PI': 'p40_120_6_e4', 'AD': 'ad2_f40_10'}  stored: {'N': 'f120_6', 'FX': 'c2000', 'FB': 'f120_6', 'PI': 'p40_120_6_e4', 'AD': 'ad2_f40_10'}  match=True
+retune pi=0.5: {'N': 'f120_8', 'FX': 'c1800', 'FB': 'f120_8', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  stored: {'N': 'f120_8', 'FX': 'c1800', 'FB': 'f120_8', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  match=True
+retune pi=1.0: {'N': 'f40_10', 'FX': 'c2400', 'FB': 'f40_10', 'PI': 'p70_40_10_e4', 'AD': 'ad0p5_f40_10'}  (not in run)
+  NOTE FB_pi0.05 = f10_8: no evaluation runs in the run dir -> not evaluated
+  NOTE PI_pi1.0 = p70_40_10_e4: no evaluation runs in the run dir -> not evaluated
+
+medians (s/veh): arm  clean  slow  block
+  NC     265.7   310.7   313.2
+  ID      58.3   190.7   287.9
+  IP      58.3   190.7   230.8
+  N       58.3   310.8   332.0
+  FX     161.6   310.3   321.6
+  FB     139.5   206.4   241.8
+  PI     113.0   189.9   242.8
+  AD     149.0   216.0   284.6
+  N clean quantiles 10/25/50/75/90: [ 33.6  35.9  58.3 183.9 338. ]
+  clean PI-N per seed: median 7.4, share>0 0.55, q10/q90 -182.2/108.0
+  clean FB-N per seed: median 10.1, share>0 0.52, q10/q90 -130.7/120.0
+  clean FX-N per seed: median -1.8, share>0 0.48, q10/q90 -23.4/218.9
+
+--- pi = 0.05
+  ranking (median of per-seed mixture | mixture of medians):
+    IP            66.7 |    65.9 | mean   131.7
+    ID            69.6 |    67.4 | mean   133.0
+    N             71.5 |    71.5 | mean   136.8
+    N_pi0.05      71.5 |    71.5 | mean   136.8
+    FX_pi0.05     71.5 |    71.5 | mean   136.8
+    PI_pi0.05     76.0 |    73.4 | mean   100.7
+    AD_pi0.05    114.0 |   114.5 | mean   150.8
+    PI           119.8 |   118.1 | mean   122.5
+    FB           142.1 |   143.7 | mean   139.6
+    AD           152.7 |   154.1 | mean   147.9
+    FX           170.2 |   169.3 | mean   181.1
+    NC           269.4 |   268.1 | mean   249.0
+  IP vs N        : rel    7.1 %  CI [   4.3,    9.7]  diff    5.1 [   4.6,    5.5] s
+  IP vs FX       : rel    2.9 %  CI [  -0.1,   11.9]  diff    4.9 [  -0.1,   20.5] s
+  IP vs FB       : rel    5.5 %  CI [  -6.4,   27.8]  diff    7.9 [  -9.0,   40.1] s
+  IP vs PI       : rel    6.1 %  CI [  -6.6,   28.5]  diff    7.3 [  -7.9,   35.4] s
+  IP vs AD       : rel    2.9 %  CI [  -4.1,   31.4]  diff    4.4 [  -6.2,   48.5] s
+  IP vs N_pi0.05 : rel    7.1 %  CI [   4.3,    9.7]  diff    5.1 [   4.6,    5.5] s
+  IP vs FX_pi0.05: rel    7.1 %  CI [   4.3,    9.7]  diff    5.1 [   4.6,    5.5] s
+  IP vs PI_pi0.05: rel    6.8 %  CI [   2.8,    9.6]  diff    5.2 [   2.1,    6.3] s
+  IP vs AD_pi0.05: rel   11.4 %  CI [   4.6,   22.4]  diff   12.9 [   5.2,   25.1] s
+  ID vs N        : rel    4.9 %  CI [   2.9,    7.3]  diff    3.5 [   2.9,    4.9] s
+  ID vs FX       : rel    2.6 %  CI [  -0.3,   11.8]  diff    4.5 [  -0.6,   21.6] s
+  ID vs FB       : rel    3.6 %  CI [  -6.8,   26.8]  diff    5.1 [  -9.7,   39.0] s
+  ID vs PI       : rel    5.0 %  CI [  -7.7,   27.6]  diff    6.0 [  -9.2,   33.8] s
+  ID vs AD       : rel    3.0 %  CI [  -5.0,   31.2]  diff    4.6 [  -7.4,   49.7] s
+  ID vs N_pi0.05 : rel    4.9 %  CI [   2.9,    7.3]  diff    3.5 [   2.9,    4.9] s
+  ID vs FX_pi0.05: rel    4.9 %  CI [   2.9,    7.3]  diff    3.5 [   2.9,    4.9] s
+  ID vs PI_pi0.05: rel    5.2 %  CI [  -0.5,    8.0]  diff    3.9 [  -0.4,    5.6] s
+  ID vs AD_pi0.05: rel   10.1 %  CI [   3.7,   21.3]  diff   11.5 [   4.1,   23.2] s
+
+--- pi = 0.1
+  ranking (median of per-seed mixture | mixture of medians):
+    IP            75.2 |    73.5 | mean   136.4
+    ID            80.9 |    76.4 | mean   139.0
+    N             84.6 |    84.6 | mean   146.5
+    N_pi0.1       84.6 |    84.6 | mean   146.5
+    FX_pi0.1      84.6 |    84.6 | mean   146.5
+    PI_pi0.1      87.7 |    84.4 | mean   110.7
+    FB_pi0.1      91.8 |    94.4 | mean   133.3
+    AD_pi0.1     124.2 |   124.8 | mean   159.5
+    PI           126.1 |   123.3 | mean   127.9
+    FB           144.1 |   147.9 | mean   144.7
+    AD           159.9 |   159.1 | mean   154.0
+    FX           177.8 |   177.1 | mean   188.4
+    NC           272.9 |   270.4 | mean   252.3
+  IP vs N        : rel   12.0 %  CI [   7.6,   15.2]  diff   10.2 [   9.3,   11.1] s
+  IP vs FX       : rel    6.2 %  CI [   3.4,   14.3]  diff   11.1 [   5.5,   27.4] s
+  IP vs FB       : rel    5.0 %  CI [  -4.5,   26.1]  diff    7.1 [  -6.6,   38.7] s
+  IP vs PI       : rel    7.9 %  CI [  -5.4,   24.7]  diff    9.9 [  -7.0,   30.9] s
+  IP vs AD       : rel    4.1 %  CI [  -3.0,   29.7]  diff    6.5 [  -4.7,   47.1] s
+  IP vs N_pi0.1  : rel   12.0 %  CI [   7.6,   15.2]  diff   10.2 [   9.3,   11.1] s
+  IP vs FX_pi0.1 : rel   12.0 %  CI [   7.6,   15.2]  diff   10.2 [   9.3,   11.1] s
+  IP vs FB_pi0.1 : rel   11.5 %  CI [   7.7,   13.9]  diff   10.6 [   7.5,   12.5] s
+  IP vs PI_pi0.1 : rel   10.0 %  CI [   6.1,   12.9]  diff    8.7 [   5.5,   10.4] s
+  IP vs AD_pi0.1 : rel   14.3 %  CI [   8.2,   25.4]  diff   17.7 [  10.2,   30.7] s
+  ID vs N        : rel    8.3 %  CI [   5.2,   11.7]  diff    7.1 [   5.8,    9.8] s
+  ID vs FX       : rel    6.2 %  CI [   2.7,   13.7]  diff   11.0 [   4.3,   27.3] s
+  ID vs FB       : rel    1.1 %  CI [  -5.9,   22.9]  diff    1.6 [  -8.8,   33.7] s
+  ID vs PI       : rel    4.9 %  CI [  -6.7,   23.5]  diff    6.1 [  -8.7,   29.5] s
+  ID vs AD       : rel    3.7 %  CI [  -4.1,   28.7]  diff    5.9 [  -6.4,   49.4] s
+  ID vs N_pi0.1  : rel    8.3 %  CI [   5.2,   11.7]  diff    7.1 [   5.8,    9.8] s
+  ID vs FX_pi0.1 : rel    8.3 %  CI [   5.2,   11.7]  diff    7.1 [   5.8,    9.8] s
+  ID vs FB_pi0.1 : rel    7.9 %  CI [   4.2,   12.3]  diff    7.2 [   4.1,   11.8] s
+  ID vs PI_pi0.1 : rel    6.6 %  CI [   3.2,   10.9]  diff    5.8 [   2.9,    8.9] s
+  ID vs AD_pi0.1 : rel   11.5 %  CI [   6.2,   22.3]  diff   14.3 [   7.9,   25.7] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 0.00e+00
+
+--- pi = 0.25
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           103.8 |    96.4 | mean   150.5
+    PI_pi0.25    108.0 |   103.4 | mean   120.1
+    ID           110.6 |   103.6 | mean   156.9
+    N            131.0 |   124.1 | mean   175.7
+    FX_pi0.25    131.0 |   124.1 | mean   175.7
+    PI           142.7 |   138.8 | mean   144.0
+    N_pi0.25     143.4 |   137.8 | mean   144.4
+    FB_pi0.25    143.4 |   137.8 | mean   144.4
+    AD_pi0.25    158.4 |   155.5 | mean   185.5
+    FB           159.1 |   160.6 | mean   159.9
+    AD           177.3 |   174.3 | mean   172.3
+    FX           196.2 |   200.2 | mean   210.1
+    NC           276.0 |   277.3 | mean   262.1
+  IP vs N        : rel   19.4 %  CI [  14.9,   23.3]  diff   25.5 [  23.1,   27.6] s
+  IP vs FX       : rel   15.3 %  CI [  11.8,   20.1]  diff   30.0 [  24.1,   37.8] s
+  IP vs FB       : rel    6.1 %  CI [  -1.9,   19.1]  diff    9.8 [  -3.2,   29.9] s
+  IP vs PI       : rel    9.8 %  CI [  -2.7,   18.9]  diff   14.0 [  -3.7,   26.0] s
+  IP vs AD       : rel    7.7 %  CI [   1.2,   24.5]  diff   13.7 [   2.1,   43.0] s
+  IP vs N_pi0.25 : rel   11.7 %  CI [  -1.0,   20.3]  diff   16.7 [  -1.4,   25.5] s
+  IP vs FX_pi0.25: rel   19.4 %  CI [  14.9,   23.3]  diff   25.5 [  23.1,   27.6] s
+  IP vs FB_pi0.25: rel   11.7 %  CI [  -1.0,   20.3]  diff   16.7 [  -1.4,   25.5] s
+  IP vs PI_pi0.25: rel   -4.7 %  CI [ -12.3,    6.3]  diff   -5.0 [ -13.6,    6.7] s
+  IP vs AD_pi0.25: rel   21.5 %  CI [  15.8,   27.6]  diff   34.0 [  25.6,   43.0] s
+  ID vs N        : rel   13.5 %  CI [  10.1,   18.6]  diff   17.6 [  14.5,   24.5] s
+  ID vs FX       : rel   13.5 %  CI [   9.6,   19.7]  diff   26.4 [  17.6,   37.5] s
+  ID vs FB       : rel    1.3 %  CI [  -6.5,   13.2]  diff    2.1 [ -10.4,   21.4] s
+  ID vs PI       : rel    3.7 %  CI [  -7.5,   12.5]  diff    5.2 [ -10.6,   17.7] s
+  ID vs AD       : rel    4.6 %  CI [  -2.9,   18.2]  diff    8.2 [  -5.0,   32.7] s
+  ID vs N_pi0.25 : rel    5.1 %  CI [  -5.5,   13.9]  diff    7.4 [  -8.0,   19.2] s
+  ID vs FX_pi0.25: rel   13.5 %  CI [  10.1,   18.6]  diff   17.6 [  14.5,   24.5] s
+  ID vs FB_pi0.25: rel    5.1 %  CI [  -5.5,   13.9]  diff    7.4 [  -8.0,   19.2] s
+  ID vs PI_pi0.25: rel   -5.2 %  CI [ -15.2,    0.3]  diff   -5.6 [ -16.7,    0.4] s
+  ID vs AD_pi0.25: rel   16.5 %  CI [  12.5,   21.4]  diff   26.2 [  20.5,   32.8] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 0.00e+00
+
+--- pi = 0.5
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           142.8 |   134.5 | mean   174.1
+    PI_pi0.5     157.3 |   155.6 | mean   155.9
+    ID           157.8 |   148.8 | mean   186.9
+    PI           165.9 |   164.6 | mean   170.9
+    N_pi0.5      174.2 |   170.2 | mean   172.3
+    FB_pi0.5     174.2 |   170.2 | mean   172.3
+    FB           184.1 |   181.8 | mean   185.3
+    FX_pi0.5     197.8 |   187.1 | mean   213.2
+    N            199.7 |   189.8 | mean   224.4
+    AD           204.9 |   199.7 | mean   202.9
+    AD_pi0.5     204.9 |   199.7 | mean   202.9
+    FX           226.4 |   238.8 | mean   246.2
+    NC           284.7 |   288.9 | mean   278.5
+  IP vs N        : rel   25.5 %  CI [  21.8,   28.5]  diff   50.9 [  46.3,   55.3] s
+  IP vs FX       : rel   26.0 %  CI [  20.7,   31.2]  diff   58.8 [  48.3,   70.8] s
+  IP vs FB       : rel    9.4 %  CI [   0.5,   14.9]  diff   17.3 [   1.0,   26.7] s
+  IP vs PI       : rel    6.4 %  CI [  -2.0,   11.2]  diff   10.7 [  -3.3,   18.9] s
+  IP vs AD       : rel   10.5 %  CI [   6.3,   22.4]  diff   21.5 [  13.0,   45.7] s
+  IP vs N_pi0.5  : rel    2.5 %  CI [  -5.1,   11.6]  diff    4.3 [  -8.9,   21.3] s
+  IP vs FX_pi0.5 : rel   26.2 %  CI [  22.9,   32.5]  diff   51.7 [  45.4,   64.1] s
+  IP vs FB_pi0.5 : rel    2.5 %  CI [  -5.1,   11.6]  diff    4.3 [  -8.9,   21.3] s
+  IP vs PI_pi0.5 : rel   -2.7 %  CI [ -11.3,    3.1]  diff   -4.3 [ -18.2,    5.1] s
+  IP vs AD_pi0.5 : rel   10.5 %  CI [   6.3,   22.4]  diff   21.5 [  13.0,   45.7] s
+  ID vs N        : rel   17.7 %  CI [  14.0,   24.0]  diff   35.3 [  29.0,   49.0] s
+  ID vs FX       : rel   22.2 %  CI [  17.4,   28.0]  diff   50.2 [  41.2,   64.3] s
+  ID vs FB       : rel   -2.4 %  CI [  -6.9,    8.3]  diff   -4.5 [ -12.8,   14.9] s
+  ID vs PI       : rel   -1.8 %  CI [ -10.9,    4.4]  diff   -3.0 [ -18.1,    7.5] s
+  ID vs AD       : rel    6.6 %  CI [  -0.1,   13.4]  diff   13.6 [  -0.2,   27.6] s
+  ID vs N_pi0.5  : rel   -3.8 %  CI [ -13.0,    1.6]  diff   -6.7 [ -22.0,    2.9] s
+  ID vs FX_pi0.5 : rel   18.7 %  CI [  13.7,   24.4]  diff   37.0 [  27.4,   48.4] s
+  ID vs FB_pi0.5 : rel   -3.8 %  CI [ -13.0,    1.6]  diff   -6.7 [ -22.0,    2.9] s
+  ID vs PI_pi0.5 : rel  -10.3 %  CI [ -18.3,   -4.7]  diff  -16.3 [ -28.7,   -7.2] s
+  ID vs AD_pi0.5 : rel    6.6 %  CI [  -0.1,   13.4]  diff   13.6 [  -0.2,   27.6] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 1.07e-13
+
+--- pi = 1.0
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           212.4 |   210.8 | mean   221.2
+    PI           225.3 |   216.3 | mean   224.6
+    FB           230.9 |   224.1 | mean   236.0
+    N_pi1.0      230.9 |   224.1 | mean   236.0
+    FB_pi1.0     230.9 |   224.1 | mean   236.0
+    ID           243.5 |   239.3 | mean   246.7
+    AD           255.6 |   250.3 | mean   264.1
+    AD_pi1.0     255.6 |   250.3 | mean   264.1
+    NC           310.8 |   312.0 | mean   311.2
+    FX           316.1 |   315.9 | mean   318.6
+    FX_pi1.0     316.1 |   315.9 | mean   318.6
+    N            318.1 |   321.4 | mean   321.8
+  IP vs N        : rel   32.0 %  CI [  28.5,   35.0]  diff  101.9 [  92.5,  110.5] s
+  IP vs FX       : rel   30.6 %  CI [  27.0,   32.8]  diff   96.6 [  84.4,  103.0] s
+  IP vs FB       : rel    5.3 %  CI [   1.6,    9.2]  diff   12.2 [   3.6,   21.4] s
+  IP vs PI       : rel    0.8 %  CI [  -3.9,    4.3]  diff    1.7 [  -8.6,   10.2] s
+  IP vs AD       : rel   16.9 %  CI [  11.5,   20.6]  diff   43.1 [  28.9,   54.0] s
+  IP vs N_pi1.0  : rel    5.3 %  CI [   1.6,    9.2]  diff   12.2 [   3.6,   21.4] s
+  IP vs FX_pi1.0 : rel   30.6 %  CI [  27.0,   32.8]  diff   96.6 [  84.4,  103.0] s
+  IP vs FB_pi1.0 : rel    5.3 %  CI [   1.6,    9.2]  diff   12.2 [   3.6,   21.4] s
+  IP vs AD_pi1.0 : rel   16.9 %  CI [  11.5,   20.6]  diff   43.1 [  28.9,   54.0] s
+  ID vs N        : rel   22.2 %  CI [  17.9,   30.1]  diff   70.5 [  57.9,   97.9] s
+  ID vs FX       : rel   21.6 %  CI [  16.5,   29.5]  diff   68.4 [  51.7,   92.8] s
+  ID vs FB       : rel   -4.1 %  CI [  -6.3,    0.5]  diff   -9.5 [ -14.5,    1.1] s
+  ID vs PI       : rel   -8.0 %  CI [ -12.6,   -4.9]  diff  -18.0 [ -27.8,  -11.1] s
+  ID vs AD       : rel    7.0 %  CI [   2.1,   11.9]  diff   17.9 [   5.3,   30.0] s
+  ID vs N_pi1.0  : rel   -4.1 %  CI [  -6.3,    0.5]  diff   -9.5 [ -14.5,    1.1] s
+  ID vs FX_pi1.0 : rel   21.6 %  CI [  16.5,   29.5]  diff   68.4 [  51.7,   92.8] s
+  ID vs FB_pi1.0 : rel   -4.1 %  CI [  -6.3,    0.5]  diff   -9.5 [ -14.5,    1.1] s
+  ID vs AD_pi1.0 : rel    7.0 %  CI [   2.1,   11.9]  diff   17.9 [   5.3,   30.0] s
+
+================ q 2000  (N=c1800, ID=f40_10, IP={'slow': 'c800+back', 'block': 'f40_16'})
+main arms re-derived from tuning runs: {'FX': 'c1900', 'FB': 'f40_10', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10', 'N': 'c1800'}  stored: {'N': 'c1800', 'FX': 'c1900', 'FB': 'f40_10', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}
+retune pi=0.05: {'N': 'c1700', 'FX': 'c1700', 'FB': 'f10_8', 'PI': 'p70_40_4_e5', 'AD': 'ad0p5_f40_10'}  (not in run)
+retune pi=0.1: {'N': 'c1700', 'FX': 'c1700', 'FB': 'f10_8', 'PI': 'p40_40_8_e4', 'AD': 'ad0p5_f40_10'}  stored: {'N': 'c1700', 'FX': 'c1700', 'FB': 'f10_8', 'PI': 'p40_40_8_e4', 'AD': 'ad0p5_f40_10'}  match=True
+retune pi=0.25: {'N': 'c1800', 'FX': 'c1800', 'FB': 'f20_8', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  stored: {'N': 'c1800', 'FX': 'c1800', 'FB': 'f20_8', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  match=True
+retune pi=0.5: {'N': 'f70_6', 'FX': 'c1800', 'FB': 'f70_6', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  stored: {'N': 'f70_6', 'FX': 'c1800', 'FB': 'f70_6', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  match=True
+retune pi=1.0: {'N': 'f40_10', 'FX': 'c1800', 'FB': 'f40_10', 'PI': 'p70_70_8_e4', 'AD': 'ad0p5_f40_10'}  (not in run)
+  NOTE PI_pi0.05 = p70_40_4_e5: no evaluation runs in the run dir -> not evaluated
+
+medians (s/veh): arm  clean  slow  block
+  NC     504.9   515.4   520.5
+  ID     143.9   373.6   425.2
+  IP     143.9   301.7   378.6
+  N      143.9   507.7   520.9
+  FX     225.3   511.4   523.2
+  FB     297.4   366.7   413.2
+  PI     197.8   326.6   431.5
+  AD     316.7   395.7   489.0
+  N clean quantiles 10/25/50/75/90: [ 88.1 102.7 143.9 320.1 495.9]
+  clean PI-N per seed: median 14.5, share>0 0.52, q10/q90 -258.8/112.2
+  clean FB-N per seed: median 125.1, share>0 0.73, q10/q90 -146.6/229.5
+  clean FX-N per seed: median -6.8, share>0 0.40, q10/q90 -29.3/290.6
+
+--- pi = 0.05
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           157.5 |   153.7 | mean   228.3
+    ID           161.6 |   156.7 | mean   230.6
+    N            163.7 |   162.4 | mean   236.0
+    N_pi0.05     172.9 |   172.0 | mean   222.2
+    FX_pi0.05    172.9 |   172.0 | mean   222.2
+    FB_pi0.05    173.7 |   173.7 | mean   225.8
+    PI           209.3 |   206.8 | mean   212.7
+    FX           239.5 |   239.9 | mean   275.9
+    FB           301.8 |   302.0 | mean   304.9
+    AD           323.4 |   323.0 | mean   319.6
+    AD_pi0.05    323.4 |   323.0 | mean   319.6
+    NC           504.9 |   505.5 | mean   499.1
+  IP vs N        : rel    4.9 %  CI [   3.8,    5.8]  diff    8.0 [   7.2,    9.0] s
+  IP vs FX       : rel   -0.2 %  CI [  -1.7,    2.2]  diff   -0.5 [  -3.4,    6.4] s
+  IP vs FB       : rel   40.6 %  CI [  30.3,   47.1]  diff  122.5 [  92.5,  140.6] s
+  IP vs PI       : rel    6.7 %  CI [  -7.0,   17.3]  diff   14.0 [ -14.4,   36.6] s
+  IP vs AD       : rel   40.0 %  CI [  31.9,   48.3]  diff  129.4 [ 102.9,  155.3] s
+  IP vs N_pi0.05 : rel   16.2 %  CI [   8.8,   19.3]  diff   28.0 [  15.8,   31.6] s
+  IP vs FX_pi0.05: rel   16.2 %  CI [   8.8,   19.3]  diff   28.0 [  15.8,   31.6] s
+  IP vs FB_pi0.05: rel   15.3 %  CI [  12.6,   17.9]  diff   26.5 [  22.4,   31.2] s
+  IP vs AD_pi0.05: rel   40.0 %  CI [  31.9,   48.3]  diff  129.4 [ 102.9,  155.3] s
+  ID vs N        : rel    3.2 %  CI [   2.5,    3.8]  diff    5.2 [   4.7,    6.1] s
+  ID vs FX       : rel   -0.5 %  CI [  -2.8,    1.7]  diff   -1.2 [  -5.5,    4.9] s
+  ID vs FB       : rel   39.1 %  CI [  29.5,   46.0]  diff  118.1 [  90.2,  136.2] s
+  ID vs PI       : rel    5.1 %  CI [  -8.3,   15.6]  diff   10.7 [ -17.3,   32.0] s
+  ID vs AD       : rel   38.6 %  CI [  30.7,   47.7]  diff  124.7 [  98.3,  152.6] s
+  ID vs N_pi0.05 : rel   13.6 %  CI [   9.6,   17.2]  diff   23.5 [  17.6,   28.3] s
+  ID vs FX_pi0.05: rel   13.6 %  CI [   9.6,   17.2]  diff   23.5 [  17.6,   28.3] s
+  ID vs FB_pi0.05: rel   13.1 %  CI [  11.1,   16.1]  diff   22.7 [  19.7,   28.0] s
+  ID vs AD_pi0.05: rel   38.6 %  CI [  30.7,   47.7]  diff  124.7 [  98.3,  152.6] s
+
+--- pi = 0.1
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           171.2 |   163.6 | mean   235.0
+    ID           176.9 |   169.5 | mean   239.7
+    N            184.1 |   181.0 | mean   250.5
+    N_pi0.1      193.6 |   190.1 | mean   237.9
+    FX_pi0.1     193.6 |   190.1 | mean   237.9
+    FB_pi0.1     195.6 |   194.3 | mean   243.6
+    PI           218.6 |   215.9 | mean   221.6
+    PI_pi0.1     224.6 |   228.4 | mean   226.0
+    FX           253.7 |   254.5 | mean   288.2
+    FB           306.3 |   306.7 | mean   309.8
+    AD           329.6 |   329.2 | mean   326.2
+    AD_pi0.1     329.6 |   329.2 | mean   326.2
+    NC           504.2 |   506.2 | mean   500.3
+  IP vs N        : rel    8.7 %  CI [   6.9,   10.3]  diff   16.0 [  14.4,   18.0] s
+  IP vs FX       : rel    3.6 %  CI [   1.6,    4.8]  diff    9.0 [   4.0,   13.1] s
+  IP vs FB       : rel   38.6 %  CI [  29.0,   44.6]  diff  118.3 [  89.8,  134.8] s
+  IP vs PI       : rel    5.8 %  CI [  -6.5,   17.0]  diff   12.6 [ -14.7,   38.2] s
+  IP vs AD       : rel   38.4 %  CI [  31.0,   46.5]  diff  126.5 [ 101.8,  151.0] s
+  IP vs N_pi0.1  : rel   16.6 %  CI [  11.8,   21.7]  diff   32.2 [  23.4,   39.2] s
+  IP vs FX_pi0.1 : rel   16.6 %  CI [  11.8,   21.7]  diff   32.2 [  23.4,   39.2] s
+  IP vs FB_pi0.1 : rel   18.8 %  CI [  16.3,   20.9]  diff   36.7 [  33.2,   40.4] s
+  IP vs PI_pi0.1 : rel   -3.1 %  CI [  -7.7,    0.2]  diff   -6.9 [ -17.8,    0.4] s
+  IP vs AD_pi0.1 : rel   38.4 %  CI [  31.0,   46.5]  diff  126.5 [ 101.8,  151.0] s
+  ID vs N        : rel    5.6 %  CI [   4.6,    6.7]  diff   10.4 [   9.4,   12.2] s
+  ID vs FX       : rel    2.2 %  CI [   0.4,    4.4]  diff    5.5 [   0.9,   12.5] s
+  ID vs FB       : rel   36.5 %  CI [  27.5,   42.3]  diff  111.9 [  84.2,  129.6] s
+  ID vs PI       : rel    3.2 %  CI [  -8.7,   14.0]  diff    7.0 [ -19.4,   29.6] s
+  ID vs AD       : rel   37.3 %  CI [  29.0,   45.1]  diff  122.8 [  94.2,  147.2] s
+  ID vs N_pi0.1  : rel   13.9 %  CI [  11.0,   17.8]  diff   26.8 [  21.7,   32.4] s
+  ID vs FX_pi0.1 : rel   13.9 %  CI [  11.0,   17.8]  diff   26.8 [  21.7,   32.4] s
+  ID vs FB_pi0.1 : rel   15.7 %  CI [  13.7,   17.9]  diff   30.7 [  27.2,   35.0] s
+  ID vs PI_pi0.1 : rel   -6.6 %  CI [  -9.8,   -2.5]  diff  -14.9 [ -22.3,   -5.6] s
+  ID vs AD_pi0.1 : rel   37.3 %  CI [  29.0,   45.1]  diff  122.8 [  94.2,  147.2] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 0.00e+00
+
+--- pi = 0.25
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           203.7 |   193.0 | mean   255.2
+    ID           219.0 |   207.8 | mean   267.0
+    PI           249.9 |   243.1 | mean   248.5
+    PI_pi0.25    249.9 |   243.1 | mean   248.5
+    N            254.6 |   236.5 | mean   294.0
+    N_pi0.25     254.6 |   236.5 | mean   294.0
+    FX_pi0.25    254.6 |   236.5 | mean   294.0
+    FB_pi0.25    275.1 |   263.0 | mean   297.0
+    FX           299.6 |   298.3 | mean   324.9
+    FB           321.6 |   320.5 | mean   324.4
+    AD           340.3 |   348.1 | mean   346.0
+    AD_pi0.25    340.3 |   348.1 | mean   346.0
+    NC           505.4 |   508.1 | mean   503.8
+  IP vs N        : rel   15.7 %  CI [  13.8,   19.1]  diff   39.9 [  36.1,   45.1] s
+  IP vs FX       : rel   12.5 %  CI [   9.4,   15.8]  diff   37.4 [  29.6,   48.3] s
+  IP vs FB       : rel   31.9 %  CI [  24.2,   36.8]  diff  102.7 [  78.8,  116.7] s
+  IP vs PI       : rel    5.3 %  CI [  -3.2,   14.6]  diff   13.3 [  -8.1,   36.8] s
+  IP vs AD       : rel   35.5 %  CI [  29.4,   41.7]  diff  120.6 [ 102.2,  141.5] s
+  IP vs N_pi0.25 : rel   15.7 %  CI [  13.8,   19.1]  diff   39.9 [  36.1,   45.1] s
+  IP vs FX_pi0.25: rel   15.7 %  CI [  13.8,   19.1]  diff   39.9 [  36.1,   45.1] s
+  IP vs FB_pi0.25: rel   13.0 %  CI [  10.6,   16.3]  diff   35.7 [  29.5,   43.1] s
+  IP vs PI_pi0.25: rel    5.3 %  CI [  -3.2,   14.6]  diff   13.3 [  -8.1,   36.8] s
+  IP vs AD_pi0.25: rel   35.5 %  CI [  29.4,   41.7]  diff  120.6 [ 102.2,  141.5] s
+  ID vs N        : rel   10.2 %  CI [   9.1,   12.5]  diff   25.9 [  23.5,   30.4] s
+  ID vs FX       : rel   10.0 %  CI [   6.4,   12.3]  diff   30.0 [  19.4,   36.8] s
+  ID vs FB       : rel   27.2 %  CI [  21.7,   32.6]  diff   87.4 [  70.3,  104.0] s
+  ID vs PI       : rel   -0.3 %  CI [  -7.9,    8.2]  diff   -0.8 [ -19.6,   20.2] s
+  ID vs AD       : rel   32.2 %  CI [  24.9,   37.3]  diff  109.5 [  86.7,  126.6] s
+  ID vs N_pi0.25 : rel   10.2 %  CI [   9.1,   12.5]  diff   25.9 [  23.5,   30.4] s
+  ID vs FX_pi0.25: rel   10.2 %  CI [   9.1,   12.5]  diff   25.9 [  23.5,   30.4] s
+  ID vs FB_pi0.25: rel    9.0 %  CI [   6.7,   10.9]  diff   24.7 [  18.2,   29.8] s
+  ID vs PI_pi0.25: rel   -0.3 %  CI [  -7.9,    8.2]  diff   -0.8 [ -19.6,   20.2] s
+  ID vs AD_pi0.25: rel   32.2 %  CI [  24.9,   37.3]  diff  109.5 [  86.7,  126.6] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 0.00e+00
+
+--- pi = 0.5
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           259.6 |   242.0 | mean   289.0
+    PI           289.6 |   288.4 | mean   293.2
+    PI_pi0.5     289.6 |   288.4 | mean   293.2
+    ID           292.4 |   271.7 | mean   312.5
+    N_pi0.5      335.5 |   325.7 | mean   340.9
+    FB_pi0.5     335.5 |   325.7 | mean   340.9
+    N            348.0 |   329.1 | mean   366.4
+    FX_pi0.5     348.0 |   329.1 | mean   366.4
+    FB           348.1 |   343.7 | mean   348.7
+    FX           375.0 |   371.3 | mean   386.0
+    AD           376.5 |   379.5 | mean   379.0
+    AD_pi0.5     376.5 |   379.5 | mean   379.0
+    NC           515.4 |   511.4 | mean   509.6
+  IP vs N        : rel   22.9 %  CI [  20.1,   26.7]  diff   79.8 [  72.1,   90.1] s
+  IP vs FX       : rel   22.5 %  CI [  19.0,   26.9]  diff   84.5 [  71.9,  100.9] s
+  IP vs FB       : rel   22.3 %  CI [  16.6,   26.8]  diff   77.7 [  58.1,   92.7] s
+  IP vs PI       : rel    6.5 %  CI [  -0.8,   12.4]  diff   18.9 [  -2.4,   36.4] s
+  IP vs AD       : rel   28.5 %  CI [  23.8,   33.1]  diff  107.4 [  89.7,  125.8] s
+  IP vs N_pi0.5  : rel   21.8 %  CI [  14.4,   24.3]  diff   73.0 [  48.9,   80.4] s
+  IP vs FX_pi0.5 : rel   22.9 %  CI [  20.1,   26.7]  diff   79.8 [  72.1,   90.1] s
+  IP vs FB_pi0.5 : rel   21.8 %  CI [  14.4,   24.3]  diff   73.0 [  48.9,   80.4] s
+  IP vs PI_pi0.5 : rel    6.5 %  CI [  -0.8,   12.4]  diff   18.9 [  -2.4,   36.4] s
+  IP vs AD_pi0.5 : rel   28.5 %  CI [  23.8,   33.1]  diff  107.4 [  89.7,  125.8] s
+  ID vs N        : rel   14.9 %  CI [  13.2,   17.7]  diff   51.9 [  47.0,   60.9] s
+  ID vs FX       : rel   16.5 %  CI [  12.7,   20.8]  diff   61.8 [  46.9,   79.8] s
+  ID vs FB       : rel   15.2 %  CI [  10.7,   18.4]  diff   52.9 [  37.4,   63.5] s
+  ID vs PI       : rel   -2.5 %  CI [  -7.1,    0.9]  diff   -7.3 [ -20.3,    2.5] s
+  ID vs AD       : rel   21.7 %  CI [  16.2,   27.3]  diff   81.6 [  61.8,  102.0] s
+  ID vs N_pi0.5  : rel   12.5 %  CI [   7.4,   16.7]  diff   42.0 [  24.7,   55.5] s
+  ID vs FX_pi0.5 : rel   14.9 %  CI [  13.2,   17.7]  diff   51.9 [  47.0,   60.9] s
+  ID vs FB_pi0.5 : rel   12.5 %  CI [   7.4,   16.7]  diff   42.0 [  24.7,   55.5] s
+  ID vs PI_pi0.5 : rel   -2.5 %  CI [  -7.1,    0.9]  diff   -7.3 [ -20.3,    2.5] s
+  ID vs AD_pi0.5 : rel   21.7 %  CI [  16.2,   27.3]  diff   81.6 [  61.8,  102.0] s
+  max |result.json - mine| over rel / diff_ci lo / rel_ci hi: 0.00e+00
+
+--- pi = 1.0
+  ranking (median of per-seed mixture | mixture of medians):
+    IP           340.7 |   340.1 | mean   356.4
+    FB           383.9 |   389.9 | mean   397.3
+    N_pi1.0      383.9 |   389.9 | mean   397.3
+    FB_pi1.0     383.9 |   389.9 | mean   397.3
+    PI           385.5 |   379.0 | mean   382.7
+    PI_pi1.0     385.5 |   379.0 | mean   382.7
+    ID           400.9 |   399.4 | mean   403.4
+    AD           436.9 |   442.4 | mean   445.1
+    AD_pi1.0     436.9 |   442.4 | mean   445.1
+    FX           513.0 |   517.3 | mean   508.4
+    N            514.6 |   514.3 | mean   511.2
+    FX_pi1.0     514.6 |   514.3 | mean   511.2
+    NC           519.0 |   517.9 | mean   521.3
+  IP vs N        : rel   31.0 %  CI [  27.8,   35.1]  diff  159.7 [ 144.3,  180.2] s
+  IP vs FX       : rel   32.0 %  CI [  27.1,   34.6]  diff  164.1 [ 139.9,  178.5] s
+  IP vs FB       : rel   10.8 %  CI [   9.3,   13.4]  diff   41.6 [  36.7,   52.3] s
+  IP vs PI       : rel   10.6 %  CI [   4.6,   14.3]  diff   40.8 [  17.4,   55.9] s
+  IP vs AD       : rel   19.9 %  CI [  18.2,   24.1]  diff   87.1 [  79.7,  105.3] s
+  IP vs N_pi1.0  : rel   10.8 %  CI [   9.3,   13.4]  diff   41.6 [  36.7,   52.3] s
+  IP vs FX_pi1.0 : rel   31.0 %  CI [  27.8,   35.1]  diff  159.7 [ 144.3,  180.2] s
+  IP vs FB_pi1.0 : rel   10.8 %  CI [   9.3,   13.4]  diff   41.6 [  36.7,   52.3] s
+  IP vs PI_pi1.0 : rel   10.6 %  CI [   4.6,   14.3]  diff   40.8 [  17.4,   55.9] s
+  IP vs AD_pi1.0 : rel   19.9 %  CI [  18.2,   24.1]  diff   87.1 [  79.7,  105.3] s
+  ID vs N        : rel   20.2 %  CI [  18.1,   23.6]  diff  103.7 [  94.0,  121.8] s
+  ID vs FX       : rel   20.4 %  CI [  17.2,   24.9]  diff  104.5 [  88.3,  127.8] s
+  ID vs FB       : rel   -2.3 %  CI [  -4.7,   -0.4]  diff   -8.7 [ -17.6,   -1.7] s
+  ID vs PI       : rel   -5.3 %  CI [  -7.6,   -1.3]  diff  -20.3 [ -27.9,   -5.2] s
+  ID vs AD       : rel    9.3 %  CI [   7.8,   11.1]  diff   40.8 [  34.1,   49.1] s
+  ID vs N_pi1.0  : rel   -2.3 %  CI [  -4.7,   -0.4]  diff   -8.7 [ -17.6,   -1.7] s
+  ID vs FX_pi1.0 : rel   20.2 %  CI [  18.1,   23.6]  diff  103.7 [  94.0,  121.8] s
+  ID vs FB_pi1.0 : rel   -2.3 %  CI [  -4.7,   -0.4]  diff   -8.7 [ -17.6,   -1.7] s
+  ID vs PI_pi1.0 : rel   -5.3 %  CI [  -7.6,   -1.3]  diff  -20.3 [ -27.9,   -5.2] s
+  ID vs AD_pi1.0 : rel    9.3 %  CI [   7.8,   11.1]  diff   40.8 [  34.1,   49.1] s

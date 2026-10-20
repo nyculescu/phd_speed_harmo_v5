@@ -1,0 +1,6 @@
+files 50061
+runs with collisions 0 total collisions 0
+runs with estops 43370
+health Counter({'WARN': 49834, 'PASS': 227})
+codes [('H-R4b', 49828), ('H-R4e', 43370), ('H-R2', 6764), ('H-R5', 2201)]
+not drained 0

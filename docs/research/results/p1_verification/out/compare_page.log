@@ -1,0 +1,3 @@
+mismatches: 0
+checks {'n_invalid_eval': 0, 'n_teleport_eval': 0, 'n_undrained_eval': 0, 'window_mismatch_seed_cells': 0, 'replicate_seed_bad': 0, 'N_fixed_vs_NN_hash_mismatch': 0, 'delayed_switch_time_bad': 0}
+scalar comparisons 3364

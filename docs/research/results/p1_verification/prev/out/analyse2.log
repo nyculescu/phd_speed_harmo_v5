@@ -1,0 +1,94 @@
+
+========== q 1600
+  clean N          (c2000         ) mean  127.0 median   58.3 share > 2*median(N) 0.39; vs N per seed: median diff    0.0, mean diff    0.0, share better than N 0.00
+  clean PI         (p40_40_10_e4  ) mean  117.2 median  113.0 share > 2*median(N) 0.48; vs N per seed: median diff    7.4, mean diff   -9.8, share better than N 0.45
+  clean PI_pi0.1   (p20_10_10_e4  ) mean   90.8 median   62.3 share > 2*median(N) 0.29; vs N per seed: median diff    1.3, mean diff  -36.2, share better than N 0.44
+  clean PI_pi0.25  (p40_120_6_e4  ) mean   75.1 median   53.9 share > 2*median(N) 0.21; vs N per seed: median diff   -3.0, mean diff  -52.0, share better than N 0.63
+  clean PI_pi0.5   (p70_70_8_e4   ) mean   90.9 median   87.4 share > 2*median(N) 0.21; vs N per seed: median diff   -5.1, mean diff  -36.1, share better than N 0.55
+  clean FB         (f40_10        ) mean  134.6 median  139.5 share > 2*median(N) 0.63; vs N per seed: median diff   10.1, mean diff    7.6, share better than N 0.48
+  clean NC         (NC            ) mean  245.7 median  265.7 share > 2*median(N) 0.86; vs N per seed: median diff  134.2, mean diff  118.7, share better than N 0.21
+  incident means: IP slow/block 202.7/239.6, ID 202.7/290.8; N clean mean 127.0
+  pi 0.05: MEAN ranking: PI 122.5, IP 131.7, ID 133.0, N 136.8, FB 139.6, AD 147.9
+     IP vs PI       : mean diff   -9.2 s [ -30.3,   11.4], rel_mean   -7.5 % [ -24.9,    9.2], median diff    7.3, IP lower on 56 % of seeds
+     IP vs FB       : mean diff    7.9 s [ -10.6,   25.9], rel_mean    5.7 % [  -7.6,   18.6], median diff    7.9, IP lower on 53 % of seeds
+     ID vs PI       : mean diff  -10.5 s [ -31.5,   10.1], rel_mean   -8.5 % [ -25.9,    8.1], median diff    6.0, ID lower on 56 % of seeds
+     ID vs FB       : mean diff    6.6 s [ -11.8,   24.5], rel_mean    4.8 % [  -8.4,   17.6], median diff    5.1, ID lower on 52 % of seeds
+  pi 0.1: MEAN ranking: PI_pi0.1 110.7, PI 127.9, FB_pi0.1 133.3, IP 136.4, ID 139.0, FB 144.7
+     IP vs PI       : mean diff   -8.5 s [ -28.6,   11.1], rel_mean   -6.7 % [ -22.5,    8.6], median diff    9.9, IP lower on 55 % of seeds
+     IP vs PI_pi0.1 : mean diff  -25.8 s [ -45.2,   -7.6], rel_mean  -23.3 % [ -41.5,   -6.8], median diff    8.7, IP lower on 65 % of seeds
+     IP vs FB       : mean diff    8.3 s [  -9.3,   25.3], rel_mean    5.7 % [  -6.4,   17.6], median diff    7.1, IP lower on 55 % of seeds
+     IP vs FB_pi0.1 : mean diff   -3.1 s [ -21.0,   14.1], rel_mean   -2.4 % [ -16.3,   10.4], median diff   10.6, IP lower on 68 % of seeds
+     ID vs PI       : mean diff  -11.1 s [ -31.0,    8.4], rel_mean   -8.7 % [ -24.4,    6.5], median diff    6.1, ID lower on 56 % of seeds
+     ID vs PI_pi0.1 : mean diff  -28.3 s [ -47.7,  -10.2], rel_mean  -25.6 % [ -43.8,   -9.2], median diff    5.8, ID lower on 63 % of seeds
+     ID vs FB       : mean diff    5.7 s [ -11.7,   22.7], rel_mean    4.0 % [  -8.0,   15.7], median diff    1.6, ID lower on 51 % of seeds
+     ID vs FB_pi0.1 : mean diff   -5.7 s [ -23.4,   11.5], rel_mean   -4.3 % [ -18.3,    8.5], median diff    7.2, ID lower on 67 % of seeds
+  pi 0.25: MEAN ranking: PI_pi0.25 120.1, PI 144.0, N_pi0.25 144.4, FB_pi0.25 144.4, IP 150.5, ID 156.9
+     IP vs PI       : mean diff   -6.5 s [ -23.6,   10.1], rel_mean   -4.5 % [ -16.4,    7.0], median diff   14.0, IP lower on 57 % of seeds
+     IP vs PI_pi0.25: mean diff  -30.5 s [ -45.9,  -16.0], rel_mean  -25.4 % [ -37.6,  -13.6], median diff   -5.0, IP lower on 45 % of seeds
+     IP vs FB       : mean diff    9.4 s [  -5.5,   23.9], rel_mean    5.9 % [  -3.4,   15.0], median diff    9.8, IP lower on 57 % of seeds
+     IP vs FB_pi0.25: mean diff   -6.1 s [ -22.0,    9.0], rel_mean   -4.2 % [ -15.2,    6.3], median diff   16.7, IP lower on 59 % of seeds
+     ID vs PI       : mean diff  -12.9 s [ -29.7,    3.4], rel_mean   -9.0 % [ -20.6,    2.3], median diff    5.2, ID lower on 53 % of seeds
+     ID vs PI_pi0.25: mean diff  -36.9 s [ -52.0,  -22.7], rel_mean  -30.7 % [ -42.4,  -19.3], median diff   -5.6, ID lower on 42 % of seeds
+     ID vs FB       : mean diff    3.0 s [ -11.7,   17.2], rel_mean    1.9 % [  -7.2,   10.8], median diff    2.1, ID lower on 52 % of seeds
+     ID vs FB_pi0.25: mean diff  -12.5 s [ -28.0,    2.3], rel_mean   -8.7 % [ -19.3,    1.6], median diff    7.4, ID lower on 55 % of seeds
+  pi 0.5: MEAN ranking: PI_pi0.5 155.9, PI 170.9, N_pi0.5 172.3, FB_pi0.5 172.3, IP 174.1, FB 185.3
+     IP vs PI       : mean diff   -3.2 s [ -15.8,    8.9], rel_mean   -1.9 % [  -9.3,    5.2], median diff   10.7, IP lower on 58 % of seeds
+     IP vs PI_pi0.5 : mean diff  -18.2 s [ -31.7,   -5.3], rel_mean  -11.7 % [ -20.4,   -3.4], median diff   -4.3, IP lower on 45 % of seeds
+     IP vs FB       : mean diff   11.2 s [   0.4,   21.7], rel_mean    6.0 % [   0.2,   11.8], median diff   17.3, IP lower on 60 % of seeds
+     IP vs FB_pi0.5 : mean diff   -1.8 s [ -14.7,   10.7], rel_mean   -1.1 % [  -8.7,    6.1], median diff    4.3, IP lower on 52 % of seeds
+     ID vs PI       : mean diff  -16.0 s [ -27.9,   -4.4], rel_mean   -9.4 % [ -16.3,   -2.6], median diff   -3.0, ID lower on 46 % of seeds
+     ID vs PI_pi0.5 : mean diff  -31.0 s [ -43.7,  -18.7], rel_mean  -19.9 % [ -28.1,  -12.0], median diff  -16.3, ID lower on 33 % of seeds
+     ID vs FB       : mean diff   -1.6 s [ -12.0,    8.7], rel_mean   -0.9 % [  -6.4,    4.7], median diff   -4.5, ID lower on 48 % of seeds
+     ID vs FB_pi0.5 : mean diff  -14.6 s [ -26.9,   -2.4], rel_mean   -8.5 % [ -15.8,   -1.4], median diff   -6.7, ID lower on 43 % of seeds
+  pi 1.0: MEAN ranking: IP 221.2, PI 224.6, FB 236.0, ID 246.7, AD 264.1, FX 318.6
+     IP vs PI       : mean diff    3.4 s [  -5.2,   12.0], rel_mean    1.5 % [  -2.4,    5.2], median diff    1.7, IP lower on 50 % of seeds
+     IP vs FB       : mean diff   14.8 s [   7.7,   22.1], rel_mean    6.3 % [   3.3,    9.2], median diff   12.2, IP lower on 64 % of seeds
+     ID vs PI       : mean diff  -22.2 s [ -29.9,  -14.4], rel_mean   -9.9 % [ -13.5,   -6.4], median diff  -18.0, ID lower on 31 % of seeds
+     ID vs FB       : mean diff  -10.7 s [ -19.2,   -2.4], rel_mean   -4.6 % [  -8.1,   -1.0], median diff   -9.5, ID lower on 43 % of seeds
+
+========== q 2000
+  clean N          (c1800         ) mean  221.5 median  143.9 share > 2*median(N) 0.30; vs N per seed: median diff    0.0, mean diff    0.0, share better than N 0.00
+  clean PI         (p70_70_8_e4   ) mean  203.7 median  197.8 share > 2*median(N) 0.12; vs N per seed: median diff   14.5, mean diff  -17.8, share better than N 0.48
+  clean PI_pi0.1   (p40_40_8_e4   ) mean  205.9 median  209.0 share > 2*median(N) 0.20; vs N per seed: median diff  -15.4, mean diff  -15.7, share better than N 0.62
+  clean PI_pi0.25  (p70_70_8_e4   ) mean  203.7 median  197.8 share > 2*median(N) 0.12; vs N per seed: median diff   14.5, mean diff  -17.8, share better than N 0.48
+  clean PI_pi0.5   (p70_70_8_e4   ) mean  203.7 median  197.8 share > 2*median(N) 0.12; vs N per seed: median diff   14.5, mean diff  -17.8, share better than N 0.48
+  clean FB         (f40_10        ) mean  300.1 median  297.4 share > 2*median(N) 0.54; vs N per seed: median diff  125.1, mean diff   78.6, share better than N 0.27
+  clean NC         (NC            ) mean  498.0 median  504.9 share > 2*median(N) 1.00; vs N per seed: median diff  329.6, mean diff  276.4, share better than N 0.06
+  incident means: IP slow/block 325.1/387.7, ID 382.4/424.3; N clean mean 221.5
+  pi 0.05: MEAN ranking: PI 212.7, IP 228.3, ID 230.6, N 236.0, FX 275.9, FB 304.9
+     IP vs PI       : mean diff  -15.6 s [ -41.9,    9.2], rel_mean   -7.3 % [ -19.6,    4.3], median diff   14.0, IP lower on 52 % of seeds
+     IP vs FB       : mean diff   76.7 s [  50.1,  102.1], rel_mean   25.1 % [  16.4,   33.7], median diff  122.5, IP lower on 74 % of seeds
+     ID vs PI       : mean diff  -17.9 s [ -44.1,    6.6], rel_mean   -8.4 % [ -20.5,    3.1], median diff   10.7, ID lower on 52 % of seeds
+     ID vs FB       : mean diff   74.3 s [  48.0,   99.6], rel_mean   24.4 % [  15.7,   32.8], median diff  118.1, ID lower on 73 % of seeds
+  pi 0.1: MEAN ranking: PI 221.6, PI_pi0.1 226.0, IP 235.0, N_pi0.1 237.9, FX_pi0.1 237.9, ID 239.7
+     IP vs PI       : mean diff  -13.4 s [ -38.6,   10.4], rel_mean   -6.0 % [ -17.3,    4.7], median diff   12.6, IP lower on 54 % of seeds
+     IP vs PI_pi0.1 : mean diff   -9.0 s [ -32.1,   13.2], rel_mean   -4.0 % [ -14.1,    5.9], median diff   -6.9, IP lower on 41 % of seeds
+     IP vs FB       : mean diff   74.8 s [  49.3,   99.1], rel_mean   24.1 % [  15.8,   32.2], median diff  118.3, IP lower on 74 % of seeds
+     IP vs FB_pi0.1 : mean diff    8.6 s [ -15.8,   31.6], rel_mean    3.5 % [  -6.7,   12.6], median diff   36.7, IP lower on 82 % of seeds
+     ID vs PI       : mean diff  -18.1 s [ -42.8,    5.2], rel_mean   -8.2 % [ -19.2,    2.4], median diff    7.0, ID lower on 52 % of seeds
+     ID vs PI_pi0.1 : mean diff  -13.7 s [ -36.4,    8.1], rel_mean   -6.1 % [ -16.0,    3.6], median diff  -14.9, ID lower on 39 % of seeds
+     ID vs FB       : mean diff   70.1 s [  45.2,   93.9], rel_mean   22.6 % [  14.5,   30.5], median diff  111.9, ID lower on 72 % of seeds
+     ID vs FB_pi0.1 : mean diff    3.9 s [ -20.2,   26.6], rel_mean    1.6 % [  -8.5,   10.6], median diff   30.7, ID lower on 82 % of seeds
+  pi 0.25: MEAN ranking: PI 248.5, PI_pi0.25 248.5, IP 255.2, ID 267.0, N 294.0, N_pi0.25 294.0
+     IP vs PI       : mean diff   -6.8 s [ -29.0,   14.2], rel_mean   -2.7 % [ -11.7,    5.7], median diff   13.3, IP lower on 55 % of seeds
+     IP vs PI_pi0.25: mean diff   -6.8 s [ -29.0,   14.2], rel_mean   -2.7 % [ -11.7,    5.7], median diff   13.3, IP lower on 55 % of seeds
+     IP vs FB       : mean diff   69.1 s [  47.0,   90.4], rel_mean   21.3 % [  14.3,   28.0], median diff  102.7, IP lower on 74 % of seeds
+     IP vs FB_pi0.25: mean diff   41.7 s [  22.6,   60.3], rel_mean   14.1 % [   7.6,   20.2], median diff   35.7, IP lower on 84 % of seeds
+     ID vs PI       : mean diff  -18.5 s [ -39.3,    1.2], rel_mean   -7.5 % [ -15.8,    0.5], median diff   -0.8, ID lower on 49 % of seeds
+     ID vs PI_pi0.25: mean diff  -18.5 s [ -39.3,    1.2], rel_mean   -7.5 % [ -15.8,    0.5], median diff   -0.8, ID lower on 49 % of seeds
+     ID vs FB       : mean diff   57.4 s [  36.8,   77.2], rel_mean   17.7 % [  11.3,   24.0], median diff   87.4, ID lower on 72 % of seeds
+     ID vs FB_pi0.25: mean diff   30.0 s [  11.6,   48.0], rel_mean   10.1 % [   3.9,   16.0], median diff   24.7, ID lower on 77 % of seeds
+  pi 0.5: MEAN ranking: IP 289.0, PI 293.2, PI_pi0.5 293.2, ID 312.5, N_pi0.5 340.9, FB_pi0.5 340.9
+     IP vs PI       : mean diff    4.3 s [ -14.0,   21.1], rel_mean    1.5 % [  -4.8,    7.2], median diff   18.9, IP lower on 58 % of seeds
+     IP vs PI_pi0.5 : mean diff    4.3 s [ -14.0,   21.1], rel_mean    1.5 % [  -4.8,    7.2], median diff   18.9, IP lower on 58 % of seeds
+     IP vs FB       : mean diff   59.7 s [  42.4,   76.3], rel_mean   17.1 % [  12.1,   22.0], median diff   77.7, IP lower on 75 % of seeds
+     IP vs FB_pi0.5 : mean diff   51.9 s [  35.3,   67.8], rel_mean   15.2 % [  10.3,   20.0], median diff   73.0, IP lower on 76 % of seeds
+     ID vs PI       : mean diff  -19.2 s [ -34.2,   -5.0], rel_mean   -6.6 % [ -11.7,   -1.7], median diff   -7.3, ID lower on 42 % of seeds
+     ID vs PI_pi0.5 : mean diff  -19.2 s [ -34.2,   -5.0], rel_mean   -6.6 % [ -11.7,   -1.7], median diff   -7.3, ID lower on 42 % of seeds
+     ID vs FB       : mean diff   36.2 s [  22.2,   49.8], rel_mean   10.4 % [   6.3,   14.3], median diff   52.9, ID lower on 70 % of seeds
+     ID vs FB_pi0.5 : mean diff   28.4 s [  14.6,   41.8], rel_mean    8.3 % [   4.3,   12.3], median diff   42.0, ID lower on 71 % of seeds
+  pi 1.0: MEAN ranking: IP 356.4, PI 382.7, FB 397.3, ID 403.4, AD 445.1, FX 508.4
+     IP vs PI       : mean diff   26.3 s [  11.0,   41.3], rel_mean    6.9 % [   2.9,   10.6], median diff   40.8, IP lower on 68 % of seeds
+     IP vs FB       : mean diff   40.9 s [  27.8,   53.7], rel_mean   10.3 % [   7.1,   13.4], median diff   41.6, IP lower on 80 % of seeds
+     ID vs PI       : mean diff  -20.7 s [ -31.0,  -10.3], rel_mean   -5.4 % [  -8.4,   -2.6], median diff  -20.3, ID lower on 35 % of seeds
+     ID vs FB       : mean diff   -6.1 s [ -14.7,    2.6], rel_mean   -1.5 % [  -3.8,    0.7], median diff   -8.7, ID lower on 39 % of seeds

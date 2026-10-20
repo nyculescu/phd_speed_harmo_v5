@@ -1,0 +1,6 @@
+slow_q1600: NC 0 (0/100, coll 0); N 7 (100/100, coll 0); FX 11.5 (100/100, coll 0); FB 3 (90/100, coll 0); PI 2 (88/100, coll 0); AD 3 (92/100, coll 0); ID 2 (93/100, coll 0); IP 2 (93/100, coll 0)
+block_q1600: NC 0 (0/100, coll 0); N 6 (99/100, coll 0); FX 10 (100/100, coll 0); FB 3 (90/100, coll 0); PI 2 (86/100, coll 0); AD 3 (93/100, coll 0); ID 2 (95/100, coll 0); IP 4.5 (99/100, coll 0)
+none_q1600: NC 0 (0/100, coll 0); N 8 (100/100, coll 0); FX 14 (100/100, coll 0); FB 11 (97/100, coll 0); PI 8 (97/100, coll 0); AD 8 (97/100, coll 0)
+slow_q2000: NC 0 (0/100, coll 0); N 2 (84/100, coll 0); FX 2 (91/100, coll 0); FB 2 (80/100, coll 0); PI 1 (68/100, coll 0); AD 2 (79/100, coll 0); ID 1 (76/100, coll 0); IP 1 (71/100, coll 0)
+block_q2000: NC 0 (0/100, coll 0); N 2 (84/100, coll 0); FX 2 (91/100, coll 0); FB 2 (83/100, coll 0); PI 1 (72/100, coll 0); AD 2 (80/100, coll 0); ID 1 (82/100, coll 0); IP 3 (87/100, coll 0)
+none_q2000: NC 0 (0/100, coll 0); N 2 (85/100, coll 0); FX 2.5 (93/100, coll 0); FB 3 (90/100, coll 0); PI 2 (79/100, coll 0); AD 3 (89/100, coll 0)

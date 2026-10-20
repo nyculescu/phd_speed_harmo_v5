@@ -1,0 +1,12 @@
+q1600: N median 58.3; seeds with N > 2x median: 39/100
+  FX  - N: median -1.8 [-5.6, 16.8] | mean +46.9 [25.7, 68.3] | arm worse on 48/100; arm > 2x N median on 59 | arm Q1 39.1 (N Q1 35.9)
+  FB  - N: median +10.1 [-10.7, 40.9] | mean +7.6 [-11.8, 26.4] | arm worse on 52/100; arm > 2x N median on 63 | arm Q1 79.3 (N Q1 35.9)
+  PI  - N: median +7.4 [-9.9, 37.5] | mean -9.8 [-32.0, 11.7] | arm worse on 55/100; arm > 2x N median on 48 | arm Q1 75.6 (N Q1 35.9)
+  AD  - N: median +2.7 [-8.2, 49.9] | mean +14.8 [-7.0, 36.4] | arm worse on 51/100; arm > 2x N median on 61 | arm Q1 67.7 (N Q1 35.9)
+  NC  - N: median +134.2 [88.7, 161.0] | mean +118.7 [96.0, 141.1] | arm worse on 79/100; arm > 2x N median on 86 | arm Q1 176.4 (N Q1 35.9)
+q2000: N median 143.9; seeds with N > 2x median: 30/100
+  FX  - N: median -6.8 [-11.2, 0.3] | mean +42.2 [14.0, 71.3] | arm worse on 40/100; arm > 2x N median on 44 | arm Q1 104.8 (N Q1 102.7)
+  FB  - N: median +125.1 [96.2, 146.3] | mean +78.6 [50.9, 105.1] | arm worse on 73/100; arm > 2x N median on 54 | arm Q1 250.7 (N Q1 102.7)
+  PI  - N: median +14.5 [-13.6, 35.0] | mean -17.8 [-45.2, 8.0] | arm worse on 52/100; arm > 2x N median on 12 | arm Q1 148.6 (N Q1 102.7)
+  AD  - N: median +129.5 [103.9, 158.3] | mean +91.5 [64.2, 118.0] | arm worse on 73/100; arm > 2x N median on 61 | arm Q1 262.5 (N Q1 102.7)
+  NC  - N: median +329.6 [287.9, 347.5] | mean +276.4 [246.7, 305.2] | arm worse on 94/100; arm > 2x N median on 100 | arm Q1 451.7 (N Q1 102.7)

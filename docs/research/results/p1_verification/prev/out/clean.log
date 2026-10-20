@@ -1,0 +1,26 @@
+== q 1600: N clean histogram (s/veh) bins 0-50-100-150-200-300-400-600: [48, 12, 5, 12, 8, 12, 3]
+  FX         c2400          med  161.6 vs N   58.3 | paired median(arm-N)   -1.8 [  -5.6,   16.8] | mean(arm-N)   46.9 [  25.7,   68.3] | arm worse on 48 %
+  FB         f40_10         med  139.5 vs N   58.3 | paired median(arm-N)   10.1 [ -10.7,   40.9] | mean(arm-N)    7.6 [ -11.8,   26.4] | arm worse on 52 %
+  PI         p40_40_10_e4   med  113.0 vs N   58.3 | paired median(arm-N)    7.4 [  -9.9,   37.5] | mean(arm-N)   -9.8 [ -32.0,   11.7] | arm worse on 55 %
+  AD         ad0p5_f40_10   med  149.0 vs N   58.3 | paired median(arm-N)    2.7 [  -8.2,   49.9] | mean(arm-N)   14.8 [  -7.0,   36.4] | arm worse on 51 %
+  NC         NC             med  265.7 vs N   58.3 | paired median(arm-N)  134.2 [  88.7,  161.0] | mean(arm-N)  118.7 [  96.0,  141.1] | arm worse on 79 %
+  FB_pi0.1   f20_8          med   69.4 vs N   58.3 | paired median(arm-N)    0.3 [  -2.0,    1.7] | mean(arm-N)  -15.0 [ -34.7,    4.2] | arm worse on 52 %
+  PI_pi0.1   p20_10_10_e4   med   62.3 vs N   58.3 | paired median(arm-N)    1.3 [  -1.5,    2.4] | mean(arm-N)  -36.2 [ -57.6,  -16.3] | arm worse on 56 %
+  FB_pi0.25  f120_6         med   91.7 vs N   58.3 | paired median(arm-N)    1.8 [  -7.9,    9.2] | mean(arm-N)  -25.2 [ -45.4,   -5.9] | arm worse on 52 %
+  PI_pi0.25  p40_120_6_e4   med   53.9 vs N   58.3 | paired median(arm-N)   -3.0 [ -19.1,   -0.9] | mean(arm-N)  -52.0 [ -71.7,  -33.4] | arm worse on 37 %
+  FB_pi0.5   f120_8         med  109.0 vs N   58.3 | paired median(arm-N)   21.3 [ -13.8,   37.4] | mean(arm-N)  -12.7 [ -34.3,    8.1] | arm worse on 54 %
+  PI_pi0.5   p70_70_8_e4    med   87.4 vs N   58.3 | paired median(arm-N)   -5.1 [ -12.3,   15.8] | mean(arm-N)  -36.1 [ -59.2,  -14.2] | arm worse on 45 %
+  seeds N>2med: 39  of which PI>2med: 25  PI>2med & N<=2med: 23
+== q 2000: N clean histogram (s/veh) bins 0-50-100-150-200-300-400-600: [0, 23, 29, 10, 11, 13, 10]
+  FX         c1900          med  225.3 vs N  143.9 | paired median(arm-N)   -6.8 [ -11.2,    0.3] | mean(arm-N)   42.2 [  14.0,   71.3] | arm worse on 40 %
+  FB         f40_10         med  297.4 vs N  143.9 | paired median(arm-N)  125.1 [  96.2,  146.3] | mean(arm-N)   78.6 [  50.9,  105.1] | arm worse on 73 %
+  PI         p70_70_8_e4    med  197.8 vs N  143.9 | paired median(arm-N)   14.5 [ -13.6,   35.0] | mean(arm-N)  -17.8 [ -45.2,    8.0] | arm worse on 52 %
+  AD         ad0p5_f40_10   med  316.7 vs N  143.9 | paired median(arm-N)  129.5 [ 103.9,  158.3] | mean(arm-N)   91.5 [  64.2,  118.0] | arm worse on 73 %
+  NC         NC             med  504.9 vs N  143.9 | paired median(arm-N)  329.6 [ 287.9,  347.5] | mean(arm-N)  276.4 [ 246.7,  305.2] | arm worse on 94 %
+  FB_pi0.1   f10_8          med  153.1 vs N  143.9 | paired median(arm-N)   16.0 [  12.0,   21.2] | mean(arm-N)  -13.5 [ -40.0,   11.6] | arm worse on 75 %
+  PI_pi0.1   p40_40_8_e4    med  209.0 vs N  143.9 | paired median(arm-N)  -15.4 [ -25.1,   -4.9] | mean(arm-N)  -15.7 [ -41.0,    8.4] | arm worse on 38 %
+  FB_pi0.25  f20_8          med  187.0 vs N  143.9 | paired median(arm-N)   -4.8 [  -9.3,    3.6] | mean(arm-N)    7.8 [ -16.5,   31.5] | arm worse on 43 %
+  PI_pi0.25  p70_70_8_e4    med  197.8 vs N  143.9 | paired median(arm-N)   14.5 [ -13.6,   35.0] | mean(arm-N)  -17.8 [ -45.2,    8.0] | arm worse on 52 %
+  FB_pi0.5   f70_6          med  191.2 vs N  143.9 | paired median(arm-N)   31.0 [   3.3,   55.7] | mean(arm-N)   -6.7 [ -32.8,   18.3] | arm worse on 60 %
+  PI_pi0.5   p70_70_8_e4    med  197.8 vs N  143.9 | paired median(arm-N)   14.5 [ -13.6,   35.0] | mean(arm-N)  -17.8 [ -45.2,    8.0] | arm worse on 52 %
+  seeds N>2med: 30  of which PI>2med: 7  PI>2med & N<=2med: 5

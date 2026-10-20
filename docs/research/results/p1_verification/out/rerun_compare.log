@@ -1,0 +1,27 @@
+runs/NC_block_q2000_s7400599: IDENTICAL hash 124b63f2ddde delay 664.423
+runs/ad0p5_f40_10_slow_q2000_s7400544: IDENTICAL hash c4f61017b299 delay 554.648
+runs/c1800-c800+back_d120_slow_q2000_s7400502: IDENTICAL hash f2d662eae631 delay 633.321
+runs/c1800-c800+back_slow_q2000_s7400523: IDENTICAL hash 66f5cd668fd7 delay 404.018
+runs/c1800-c800+back_slow_q2000_s7400523_k4: IDENTICAL hash 8ad9cefbb98c delay 373.668
+runs/c1800-c800_fa_none_q2000_s7400501: IDENTICAL hash eff6b3a5b2f1 delay 207.028
+runs/c1800-f40_10_slow_q2000_s7400523: IDENTICAL hash 1900370e1a19 delay 473.149
+runs/c2000-f40_14_block_q1600_s7400578: IDENTICAL hash 4e78ff996ae3 delay 333.612
+runs/c2000-f70_8_block_q1600_s7400578: IDENTICAL hash ac31604912ff delay 481.026
+runs/c2000_none_q1600_s7400533: IDENTICAL hash 1892a6a1ee16 delay 72.057
+runs/f40_10_block_q1600_s7400512: IDENTICAL hash ce9c557f6c7d delay 254.868
+runs/p40_120_6_e4_none_q1600_s7400533: IDENTICAL hash a87b59390998 delay 40.697
+runs/p40_40_10_e4_none_q1600_s7400533: IDENTICAL hash b9edf2f5e5fb delay 191.577
+runs/p40_40_10_e4_slow_q1600_s7400500: IDENTICAL hash 53f87d4d2162 delay 246.643
+runs/p70_70_8_e4_block_q2000_s7400561: IDENTICAL hash e1f92cb43f64 delay 339.055
+runs/p70_70_8_e4_slow_q2000_s7400537: IDENTICAL hash 905a361f37c8 delay 327.243
+spot/ad0p5_f40_10_block_q2000_s7400502: IDENTICAL hash 7d9362560856 delay 704.248
+spot/c1800-c800+back_d60_slow_q2000_s7400500: IDENTICAL hash 86f128da74c8 delay 475.551
+spot/c1800-c800+back_slow_q2000_s7400500_k4: IDENTICAL hash 0e82752e8862 delay 187.577
+spot/c1800-c800_fa_none_q2000_s7400500: IDENTICAL hash 6512f8a176c4 delay 402.326
+spot/c1800_slow_q2000_s7400500: IDENTICAL hash b300c71f79f8 delay 475.488
+spot/c2000-f40_14_block_q1600_s7400500: IDENTICAL hash 6806b5e9bc42 delay 209.361
+spot/c2000-f70_8_block_q1600_s7400500: IDENTICAL hash d0cc8e6d3535 delay 345.401
+spot/c2000_none_q1600_s7400503: IDENTICAL hash c0f02ef79289 delay 84.414
+spot/p40_40_10_e4_block_q1600_s7400500: IDENTICAL hash 812f91096ad4 delay 324.218
+spot/p70_70_8_e4_slow_q2000_s7400501: IDENTICAL hash f367e59408c9 delay 366.771
+26/26 identical on ('hash', 'delay_s', 'served_ctrl_vph', 'ttt_ctrl_vehh', 'max_queue', 'meter_log', 't_switch', 't_back', 'valid')
