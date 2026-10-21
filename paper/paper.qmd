@@ -16,6 +16,8 @@ format:
     include-in-header:
       text: |
         \usepackage{graphicx}
+        \usepackage{xcolor}
+        \newcommand{\citeneeded}[1]{\textcolor{red}{[CITE: #1]}}
         \usepackage{caption}
         \captionsetup{labelsep=period,font=footnotesize}
 bibliography: references.bib
@@ -58,13 +60,48 @@ FIGURES AND TABLES (scripts in paper/figures/, reading committed JSONs only)
 
 # Introduction {#sec-intro}
 
-*Draft source: the Argon introduction, fixed per V120 (no unsourced claims; terminology L0/ID/IP/L2; "no gain of 10 % or more detected"; C1 with its CI and scope).*
+Non-recurring events such as crashes, breakdowns and lane blockages reduce the capacity of freeway bottlenecks at unpredictable times \citeneeded{non-recurrent congestion share / capacity drop}. Mainline (mainstream) metering regulates the flow with signals across all lanes of the freeway itself, upstream of a bottleneck. It has been studied for lane drops at work zones and toll plazas [@Papageorgiou2008; @Spiliopoulou2010; @Tympakianaki2014] and for merges that combine mainline and ramp signals [@Ghiasi2018; @Hale2020].
+
+For a known, stationary bottleneck, local feedback control works well: integral laws such as ALINEA [@Papageorgiou1991] and proportional-integral extensions such as PI-ALINEA [@Wang2014] keep the bottleneck near its critical state without a demand model. The same laws drive mainstream traffic flow control with variable speed limits [@Carlson2010; @Carlson2011] and remain strong benchmarks [@Frejo2021b]. Set-point adaptation [@Smaragdis2003] tracks slow changes in the bottleneck without an incident detector. Incident-responsive ramp metering switches or schedules the controller when an incident is reported [@Sheu2007; @Dabiri2014; @Wu2014], usually compared with no control or with a fixed-parameter controller.
+
+An incident-aware meter needs a detection and classification system, which adds delay and errors. A practical question therefore remains: *how much incident information does a mainline meter actually need, beyond strong always-on feedback?* Is it enough to know that an incident has started, does knowing its type add value, and how much is left for full per-incident knowledge?
+
+We answer this question for one microsimulated bottleneck with a four-lane mainline signal in SUMO [@Lopez2018]. We compare an information ladder: always-on control without incident information (L0), knowledge of incident presence (ID), knowledge of its type (IP), and per-incident hindsight (L2). Hindsight gains are inflated when the best plan is selected on the same noisy runs used for evaluation [@Smith2006; @Cameron2016], so we bracket them between an in-sample and a cross-fitted oracle [@vanHasselt2010]. All statements were pre-registered before any data were produced.
+
+The contributions are:
+
+- an information-ladder decomposition for incident-responsive mainline metering against a full set of tuned always-on controllers, including a PI law;
+- honest bounds on the value of per-incident hindsight under simulation noise, with pre-registered statements, paired seeds and a confirmation on fresh seeds;
+- the sensitivity of the gains to detection delay and to red-light running at the meter.
 
 # Background and Related Work {#sec-background}
 
-Mainline (mainstream) signal control upstream of lane drops and toll plazas is established [@Papageorgiou2008; @Spiliopoulou2010; @Tympakianaki2014]. *(Citation render test; text to follow.)*
+## Mainline metering and its controllers
+
+A mainline meter holds traffic upstream of the bottleneck with green, amber and red signals across all lanes and releases it at a controlled rate. Feedback laws developed for ramp metering apply directly [@Papageorgiou2008; @Tympakianaki2014]: ALINEA integrates the deviation of a downstream measurement from its critical value [@Papageorgiou1991], and PI-ALINEA adds a proportional term that helps when the bottleneck is further downstream of the signal [@Wang2014]. When an incident changes the bottleneck, a fixed set point may no longer fit; adaptive schemes estimate it online [@Smaragdis2003], while incident-scheduled controllers switch plans or parameters when an incident flag arrives [@Dabiri2014].
+
+## Incident detection and driver compliance
+
+Incident-aware control is only as good as its detection. Automatic incident detection trades detection time against false alarms \citeneeded{AID detection delay / false alarms}; we therefore report how long detection may take before the gain disappears. Drivers also do not always obey metering signals: field evaluations of ramp and work-zone meters report non-compliance at red [@TOPS2005; @Sun2013]. We model the amber phase explicitly and add red-light runners as a sensitivity row.
+
+## Honest headroom in stochastic microsimulation
+
+Studies of adaptive control often compare a method with a hindsight "oracle" that picks the best plan for each scenario. In microsimulation every run is noisy; if the oracle picks the best plan on the same run used to score it, part of its advantage is luck. This is the optimizer's curse of decision analysis [@Smith2006] and the virtual-best-solver bias of algorithm benchmarking [@Cameron2016]. Selecting on one set of runs and evaluating on another removes the upward bias, at the cost of a downward one [@vanHasselt2010]. We use both estimates as a bracket.
 
 # Problem Setting and the Information Ladder {#sec-problem}
+
+@fig-plant shows the setting. Constant demand $q$ approaches a bottleneck where four lanes reduce to one. A single signal across the four mainline lanes releases vehicles at a commanded rate; the queue is stored upstream on four lanes. An incident of random type, onset and duration may occur at the bottleneck. The objective is the door-to-door delay per vehicle, including the time spent waiting in the meter queue and at the network entry.
+
+![Schematic of the simulated bottleneck (not to scale): four lanes reduce to two and then to one; one mainline signal across all four lanes; two incident types.](figures/fig_plant.pdf){#fig-plant}
+
+We ask how the attainable delay reduction depends on what the controller knows about the incident:
+
+- **L0, no incident information.** The meter runs one always-on law (a constant rate or feedback), tuned once.
+- **L1a (ID), presence.** The meter knows when an incident starts and ends, and switches to one plan.
+- **L1b (IP), type.** The meter also knows the incident type, and switches to a plan for that type.
+- **L2, full per-incident knowledge.** In hindsight, the best plan for each individual incident. This is an upper limit for any incident-aware controller using the same plans, and cannot be measured without bias (Section \ref{sec-design}).
+
+All comparisons are made *given that an incident occurs*. Always-on controllers tuned on incident runs may pay a cost on incident-free days, which we report separately.
 
 # Experimental Design {#sec-design}
 
