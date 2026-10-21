@@ -1,6 +1,6 @@
 # Strengthening plan v0: proper results from a proper implementation (paper_1 line)
 
-**Status:** draft (V132), for author review. Nothing in it has been built or run.
+**Status:** draft (V132); S1-S3 decided in V133 (BN4 + lane changes; the strengthened study is paper_1's evidence; incident + day-mix evaluation). S4 open. Nothing has been built or run.
 **Author goal (2026-10-21):** "I want the project to be strengthened so that we have proper results based on proper implementation and logic."
 **Inputs:**
 - the forensic audit `docs/audits/paper1_2026-10-21/`: the report and `FINDINGS_REGISTER.md`;
