@@ -84,8 +84,8 @@ def main(argv=None) -> int:
     med_drop, med_qdf = float(np.median(drops)), float(np.median(qdfs))
     share = sum(cal.T1A[0] <= d <= cal.T1A[1] for d in drops) / len(m)
     rep["T1a"] = {"median_drop": med_drop, "share_in_range": share, "n_breakdown": len(drops), "n": len(m),
-                  "pass": cal.T1A[0] <= med_drop <= cal.T1A[1] and share >= 0.75}
-    rep["T1b"] = {"median_qdf": med_qdf, "pass": cal.T1B[0] <= med_qdf <= cal.T1B[1]}
+                  "pass": bool(cal.T1A[0] <= med_drop <= cal.T1A[1] and share >= 0.75)}
+    rep["T1b"] = {"median_qdf": med_qdf, "pass": bool(cal.T1B[0] <= med_qdf <= cal.T1B[1])}
     r_min = round(0.4 * med_qdf / 50.0) * 50.0
     rep["r_min"] = r_min
     print("T1a/T1b", rep["T1a"], rep["T1b"], "r_min", r_min, flush=True)
@@ -118,7 +118,7 @@ def main(argv=None) -> int:
                 stops += sum(v for e, v in st.items() if e == "2" or e.startswith(":3"))
                 reds += 4 * r["n_red_onsets"]
     rep["T1d"] = {"forced_stops": stops, "lane_red_onsets": reds, "share": stops / max(reds, 1),
-                  "pass": stops / max(reds, 1) < 0.01}
+                  "pass": bool(stops / max(reds, 1) < 0.01)}
 
     diffs = []
     for s in S(70, 79):
@@ -127,7 +127,7 @@ def main(argv=None) -> int:
     ci = boot_ci(diffs)
     stuck = sum("H-R5" in R2[f"nc_close_s{s}"]["health_codes"] for s in S(70, 79))
     rep["T1e"] = {"median_flow_reduction_vph": float(np.median(diffs)), "ci95": ci, "runs_with_H-R5": stuck,
-                  "pass": ci[0] > 0 and stuck == 0}
+                  "pass": bool(ci[0] > 0 and stuck == 0)}
 
     t1f = {}
     ev = []
@@ -147,7 +147,7 @@ def main(argv=None) -> int:
                  rel=float(np.median(dd) / np.median(nc)), diff_ci95=boot_ci(dd),
                  ttt_rel=float(np.median([R3[f"t1f_nc_{inc}_s{s}"]["ttt_window_vehh"] - R3[f"t1f_c{d['best']:g}_{inc}_s{s}"]["ttt_window_vehh"] for s in S(80, 89)])
                                / np.median([R3[f"t1f_nc_{inc}_s{s}"]["ttt_window_vehh"] for s in S(80, 89)])))
-    rep["T1f"] = {**t1f, "pass": any(d["rel"] >= 0.10 for d in t1f.values())}
+    rep["T1f"] = {**t1f, "pass": bool(any(d["rel"] >= 0.10 for d in t1f.values()))}
     for r in R3.values():
         if r and not (r["valid"] and r["teleports"] == 0 and r["collisions"] == 0):
             rep["T1c"]["pass"] = False
@@ -155,12 +155,12 @@ def main(argv=None) -> int:
     ratios = [R2[f"t0_c{c:g}_s{s}"]["discharge_ctrl_vph"] / c for s in S(90, 94) for c in (800.0, 1200.0, 1600.0)]
     rep["T0"] = {"median_ratio": float(np.median(ratios)), "min": float(min(ratios)), "max": float(max(ratios)),
                  "wall_s_median": float(np.median([r["wall_s"] for r in allr])),
-                 "pass": abs(np.median(ratios) - 1) <= 0.10}
+                 "pass": bool(abs(np.median(ratios) - 1) <= 0.10)}
     same = [R2[f"t3_k0_s{s}"]["hash"] == R2[f"t3_k1_s{s}"]["hash"] for s in S(95, 99)]
     rep["T3"] = {"identical": sum(same), "n": len(same), "pass": all(same)}
     rep["all_pass"] = all(rep[k]["pass"] for k in ("T0", "T1a", "T1b", "T1c", "T1d", "T1e", "T1f", "T3"))
-    (out / "t1_result.json").write_text(json.dumps(rep, indent=1))
-    print(json.dumps(rep, indent=1))
+    (out / "t1_result.json").write_text(json.dumps(rep, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
+    print(json.dumps(rep, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
     return 0
 
 
