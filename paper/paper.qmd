@@ -68,7 +68,96 @@ Mainline (mainstream) signal control upstream of lane drops and toll plazas is e
 
 # Experimental Design {#sec-design}
 
+## Plant and meter
+
+We use SUMO [@Lopez2018] with a single freeway bottleneck: four lanes reduce to two and then to one (lanes per edge 4/4/4/2/1). One signal across all four mainline lanes, upstream of the lane drop, meters the flow (mainline metering). Demand is constant at $q \in \{1600, 2000\}$ veh/h. Each run has a 40-s warm-up and a 900-s control period, and continues until the network is empty. A signal cycle is 6 s green, 3 s amber and at least 2 s red, with cycle length $c(q) = \max(11, 28{,}800/q)$ s (two vehicles per lane per green); the commanded rate is limited to $[200, 2618]$ veh/h. Lane changing is disabled in this plant, so a lane blockage is represented by a crawling lane.
+
+## Incidents
+
+Two incident types act on the bottleneck: a *slowdown* (speed limit 5 m/s) and a *lane crawl* (one lane at 1 m/s). Onset is uniform in the first third of the control period and duration uniform in 120–480 s. Every controller sees the same incident in a given seed. The four evaluation cells are the two types at the two demand levels.
+
+## Controllers and information levels
+
+Table \ref{tbl:arms} lists the arms. The always-on arms (L0) use no incident information: the best constant rate on incident-free days (N), the best constant rate tuned on incident runs (FX), an integral feedback law on the downstream vehicle count in the style of ALINEA (FB) [@Papageorgiou1991], a PI law in the form of PI-ALINEA (PI) [@Wang2014], as used for mainstream signals at lane drops [@Tympakianaki2014], and FB with an online set point in the spirit of AD-ALINEA (AD) [@Smaragdis2003]. ID knows only that an incident has started; IP also knows its type. Both run N before the incident and then switch to an action from a set $A$ of 120 actions: 50 constant-rate and integral-feedback plans plus the 10 best PI-law plans, each either kept to the end or released back to N when the incident clears. All arms are tuned on 40 tuning seeds; detection is perfect in the main rows.
+
+```{=latex}
+\begin{table}[tb]
+\caption{Arms and the incident information they use}
+\label{tbl:arms}
+\centering
+\footnotesize
+\begin{tabular}{lll}
+\hline
+Level & Arm & Information used \\
+\hline
+L0 & N, FX, FB, PI, AD & none (always on) \\
+L1a & ID & incident onset (and clearance) \\
+L1b & IP & onset, clearance and type \\
+L2 & OR$_\mathrm{in}$, ORX$_R$ & full per-incident hindsight (bounds) \\
+\hline
+\end{tabular}
+\end{table}
+```
+
+## Honest bounds for per-incident information
+
+The value of perfect per-incident knowledge is bounded from both sides. OR$_\text{in}$ picks, for each seed, the best action of $A$ on the evaluated run itself. Because simulation noise makes some actions look better by chance, this *in-sample oracle* is optimistic, an instance of the optimizer's curse [@Smith2006; @Cameron2016]. ORX$_R$ picks the action with the best mean over $R \in \{1, 2, 4\}$ independent replicate runs (new demand and simulator seeds, same incident) and scores it on the evaluated run. Separating selection from evaluation in this way, as in double estimation [@vanHasselt2010], yields a bound that is low in expectation. A placebo (TP), which picks the best of five replicate runs of IP itself, shows the size of pure-noise gains. We found that in SUMO a change of controller also changes later random draws, so paired runs with equal seeds do not share common random numbers.
+
+## Protocol and statistics
+
+The protocol, its statements and the seed ranges were fixed and approved before any data were produced, and every study was run once from a frozen code version. Evaluation uses 100 seeds that are separate from the tuning seeds; comparisons are paired by seed. We report $\text{rel} = \text{median}(r - t)/\text{median}(r)$, where positive values favour arm $t$ over reference $r$, with percentile bootstrap confidence intervals ($B = 20{,}000$). Statement S1 uses the rule R($t$, $r$): (a) in at least one cell, rel $\geq 10\,\%$ with the lower CI bound of $\text{median}(r - t)$ above zero, and (b) in every cell, point rel $\geq -5\,\%$. S1a (*presence pays*) requires R(ID, $r$) for every L0 arm, with (a) met in the same cell; S1b (*type pays*) requires R(IP, ID). The S1 intervals are Bonferroni-corrected (level 0.99375). S2 states the bracket of the gain of per-incident information over IP, and S3 reports break-even detection delays (descriptive). A separate confirmation (C1) tested one cell on 100 fresh seeds with a single pre-fixed statement at the 95 % level.
+
+## Realism rows
+
+Drivers obey the amber unless they cannot stop comfortably. In report-only rows, a share $s \in \{10, 30\}\,\%$ of drivers ignore the amber and the first 1.5 s of red. Published field rates of metered-signal violations [@TOPS2005; @Sun2013] give context for these shares; they are model parameters, not field estimates.
+
 # Results {#sec-results}
+
+## The information ladder (S1)
+
+@fig-ladder and Table \ref{tbl:results} summarise the ladder. **S1a fails:** knowing only that an incident is on gave no detected gain of 10 % or more over strong always-on control. Against always-on PI, ID was never better (rel between $-17.9\,\%$ and $-0.7\,\%$). **S1b passes:** knowing the type added 11.8 % [5.8, 16.7] (slowdown, 2000 veh/h) and 22.0 % [8.8, 31.4] (lane crawl, 1600 veh/h) over presence alone. Against always-on PI, IP's interval lay above zero only for the lane crawl at 1600 veh/h: 18.0 % [8.9, 31.6] (report-only row).
+
+::: {#fig-ladder fig-env="figure*"}
+![](figures/fig_ladder.pdf)
+
+Median delay along the information ladder in the four cells: strongest always-on arm (L0), presence (ID), type (IP), and the two bounds on per-incident hindsight (ORX$_4$ low, OR$_\text{in}$ high). 100 seeds per cell.
+:::
+
+```{=latex}
+\begin{table}[tb]
+\caption{Summary per cell (P1b). Rel in \%, positive favours the second arm; bold: interval above zero at the S1 level}
+\label{tbl:results}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrr}
+\hline
+ & Slow 1600 & Slow 2000 & Crawl 1600 & Crawl 2000 \\
+\hline
+ID vs PI (S1a) & $-17.9$ & $-1.8$ & $-0.7$ & $-2.1$ \\
+IP vs ID (S1b) & 16.2 & \textbf{11.8} & \textbf{22.0} & 0.0 \\
+IP vs PI & 4.5 & 7.4 & \textbf{18.0} & $-2.1$ \\
+S2 bracket & $[-0.4, 47.9]$ & $[-2.4, 19.3]$ & $[0.4, 25.4]$ & $[3.5, 22.4]$ \\
+Placebo TP & 37.7 & 16.8 & 13.6 & 15.7 \\
+$d^*$ (s) & 2.6 & 120.4 & $>240$ & never ahead \\
+\hline
+\end{tabular}
+\end{table}
+```
+
+## Confirmation on fresh seeds (C1)
+
+The lane-crawl cell at 1600 veh/h was tested once on 100 fresh seeds. **C1 is confirmed:** the type plan reduced median delay relative to always-on PI by 16.2 % [7.3, 23.7] (41.4 s/veh [16.6, 65.7]), with the same result when seeds with invalid runs are excluded. @fig-c1 shows that the lead held with detection delays of 30–120 s (12.5–16.4 %) and with red-light runners (24.4 % at $s = 10\,\%$, 27.6 % at $s = 30\,\%$), where always-on PI itself degraded.
+
+![Confirmation C1 (lane crawl, 1600 veh/h, 100 fresh seeds): delay reduction of the type plan IP over always-on PI with 95 % CI. The dashed line marks 10 %.](figures/fig_c1_robust.pdf){#fig-c1}
+
+## Per-incident information (S2)
+
+Per-incident hindsight beyond the type plan could only be bracketed, because the bracket did not converge as $R$ grew. The lower bounds were positive in the two lane-crawl cells (0.4 % and 3.5 %); the upper bounds ranged from 13.3 % to 47.9 %. The placebo alone gained 13.6–37.7 %, which shows how strongly in-sample selection on simulation noise inflates hindsight gains.
+
+## Robustness and realism
+
+The type plans differed in robustness. For the slowdown at 2000 veh/h, IP stayed ahead of the best always-on arm up to a detection delay of about 120 s. For the slowdown at 1600 veh/h, the tuned plan was an open-loop constant rate whose lead vanished within 3 s of detection delay and which lost 49.8 % with 30 % runners. For the lane crawl at 2000 veh/h, the best plan was PI's own law, and starting it only at onset never beat always-on PI. The amber phase reduced the share of runs with an emergency stop from 87 % (no amber) to 12.8 %; no collisions occurred, and no vehicle crossed on red without runners. At 2000 veh/h the meter queue reached the upstream entry in 85–100 % of metered runs, so these cells assume unlimited upstream storage.
 
 # Discussion and Limitations {#sec-discussion}
 
