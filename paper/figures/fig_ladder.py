@@ -22,7 +22,7 @@ for ax, (key, title) in zip(axes, cells):
     names, vals, cols = [], [], []
     for i, r in enumerate(rungs):
         name = r["arm"]
-        names.append(name if i else f"{name}\n(L0)")
+        names.append({"ORX_4": "ORX$_4$", "OR_in": "OR$_{in}$"}.get(name, name) if i else f"{name}\n(L0)")
         vals.append(r["median_delay_s"])
         cols.append(colour["L0"] if i == 0 else colour.get(name, "#999999"))
     ax.bar(range(len(vals)), vals, color=cols, edgecolor="black", linewidth=0.3)
