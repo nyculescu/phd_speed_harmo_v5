@@ -82,7 +82,7 @@ A mainline meter holds traffic upstream of the bottleneck with green, amber and 
 
 ## Incident detection and driver compliance
 
-Incident-aware control is only as good as its detection. Automatic incident detection trades detection time against false alarms \citeneeded{AID detection delay / false alarms}; we therefore report how long detection may take before the gain disappears. Drivers also do not always obey metering signals: field evaluations of ramp and work-zone meters report non-compliance at red [@TOPS2005; @Sun2013]. We model the amber phase explicitly and add red-light runners as a sensitivity row.
+Incident-aware control is only as good as its detection, which in practice is neither instantaneous nor error-free. We therefore report how long detection may take, and how often the type may be wrong or a false alarm occur, before the gain disappears. Drivers also do not always obey metering signals: field evaluations of ramp and work-zone meters report non-compliance at red [@TOPS2005; @Sun2013]. We model the amber phase explicitly and add red-light runners as a sensitivity row.
 
 ## Honest headroom in stochastic microsimulation
 
