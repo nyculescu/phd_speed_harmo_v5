@@ -2,7 +2,7 @@
 
 Reads only the committed result file, so every number in the paper traces to the baseline:
 docs/research/results/p1b_c1_result.json (V116, code e7dd561).
-Usage: python paper/figures/fig_c1_delay.py  -> paper/figures/fig_c1_delay.pdf
+Usage: python papers/paper_1/figures/fig_c1_delay.py  -> papers/paper_1/figures/fig_c1_delay.pdf
 """
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 RES = ROOT / "docs/research/results/p1b_c1_result.json"
 OUT = Path(__file__).with_suffix(".pdf")
 

@@ -2,7 +2,7 @@
 rel = median(PI - IP) / median(PI) with 95 % CI, at baseline, with detection delays and with red-light runners.
 
 Reads only docs/research/results/p1b_c1_result.json (V116, code e7dd561).
-Usage: python paper/figures/fig_c1_robust.py  -> paper/figures/fig_c1_robust.pdf
+Usage: python papers/paper_1/figures/fig_c1_robust.py  -> papers/paper_1/figures/fig_c1_robust.pdf
 """
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 c1 = json.loads((ROOT / "docs/research/results/p1b_c1_result.json").read_text())["c1"]
 desc = c1["descriptive"]
 rows = [("Baseline (C1)", c1["C1"]["all_seeds"]),

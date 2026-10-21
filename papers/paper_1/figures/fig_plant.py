@@ -1,7 +1,7 @@
 """Fig. 1: schematic of the plant (not to scale): 4 lanes -> 2 -> 1 (lanes per edge 4/4/4/2/1), one mainline signal
 across all 4 lanes, and the two incident types (slowdown on the 1-lane bottleneck; crawling lane on the 2-lane edge).
 No data are read; the geometry follows v5b/d1/netgen_bn4.py (edge lane counts).
-Usage: python paper/figures/fig_plant.py  -> paper/figures/fig_plant.pdf
+Usage: python papers/paper_1/figures/fig_plant.py  -> papers/paper_1/figures/fig_plant.pdf
 """
 from pathlib import Path
 

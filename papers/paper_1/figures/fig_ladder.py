@@ -1,7 +1,7 @@
 """Fig. 2: the information ladder per cell (P1b): strongest L0 arm -> ID -> IP -> ORX_4 -> OR_in, median delay.
 
 Reads only docs/research/results/p1b_result.json (V112/V113, code 93ba655).
-Usage: python paper/figures/fig_ladder.py  -> paper/figures/fig_ladder.pdf
+Usage: python papers/paper_1/figures/fig_ladder.py  -> papers/paper_1/figures/fig_ladder.pdf
 """
 import json
 from pathlib import Path
@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 lad = json.loads((ROOT / "docs/research/results/p1b_result.json").read_text())["eval"]["fig1_ladder"]
 cells = [("slow_q1600", "Slowdown, 1600 veh/h"), ("slow_q2000", "Slowdown, 2000 veh/h"),
          ("block_q1600", "Lane crawl, 1600 veh/h"), ("block_q2000", "Lane crawl, 2000 veh/h")]
