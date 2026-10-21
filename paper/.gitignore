@@ -1,0 +1,10 @@
+paper.pdf
+paper.tex
+*.log
+*.aux
+*.bbl
+*.blg
+*.out
+figures/*.pdf
+.quarto/
+paper_files/

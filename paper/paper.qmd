@@ -1,0 +1,30 @@
+---
+title: "How Much Incident Information Does Mainline Metering Need? (render test)"
+format:
+  pdf:
+    documentclass: IEEEtran
+    pdf-engine: pdflatex
+    fontenc: T1
+    fontfamily: times
+    cite-method: natbib
+    classoption: [conference]
+    keep-tex: true
+    number-sections: true
+    fig-pos: "tb"
+    include-in-header:
+      text: |
+        \usepackage{graphicx}
+        \usepackage{caption}
+        \captionsetup{labelsep=period,font=footnotesize}
+crossref:
+  fig-title: Fig.
+  fig-prefix: Fig.
+---
+
+# Introduction
+
+Render test only (V119). This page checks the toolchain: Quarto → official IEEEtran class → PDF. It is not paper text. The figure below is produced by `paper/figures/fig_c1_delay.py` from the committed result file `docs/research/results/p1b_c1_result.json` (V116), so the numbers trace to the baseline `baseline-2026-10-20`.
+
+![Median delay per vehicle in the confirmation C1 (lane-crawl incident, 1,600 veh/h, 100 fresh seeds).](figures/fig_c1_delay.pdf){#fig-c1}
+
+As @fig-c1 shows, the cross-reference mechanism works.
