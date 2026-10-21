@@ -1,6 +1,6 @@
 # P1b confirmation C1: does the type plan beat always-on PI in block_q1600?
 
-Status: **DRAFT (V114), awaiting the author's approval of the statement and the seeds.** It is run once, from a frozen worktree.
+Status: **APPROVED (V115, 2026-10-20): statement C1 and seeds 7,400,700–799 approved by the author.** It is run once, from a frozen worktree.
 
 **Why.** P1b found, in a report-only row, that in cell block_q1600 the per-type plan IP beats tuned always-on PI by 18.0 % [8.9, 31.6] (`p1b_result.md`). A report-only row is not a claim. C1 tests it once, on fresh seeds, with the statement fixed here.
 
