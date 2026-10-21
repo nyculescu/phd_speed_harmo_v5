@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# claude-job NAME PROMPT_FILE [WORKDIR]
+# Runs a headless Claude Code job in its own systemd user unit (decision V110), outside VS Code.
+# The job runs to completion or fails cleanly; nothing is resumed half-way.
+# Outputs: ~/work/phd/v5b1_runs/jobs/NAME/{result.json, stderr.log, EXIT, DONE}
+set -euo pipefail
+name=${1:?name}; prompt=${2:?prompt file}; wd=${3:-/srv/shared/Workspace/phd/phd_speed_harmo_v5b1}
+[ -f "$prompt" ] || { echo "no prompt file: $prompt" >&2; exit 1; }
+C=$(ls -d "$HOME"/.vscode/extensions/anthropic.claude-code-*-linux-x64 2>/dev/null | sort -V | tail -1)/resources/native-binary/claude
+[ -x "$C" ] || { echo "claude binary not found" >&2; exit 1; }
+out="$HOME/work/phd/v5b1_runs/jobs/$name"
+[ -e "$out/DONE" ] && { echo "job $name already finished ($out); use a new name" >&2; exit 1; }
+mkdir -p "$out"; cp "$prompt" "$out/prompt.md"
+RULES='Rules for this headless job (author decisions V107, V110): be token-efficient; never git push; never modify CLAUDE.md, settings or permissions; never touch fans, the cooling pad, power settings or the vsl-cooling unit; never run protocol seeds unless the prompt explicitly says so; long simulations only via systemd-run; write your final answer as the last message.'
+ALLOW='Read Edit Write Glob Grep Bash WebSearch WebFetch'
+DENY='Bash(git push:*) Bash(sudo:*) Bash(systemctl --user stop:*) Bash(systemctl --user restart:*) Agent Workflow'
+systemd-run --user --unit "cj-$name" --collect --working-directory="$wd" \
+  /bin/bash -c "\"$C\" -p \"\$(cat '$out/prompt.md')\" --output-format json --append-system-prompt \"$RULES\" \
+    --allowedTools $ALLOW --disallowedTools '${DENY// /' '}' --add-dir $HOME/work/phd \
+    > '$out/result.json' 2> '$out/stderr.log'; echo \$? > '$out/EXIT'; date -Is > '$out/DONE'"
+echo "started unit cj-$name; output in $out"
