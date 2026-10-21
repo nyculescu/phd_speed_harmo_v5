@@ -7,6 +7,8 @@ edge 2, the lane-closure blocker on lane 4_1 and the slowdown on the bottleneck 
   wz:  lanes 3/3/3/2/2, nodes x = 0, 200, 800, 1000, 1400, 1600 m; zipper drop 3->2 at node 4; the 2-lane work-zone
        bottleneck is edge 4 (400 m); the blocker closes one of its two lanes, so capacity really falls to one lane.
 
+Breakdown loops 'up' (V143): BN4 edge-4 loops as the gate defines; WZ 150 m upstream of the drop, outside the 100-m
+zipper merging zone.
 Calibration knobs (gate §2): merge ('zip20', 'zip100', 'laneend'), car-following ('IDM' Flow parameters, 'EIDM',
 'Krauss' SUMO defaults), lcCooperative, speed-factor spread. CRN: depart time, depart lane and speed factor of every
 vehicle come from the demand seed and are written into the route file.
@@ -36,11 +38,11 @@ GEOMS = {
     "bn4": {"nodes": [("1", 0.0), ("2", 100.0), ("3", 410.0), ("4", 550.0), ("5", 830.0), ("6", 985.0)],
             "lanes": {"1": 4, "2": 4, "3": 4, "4": 2, "5": 1}, "drops": ("4", "5"), "bott_edge": "5",
             "block_pos": 180.0, "loops": {"e4": [("4", 100.0)], "e5": [("5", "mid")], "exit": [("5", -15.0)],
-                                           "e3": [("3", -20.0)]}},
+                                           "e3": [("3", -20.0)], "up": [("4", 100.0)]}},
     "wz": {"nodes": [("1", 0.0), ("2", 200.0), ("3", 800.0), ("4", 1000.0), ("5", 1400.0), ("6", 1600.0)],
            "lanes": {"1": 3, "2": 3, "3": 3, "4": 2, "5": 2}, "drops": ("4",), "bott_edge": "4",
            "block_pos": 250.0, "loops": {"e4": [("4", 100.0)], "e5": [("5", "mid")], "exit": [("5", -15.0)],
-                                          "e3": [("3", -20.0)]}},
+                                          "e3": [("3", -20.0)], "up": [("3", -150.0)]}},
 }
 EDGE_NODES = {"1": ("1", "2"), "2": ("2", "3"), "3": ("3", "4"), "4": ("4", "5"), "5": ("5", "6")}
 
@@ -92,7 +94,7 @@ def _connections(geom: str, merge: str) -> list:
 
 def build_net(cfg: Config) -> Path:
     g = GEOMS[cfg.geom]
-    spec = {"v": 2, "geom": cfg.geom, "merge": cfg.merge, "g": g, "speed": SPEED, "period": LOOP_PERIOD}
+    spec = {"v": 3, "geom": cfg.geom, "merge": cfg.merge, "g": g, "speed": SPEED, "period": LOOP_PERIOD}
     h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
     d = NET_CACHE / f"p1c_{cfg.geom}_{cfg.merge}_{h}"
     net = d / "net.xml"

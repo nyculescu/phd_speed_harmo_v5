@@ -93,7 +93,10 @@ def measure(r: dict) -> dict:
     ser = r["series"]                       # (t, exit count, e4 speed, e3 speed, r)
     t = np.array([x[0] for x in ser])
     q = np.array([x[1] for x in ser]) * 120.0                  # veh/h per 30-s interval
-    v = np.minimum(np.array([x[2] for x in ser]), np.array([x[3] for x in ser]))
+    # V143: breakdown from the gate's single location ('up' loops, 6th series field); runs without it (BN4 stage 1,
+    # V139) used min(edge-3, edge-4), a disclosed deviation
+    v = np.array([x[5] for x in ser]) if len(ser[0]) > 5 else \
+        np.minimum(np.array([x[2] for x in ser]), np.array([x[3] for x in ser]))
     slow = v < 0.5 * FREE
     hold_end = WARM + RAMP + HOLD
     tb = None

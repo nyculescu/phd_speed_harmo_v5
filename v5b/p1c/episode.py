@@ -136,7 +136,8 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
             ser.append((round(t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
                         round(_mean(loops["e4"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
                         round(_mean(loops["e3"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
-                        None if meter is None else round(meter.r, 1)))
+                        None if meter is None else round(meter.r, 1),
+                        round(_mean(loops["up"], ls.inductionloop.getLastIntervalMeanSpeed), 2)))
 
     while sim.t < end_ctrl - 1e-9:
         tick(sim.t)
