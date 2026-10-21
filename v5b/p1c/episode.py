@@ -115,6 +115,7 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
     tts0, arr0 = sim.tts_system, sim.arrived
     ser = []
     t_switch = None
+    cr = {"prev": set(ls.edge.getLastStepVehicleIDs("2")), "n": 0}
     end_ctrl = warmup + control
 
     def tick(t):
@@ -125,6 +126,10 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
             t_switch = t
         if meter is not None:
             meter.step(t)
+        if t < end_ctrl:
+            ids2 = set(ls.edge.getLastStepVehicleIDs("2"))
+            cr["n"] += len(cr["prev"] - ids2)
+            cr["prev"] = ids2
         if series and abs((t / pl.LOOP_PERIOD) - round(t / pl.LOOP_PERIOD)) < 1e-6:
             ser.append((round(t, 1), int(ls.inductionloop.getLastIntervalVehicleNumber("X5_0")),
                         round(float(np.mean([max(ls.inductionloop.getLastIntervalMeanSpeed(i), 0) for i in pl.LOOPS["e4"]])), 2),
@@ -158,7 +163,9 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
         pass
     out = {"cfg": pl.config_dict(cfg), "arm": arm, "post": post, "incident": incident, "seed": seed,
            "profile": profile, "r_min": r_min, "onset": onset, "duration": dur, "t_on": inc.t_on, "t_off": inc.t_off,
-           "t_switch": t_switch, "generated": dem.counts_by_route()["main"], "n_trips": len(trips),
+           "t_switch": t_switch, "crossings_ctrl": cr["n"], "discharge_ctrl_vph": cr["n"] * 3600.0 / control,
+           "n_red_onsets": meter.n_red if meter is not None else 0,
+           "commanded_final": meter.r if meter is not None else None, "generated": dem.counts_by_route()["main"], "n_trips": len(trips),
            "delay_s": float(np.mean([x[0] for x in trips])) if trips else None,
            "timeloss_delay_s": float(np.mean([x[1] + x[2] for x in trips])) if trips else None,
            "ttt_window_vehh": ttt_win, "served_ctrl_vph": served, "n_left_ctrl_end": n_left,

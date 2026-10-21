@@ -43,6 +43,7 @@ class Meter:
         self.t0 = None
         self.clock = None
         self.state = None
+        self.n_red = 0
         self.set_plan(pid)
 
     def set_plan(self, pid: str) -> None:
@@ -80,6 +81,8 @@ class Meter:
                 self.clock, self.t_cyc0 = SignalClock("continuous"), t
             ph = self.clock.phase(t, self.t_cyc0, cycle_s(self.r))
             s = "G" if ph < GREEN else "y" if ph < GREEN + AMBER else "r"
+        if s == "r" and self.state != "r":
+            self.n_red += 1
         if s != self.state:
             self.set_state({"G": "GGGG", "y": "yyyy", "r": "rrrr"}[s])
         self.state = s
