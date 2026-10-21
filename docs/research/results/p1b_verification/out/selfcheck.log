@@ -1,0 +1,8 @@
+s=0 eval runs 249782 with any red crossing 0 max red_cross_share 0
+max max_queue_m over all eval runs 369.6 avail {410.0}
+runners s0.1 block_q1600 IP vs N +29.5 [+26.8, +33.2]; FX +29.5 [+26.0, +32.0]; FB +13.7 [+2.8, +17.4]; PI +22.0 [+13.6, +26.6]; AD +27.7 [+20.0, +34.6]
+runners s0.3 block_q1600 IP vs N +29.0 [+25.1, +33.3]; FX +30.9 [+24.0, +33.6]; FB +12.9 [+4.8, +22.6]; PI +28.5 [+19.2, +33.4]; AD +28.1 [+18.8, +38.9]
+runners s0.1 slow_q2000 IP vs N +35.2 [+31.6, +38.3]; FX +27.1 [+24.2, +30.1]; FB +9.9 [+6.0, +14.8]; PI +10.7 [+5.2, +17.0]; AD +15.4 [+8.5, +19.5]
+runners s0.3 slow_q2000 IP vs N +33.8 [+30.8, +36.1]; FX +32.6 [+28.9, +34.3]; FB +14.1 [+8.4, +17.0]; PI +13.8 [+8.8, +21.6]; AD +15.0 [+10.3, +21.6]
+largest median max queue (veh): [('slow_q2000', 'N', 297.0), ('block_q2000', 'N', 283.5), ('block_q2000', 'AD', 254.0)]
+own-seed mismatch count 60 field kinds ['diff_ci', 'rel_ci']

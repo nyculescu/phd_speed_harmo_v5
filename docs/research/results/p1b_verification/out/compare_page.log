@@ -1,0 +1,4 @@
+values compared: 6217 mismatches: 0
+checks {'n_eval_runs': 255182, 'n_tune_runs': 75120, 'n_invalid_eval': 0, 'n_teleport_eval': 0, 'n_undrained_eval': 0, 'n_collision_runs_eval': 0, 'signals': ['amber'], 'commits': ['93ba6550fd409ab7992d6166dc976f0bcceb1046'], 'window_mismatch_seed_cells': 0, 'replicate_seed_bad': 0, 'N_fixed_vs_NN_hash_mismatch': 0, 'delayed_switch_time_bad': 0}
+mismatch field kinds: {}
+non-CI mismatches: []

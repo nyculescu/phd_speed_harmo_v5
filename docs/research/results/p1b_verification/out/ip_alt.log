@@ -1,0 +1,4 @@
+slow_q1600: IP c1000+back runner-up p70_120_8_e4: median 175.1; vs ID +8.4 [+3.8, +17.1] dlo +7.7; vs FB +10.5 [+2.6, +26.9] dlo +5.2; vs PI -6.4 [-14.7, +1.9] dlo -25.1
+block_q1600: IP p20_20_16_e4 runner-up p20_20_14_e4: median 212.8; vs ID +18.4 [+9.9, +25.8] dlo +24.0; vs FB +13.7 [+5.0, +20.1] dlo +11.5; vs PI +16.3 [+4.8, +26.9] dlo +10.4
+slow_q2000: IP p70_40_8_e4 runner-up f70_8: median 381.5; vs ID +6.3 [-2.1, +9.8] dlo -7.4; vs FB +1.8 [-4.6, +11.4] dlo -17.1; vs PI +1.1 [-10.6, +8.4] dlo -36.8
+block_q2000: IP p20_20_14_e4 runner-up p20_20_16_e4: median 381.7; vs ID +3.0 [+1.0, +5.3] dlo +3.6; vs FB +8.4 [+3.2, +12.5] dlo +12.6; vs PI -0.7 [-5.7, +2.9] dlo -20.5

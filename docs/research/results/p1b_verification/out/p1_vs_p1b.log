@@ -1,0 +1,30 @@
+== P1: S1a False S1b True cells ['slow_q2000', 'block_q1600']
+  arms q1600: N c2000, FX c2400, FB f40_10, PI p40_40_10_e4, AD ad0p5_f40_10, ID f70_8, IP {'slow': 'f70_8', 'block': 'f40_14'}
+  arms q2000: N c1800, FX c1900, FB f40_10, PI p70_70_8_e4, AD ad0p5_f40_10, ID f40_10, IP {'slow': 'c800+back', 'block': 'f40_16'}
+  slow_q1600: ID vs [N +37.7 FX +34.7 FB +8.5 PI +3.1 AD +11.8]; IP vs ID +0.0 [+0.0, +0.0] diffCI [0.0, 0.0]; IP vs [N +37.7 FX +34.7 FB +8.5 PI +3.1 AD +11.8]
+     S2 [-7.1, +39.7] TP +22.0; d* 45.28 crossing PI [0.00, 140.91]; c* 180.00 > max N [0.00, 180.00]; p* 0.13 crossing PI [0.00, 0.25]; comb vs IP -4.1; max queue veh med: N 42 FB 116.5 PI 114.5 AD 124 ID 115.5 IP 115.5
+  slow_q2000: ID vs [N +26.5 FX +26.7 FB -0.8 PI -13.3 AD +5.4]; IP vs ID +17.2 [+11.4, +26.0] diffCI [42.7, 96.4]; IP vs [N +37.7 FX +38.0 FB +17.4 PI +6.9 AD +24.7]
+     S2 [-9.1, +13.3] TP +16.8; d* 25.80 crossing PI [9.91, 34.93]; c* 46.29 crossing PI [24.62, 58.64]; p* 0.17 crossing PI [0.10, 0.22]; comb vs IP -28.0; max queue veh med: N 140 FB 197 PI 192.5 AD 218.5 ID 200.5 IP 161
+  block_q1600: ID vs [N +12.6 FX +13.7 FB -14.0 PI -15.1 AD +3.5]; IP vs ID +18.4 [+10.0, +29.7] diffCI [27.2, 89.2]; IP vs [N +27.9 FX +26.8 FB +4.7 PI -0.7 AD +18.2]
+     S2 [+3.4, +26.6] TP +14.6; d* 0.00 IP never ahead PI [0.00, 240.00]; c* 0.00 IP never ahead PI [0.00, 180.00]; p* 0.00 IP never ahead PI [0.00, 0.30]; comb vs IP -6.0; max queue veh med: N 65 FB 139.5 PI 133 AD 161 ID 155 IP 119
+  block_q2000: ID vs [N +17.8 FX +17.3 FB -3.0 PI +0.7 AD +12.2]; IP vs ID +6.9 [+0.8, +15.3] diffCI [3.3, 66.9]; IP vs [N +26.2 FX +23.7 FB +4.5 PI +9.8 AD +17.8]
+     S2 [-1.8, +19.8] TP +12.2; d* 210.06 crossing FB [7.61, 240.00]; c* 180.00 > max N [180.00, 180.00]; p* 0.08 crossing FB [0.02, 0.21]; comb vs IP -12.4; max queue veh med: N 150.5 FB 227.5 PI 232.5 AD 267.5 ID 235.5 IP 195.5
+== P1b: S1a False S1b True cells ['slow_q2000', 'block_q1600']
+  arms q1600: N c1800, FX c2600, FB f40_10, PI p70_120_8_e4, AD ad0p5_f40_10, ID f40_10, IP {'slow': 'c1000+back', 'block': 'p20_20_16_e4'}
+  arms q2000: N f10_8, FX c2000, FB f20_12, PI p20_20_14_e4, AD ad0p5_f20_12, ID p20_20_14_e4, IP {'slow': 'p70_40_8_e4', 'block': 'p20_20_14_e4'}
+  slow_q1600: ID vs [N +28.4 FX +31.2 FB -1.5 PI -17.9 AD +2.2]; IP vs ID +16.2 [-16.7, +27.4] diffCI [-32.6, 56.4]; IP vs [N +25.1 FX +30.4 FB +14.4 PI +4.5 AD +19.1]
+     S2 [-0.4, +47.9] TP +37.7; d* 2.61 crossing PI [0.00, 7.10]; c* 115.17 crossing PI [0.00, 156.23]; p* 0.13 crossing PI [0.00, 0.30]; comb vs IP -20.5; max queue veh med: N 43 FB 118.5 PI 109 AD 121 ID 117 IP 78
+  slow_q2000: ID vs [N +30.8 FX +19.4 FB +4.8 PI -1.8 AD +6.1]; IP vs ID +11.8 [+5.8, +16.7] diffCI [21.6, 63.3]; IP vs [N +36.3 FX +25.1 FB +8.2 PI +7.4 AD +12.2]
+     S2 [-2.4, +19.3] TP +16.8; d* 120.37 crossing PI [20.14, 168.48]; c* 180.00 > max N [180.00, 180.00]; p* 0.53 crossing PI [0.21, 0.89]; comb vs IP -1.6; max queue veh med: N 297 FB 213.5 PI 192 AD 216 ID 202 IP 206
+  block_q1600: ID vs [N +16.3 FX +15.8 FB -2.6 PI -0.7 AD +13.6]; IP vs ID +22.0 [+8.8, +31.4] diffCI [21.4, 84.8]; IP vs [N +30.2 FX +30.2 FB +15.9 PI +18.0 AD +26.3]
+     S2 [+0.4, +25.4] TP +13.6; d* 240.00 > max N [192.76, 240.00]; c* 180.00 > max N [180.00, 180.00]; p* 0.21 crossing FB [0.12, 0.33]; comb vs IP -16.5; max queue veh med: N 65 FB 142.5 PI 148 AD 163 ID 146 IP 121
+  block_q2000: ID vs [N +27.3 FX +19.6 FB +6.6 PI -2.1 AD +12.9]; IP vs ID +0.0 [+0.0, +0.0] diffCI [0.0, 0.0]; IP vs [N +27.3 FX +19.6 FB +6.6 PI -2.1 AD +12.9]
+     S2 [+3.5, +22.4] TP +15.7; d* 0.00 IP never ahead PI [0.00, 0.00]; c* 0.00 IP never ahead PI [0.00, 0.00]; p* 0.00 IP never ahead PI [0.00, 0.00]; comb vs IP -3.4; max queue veh med: N 283.5 FB 237 PI 212.5 AD 254 ID 216.5 IP 216.5
+P1b k=0 all: runs 63182, with emergency_stops>0 8213, with emergency_meter>0 15693, total emergency_stops 8794, total emergency_meter 28525, collisions 0
+P1b k=0, rs=0: runs 57782, with emergency_stops>0 7396, with emergency_meter>0 12726, total emergency_stops 7854, total emergency_meter 22781, collisions 0
+P1b slow_q1600 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (20/44); FX 1/2 (63/78); FB 0/0 (20/28); PI 0/0 (23/26); AD 0/0 (20/31); ID 0/0 (14/21); IP 0/0 (12/15)
+P1b block_q1600 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (11/35); FX 0/1 (47/60); FB 0/0 (22/29); PI 0/0 (21/25); AD 0/0 (21/32); ID 0/0 (13/22); IP 0/0 (12/27)
+P1b none_q1600 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (18/46); FX 1/2 (66/80); FB 0/0 (36/45); PI 0/0 (38/44); AD 0/0.5 (40/50)
+P1b slow_q2000 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (10/16); FX 0/0 (10/44); FB 0/0 (12/22); PI 0/0 (10/23); AD 0/0 (9/22); ID 0/0 (9/16); IP 0/0 (9/16)
+P1b block_q2000 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (9/15); FX 0/0 (7/34); FB 0/0 (11/24); PI 0/0 (10/22); AD 0/0 (10/24); ID 0/0 (9/16); IP 0/0 (9/16)
+P1b none_q2000 emergency_stops/emergency_meter median (runs>0): NC 0/0 (0/0); N 0/0 (9/14); FX 0/0 (9/47); FB 0/0 (15/27); PI 0/0 (11/25); AD 0/0 (11/25)
