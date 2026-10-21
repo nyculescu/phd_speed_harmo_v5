@@ -4,8 +4,10 @@ import difflib, json, re, sys, time, urllib.parse, urllib.request
 t = open(sys.argv[1]).read()
 bib = t.split("```bibtex")[1].split("```")[0] if "```bibtex" in t else t
 def fld(b, k):
-    m = re.search(rf"\b{k}\s*=\s*\{{(.*?)\}}\s*,?\s*(?:\n|$)", b + "\n", re.S)
-    return re.sub(r"[{}\\'\"]", "", m.group(1)).strip() if m else ""
+    m = re.search(rf"\b{k}\s*=\s*(?:\{{(.*?)\}}|([^,\n]+))\s*,?\s*(?:\n|$)", b + "\n", re.S)
+    if not m:
+        return ""
+    return re.sub(r"[{}\\'\"]", "", m.group(1) if m.group(1) is not None else m.group(2)).strip()
 for key, b in re.findall(r"@\w+\{([^,]+),(.*?)\n\}", bib, re.S):
     doi = fld(b, "doi")
     if not doi:
