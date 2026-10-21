@@ -55,9 +55,16 @@ class Config:
     speed_dev: float = 0.10
     step: float = STEP_LENGTH
     geom: str = "bn4"             # bn4 | wz
+    lc_coop_speed: float | None = None   # stage 2 knob (gate §2)
+    decel: float | None = None           # stage 2 knob: comfortable deceleration b (m/s^2)
 
     def tag(self) -> str:
-        return f"{self.geom}_{self.merge}_{self.cf}_lc{self.lc_coop:g}_sd{self.speed_dev:g}_st{self.step:g}"
+        t = f"{self.geom}_{self.merge}_{self.cf}_lc{self.lc_coop:g}_sd{self.speed_dev:g}_st{self.step:g}"
+        if self.lc_coop_speed is not None:
+            t += f"_lcs{self.lc_coop_speed:g}"
+        if self.decel is not None:
+            t += f"_b{self.decel:g}"
+        return t
 
 
 def lanes(geom: str, edge: str) -> int:
@@ -142,12 +149,14 @@ def build_net(cfg: Config) -> Path:
 
 def vtype_xml(cfg: Config) -> str:
     lc = f'laneChangeModel="LC2013" lcCooperative="{cfg.lc_coop:g}"'
+    if cfg.lc_coop_speed is not None:
+        lc += f' lcCooperativeSpeed="{cfg.lc_coop_speed:g}"'
     if cfg.cf == "IDM":
-        cf = 'carFollowModel="IDM" accel="1.0" decel="1.5" tau="1.0" minGap="2.0" delta="4"'
+        cf = f'carFollowModel="IDM" accel="1.0" decel="{cfg.decel or 1.5:g}" tau="1.0" minGap="2.0" delta="4"'
     elif cfg.cf == "EIDM":
-        cf = 'carFollowModel="EIDM"'
+        cf = 'carFollowModel="EIDM"' + (f' decel="{cfg.decel:g}"' if cfg.decel else "")
     elif cfg.cf == "Krauss":
-        cf = 'carFollowModel="Krauss"'
+        cf = 'carFollowModel="Krauss"' + (f' decel="{cfg.decel:g}"' if cfg.decel else "")
     else:
         raise ValueError(cfg.cf)
     return f'  <vType id="car" vClass="passenger" length="5" {cf} {lc}/>'

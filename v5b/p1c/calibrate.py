@@ -42,9 +42,17 @@ def profile(geom: str = "bn4") -> list:
     return p
 
 
-def configs(geom: str = "bn4"):
+STAGE2 = {"lc_coop_speed": [0.0, 0.5], "decel": [3.0, 4.5]}     # gate §2 stage 2, with step 0.25 s
+
+
+def configs(geom: str = "bn4", stage: int = 1):
     for v in itertools.product(*GRID.values()):
-        yield dict(zip(GRID.keys(), v), step=0.5, geom=geom)
+        base = dict(zip(GRID.keys(), v), step=0.5, geom=geom)
+        if stage == 1:
+            yield base
+        else:
+            for w in itertools.product(*STAGE2.values()):
+                yield {**base, **dict(zip(STAGE2.keys(), w)), "step": 0.25}
 
 
 def _cpu_util(dt: float = 3.0) -> float:
@@ -57,12 +65,14 @@ def _cpu_util(dt: float = 3.0) -> float:
     return 100.0 * (1 - (i2 - i1) / max(t2 - t1, 1))
 
 
-def run(out: Path, workers: int, geom: str = "bn4", seeds=SEEDS) -> None:
+def run(out: Path, workers: int, geom: str = "bn4", seeds=SEEDS, stage: int = 1) -> None:
     out.mkdir(parents=True, exist_ok=True)
     (out / "runs").mkdir(exist_ok=True)
     jobs = []
-    for cfg in configs(geom):
+    for cfg in configs(geom, stage):
         tag = f"{cfg['geom']}_{cfg['merge']}_{cfg['cf']}_lc{cfg['lc_coop']:g}_sd{cfg['speed_dev']:g}"
+        if stage == 2:
+            tag += f"_st0.25_lcs{cfg['lc_coop_speed']:g}_b{cfg['decel']:g}"
         for s in seeds:
             f = out / "runs" / f"{tag}_s{s}.json"
             if not f.exists():
@@ -119,12 +129,12 @@ def measure(r: dict) -> dict:
     return out
 
 
-def analyse(out: Path, geom: str = "bn4") -> dict:
+def analyse(out: Path, geom: str = "bn4", stage: int = 1) -> dict:
     rows = {}
     for f in sorted((out / "runs").glob("*.json")):
         r = json.loads(f.read_text())
         c = r["cfg"]
-        key = (c["merge"], c["cf"], c["lc_coop"], c["speed_dev"])
+        key = (c["merge"], c["cf"], c["lc_coop"], c["speed_dev"], c.get("lc_coop_speed"), c.get("decel"), c.get("step"))
         m = measure(r)
         rows.setdefault(key, []).append({**m, "valid": r["valid"], "teleports": r["teleports"],
                                          "collisions": r["collisions"], "estops": r["emergency_stops"],
@@ -139,8 +149,10 @@ def analyse(out: Path, geom: str = "bn4") -> dict:
         artefact_free = all(x["valid"] and x["teleports"] == 0 and x["collisions"] == 0 for x in rs)
         t1a = med_drop is not None and T1A[0] <= med_drop <= T1A[1] and in_range >= 0.75
         t1b = med_qdf is not None and T1B[0] <= med_qdf / BOTT_LANES[geom] <= T1B[1]   # per lane (V141)
-        nondef = sum(v != DEFAULTS[k] for k, v in zip(DEFAULTS, key))
-        table.append({"merge": key[0], "cf": key[1], "lc_coop": key[2], "speed_dev": key[3], "n": len(rs),
+        nondef = sum(v != DEFAULTS[k] for k, v in zip(DEFAULTS, key)) + sum(x is not None for x in key[4:6]) \
+            + (key[6] != 0.5)
+        table.append({"merge": key[0], "cf": key[1], "lc_coop": key[2], "speed_dev": key[3], "lc_coop_speed": key[4],
+                      "decel": key[5], "step": key[6], "n": len(rs),
                       "n_breakdown": len(drops), "median_drop": med_drop, "share_in_range": in_range,
                       "median_qdf": med_qdf, "median_pre": float(np.median([x["pre"] for x in rs if x["pre"]]))
                       if any(x["pre"] for x in rs) else None,
@@ -150,7 +162,7 @@ def analyse(out: Path, geom: str = "bn4") -> dict:
     chosen = min(passing, key=lambda r: (r["non_default"], abs(r["median_drop"] - 0.07))) if passing else None
     res = {"table": sorted(table, key=lambda r: (not r["pass"], r["non_default"])), "chosen": chosen,
            "n_pass": len(passing)}
-    (out / "calibration_stage1.json").write_text(json.dumps(res, indent=1))
+    (out / f"calibration_stage{stage}.json").write_text(json.dumps(res, indent=1))
     return res
 
 
@@ -161,10 +173,11 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--geom", default="bn4")
     ap.add_argument("--seed0", type=int, default=7_430_000)
+    ap.add_argument("--stage", type=int, default=1)
     a = ap.parse_args(argv)
     if a.cmd == "run":
-        run(Path(a.out), a.workers, a.geom, list(range(a.seed0, a.seed0 + 10)))
-    res = analyse(Path(a.out), a.geom)
+        run(Path(a.out), a.workers, a.geom, list(range(a.seed0, a.seed0 + 10)), a.stage)
+    res = analyse(Path(a.out), a.geom, a.stage)
     print(json.dumps({"n_pass": res["n_pass"], "chosen": res["chosen"]}, indent=1))
     for r in res["table"]:
         print(f"{r['merge']:8} {r['cf']:6} lc{r['lc_coop']:<4} sd{r['speed_dev']:<5} bd {r['n_breakdown']:2}/{r['n']} "
