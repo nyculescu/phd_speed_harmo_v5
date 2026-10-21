@@ -1,30 +1,77 @@
 ---
-title: "How Much Incident Information Does Mainline Metering Need? (render test)"
+title: "How Much Incident Information Does Mainline Metering Need? An Honest Headroom Decomposition in Microsimulation"
 format:
   pdf:
     documentclass: IEEEtran
     pdf-engine: pdflatex
     fontenc: T1
     fontfamily: times
-    cite-method: natbib
     classoption: [conference]
     keep-tex: true
     number-sections: true
     fig-pos: "tb"
+    cite-method: natbib
+    natbiboptions: "numbers,compress"
+    biblio-style: IEEEtran
     include-in-header:
       text: |
         \usepackage{graphicx}
         \usepackage{caption}
         \captionsetup{labelsep=period,font=footnotesize}
+bibliography: references.bib
 crossref:
   fig-title: Fig.
   fig-prefix: Fig.
+  tbl-title: TABLE
+  tbl-prefix: Table
 ---
 
-# Introduction
+<!--
+PAPER PLAN (V121). IEEE ITSC 2027, 6 pages incl. references. Deadline 1 Mar 2027.
+Sources of truth: docs/research/results/{p1b_result.md, p1b_c1_summary.md, p1_result.md}; protocols in docs/research/protocols/.
+Every number in the text must trace to a committed result JSON (via figure/table scripts or explicit citation of the note).
+Terminology (fixed, from the protocol): L0 = always-on control (FX, FB, PI, AD); ID = incident presence; IP = incident type;
+L2 = per-incident hindsight, bracketed by OR_in (upper) and ORX (lower). Mainline metering, NOT ramp metering.
 
-Render test only (V119). This page checks the toolchain: Quarto → official IEEEtran class → PDF. It is not paper text. The figure below is produced by `paper/figures/fig_c1_delay.py` from the committed result file `docs/research/results/p1b_c1_result.json` (V116), so the numbers trace to the baseline `baseline-2026-10-20`.
+PAGE BUDGET (≈ 6 pages)
+  Abstract                           ~0.2
+  I   Introduction                   ~0.8  (from the Argon draft after the V120 fixes)
+  II  Background and related work    ~0.6  (mainline metering; incident-responsive control; selection bias)
+  III Problem and information ladder ~0.6  (L0 / ID / IP / L2; what each controller knows)
+  IV  Experimental design            ~1.0  (plant BN4, incidents, amber + runners, tuning, seeds, pre-registration, statistics, cross-fitting)
+  V   Results                        ~1.6  (S1 ladder; C1 confirmation; S2 bracket; S3 robustness; realism rows)
+  VI  Discussion and limitations     ~0.6
+  VII Conclusion                     ~0.2
+  References                         ~0.5
 
-![Median delay per vehicle in the confirmation C1 (lane-crawl incident, 1,600 veh/h, 100 fresh seeds).](figures/fig_c1_delay.pdf){#fig-c1}
+FIGURES AND TABLES (scripts in paper/figures/, reading committed JSONs only)
+  Fig. 1   Plant schematic: 4 lanes -> 1-lane bottleneck, mainline signal, incident location   (drawn; no data)
+  Fig. 2   Information ladder per cell: delay of best L0 / ID / IP + L2 bracket (P1b, 4 cells) <- p1b_result.json
+  Fig. 3   C1 confirmation + robustness (detection delay 30-120 s; runners 10/30 %)          <- p1b_c1_result.json
+  Table I  Arms and the information each uses                                              (protocol)
+  Table II S1/S2/S3 summary per cell with CIs                                              <- p1b_result.json
+-->
 
-As @fig-c1 shows, the cross-reference mechanism works.
+::: {.abstract}
+*Abstract*: To be written last (at most 200 words).
+:::
+
+# Introduction {#sec-intro}
+
+*Draft source: the Argon introduction, fixed per V120 (no unsourced claims; terminology L0/ID/IP/L2; "no gain of 10 % or more detected"; C1 with its CI and scope).*
+
+# Background and Related Work {#sec-background}
+
+Mainline (mainstream) signal control upstream of lane drops and toll plazas is established [@Papageorgiou2008; @Spiliopoulou2010; @Tympakianaki2014]. *(Citation render test; text to follow.)*
+
+# Problem Setting and the Information Ladder {#sec-problem}
+
+# Experimental Design {#sec-design}
+
+# Results {#sec-results}
+
+# Discussion and Limitations {#sec-discussion}
+
+# Conclusion {#sec-conclusion}
+
+*To be written.*
