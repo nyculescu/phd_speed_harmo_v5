@@ -27,7 +27,7 @@ from v5b.d2.incidents import incident_window
 from v5b.p1c import plant as pl
 from v5b.p1c.meter import Meter
 
-CLOSE_LANE, SLOW_EDGE, SLOW_MPS = "4_1", "5", 5.0
+SLOW_MPS = 5.0
 _EMERG = re.compile(r"Vehicle '([^']+)' performs emergency (braking|stop).*?lane='([^']+)'.*?time=([\d.]+)")
 
 
@@ -50,8 +50,8 @@ class Sim(SumoSim):
 
 
 class Incident:
-    def __init__(self, kind, onset, duration):
-        self.kind, self.onset, self.duration = kind, onset, duration
+    def __init__(self, kind, onset, duration, slow_edge):
+        self.kind, self.onset, self.duration, self.slow_edge = kind, onset, duration, slow_edge
         self.on = self.done = False
         self.t_on = self.t_off = None
 
@@ -60,7 +60,7 @@ class Incident:
             return
         if not self.on and t >= self.onset - 1e-9:
             if self.kind == "slow":
-                ls.edge.setMaxSpeed(SLOW_EDGE, SLOW_MPS)
+                ls.edge.setMaxSpeed(self.slow_edge, SLOW_MPS)
             self.on, self.t_on = True, t   # 'close': the blocker vehicle in the route file acts by itself
         elif self.on and t >= self.onset + self.duration - 1e-9:
             self.clear(t)
@@ -69,13 +69,12 @@ class Incident:
         if not self.on:
             return
         if self.kind == "slow":
-            ls.edge.setMaxSpeed(SLOW_EDGE, pl.SPEED)
+            ls.edge.setMaxSpeed(self.slow_edge, pl.SPEED)
         self.on, self.done, self.t_off = False, True, t
 
 
-def _occ(edge: str):
-    ids = pl.LOOPS[edge]
-    return float(np.mean([ls.inductionloop.getLastIntervalOccupancy(i) for i in ids]))
+def _mean(ids, fn):
+    return float(np.mean([max(fn(i), 0.0) for i in ids]))
 
 
 def _trips(path: Path, sf: dict) -> list:
@@ -104,18 +103,20 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
     dem.write(rou)
     sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
               extra_args=["--tripinfo-output", str(trip)])
-    inc = Incident(incident, onset, dur)
+    inc = Incident(incident, onset, dur, pl.GEOMS[cfg.geom]["bott_edge"])
+    loops = pl.loop_ids(cfg.geom)
     sim.start()
     ls.trafficlight.setProgram(pl.TLS_ID, "allgreen")
     meter = None
     if arm != "NC":
-        meter = Meter(arm, read_occ=_occ, set_state=lambda s: ls.trafficlight.setRedYellowGreenState(pl.TLS_ID, s),
-                      r_min=r_min)
+        meter = Meter(arm, read_occ=lambda e: _mean(loops[e], ls.inductionloop.getLastIntervalOccupancy),
+                      set_state=lambda s: ls.trafficlight.setRedYellowGreenState(pl.TLS_ID, s), r_min=r_min,
+                      n_lanes=pl.lanes(cfg.geom, "2"))
     sim.run_until(warmup)
     tts0, arr0 = sim.tts_system, sim.arrived
     ser = []
     t_switch = None
-    cr = {"prev": set(ls.edge.getLastStepVehicleIDs("2")), "n": 0}
+    cr = {"prev": set(ls.edge.getLastStepVehicleIDs("2")), "n": 0, "ctrl": 0}
     end_ctrl = warmup + control
 
     def tick(t):
@@ -124,16 +125,17 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
         if post and inc.on and t_switch is None:
             meter.set_plan(post)
             t_switch = t
-        if meter is not None:
-            meter.step(t)
+        ids2 = set(ls.edge.getLastStepVehicleIDs("2"))
+        cr["n"] += len(cr["prev"] - ids2)
+        cr["prev"] = ids2
         if t < end_ctrl:
-            ids2 = set(ls.edge.getLastStepVehicleIDs("2"))
-            cr["n"] += len(cr["prev"] - ids2)
-            cr["prev"] = ids2
+            cr["ctrl"] = cr["n"]
+        if meter is not None:
+            meter.step(t, cr["n"])
         if series and abs((t / pl.LOOP_PERIOD) - round(t / pl.LOOP_PERIOD)) < 1e-6:
-            ser.append((round(t, 1), int(ls.inductionloop.getLastIntervalVehicleNumber("X5_0")),
-                        round(float(np.mean([max(ls.inductionloop.getLastIntervalMeanSpeed(i), 0) for i in pl.LOOPS["e4"]])), 2),
-                        round(float(np.mean([max(ls.inductionloop.getLastIntervalMeanSpeed(i), 0) for i in pl.LOOPS["e3"]])), 2),
+            ser.append((round(t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
+                        round(_mean(loops["e4"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
+                        round(_mean(loops["e3"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
                         None if meter is None else round(meter.r, 1)))
 
     while sim.t < end_ctrl - 1e-9:
@@ -163,7 +165,7 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
         pass
     out = {"cfg": pl.config_dict(cfg), "arm": arm, "post": post, "incident": incident, "seed": seed,
            "profile": profile, "r_min": r_min, "onset": onset, "duration": dur, "t_on": inc.t_on, "t_off": inc.t_off,
-           "t_switch": t_switch, "crossings_ctrl": cr["n"], "discharge_ctrl_vph": cr["n"] * 3600.0 / control,
+           "t_switch": t_switch, "crossings_ctrl": cr["ctrl"], "discharge_ctrl_vph": cr["ctrl"] * 3600.0 / control,
            "n_red_onsets": meter.n_red if meter is not None else 0,
            "commanded_final": meter.r if meter is not None else None, "generated": dem.counts_by_route()["main"], "n_trips": len(trips),
            "delay_s": float(np.mean([x[0] for x in trips])) if trips else None,

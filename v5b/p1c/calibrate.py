@@ -21,16 +21,19 @@ import numpy as np
 
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 
-SEEDS = list(range(7_430_000, 7_430_010))
+SEEDS = list(range(7_430_000, 7_430_010))      # BN4 stage 1 (V139); WZ uses --seed0 7430010 (V141)
 GRID = {"merge": ["zip20", "zip100", "laneend"], "cf": ["IDM", "EIDM", "Krauss"], "lc_coop": [1.0, 0.5, 0.2],
         "speed_dev": [0.10, 0.05]}
 DEFAULTS = {"merge": "zip100", "cf": "IDM", "lc_coop": 1.0, "speed_dev": 0.10}
-WARM, RAMP, HOLD, Q0, Q1 = 300.0, 1200.0, 1200.0, 1200.0, 2400.0
+WARM, RAMP, HOLD = 300.0, 1200.0, 1200.0
+RAMPS = {"bn4": (1200.0, 2400.0), "wz": (2400.0, 4800.0)}
+BOTT_LANES = {"bn4": 1, "wz": 2}
 FREE = 23.0
 T1A, T1B = (0.03, 0.20), (1770.0, 2330.0)
 
 
-def profile() -> list:
+def profile(geom: str = "bn4") -> list:
+    Q0, Q1 = RAMPS[geom]
     p = [(0.0, WARM, Q0)]
     n = int(RAMP // 60)
     for i in range(n):
@@ -39,9 +42,9 @@ def profile() -> list:
     return p
 
 
-def configs():
+def configs(geom: str = "bn4"):
     for v in itertools.product(*GRID.values()):
-        yield dict(zip(GRID.keys(), v), step=0.5)
+        yield dict(zip(GRID.keys(), v), step=0.5, geom=geom)
 
 
 def _cpu_util(dt: float = 3.0) -> float:
@@ -54,16 +57,16 @@ def _cpu_util(dt: float = 3.0) -> float:
     return 100.0 * (1 - (i2 - i1) / max(t2 - t1, 1))
 
 
-def run(out: Path, workers: int) -> None:
+def run(out: Path, workers: int, geom: str = "bn4", seeds=SEEDS) -> None:
     out.mkdir(parents=True, exist_ok=True)
     (out / "runs").mkdir(exist_ok=True)
     jobs = []
-    for cfg in configs():
-        tag = f"{cfg['merge']}_{cfg['cf']}_lc{cfg['lc_coop']:g}_sd{cfg['speed_dev']:g}"
-        for s in SEEDS:
+    for cfg in configs(geom):
+        tag = f"{cfg['geom']}_{cfg['merge']}_{cfg['cf']}_lc{cfg['lc_coop']:g}_sd{cfg['speed_dev']:g}"
+        for s in seeds:
             f = out / "runs" / f"{tag}_s{s}.json"
             if not f.exists():
-                jobs.append({"cfg": cfg, "arm": "NC", "incident": "none", "profile": profile(), "seed": s,
+                jobs.append({"cfg": cfg, "arm": "NC", "incident": "none", "profile": profile(geom), "seed": s,
                              "out": str(f), "series": True})
     print(f"{len(jobs)} jobs, cpu {_cpu_util():.0f} %", flush=True)
     env = clean_sumo_env()
@@ -113,7 +116,7 @@ def measure(r: dict) -> dict:
     return out
 
 
-def analyse(out: Path) -> dict:
+def analyse(out: Path, geom: str = "bn4") -> dict:
     rows = {}
     for f in sorted((out / "runs").glob("*.json")):
         r = json.loads(f.read_text())
@@ -132,7 +135,7 @@ def analyse(out: Path) -> dict:
         med_qdf = float(np.median(qdfs)) if qdfs else None
         artefact_free = all(x["valid"] and x["teleports"] == 0 and x["collisions"] == 0 for x in rs)
         t1a = med_drop is not None and T1A[0] <= med_drop <= T1A[1] and in_range >= 0.75
-        t1b = med_qdf is not None and T1B[0] <= med_qdf <= T1B[1]
+        t1b = med_qdf is not None and T1B[0] <= med_qdf / BOTT_LANES[geom] <= T1B[1]   # per lane (V141)
         nondef = sum(v != DEFAULTS[k] for k, v in zip(DEFAULTS, key))
         table.append({"merge": key[0], "cf": key[1], "lc_coop": key[2], "speed_dev": key[3], "n": len(rs),
                       "n_breakdown": len(drops), "median_drop": med_drop, "share_in_range": in_range,
@@ -153,10 +156,12 @@ def main(argv=None) -> int:
     ap.add_argument("cmd", choices=["run", "analyse"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--geom", default="bn4")
+    ap.add_argument("--seed0", type=int, default=7_430_000)
     a = ap.parse_args(argv)
     if a.cmd == "run":
-        run(Path(a.out), a.workers)
-    res = analyse(Path(a.out))
+        run(Path(a.out), a.workers, a.geom, list(range(a.seed0, a.seed0 + 10)))
+    res = analyse(Path(a.out), a.geom)
     print(json.dumps({"n_pass": res["n_pass"], "chosen": res["chosen"]}, indent=1))
     for r in res["table"]:
         print(f"{r['merge']:8} {r['cf']:6} lc{r['lc_coop']:<4} sd{r['speed_dev']:<5} bd {r['n_breakdown']:2}/{r['n']} "

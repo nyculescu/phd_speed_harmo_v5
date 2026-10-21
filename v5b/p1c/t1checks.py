@@ -17,9 +17,11 @@ import numpy as np
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 from v5b.p1c import calibrate as cal
 
-Q_NEAR = 2100.0          # near-capacity demand = calibration pre-queue flow (2,106 veh/h), rounded (V139)
+Q_NEAR = 2100.0          # BN4: calibration pre-queue flow (2,106 veh/h), rounded (V139); WZ: --q-near (V141)
 CONST_GRID = [1200.0, 1400.0, 1600.0, 1800.0, 2000.0]
-S = lambda a, b: list(range(7_430_000 + a, 7_430_000 + b + 1))
+BASE = 0                 # seed offset added to the BN4 layout 050-099; WZ uses 50 -> 100-149 (V141)
+S = lambda a, b: list(range(7_430_000 + BASE + a, 7_430_000 + BASE + b + 1))
+r50 = lambda x: round(x / 50.0) * 50.0
 
 
 def flat(q):
@@ -70,14 +72,21 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--cfg", required=True)
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--seed-base", type=int, default=0)
+    ap.add_argument("--q-near", type=float, default=None)
     a = ap.parse_args(argv)
+    global BASE, Q_NEAR, CONST_GRID
+    BASE = a.seed_base
     out = Path(a.out)
     (out / "runs").mkdir(parents=True, exist_ok=True)
     cfg = json.loads(a.cfg)
-    rep = {"cfg": cfg, "q_near": Q_NEAR}
+    geom = cfg.get("geom", "bn4")
+    if a.q_near:
+        Q_NEAR = a.q_near
+    rep = {"cfg": cfg, "q_near": Q_NEAR, "seed_base": BASE}
 
     # T1a / T1b: ramp, no control, seeds 050-069
-    R = run_jobs([job(cfg, "NC", "none", None, s, 600.0, f"t1ab_s{s}", cal.profile()) for s in S(50, 69)], out, a.workers)
+    R = run_jobs([job(cfg, "NC", "none", None, s, 600.0, f"t1ab_s{s}", cal.profile(geom)) for s in S(50, 69)], out, a.workers)
     m = [cal.measure(r) for r in R.values() if r]
     drops = [x["drop"] for x in m if x["drop"] is not None]
     qdfs = [x["qdf"] for x in m if x["qdf"] is not None]
@@ -85,23 +94,28 @@ def main(argv=None) -> int:
     share = sum(cal.T1A[0] <= d <= cal.T1A[1] for d in drops) / len(m)
     rep["T1a"] = {"median_drop": med_drop, "share_in_range": share, "n_breakdown": len(drops), "n": len(m),
                   "pass": bool(cal.T1A[0] <= med_drop <= cal.T1A[1] and share >= 0.75)}
-    rep["T1b"] = {"median_qdf": med_qdf, "pass": bool(cal.T1B[0] <= med_qdf <= cal.T1B[1])}
-    r_min = round(0.4 * med_qdf / 50.0) * 50.0
+    per_lane = med_qdf / cal.BOTT_LANES[geom]
+    rep["T1b"] = {"median_qdf": med_qdf, "per_lane": per_lane, "pass": bool(cal.T1B[0] <= per_lane <= cal.T1B[1])}
+    r_min = r50(0.4 * med_qdf)
     rep["r_min"] = r_min
+    if geom != "bn4":                                  # V141: grids scaled to the measured capacity
+        CONST_GRID = [r50(f * med_qdf) for f in (0.6, 0.7, 0.8, 0.9, 1.0)]
+    t0r = [800.0, 1200.0, 1600.0] if geom == "bn4" else [r50(f * med_qdf) for f in (0.4, 0.6, 0.8)]
+    rep["const_grid"], rep["t0_rates"] = CONST_GRID, t0r
     print("T1a/T1b", rep["T1a"], rep["T1b"], "r_min", r_min, flush=True)
 
     jobs = []
     for s in S(70, 79):                                   # T1d meter physics; T1e closure; T1f tuning
         for inc in ("none", "close", "slow"):
             jobs.append(job(cfg, "NC", inc, Q_NEAR, s, r_min, f"nc_{inc}_s{s}"))
-            for c in sorted(set(CONST_GRID + [800.0])):
+            for c in sorted(set(CONST_GRID + t0r)):
                 jobs.append(job(cfg, f"c{c:g}", inc, Q_NEAR, s, r_min, f"c{c:g}_{inc}_s{s}"))
     for s in S(90, 94):                                   # T0
-        for c in (800.0, 1200.0, 1600.0):
+        for c in t0r:
             jobs.append(job(cfg, f"c{c:g}", "none", Q_NEAR, s, r_min, f"t0_c{c:g}_s{s}"))
     for s in S(95, 99):                                   # T3
         for k in (0, 1):
-            jobs.append(job(cfg, "c1200", "close", Q_NEAR, s, r_min, f"t3_k{k}_s{s}"))
+            jobs.append(job(cfg, f"c{t0r[1]:g}", "close", Q_NEAR, s, r_min, f"t3_k{k}_s{s}"))
     R2 = run_jobs(jobs, out, a.workers)
     allr = [r for r in list(R.values()) + list(R2.values()) if r]
 
@@ -112,11 +126,11 @@ def main(argv=None) -> int:
     stops = reds = 0
     for s in S(70, 79):
         for inc in ("none", "close", "slow"):
-            for c in (800.0, 1200.0, 1600.0):
+            for c in t0r:
                 r = R2[f"c{c:g}_{inc}_s{s}"]
                 st = r["emerg_by_edge"]["stop"]
                 stops += sum(v for e, v in st.items() if e == "2" or e.startswith(":3"))
-                reds += 4 * r["n_red_onsets"]
+                reds += (4 if geom == "bn4" else 3) * r["n_red_onsets"]
     rep["T1d"] = {"forced_stops": stops, "lane_red_onsets": reds, "share": stops / max(reds, 1),
                   "pass": bool(stops / max(reds, 1) < 0.01)}
 
@@ -152,7 +166,7 @@ def main(argv=None) -> int:
         if r and not (r["valid"] and r["teleports"] == 0 and r["collisions"] == 0):
             rep["T1c"]["pass"] = False
 
-    ratios = [R2[f"t0_c{c:g}_s{s}"]["discharge_ctrl_vph"] / c for s in S(90, 94) for c in (800.0, 1200.0, 1600.0)]
+    ratios = [R2[f"t0_c{c:g}_s{s}"]["discharge_ctrl_vph"] / c for s in S(90, 94) for c in t0r]
     rep["T0"] = {"median_ratio": float(np.median(ratios)), "min": float(min(ratios)), "max": float(max(ratios)),
                  "wall_s_median": float(np.median([r["wall_s"] for r in allr])),
                  "pass": bool(abs(np.median(ratios) - 1) <= 0.10)}
