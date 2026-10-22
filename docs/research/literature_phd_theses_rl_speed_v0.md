@@ -9,7 +9,7 @@
 **Basis key.** [REC] = read on the repository or official record page (abstract level). [SNIP] = search-engine summary of the record only. No full text was read in this pass, so methods details beyond the abstract are not verified.
 
 **Coverage limits.**
-- Fewer than 20 qualifying theses were confirmed (9 confirmed, 4 to confirm).
+- Fewer than 20 qualifying theses were confirmed (9 confirmed, 3 to confirm; W. Zhou moved to related in V151 because the PDF says MSc).
 - Chinese, Korean and other national thesis databases (CNKI, RISS) and ProQuest were not searched; they are likely to hold more.
 - A ProQuest export through the author's library would close most of this gap.
 
@@ -33,7 +33,6 @@
 |---|---|---|---|
 | 2026 | Amir Hossein Karbasi, *Integrated Traffic and Infrastructure Management Using Deep Reinforcement Learning and Automated Vehicles* (McMaster) | DRL truck platooning and freeway-bottleneck / signal control; degree level not confirmed (repository blocked our fetcher) | https://hdl.handle.net/11375/33857 |
 | 2022 | Eugene Vinitsky, *From sim-to-real: learning and deploying autonomous vehicle controllers that improve transportation metrics* (UC Berkeley, A. Bayen) | Title and year only from the Math Genealogy Project; no official record found | https://mathgenealogy.com/id.php?id=286363 |
-| 2019 | Weiyi Zhou, *A Q-Learning Based Integrated Variable Speed Limit and Hard Shoulder Running Control to Reduce Travel Time at Freeway Bottleneck* (University of Maryland, L. Zhang) | Record type "Thesis", degree level not stated; Q-learning VSL + HSR on I-270 (DTA model), beats feedback-based VSL | https://drum.lib.umd.edu/handle/1903/25204 |
 | 2018 | Mofan Zhou, *Modeling the Impact of Connected and Automated Vehicles on Highway Operations* (Griffith) | RL car-following controllers for CAVs to dampen stop-and-go oscillations (from the OpenAlex abstract); degree not confirmed (repository returned 403) | http://hdl.handle.net/10072/378093 |
 
 ## C. Related, not qualifying (read for context)
@@ -41,6 +40,7 @@
 - **Julian Isser (ETH Zurich, 2026), replication study:** checks the claim of Hou et al. that RL (Ape-X DQN, PPO, A3C) beats no metering, fixed-time and ALINEA for freeway ramp metering. Thesis type not confirmed; ramp metering only. **Directly relevant to fair-baseline questions; read it.** https://doi.org/10.3929/ethz-c-000801167
 - **Saeed Mansouryar (Sapienza, PhD 2026):** freeway VSL is *rule-based*, validated on about a year of Padua-Mestre field data (up to 19 % less travel time under congestion). It is compared in SUMO with a DRL jam-shrinking controller; DRL is used for urban signals. https://iris.uniroma1.it/handle/11573/1758911
 - **Mladen Miletić (Zagreb):** doctoral thesis *topic* defended on 9 Jan 2024 (spatial-temporal VSL with congestion detection and ML in a CAV environment); related Q-learning paper in *Machines* 2023; the thesis itself was not found.
+- **Weiyi Zhou (University of Maryland, MSc 2019, title page checked in the PDF):** Q-learning integrated VSL and hard-shoulder running on I-270 (DTA model); beats feedback-based VSL. A master's thesis (V151).
 - **Prajwal Bindu Vinod (TU Delft, MSc 2025):** SAC for combined ramp metering and VSL in SUMO. A master's thesis.
 - **Not RL or not confirmed as RL:** Amirreza Kandiri (UCD 2025, VSL optimisation framework; RL not stated); Zeyu Mu (UVA 2026, CAV platooning; RL not stated); Aditya Maheshwari (Carleton 2020, RL for mixed-autonomy highways; degree not checked); Daniel Lazar (Berkeley 2021, mostly theory of mixed-autonomy routing).
 - **Key non-thesis work:**

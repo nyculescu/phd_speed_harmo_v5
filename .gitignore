@@ -10,3 +10,7 @@ dist/
 runs/raw/
 *.sumocfg.tmp
 .DS_Store
+
+# Thesis PDFs: third-party copyright, kept local only (V151)
+docs/theses/*.pdf
+docs/theses/*.notpdf
