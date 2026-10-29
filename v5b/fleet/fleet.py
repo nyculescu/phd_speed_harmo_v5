@@ -70,6 +70,8 @@ HDV_ACCEL: float | None = None
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
 HDV_TAU_FIXED: float | None = None
+# Krauss dawdling redraw interval for humans (SUMO sigmaStep; default = step length); V178 test
+HDV_SIGMA_STEP: float | None = None
 HDV_SIGMA_FIXED: float | None = None
 
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
@@ -136,6 +138,8 @@ class VehSpec:
             a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{TRUCK_MAX:g}"}
         else:
             a |= {"vClass": "passenger", "carFollowModel": CAV_MODELS[self.cls], "tau": f"{self.tau:g}"}
+        if self.cls in ("hdv_car", "truck") and HDV_SIGMA_STEP is not None:
+            a["sigmaStep"] = f"{HDV_SIGMA_STEP:g}"
         if self.cls in ("acc", "cacc", "alks") and CAV_APPARENT_DECEL is not None:
             a["apparentDecel"] = f"{CAV_APPARENT_DECEL:g}"
         if self.cls != "acc" or CAV_MODELS["acc"] == "ACC":     # ACC gains exist only in SUMO's ACC model

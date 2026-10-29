@@ -81,14 +81,14 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     return out
 
 
-DIAG = {"base": {}, "no_trucks": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0)}, "asl_step": {"asl": 0.1},
+DIAG = {"base_sigmastep0.5": {"sigma_step": 0.5}, "base": {}, "no_trucks": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0)}, "asl_step": {"asl": 0.1},
         "sigma_0.5": {"sigma": 0.5}, "all_three": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0), "asl": 0.1, "sigma": 0.5}}
 
 
 def diag_one(seed: int, name: str, run_dir: Path) -> dict:
     """V178 diagnosis: the default human-only configuration with one sourced ingredient switched off."""
     d = DIAG[name]
-    fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = d.get("asl"), d.get("sigma")
+    fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED, fl.HDV_SIGMA_STEP = d.get("asl"), d.get("sigma"), d.get("sigma_step")
     return {"diag": name, **run_once(seed, *DEFAULTS, run_dir, d.get("shares", HUMAN_SHARES))}
 
 
@@ -96,15 +96,18 @@ def diag_one(seed: int, name: str, run_dir: Path) -> dict:
 WALK = [("w0_v139like", {"geom": "bn4", "limit": 23.0, "step": 0.5, "tau": 1.0, "sf": (1.0, 0.1, 0.2, 2.0),
                          "lengths": ((100.0, 5.0, 0.0),)}),
         ("w1_step0.1", {"step": 0.1}), ("w2_bn4x", {"geom": "bn4x"}), ("w3_100kmh", {"limit": 100.0 / 3.6}),
-        ("w4_uk_speeds", {"sf": fl.CAR_SF}), ("w5_lengths", {"lengths": fl.CAR_SEGMENTS}), ("w6_tau_beta", {"tau": None})]
+        ("w4_uk_speeds", {"sf": fl.CAR_SF}), ("w5_lengths", {"lengths": fl.CAR_SEGMENTS}), ("w6_tau_beta", {"tau": None}),
+        ("w7_w1_plus_sigmastep0.5", None)]
 
 
 def walk_one(seed: int, i: int, run_dir: Path) -> dict:
-    k = {}
-    for _, d in WALK[:i + 1]:
+    k = {"sigma_step": None}
+    steps = WALK[:2] + [("", {"sigma_step": 0.5})] if WALK[i][1] is None else WALK[:i + 1]
+    for _, d in steps:
         k |= d
     fl.LIMIT, fl.CAR_SF, fl.CAR_SEGMENTS = k["limit"], k["sf"], k["lengths"]
     fl.HDV_TAU_FIXED, fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = k["tau"], k["step"], 0.5
+    fl.HDV_SIGMA_STEP = k["sigma_step"]
     out = run_once(seed, *DEFAULTS, run_dir, (1.0, 0.0, 0.0, 0.0, 0.0), geom=k["geom"], step=k["step"])
     return {"walk": WALK[i][0], **out}
 
