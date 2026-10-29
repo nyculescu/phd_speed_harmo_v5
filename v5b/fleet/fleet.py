@@ -63,6 +63,10 @@ CAV_APPARENT_DECEL: float | None = None
 # CAV car-following models; IDM variants for the V169/V171 tests (SUMO's ACC brakes hard at queue tails)
 CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 
+# calibration knobs (V177): HDV-car tau scale (shape kept) and accel; None = SUMO default
+HDV_TAU_SCALE = 1.0
+HDV_ACCEL: float | None = None
+
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
 
 
@@ -121,6 +125,8 @@ class VehSpec:
         if self.cls == "hdv_car":
             a |= {"vClass": "passenger", "carFollowModel": "Krauss", "tau": f"{self.tau:.3f}",
                   "sigma": f"{self.sigma:.3f}", "actionStepLength": f"{self.asl:.1f}"}
+            if HDV_ACCEL is not None:
+                a["accel"] = f"{HDV_ACCEL:g}"
         elif self.cls == "truck":
             a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{TRUCK_MAX:g}"}
         else:
@@ -151,7 +157,7 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
                     round(sf, 4))
         if cls == "hdv_car":
             while True:                       # tau >= actionStepLength per vehicle (note §4)
-                tau = TAU_RANGE[0] + (TAU_RANGE[1] - TAU_RANGE[0]) * float(rf.beta(*TAU_AB))
+                tau = HDV_TAU_SCALE * (TAU_RANGE[0] + (TAU_RANGE[1] - TAU_RANGE[0]) * float(rf.beta(*TAU_AB)))
                 asl = round(_quantile(rf, ASL_Q) * 10) / 10
                 sig = _quantile(rf, SIGMA_Q)
                 if tau >= asl:

@@ -90,3 +90,14 @@ def test_bn4x_geometry():
     assert b["2"] - b["1"] == a["2"] - a["1"] + fl.UPSTREAM_EXTRA
     assert all(b[n] - b["2"] == a[n] - a["2"] for n in a if n != "1")   # downstream of edge 1 unchanged
     assert pl.GEOMS["bn4x"]["lanes"] == pl.GEOMS["bn4"]["lanes"]
+
+
+def test_calibration_knobs(monkeypatch):
+    monkeypatch.setattr(fl, "HDV_TAU_SCALE", 0.7)
+    monkeypatch.setattr(fl, "HDV_ACCEL", 2.0)
+    monkeypatch.setattr(fl, "SHARES", (0.925, 0.075, 0.0, 0.0, 0.0))
+    v = fl.sample(4000, SEED, 4, [0.0] * 4000)
+    assert {x.cls for x in v} == {"hdv_car", "truck"}
+    h = [x for x in v if x.cls == "hdv_car"]
+    assert all(x.tau >= x.asl for x in h) and min(x.tau for x in h) >= 0.7 * 0.2 - 1e-9
+    assert 'accel="2"' in h[0].vtype_xml()
