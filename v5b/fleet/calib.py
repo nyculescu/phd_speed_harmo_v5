@@ -40,7 +40,7 @@ def grid() -> list:
 
 
 def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES,
-             geom: str = "bn4x", step: float = CFG.step) -> dict:
+             geom: str = "bn4x", step: float = CFG.step, ballistic: bool = False) -> dict:
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     fl.SHARES, fl.HDV_TAU_SCALE, fl.HDV_ACCEL = shares, c, None if accel == 2.6 else accel
@@ -51,7 +51,7 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
     dem.write(rou)
     sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
-              extra_args=["--tripinfo-output", str(trip)])
+              extra_args=["--tripinfo-output", str(trip)] + (["--step-method.ballistic", "true"] if ballistic else []))
     loops = pl.loop_ids(cfg.geom)
     sim.start()
     ls.trafficlight.setProgram(pl.TLS_ID, "allgreen")
@@ -110,6 +110,21 @@ def walk_one(seed: int, i: int, run_dir: Path) -> dict:
     fl.HDV_SIGMA_STEP = k["sigma_step"]
     out = run_once(seed, *DEFAULTS, run_dir, (1.0, 0.0, 0.0, 0.0, 0.0), geom=k["geom"], step=k["step"])
     return {"walk": WALK[i][0], **out}
+
+
+# V179 step-length check on the V139-like human plant (WALK[0])
+VERIFY = {"euler_0.25": (0.25, False), "euler_0.2": (0.2, False), "ballistic_0.5": (0.5, True),
+          "ballistic_0.1": (0.1, True)}
+
+
+def verify_one(seed: int, name: str, run_dir: Path) -> dict:
+    step, ballistic = VERIFY[name]
+    k = dict(WALK[0][1])
+    fl.LIMIT, fl.CAR_SF, fl.CAR_SEGMENTS = k["limit"], k["sf"], k["lengths"]
+    fl.HDV_TAU_FIXED, fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED, fl.HDV_SIGMA_STEP = k["tau"], step, 0.5, None
+    out = run_once(seed, *DEFAULTS, run_dir, (1.0, 0.0, 0.0, 0.0, 0.0), geom=k["geom"], step=step,
+                   ballistic=ballistic)
+    return {"verify": name, **out}
 
 
 def batch(out: Path, seeds: list, workers: int) -> None:
@@ -191,6 +206,10 @@ def main(argv=None) -> int:
     w.add_argument("--seed", type=int, required=True)
     w.add_argument("--i", type=int, required=True)
     w.add_argument("--out", required=True)
+    v = sub.add_parser("verify")
+    v.add_argument("--seed", type=int, required=True)
+    v.add_argument("--name", required=True)
+    v.add_argument("--out", required=True)
     n = sub.add_parser("analyse")
     n.add_argument("--out", required=True)
     a = ap.parse_args(argv)
@@ -206,6 +225,9 @@ def main(argv=None) -> int:
     elif a.cmd == "walk":
         out = Path(a.out)
         out.write_text(json.dumps(walk_one(a.seed, a.i, out.parent / "rd")))
+    elif a.cmd == "verify":
+        out = Path(a.out)
+        out.write_text(json.dumps(verify_one(a.seed, a.name, out.parent / "rd")))
     elif a.cmd == "batch":
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers)
         print(json.dumps(analyse(Path(a.out)), indent=1))
