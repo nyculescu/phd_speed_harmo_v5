@@ -196,6 +196,21 @@ pl.GEOMS.setdefault("bn4x", {**pl.GEOMS["bn4"], "nodes": [(n, x if n == "1" else
                                                           for n, x in pl.GEOMS["bn4"]["nodes"]]})
 
 
+
+
+def _lane_drop(n: int) -> dict:
+    """V184 corridor: entry 3,000 m, 310 m, approach 1,000 m (n lanes), drop, bottleneck 1,000 m, exit 500 m (n-1)."""
+    x = (0.0, 3000.0, 3310.0, 4310.0, 5310.0, 5810.0)
+    return {"nodes": [(str(i + 1), v) for i, v in enumerate(x)],
+            "lanes": {"1": n, "2": n, "3": n, "4": n - 1, "5": n - 1}, "drops": ("4",), "bott_edge": "4",
+            "block_pos": 250.0, "loops": {"e4": [("4", 100.0)], "e5": [("5", "mid")], "exit": [("5", -15.0)],
+                                          "e3": [("3", -20.0)], "up": [("3", -150.0)]}}
+
+
+pl.GEOMS.setdefault("ld32", _lane_drop(3))
+pl.GEOMS.setdefault("ld43", _lane_drop(4))
+
+
 def build_net(cfg: pl.Config) -> Path:
     """The p1c geometry with a 100 km/h limit on every edge (V156); cached under its own spec hash."""
     with mock.patch.object(pl, "SPEED", LIMIT):

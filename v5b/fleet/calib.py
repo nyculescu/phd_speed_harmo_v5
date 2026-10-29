@@ -37,19 +37,26 @@ T_CAP = 7200.0
 
 # V180 stage 2: lane-end merges (SUMO's zipper caps throughput at about 1,350 veh/h for steps <= 0.25 s);
 # V182 stage 3: lane-end merges, accel 2.6, plus the HDV-car action-step scale
-STAGE_MERGES = {1: MERGES, 2: ("laneend",), 3: ("laneend",)}
-STAGE_ACCELS = {1: ACCELS, 2: ACCELS, 3: (2.6,)}
-STAGE_ASL = {1: (1.0,), 2: (1.0,), 3: (0.25, 0.5, 0.75, 1.0)}
-STAGE_DEFAULTS = {1: DEFAULTS + (1.0,), 2: (1.0, "laneend", 2.6, 1.0), 3: (1.0, "laneend", 2.6, 1.0)}
+# V184 stage 4: multi-lane lane-drop corridors 3 -> 2 and 4 -> 3, same knobs as stage 3
+STAGE_MERGES = {1: MERGES, 2: ("laneend",), 3: ("laneend",), 4: ("laneend",)}
+STAGE_ACCELS = {1: ACCELS, 2: ACCELS, 3: (2.6,), 4: (2.6,)}
+STAGE_ASL = {1: (1.0,), 2: (1.0,), 3: (0.25, 0.5, 0.75, 1.0), 4: (0.25, 0.5, 0.75, 1.0)}
+STAGE_GEOMS = {1: ("bn4x",), 2: ("bn4x",), 3: ("bn4x",), 4: ("ld32", "ld43")}
+STAGE_DEFAULTS = {1: DEFAULTS + (1.0,), 2: (1.0, "laneend", 2.6, 1.0), 3: (1.0, "laneend", 2.6, 1.0),
+                  4: (1.0, "laneend", 2.6, 1.0)}
 
 
 def grid(stage: int = 1) -> list:
-    return [(c, m, a, s) for c in TAU_SCALES for m in STAGE_MERGES[stage] for a in STAGE_ACCELS[stage]
-            for s in STAGE_ASL[stage]]
+    return [(c, m, a, s, g) for g in STAGE_GEOMS[stage] for c in TAU_SCALES for m in STAGE_MERGES[stage]
+            for a in STAGE_ACCELS[stage] for s in STAGE_ASL[stage]]
 
 
-def _name(c, m, a, s) -> str:
-    return f"c{c:g}_{m}_a{a:g}" + ("" if s == 1.0 else f"_s{s:g}")
+def _name(c, m, a, s, g="bn4x") -> str:
+    return ("" if g == "bn4x" else f"{g}_") + f"c{c:g}_{m}_a{a:g}" + ("" if s == 1.0 else f"_s{s:g}")
+
+
+def lanes_out(geom: str) -> int:
+    return pl.lanes(geom, pl.GEOMS[geom]["bott_edge"])
 
 
 def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES,
@@ -60,7 +67,8 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     fl.HDV_ASL_SCALE = asl_scale
     cfg = dataclasses.replace(CFG, geom=geom, merge=merge, step=step)
     d = fl.build_net(cfg)
-    dem = fl.FleetDemand(seed, cal.profile("bn4"), cfg)
+    k = lanes_out(geom)
+    dem = fl.FleetDemand(seed, [(t0, t1, q * k) for t0, t1, q in cal.profile("bn4")], cfg)
     tag = f"cal_{cfg.tag()}_c{c:g}_a{accel:g}_s{seed}_pid{os.getpid()}"
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
     dem.write(rou)
@@ -84,7 +92,9 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     with mock.patch.object(cal, "FREE", fl.LIMIT):
         m = cal.measure({"series": ser})
     hdv = [v for v in dem.veh if v.cls == "hdv_car"]
-    out = {"seed": seed, "c": c, "merge": merge, "accel": accel, "asl_scale": asl_scale, **m, "drained": drained,
+    out = {"seed": seed, "geom": geom, "lanes_out": k, "c": c, "merge": merge, "accel": accel, "asl_scale": asl_scale,
+           **m, "pre_per_lane": m["pre"] / k if m["pre"] else None, "qdf_per_lane": m["qdf"] / k if m["qdf"] else None,
+           "drained": drained,
            "collisions": res["collisions"], "teleports": res["teleports"],
            "emergency_braking": log.count("performs emergency braking"), "sumo_errors": log.count("Error"),
            "tau_mean": round(float(np.mean([v.tau for v in hdv])), 3),
@@ -155,17 +165,17 @@ def diag3_one(seed: int, name: str, run_dir: Path) -> dict:
 def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
-    jobs = [(sd, c, m, a, s) for (c, m, a, s) in grid(stage) for sd in seeds
-            if not (out / "runs" / f"{_name(c, m, a, s)}_s{sd}.json").exists()]
+    jobs = [(sd, c, m, a, s, g) for (c, m, a, s, g) in grid(stage) for sd in seeds
+            if not (out / "runs" / f"{_name(c, m, a, s, g)}_s{sd}.json").exists()]
     print(f"{len(jobs)} runs, cpu {cal._cpu_util():.0f} %", flush=True)
 
     def one(j):
-        sd, c, m, a, s = j
+        sd, c, m, a, s, g = j
         while cal._cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
         r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.calib", "one", "--seed", str(sd),
-                            "--c", str(c), "--merge", m, "--accel", str(a), "--asl-scale", str(s),
-                            "--out", str(out / "runs" / f"{_name(c, m, a, s)}_s{sd}.json")],
+                            "--c", str(c), "--merge", m, "--accel", str(a), "--asl-scale", str(s), "--geom", g,
+                            "--out", str(out / "runs" / f"{_name(c, m, a, s, g)}_s{sd}.json")],
                            cwd=REPO_ROOT, env=env, capture_output=True, text=True)
         return j, r.returncode, r.stderr[-300:] if r.returncode else ""
 
@@ -182,29 +192,33 @@ def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
 def analyse(out: Path, stage: int = 1) -> dict:
     runs = [json.loads(f.read_text()) for f in sorted((out / "runs").glob("*.json"))]
     rows = []
-    for (c, m, a, s) in grid(stage):
-        rs = [r for r in runs if (r["c"], r["merge"], r["accel"], r.get("asl_scale", 1.0)) == (c, m, a, s)]
+    for (c, m, a, s, g) in grid(stage):
+        rs = [r for r in runs if (r["c"], r["merge"], r["accel"], r.get("asl_scale", 1.0), r.get("geom", "bn4x"))
+              == (c, m, a, s, g)]
         if not rs:
             continue
         drops = [r["drop"] for r in rs if r["drop"] is not None]
-        qdfs = [r["qdf"] for r in rs if r["qdf"] is not None]
+        qdfs = [r["qdf"] / r.get("lanes_out", 1) for r in rs if r["qdf"] is not None]
         med_drop = float(np.median(drops)) if drops else None
         med_qdf = float(np.median(qdfs)) if qdfs else None
         in_band = sum(DROP_BAND[0] <= d <= DROP_BAND[1] for d in drops) / len(rs)
         safe = all(r["collisions"] == 0 and r["teleports"] == 0 for r in rs)
         ok = (med_drop is not None and DROP_BAND[0] <= med_drop <= DROP_BAND[1] and in_band >= DROP_SHARE
               and med_qdf is not None and QDF_BAND[0] <= med_qdf <= QDF_BAND[1] and safe)
-        rows.append({"c": c, "merge": m, "accel": a, "asl_scale": s, "n": len(rs), "breakdowns": len(drops),
+        rows.append({"geom": g, "c": c, "merge": m, "accel": a, "asl_scale": s, "n": len(rs), "breakdowns": len(drops),
                      "median_drop": med_drop, "drop_in_band_share": round(in_band, 2), "median_qdf": med_qdf,
-                     "median_pre": float(np.median([r["pre"] for r in rs if r["pre"] is not None])) if drops else None,
+                     "median_pre": float(np.median([r["pre"] / r.get("lanes_out", 1) for r in rs if r["pre"] is not None]))
+                     if drops else None,
                      "collisions": sum(r["collisions"] for r in rs), "teleports": sum(r["teleports"] for r in rs),
                      "emergency_braking_median": float(np.median([r["emergency_braking"] for r in rs])),
                      "tau_mean": rs[0]["tau_mean"], "pass": ok,
                      "non_default": sum(x != y for x, y in zip((c, m, a, s), STAGE_DEFAULTS[stage]))})
-    passing = [r for r in rows if r["pass"]]
-    chosen = min(passing, key=lambda r: (r["non_default"], abs(r["median_drop"] - DROP_AIM), -r["median_qdf"])) \
-        if passing else None
-    res = {"stage": stage, "rows": rows, "n_pass": len(passing), "chosen": chosen}
+    chosen = {}
+    for g in STAGE_GEOMS[stage]:
+        passing = [r for r in rows if r["pass"] and r["geom"] == g]
+        chosen[g] = min(passing, key=lambda r: (r["non_default"], abs(r["median_drop"] - DROP_AIM),
+                                                -r["median_qdf"])) if passing else None
+    res = {"stage": stage, "per_lane": True, "rows": rows, "n_pass": sum(r["pass"] for r in rows), "chosen": chosen}
     (out / "calibration.json").write_text(json.dumps(res, indent=1))
     return res
 
@@ -218,6 +232,7 @@ def main(argv=None) -> int:
     o.add_argument("--merge", required=True)
     o.add_argument("--accel", type=float, required=True)
     o.add_argument("--asl-scale", type=float, default=1.0)
+    o.add_argument("--geom", default="bn4x")
     o.add_argument("--out", required=True)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
@@ -247,7 +262,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
-        res = run_once(a.seed, a.c, a.merge, a.accel, out.parent.parent / "rd", asl_scale=a.asl_scale)
+        res = run_once(a.seed, a.c, a.merge, a.accel, out.parent.parent / "rd", asl_scale=a.asl_scale, geom=a.geom)
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
