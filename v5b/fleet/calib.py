@@ -141,6 +141,17 @@ def verify_one(seed: int, name: str, run_dir: Path) -> dict:
     return {"verify": name, **out}
 
 
+# V183 diagnosis on the best stage-3 discharge (c 0.6, s 0.25, lane-end), report-only
+DIAG3 = {"best": {}, "no_trucks": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0)}, "narrow_speeds": {"sf": (1.0, 0.1, 0.2, 2.0)},
+         "both": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0), "sf": (1.0, 0.1, 0.2, 2.0)}}
+
+
+def diag3_one(seed: int, name: str, run_dir: Path) -> dict:
+    d = DIAG3[name]
+    fl.CAR_SF = d.get("sf", fl.CAR_SF)
+    return {"diag3": name, **run_once(seed, 0.6, "laneend", 2.6, run_dir, d.get("shares", HUMAN_SHARES), asl_scale=0.25)}
+
+
 def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
@@ -222,6 +233,10 @@ def main(argv=None) -> int:
     w.add_argument("--seed", type=int, required=True)
     w.add_argument("--i", type=int, required=True)
     w.add_argument("--out", required=True)
+    g3 = sub.add_parser("diag3")
+    g3.add_argument("--seed", type=int, required=True)
+    g3.add_argument("--name", required=True)
+    g3.add_argument("--out", required=True)
     v = sub.add_parser("verify")
     v.add_argument("--seed", type=int, required=True)
     v.add_argument("--name", required=True)
@@ -242,6 +257,9 @@ def main(argv=None) -> int:
     elif a.cmd == "walk":
         out = Path(a.out)
         out.write_text(json.dumps(walk_one(a.seed, a.i, out.parent / "rd")))
+    elif a.cmd == "diag3":
+        out = Path(a.out)
+        out.write_text(json.dumps(diag3_one(a.seed, a.name, out.parent / "rd")))
     elif a.cmd == "verify":
         out = Path(a.out)
         out.write_text(json.dumps(verify_one(a.seed, a.name, out.parent / "rd")))
