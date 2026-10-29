@@ -39,10 +39,10 @@ def grid() -> list:
     return [(c, m, a) for c in TAU_SCALES for m in MERGES for a in ACCELS]
 
 
-def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path) -> dict:
+def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES) -> dict:
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
-    fl.SHARES, fl.HDV_TAU_SCALE, fl.HDV_ACCEL = HUMAN_SHARES, c, None if accel == 2.6 else accel
+    fl.SHARES, fl.HDV_TAU_SCALE, fl.HDV_ACCEL = shares, c, None if accel == 2.6 else accel
     cfg = dataclasses.replace(CFG, geom="bn4x", merge=merge)
     d = fl.build_net(cfg)
     dem = fl.FleetDemand(seed, cal.profile("bn4"), cfg)
@@ -88,13 +88,7 @@ def diag_one(seed: int, name: str, run_dir: Path) -> dict:
     """V178 diagnosis: the default human-only configuration with one sourced ingredient switched off."""
     d = DIAG[name]
     fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = d.get("asl"), d.get("sigma")
-    shares = d.get("shares", HUMAN_SHARES)
-    global HUMAN_SHARES
-    keep, HUMAN_SHARES = HUMAN_SHARES, shares
-    try:
-        return {"diag": name, **run_once(seed, *DEFAULTS, run_dir)}
-    finally:
-        HUMAN_SHARES = keep
+    return {"diag": name, **run_once(seed, *DEFAULTS, run_dir, d.get("shares", HUMAN_SHARES))}
 
 
 def batch(out: Path, seeds: list, workers: int) -> None:
