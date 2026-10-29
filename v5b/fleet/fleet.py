@@ -13,6 +13,7 @@ Not modelled yet: CACC latency and loss (SUMO's CACC communicates ideally), dete
 """
 from __future__ import annotations
 
+import dataclasses
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -210,6 +211,19 @@ def _lane_drop(n: int) -> dict:
 
 pl.GEOMS.setdefault("ld32", _lane_drop(3))
 pl.GEOMS.setdefault("ld43", _lane_drop(4))
+
+
+PLANTS = {"v188": {"geom": "ld32", "merge": "laneend", "tau_scale": 0.8, "asl_scale": 0.5,
+                   "cav_models": {"acc": "IDM", "cacc": "IDM", "alks": "IDM"}}}
+
+
+def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
+    """Set the module knobs of an adopted plant (V188) and return its config."""
+    global HDV_TAU_SCALE, HDV_ASL_SCALE
+    p = PLANTS[name]
+    HDV_TAU_SCALE, HDV_ASL_SCALE = p["tau_scale"], p["asl_scale"]
+    CAV_MODELS.update(p["cav_models"])
+    return dataclasses.replace(cfg, geom=p["geom"], merge=p["merge"])
 
 
 def build_net(cfg: pl.Config) -> Path:

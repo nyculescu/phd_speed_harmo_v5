@@ -241,6 +241,7 @@ def batch(out: Path, seeds: list, workers: int, extra: list) -> None:
 
 
 def _common(p) -> None:
+    p.add_argument("--plant", help="adopted plant preset, e.g. v188 (overrides geometry, merge and model knobs)")
     p.add_argument("--cav-apparent-decel", type=float)
     p.add_argument("--geom", default=CFG.geom)
     for c in fl.CAV_MODELS:
@@ -264,6 +265,7 @@ def main(argv=None) -> int:
     b.add_argument("--seed0", type=int, required=True)
     b.add_argument("--n", type=int, default=10)
     b.add_argument("--workers", type=int, default=10)
+    b.add_argument("--adt", type=float, default=ADT)
     _common(b)
     a = ap.parse_args(argv)
     if a.cav_apparent_decel is not None:
@@ -273,12 +275,19 @@ def main(argv=None) -> int:
                                              "who": a.crash_who}
     if a.cmd == "one":
         out = Path(a.out)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, dataclasses.replace(CFG, geom=a.geom), crash)
+        cfg = dataclasses.replace(CFG, geom=a.geom)
+        if a.plant:
+            cfg = fl.apply_plant(a.plant, cfg)
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash)
+        res["plant"] = a.plant
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
     else:
         extra = ["--geom", a.geom] + [x for c in fl.CAV_MODELS for x in (f"--{c}-model", fl.CAV_MODELS[c])]
+        if a.plant:
+            extra += ["--plant", a.plant]
+        extra += ["--adt", str(a.adt)]
         if a.cav_apparent_decel is not None:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:

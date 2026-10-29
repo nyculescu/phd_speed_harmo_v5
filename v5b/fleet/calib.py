@@ -162,6 +162,14 @@ def diag3_one(seed: int, name: str, run_dir: Path) -> dict:
     return {"diag3": name, **run_once(seed, 0.6, "laneend", 2.6, run_dir, d.get("shares", HUMAN_SHARES), asl_scale=0.25)}
 
 
+def mix_one(seed: int, run_dir: Path) -> dict:
+    """V188 step 2: the V139 per-lane ramp on plant v188 with the full V160-V161 mix (prediction, not tuned)."""
+    p = fl.PLANTS["v188"]
+    fl.CAV_MODELS.update(p["cav_models"])
+    return {"plant": "v188", **run_once(seed, p["tau_scale"], p["merge"], 2.6, run_dir, fl.SHARES,
+                                       geom=p["geom"], asl_scale=p["asl_scale"])}
+
+
 def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
@@ -252,6 +260,9 @@ def main(argv=None) -> int:
     g3.add_argument("--seed", type=int, required=True)
     g3.add_argument("--name", required=True)
     g3.add_argument("--out", required=True)
+    x = sub.add_parser("mix")
+    x.add_argument("--seed", type=int, required=True)
+    x.add_argument("--out", required=True)
     v = sub.add_parser("verify")
     v.add_argument("--seed", type=int, required=True)
     v.add_argument("--name", required=True)
@@ -275,6 +286,9 @@ def main(argv=None) -> int:
     elif a.cmd == "diag3":
         out = Path(a.out)
         out.write_text(json.dumps(diag3_one(a.seed, a.name, out.parent / "rd")))
+    elif a.cmd == "mix":
+        out = Path(a.out)
+        out.write_text(json.dumps(mix_one(a.seed, out.parent / "rd")))
     elif a.cmd == "verify":
         out = Path(a.out)
         out.write_text(json.dumps(verify_one(a.seed, a.name, out.parent / "rd")))
