@@ -158,7 +158,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
                         cls=cls_i)
     ttc = r[:, 3]
     out = {
-        "seed": seed, "adt": adt, "generated": len(dem.veh), "arrived": res["arrived"], "drained": drained,
+        "seed": seed, "adt": adt, "cav_apparent_decel": fl.CAV_APPARENT_DECEL, "generated": len(dem.veh), "arrived": res["arrived"], "drained": drained,
         "sumo_errors": log.count("Error"), "teleports": res["teleports"], "collisions": res["collisions"],
         "collision_pairs": dict(Counter(f"{dem.by_id[c['collider']].cls}>{dem.by_id[c['victim']].cls}" for c in coll
                                         if c["collider"] in dem.by_id and c["victim"] in dem.by_id)),
@@ -177,7 +177,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
     return out
 
 
-def batch(out: Path, seeds: list, workers: int) -> None:
+def batch(out: Path, seeds: list, workers: int, extra: list) -> None:
     out.mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
     print(f"{len(seeds)} days, cpu {_cpu_util():.0f} %", flush=True)
@@ -186,7 +186,7 @@ def batch(out: Path, seeds: list, workers: int) -> None:
         while _cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
         r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.day", "one", "--seed", str(s),
-                            "--out", str(out / f"day_s{s}.json")], cwd=REPO_ROOT, env=env, capture_output=True,
+                            "--out", str(out / f"day_s{s}.json"), *extra], cwd=REPO_ROOT, env=env, capture_output=True,
                            text=True)
         return s, r.returncode, r.stderr[-500:] if r.returncode else ""
 
@@ -204,12 +204,16 @@ def main(argv=None) -> int:
     o.add_argument("--seed", type=int, required=True)
     o.add_argument("--adt", type=float, default=ADT)
     o.add_argument("--out", required=True)
+    o.add_argument("--cav-apparent-decel", type=float)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
     b.add_argument("--seed0", type=int, required=True)
     b.add_argument("--n", type=int, default=10)
     b.add_argument("--workers", type=int, default=10)
+    b.add_argument("--cav-apparent-decel", type=float)
     a = ap.parse_args(argv)
+    if a.cav_apparent_decel is not None:
+        fl.CAV_APPARENT_DECEL = a.cav_apparent_decel
     if a.cmd == "one":
         out = Path(a.out)
         res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt)
@@ -217,7 +221,8 @@ def main(argv=None) -> int:
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
     else:
-        batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers)
+        extra = [] if a.cav_apparent_decel is None else ["--cav-apparent-decel", str(a.cav_apparent_decel)]
+        batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers, extra)
     return 0
 
 

@@ -57,6 +57,9 @@ ACC_ORIGINAL = {"gapClosingControlGainSpeed": 0.07, "gapClosingControlGainSpace"
                 "collisionAvoidanceGainSpeed": 0.07, "collisionAvoidanceGainSpace": 0.23,
                 "collisionAvoidanceOverride": 100}
 
+# variant knob (V168 test): followers of a CAV assume it may brake this hard (SUMO apparentDecel); None = SUMO default
+CAV_APPARENT_DECEL: float | None = None
+
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
 
 
@@ -121,6 +124,8 @@ class VehSpec:
             a |= {"vClass": "passenger", "carFollowModel": "ACC", "tau": f"{self.tau:g}"}
         elif self.cls == "cacc":
             a |= {"vClass": "passenger", "carFollowModel": "CACC", "tau": f"{self.tau:g}"}
+        if self.cls in ("acc", "cacc", "alks") and CAV_APPARENT_DECEL is not None:
+            a["apparentDecel"] = f"{CAV_APPARENT_DECEL:g}"
         a |= {k: f"{v:g}" for k, v in self.extra.items()}
         return "  <vType " + " ".join(f'{k}="{v}"' for k, v in a.items()) + "/>"
 

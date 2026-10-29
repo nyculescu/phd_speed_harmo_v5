@@ -9,10 +9,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
 from scipy import stats
+
+from v5b.fleet import day, fleet as fl
+from v5b.fleet.smoke import CFG
 
 THRESHOLDS = (1.0, 1.5, 3.0)
 TARGET = 0.288     # crashes per day: P(>= 1 crash per day) = 25 % (V167)
@@ -45,6 +50,49 @@ def tail(mins: np.ndarray, u: float, n_days: int) -> dict:
             "ks_p": round(float(ks.pvalue), 4), "min_ttc_seen": round(float(mins.min()), 3)}
 
 
+_EB = re.compile(r"Vehicle '([^']+)' performs emergency braking on lane '([^']+)' with decel=([\d.]+), wished=([\d.]+),"
+                 r" severity=([\d.]+), time=([\d.]+)")
+
+
+def diagnostics(d: Path, rows: list) -> dict:
+    """Who brakes at the emergency limit, and where; the collision events with the colliders' drawn parameters."""
+    by_cls, by_place, hour, rate_n = Counter(), Counter(), Counter(), Counter()
+    tau_eb, tau_all, asl_eb, asl_all, coll = [], [], [], [], []
+    for r in rows:
+        log = d / f"sumo_s{r['seed']}.log"
+        if not log.exists():
+            continue
+        spec = fl.FleetDemand(r["seed"], day.profile(r["adt"]), CFG).by_id
+        rate_n.update(v.cls for v in spec.values())
+        tau_all += [v.tau for v in spec.values() if v.cls == "hdv_car"]
+        asl_all += [v.asl for v in spec.values() if v.cls == "hdv_car"]
+        for m in _EB.finditer(log.read_text(errors="replace")):
+            v = spec[m.group(1)]
+            lane = m.group(2)
+            by_cls[v.cls] += 1
+            by_place[("junction " if lane.startswith(":") else "edge ") + lane.split("_")[0].lstrip(":")] += 1
+            hour[int(float(m.group(6).rstrip(".")) // 3600)] += 1
+            if v.cls == "hdv_car":
+                tau_eb.append(v.tau)
+                asl_eb.append(v.asl)
+        for c in r.get("collision_events", []):
+            a, b = spec[c["collider"]], spec[c["victim"]]
+            coll.append(c | {"collider_cls": a.cls, "victim_cls": b.cls, "collider_tau": a.tau,
+                             "collider_asl": a.asl, "collider_sigma": a.sigma, "victim_tau": b.tau})
+    n_eb = sum(by_cls.values())
+    qs = (0.0, 0.25, 0.5, 0.75, 1.0)
+    return {
+        "emergency_braking": n_eb,
+        "per_1000_vehicles_by_class": {c: round(1000 * by_cls[c] / rate_n[c], 1) for c in fl.CLASSES if rate_n[c]},
+        "by_place": dict(by_place.most_common()), "by_hour": dict(sorted(hour.items())),
+        "hdv_car_tau_quartiles_braking_vs_all": [list(np.round(np.quantile(tau_eb, qs), 2)) if tau_eb else None,
+                                                 list(np.round(np.quantile(tau_all, qs), 2)) if tau_all else None],
+        "hdv_car_asl_mean_braking_vs_all": [round(float(np.mean(asl_eb)), 3) if asl_eb else None,
+                                            round(float(np.mean(asl_all)), 3) if asl_all else None],
+        "collisions": coll,
+    }
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", required=True)
@@ -58,11 +106,11 @@ def main(argv=None) -> int:
         z = np.load(d / f"conflicts_s{r['seed']}.npz")
         for u in THRESHOLDS:
             mins[u].append(encounters(z, u))
-        rows.append({k: r[k] for k in ("seed", "generated", "arrived", "drained", "sumo_errors", "teleports",
-                                       "collisions", "collision_pairs", "emergency_stops",
-                                       "emergency_braking_warnings", "breakdowns", "vehicle_seconds",
-                                       "closing_seconds", "ttc_seconds_below", "ttc_min", "delay_mean_by_class",
-                                       "health", "wall_s")}
+        rows.append({k: r.get(k) for k in (
+            "seed", "adt", "collision_events", "generated", "arrived", "drained", "sumo_errors", "teleports",
+            "collisions", "collision_pairs", "emergency_stops", "emergency_braking_warnings", "breakdowns",
+            "vehicle_seconds", "closing_seconds", "ttc_seconds_below", "ttc_min", "delay_mean_by_class", "health",
+            "wall_s")}
                     | {"encounters": {f"{u:g}": int(len(mins[u][-1])) for u in THRESHOLDS}})
     n = len(rows)
     bks = [b for r in rows for b in r["breakdowns"] if b["drop"] is not None and b["min"] >= 15]
@@ -84,6 +132,7 @@ def main(argv=None) -> int:
                      if bks else None, "duration_min_median": med([b["min"] for b in bks])},
         "tail": {f"{u:g}": tail(np.concatenate(mins[u]), u, n) for u in THRESHOLDS},
         "target_crashes_per_day": TARGET,
+        "diagnostics": diagnostics(d, rows),
     }
     Path(a.out).write_text(json.dumps({"summary": summ, "days": rows}, indent=1))
     print(json.dumps(summ, indent=1))
