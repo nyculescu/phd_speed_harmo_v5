@@ -1,0 +1,1490 @@
+{
+ "note": "Plant v188 (V188): step 2 mixed-fleet ramp (code aef680b) and step 4 crash-free reference days, ADT 45,000 (code aef680b), seeds 7,430,040-049; crash scale on those days.",
+ "mix_ramp": [
+  {
+   "seed": 7430040,
+   "breakdown_s": 1800.0,
+   "pre": 3240.0,
+   "qdf": 2868.5714285714284,
+   "drop": 0.11463844797178135,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430041,
+   "breakdown_s": 1860.0,
+   "pre": 3384.0,
+   "qdf": 3195.7894736842104,
+   "drop": 0.05561776782381489,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430042,
+   "breakdown_s": 1620.0,
+   "pre": 3108.0,
+   "qdf": 3106.6666666666665,
+   "drop": 0.0004290004290005145,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430043,
+   "breakdown_s": 1770.0,
+   "pre": 3084.0,
+   "qdf": 2880.0,
+   "drop": 0.06614785992217898,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430044,
+   "breakdown_s": 1680.0,
+   "pre": 3144.0,
+   "qdf": 2942.4,
+   "drop": 0.06412213740458017,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430045,
+   "breakdown_s": 1740.0,
+   "pre": 3168.0,
+   "qdf": 2817.391304347826,
+   "drop": 0.11067193675889331,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430046,
+   "breakdown_s": 1680.0,
+   "pre": 3456.0,
+   "qdf": 3288.0,
+   "drop": 0.04861111111111116,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430047,
+   "breakdown_s": 1470.0,
+   "pre": 3024.0,
+   "qdf": 3003.75,
+   "drop": 0.006696428571428603,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430048,
+   "breakdown_s": 1800.0,
+   "pre": 3456.0,
+   "qdf": 3017.1428571428573,
+   "drop": 0.12698412698412698,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  },
+  {
+   "seed": 7430049,
+   "breakdown_s": 1530.0,
+   "pre": 3312.0,
+   "qdf": 2852.0,
+   "drop": 0.13888888888888884,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0
+  }
+ ],
+ "days": {
+  "summary": {
+   "days": 10,
+   "seeds": [
+    7430040,
+    7430041,
+    7430042,
+    7430043,
+    7430044,
+    7430045,
+    7430046,
+    7430047,
+    7430048,
+    7430049
+   ],
+   "layer_a": {
+    "collisions": 0,
+    "teleports": 0,
+    "emergency_stops": 0,
+    "emergency_braking_per_day": 0.0,
+    "all_drained": true,
+    "sumo_errors": 0
+   },
+   "capacity": {
+    "breakdowns_per_day": 12.0,
+    "n_used": 42,
+    "pre_median": 3480.0,
+    "qdf_median": 3044.87,
+    "drop_median": 0.132,
+    "drop_range": [
+     0.05,
+     0.198
+    ],
+    "duration_min_median": 25.0
+   },
+   "tail": {
+    "1": {
+     "n": 0,
+     "fit": null
+    },
+    "1.5": {
+     "n": 17573,
+     "per_day": 1757.3,
+     "shape": -0.7706,
+     "scale": 0.366,
+     "endpoint_ttc": 1.025,
+     "p_crash_per_encounter": 0.0,
+     "evt_crashes_per_day": 0.0,
+     "ks_p": 0.0,
+     "min_ttc_seen": 1.025
+    },
+    "3": {
+     "n": 174106,
+     "per_day": 17410.6,
+     "shape": -0.6188,
+     "scale": 1.2228,
+     "endpoint_ttc": 1.024,
+     "p_crash_per_encounter": 0.0,
+     "evt_crashes_per_day": 0.0,
+     "ks_p": 0.0,
+     "min_ttc_seen": 1.025
+    }
+   },
+   "target_crashes_per_day": 0.288,
+   "diagnostics": {
+    "emergency_braking": 0,
+    "per_1000_vehicles_by_class": {
+     "hdv_car": 0.0,
+     "truck": 0.0,
+     "acc": 0.0,
+     "cacc": 0.0,
+     "alks": 0.0
+    },
+    "by_place": {},
+    "by_hour": {},
+    "hdv_car_tau_quartiles_braking_vs_all": [
+     null,
+     [
+      0.2,
+      0.9,
+      1.21,
+      1.52,
+      2.0
+     ]
+    ],
+    "hdv_car_asl_mean_braking_vs_all": [
+     null,
+     0.377
+    ],
+    "collisions": []
+   }
+  },
+  "days": [
+   {
+    "seed": 7430040,
+    "generated": 45047,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 28410.0,
+      "t_recover": 28530.0,
+      "min": 2.0,
+      "pre": 3528.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 29010.0,
+      "t_recover": 30270.0,
+      "min": 21.0,
+      "pre": 3528.0,
+      "qdf": 2974.5454545454545,
+      "drop": 0.1568748711605854
+     },
+     {
+      "t_break": 58170.0,
+      "t_recover": 61020.0,
+      "min": 47.5,
+      "pre": 3456.0,
+      "qdf": 3075.3488372093025,
+      "drop": 0.11014211886304903
+     },
+     {
+      "t_break": 61200.0,
+      "t_recover": 62520.0,
+      "min": 22.0,
+      "pre": 3528.0,
+      "qdf": 3030.8571428571427,
+      "drop": 0.14091350826044713
+     },
+     {
+      "t_break": 62910.0,
+      "t_recover": 63330.0,
+      "min": 7.0,
+      "pre": 3528.0,
+      "qdf": 3312.0,
+      "drop": 0.061224489795918324
+     },
+     {
+      "t_break": 63840.0,
+      "t_recover": 64380.0,
+      "min": 9.0,
+      "pre": 3528.0,
+      "qdf": 3106.6666666666665,
+      "drop": 0.11942554799697658
+     },
+     {
+      "t_break": 64710.0,
+      "t_recover": 64860.0,
+      "min": 2.5,
+      "pre": 3708.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 64980.0,
+      "t_recover": 65130.0,
+      "min": 2.5,
+      "pre": 3720.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 65310.0,
+      "t_recover": 65790.0,
+      "min": 8.0,
+      "pre": 3720.0,
+      "qdf": 3188.5714285714284,
+      "drop": 0.1428571428571429
+     },
+     {
+      "t_break": 65970.0,
+      "t_recover": 66180.0,
+      "min": 3.5,
+      "pre": 3720.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 66780.0,
+      "t_recover": 68700.0,
+      "min": 32.0,
+      "pre": 3720.0,
+      "qdf": 2982.5454545454545,
+      "drop": 0.19824046920821115
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1549,
+     "3": 15715
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 153.5,
+     "truck": 135.8,
+     "acc": 168.5,
+     "cacc": 163.2,
+     "alks": 183.8
+    },
+    "wall_s": 2288.8
+   },
+   {
+    "seed": 7430041,
+    "generated": 45080,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 27870.0,
+      "t_recover": 28050.0,
+      "min": 3.0,
+      "pre": 3540.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 28500.0,
+      "t_recover": 28710.0,
+      "min": 3.5,
+      "pre": 3540.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 28890.0,
+      "t_recover": 29340.0,
+      "min": 7.5,
+      "pre": 3540.0,
+      "qdf": 3520.0,
+      "drop": 0.005649717514124242
+     },
+     {
+      "t_break": 29640.0,
+      "t_recover": 30840.0,
+      "min": 20.0,
+      "pre": 3540.0,
+      "qdf": 3011.6129032258063,
+      "drop": 0.14926189174412252
+     },
+     {
+      "t_break": 58260.0,
+      "t_recover": 58470.0,
+      "min": 3.5,
+      "pre": 3384.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 59040.0,
+      "t_recover": 59430.0,
+      "min": 6.5,
+      "pre": 3384.0,
+      "qdf": 3240.0,
+      "drop": 0.04255319148936165
+     },
+     {
+      "t_break": 59640.0,
+      "t_recover": 61350.0,
+      "min": 28.5,
+      "pre": 3384.0,
+      "qdf": 2957.5,
+      "drop": 0.1260342789598109
+     },
+     {
+      "t_break": 61620.0,
+      "t_recover": 62160.0,
+      "min": 9.0,
+      "pre": 3456.0,
+      "qdf": 2826.6666666666665,
+      "drop": 0.1820987654320988
+     },
+     {
+      "t_break": 62340.0,
+      "t_recover": 63900.0,
+      "min": 26.0,
+      "pre": 3456.0,
+      "qdf": 3131.1627906976746,
+      "drop": 0.09399224806201545
+     },
+     {
+      "t_break": 64080.0,
+      "t_recover": 64710.0,
+      "min": 10.5,
+      "pre": 3696.0,
+      "qdf": 3380.0,
+      "drop": 0.08549783549783552
+     },
+     {
+      "t_break": 64920.0,
+      "t_recover": 65160.0,
+      "min": 4.0,
+      "pre": 3696.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 65910.0,
+      "t_recover": 66180.0,
+      "min": 4.5,
+      "pre": 3696.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 66390.0,
+      "t_recover": 66990.0,
+      "min": 10.0,
+      "pre": 3696.0,
+      "qdf": 3163.6363636363635,
+      "drop": 0.1440377804014168
+     },
+     {
+      "t_break": 67140.0,
+      "t_recover": 68520.0,
+      "min": 23.0,
+      "pre": 3696.0,
+      "qdf": 3107.027027027027,
+      "drop": 0.1593541593541593
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1822,
+     "3": 16509
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 130.9,
+     "truck": 105.7,
+     "acc": 140.8,
+     "cacc": 147.9,
+     "alks": 158.8
+    },
+    "wall_s": 2340.3
+   },
+   {
+    "seed": 7430042,
+    "generated": 44759,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 58740.0,
+      "t_recover": 60240.0,
+      "min": 25.0,
+      "pre": 3384.0,
+      "qdf": 3199.0243902439024,
+      "drop": 0.054661823213976835
+     },
+     {
+      "t_break": 60360.0,
+      "t_recover": 66420.0,
+      "min": 101.0,
+      "pre": 3624.0,
+      "qdf": 3049.740932642487,
+      "drop": 0.1584600075489826
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1302,
+     "3": 12187
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 83.0,
+     "truck": 63.7,
+     "acc": 91.3,
+     "cacc": 88.2,
+     "alks": 101.1
+    },
+    "wall_s": 2136.8
+   },
+   {
+    "seed": 7430043,
+    "generated": 45241,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 27210.0,
+      "t_recover": 27330.0,
+      "min": 2.0,
+      "pre": 3216.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 27570.0,
+      "t_recover": 31380.0,
+      "min": 63.5,
+      "pre": 3216.0,
+      "qdf": 3053.898305084746,
+      "drop": 0.050404755881608865
+     },
+     {
+      "t_break": 55830.0,
+      "t_recover": 59160.0,
+      "min": 55.5,
+      "pre": 3408.0,
+      "qdf": 3023.529411764706,
+      "drop": 0.11281413974040322
+     },
+     {
+      "t_break": 59280.0,
+      "t_recover": 60240.0,
+      "min": 16.0,
+      "pre": 3516.0,
+      "qdf": 3052.1739130434785,
+      "drop": 0.1319186822970767
+     },
+     {
+      "t_break": 60510.0,
+      "t_recover": 61050.0,
+      "min": 9.0,
+      "pre": 3360.0,
+      "qdf": 3000.0,
+      "drop": 0.1071428571428571
+     },
+     {
+      "t_break": 61470.0,
+      "t_recover": 61680.0,
+      "min": 3.5,
+      "pre": 3360.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 61830.0,
+      "t_recover": 63480.0,
+      "min": 27.5,
+      "pre": 3360.0,
+      "qdf": 3026.086956521739,
+      "drop": 0.09937888198757772
+     },
+     {
+      "t_break": 63630.0,
+      "t_recover": 63870.0,
+      "min": 4.0,
+      "pre": 3396.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 64050.0,
+      "t_recover": 65910.0,
+      "min": 31.0,
+      "pre": 3396.0,
+      "qdf": 3002.264150943396,
+      "drop": 0.11594106273751592
+     },
+     {
+      "t_break": 66030.0,
+      "t_recover": 66540.0,
+      "min": 8.5,
+      "pre": 3396.0,
+      "qdf": 3225.0,
+      "drop": 0.05035335689045939
+     },
+     {
+      "t_break": 66780.0,
+      "t_recover": 66930.0,
+      "min": 2.5,
+      "pre": 3396.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 67080.0,
+      "t_recover": 67320.0,
+      "min": 4.0,
+      "pre": 3324.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 67470.0,
+      "t_recover": 67800.0,
+      "min": 5.5,
+      "pre": 3324.0,
+      "qdf": 2640.0,
+      "drop": 0.2057761732851986
+     },
+     {
+      "t_break": 67950.0,
+      "t_recover": 68160.0,
+      "min": 3.5,
+      "pre": 3324.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 68280.0,
+      "t_recover": 69180.0,
+      "min": 15.0,
+      "pre": 3324.0,
+      "qdf": 3120.0,
+      "drop": 0.06137184115523464
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 2156,
+     "3": 21321
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 194.4,
+     "truck": 187.3,
+     "acc": 207.6,
+     "cacc": 202.3,
+     "alks": 230.4
+    },
+    "wall_s": 2356.1
+   },
+   {
+    "seed": 7430044,
+    "generated": 45290,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 28260.0,
+      "t_recover": 28950.0,
+      "min": 11.5,
+      "pre": 3324.0,
+      "qdf": 3205.714285714286,
+      "drop": 0.03558535327488399
+     },
+     {
+      "t_break": 29070.0,
+      "t_recover": 30450.0,
+      "min": 23.0,
+      "pre": 3468.0,
+      "qdf": 2928.6486486486488,
+      "drop": 0.1555223043112316
+     },
+     {
+      "t_break": 30570.0,
+      "t_recover": 30780.0,
+      "min": 3.5,
+      "pre": 3468.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 31020.0,
+      "t_recover": 32910.0,
+      "min": 31.5,
+      "pre": 3468.0,
+      "qdf": 3013.3333333333335,
+      "drop": 0.1311034217608612
+     },
+     {
+      "t_break": 58200.0,
+      "t_recover": 58740.0,
+      "min": 9.0,
+      "pre": 3432.0,
+      "qdf": 2933.3333333333335,
+      "drop": 0.14529914529914523
+     },
+     {
+      "t_break": 58920.0,
+      "t_recover": 60690.0,
+      "min": 29.5,
+      "pre": 3432.0,
+      "qdf": 2916.0,
+      "drop": 0.1503496503496503
+     },
+     {
+      "t_break": 60840.0,
+      "t_recover": 61110.0,
+      "min": 4.5,
+      "pre": 3312.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 61620.0,
+      "t_recover": 61860.0,
+      "min": 4.0,
+      "pre": 3312.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 62040.0,
+      "t_recover": 62250.0,
+      "min": 3.5,
+      "pre": 3300.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 62580.0,
+      "t_recover": 64350.0,
+      "min": 29.5,
+      "pre": 3336.0,
+      "qdf": 3160.8,
+      "drop": 0.052517985611510776
+     },
+     {
+      "t_break": 64860.0,
+      "t_recover": 65670.0,
+      "min": 13.5,
+      "pre": 3552.0,
+      "qdf": 3200.0,
+      "drop": 0.09909909909909909
+     },
+     {
+      "t_break": 65790.0,
+      "t_recover": 66120.0,
+      "min": 5.5,
+      "pre": 3552.0,
+      "qdf": 2820.0,
+      "drop": 0.20608108108108103
+     },
+     {
+      "t_break": 66630.0,
+      "t_recover": 67920.0,
+      "min": 21.5,
+      "pre": 3552.0,
+      "qdf": 3275.294117647059,
+      "drop": 0.07790143084260726
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1936,
+     "3": 18723
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 159.4,
+     "truck": 142.8,
+     "acc": 166.1,
+     "cacc": 166.7,
+     "alks": 186.5
+    },
+    "wall_s": 2370.2
+   },
+   {
+    "seed": 7430045,
+    "generated": 45006,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 57090.0,
+      "t_recover": 59910.0,
+      "min": 47.0,
+      "pre": 3420.0,
+      "qdf": 3182.1176470588234,
+      "drop": 0.06955624355005163
+     },
+     {
+      "t_break": 60060.0,
+      "t_recover": 60270.0,
+      "min": 3.5,
+      "pre": 3768.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 60630.0,
+      "t_recover": 61350.0,
+      "min": 12.0,
+      "pre": 3768.0,
+      "qdf": 2880.0,
+      "drop": 0.23566878980891715
+     },
+     {
+      "t_break": 61500.0,
+      "t_recover": 61710.0,
+      "min": 3.5,
+      "pre": 3768.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 61890.0,
+      "t_recover": 62130.0,
+      "min": 4.0,
+      "pre": 3768.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 62340.0,
+      "t_recover": 62550.0,
+      "min": 3.5,
+      "pre": 3768.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 62700.0,
+      "t_recover": 64350.0,
+      "min": 27.5,
+      "pre": 3768.0,
+      "qdf": 3033.913043478261,
+      "drop": 0.19482137911935749
+     },
+     {
+      "t_break": 64530.0,
+      "t_recover": 64800.0,
+      "min": 4.5,
+      "pre": 3576.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 64950.0,
+      "t_recover": 66330.0,
+      "min": 23.0,
+      "pre": 3576.0,
+      "qdf": 2928.6486486486488,
+      "drop": 0.18102666424814073
+     },
+     {
+      "t_break": 66690.0,
+      "t_recover": 67560.0,
+      "min": 14.5,
+      "pre": 3348.0,
+      "qdf": 3120.0,
+      "drop": 0.06810035842293904
+     },
+     {
+      "t_break": 67710.0,
+      "t_recover": 68730.0,
+      "min": 17.0,
+      "pre": 3384.0,
+      "qdf": 3158.4,
+      "drop": 0.06666666666666665
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1841,
+     "3": 17664
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 140.9,
+     "truck": 132.0,
+     "acc": 149.2,
+     "cacc": 149.5,
+     "alks": 167.2
+    },
+    "wall_s": 2360.6
+   },
+   {
+    "seed": 7430046,
+    "generated": 45021,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 26280.0,
+      "t_recover": 26700.0,
+      "min": 7.0,
+      "pre": 2856.0,
+      "qdf": 3048.0,
+      "drop": -0.0672268907563025
+     },
+     {
+      "t_break": 27180.0,
+      "t_recover": 27540.0,
+      "min": 6.0,
+      "pre": 3156.0,
+      "qdf": 3080.0,
+      "drop": 0.02408111533586821
+     },
+     {
+      "t_break": 29100.0,
+      "t_recover": 29640.0,
+      "min": 9.0,
+      "pre": 3252.0,
+      "qdf": 3146.6666666666665,
+      "drop": 0.03239032390323904
+     },
+     {
+      "t_break": 29760.0,
+      "t_recover": 30210.0,
+      "min": 7.5,
+      "pre": 3252.0,
+      "qdf": 3400.0,
+      "drop": -0.045510455104551095
+     },
+     {
+      "t_break": 59190.0,
+      "t_recover": 62640.0,
+      "min": 57.5,
+      "pre": 3576.0,
+      "qdf": 3122.264150943396,
+      "drop": 0.12688362669368114
+     },
+     {
+      "t_break": 62790.0,
+      "t_recover": 63030.0,
+      "min": 4.0,
+      "pre": 3540.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 63180.0,
+      "t_recover": 63750.0,
+      "min": 9.5,
+      "pre": 3540.0,
+      "qdf": 3012.0,
+      "drop": 0.14915254237288134
+     },
+     {
+      "t_break": 63990.0,
+      "t_recover": 64230.0,
+      "min": 4.0,
+      "pre": 3492.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 64380.0,
+      "t_recover": 65490.0,
+      "min": 18.5,
+      "pre": 3408.0,
+      "qdf": 2952.8571428571427,
+      "drop": 0.13355130784708258
+     },
+     {
+      "t_break": 65730.0,
+      "t_recover": 67080.0,
+      "min": 22.5,
+      "pre": 3732.0,
+      "qdf": 3053.3333333333335,
+      "drop": 0.18185066095033942
+     },
+     {
+      "t_break": 67200.0,
+      "t_recover": 68610.0,
+      "min": 23.5,
+      "pre": 3732.0,
+      "qdf": 3069.4736842105262,
+      "drop": 0.17752580808935525
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1548,
+     "3": 15727
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 118.1,
+     "truck": 119.2,
+     "acc": 132.5,
+     "cacc": 127.4,
+     "alks": 151.1
+    },
+    "wall_s": 2224.1
+   },
+   {
+    "seed": 7430047,
+    "generated": 44770,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 27660.0,
+      "t_recover": 32130.0,
+      "min": 74.5,
+      "pre": 3480.0,
+      "qdf": 2993.1428571428573,
+      "drop": 0.13990147783251228
+     },
+     {
+      "t_break": 32400.0,
+      "t_recover": 32580.0,
+      "min": 3.0,
+      "pre": 3528.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 32790.0,
+      "t_recover": 32970.0,
+      "min": 3.0,
+      "pre": 3528.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 55770.0,
+      "t_recover": 56640.0,
+      "min": 14.5,
+      "pre": 3240.0,
+      "qdf": 3228.0,
+      "drop": 0.0037037037037036535
+     },
+     {
+      "t_break": 57420.0,
+      "t_recover": 57600.0,
+      "min": 3.0,
+      "pre": 3336.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 58440.0,
+      "t_recover": 60840.0,
+      "min": 40.0,
+      "pre": 3576.0,
+      "qdf": 3103.0985915492956,
+      "drop": 0.13224312316854148
+     },
+     {
+      "t_break": 60960.0,
+      "t_recover": 62970.0,
+      "min": 33.5,
+      "pre": 3600.0,
+      "qdf": 2987.5862068965516,
+      "drop": 0.1701149425287357
+     },
+     {
+      "t_break": 63360.0,
+      "t_recover": 63660.0,
+      "min": 5.0,
+      "pre": 3456.0,
+      "qdf": 2640.0,
+      "drop": 0.23611111111111116
+     },
+     {
+      "t_break": 63810.0,
+      "t_recover": 64800.0,
+      "min": 16.5,
+      "pre": 3456.0,
+      "qdf": 3170.0,
+      "drop": 0.08275462962962965
+     },
+     {
+      "t_break": 64980.0,
+      "t_recover": 65850.0,
+      "min": 14.5,
+      "pre": 3468.0,
+      "qdf": 3018.0,
+      "drop": 0.12975778546712802
+     },
+     {
+      "t_break": 66120.0,
+      "t_recover": 66900.0,
+      "min": 13.0,
+      "pre": 3468.0,
+      "qdf": 3324.705882352941,
+      "drop": 0.04131894972521888
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1950,
+     "3": 19521
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 129.3,
+     "truck": 111.1,
+     "acc": 140.5,
+     "cacc": 144.1,
+     "alks": 159.0
+    },
+    "wall_s": 2403.0
+   },
+   {
+    "seed": 7430048,
+    "generated": 45604,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 27480.0,
+      "t_recover": 28170.0,
+      "min": 11.5,
+      "pre": 3372.0,
+      "qdf": 3342.8571428571427,
+      "drop": 0.008642602948652822
+     },
+     {
+      "t_break": 28980.0,
+      "t_recover": 29550.0,
+      "min": 9.5,
+      "pre": 3432.0,
+      "qdf": 3132.0,
+      "drop": 0.0874125874125874
+     },
+     {
+      "t_break": 30360.0,
+      "t_recover": 32730.0,
+      "min": 39.5,
+      "pre": 3552.0,
+      "qdf": 3034.285714285714,
+      "drop": 0.14575289575289574
+     },
+     {
+      "t_break": 56550.0,
+      "t_recover": 59070.0,
+      "min": 42.0,
+      "pre": 3396.0,
+      "qdf": 2908.8,
+      "drop": 0.14346289752650176
+     },
+     {
+      "t_break": 59310.0,
+      "t_recover": 60150.0,
+      "min": 14.0,
+      "pre": 3204.0,
+      "qdf": 3025.2631578947367,
+      "drop": 0.05578553124384
+     },
+     {
+      "t_break": 60270.0,
+      "t_recover": 60630.0,
+      "min": 6.0,
+      "pre": 3264.0,
+      "qdf": 2640.0,
+      "drop": 0.19117647058823528
+     },
+     {
+      "t_break": 60780.0,
+      "t_recover": 61440.0,
+      "min": 11.0,
+      "pre": 3264.0,
+      "qdf": 3433.846153846154,
+      "drop": -0.05203619909502266
+     },
+     {
+      "t_break": 62130.0,
+      "t_recover": 62700.0,
+      "min": 9.5,
+      "pre": 3528.0,
+      "qdf": 3000.0,
+      "drop": 0.1496598639455783
+     },
+     {
+      "t_break": 62940.0,
+      "t_recover": 63210.0,
+      "min": 4.5,
+      "pre": 3528.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 63540.0,
+      "t_recover": 64140.0,
+      "min": 10.0,
+      "pre": 3528.0,
+      "qdf": 2956.3636363636365,
+      "drop": 0.1620284477427334
+     },
+     {
+      "t_break": 64440.0,
+      "t_recover": 65520.0,
+      "min": 18.0,
+      "pre": 3528.0,
+      "qdf": 3040.0,
+      "drop": 0.13832199546485258
+     },
+     {
+      "t_break": 65640.0,
+      "t_recover": 65880.0,
+      "min": 4.0,
+      "pre": 3336.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 66210.0,
+      "t_recover": 66810.0,
+      "min": 10.0,
+      "pre": 3336.0,
+      "qdf": 3174.5454545454545,
+      "drop": 0.04839764551994774
+     },
+     {
+      "t_break": 66990.0,
+      "t_recover": 68070.0,
+      "min": 18.0,
+      "pre": 3336.0,
+      "qdf": 2933.3333333333335,
+      "drop": 0.12070343725019983
+     },
+     {
+      "t_break": 68250.0,
+      "t_recover": 68910.0,
+      "min": 11.0,
+      "pre": 3528.0,
+      "qdf": 3092.3076923076924,
+      "drop": 0.1234955520669806
+     },
+     {
+      "t_break": 69090.0,
+      "t_recover": 69720.0,
+      "min": 10.5,
+      "pre": 3528.0,
+      "qdf": 2960.0,
+      "drop": 0.16099773242630389
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 2058,
+     "3": 21772
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 217.2,
+     "truck": 207.4,
+     "acc": 232.9,
+     "cacc": 241.7,
+     "alks": 248.2
+    },
+    "wall_s": 2457.1
+   },
+   {
+    "seed": 7430049,
+    "generated": 44947,
+    "collisions": 0,
+    "teleports": 0,
+    "drained": true,
+    "breakdowns": [
+     {
+      "t_break": 57720.0,
+      "t_recover": 57990.0,
+      "min": 4.5,
+      "pre": 3504.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 58110.0,
+      "t_recover": 59010.0,
+      "min": 15.0,
+      "pre": 3504.0,
+      "qdf": 3228.5714285714284,
+      "drop": 0.07860404435746904
+     },
+     {
+      "t_break": 59130.0,
+      "t_recover": 59430.0,
+      "min": 5.0,
+      "pre": 3504.0,
+      "qdf": 3360.0,
+      "drop": 0.04109589041095896
+     },
+     {
+      "t_break": 59760.0,
+      "t_recover": 60300.0,
+      "min": 9.0,
+      "pre": 3504.0,
+      "qdf": 3173.3333333333335,
+      "drop": 0.0943683409436834
+     },
+     {
+      "t_break": 60480.0,
+      "t_recover": 61560.0,
+      "min": 18.0,
+      "pre": 3504.0,
+      "qdf": 2986.6666666666665,
+      "drop": 0.14764079147640796
+     },
+     {
+      "t_break": 61710.0,
+      "t_recover": 62730.0,
+      "min": 17.0,
+      "pre": 3468.0,
+      "qdf": 3081.6,
+      "drop": 0.11141868512110731
+     },
+     {
+      "t_break": 62850.0,
+      "t_recover": 63180.0,
+      "min": 5.5,
+      "pre": 3456.0,
+      "qdf": 2160.0,
+      "drop": 0.375
+     },
+     {
+      "t_break": 63480.0,
+      "t_recover": 64650.0,
+      "min": 19.5,
+      "pre": 3600.0,
+      "qdf": 3144.0,
+      "drop": 0.1266666666666667
+     },
+     {
+      "t_break": 64800.0,
+      "t_recover": 65040.0,
+      "min": 4.0,
+      "pre": 3600.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 65550.0,
+      "t_recover": 65820.0,
+      "min": 4.5,
+      "pre": 3600.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 65970.0,
+      "t_recover": 66300.0,
+      "min": 5.5,
+      "pre": 3600.0,
+      "qdf": 2820.0,
+      "drop": 0.21666666666666667
+     },
+     {
+      "t_break": 66690.0,
+      "t_recover": 66840.0,
+      "min": 2.5,
+      "pre": 3564.0,
+      "qdf": null,
+      "drop": null
+     },
+     {
+      "t_break": 67350.0,
+      "t_recover": 68850.0,
+      "min": 25.0,
+      "pre": 3480.0,
+      "qdf": 3263.4146341463415,
+      "drop": 0.06223717409587892
+     }
+    ],
+    "encounters": {
+     "1": 0,
+     "1.5": 1411,
+     "3": 14967
+    },
+    "delay_mean_by_class": {
+     "hdv_car": 159.3,
+     "truck": 140.5,
+     "acc": 185.5,
+     "cacc": 175.0,
+     "alks": 184.6
+    },
+    "wall_s": 2408.3
+   }
+  ]
+ },
+ "crash_scale": {
+  "human_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1.5_linear": {
+   "k": 0.0013276439145684768,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 1451.9,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1967,
+    0.2881
+   ],
+   "expected_crashes_per_day": 0.2885586662395657,
+   "p_max": 0.000409618943516132
+  },
+  "human_u1.5_constant": {
+   "k": 0.000198780878166549,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 1451.9,
+   "p_day_mean": 0.24999999999994976,
+   "p_day_range": [
+    0.1923,
+    0.2958
+   ],
+   "expected_crashes_per_day": 0.2886099570100125,
+   "p_max": 0.000198780878166549
+  },
+  "human_u3_linear": {
+   "k": 0.00010924057639354003,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 9660.4,
+   "p_day_mean": 0.24999999999999994,
+   "p_day_range": [
+    0.1855,
+    0.3013
+   ],
+   "expected_crashes_per_day": 0.28878769137796567,
+   "p_max": 7.147232547890499e-05
+  },
+  "human_u3_constant": {
+   "k": 2.989628595700955e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 9660.4,
+   "p_day_mean": 0.2500000000007145,
+   "p_day_range": [
+    0.1831,
+    0.3054
+   ],
+   "expected_crashes_per_day": 0.28881008085909504,
+   "p_max": 2.989628595700955e-05
+  },
+  "all_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1.5_linear": {
+   "k": 0.0011305300607400899,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 1757.3,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1961,
+    0.2917
+   ],
+   "expected_crashes_per_day": 0.2886508273069869,
+   "p_max": 0.0003579233968386406
+  },
+  "all_u1.5_constant": {
+   "k": 0.0001642666946048421,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 1757.3,
+   "p_day_mean": 0.25000000000007994,
+   "p_day_range": [
+    0.1926,
+    0.2983
+   ],
+   "expected_crashes_per_day": 0.2886658624290891,
+   "p_max": 0.0001642666946048421
+  },
+  "all_u3_linear": {
+   "k": 6.685158313171234e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 17410.6,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1854,
+    0.3005
+   ],
+   "expected_crashes_per_day": 0.28878862264911,
+   "p_max": 4.400832561315041e-05
+  },
+  "all_u3_constant": {
+   "k": 1.658676848009799e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 17410.6,
+   "p_day_mean": 0.2499999999994691,
+   "p_day_range": [
+    0.183,
+    0.3031
+   ],
+   "expected_crashes_per_day": 0.28878559129959414,
+   "p_max": 1.658676848009799e-05
+  }
+ }
+}

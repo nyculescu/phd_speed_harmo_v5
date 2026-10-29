@@ -67,6 +67,8 @@ def p_day(mins: np.ndarray, k: float, u: float, shape: str) -> float:
 
 
 def calibrate(days: list, u: float, shape: str, target: float = TARGET) -> dict:
+    if not any(len(m) for m in days):
+        return {"k": None, "u": u, "shape": shape, "encounters_per_day": 0.0, "p_day_mean": 0.0}
     lo, hi = 0.0, 1.0
     while np.mean([p_day(m, hi, u, shape) for m in days]) < target and hi < 1e6:
         hi *= 2
@@ -81,8 +83,8 @@ def calibrate(days: list, u: float, shape: str, target: float = TARGET) -> dict:
     lam = [float(p_crash(m, k, u, shape).sum()) for m in days]
     return {"k": k, "u": u, "shape": shape, "encounters_per_day": float(np.mean([len(m) for m in days])),
             "p_day_mean": float(np.mean(pd)), "p_day_range": [round(min(pd), 4), round(max(pd), 4)],
-            "expected_crashes_per_day": float(np.mean(lam)), "p_max": float(max(p_crash(m, k, u, shape).max()
-                                                                                for m in days if len(m)))}
+            "expected_crashes_per_day": float(np.mean(lam)),
+            "p_max": max((float(p_crash(m, k, u, shape).max()) for m in days if len(m)), default=None)}
 
 
 def main(argv=None) -> int:
