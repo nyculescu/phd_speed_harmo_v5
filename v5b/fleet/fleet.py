@@ -66,6 +66,7 @@ CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 # calibration knobs (V177): HDV-car tau scale (shape kept) and accel; None = SUMO default
 HDV_TAU_SCALE = 1.0
 HDV_ACCEL: float | None = None
+HDV_ASL_SCALE = 1.0
 
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
@@ -167,7 +168,7 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
         if cls == "hdv_car":
             while True:                       # tau >= actionStepLength per vehicle (note §4)
                 tau = HDV_TAU_SCALE * (TAU_RANGE[0] + (TAU_RANGE[1] - TAU_RANGE[0]) * float(rf.beta(*TAU_AB)))
-                asl = round(_quantile(rf, ASL_Q) * 10) / 10
+                asl = max(0.1, round(HDV_ASL_SCALE * _quantile(rf, ASL_Q) * 10) / 10)
                 sig = _quantile(rf, SIGMA_Q)
                 if tau >= asl:
                     break

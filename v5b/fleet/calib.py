@@ -35,20 +35,29 @@ DROP_BAND, DROP_SHARE, QDF_BAND, DROP_AIM = (0.02, 0.11), 0.75, cal.T1B, 0.05
 T_CAP = 7200.0
 
 
-# V180 stage 2: lane-end merges (SUMO's zipper caps throughput at about 1,350 veh/h for steps <= 0.25 s)
-STAGE_MERGES = {1: MERGES, 2: ("laneend",)}
-STAGE_DEFAULTS = {1: DEFAULTS, 2: (1.0, "laneend", 2.6)}
+# V180 stage 2: lane-end merges (SUMO's zipper caps throughput at about 1,350 veh/h for steps <= 0.25 s);
+# V182 stage 3: lane-end merges, accel 2.6, plus the HDV-car action-step scale
+STAGE_MERGES = {1: MERGES, 2: ("laneend",), 3: ("laneend",)}
+STAGE_ACCELS = {1: ACCELS, 2: ACCELS, 3: (2.6,)}
+STAGE_ASL = {1: (1.0,), 2: (1.0,), 3: (0.25, 0.5, 0.75, 1.0)}
+STAGE_DEFAULTS = {1: DEFAULTS + (1.0,), 2: (1.0, "laneend", 2.6, 1.0), 3: (1.0, "laneend", 2.6, 1.0)}
 
 
 def grid(stage: int = 1) -> list:
-    return [(c, m, a) for c in TAU_SCALES for m in STAGE_MERGES[stage] for a in ACCELS]
+    return [(c, m, a, s) for c in TAU_SCALES for m in STAGE_MERGES[stage] for a in STAGE_ACCELS[stage]
+            for s in STAGE_ASL[stage]]
+
+
+def _name(c, m, a, s) -> str:
+    return f"c{c:g}_{m}_a{a:g}" + ("" if s == 1.0 else f"_s{s:g}")
 
 
 def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES,
-             geom: str = "bn4x", step: float = CFG.step, ballistic: bool = False) -> dict:
+             geom: str = "bn4x", step: float = CFG.step, ballistic: bool = False, asl_scale: float = 1.0) -> dict:
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     fl.SHARES, fl.HDV_TAU_SCALE, fl.HDV_ACCEL = shares, c, None if accel == 2.6 else accel
+    fl.HDV_ASL_SCALE = asl_scale
     cfg = dataclasses.replace(CFG, geom=geom, merge=merge, step=step)
     d = fl.build_net(cfg)
     dem = fl.FleetDemand(seed, cal.profile("bn4"), cfg)
@@ -75,7 +84,7 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     with mock.patch.object(cal, "FREE", fl.LIMIT):
         m = cal.measure({"series": ser})
     hdv = [v for v in dem.veh if v.cls == "hdv_car"]
-    out = {"seed": seed, "c": c, "merge": merge, "accel": accel, **m, "drained": drained,
+    out = {"seed": seed, "c": c, "merge": merge, "accel": accel, "asl_scale": asl_scale, **m, "drained": drained,
            "collisions": res["collisions"], "teleports": res["teleports"],
            "emergency_braking": log.count("performs emergency braking"), "sumo_errors": log.count("Error"),
            "tau_mean": round(float(np.mean([v.tau for v in hdv])), 3),
@@ -135,17 +144,17 @@ def verify_one(seed: int, name: str, run_dir: Path) -> dict:
 def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
-    jobs = [(s, c, m, a) for (c, m, a) in grid(stage) for s in seeds
-            if not (out / "runs" / f"c{c:g}_{m}_a{a:g}_s{s}.json").exists()]
+    jobs = [(sd, c, m, a, s) for (c, m, a, s) in grid(stage) for sd in seeds
+            if not (out / "runs" / f"{_name(c, m, a, s)}_s{sd}.json").exists()]
     print(f"{len(jobs)} runs, cpu {cal._cpu_util():.0f} %", flush=True)
 
     def one(j):
-        s, c, m, a = j
+        sd, c, m, a, s = j
         while cal._cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
-        r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.calib", "one", "--seed", str(s),
-                            "--c", str(c), "--merge", m, "--accel", str(a),
-                            "--out", str(out / "runs" / f"c{c:g}_{m}_a{a:g}_s{s}.json")],
+        r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.calib", "one", "--seed", str(sd),
+                            "--c", str(c), "--merge", m, "--accel", str(a), "--asl-scale", str(s),
+                            "--out", str(out / "runs" / f"{_name(c, m, a, s)}_s{sd}.json")],
                            cwd=REPO_ROOT, env=env, capture_output=True, text=True)
         return j, r.returncode, r.stderr[-300:] if r.returncode else ""
 
@@ -162,8 +171,8 @@ def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
 def analyse(out: Path, stage: int = 1) -> dict:
     runs = [json.loads(f.read_text()) for f in sorted((out / "runs").glob("*.json"))]
     rows = []
-    for (c, m, a) in grid(stage):
-        rs = [r for r in runs if (r["c"], r["merge"], r["accel"]) == (c, m, a)]
+    for (c, m, a, s) in grid(stage):
+        rs = [r for r in runs if (r["c"], r["merge"], r["accel"], r.get("asl_scale", 1.0)) == (c, m, a, s)]
         if not rs:
             continue
         drops = [r["drop"] for r in rs if r["drop"] is not None]
@@ -174,13 +183,13 @@ def analyse(out: Path, stage: int = 1) -> dict:
         safe = all(r["collisions"] == 0 and r["teleports"] == 0 for r in rs)
         ok = (med_drop is not None and DROP_BAND[0] <= med_drop <= DROP_BAND[1] and in_band >= DROP_SHARE
               and med_qdf is not None and QDF_BAND[0] <= med_qdf <= QDF_BAND[1] and safe)
-        rows.append({"c": c, "merge": m, "accel": a, "n": len(rs), "breakdowns": len(drops),
+        rows.append({"c": c, "merge": m, "accel": a, "asl_scale": s, "n": len(rs), "breakdowns": len(drops),
                      "median_drop": med_drop, "drop_in_band_share": round(in_band, 2), "median_qdf": med_qdf,
                      "median_pre": float(np.median([r["pre"] for r in rs if r["pre"] is not None])) if drops else None,
                      "collisions": sum(r["collisions"] for r in rs), "teleports": sum(r["teleports"] for r in rs),
                      "emergency_braking_median": float(np.median([r["emergency_braking"] for r in rs])),
                      "tau_mean": rs[0]["tau_mean"], "pass": ok,
-                     "non_default": sum(x != y for x, y in zip((c, m, a), STAGE_DEFAULTS[stage]))})
+                     "non_default": sum(x != y for x, y in zip((c, m, a, s), STAGE_DEFAULTS[stage]))})
     passing = [r for r in rows if r["pass"]]
     chosen = min(passing, key=lambda r: (r["non_default"], abs(r["median_drop"] - DROP_AIM), -r["median_qdf"])) \
         if passing else None
@@ -197,6 +206,7 @@ def main(argv=None) -> int:
     o.add_argument("--c", type=float, required=True)
     o.add_argument("--merge", required=True)
     o.add_argument("--accel", type=float, required=True)
+    o.add_argument("--asl-scale", type=float, default=1.0)
     o.add_argument("--out", required=True)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
@@ -222,7 +232,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
-        res = run_once(a.seed, a.c, a.merge, a.accel, out.parent.parent / "rd")
+        res = run_once(a.seed, a.c, a.merge, a.accel, out.parent.parent / "rd", asl_scale=a.asl_scale)
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
