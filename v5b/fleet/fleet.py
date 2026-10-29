@@ -67,6 +67,10 @@ CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 HDV_TAU_SCALE = 1.0
 HDV_ACCEL: float | None = None
 
+# diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
+HDV_ASL_FIXED: float | None = None
+HDV_SIGMA_FIXED: float | None = None
+
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
 
 
@@ -164,6 +168,10 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
                     break
                 v.resampled += 1
             v.tau, v.sigma, v.asl = round(tau, 3), round(sig, 3), asl
+            if HDV_ASL_FIXED is not None:
+                v.asl = HDV_ASL_FIXED
+            if HDV_SIGMA_FIXED is not None:
+                v.sigma = HDV_SIGMA_FIXED
         elif cls == "acc":
             v.tau, v.extra = _discrete(rf, ACC_TAU), dict(ACC_GAINS)
         elif cls == "cacc":

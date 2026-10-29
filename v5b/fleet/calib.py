@@ -80,6 +80,23 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path) -> di
     return out
 
 
+DIAG = {"base": {}, "no_trucks": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0)}, "asl_step": {"asl": 0.1},
+        "sigma_0.5": {"sigma": 0.5}, "all_three": {"shares": (1.0, 0.0, 0.0, 0.0, 0.0), "asl": 0.1, "sigma": 0.5}}
+
+
+def diag_one(seed: int, name: str, run_dir: Path) -> dict:
+    """V178 diagnosis: the default human-only configuration with one sourced ingredient switched off."""
+    d = DIAG[name]
+    fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = d.get("asl"), d.get("sigma")
+    shares = d.get("shares", HUMAN_SHARES)
+    global HUMAN_SHARES
+    keep, HUMAN_SHARES = HUMAN_SHARES, shares
+    try:
+        return {"diag": name, **run_once(seed, *DEFAULTS, run_dir)}
+    finally:
+        HUMAN_SHARES = keep
+
+
 def batch(out: Path, seeds: list, workers: int) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
@@ -151,6 +168,10 @@ def main(argv=None) -> int:
     b.add_argument("--seed0", type=int, required=True)
     b.add_argument("--n", type=int, default=10)
     b.add_argument("--workers", type=int, default=30)
+    g = sub.add_parser("diag")
+    g.add_argument("--seed", type=int, required=True)
+    g.add_argument("--name", required=True)
+    g.add_argument("--out", required=True)
     n = sub.add_parser("analyse")
     n.add_argument("--out", required=True)
     a = ap.parse_args(argv)
@@ -160,6 +181,9 @@ def main(argv=None) -> int:
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
+    elif a.cmd == "diag":
+        out = Path(a.out)
+        out.write_text(json.dumps(diag_one(a.seed, a.name, out.parent / "rd")))
     elif a.cmd == "batch":
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers)
         print(json.dumps(analyse(Path(a.out)), indent=1))
