@@ -1,0 +1,863 @@
+{
+ "note": "Plant v190 (V190): 10 crash-free reference days, ADT 45,000 (15 % ramp), code d4d533e, seeds 7,430,040-049; crash scale on those days.",
+ "summary": {
+  "days": 10,
+  "seeds": [
+   7430040,
+   7430041,
+   7430042,
+   7430043,
+   7430044,
+   7430045,
+   7430046,
+   7430047,
+   7430048,
+   7430049
+  ],
+  "layer_a": {
+   "collisions": 0,
+   "teleports": 14,
+   "emergency_stops": 0,
+   "emergency_braking_per_day": 1.0,
+   "all_drained": true,
+   "sumo_errors": 0
+  },
+  "capacity": {
+   "breakdowns_per_day": 4.0,
+   "n_used": 15,
+   "pre_median": 3456.0,
+   "qdf_median": 3062.188,
+   "drop_median": 0.112,
+   "drop_range": [
+    -0.048,
+    0.172
+   ],
+   "duration_min_median": 134.5
+  },
+  "tail": {
+   "1": {
+    "n": 0,
+    "fit": null
+   },
+   "1.5": {
+    "n": 22627,
+    "per_day": 2262.7,
+    "shape": -0.737,
+    "scale": 0.3482,
+    "endpoint_ttc": 1.028,
+    "p_crash_per_encounter": 0.0,
+    "evt_crashes_per_day": 0.0,
+    "ks_p": 0.0,
+    "min_ttc_seen": 1.028
+   },
+   "3": {
+    "n": 214821,
+    "per_day": 21482.1,
+    "shape": -0.6376,
+    "scale": 1.2578,
+    "endpoint_ttc": 1.027,
+    "p_crash_per_encounter": 0.0,
+    "evt_crashes_per_day": 0.0,
+    "ks_p": 0.0,
+    "min_ttc_seen": 1.028
+   }
+  },
+  "target_crashes_per_day": 0.288,
+  "diagnostics": {
+   "emergency_braking": 24,
+   "per_1000_vehicles_by_class": {
+    "hdv_car": 0.0,
+    "truck": 0.0,
+    "acc": 0.0,
+    "cacc": 0.4,
+    "alks": 0.0
+   },
+   "by_place": {
+    "junction m": 18,
+    "junction ae": 4,
+    "edge 2": 2
+   },
+   "by_hour": {
+    "16": 7,
+    "17": 8,
+    "18": 8,
+    "19": 1
+   },
+   "hdv_car_tau_quartiles_braking_vs_all": [
+    null,
+    [
+     0.2,
+     0.9,
+     1.21,
+     1.52,
+     2.0
+    ]
+   ],
+   "hdv_car_asl_mean_braking_vs_all": [
+    null,
+    0.377
+   ],
+   "collisions": []
+  }
+ },
+ "days": [
+  {
+   "seed": 7430040,
+   "generated": 45047,
+   "collisions": 0,
+   "teleports": 2,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 29160.0,
+     "t_recover": 30090.0,
+     "min": 15.5,
+     "pre": 3444.0,
+     "qdf": 3038.181818181818,
+     "drop": 0.11783338612606908
+    },
+    {
+     "t_break": 57990.0,
+     "t_recover": 68910.0,
+     "min": 182.0,
+     "pre": 3336.0,
+     "qdf": 3006.760563380282,
+     "drop": 0.09869287668456783
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58650.0,
+     "t_recover": 66630.0,
+     "min": 133.0,
+     "pre": 3336.0,
+     "qdf": 3017.743190661479,
+     "drop": 0.09540072222377738
+    }
+   ],
+   "ramp_queue_max": 54,
+   "delay_mean_by_class": {
+    "hdv_car": 164.1,
+    "truck": 168.8,
+    "acc": 167.7,
+    "cacc": 165.1,
+    "alks": 168.5
+   },
+   "wall_s": 2487.2
+  },
+  {
+   "seed": 7430041,
+   "generated": 45080,
+   "collisions": 0,
+   "teleports": 2,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 58260.0,
+     "t_recover": 68520.0,
+     "min": 171.0,
+     "pre": 3456.0,
+     "qdf": 3047.2072072072074,
+     "drop": 0.1182849516182849
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60540.0,
+     "t_recover": 66090.0,
+     "min": 92.5,
+     "pre": 3576.0,
+     "qdf": 3021.818181818182,
+     "drop": 0.1549725442342892
+    }
+   ],
+   "ramp_queue_max": 56,
+   "delay_mean_by_class": {
+    "hdv_car": 118.5,
+    "truck": 120.9,
+    "acc": 125.1,
+    "cacc": 121.9,
+    "alks": 132.2
+   },
+   "wall_s": 2439.7
+  },
+  {
+   "seed": 7430042,
+   "generated": 44759,
+   "collisions": 0,
+   "teleports": 0,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 26790.0,
+     "t_recover": 27330.0,
+     "min": 9.0,
+     "pre": 3192.0,
+     "qdf": 3040.0,
+     "drop": 0.04761904761904767
+    },
+    {
+     "t_break": 27870.0,
+     "t_recover": 28170.0,
+     "min": 5.0,
+     "pre": 3312.0,
+     "qdf": 3960.0,
+     "drop": -0.19565217391304346
+    },
+    {
+     "t_break": 28710.0,
+     "t_recover": 29160.0,
+     "min": 7.5,
+     "pre": 3480.0,
+     "qdf": 3120.0,
+     "drop": 0.10344827586206895
+    },
+    {
+     "t_break": 58740.0,
+     "t_recover": 66390.0,
+     "min": 127.5,
+     "pre": 3396.0,
+     "qdf": 3070.243902439024,
+     "drop": 0.09592346806860297
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60660.0,
+     "t_recover": 62370.0,
+     "min": 28.5,
+     "pre": 3456.0,
+     "qdf": 3182.5,
+     "drop": 0.07913773148148151
+    },
+    {
+     "t_break": 62940.0,
+     "t_recover": 65460.0,
+     "min": 42.0,
+     "pre": 3624.0,
+     "qdf": 3033.6,
+     "drop": 0.1629139072847683
+    }
+   ],
+   "ramp_queue_max": 51,
+   "delay_mean_by_class": {
+    "hdv_car": 84.5,
+    "truck": 84.3,
+    "acc": 91.2,
+    "cacc": 86.6,
+    "alks": 97.5
+   },
+   "wall_s": 2354.8
+  },
+  {
+   "seed": 7430043,
+   "generated": 45241,
+   "collisions": 0,
+   "teleports": 1,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 27930.0,
+     "t_recover": 29430.0,
+     "min": 25.0,
+     "pre": 3492.0,
+     "qdf": 3108.2926829268295,
+     "drop": 0.10988182046768913
+    },
+    {
+     "t_break": 29700.0,
+     "t_recover": 30030.0,
+     "min": 5.5,
+     "pre": 3624.0,
+     "qdf": 3240.0,
+     "drop": 0.10596026490066224
+    },
+    {
+     "t_break": 55800.0,
+     "t_recover": 68160.0,
+     "min": 206.0,
+     "pre": 3372.0,
+     "qdf": 3029.4789081885856,
+     "drop": 0.10157802248262582
+    },
+    {
+     "t_break": 68490.0,
+     "t_recover": 68820.0,
+     "min": 5.5,
+     "pre": 3420.0,
+     "qdf": 3300.0,
+     "drop": 0.03508771929824561
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58560.0,
+     "t_recover": 59550.0,
+     "min": 16.5,
+     "pre": 3516.0,
+     "qdf": 3185.0,
+     "drop": 0.09414106939704214
+    },
+    {
+     "t_break": 59760.0,
+     "t_recover": 67020.0,
+     "min": 121.0,
+     "pre": 3552.0,
+     "qdf": 3020.0858369098714,
+     "drop": 0.14975060897807668
+    },
+    {
+     "t_break": 68130.0,
+     "t_recover": 68460.0,
+     "min": 5.5,
+     "pre": 3420.0,
+     "qdf": 3240.0,
+     "drop": 0.052631578947368474
+    }
+   ],
+   "ramp_queue_max": 54,
+   "delay_mean_by_class": {
+    "hdv_car": 164.3,
+    "truck": 175.9,
+    "acc": 170.5,
+    "cacc": 164.9,
+    "alks": 177.7
+   },
+   "wall_s": 2581.0
+  },
+  {
+   "seed": 7430044,
+   "generated": 45290,
+   "collisions": 0,
+   "teleports": 0,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 28290.0,
+     "t_recover": 29010.0,
+     "min": 12.0,
+     "pre": 3516.0,
+     "qdf": 3248.0,
+     "drop": 0.07622298065984068
+    },
+    {
+     "t_break": 30390.0,
+     "t_recover": 30870.0,
+     "min": 8.0,
+     "pre": 3516.0,
+     "qdf": 3137.1428571428573,
+     "drop": 0.10775231594344215
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56040.0,
+     "min": 2.0,
+     "pre": 3408.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 56430.0,
+     "t_recover": 57060.0,
+     "min": 10.5,
+     "pre": 3408.0,
+     "qdf": 3550.0,
+     "drop": -0.04166666666666674
+    },
+    {
+     "t_break": 57390.0,
+     "t_recover": 57750.0,
+     "min": 6.0,
+     "pre": 3660.0,
+     "qdf": 3000.0,
+     "drop": 0.180327868852459
+    },
+    {
+     "t_break": 58410.0,
+     "t_recover": 59220.0,
+     "min": 13.5,
+     "pre": 3660.0,
+     "qdf": 3353.3333333333335,
+     "drop": 0.08378870673952632
+    },
+    {
+     "t_break": 59520.0,
+     "t_recover": 67320.0,
+     "min": 130.0,
+     "pre": 3660.0,
+     "qdf": 3098.964143426295,
+     "drop": 0.15328848540265172
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 59610.0,
+     "t_recover": 66300.0,
+     "min": 111.5,
+     "pre": 3660.0,
+     "qdf": 3082.9906542056074,
+     "drop": 0.15765282671977943
+    }
+   ],
+   "ramp_queue_max": 56,
+   "delay_mean_by_class": {
+    "hdv_car": 127.1,
+    "truck": 137.7,
+    "acc": 132.6,
+    "cacc": 133.1,
+    "alks": 138.9
+   },
+   "wall_s": 2511.2
+  },
+  {
+   "seed": 7430045,
+   "generated": 45006,
+   "collisions": 0,
+   "teleports": 3,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 55830.0,
+     "t_recover": 67620.0,
+     "min": 196.5,
+     "pre": 3348.0,
+     "qdf": 3062.1875,
+     "drop": 0.08536813022700118
+    },
+    {
+     "t_break": 67800.0,
+     "t_recover": 68790.0,
+     "min": 16.5,
+     "pre": 3588.0,
+     "qdf": 3155.0,
+     "drop": 0.12068004459308812
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58620.0,
+     "t_recover": 60840.0,
+     "min": 37.0,
+     "pre": 3564.0,
+     "qdf": 3188.3076923076924,
+     "drop": 0.10541310541310545
+    },
+    {
+     "t_break": 60960.0,
+     "t_recover": 62250.0,
+     "min": 21.5,
+     "pre": 3576.0,
+     "qdf": 3095.294117647059,
+     "drop": 0.13442558231346224
+    },
+    {
+     "t_break": 62430.0,
+     "t_recover": 67200.0,
+     "min": 79.5,
+     "pre": 3576.0,
+     "qdf": 2954.4,
+     "drop": 0.17382550335570468
+    }
+   ],
+   "ramp_queue_max": 55,
+   "delay_mean_by_class": {
+    "hdv_car": 155.7,
+    "truck": 161.6,
+    "acc": 167.6,
+    "cacc": 156.0,
+    "alks": 164.4
+   },
+   "wall_s": 2514.7
+  },
+  {
+   "seed": 7430046,
+   "generated": 45021,
+   "collisions": 0,
+   "teleports": 3,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 27210.0,
+     "t_recover": 27510.0,
+     "min": 5.0,
+     "pre": 3204.0,
+     "qdf": 2520.0,
+     "drop": 0.2134831460674157
+    },
+    {
+     "t_break": 28620.0,
+     "t_recover": 28860.0,
+     "min": 4.0,
+     "pre": 3348.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 28980.0,
+     "t_recover": 29610.0,
+     "min": 10.5,
+     "pre": 3348.0,
+     "qdf": 3150.0,
+     "drop": 0.05913978494623651
+    },
+    {
+     "t_break": 58080.0,
+     "t_recover": 69270.0,
+     "min": 186.5,
+     "pre": 3468.0,
+     "qdf": 3002.6373626373625,
+     "drop": 0.13418761169626225
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58980.0,
+     "t_recover": 66870.0,
+     "min": 131.5,
+     "pre": 3360.0,
+     "qdf": 3022.6771653543306,
+     "drop": 0.10039370078740162
+    }
+   ],
+   "ramp_queue_max": 54,
+   "delay_mean_by_class": {
+    "hdv_car": 162.1,
+    "truck": 178.9,
+    "acc": 170.5,
+    "cacc": 161.6,
+    "alks": 182.1
+   },
+   "wall_s": 2521.6
+  },
+  {
+   "seed": 7430047,
+   "generated": 44770,
+   "collisions": 0,
+   "teleports": 0,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 27120.0,
+     "t_recover": 27450.0,
+     "min": 5.5,
+     "pre": 3300.0,
+     "qdf": 3840.0,
+     "drop": -0.16363636363636358
+    },
+    {
+     "t_break": 27690.0,
+     "t_recover": 30300.0,
+     "min": 43.5,
+     "pre": 3336.0,
+     "qdf": 3081.5384615384614,
+     "drop": 0.07627743958679212
+    },
+    {
+     "t_break": 55860.0,
+     "t_recover": 56190.0,
+     "min": 5.5,
+     "pre": 3384.0,
+     "qdf": 2700.0,
+     "drop": 0.2021276595744681
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 58710.0,
+     "min": 6.0,
+     "pre": 3468.0,
+     "qdf": 4080.0,
+     "drop": -0.17647058823529416
+    },
+    {
+     "t_break": 58830.0,
+     "t_recover": 66900.0,
+     "min": 134.5,
+     "pre": 3468.0,
+     "qdf": 3081.230769230769,
+     "drop": 0.11152515304764443
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60600.0,
+     "t_recover": 60930.0,
+     "min": 5.5,
+     "pre": 3456.0,
+     "qdf": 3060.0,
+     "drop": 0.11458333333333337
+    },
+    {
+     "t_break": 62070.0,
+     "t_recover": 65040.0,
+     "min": 49.5,
+     "pre": 3600.0,
+     "qdf": 3088.0,
+     "drop": 0.14222222222222225
+    }
+   ],
+   "ramp_queue_max": 52,
+   "delay_mean_by_class": {
+    "hdv_car": 96.2,
+    "truck": 96.9,
+    "acc": 104.2,
+    "cacc": 102.3,
+    "alks": 113.8
+   },
+   "wall_s": 2358.3
+  },
+  {
+   "seed": 7430048,
+   "generated": 45604,
+   "collisions": 0,
+   "teleports": 1,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 27780.0,
+     "t_recover": 28140.0,
+     "min": 6.0,
+     "pre": 3432.0,
+     "qdf": 3560.0,
+     "drop": -0.037296037296037365
+    },
+    {
+     "t_break": 28740.0,
+     "t_recover": 29370.0,
+     "min": 10.5,
+     "pre": 3444.0,
+     "qdf": 3210.0,
+     "drop": 0.06794425087108014
+    },
+    {
+     "t_break": 32010.0,
+     "t_recover": 32130.0,
+     "min": 2.0,
+     "pre": 3492.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56880.0,
+     "min": 16.0,
+     "pre": 3108.0,
+     "qdf": 3255.6521739130435,
+     "drop": -0.047507134463656175
+    },
+    {
+     "t_break": 57000.0,
+     "t_recover": 69330.0,
+     "min": 205.5,
+     "pre": 3648.0,
+     "qdf": 3019.7014925373132,
+     "drop": 0.17223095051060489
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58050.0,
+     "t_recover": 58260.0,
+     "min": 3.5,
+     "pre": 3648.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 58440.0,
+     "t_recover": 67680.0,
+     "min": 154.0,
+     "pre": 3648.0,
+     "qdf": 3043.344481605351,
+     "drop": 0.16574986798098923
+    }
+   ],
+   "ramp_queue_max": 53,
+   "delay_mean_by_class": {
+    "hdv_car": 190.0,
+    "truck": 205.4,
+    "acc": 196.8,
+    "cacc": 190.0,
+    "alks": 200.7
+   },
+   "wall_s": 2580.3
+  },
+  {
+   "seed": 7430049,
+   "generated": 44947,
+   "collisions": 0,
+   "teleports": 2,
+   "drained": true,
+   "breakdowns": [
+    {
+     "t_break": 28440.0,
+     "t_recover": 29250.0,
+     "min": 13.5,
+     "pre": 3384.0,
+     "qdf": 2853.3333333333335,
+     "drop": 0.15681639085894405
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 68820.0,
+     "min": 174.5,
+     "pre": 3504.0,
+     "qdf": 2980.235294117647,
+     "drop": 0.1494762288477035
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58920.0,
+     "t_recover": 67530.0,
+     "min": 143.5,
+     "pre": 3504.0,
+     "qdf": 2996.546762589928,
+     "drop": 0.14482112939785152
+    }
+   ],
+   "ramp_queue_max": 53,
+   "delay_mean_by_class": {
+    "hdv_car": 168.1,
+    "truck": 185.4,
+    "acc": 184.7,
+    "cacc": 173.9,
+    "alks": 183.8
+   },
+   "wall_s": 2490.5
+  }
+ ],
+ "crash_scale": {
+  "human_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1.5_linear": {
+   "k": 0.0010936723104892753,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 1840.7,
+   "p_day_mean": 0.24999999999999986,
+   "p_day_range": [
+    0.2168,
+    0.284
+   ],
+   "expected_crashes_per_day": 0.28794548385201946,
+   "p_max": 0.00033009647917045125
+  },
+  "human_u1.5_constant": {
+   "k": 0.00015649855449245687,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 1840.7,
+   "p_day_mean": 0.24999999999992095,
+   "p_day_range": [
+    0.21,
+    0.2896
+   ],
+   "expected_crashes_per_day": 0.2880668892542654,
+   "p_max": 0.00015649855449245687
+  },
+  "human_u3_linear": {
+   "k": 8.419788502988271e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 12282.9,
+   "p_day_mean": 0.24999999999999994,
+   "p_day_range": [
+    0.1946,
+    0.2965
+   ],
+   "expected_crashes_per_day": 0.28845439412693274,
+   "p_max": 5.480541095864219e-05
+  },
+  "human_u3_constant": {
+   "k": 2.3489386806907486e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 12282.9,
+   "p_day_mean": 0.25000000000017814,
+   "p_day_range": [
+    0.1924,
+    0.2971
+   ],
+   "expected_crashes_per_day": 0.288517789210564,
+   "p_max": 2.3489386806907486e-05
+  },
+  "all_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1.5_linear": {
+   "k": 0.0009120164199976698,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 2262.7,
+   "p_day_mean": 0.24999999999999994,
+   "p_day_range": [
+    0.2178,
+    0.2823
+   ],
+   "expected_crashes_per_day": 0.2879197414469411,
+   "p_max": 0.0002872638427221318
+  },
+  "all_u1.5_constant": {
+   "k": 0.0001272944818233035,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 2262.7,
+   "p_day_mean": 0.2500000000000388,
+   "p_day_range": [
+    0.2118,
+    0.2871
+   ],
+   "expected_crashes_per_day": 0.2880292240215888,
+   "p_max": 0.0001272944818233035
+  },
+  "all_u3_linear": {
+   "k": 5.2778975358824524e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 21482.1,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1952,
+    0.294
+   ],
+   "expected_crashes_per_day": 0.28835994564275746,
+   "p_max": 3.470155912027041e-05
+  },
+  "all_u3_constant": {
+   "k": 1.342755713845678e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 21482.1,
+   "p_day_mean": 0.24999999999859784,
+   "p_day_range": [
+    0.1919,
+    0.2962
+   ],
+   "expected_crashes_per_day": 0.2884521252040424,
+   "p_max": 1.342755713845678e-05
+  }
+ }
+}
