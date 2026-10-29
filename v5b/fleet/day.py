@@ -113,12 +113,14 @@ def _crash(vids: tuple) -> None:
         ls.vehicle.setSpeed(vid, 0.0)
 
 
-def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None) -> dict:
+def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None,
+            hours: tuple | None = None) -> dict:
     """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     d = fl.build_net(cfg)
-    dem = fl.FleetDemand(seed, profile(adt), cfg)
+    prof = [p for p in profile(adt) if hours is None or hours[0] * 3600 <= p[0] < hours[1] * 3600]
+    dem = fl.FleetDemand(seed, prof, cfg)
     models = "".join(f"_{c}{m}" for c, m in fl.CAV_MODELS.items())
     tag = f"day_{cfg.tag()}{models}_adt{adt:g}_s{seed}_pid{os.getpid()}"
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
@@ -135,7 +137,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
-    t_end = profile(adt)[-1][1]
+    t_end = prof[-1][1]
     drained = False
     while True:
         sim.step()
@@ -256,6 +258,8 @@ def _common(p) -> None:
     p.add_argument("--crash-u", type=float, default=1.5)
     p.add_argument("--crash-shape", default="linear")
     p.add_argument("--crash-who", default="human")
+    p.add_argument("--hours", help="only these hours of the reference day, e.g. 13,20")
+    p.add_argument("--ramp-lc-assertive", type=float)
 
 
 def main(argv=None) -> int:
@@ -277,6 +281,8 @@ def main(argv=None) -> int:
     if a.cav_apparent_decel is not None:
         fl.CAV_APPARENT_DECEL = a.cav_apparent_decel
     fl.CAV_MODELS.update({c: getattr(a, f"{c}_model") for c in fl.CAV_MODELS})
+    fl.RAMP_LC_ASSERTIVE = a.ramp_lc_assertive
+    hours = tuple(int(x) for x in a.hours.split(",")) if a.hours else None
     crash = None if a.crash_k is None else {"k": a.crash_k, "u": a.crash_u, "shape": a.crash_shape,
                                              "who": a.crash_who}
     if a.cmd == "one":
@@ -284,8 +290,8 @@ def main(argv=None) -> int:
         cfg = dataclasses.replace(CFG, geom=a.geom)
         if a.plant:
             cfg = fl.apply_plant(a.plant, cfg)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash)
-        res["plant"] = a.plant
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours)
+        res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
@@ -294,6 +300,10 @@ def main(argv=None) -> int:
         if a.plant:
             extra += ["--plant", a.plant]
         extra += ["--adt", str(a.adt)]
+        if a.hours:
+            extra += ["--hours", a.hours]
+        if a.ramp_lc_assertive is not None:
+            extra += ["--ramp-lc-assertive", str(a.ramp_lc_assertive)]
         if a.cav_apparent_decel is not None:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:

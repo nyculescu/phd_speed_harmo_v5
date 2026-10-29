@@ -69,6 +69,8 @@ CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 HDV_TAU_SCALE = 1.0
 HDV_ACCEL: float | None = None
 HDV_ASL_SCALE = 1.0
+# V192 test: LC2013 lcAssertive for vehicles entering by the on-ramp; None = SUMO default
+RAMP_LC_ASSERTIVE: float | None = None
 
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
@@ -123,6 +125,7 @@ class VehSpec:
     asl: float | None = None
     resampled: int = 0
     extra: dict = field(default_factory=dict)
+    lc: dict = field(default_factory=dict)
 
     @property
     def desired(self) -> float:
@@ -131,7 +134,7 @@ class VehSpec:
 
     def vtype_xml(self) -> str:
         a = {"id": f"t.{self.vid}", "length": f"{self.length:.3f}", "width": f"{self.width:.3f}",
-             "laneChangeModel": "LC2013", "lcCooperative": "1"}
+             "laneChangeModel": "LC2013", "lcCooperative": "1", **{k: f"{v:g}" for k, v in self.lc.items()}}
         if self.cls == "hdv_car":
             a |= {"vClass": "passenger", "carFollowModel": "Krauss", "tau": f"{self.tau:.3f}",
                   "sigma": f"{self.sigma:.3f}", "actionStepLength": f"{self.asl:.1f}"}
@@ -281,6 +284,8 @@ class FleetDemand:
         self.veh = sample(len(deps), seed, max(v[2] for v in self.routes.values()), deps)
         for v, r in zip(self.veh, self.route_of):
             v.lane = v.lane % self.routes[r][2]
+            if r == "ramp" and RAMP_LC_ASSERTIVE is not None:
+                v.lc = {"lcAssertive": RAMP_LC_ASSERTIVE}
         self.by_id = {v.vid: v for v in self.veh}
         self.vehicles = [(v.depart, v.vid, r, f"t.{v.vid}") for v, r in zip(self.veh, self.route_of)]
 
