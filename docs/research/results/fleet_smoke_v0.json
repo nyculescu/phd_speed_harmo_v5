@@ -1,0 +1,747 @@
+{
+ "note": "Fleet smoke runs (software checks, not results): BN4 zipper 100 m, Krauss HDV, step 0.1 s, 100 km/h, V156-V161 fleet, V139 calibration demand profile (ramp 1,200 -> 2,400 veh/h), NC. Seeds 7,400,000-001 (tests' convention). Code v5b/fleet/smoke.py. Collision pair counts are per step while overlapping.",
+ "runs": {
+  "fleet_smoke_20261029b/a.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": null,
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 102,
+   "collision_pairs": null,
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 40,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1050.0,
+    "pre": 1404.0,
+    "qdf": 1168.695652173913,
+    "drop": 0.16759568933481983
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.02,
+    "truck": 1.94,
+    "acc": 2.09,
+    "cacc": 2.05,
+    "alks": 1.97
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 690.4,
+    "truck": 681.6,
+    "acc": 645.1,
+    "cacc": 704.1,
+    "alks": 709.6
+   },
+   "hash": "b95f5aed266c88a8",
+   "wall_s": 19.4
+  },
+  "fleet_smoke_20261029b/b.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": null,
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 102,
+   "collision_pairs": null,
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 40,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1050.0,
+    "pre": 1404.0,
+    "qdf": 1168.695652173913,
+    "drop": 0.16759568933481983
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.02,
+    "truck": 1.94,
+    "acc": 2.09,
+    "cacc": 2.05,
+    "alks": 1.97
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 690.4,
+    "truck": 681.6,
+    "acc": 645.1,
+    "cacc": 704.1,
+    "alks": 709.6
+   },
+   "hash": "b95f5aed266c88a8",
+   "wall_s": 19.4
+  },
+  "fleet_smoke_20261029b/c.json": {
+   "seed": 7400000,
+   "incident": "slow",
+   "command": true,
+   "acc_gains": null,
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 186,
+   "collision_pairs": null,
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 54,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 540.0,
+    "pre": 1080.0,
+    "qdf": 1180.952380952381,
+    "drop": -0.09347442680776008
+   },
+   "actuator": {
+    "n_cmd": 24,
+    "max_over": 7.33
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 1.79,
+    "truck": 1.74,
+    "acc": 1.85,
+    "cacc": 1.82,
+    "alks": 1.78
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 814.8,
+    "truck": 811.1,
+    "acc": 767.5,
+    "cacc": 834.2,
+    "alks": 838.8
+   },
+   "hash": "81bfa171327b149d",
+   "wall_s": 22.3
+  },
+  "fleet_smoke_20261029b/d.json": {
+   "seed": 7400001,
+   "incident": "none",
+   "command": false,
+   "acc_gains": null,
+   "generated": 1496,
+   "arrived": 1496,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": 0.48,
+    "truck": -1.1,
+    "acc": -0.23,
+    "cacc": -0.31,
+    "alks": 0.54
+   },
+   "hdv_resample_share": 0.078,
+   "teleports": 0,
+   "collisions": 202,
+   "collision_pairs": null,
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 56,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 840.0,
+    "pre": 1428.0,
+    "qdf": 1197.7358490566037,
+    "drop": 0.1612494054225464
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.08,
+    "truck": 2.07,
+    "acc": 1.98,
+    "cacc": 2.21,
+    "alks": 2.0
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 584.6,
+    "truck": 625.0,
+    "acc": 617.3,
+    "cacc": 547.5,
+    "alks": 632.9
+   },
+   "hash": "69a60c449b852cbf",
+   "wall_s": 18.5
+  },
+  "fleet_smoke_20261029c/cmd.json": {
+   "seed": 7400000,
+   "incident": "slow",
+   "command": true,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23,
+    "collisionAvoidanceGainSpeed": 0.07,
+    "collisionAvoidanceGainSpace": 0.23,
+    "collisionAvoidanceOverride": 100
+   },
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 186,
+   "collision_pairs": {
+    "acc>hdv_car": 2196,
+    "acc>alks": 1075,
+    "acc>acc": 478,
+    "acc>truck": 278,
+    "acc>cacc": 267,
+    "hdv_car>alks": 25,
+    "alks>acc": 5
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 54,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 540.0,
+    "pre": 1080.0,
+    "qdf": 1180.952380952381,
+    "drop": -0.09347442680776008
+   },
+   "actuator": {
+    "n_cmd": 24,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 1.79,
+    "truck": 1.74,
+    "acc": 1.85,
+    "cacc": 1.82,
+    "alks": 1.78
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 814.8,
+    "truck": 811.1,
+    "acc": 767.5,
+    "cacc": 834.2,
+    "alks": 838.8
+   },
+   "hash": "81bfa171327b149d",
+   "wall_s": 23.6
+  },
+  "fleet_smoke_20261029c/def_7400000.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {},
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 0,
+   "collision_pairs": {},
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 31,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1020.0,
+    "pre": 1440.0,
+    "qdf": 1187.2340425531916,
+    "drop": 0.17553191489361697
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.1,
+    "truck": 2.03,
+    "acc": 2.17,
+    "cacc": 2.15,
+    "alks": 2.07
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 647.0,
+    "truck": 639.2,
+    "acc": 612.5,
+    "cacc": 654.6,
+    "alks": 667.5
+   },
+   "hash": "64e7e280602fcf85",
+   "wall_s": 19.8
+  },
+  "fleet_smoke_20261029c/def_7400001.json": {
+   "seed": 7400001,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {},
+   "generated": 1496,
+   "arrived": 1496,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": 0.48,
+    "truck": -1.1,
+    "acc": -0.23,
+    "cacc": -0.31,
+    "alks": 0.54
+   },
+   "hdv_resample_share": 0.078,
+   "teleports": 0,
+   "collisions": 0,
+   "collision_pairs": {},
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 47,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 840.0,
+    "pre": 1404.0,
+    "qdf": 1247.5471698113208,
+    "drop": 0.11143363973552645
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.21,
+    "truck": 2.19,
+    "acc": 2.08,
+    "cacc": 2.38,
+    "alks": 2.12
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 534.1,
+    "truck": 579.6,
+    "acc": 565.3,
+    "cacc": 488.6,
+    "alks": 580.8
+   },
+   "hash": "8a31354e0d2b89f8",
+   "wall_s": 18.6
+  },
+  "fleet_smoke_20261029c/gc_7400000.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23
+   },
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 2,
+   "collision_pairs": {
+    "acc>alks": 17
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 28,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1050.0,
+    "pre": 1440.0,
+    "qdf": 1163.4782608695652,
+    "drop": 0.19202898550724634
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.01,
+    "truck": 1.92,
+    "acc": 2.11,
+    "cacc": 2.07,
+    "alks": 1.99
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 689.0,
+    "truck": 679.1,
+    "acc": 644.7,
+    "cacc": 703.2,
+    "alks": 709.5
+   },
+   "hash": "08ecce068a9bccc1",
+   "wall_s": 18.5
+  },
+  "fleet_smoke_20261029c/gc_7400001.json": {
+   "seed": 7400001,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23
+   },
+   "generated": 1496,
+   "arrived": 1496,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": 0.48,
+    "truck": -1.1,
+    "acc": -0.23,
+    "cacc": -0.31,
+    "alks": 0.54
+   },
+   "hdv_resample_share": 0.078,
+   "teleports": 0,
+   "collisions": 4,
+   "collision_pairs": {
+    "acc>acc": 33,
+    "hdv_car>acc": 6
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 62,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 840.0,
+    "pre": 1392.0,
+    "qdf": 1218.1132075471698,
+    "drop": 0.12491867273910207
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.08,
+    "truck": 2.09,
+    "acc": 1.98,
+    "cacc": 2.22,
+    "alks": 2.0
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 584.5,
+    "truck": 626.3,
+    "acc": 618.9,
+    "cacc": 546.9,
+    "alks": 631.4
+   },
+   "hash": "9ff7ad151c7d60fb",
+   "wall_s": 17.8
+  },
+  "fleet_smoke_20261029c/o100_7400000.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23,
+    "collisionAvoidanceGainSpeed": 0.07,
+    "collisionAvoidanceGainSpace": 0.23,
+    "collisionAvoidanceOverride": 100
+   },
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 102,
+   "collision_pairs": {
+    "acc>hdv_car": 1155,
+    "acc>alks": 537,
+    "acc>acc": 364,
+    "acc>truck": 312,
+    "hdv_car>acc": 149,
+    "acc>cacc": 48
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 40,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1050.0,
+    "pre": 1404.0,
+    "qdf": 1168.695652173913,
+    "drop": 0.16759568933481983
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.02,
+    "truck": 1.94,
+    "acc": 2.09,
+    "cacc": 2.05,
+    "alks": 1.97
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 690.4,
+    "truck": 681.6,
+    "acc": 645.1,
+    "cacc": 704.1,
+    "alks": 709.6
+   },
+   "hash": "b95f5aed266c88a8",
+   "wall_s": 20.7
+  },
+  "fleet_smoke_20261029c/o100_7400001.json": {
+   "seed": 7400001,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23,
+    "collisionAvoidanceGainSpeed": 0.07,
+    "collisionAvoidanceGainSpace": 0.23,
+    "collisionAvoidanceOverride": 100
+   },
+   "generated": 1496,
+   "arrived": 1496,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": 0.48,
+    "truck": -1.1,
+    "acc": -0.23,
+    "cacc": -0.31,
+    "alks": 0.54
+   },
+   "hdv_resample_share": 0.078,
+   "teleports": 0,
+   "collisions": 202,
+   "collision_pairs": {
+    "acc>hdv_car": 2234,
+    "acc>alks": 1104,
+    "acc>acc": 756,
+    "acc>cacc": 345,
+    "acc>truck": 145,
+    "hdv_car>hdv_car": 20,
+    "hdv_car>acc": 6,
+    "alks>acc": 5
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 56,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 840.0,
+    "pre": 1428.0,
+    "qdf": 1197.7358490566037,
+    "drop": 0.1612494054225464
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.08,
+    "truck": 2.07,
+    "acc": 1.98,
+    "cacc": 2.21,
+    "alks": 2.0
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 584.6,
+    "truck": 625.0,
+    "acc": 617.3,
+    "cacc": 547.5,
+    "alks": 632.9
+   },
+   "hash": "69a60c449b852cbf",
+   "wall_s": 19.5
+  },
+  "fleet_smoke_20261029c/o2_7400000.json": {
+   "seed": 7400000,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23,
+    "collisionAvoidanceGainSpeed": 0.07,
+    "collisionAvoidanceGainSpace": 0.23,
+    "collisionAvoidanceOverride": 2.0
+   },
+   "generated": 1544,
+   "arrived": 1544,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": -1.04,
+    "truck": -0.46,
+    "acc": 1.0,
+    "cacc": -1.31,
+    "alks": 1.7
+   },
+   "hdv_resample_share": 0.083,
+   "teleports": 0,
+   "collisions": 92,
+   "collision_pairs": {
+    "acc>hdv_car": 894,
+    "acc>alks": 462,
+    "acc>cacc": 369,
+    "acc>acc": 197,
+    "acc>truck": 74
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 74,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 1050.0,
+    "pre": 1404.0,
+    "qdf": 1186.9565217391305,
+    "drop": 0.15458937198067624
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.02,
+    "truck": 1.94,
+    "acc": 2.12,
+    "cacc": 2.04,
+    "alks": 1.98
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 689.2,
+    "truck": 677.3,
+    "acc": 644.1,
+    "cacc": 703.8,
+    "alks": 711.1
+   },
+   "hash": "0f968d4ee4b79c62",
+   "wall_s": 20.9
+  },
+  "fleet_smoke_20261029c/o2_7400001.json": {
+   "seed": 7400001,
+   "incident": "none",
+   "command": false,
+   "acc_gains": {
+    "gapClosingControlGainSpeed": 0.07,
+    "gapClosingControlGainSpace": 0.23,
+    "collisionAvoidanceGainSpeed": 0.07,
+    "collisionAvoidanceGainSpace": 0.23,
+    "collisionAvoidanceOverride": 2.0
+   },
+   "generated": 1496,
+   "arrived": 1496,
+   "drained": true,
+   "sumo_errors": 0,
+   "S2_mismatches": 0,
+   "S3_z": {
+    "hdv_car": 0.48,
+    "truck": -1.1,
+    "acc": -0.23,
+    "cacc": -0.31,
+    "alks": 0.54
+   },
+   "hdv_resample_share": 0.078,
+   "teleports": 0,
+   "collisions": 164,
+   "collision_pairs": {
+    "acc>hdv_car": 1813,
+    "acc>acc": 662,
+    "acc>alks": 557,
+    "acc>cacc": 391,
+    "acc>truck": 42,
+    "hdv_car>acc": 7,
+    "alks>acc": 7
+   },
+   "emergency_stops": 0,
+   "emergency_braking_warnings": 119,
+   "ballistic_in_log": true,
+   "drop": {
+    "breakdown_s": 840.0,
+    "pre": 1416.0,
+    "qdf": 1197.7358490566037,
+    "drop": 0.15414134953629688
+   },
+   "actuator": {
+    "n_cmd": 0,
+    "max_over": 0.0
+   },
+   "speed_mean_by_class": {
+    "hdv_car": 2.08,
+    "truck": 2.1,
+    "acc": 1.98,
+    "cacc": 2.21,
+    "alks": 1.99
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 588.4,
+    "truck": 626.8,
+    "acc": 619.5,
+    "cacc": 550.9,
+    "alks": 634.3
+   },
+   "hash": "31f83f184820578c",
+   "wall_s": 19.6
+  }
+ }
+}
