@@ -60,8 +60,8 @@ ACC_ORIGINAL = {"gapClosingControlGainSpeed": 0.07, "gapClosingControlGainSpace"
 # variant knob (V168 test): followers of a CAV assume it may brake this hard (SUMO apparentDecel); None = SUMO default
 CAV_APPARENT_DECEL: float | None = None
 
-# ALKS-like class car-following model: SUMO's ACC, or IDM for the V169 test (ACC approaches standing queues late)
-ALKS_MODEL = "ACC"
+# CAV car-following models; IDM variants for the V169/V171 tests (SUMO's ACC brakes hard at queue tails)
+CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
 
@@ -123,15 +123,12 @@ class VehSpec:
                   "sigma": f"{self.sigma:.3f}", "actionStepLength": f"{self.asl:.1f}"}
         elif self.cls == "truck":
             a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{TRUCK_MAX:g}"}
-        elif self.cls == "acc":
-            a |= {"vClass": "passenger", "carFollowModel": "ACC", "tau": f"{self.tau:g}"}
-        elif self.cls == "alks":
-            a |= {"vClass": "passenger", "carFollowModel": ALKS_MODEL, "tau": f"{self.tau:g}"}
-        elif self.cls == "cacc":
-            a |= {"vClass": "passenger", "carFollowModel": "CACC", "tau": f"{self.tau:g}"}
+        else:
+            a |= {"vClass": "passenger", "carFollowModel": CAV_MODELS[self.cls], "tau": f"{self.tau:g}"}
         if self.cls in ("acc", "cacc", "alks") and CAV_APPARENT_DECEL is not None:
             a["apparentDecel"] = f"{CAV_APPARENT_DECEL:g}"
-        a |= {k: f"{v:g}" for k, v in self.extra.items()}
+        if self.cls != "acc" or CAV_MODELS["acc"] == "ACC":     # ACC gains exist only in SUMO's ACC model
+            a |= {k: f"{v:g}" for k, v in self.extra.items()}
         return "  <vType " + " ".join(f'{k}="{v}"' for k, v in a.items()) + "/>"
 
 
