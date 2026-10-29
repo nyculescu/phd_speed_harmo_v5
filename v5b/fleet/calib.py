@@ -35,8 +35,13 @@ DROP_BAND, DROP_SHARE, QDF_BAND, DROP_AIM = (0.02, 0.11), 0.75, cal.T1B, 0.05
 T_CAP = 7200.0
 
 
-def grid() -> list:
-    return [(c, m, a) for c in TAU_SCALES for m in MERGES for a in ACCELS]
+# V180 stage 2: lane-end merges (SUMO's zipper caps throughput at about 1,350 veh/h for steps <= 0.25 s)
+STAGE_MERGES = {1: MERGES, 2: ("laneend",)}
+STAGE_DEFAULTS = {1: DEFAULTS, 2: (1.0, "laneend", 2.6)}
+
+
+def grid(stage: int = 1) -> list:
+    return [(c, m, a) for c in TAU_SCALES for m in STAGE_MERGES[stage] for a in ACCELS]
 
 
 def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES,
@@ -127,10 +132,10 @@ def verify_one(seed: int, name: str, run_dir: Path) -> dict:
     return {"verify": name, **out}
 
 
-def batch(out: Path, seeds: list, workers: int) -> None:
+def batch(out: Path, seeds: list, workers: int, stage: int = 1) -> None:
     (out / "runs").mkdir(parents=True, exist_ok=True)
     env = clean_sumo_env()
-    jobs = [(s, c, m, a) for (c, m, a) in grid() for s in seeds
+    jobs = [(s, c, m, a) for (c, m, a) in grid(stage) for s in seeds
             if not (out / "runs" / f"c{c:g}_{m}_a{a:g}_s{s}.json").exists()]
     print(f"{len(jobs)} runs, cpu {cal._cpu_util():.0f} %", flush=True)
 
@@ -154,10 +159,10 @@ def batch(out: Path, seeds: list, workers: int) -> None:
     print(f"all done in {time.time() - t0:.0f} s", flush=True)
 
 
-def analyse(out: Path) -> dict:
+def analyse(out: Path, stage: int = 1) -> dict:
     runs = [json.loads(f.read_text()) for f in sorted((out / "runs").glob("*.json"))]
     rows = []
-    for (c, m, a) in grid():
+    for (c, m, a) in grid(stage):
         rs = [r for r in runs if (r["c"], r["merge"], r["accel"]) == (c, m, a)]
         if not rs:
             continue
@@ -175,11 +180,11 @@ def analyse(out: Path) -> dict:
                      "collisions": sum(r["collisions"] for r in rs), "teleports": sum(r["teleports"] for r in rs),
                      "emergency_braking_median": float(np.median([r["emergency_braking"] for r in rs])),
                      "tau_mean": rs[0]["tau_mean"], "pass": ok,
-                     "non_default": sum(x != y for x, y in zip((c, m, a), DEFAULTS))})
+                     "non_default": sum(x != y for x, y in zip((c, m, a), STAGE_DEFAULTS[stage]))})
     passing = [r for r in rows if r["pass"]]
     chosen = min(passing, key=lambda r: (r["non_default"], abs(r["median_drop"] - DROP_AIM), -r["median_qdf"])) \
         if passing else None
-    res = {"rows": rows, "n_pass": len(passing), "chosen": chosen}
+    res = {"stage": stage, "rows": rows, "n_pass": len(passing), "chosen": chosen}
     (out / "calibration.json").write_text(json.dumps(res, indent=1))
     return res
 
@@ -198,6 +203,7 @@ def main(argv=None) -> int:
     b.add_argument("--seed0", type=int, required=True)
     b.add_argument("--n", type=int, default=10)
     b.add_argument("--workers", type=int, default=30)
+    b.add_argument("--stage", type=int, default=1)
     g = sub.add_parser("diag")
     g.add_argument("--seed", type=int, required=True)
     g.add_argument("--name", required=True)
@@ -212,6 +218,7 @@ def main(argv=None) -> int:
     v.add_argument("--out", required=True)
     n = sub.add_parser("analyse")
     n.add_argument("--out", required=True)
+    n.add_argument("--stage", type=int, default=1)
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
@@ -229,10 +236,10 @@ def main(argv=None) -> int:
         out = Path(a.out)
         out.write_text(json.dumps(verify_one(a.seed, a.name, out.parent / "rd")))
     elif a.cmd == "batch":
-        batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers)
-        print(json.dumps(analyse(Path(a.out)), indent=1))
+        batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers, a.stage)
+        print(json.dumps(analyse(Path(a.out), a.stage), indent=1))
     else:
-        print(json.dumps(analyse(Path(a.out)), indent=1))
+        print(json.dumps(analyse(Path(a.out), a.stage), indent=1))
     return 0
 
 
