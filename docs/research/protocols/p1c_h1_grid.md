@@ -1,6 +1,6 @@
 # H1: T1f re-run with the constant-rate grid above the discharge flow (V154, DRAFT)
 
-**Status:** draft, fixed before data. Needs author approval (criteria and seeds) and a design review before any run.
+**Status:** on hold. The design review (V155, `docs/research/reviews/p1c_h1_design_review.md`) found that the slowdown cell cannot test the band above QDF. Do not run this draft.
 
 ## 1. Why
 
@@ -60,6 +60,6 @@ The seed ranges are inside the V135 block. They avoid the V153 plan's G2 (100-11
 
 ## 6. Cost and execution
 
-- **Runs:** tuning 10 seeds × 2 cells × (9 rates + NC) = 200, plus at most 40 for the edge rule; evaluation 20 seeds × 2 cells × 2 arms = 80. About 320 runs in total, my estimate under 30 min at 32 workers.
+- **Runs:** tuning 10 seeds × 2 cells × (9 rates + NC) = 200, plus at most 40 for the edge rule; evaluation 20 seeds × 2 cells × 2 arms = 80. About 320 runs in total, about 1 min of compute (measured: median 0.8 s per run; T1g's 1,120 runs in 1.7 min).
 - **Execution:** from a frozen copy at the run commit, with the CPU guard, in its own systemd user unit. Run once.
 - **Code:** a new script `v5b/p1c/h1_grid.py` that reuses `t1checks.job` / `run_jobs`. `bn4_slow_test.py` is unchanged.
