@@ -69,6 +69,7 @@ HDV_ACCEL: float | None = None
 
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
+HDV_TAU_FIXED: float | None = None
 HDV_SIGMA_FIXED: float | None = None
 
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
@@ -172,6 +173,8 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
                 v.asl = HDV_ASL_FIXED
             if HDV_SIGMA_FIXED is not None:
                 v.sigma = HDV_SIGMA_FIXED
+            if HDV_TAU_FIXED is not None:
+                v.tau = HDV_TAU_FIXED
         elif cls == "acc":
             v.tau, v.extra = _discrete(rf, ACC_TAU), dict(ACC_GAINS)
         elif cls == "cacc":

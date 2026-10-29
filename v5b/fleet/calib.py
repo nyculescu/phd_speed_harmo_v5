@@ -39,11 +39,12 @@ def grid() -> list:
     return [(c, m, a) for c in TAU_SCALES for m in MERGES for a in ACCELS]
 
 
-def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES) -> dict:
+def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, shares: tuple = HUMAN_SHARES,
+             geom: str = "bn4x", step: float = CFG.step) -> dict:
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     fl.SHARES, fl.HDV_TAU_SCALE, fl.HDV_ACCEL = shares, c, None if accel == 2.6 else accel
-    cfg = dataclasses.replace(CFG, geom="bn4x", merge=merge)
+    cfg = dataclasses.replace(CFG, geom=geom, merge=merge, step=step)
     d = fl.build_net(cfg)
     dem = fl.FleetDemand(seed, cal.profile("bn4"), cfg)
     tag = f"cal_{cfg.tag()}_c{c:g}_a{accel:g}_s{seed}_pid{os.getpid()}"
@@ -89,6 +90,23 @@ def diag_one(seed: int, name: str, run_dir: Path) -> dict:
     d = DIAG[name]
     fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = d.get("asl"), d.get("sigma")
     return {"diag": name, **run_once(seed, *DEFAULTS, run_dir, d.get("shares", HUMAN_SHARES))}
+
+
+# V178 walk from a V139-like human plant to the fleet plant, one difference added per step (cumulative)
+WALK = [("w0_v139like", {"geom": "bn4", "limit": 23.0, "step": 0.5, "tau": 1.0, "sf": (1.0, 0.1, 0.2, 2.0),
+                         "lengths": ((100.0, 5.0, 0.0),)}),
+        ("w1_step0.1", {"step": 0.1}), ("w2_bn4x", {"geom": "bn4x"}), ("w3_100kmh", {"limit": 100.0 / 3.6}),
+        ("w4_uk_speeds", {"sf": fl.CAR_SF}), ("w5_lengths", {"lengths": fl.CAR_SEGMENTS}), ("w6_tau_beta", {"tau": None})]
+
+
+def walk_one(seed: int, i: int, run_dir: Path) -> dict:
+    k = {}
+    for _, d in WALK[:i + 1]:
+        k |= d
+    fl.LIMIT, fl.CAR_SF, fl.CAR_SEGMENTS = k["limit"], k["sf"], k["lengths"]
+    fl.HDV_TAU_FIXED, fl.HDV_ASL_FIXED, fl.HDV_SIGMA_FIXED = k["tau"], k["step"], 0.5
+    out = run_once(seed, *DEFAULTS, run_dir, (1.0, 0.0, 0.0, 0.0, 0.0), geom=k["geom"], step=k["step"])
+    return {"walk": WALK[i][0], **out}
 
 
 def batch(out: Path, seeds: list, workers: int) -> None:
@@ -166,6 +184,10 @@ def main(argv=None) -> int:
     g.add_argument("--seed", type=int, required=True)
     g.add_argument("--name", required=True)
     g.add_argument("--out", required=True)
+    w = sub.add_parser("walk")
+    w.add_argument("--seed", type=int, required=True)
+    w.add_argument("--i", type=int, required=True)
+    w.add_argument("--out", required=True)
     n = sub.add_parser("analyse")
     n.add_argument("--out", required=True)
     a = ap.parse_args(argv)
@@ -178,6 +200,9 @@ def main(argv=None) -> int:
     elif a.cmd == "diag":
         out = Path(a.out)
         out.write_text(json.dumps(diag_one(a.seed, a.name, out.parent / "rd")))
+    elif a.cmd == "walk":
+        out = Path(a.out)
+        out.write_text(json.dumps(walk_one(a.seed, a.i, out.parent / "rd")))
     elif a.cmd == "batch":
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers)
         print(json.dumps(analyse(Path(a.out)), indent=1))
