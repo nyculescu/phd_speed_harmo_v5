@@ -82,3 +82,11 @@ def test_vtype_xml(veh):
     assert 'carFollowModel="ACC"' in x["acc"] and "collisionAvoidance" not in x["acc"]   # V164 default gains
     assert 'carFollowModel="CACC"' in x["cacc"]
     assert 'carFollowModel="ACC"' in x["alks"] and "gapClosingControlGainSpeed" not in x["alks"]
+
+
+def test_bn4x_geometry():
+    from v5b.p1c import plant as pl
+    a, b = dict(pl.GEOMS["bn4"]["nodes"]), dict(pl.GEOMS["bn4x"]["nodes"])
+    assert b["2"] - b["1"] == a["2"] - a["1"] + fl.UPSTREAM_EXTRA
+    assert all(b[n] - b["2"] == a[n] - a["2"] for n in a if n != "1")   # downstream of edge 1 unchanged
+    assert pl.GEOMS["bn4x"]["lanes"] == pl.GEOMS["bn4"]["lanes"]

@@ -1,7 +1,8 @@
 """No-control reference days for the fleet plant (V167): capacity, Layer A safety and conflict records.
 
 Day = 24 hourly Poisson rates: ADT x the UK motorway weekday shares (V166 (f), WebTRIS, 10 sites, Tue-Thu autumn 2025),
-then drain until empty (cap 2 h). BN4 zipper 100 m, step 0.1 s, the V156-V164 fleet, all green.
+then drain until empty (cap 2 h). BN4 zipper 100 m (or bn4x, 3 km longer entry, V169), step 0.1 s, the V156-V164
+fleet (ALKS-like class on ACC or IDM), all green.
 Every whole second, each vehicle's same-lane leader comes from getLeader; rear-end TTC = (gap + follower minGap) /
 closing speed when the follower is faster. Every TTC below TTC_KEEP is stored (t, follower, leader, TTC, speeds), so the
 1.0 / 1.5 / 3.0 s thresholds and the EVT fit (V166 (c)) can be computed afterwards. The SSM device is not used (V166 (a)).
@@ -13,6 +14,7 @@ breakdown to recovery (the V139 rule adapted to a day with two peaks).
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import os
 import subprocess
@@ -90,17 +92,17 @@ def breakdowns(ser: list) -> list:
     return out
 
 
-def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
+def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG) -> dict:
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
-    d = fl.build_net(CFG)
-    dem = fl.FleetDemand(seed, profile(adt), CFG)
-    tag = f"day_{CFG.tag()}_adt{adt:g}_s{seed}_pid{os.getpid()}"
+    d = fl.build_net(cfg)
+    dem = fl.FleetDemand(seed, profile(adt), cfg)
+    tag = f"day_{cfg.tag()}_alks{fl.ALKS_MODEL}_adt{adt:g}_s{seed}_pid{os.getpid()}"
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
     dem.write(rou)
-    sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=CFG.step, seed=seed,
+    sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
               extra_args=["--tripinfo-output", str(trip)])
-    loops = pl.loop_ids(CFG.geom)
+    loops = pl.loop_ids(cfg.geom)
     idx = {v.vid: i for i, v in enumerate(dem.veh)}
     cls_i = np.array([fl.CLASSES.index(v.cls) for v in dem.veh], dtype=np.int8)
     sim.start()
@@ -158,7 +160,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
                         cls=cls_i)
     ttc = r[:, 3]
     out = {
-        "seed": seed, "adt": adt, "cav_apparent_decel": fl.CAV_APPARENT_DECEL, "generated": len(dem.veh), "arrived": res["arrived"], "drained": drained,
+        "seed": seed, "adt": adt, "geom": cfg.geom, "alks_model": fl.ALKS_MODEL,
+        "cav_apparent_decel": fl.CAV_APPARENT_DECEL, "generated": len(dem.veh), "arrived": res["arrived"], "drained": drained,
         "sumo_errors": log.count("Error"), "teleports": res["teleports"], "collisions": res["collisions"],
         "collision_pairs": dict(Counter(f"{dem.by_id[c['collider']].cls}>{dem.by_id[c['victim']].cls}" for c in coll
                                         if c["collider"] in dem.by_id and c["victim"] in dem.by_id)),
@@ -205,23 +208,30 @@ def main(argv=None) -> int:
     o.add_argument("--adt", type=float, default=ADT)
     o.add_argument("--out", required=True)
     o.add_argument("--cav-apparent-decel", type=float)
+    o.add_argument("--geom", default=CFG.geom)
+    o.add_argument("--alks-model", default=fl.ALKS_MODEL)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
     b.add_argument("--seed0", type=int, required=True)
     b.add_argument("--n", type=int, default=10)
     b.add_argument("--workers", type=int, default=10)
     b.add_argument("--cav-apparent-decel", type=float)
+    b.add_argument("--geom", default=CFG.geom)
+    b.add_argument("--alks-model", default=fl.ALKS_MODEL)
     a = ap.parse_args(argv)
     if a.cav_apparent_decel is not None:
         fl.CAV_APPARENT_DECEL = a.cav_apparent_decel
+    fl.ALKS_MODEL = a.alks_model
     if a.cmd == "one":
         out = Path(a.out)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt)
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, dataclasses.replace(CFG, geom=a.geom))
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)
     else:
-        extra = [] if a.cav_apparent_decel is None else ["--cav-apparent-decel", str(a.cav_apparent_decel)]
+        extra = ["--geom", a.geom, "--alks-model", a.alks_model]
+        if a.cav_apparent_decel is not None:
+            extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers, extra)
     return 0
 

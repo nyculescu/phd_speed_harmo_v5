@@ -60,6 +60,9 @@ ACC_ORIGINAL = {"gapClosingControlGainSpeed": 0.07, "gapClosingControlGainSpace"
 # variant knob (V168 test): followers of a CAV assume it may brake this hard (SUMO apparentDecel); None = SUMO default
 CAV_APPARENT_DECEL: float | None = None
 
+# ALKS-like class car-following model: SUMO's ACC, or IDM for the V169 test (ACC approaches standing queues late)
+ALKS_MODEL = "ACC"
+
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
 
 
@@ -120,8 +123,10 @@ class VehSpec:
                   "sigma": f"{self.sigma:.3f}", "actionStepLength": f"{self.asl:.1f}"}
         elif self.cls == "truck":
             a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{TRUCK_MAX:g}"}
-        elif self.cls in ("acc", "alks"):
+        elif self.cls == "acc":
             a |= {"vClass": "passenger", "carFollowModel": "ACC", "tau": f"{self.tau:g}"}
+        elif self.cls == "alks":
+            a |= {"vClass": "passenger", "carFollowModel": ALKS_MODEL, "tau": f"{self.tau:g}"}
         elif self.cls == "cacc":
             a |= {"vClass": "passenger", "carFollowModel": "CACC", "tau": f"{self.tau:g}"}
         if self.cls in ("acc", "cacc", "alks") and CAV_APPARENT_DECEL is not None:
@@ -164,6 +169,12 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
             v.tau = ALKS_TAU
         out.append(v)
     return out
+
+
+# BN4 with a 3 km longer entry edge (V169): the peak queues (up to about 1.2 km in V168) stay inside the network
+UPSTREAM_EXTRA = 3000.0
+pl.GEOMS.setdefault("bn4x", {**pl.GEOMS["bn4"], "nodes": [(n, x if n == "1" else x + UPSTREAM_EXTRA)
+                                                          for n, x in pl.GEOMS["bn4"]["nodes"]]})
 
 
 def build_net(cfg: pl.Config) -> Path:
