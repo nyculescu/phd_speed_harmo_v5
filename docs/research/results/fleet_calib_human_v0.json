@@ -463,5 +463,55 @@
    "median_pre": 1332.0,
    "collisions": 0
   }
+ },
+ "step_check_V180": {
+  "euler_0.25": {
+   "n": 10,
+   "median_drop": 0.4356651679449881,
+   "median_qdf": 1344.6315789473683,
+   "median_pre": 2388.0,
+   "collisions": 0
+  },
+  "euler_0.2": {
+   "n": 10,
+   "median_drop": 0.428125,
+   "median_qdf": 1363.6363636363637,
+   "median_pre": 2388.0,
+   "collisions": 0
+  },
+  "ballistic_0.5": {
+   "n": 10,
+   "median_drop": 0.04168054630246498,
+   "median_qdf": 1816.6304347826087,
+   "median_pre": 1896.0,
+   "collisions": 0
+  },
+  "ballistic_0.1": {
+   "n": 10,
+   "median_drop": 0.26302607604234635,
+   "median_qdf": 1344.6606334841629,
+   "median_pre": 1818.0,
+   "collisions": 0
+  }
+ },
+ "merge_isolation_V180": {
+  "note": "Scratch test, not on calibration seeds: 400 Krauss-default 5-m cars at 3,000 veh/h, 23 m/s, discharge counted over 300 s, SUMO seed 7,400,000.",
+  "signal_1lane": {
+   "0.1": 2520,
+   "0.5": 2364
+  },
+  "zipper_2to1_vis100": {
+   "0.1": 1344,
+   "0.5": 1932
+  },
+  "laneend_2to1": {
+   "0.1": 2520,
+   "0.5": 2124
+  },
+  "zipper_0.1_vis20": 1356,
+  "zipper_0.1_vis300": 1380,
+  "zipper_0.1_jmTimegapMinor0.5": 1344,
+  "zipper_0.1_jmTimegapMinor0": 1344,
+  "zipper_0.1_actionStep0.5": 1296
  }
 }
