@@ -5,7 +5,8 @@ then drain until empty (cap 2 h). BN4 zipper 100 m, step 0.1 s, the V156-V164 fl
 Every whole second, each vehicle's same-lane leader comes from getLeader; rear-end TTC = (gap + follower minGap) /
 closing speed when the follower is faster. Every TTC below TTC_KEEP is stored (t, follower, leader, TTC, speeds), so the
 1.0 / 1.5 / 3.0 s thresholds and the EVT fit (V166 (c)) can be computed afterwards. The SSM device is not used (V166 (a)).
-Breakdowns: 'up' loop speed below half the limit for 4 consecutive 30-s intervals; recovery after 4 intervals above.
+Breakdowns: 'up' loop speed (vehicle-weighted over lanes; intervals without vehicles count as free) below half the
+limit for 4 consecutive 30-s intervals; recovery after 4 intervals above.
 Pre-queue flow = highest 5-min rolling exit flow in the hour before breakdown; QDF = mean exit flow from 5 min after
 breakdown to recovery (the V139 rule adapted to a day with two peaks).
 """
@@ -29,7 +30,7 @@ from v5b.fleet import fleet as fl
 from v5b.fleet.smoke import CFG
 from v5b.p1c import plant as pl
 from v5b.p1c.calibrate import _cpu_util
-from v5b.p1c.episode import Sim, _mean
+from v5b.p1c.episode import Sim
 
 # share of daily traffic per hour, 00-01 to 23-24 (%)
 UK_WEEKDAY = (0.61, 0.51, 0.52, 0.65, 1.08, 2.35, 5.32, 7.23, 6.71, 6.02, 5.61, 5.70,
@@ -45,11 +46,29 @@ def profile(adt: float = ADT) -> list:
     return [(3600.0 * h, 3600.0 * (h + 1), adt * s / tot) for h, s in enumerate(UK_WEEKDAY)]
 
 
+def _up_speed(ids: list) -> float | None:
+    n = [ls.inductionloop.getLastIntervalVehicleNumber(i) for i in ids]
+    if not sum(n):
+        return None
+    return round(sum(k * ls.inductionloop.getLastIntervalMeanSpeed(i) for k, i in zip(n, ids) if k) / sum(n), 2)
+
+
+def _first_steps(coll: list) -> list:
+    """One row per collision: SUMO reports a pair again on every step while it overlaps."""
+    seen, out = {}, []
+    for c in coll:
+        k = (c["collider"], c["victim"])
+        if k not in seen or c["t"] - seen[k] > 1.0:
+            out.append(c)
+        seen[k] = c["t"]
+    return out
+
+
 def breakdowns(ser: list) -> list:
     t = np.array([x[0] for x in ser])
     q = np.array([x[1] for x in ser]) * 120.0
-    v = np.array([x[2] for x in ser])
-    slow = v < 0.5 * fl.LIMIT
+    v = np.array([np.nan if x[2] is None else x[2] for x in ser], dtype=float)
+    slow = np.nan_to_num(v, nan=fl.LIMIT) < 0.5 * fl.LIMIT
     roll = np.convolve(q, np.ones(10) / 10, mode="valid")
     ends = t[9:]
     out, i, n = [], 0, len(t)
@@ -93,7 +112,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
     drained = False
     while True:
         sim.step()
-        coll += [(c.collider, c.victim) for c in ls.simulation.getCollisions()]
+        coll += [{"t": round(sim.t, 1), "collider": c.collider, "victim": c.victim, "type": c.type, "lane": c.lane,
+                  "v_collider": round(c.colliderSpeed, 2), "v_victim": round(c.victimSpeed, 2)}
+                 for c in ls.simulation.getCollisions()]
         for vid in ls.simulation.getDepartedIDList():
             min_gap[vid] = ls.vehicle.getMinGap(vid)
         t = sim.t
@@ -114,8 +135,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
                     rec.append((t, idx[vid], idx[lead[0]], ttc, sp[vid], sp[lead[0]]))
             if abs(t / pl.LOOP_PERIOD - round(t / pl.LOOP_PERIOD)) < 1e-6:
                 ser.append((round(t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
-                            round(_mean(loops["up"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
-                            int(sim.departed), len(ls.simulation.getPendingVehicles())))
+                            _up_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles())))
         if t >= t_end and sim.departed == sim._total and ls.vehicle.getIDCount() == 0 \
                 and not ls.simulation.getPendingVehicles():
             drained = True
@@ -140,8 +160,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
     out = {
         "seed": seed, "adt": adt, "generated": len(dem.veh), "arrived": res["arrived"], "drained": drained,
         "sumo_errors": log.count("Error"), "teleports": res["teleports"], "collisions": res["collisions"],
-        "collision_pairs": dict(Counter(f"{dem.by_id[a].cls}>{dem.by_id[b].cls}" for a, b in coll
-                                        if a in dem.by_id and b in dem.by_id)),
+        "collision_pairs": dict(Counter(f"{dem.by_id[c['collider']].cls}>{dem.by_id[c['victim']].cls}" for c in coll
+                                        if c["collider"] in dem.by_id and c["victim"] in dem.by_id)),
+        "collision_events": _first_steps(coll),
         "emergency_stops": res["emergency_stops"], "emergency_braking_warnings": log.count("performs emergency braking"),
         "breakdowns": breakdowns(ser), "max_pending": res.get("max_pending"),
         "vehicle_seconds": veh_s, "closing_seconds": closing_s,
@@ -150,7 +171,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT) -> dict:
         "delay_mean_by_class": {c: round(float(np.mean(x)), 1) if x else None for c, x in delays.items()},
         "series": ser, "health": res["health"]["status"], "hash": res["hash"], "wall_s": round(time.time() - t_w0, 1),
     }
-    for f in (rou, trip, sim.log_file, sim.stat_file):
+    sim.log_file.replace(run_dir.parent / f"sumo_s{seed}.log")
+    for f in (rou, trip, sim.stat_file):
         f.unlink(missing_ok=True)
     return out
 
