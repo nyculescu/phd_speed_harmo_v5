@@ -74,9 +74,9 @@ def run_once(seed: int, c: float, merge: str, accel: float, run_dir: Path, share
     dem.write(rou)
     sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
               extra_args=["--tripinfo-output", str(trip)] + (["--step-method.ballistic", "true"] if ballistic else []))
-    loops = pl.loop_ids(cfg.geom)
+    loops = fl.loop_ids(cfg.geom)
     sim.start()
-    ls.trafficlight.setProgram(pl.TLS_ID, "allgreen")
+    fl.all_green(cfg.geom)
     ser, drained = [], False
     while sim.t < T_CAP - 1e-9:
         sim.step()

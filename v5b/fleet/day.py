@@ -60,10 +60,11 @@ def _first_steps(coll: list) -> list:
     return out
 
 
-def breakdowns(ser: list) -> list:
+def breakdowns(ser: list, k: int = 2) -> list:
+    """Breakdown episodes from the loop speed in series field k (2: 'up' loops; 5: 'merge_up' on ramp32)."""
     t = np.array([x[0] for x in ser])
     q = np.array([x[1] for x in ser]) * 120.0
-    v = np.array([np.nan if x[2] is None else x[2] for x in ser], dtype=float)
+    v = np.array([np.nan if x[k] is None else x[k] for x in ser], dtype=float)
     slow = np.nan_to_num(v, nan=fl.LIMIT) < 0.5 * fl.LIMIT
     roll = np.convolve(q, np.ones(10) / 10, mode="valid")
     ends = t[9:]
@@ -126,11 +127,11 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                                        step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
     removed, arrived_while_crashed = [], []
-    loops = pl.loop_ids(cfg.geom)
+    loops = fl.loop_ids(cfg.geom)
     idx = {v.vid: i for i, v in enumerate(dem.veh)}
     cls_i = np.array([fl.CLASSES.index(v.cls) for v in dem.veh], dtype=np.int8)
     sim.start()
-    ls.trafficlight.setProgram(pl.TLS_ID, "allgreen")
+    fl.all_green(cfg.geom)
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
@@ -175,7 +176,10 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 cp.prune(t)
             if abs(t / pl.LOOP_PERIOD - round(t / pl.LOOP_PERIOD)) < 1e-6:
                 ser.append((round(t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
-                            loop_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles())))
+                            loop_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles()),
+                            loop_speed(loops["merge_up"]) if "merge_up" in loops else None,
+                            sum(ls.lane.getLastStepVehicleNumber(f"{e}_0") for e in ("r",)) if "ramp_q" in loops
+                            else None))
         if t >= t_end and sim.departed == sim._total and ls.vehicle.getIDCount() == 0 \
                 and not ls.simulation.getPendingVehicles():
             drained = True
@@ -206,6 +210,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "collision_events": _first_steps(coll),
         "emergency_stops": res["emergency_stops"], "emergency_braking_warnings": log.count("performs emergency braking"),
         "breakdowns": breakdowns(ser), "max_pending": res.get("max_pending"),
+        "breakdowns_merge": breakdowns(ser, 5) if "merge_up" in loops else None,
+        "ramp_queue_max": max((x[6] for x in ser if x[6] is not None), default=None),
         "crash_rule": crash, "crashes": cp.events if cp else [], "removed": len(removed),
         "arrived_while_crashed": arrived_while_crashed, "arrived_plus_removed": res["arrived"] + len(removed),
         "vehicle_seconds": veh_s, "closing_seconds": closing_s,

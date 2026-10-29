@@ -21,6 +21,7 @@ from unittest import mock
 
 import numpy as np
 
+from v5b.fleet import corridor
 from v5b.p1c import plant as pl
 
 LIMIT = 100.0 / 3.6
@@ -76,7 +77,7 @@ HDV_TAU_FIXED: float | None = None
 HDV_SIGMA_STEP: float | None = None
 HDV_SIGMA_FIXED: float | None = None
 
-STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5}
+STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5, "route": 6}
 
 
 def _beta_ab(lo: float, hi: float, mean: float, sd: float) -> tuple:
@@ -215,6 +216,7 @@ pl.GEOMS.setdefault("ld43", _lane_drop(4))
 
 PLANTS = {"v188": {"geom": "ld32", "merge": "laneend", "tau_scale": 0.8, "asl_scale": 0.5,
                    "cav_models": {"acc": "IDM", "cacc": "IDM", "alks": "IDM"}}}
+PLANTS["v190"] = {**PLANTS["v188"], "geom": corridor.NAME}
 
 
 def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
@@ -227,9 +229,31 @@ def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
 
 
 def build_net(cfg: pl.Config) -> Path:
-    """The p1c geometry with a 100 km/h limit on every edge (V156); cached under its own spec hash."""
+    """The p1c geometry (or the V190 on-ramp corridor) with a 100 km/h limit on every edge (V156)."""
+    if cfg.geom == corridor.NAME:
+        return corridor.build(LIMIT)
     with mock.patch.object(pl, "SPEED", LIMIT):
         return pl.build_net(cfg)
+
+
+def loop_ids(geom: str) -> dict:
+    return corridor.loop_ids() if geom == corridor.NAME else pl.loop_ids(geom)
+
+
+def all_green(geom: str) -> None:
+    """No control: the p1c mainline signal or the V190 ramp meter stays green."""
+    import libsumo as ls
+    for tls in ls.trafficlight.getIDList():
+        if geom == corridor.NAME or tls == pl.TLS_ID:
+            ls.trafficlight.setRedYellowGreenState(tls, "G" * len(ls.trafficlight.getRedYellowGreenState(tls)))
+
+
+def routes(geom: str) -> dict:
+    """route id -> (edges, share of vehicles, entry lanes)."""
+    if geom == corridor.NAME:
+        return {r: (e, corridor.RAMP_SHARE if r == "ramp" else 1 - corridor.RAMP_SHARE, corridor.ENTRY_LANES[r])
+                for r, e in corridor.ROUTES.items()}
+    return {"main": (pl.ROUTE_EDGES, 1.0, pl.lanes(geom, "1"))}
 
 
 class FleetDemand:
@@ -249,9 +273,16 @@ class FleetDemand:
                     break
                 deps.append(round(math.ceil(t / cfg.step - 1e-9) * cfg.step, 3))
         self.cfg, self.seed, self.profile = cfg, seed, profile
-        self.veh = sample(len(deps), seed, pl.lanes(cfg.geom, "1"), deps)
+        self.routes = routes(cfg.geom)
+        names = list(self.routes)
+        rr = _rng(seed, "route")
+        self.route_of = [names[int(rr.choice(len(names), p=[self.routes[n][1] for n in names]))]
+                         for _ in deps]
+        self.veh = sample(len(deps), seed, max(v[2] for v in self.routes.values()), deps)
+        for v, r in zip(self.veh, self.route_of):
+            v.lane = v.lane % self.routes[r][2]
         self.by_id = {v.vid: v for v in self.veh}
-        self.vehicles = [(v.depart, v.vid, "main", f"t.{v.vid}") for v in self.veh]
+        self.vehicles = [(v.depart, v.vid, r, f"t.{v.vid}") for v, r in zip(self.veh, self.route_of)]
 
     @property
     def depart_times(self) -> list:
@@ -261,8 +292,9 @@ class FleetDemand:
         return {"main": len(self.veh)}
 
     def write(self, path: Path) -> None:
-        lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<routes>", f'  <route id="main" edges="{pl.ROUTE_EDGES}"/>']
+        lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<routes>"]
+        lines += [f'  <route id="{r}" edges="{e[0]}"/>' for r, e in self.routes.items()]
         lines += [v.vtype_xml() for v in self.veh]
-        lines += [f'  <vehicle id="{v.vid}" type="t.{v.vid}" route="main" depart="{v.depart:.2f}" departLane="{v.lane}" '
-                  f'departSpeed="max" speedFactor="{v.sf}"/>' for v in self.veh]
+        lines += [f'  <vehicle id="{v.vid}" type="t.{v.vid}" route="{r}" depart="{v.depart:.2f}" departLane="{v.lane}" '
+                  f'departSpeed="max" speedFactor="{v.sf}"/>' for v, r in zip(self.veh, self.route_of)]
         path.write_text("\n".join(lines + ["</routes>"]) + "\n")

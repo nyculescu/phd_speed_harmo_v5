@@ -101,3 +101,19 @@ def test_calibration_knobs(monkeypatch):
     h = [x for x in v if x.cls == "hdv_car"]
     assert all(x.tau >= x.asl for x in h) and min(x.tau for x in h) >= 0.7 * 0.2 - 1e-9
     assert 'accel="2"' in h[0].vtype_xml()
+
+
+def test_ramp_corridor_demand():
+    from collections import Counter
+    from v5b.fleet import corridor
+    from v5b.fleet.smoke import CFG
+    cfg = fl.apply_plant("v190", CFG)
+    try:
+        dem = fl.FleetDemand(SEED, [(0.0, 3600.0, 4000.0)], cfg)
+        n = Counter(dem.route_of)
+        assert abs(n["ramp"] / len(dem.veh) - corridor.RAMP_SHARE) < 0.03
+        assert all(v.lane == 0 for v, r in zip(dem.veh, dem.route_of) if r == "ramp")
+        assert {k for k in fl.loop_ids(cfg.geom)} >= {"up", "merge_up", "exit", "ramp_q"}
+    finally:
+        fl.HDV_TAU_SCALE, fl.HDV_ASL_SCALE = 1.0, 1.0
+        fl.CAV_MODELS.update(acc="ACC", cacc="CACC", alks="ACC")
