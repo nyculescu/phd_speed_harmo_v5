@@ -1,5 +1,5 @@
 {
- "note": "No-control reference days (V167): BN4 zipper 100 m, step 0.1 s, fleet V156-V164, ADT 20,000 with UK weekday shares, seeds 7,430,040-049. 'baseline' = code 1310ae3 (re-measure of the 6448b0d days with a lane-weighted breakdown speed; same simulation); 'cav_apparent_decel_9' = code ac36996. SUMO's collision counter counts both vehicles of a collision.",
+ "note": "No-control reference days (V167): BN4 zipper 100 m, step 0.1 s, fleet V156-V164, ADT 20,000 with UK weekday shares, seeds 7,430,040-049. 'baseline' = code 1310ae3 (re-measure of the 6448b0d days with a lane-weighted breakdown speed; same simulation); 'cav_apparent_decel_9' = code ac36996. SUMO's collision counter counts both vehicles of a collision. 'bn4x_alks_ACC' and 'bn4x_alks_IDM' = code 5439e84 (V169): 3 km longer entry edge; ALKS-like class on SUMO ACC or IDM.",
  "runs": {
   "baseline": {
    "summary": {
@@ -1182,6 +1182,1259 @@
       "alks": 416.1
      },
      "wall_s": 813.6
+    }
+   ]
+  },
+  "bn4x_alks_ACC": {
+   "summary": {
+    "days": 10,
+    "seeds": [
+     7430040,
+     7430041,
+     7430042,
+     7430043,
+     7430044,
+     7430045,
+     7430046,
+     7430047,
+     7430048,
+     7430049
+    ],
+    "layer_a": {
+     "collisions": 8,
+     "teleports": 0,
+     "emergency_stops": 0,
+     "emergency_braking_per_day": 2306.5,
+     "all_drained": true,
+     "sumo_errors": 0
+    },
+    "capacity": {
+     "breakdowns_per_day": 3.0,
+     "n_used": 21,
+     "pre_median": 1488.0,
+     "qdf_median": 1208.552,
+     "drop_median": 0.181,
+     "drop_range": [
+      0.101,
+      0.255
+     ],
+     "duration_min_median": 275.5
+    },
+    "tail": {
+     "1": {
+      "n": 36,
+      "per_day": 3.6,
+      "shape": -0.6439,
+      "scale": 0.5838,
+      "endpoint_ttc": 0.093,
+      "p_crash_per_encounter": 0.0,
+      "evt_crashes_per_day": 0.0,
+      "ks_p": 0.3977,
+      "min_ttc_seen": 0.133
+     },
+     "1.5": {
+      "n": 3864,
+      "per_day": 386.4,
+      "shape": 0.0398,
+      "scale": 0.1048,
+      "endpoint_ttc": null,
+      "p_crash_per_encounter": 1.2060556839572065e-05,
+      "evt_crashes_per_day": 0.0046601991628106455,
+      "ks_p": 0.0025,
+      "min_ttc_seen": 0.133
+     },
+     "3": {
+      "n": 177621,
+      "per_day": 17762.1,
+      "shape": -0.2833,
+      "scale": 0.8123,
+      "endpoint_ttc": 0.133,
+      "p_crash_per_encounter": 0.0,
+      "evt_crashes_per_day": 0.0,
+      "ks_p": 0.0,
+      "min_ttc_seen": 0.133
+     }
+    },
+    "target_crashes_per_day": 0.288,
+    "diagnostics": {
+     "emergency_braking": 22695,
+     "per_1000_vehicles_by_class": {
+      "hdv_car": 2.0,
+      "truck": 2.0,
+      "acc": 251.5,
+      "cacc": 128.7,
+      "alks": 258.2
+     },
+     "by_place": {
+      "edge 1": 13626,
+      "edge 2": 5513,
+      "edge 3": 2093,
+      "edge 4": 1188,
+      "junction 4": 272,
+      "junction 2": 2,
+      "junction 3": 1
+     },
+     "by_hour": {
+      "1": 2,
+      "4": 9,
+      "5": 22,
+      "6": 169,
+      "7": 1661,
+      "8": 2526,
+      "9": 2311,
+      "10": 2024,
+      "11": 1265,
+      "12": 557,
+      "13": 544,
+      "14": 847,
+      "15": 1801,
+      "16": 2165,
+      "17": 2238,
+      "18": 2218,
+      "19": 1995,
+      "20": 309,
+      "21": 19,
+      "22": 9,
+      "23": 4
+     },
+     "hdv_car_tau_quartiles_braking_vs_all": [
+      [
+       0.23,
+       0.45,
+       0.59,
+       0.81,
+       1.93
+      ],
+      [
+       0.2,
+       0.9,
+       1.21,
+       1.52,
+       2.0
+      ]
+     ],
+     "hdv_car_asl_mean_braking_vs_all": [
+      0.299,
+      0.377
+     ],
+     "collisions": [
+      {
+       "t": 54621.6,
+       "collider": "main.12447",
+       "victim": "main.12440",
+       "type": "collision",
+       "lane": "2_2",
+       "v_collider": 14.61,
+       "v_victim": 13.51,
+       "collider_cls": "hdv_car",
+       "victim_cls": "acc",
+       "collider_tau": 1.44,
+       "collider_asl": 0.2,
+       "collider_sigma": 0.13,
+       "victim_tau": 2.2
+      },
+      {
+       "t": 28824.0,
+       "collider": "main.3727",
+       "victim": "main.3714",
+       "type": "collision",
+       "lane": "1_1",
+       "v_collider": 15.37,
+       "v_victim": 14.05,
+       "collider_cls": "hdv_car",
+       "victim_cls": "alks",
+       "collider_tau": 1.93,
+       "collider_asl": 0.8,
+       "collider_sigma": 0.223,
+       "victim_tau": 1.6
+      },
+      {
+       "t": 47245.5,
+       "collider": "main.10046",
+       "victim": "main.10047",
+       "type": "collision",
+       "lane": "2_2",
+       "v_collider": 20.13,
+       "v_victim": 18.62,
+       "collider_cls": "hdv_car",
+       "victim_cls": "alks",
+       "collider_tau": 1.273,
+       "collider_asl": 0.8,
+       "collider_sigma": 0.445,
+       "victim_tau": 1.6
+      },
+      {
+       "t": 35989.2,
+       "collider": "main.6112",
+       "victim": "main.6109",
+       "type": "side",
+       "lane": ":4_0_3",
+       "v_collider": 6.67,
+       "v_victim": 6.86,
+       "collider_cls": "hdv_car",
+       "victim_cls": "cacc",
+       "collider_tau": 1.772,
+       "collider_asl": 0.6,
+       "collider_sigma": 0.708,
+       "victim_tau": 0.6
+      }
+     ]
+    }
+   },
+   "days": [
+    {
+     "seed": 7430040,
+     "collisions": 0,
+     "emergency_braking_warnings": 2166,
+     "breakdowns": [
+      {
+       "t_break": 27570.0,
+       "t_recover": 40290.0,
+       "min": 212.0,
+       "pre": 1452.0,
+       "qdf": 1206.0722891566265,
+       "drop": 0.16937170168276405
+      },
+      {
+       "t_break": 52320.0,
+       "t_recover": 52800.0,
+       "min": 8.0,
+       "pre": 1572.0,
+       "qdf": 1285.7142857142858,
+       "drop": 0.18211559432933477
+      },
+      {
+       "t_break": 55260.0,
+       "t_recover": 72180.0,
+       "min": 282.0,
+       "pre": 1488.0,
+       "qdf": 1200.2162162162163,
+       "drop": 0.19340308049985466
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 355,
+      "3": 16781
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 425.2,
+      "truck": 433.6,
+      "acc": 426.3,
+      "cacc": 412.3,
+      "alks": 438.8
+     },
+     "wall_s": 1811.0
+    },
+    {
+     "seed": 7430041,
+     "collisions": 0,
+     "emergency_braking_warnings": 2141,
+     "breakdowns": [
+      {
+       "t_break": 26670.0,
+       "t_recover": 40830.0,
+       "min": 236.0,
+       "pre": 1536.0,
+       "qdf": 1214.7732181425486,
+       "drop": 0.20913201943844495
+      },
+      {
+       "t_break": 55380.0,
+       "t_recover": 72240.0,
+       "min": 281.0,
+       "pre": 1488.0,
+       "qdf": 1220.8318264014467,
+       "drop": 0.17954850376246856
+      }
+     ],
+     "encounters": {
+      "1": 3,
+      "1.5": 384,
+      "3": 18010
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 446.3,
+      "truck": 414.2,
+      "acc": 464.2,
+      "cacc": 449.9,
+      "alks": 481.5
+     },
+     "wall_s": 1852.2
+    },
+    {
+     "seed": 7430042,
+     "collisions": 0,
+     "emergency_braking_warnings": 2281,
+     "breakdowns": [
+      {
+       "t_break": 25680.0,
+       "t_recover": 25980.0,
+       "min": 5.0,
+       "pre": 1596.0,
+       "qdf": 1560.0,
+       "drop": 0.022556390977443663
+      },
+      {
+       "t_break": 26400.0,
+       "t_recover": 40140.0,
+       "min": 229.0,
+       "pre": 1596.0,
+       "qdf": 1208.552338530067,
+       "drop": 0.24276169265033398
+      },
+      {
+       "t_break": 54420.0,
+       "t_recover": 72780.0,
+       "min": 306.0,
+       "pre": 1560.0,
+       "qdf": 1206.5671641791046,
+       "drop": 0.22655951014159958
+      }
+     ],
+     "encounters": {
+      "1": 1,
+      "1.5": 402,
+      "3": 18548
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 478.7,
+      "truck": 452.3,
+      "acc": 496.7,
+      "cacc": 479.5,
+      "alks": 503.1
+     },
+     "wall_s": 1788.5
+    },
+    {
+     "seed": 7430043,
+     "collisions": 0,
+     "emergency_braking_warnings": 2489,
+     "breakdowns": [
+      {
+       "t_break": 27390.0,
+       "t_recover": 43920.0,
+       "min": 275.5,
+       "pre": 1464.0,
+       "qdf": 1201.771217712177,
+       "drop": 0.17911802068840366
+      },
+      {
+       "t_break": 51720.0,
+       "t_recover": 53370.0,
+       "min": 27.5,
+       "pre": 1464.0,
+       "qdf": 1220.8695652173913,
+       "drop": 0.1660727013542409
+      },
+      {
+       "t_break": 54900.0,
+       "t_recover": 72750.0,
+       "min": 297.5,
+       "pre": 1452.0,
+       "qdf": 1198.976109215017,
+       "drop": 0.17425887795109019
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 393,
+      "3": 19396
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 489.2,
+      "truck": 479.4,
+      "acc": 531.5,
+      "cacc": 489.7,
+      "alks": 525.8
+     },
+     "wall_s": 1960.9
+    },
+    {
+     "seed": 7430044,
+     "collisions": 0,
+     "emergency_braking_warnings": 2332,
+     "breakdowns": [
+      {
+       "t_break": 25770.0,
+       "t_recover": 40530.0,
+       "min": 246.0,
+       "pre": 1356.0,
+       "qdf": 1204.9689440993789,
+       "drop": 0.11137983473497137
+      },
+      {
+       "t_break": 48120.0,
+       "t_recover": 48450.0,
+       "min": 5.5,
+       "pre": 1500.0,
+       "qdf": 1380.0,
+       "drop": 0.07999999999999996
+      },
+      {
+       "t_break": 54480.0,
+       "t_recover": 73440.0,
+       "min": 316.0,
+       "pre": 1476.0,
+       "qdf": 1217.3354735152489,
+       "drop": 0.17524696916311056
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 448,
+      "3": 19005
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 557.4,
+      "truck": 537.3,
+      "acc": 578.2,
+      "cacc": 558.9,
+      "alks": 554.2
+     },
+     "wall_s": 1978.5
+    },
+    {
+     "seed": 7430045,
+     "collisions": 0,
+     "emergency_braking_warnings": 1536,
+     "breakdowns": [
+      {
+       "t_break": 28170.0,
+       "t_recover": 34740.0,
+       "min": 109.5,
+       "pre": 1524.0,
+       "qdf": 1220.5714285714287,
+       "drop": 0.19910011248593917
+      },
+      {
+       "t_break": 49890.0,
+       "t_recover": 50040.0,
+       "min": 2.5,
+       "pre": 1452.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 53700.0,
+       "t_recover": 54030.0,
+       "min": 5.5,
+       "pre": 1524.0,
+       "qdf": 1440.0,
+       "drop": 0.055118110236220486
+      },
+      {
+       "t_break": 57870.0,
+       "t_recover": 71730.0,
+       "min": 231.0,
+       "pre": 1572.0,
+       "qdf": 1196.8211920529802,
+       "drop": 0.238663363833982
+      }
+     ],
+     "encounters": {
+      "1": 5,
+      "1.5": 250,
+      "3": 10950
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 275.0,
+      "truck": 271.9,
+      "acc": 271.9,
+      "cacc": 268.1,
+      "alks": 276.4
+     },
+     "wall_s": 1625.2
+    },
+    {
+     "seed": 7430046,
+     "collisions": 0,
+     "emergency_braking_warnings": 2445,
+     "breakdowns": [
+      {
+       "t_break": 25980.0,
+       "t_recover": 43410.0,
+       "min": 290.5,
+       "pre": 1440.0,
+       "qdf": 1199.7902097902097,
+       "drop": 0.16681235431235442
+      },
+      {
+       "t_break": 53310.0,
+       "t_recover": 72210.0,
+       "min": 315.0,
+       "pre": 1596.0,
+       "qdf": 1214.1062801932367,
+       "drop": 0.2392817793275459
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 415,
+      "3": 19753
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 473.3,
+      "truck": 474.7,
+      "acc": 503.8,
+      "cacc": 467.9,
+      "alks": 517.6
+     },
+     "wall_s": 2156.1
+    },
+    {
+     "seed": 7430047,
+     "collisions": 2,
+     "emergency_braking_warnings": 2622,
+     "breakdowns": [
+      {
+       "t_break": 25680.0,
+       "t_recover": 41670.0,
+       "min": 266.5,
+       "pre": 1368.0,
+       "qdf": 1210.0763358778627,
+       "drop": 0.11544127494308287
+      },
+      {
+       "t_break": 52050.0,
+       "t_recover": 73440.0,
+       "min": 356.5,
+       "pre": 1464.0,
+       "qdf": 1198.465909090909,
+       "drop": 0.18137574515648291
+      }
+     ],
+     "encounters": {
+      "1": 4,
+      "1.5": 417,
+      "3": 20664
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 598.0,
+      "truck": 578.0,
+      "acc": 632.9,
+      "cacc": 565.7,
+      "alks": 643.7
+     },
+     "wall_s": 2163.8
+    },
+    {
+     "seed": 7430048,
+     "collisions": 4,
+     "emergency_braking_warnings": 2799,
+     "breakdowns": [
+      {
+       "t_break": 25260.0,
+       "t_recover": 53220.0,
+       "min": 466.0,
+       "pre": 1356.0,
+       "qdf": 1219.3716143011918,
+       "drop": 0.10075839653304441
+      },
+      {
+       "t_break": 57390.0,
+       "t_recover": 57570.0,
+       "min": 3.0,
+       "pre": 1608.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 58170.0,
+       "t_recover": 58290.0,
+       "min": 2.0,
+       "pre": 1608.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 59400.0,
+       "t_recover": 70800.0,
+       "min": 190.0,
+       "pre": 1584.0,
+       "qdf": 1223.288409703504,
+       "drop": 0.22772196357102026
+      }
+     ],
+     "encounters": {
+      "1": 9,
+      "1.5": 480,
+      "3": 20587
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 375.7,
+      "truck": 368.7,
+      "acc": 403.0,
+      "cacc": 392.2,
+      "alks": 399.5
+     },
+     "wall_s": 1980.7
+    },
+    {
+     "seed": 7430049,
+     "collisions": 2,
+     "emergency_braking_warnings": 1884,
+     "breakdowns": [
+      {
+       "t_break": 27780.0,
+       "t_recover": 36390.0,
+       "min": 143.5,
+       "pre": 1548.0,
+       "qdf": 1210.7913669064749,
+       "drop": 0.21783503429814288
+      },
+      {
+       "t_break": 52350.0,
+       "t_recover": 52560.0,
+       "min": 3.5,
+       "pre": 1500.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 54630.0,
+       "t_recover": 72300.0,
+       "min": 294.5,
+       "pre": 1620.0,
+       "qdf": 1206.2068965517242,
+       "drop": 0.2554278416347382
+      }
+     ],
+     "encounters": {
+      "1": 6,
+      "1.5": 320,
+      "3": 13927
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 344.8,
+      "truck": 350.3,
+      "acc": 362.9,
+      "cacc": 336.0,
+      "alks": 362.9
+     },
+     "wall_s": 2056.7
+    }
+   ]
+  },
+  "bn4x_alks_IDM": {
+   "summary": {
+    "days": 10,
+    "seeds": [
+     7430040,
+     7430041,
+     7430042,
+     7430043,
+     7430044,
+     7430045,
+     7430046,
+     7430047,
+     7430048,
+     7430049
+    ],
+    "layer_a": {
+     "collisions": 10,
+     "teleports": 0,
+     "emergency_stops": 0,
+     "emergency_braking_per_day": 1396.0,
+     "all_drained": true,
+     "sumo_errors": 0
+    },
+    "capacity": {
+     "breakdowns_per_day": 2.5,
+     "n_used": 19,
+     "pre_median": 1464.0,
+     "qdf_median": 1198.784,
+     "drop_median": 0.18,
+     "drop_range": [
+      0.068,
+      0.257
+     ],
+     "duration_min_median": 284.5
+    },
+    "tail": {
+     "1": {
+      "n": 38,
+      "per_day": 3.8,
+      "shape": -0.7054,
+      "scale": 0.5765,
+      "endpoint_ttc": 0.183,
+      "p_crash_per_encounter": 0.0,
+      "evt_crashes_per_day": 0.0,
+      "ks_p": 0.0915,
+      "min_ttc_seen": 0.201
+     },
+     "1.5": {
+      "n": 8290,
+      "per_day": 829.0,
+      "shape": -0.02,
+      "scale": 0.109,
+      "endpoint_ttc": -3.941,
+      "p_crash_per_encounter": 1.0226634761409596e-07,
+      "evt_crashes_per_day": 8.477880217208555e-05,
+      "ks_p": 0.0,
+      "min_ttc_seen": 0.201
+     },
+     "3": {
+      "n": 245679,
+      "per_day": 24567.9,
+      "shape": -0.3039,
+      "scale": 0.8508,
+      "endpoint_ttc": 0.201,
+      "p_crash_per_encounter": 0.0,
+      "evt_crashes_per_day": 0.0,
+      "ks_p": 0.0,
+      "min_ttc_seen": 0.201
+     }
+    },
+    "target_crashes_per_day": 0.288,
+    "diagnostics": {
+     "emergency_braking": 13686,
+     "per_1000_vehicles_by_class": {
+      "hdv_car": 1.5,
+      "truck": 1.0,
+      "acc": 335.3,
+      "cacc": 187.2,
+      "alks": 10.4
+     },
+     "by_place": {
+      "edge 1": 7229,
+      "edge 2": 3772,
+      "edge 3": 1483,
+      "edge 4": 1080,
+      "junction 4": 120,
+      "junction 3": 2
+     },
+     "by_hour": {
+      "1": 3,
+      "2": 1,
+      "4": 8,
+      "5": 28,
+      "6": 199,
+      "7": 1123,
+      "8": 1335,
+      "9": 1237,
+      "10": 1149,
+      "11": 1022,
+      "12": 471,
+      "13": 431,
+      "14": 659,
+      "15": 1310,
+      "16": 1249,
+      "17": 1189,
+      "18": 1081,
+      "19": 912,
+      "20": 257,
+      "21": 11,
+      "22": 8,
+      "23": 3
+     },
+     "hdv_car_tau_quartiles_braking_vs_all": [
+      [
+       0.24,
+       0.37,
+       0.55,
+       0.71,
+       1.75
+      ],
+      [
+       0.2,
+       0.9,
+       1.21,
+       1.52,
+       2.0
+      ]
+     ],
+     "hdv_car_asl_mean_braking_vs_all": [
+      0.264,
+      0.377
+     ],
+     "collisions": [
+      {
+       "t": 28675.9,
+       "collider": "main.3619",
+       "victim": "main.3599",
+       "type": "collision",
+       "lane": "2_1",
+       "v_collider": 11.58,
+       "v_victim": 10.83,
+       "collider_cls": "truck",
+       "victim_cls": "acc",
+       "collider_tau": null,
+       "collider_asl": null,
+       "collider_sigma": null,
+       "victim_tau": 1.1
+      },
+      {
+       "t": 34544.0,
+       "collider": "main.5679",
+       "victim": "main.5680",
+       "type": "collision",
+       "lane": "2_2",
+       "v_collider": 12.81,
+       "v_victim": 10.25,
+       "collider_cls": "hdv_car",
+       "victim_cls": "acc",
+       "collider_tau": 0.806,
+       "collider_asl": 0.8,
+       "collider_sigma": 0.402,
+       "victim_tau": 1.1
+      },
+      {
+       "t": 60112.1,
+       "collider": "main.14619",
+       "victim": "main.14618",
+       "type": "collision",
+       "lane": "1_1",
+       "v_collider": 19.09,
+       "v_victim": 17.98,
+       "collider_cls": "hdv_car",
+       "victim_cls": "acc",
+       "collider_tau": 1.259,
+       "collider_asl": 0.3,
+       "collider_sigma": 0.241,
+       "victim_tau": 1.1
+      },
+      {
+       "t": 42288.4,
+       "collider": "main.8182",
+       "victim": "main.8174",
+       "type": "collision",
+       "lane": "2_2",
+       "v_collider": 9.66,
+       "v_victim": 9.09,
+       "collider_cls": "hdv_car",
+       "victim_cls": "acc",
+       "collider_tau": 1.752,
+       "collider_asl": 0.1,
+       "collider_sigma": 0.105,
+       "victim_tau": 1.1
+      },
+      {
+       "t": 44497.2,
+       "collider": "main.8919",
+       "victim": "main.8913",
+       "type": "collision",
+       "lane": "4_1",
+       "v_collider": 15.46,
+       "v_victim": 14.17,
+       "collider_cls": "hdv_car",
+       "victim_cls": "acc",
+       "collider_tau": 1.024,
+       "collider_asl": 0.2,
+       "collider_sigma": 0.294,
+       "victim_tau": 1.1
+      }
+     ]
+    }
+   },
+   "days": [
+    {
+     "seed": 7430040,
+     "collisions": 0,
+     "emergency_braking_warnings": 1243,
+     "breakdowns": [
+      {
+       "t_break": 27360.0,
+       "t_recover": 43680.0,
+       "min": 272.0,
+       "pre": 1524.0,
+       "qdf": 1193.943925233645,
+       "drop": 0.21657222753697836
+      },
+      {
+       "t_break": 55290.0,
+       "t_recover": 72300.0,
+       "min": 283.5,
+       "pre": 1608.0,
+       "qdf": 1193.978494623656,
+       "drop": 0.2574760605574279
+      }
+     ],
+     "encounters": {
+      "1": 6,
+      "1.5": 791,
+      "3": 22891
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 499.5,
+      "truck": 507.4,
+      "acc": 505.6,
+      "cacc": 485.6,
+      "alks": 513.5
+     },
+     "wall_s": 1865.1
+    },
+    {
+     "seed": 7430041,
+     "collisions": 2,
+     "emergency_braking_warnings": 1273,
+     "breakdowns": [
+      {
+       "t_break": 26910.0,
+       "t_recover": 41550.0,
+       "min": 244.0,
+       "pre": 1536.0,
+       "qdf": 1204.258872651357,
+       "drop": 0.21597729645093944
+      },
+      {
+       "t_break": 53550.0,
+       "t_recover": 53700.0,
+       "min": 2.5,
+       "pre": 1440.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 53850.0,
+       "t_recover": 54030.0,
+       "min": 3.0,
+       "pre": 1440.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 54420.0,
+       "t_recover": 72720.0,
+       "min": 305.0,
+       "pre": 1440.0,
+       "qdf": 1216.971713810316,
+       "drop": 0.15488075429839165
+      }
+     ],
+     "encounters": {
+      "1": 1,
+      "1.5": 785,
+      "3": 23400
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 527.8,
+      "truck": 488.7,
+      "acc": 552.6,
+      "cacc": 537.6,
+      "alks": 566.5
+     },
+     "wall_s": 2135.4
+    },
+    {
+     "seed": 7430042,
+     "collisions": 0,
+     "emergency_braking_warnings": 1417,
+     "breakdowns": [
+      {
+       "t_break": 25680.0,
+       "t_recover": 42750.0,
+       "min": 284.5,
+       "pre": 1416.0,
+       "qdf": 1191.0,
+       "drop": 0.15889830508474578
+      },
+      {
+       "t_break": 47550.0,
+       "t_recover": 48180.0,
+       "min": 10.5,
+       "pre": 1404.0,
+       "qdf": 1200.0,
+       "drop": 0.14529914529914534
+      },
+      {
+       "t_break": 54210.0,
+       "t_recover": 73020.0,
+       "min": 313.5,
+       "pre": 1548.0,
+       "qdf": 1202.1359223300972,
+       "drop": 0.22342640676350312
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 782,
+      "3": 24827
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 555.8,
+      "truck": 528.7,
+      "acc": 579.8,
+      "cacc": 559.0,
+      "alks": 578.3
+     },
+     "wall_s": 1813.5
+    },
+    {
+     "seed": 7430043,
+     "collisions": 0,
+     "emergency_braking_warnings": 1424,
+     "breakdowns": [
+      {
+       "t_break": 27420.0,
+       "t_recover": 44070.0,
+       "min": 277.5,
+       "pre": 1464.0,
+       "qdf": 1196.043956043956,
+       "drop": 0.18303008466942894
+      },
+      {
+       "t_break": 51720.0,
+       "t_recover": 73200.0,
+       "min": 358.0,
+       "pre": 1428.0,
+       "qdf": 1194.3988684582744,
+       "drop": 0.1635862265698359
+      }
+     ],
+     "encounters": {
+      "1": 7,
+      "1.5": 879,
+      "3": 25445
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 573.2,
+      "truck": 561.3,
+      "acc": 627.3,
+      "cacc": 573.9,
+      "alks": 611.0
+     },
+     "wall_s": 2147.5
+    },
+    {
+     "seed": 7430044,
+     "collisions": 0,
+     "emergency_braking_warnings": 1383,
+     "breakdowns": [
+      {
+       "t_break": 25710.0,
+       "t_recover": 41970.0,
+       "min": 271.0,
+       "pre": 1284.0,
+       "qdf": 1196.3977485928706,
+       "drop": 0.06822605249776437
+      },
+      {
+       "t_break": 48300.0,
+       "t_recover": 48450.0,
+       "min": 2.5,
+       "pre": 1512.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 54510.0,
+       "t_recover": 73620.0,
+       "min": 318.5,
+       "pre": 1476.0,
+       "qdf": 1211.0828025477706,
+       "drop": 0.1794831961058465
+      }
+     ],
+     "encounters": {
+      "1": 4,
+      "1.5": 889,
+      "3": 24043
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 607.3,
+      "truck": 582.8,
+      "acc": 633.5,
+      "cacc": 606.5,
+      "alks": 604.0
+     },
+     "wall_s": 2221.8
+    },
+    {
+     "seed": 7430045,
+     "collisions": 4,
+     "emergency_braking_warnings": 1150,
+     "breakdowns": [
+      {
+       "t_break": 25860.0,
+       "t_recover": 38730.0,
+       "min": 214.5,
+       "pre": 1380.0,
+       "qdf": 1201.7142857142858,
+       "drop": 0.12919254658385093
+      },
+      {
+       "t_break": 52590.0,
+       "t_recover": 52710.0,
+       "min": 2.0,
+       "pre": 1452.0,
+       "qdf": null,
+       "drop": null
+      },
+      {
+       "t_break": 53700.0,
+       "t_recover": 54210.0,
+       "min": 8.5,
+       "pre": 1464.0,
+       "qdf": 1290.0,
+       "drop": 0.11885245901639341
+      },
+      {
+       "t_break": 56460.0,
+       "t_recover": 72570.0,
+       "min": 268.5,
+       "pre": 1536.0,
+       "qdf": 1187.5,
+       "drop": 0.22688802083333337
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 682,
+      "3": 20604
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 435.0,
+      "truck": 429.5,
+      "acc": 435.3,
+      "cacc": 429.9,
+      "alks": 438.5
+     },
+     "wall_s": 1585.6
+    },
+    {
+     "seed": 7430046,
+     "collisions": 4,
+     "emergency_braking_warnings": 1409,
+     "breakdowns": [
+      {
+       "t_break": 26010.0,
+       "t_recover": 44700.0,
+       "min": 311.5,
+       "pre": 1464.0,
+       "qdf": 1195.3094462540716,
+       "drop": 0.18353179900678163
+      },
+      {
+       "t_break": 53430.0,
+       "t_recover": 72390.0,
+       "min": 316.0,
+       "pre": 1608.0,
+       "qdf": 1205.7784911717497,
+       "drop": 0.25013775424642437
+      }
+     ],
+     "encounters": {
+      "1": 4,
+      "1.5": 826,
+      "3": 25030
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 520.1,
+      "truck": 516.9,
+      "acc": 557.3,
+      "cacc": 515.5,
+      "alks": 564.1
+     },
+     "wall_s": 2154.8
+    },
+    {
+     "seed": 7430047,
+     "collisions": 0,
+     "emergency_braking_warnings": 1451,
+     "breakdowns": [
+      {
+       "t_break": 25740.0,
+       "t_recover": 42000.0,
+       "min": 271.0,
+       "pre": 1368.0,
+       "qdf": 1204.7279549718573,
+       "drop": 0.11935091010829146
+      },
+      {
+       "t_break": 52110.0,
+       "t_recover": 73620.0,
+       "min": 358.5,
+       "pre": 1464.0,
+       "qdf": 1196.7796610169491,
+       "drop": 0.1825275539501714
+      }
+     ],
+     "encounters": {
+      "1": 2,
+      "1.5": 865,
+      "3": 25387
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 632.2,
+      "truck": 611.4,
+      "acc": 670.0,
+      "cacc": 599.5,
+      "alks": 673.0
+     },
+     "wall_s": 1966.1
+    },
+    {
+     "seed": 7430048,
+     "collisions": 0,
+     "emergency_braking_warnings": 1741,
+     "breakdowns": [
+      {
+       "t_break": 25440.0,
+       "t_recover": 73080.0,
+       "min": 794.0,
+       "pre": 1356.0,
+       "qdf": 1209.0436985433819,
+       "drop": 0.10837485358157684
+      }
+     ],
+     "encounters": {
+      "1": 3,
+      "1.5": 1170,
+      "3": 33818
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 699.8,
+      "truck": 685.2,
+      "acc": 725.1,
+      "cacc": 718.0,
+      "alks": 729.4
+     },
+     "wall_s": 2080.0
+    },
+    {
+     "seed": 7430049,
+     "collisions": 0,
+     "emergency_braking_warnings": 1195,
+     "breakdowns": [
+      {
+       "t_break": 27810.0,
+       "t_recover": 37290.0,
+       "min": 158.0,
+       "pre": 1464.0,
+       "qdf": 1200.7817589576548,
+       "drop": 0.17979388049340517
+      },
+      {
+       "t_break": 51630.0,
+       "t_recover": 52020.0,
+       "min": 6.5,
+       "pre": 1344.0,
+       "qdf": 1200.0,
+       "drop": 0.1071428571428571
+      },
+      {
+       "t_break": 52140.0,
+       "t_recover": 73140.0,
+       "min": 350.0,
+       "pre": 1344.0,
+       "qdf": 1198.7843704775687,
+       "drop": 0.10804734339466615
+      }
+     ],
+     "encounters": {
+      "1": 7,
+      "1.5": 621,
+      "3": 20234
+     },
+     "delay_mean_by_class": {
+      "hdv_car": 497.9,
+      "truck": 499.3,
+      "acc": 528.1,
+      "cacc": 489.1,
+      "alks": 523.3
+     },
+     "wall_s": 1691.5
     }
    ]
   }
