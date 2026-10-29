@@ -1,4 +1,5 @@
-"""Per-vehicle fleet sampling (V156 dimensions, V158 sourced rows, V159 UK speeds, V160-V161 mix).
+"""Per-vehicle fleet sampling (V156 dimensions, V158 sourced rows, V159 UK speeds, V160-V161 mix,
+V164 default ACC gains).
 
 Every vehicle gets its own vType, drawn from the episode seed (CRN: every arm of a seed sees the same vehicles). Each
 attribute group has its own RNG stream, so adding a group does not change the others. Sources are the reference numbers
@@ -49,7 +50,9 @@ SIGMA_Q = ((0.0, 0.10, 0.50, 0.95, 1.0), (0.1, 0.12, 0.30, 0.75, 1.0))
 ACC_TAU = ((1.1, 0.504), (1.6, 0.185), (2.2, 0.311))                     # [18]
 CACC_TAU = ((0.6, 0.57), (0.7, 0.24), (0.9, 0.07), (1.1, 0.12))          # [18]
 ALKS_TAU = 1.6                                                           # R157 60 km/h row [22], placeholder above
-# original ACC controller: modes iii and iv reset (SUMO ACC docs), string-unstable at short gaps (V158)
+# the ACC class uses SUMO's default gains (V164); the original controller (modes iii and iv reset, SUMO ACC docs)
+# collided 92-202 times per smoke run (V162) and is kept for the behaviour test and smoke variants
+ACC_GAINS: dict = {}
 ACC_ORIGINAL = {"gapClosingControlGainSpeed": 0.07, "gapClosingControlGainSpace": 0.23,
                 "collisionAvoidanceGainSpeed": 0.07, "collisionAvoidanceGainSpace": 0.23,
                 "collisionAvoidanceOverride": 100}
@@ -149,7 +152,7 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
                 v.resampled += 1
             v.tau, v.sigma, v.asl = round(tau, 3), round(sig, 3), asl
         elif cls == "acc":
-            v.tau, v.extra = _discrete(rf, ACC_TAU), dict(ACC_ORIGINAL)
+            v.tau, v.extra = _discrete(rf, ACC_TAU), dict(ACC_GAINS)
         elif cls == "cacc":
             v.tau = _discrete(rf, CACC_TAU)
         elif cls == "alks":

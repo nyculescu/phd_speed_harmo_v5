@@ -162,21 +162,20 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=7_400_000)
     ap.add_argument("--incident", default="none")
     ap.add_argument("--command", action="store_true")
-    ap.add_argument("--acc-override", type=float, help="collisionAvoidanceOverride for the ACC class (variant)")
-    ap.add_argument("--acc-default", action="store_true", help="SUMO default ACC gains (variant)")
+    ap.add_argument("--acc-original", action="store_true", help="original ACC gains, override 100 (V162 variant)")
+    ap.add_argument("--acc-override", type=float, help="original ACC gains with this collisionAvoidanceOverride")
     ap.add_argument("--acc-gapclosing-only", action="store_true",
-                    help="original gap-closing gains, default collision avoidance and override (variant)")
+                    help="original gap-closing gains, default collision avoidance and override (V162 variant)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
-    if a.acc_default:
-        fl.ACC_ORIGINAL.clear()
+    if a.acc_original or a.acc_override is not None:
+        fl.ACC_GAINS.update(fl.ACC_ORIGINAL)
+        if a.acc_override is not None:
+            fl.ACC_GAINS["collisionAvoidanceOverride"] = a.acc_override
     elif a.acc_gapclosing_only:
-        for k in ("collisionAvoidanceGainSpeed", "collisionAvoidanceGainSpace", "collisionAvoidanceOverride"):
-            fl.ACC_ORIGINAL.pop(k)
-    elif a.acc_override is not None:
-        fl.ACC_ORIGINAL["collisionAvoidanceOverride"] = a.acc_override
+        fl.ACC_GAINS.update({k: v for k, v in fl.ACC_ORIGINAL.items() if k.startswith("gapClosing")})
     res = run(a.seed, Path(a.out).parent / f"run_{Path(a.out).stem}", a.incident, a.command)
-    res["acc_gains"] = dict(fl.ACC_ORIGINAL)
+    res["acc_gains"] = dict(fl.ACC_GAINS)
     Path(a.out).write_text(json.dumps(res, indent=1))
     return 0
 

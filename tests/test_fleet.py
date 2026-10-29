@@ -79,6 +79,6 @@ def test_vtype_xml(veh):
     x = {c: by(veh, c)[0].vtype_xml() for c in fl.CLASSES}
     assert 'carFollowModel="Krauss"' in x["hdv_car"] and "actionStepLength" in x["hdv_car"]
     assert 'vClass="trailer"' in x["truck"] and 'maxSpeed="25"' in x["truck"]
-    assert 'carFollowModel="ACC"' in x["acc"] and 'collisionAvoidanceOverride="100"' in x["acc"]
+    assert 'carFollowModel="ACC"' in x["acc"] and "collisionAvoidance" not in x["acc"]   # V164 default gains
     assert 'carFollowModel="CACC"' in x["cacc"]
     assert 'carFollowModel="ACC"' in x["alks"] and "gapClosingControlGainSpeed" not in x["alks"]
