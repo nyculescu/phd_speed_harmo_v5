@@ -1,0 +1,596 @@
+{
+ "note": "Layer B live validation (V174): bn4x, all CAV classes on IDM, ADT 20,000, seeds 7,430,040-049, crash rule human followers, TTC < 1.5 s, linear, k = 0.00382 (calibrated on the crash-free days of code 3da2ca1). Code 475edcc.",
+ "calibration": {
+  "human_u1_linear": {
+   "k": 0.2586336789114201,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 3.0,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.0,
+    0.4906
+   ],
+   "expected_crashes_per_day": 0.2863166732511674,
+   "p_max": 0.21908706827648353
+  },
+  "human_u1_constant": {
+   "k": 0.09920416222848655,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 3.0,
+   "p_day_mean": 0.24999999999999992,
+   "p_day_range": [
+    0.0,
+    0.5187
+   ],
+   "expected_crashes_per_day": 0.2976124866854596,
+   "p_max": 0.09920416222848655
+  },
+  "human_u1.5_linear": {
+   "k": 0.0038197568914469576,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 1262.1,
+   "p_day_mean": 0.24999999999999992,
+   "p_day_range": [
+    0.2058,
+    0.299
+   ],
+   "expected_crashes_per_day": 0.28840526524767385,
+   "p_max": 0.003430381361954258
+  },
+  "human_u1.5_constant": {
+   "k": 0.0002286414852403218,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 1262.1,
+   "p_day_mean": 0.2500000000000139,
+   "p_day_range": [
+    0.2079,
+    0.3116
+   ],
+   "expected_crashes_per_day": 0.28856841852181014,
+   "p_max": 0.0002286414852403218
+  },
+  "human_u3_linear": {
+   "k": 6.474754870689539e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 15292.1,
+   "p_day_mean": 0.24999999999999992,
+   "p_day_range": [
+    0.2066,
+    0.3089
+   ],
+   "expected_crashes_per_day": 0.2885055017937679,
+   "p_max": 6.144745503895104e-05
+  },
+  "human_u3_constant": {
+   "k": 1.8864454815858966e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 15292.1,
+   "p_day_mean": 0.24999999999902486,
+   "p_day_range": [
+    0.2071,
+    0.307
+   ],
+   "expected_crashes_per_day": 0.2884771294895969,
+   "p_max": 1.8864454815858966e-05
+  },
+  "all_u1_linear": {
+   "k": 0.196445622295992,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 4.0,
+   "p_day_mean": 0.24999999999999994,
+   "p_day_range": [
+    0.0,
+    0.4383
+   ],
+   "expected_crashes_per_day": 0.2891545122257996,
+   "p_max": 0.16640793127069384
+  },
+  "all_u1_constant": {
+   "k": 0.07397679359120252,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 4.0,
+   "p_day_mean": 0.2500000000000003,
+   "p_day_range": [
+    0.0,
+    0.4593
+   ],
+   "expected_crashes_per_day": 0.29590717436481,
+   "p_max": 0.07397679359120252
+  },
+  "all_u1.5_linear": {
+   "k": 0.0017013938419565594,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 2397.0,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1997,
+    0.31
+   ],
+   "expected_crashes_per_day": 0.28860657907400256,
+   "p_max": 0.0015279584252757613
+  },
+  "all_u1.5_constant": {
+   "k": 0.00012045293139989477,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 2397.0,
+   "p_day_mean": 0.2499999999999715,
+   "p_day_range": [
+    0.2027,
+    0.3201
+   ],
+   "expected_crashes_per_day": 0.28872567656554776,
+   "p_max": 0.00012045293139989477
+  },
+  "all_u3_linear": {
+   "k": 3.638553870097734e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 29151.9,
+   "p_day_mean": 0.24999999999999992,
+   "p_day_range": [
+    0.2027,
+    0.3115
+   ],
+   "expected_crashes_per_day": 0.2885573549004824,
+   "p_max": 3.453101774582261e-05
+  },
+  "all_u3_constant": {
+   "k": 9.89672292867061e-06,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 29151.9,
+   "p_day_mean": 0.2500000000002506,
+   "p_day_range": [
+    0.2032,
+    0.3088
+   ],
+   "expected_crashes_per_day": 0.2885082771443127,
+   "p_max": 9.89672292867061e-06
+  }
+ },
+ "days": [
+  {
+   "seed": 7430040,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    533.5,
+    533.5
+   ],
+   "breakdowns": [
+    [
+     27660.0,
+     272.5
+    ],
+    [
+     55260.0,
+     291.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     27660.0,
+     272.5
+    ],
+    [
+     55260.0,
+     291.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430041,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    684.2,
+    684.2
+   ],
+   "breakdowns": [
+    [
+     25800.0,
+     362.0
+    ],
+    [
+     53190.0,
+     332.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     25800.0,
+     362.0
+    ],
+    [
+     53190.0,
+     332.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430042,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    623.1,
+    623.1
+   ],
+   "breakdowns": [
+    [
+     25680.0,
+     310.5
+    ],
+    [
+     44760.0,
+     3.0
+    ],
+    [
+     54360.0,
+     317.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     25680.0,
+     310.5
+    ],
+    [
+     44760.0,
+     3.0
+    ],
+    [
+     54360.0,
+     317.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430043,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    778.5,
+    778.5
+   ],
+   "breakdowns": [
+    [
+     26040.0,
+     3.0
+    ],
+    [
+     26370.0,
+     791.0
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     26040.0,
+     3.0
+    ],
+    [
+     26370.0,
+     791.0
+    ]
+   ]
+  },
+  {
+   "seed": 7430044,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    669.9,
+    669.9
+   ],
+   "breakdowns": [
+    [
+     25710.0,
+     290.5
+    ],
+    [
+     45690.0,
+     3.0
+    ],
+    [
+     46260.0,
+     14.0
+    ],
+    [
+     54600.0,
+     322.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     25710.0,
+     290.5
+    ],
+    [
+     45690.0,
+     3.0
+    ],
+    [
+     46260.0,
+     14.0
+    ],
+    [
+     54600.0,
+     322.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430045,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    476.6,
+    476.6
+   ],
+   "breakdowns": [
+    [
+     25920.0,
+     227.0
+    ],
+    [
+     56070.0,
+     279.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     25920.0,
+     227.0
+    ],
+    [
+     56070.0,
+     279.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430046,
+   "crashes": [
+    {
+     "t": 46470.0,
+     "follower": "main.9580",
+     "leader": "main.9571",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.33,
+     "duration_s": 2866.6,
+     "other_crash_active": false
+    }
+   ],
+   "same_hash_as_crash_free": false,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-E2",
+    "H-R1",
+    "H-R4b",
+    "H-R5"
+   ],
+   "delay_mean_hdv_car": [
+    641.3,
+    593.8
+   ],
+   "breakdowns": [
+    [
+     26010.0,
+     373.5
+    ],
+    [
+     51720.0,
+     354.0
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     26010.0,
+     373.0
+    ],
+    [
+     53520.0,
+     320.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430047,
+   "crashes": [],
+   "same_hash_as_crash_free": true,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-R4b"
+   ],
+   "delay_mean_hdv_car": [
+    724.2,
+    724.2
+   ],
+   "breakdowns": [
+    [
+     26400.0,
+     311.5
+    ],
+    [
+     51960.0,
+     370.0
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     26400.0,
+     311.5
+    ],
+    [
+     51960.0,
+     370.0
+    ]
+   ]
+  },
+  {
+   "seed": 7430048,
+   "crashes": [
+    {
+     "t": 29300.0,
+     "follower": "main.3904",
+     "leader": "main.3897",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.309,
+     "duration_s": 3411.9,
+     "other_crash_active": false
+    },
+    {
+     "t": 30700.0,
+     "follower": "main.4465",
+     "leader": "main.4464",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.414,
+     "duration_s": 3476.5,
+     "other_crash_active": true
+    }
+   ],
+   "same_hash_as_crash_free": false,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-E2",
+    "H-R1",
+    "H-R4b",
+    "H-R5"
+   ],
+   "delay_mean_hdv_car": [
+    851.7,
+    852.5
+   ],
+   "breakdowns": [
+    [
+     25740.0,
+     802.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     25740.0,
+     802.5
+    ]
+   ]
+  },
+  {
+   "seed": 7430049,
+   "crashes": [
+    {
+     "t": 31004.0,
+     "follower": "main.4433",
+     "leader": "main.4431",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.422,
+     "duration_s": 2787.1,
+     "other_crash_active": false
+    },
+    {
+     "t": 32569.0,
+     "follower": "main.5009",
+     "leader": "main.5007",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.144,
+     "duration_s": 2241.1,
+     "other_crash_active": true
+    }
+   ],
+   "same_hash_as_crash_free": false,
+   "arrived_plus_removed_equals_generated": true,
+   "drained": true,
+   "teleports": 0,
+   "collisions": 0,
+   "health_codes": [
+    "H-E2",
+    "H-R1",
+    "H-R4b",
+    "H-R5"
+   ],
+   "delay_mean_hdv_car": [
+    595.4,
+    593.1
+   ],
+   "breakdowns": [
+    [
+     26820.0,
+     210.5
+    ],
+    [
+     51660.0,
+     365.5
+    ]
+   ],
+   "breakdowns_crash_free": [
+    [
+     26820.0,
+     205.0
+    ],
+    [
+     51660.0,
+     364.5
+    ]
+   ]
+  }
+ ]
+}

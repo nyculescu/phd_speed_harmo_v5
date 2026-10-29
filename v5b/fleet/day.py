@@ -168,6 +168,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 if ttc < TTC_KEEP:
                     rec.append((t, idx[vid], idx[lead[0]], ttc, sp[vid], sp[lead[0]]))
                     if cp is not None and cp.observe(t, idx[vid], idx[lead[0]], vid, lead[0], dem.by_id[vid].cls, ttc):
+                        cp.events[-1] |= {"lane": ls.vehicle.getLaneID(vid), "pos": round(ls.vehicle.getLanePosition(vid), 1),
+                                          "speed": round(sp[vid], 2)}
                         _crash((vid, lead[0]))
             if cp is not None and int(round(t)) % 60 == 0:
                 cp.prune(t)
