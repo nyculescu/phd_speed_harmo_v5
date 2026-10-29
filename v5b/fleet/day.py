@@ -29,7 +29,7 @@ import numpy as np
 
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
 from v5b.fleet import fleet as fl
-from v5b.fleet.smoke import CFG
+from v5b.fleet.smoke import CFG, loop_speed
 from v5b.p1c import plant as pl
 from v5b.p1c.calibrate import _cpu_util
 from v5b.p1c.episode import Sim
@@ -46,13 +46,6 @@ DRAIN_CAP = 7200.0
 def profile(adt: float = ADT) -> list:
     tot = sum(UK_WEEKDAY)
     return [(3600.0 * h, 3600.0 * (h + 1), adt * s / tot) for h, s in enumerate(UK_WEEKDAY)]
-
-
-def _up_speed(ids: list) -> float | None:
-    n = [ls.inductionloop.getLastIntervalVehicleNumber(i) for i in ids]
-    if not sum(n):
-        return None
-    return round(sum(k * ls.inductionloop.getLastIntervalMeanSpeed(i) for k, i in zip(n, ids) if k) / sum(n), 2)
 
 
 def _first_steps(coll: list) -> list:
@@ -137,7 +130,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG) ->
                     rec.append((t, idx[vid], idx[lead[0]], ttc, sp[vid], sp[lead[0]]))
             if abs(t / pl.LOOP_PERIOD - round(t / pl.LOOP_PERIOD)) < 1e-6:
                 ser.append((round(t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
-                            _up_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles())))
+                            loop_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles())))
         if t >= t_end and sim.departed == sim._total and ls.vehicle.getIDCount() == 0 \
                 and not ls.simulation.getPendingVehicles():
             drained = True

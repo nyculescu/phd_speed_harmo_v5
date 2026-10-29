@@ -31,10 +31,22 @@ from v5b.d2.incidents import incident_window
 from v5b.fleet import fleet as fl
 from v5b.p1c import calibrate as cal
 from v5b.p1c import plant as pl
-from v5b.p1c.episode import Sim, _mean
+from v5b.p1c.episode import Sim
 
 CFG = pl.Config(merge="zip100", cf="Krauss", step=fl.STEP)
 CMD_SPEED, CMD_FOR, CMD_SETTLE = 20.0, 120.0, 5.0
+
+
+def loop_speed(ids: list) -> float | None:
+    """Vehicle-weighted mean speed over the loops; None when no vehicle passed (p1c's _mean counts an empty lane as 0)."""
+    n = [ls.inductionloop.getLastIntervalVehicleNumber(i) for i in ids]
+    if not sum(n):
+        return None
+    return round(sum(k * ls.inductionloop.getLastIntervalMeanSpeed(i) for k, i in zip(n, ids) if k) / sum(n), 2)
+
+
+def _nan(x: float | None) -> float:
+    return float("nan") if x is None else x
 
 
 def _readback(vid: str, v: fl.VehSpec) -> list:
@@ -110,9 +122,8 @@ def run(seed: int, run_dir: Path, incident: str = "none", command: bool = False,
                 speeds[dem.by_id[vid].cls].append(ls.vehicle.getSpeed(vid))
         if abs(sim.t / pl.LOOP_PERIOD - round(sim.t / pl.LOOP_PERIOD)) < 1e-6:
             ser.append((round(sim.t, 1), int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["exit"])),
-                        round(_mean(loops["e4"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
-                        round(_mean(loops["e3"], ls.inductionloop.getLastIntervalMeanSpeed), 2), None,
-                        round(_mean(loops["up"], ls.inductionloop.getLastIntervalMeanSpeed), 2)))
+                        _nan(loop_speed(loops["e4"])), _nan(loop_speed(loops["e3"])), None,
+                        _nan(loop_speed(loops["up"]))))
         if sim.departed == sim._total and ls.vehicle.getIDCount() == 0 and not ls.simulation.getPendingVehicles():
             drained = True
             break
