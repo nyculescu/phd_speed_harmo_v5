@@ -28,9 +28,9 @@ import libsumo as ls
 import numpy as np
 
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, SUMO_BIN, clean_sumo_env
-from v5b.fleet import fleet as fl
+from v5b.fleet import corridor, fleet as fl, merge as mg
 from v5b.fleet.crash import CrashProcess
-from v5b.fleet.merge import CourtesyGap
+from v5b.fleet.merge import CourtesyGap, RampMerge
 from v5b.fleet.smoke import CFG, loop_speed
 from v5b.p1c import plant as pl
 from v5b.p1c.calibrate import _cpu_util
@@ -115,8 +115,9 @@ def _crash(vids: tuple) -> None:
 
 
 def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None,
-            hours: tuple | None = None, courtesy: bool = False) -> dict:
-    """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed."""
+            hours: tuple | None = None, courtesy: bool = False, squeeze: bool = False, teleport: bool = True) -> dict:
+    """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed; a crash process always
+    runs with teleporting off."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     d = fl.build_net(cfg)
@@ -126,10 +127,10 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     tag = f"day_{cfg.tag()}{models}_adt{adt:g}_s{seed}_pid{os.getpid()}"
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
     dem.write(rou)
-    sim = (CrashSim if crash else Sim)(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"],
+    sim = (CrashSim if crash or not teleport else Sim)(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"],
                                        step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
-    cg = None
+    cg = rm = None
     removed, arrived_while_crashed = [], []
     loops = fl.loop_ids(cfg.geom)
     idx = {v.vid: i for i, v in enumerate(dem.veh)}
@@ -137,8 +138,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     sim.start()
     fl.all_green(cfg.geom)
     if courtesy:
-        import v5b.fleet.merge as mg
         cg = CourtesyGap(ls.lane.getLength(mg.LANE))
+    if cfg.geom == corridor.NAME:
+        rm = RampMerge(ls.lane.getLength(mg.LANE), squeeze)
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
@@ -163,6 +165,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         if abs(t - round(t)) < 1e-6:
             if cg is not None:
                 cg.step(t)
+            if rm is not None:
+                rm.step(t, cp.blocked if cp is not None else (lambda vid: False))
             ids = ls.vehicle.getIDList()
             veh_s += len(ids)
             sp = {vid: ls.vehicle.getSpeed(vid) for vid in ids}
@@ -223,6 +227,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "ramp_queue_max": max((x[6] for x in ser if x[6] is not None), default=None),
         "crash_rule": crash, "crashes": cp.events if cp else [], "removed": len(removed),
         "courtesy_gaps": cg.n_gaps if cg else None, "courtesy_no_follower": cg.n_no_follower if cg else None,
+        "ramp_merge": rm.summary() if rm else None, "teleport": teleport and not crash,
         "arrived_while_crashed": arrived_while_crashed, "arrived_plus_removed": res["arrived"] + len(removed),
         "vehicle_seconds": veh_s, "closing_seconds": closing_s,
         "ttc_seconds_below": {f"{x:g}": int((ttc < x).sum()) for x in (0.5, 1.0, 1.5, 2.0, 3.0)},
@@ -269,6 +274,8 @@ def _common(p) -> None:
     p.add_argument("--hours", help="only these hours of the reference day, e.g. 13,20")
     p.add_argument("--ramp-lc-assertive", type=float)
     p.add_argument("--courtesy", action="store_true", help="V194 courtesy-gap rule at the on-ramp merge")
+    p.add_argument("--squeeze", action="store_true", help="V196 squeeze-in rule at the on-ramp merge")
+    p.add_argument("--no-teleport", action="store_true")
 
 
 def main(argv=None) -> int:
@@ -299,7 +306,8 @@ def main(argv=None) -> int:
         cfg = dataclasses.replace(CFG, geom=a.geom)
         if a.plant:
             cfg = fl.apply_plant(a.plant, cfg)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy)
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze,
+                      not a.no_teleport)
         res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
@@ -313,8 +321,8 @@ def main(argv=None) -> int:
             extra += ["--hours", a.hours]
         if a.ramp_lc_assertive is not None:
             extra += ["--ramp-lc-assertive", str(a.ramp_lc_assertive)]
-        if a.courtesy:
-            extra += ["--courtesy"]
+        extra += [f for f, on in (("--courtesy", a.courtesy), ("--squeeze", a.squeeze),
+                                  ("--no-teleport", a.no_teleport)) if on]
         if a.cav_apparent_decel is not None:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:
