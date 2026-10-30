@@ -30,6 +30,7 @@ import numpy as np
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, SUMO_BIN, clean_sumo_env
 from v5b.fleet import corridor, fleet as fl, merge as mg
 from v5b.fleet.crash import CrashProcess
+from v5b.fleet.incident import PassingZone
 from v5b.fleet.merge import CourtesyGap, RampMerge
 from v5b.fleet.smoke import CFG, loop_speed
 from v5b.p1c import plant as pl
@@ -130,6 +131,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     sim = (CrashSim if crash or not teleport else Sim)(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"],
                                        step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
+    pz = None
     cg = rm = None
     removed, arrived_while_crashed = [], []
     loops = fl.loop_ids(cfg.geom)
@@ -141,6 +143,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         cg = CourtesyGap(ls.lane.getLength(mg.LANE))
     if cfg.geom == corridor.NAME:
         rm = RampMerge(ls.lane.getLength(mg.LANE), squeeze)
+    if cp is not None:
+        pz = PassingZone(lambda vid: dem.by_id[vid].cls, fl.INCIDENT_TAU_FACTOR)
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
@@ -167,6 +171,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 cg.step(t)
             if rm is not None:
                 rm.step(t, cp.blocked if cp is not None else (lambda vid: False))
+            if pz is not None:
+                pz.step(cp.blocked)
             ids = ls.vehicle.getIDList()
             veh_s += len(ids)
             sp = {vid: ls.vehicle.getSpeed(vid) for vid in ids}
@@ -185,6 +191,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                         cp.events[-1] |= {"lane": ls.vehicle.getLaneID(vid), "pos": round(ls.vehicle.getLanePosition(vid), 1),
                                           "speed": round(sp[vid], 2)}
                         _crash((vid, lead[0]))
+                        pz.add(lead[0])
             if cp is not None and int(round(t)) % 60 == 0:
                 cp.prune(t)
             if abs(t / pl.LOOP_PERIOD - round(t / pl.LOOP_PERIOD)) < 1e-6:
@@ -228,6 +235,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "crash_rule": crash, "crashes": cp.events if cp else [], "removed": len(removed),
         "courtesy_gaps": cg.n_gaps if cg else None, "courtesy_no_follower": cg.n_no_follower if cg else None,
         "ramp_merge": rm.summary() if rm else None, "teleport": teleport and not crash,
+        "incident_tau_factor": fl.INCIDENT_TAU_FACTOR, "zone_slowed": pz.n_slowed if pz else None,
         "arrived_while_crashed": arrived_while_crashed, "arrived_plus_removed": res["arrived"] + len(removed),
         "vehicle_seconds": veh_s, "closing_seconds": closing_s,
         "ttc_seconds_below": {f"{x:g}": int((ttc < x).sum()) for x in (0.5, 1.0, 1.5, 2.0, 3.0)},

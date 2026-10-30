@@ -71,6 +71,8 @@ HDV_ACCEL: float | None = None
 HDV_ASL_SCALE = 1.0
 # V192 test: LC2013 lcAssertive for vehicles entering by the on-ramp; None = SUMO default
 RAMP_LC_ASSERTIVE: float | None = None
+# V199: tau factor for human drivers passing an active crash (v5b/fleet/incident.py); 1.0 = off
+INCIDENT_TAU_FACTOR = 1.0
 
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
@@ -224,9 +226,10 @@ PLANTS["v190"] = {**PLANTS["v188"], "geom": corridor.NAME, "teleport": False}   
 
 def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
     """Set the module knobs of an adopted plant (V188) and return its config."""
-    global HDV_TAU_SCALE, HDV_ASL_SCALE
+    global HDV_TAU_SCALE, HDV_ASL_SCALE, INCIDENT_TAU_FACTOR
     p = PLANTS[name]
     HDV_TAU_SCALE, HDV_ASL_SCALE = p["tau_scale"], p["asl_scale"]
+    INCIDENT_TAU_FACTOR = p.get("incident_tau_factor", 1.0)
     CAV_MODELS.update(p["cav_models"])
     return dataclasses.replace(cfg, geom=p["geom"], merge=p["merge"])
 
@@ -235,11 +238,15 @@ def build_net(cfg: pl.Config) -> Path:
     """The p1c geometry (or the V190 on-ramp corridor) with a 100 km/h limit on every edge (V156)."""
     if cfg.geom == corridor.NAME:
         return corridor.build(LIMIT)
+    if cfg.geom in corridor.STRAIGHT:
+        return corridor.build_straight(cfg.geom, LIMIT)
     with mock.patch.object(pl, "SPEED", LIMIT):
         return pl.build_net(cfg)
 
 
 def loop_ids(geom: str) -> dict:
+    if geom in corridor.STRAIGHT:
+        return corridor.straight_loop_ids(geom)
     return corridor.loop_ids() if geom == corridor.NAME else pl.loop_ids(geom)
 
 
@@ -256,6 +263,8 @@ def routes(geom: str) -> dict:
     if geom == corridor.NAME:
         return {r: (e, corridor.RAMP_SHARE if r == "ramp" else 1 - corridor.RAMP_SHARE, corridor.ENTRY_LANES[r])
                 for r, e in corridor.ROUTES.items()}
+    if geom in corridor.STRAIGHT:
+        return {"main": ("a", 1.0, corridor.STRAIGHT[geom])}
     return {"main": (pl.ROUTE_EDGES, 1.0, pl.lanes(geom, "1"))}
 
 

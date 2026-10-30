@@ -79,3 +79,37 @@ def build(speed: float) -> Path:
 def loop_ids() -> dict:
     lanes = {e: k for e, _, _, k in EDGES}
     return {name: [f"{name}_{e}_{i}" for e, _ in spots for i in range(lanes[e])] for name, spots in LOOPS.items()}
+
+
+# V199 incident calibration roads: one straight 5 km edge "a"; loops relative to the crash position
+STRAIGHT = {"inc3": 3, "inc2": 2}
+STRAIGHT_LEN, STRAIGHT_CRASH = 5000.0, 3000.0
+STRAIGHT_LOOPS = {"dn": 300.0, "upq": -500.0}
+
+
+def build_straight(name: str, speed: float) -> Path:
+    n = STRAIGHT[name]
+    spec = {"v": 1, "name": name, "lanes": n, "len": STRAIGHT_LEN, "crash": STRAIGHT_CRASH, "loops": STRAIGHT_LOOPS,
+            "speed": speed}
+    h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
+    d = NET_CACHE / f"{name}_{h}"
+    if (d / "net.xml").exists() and (d / "add.xml").exists():
+        return d
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "nod.xml").write_text(f'<nodes>\n  <node id="s" x="0" y="0"/>\n  <node id="e" x="{STRAIGHT_LEN}" y="0"/>\n'
+                               '</nodes>\n')
+    (d / "edg.xml").write_text(f'<edges>\n  <edge id="a" from="s" to="e" numLanes="{n}" speed="{speed}"/>\n</edges>\n')
+    cmd = [NETCONVERT_BIN, "--node-files", str(d / "nod.xml"), "--edge-files", str(d / "edg.xml"),
+           "--no-turnarounds", "true", "-o", str(d / "net.xml"), "--log", str(d / "netconvert.log")]
+    r = subprocess.run(cmd, env=clean_sumo_env(), capture_output=True, text=True)
+    if r.returncode != 0 or not (d / "net.xml").exists():
+        raise RuntimeError(f"netconvert failed: {r.stderr[-2000:]}")
+    add = ["<additional>"] + [f'  <inductionLoop id="{k}_a_{i}" lane="a_{i}" pos="{STRAIGHT_CRASH + x:.2f}" '
+                              f'period="60" file="NUL"/>' for k, x in STRAIGHT_LOOPS.items() for i in range(n)]
+    (d / "add.xml").write_text("\n".join(add + ["</additional>"]) + "\n")
+    (d / "spec.json").write_text(json.dumps(spec, indent=1))
+    return d
+
+
+def straight_loop_ids(name: str) -> dict:
+    return {k: [f"{k}_a_{i}" for i in range(STRAIGHT[name])] for k in STRAIGHT_LOOPS}
