@@ -222,6 +222,7 @@ pl.GEOMS.setdefault("ld43", _lane_drop(4))
 PLANTS = {"v188": {"geom": "ld32", "merge": "laneend", "tau_scale": 0.8, "asl_scale": 0.5,
                    "cav_models": {"acc": "IDM", "cacc": "IDM", "alks": "IDM"}}}
 PLANTS["v190"] = {**PLANTS["v188"], "geom": corridor.NAME, "teleport": False}   # teleporting off: V197
+PLANTS["v199"] = {**PLANTS["v190"], "incident_tau_factor": 3.0}   # passing zone calibrated in V200
 
 
 def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
