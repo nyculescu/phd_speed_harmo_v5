@@ -140,6 +140,14 @@ class CrashProcess:
         del self.active[(f, l)]
         return True
 
+    def force(self, t: float, vids: tuple, duration: float, f_cls: str) -> None:
+        """A crash placed by the caller (V202 demo), outside the encounter rule."""
+        for v in vids:
+            self.release[v] = t + duration
+        self.events.append({"t": t, "follower": vids[-1], "leader": vids[0], "follower_cls": f_cls, "min_ttc": None,
+                            "duration_s": duration, "other_crash_active": len(self.release) > len(vids),
+                            "forced": True})
+
     def due(self, t: float) -> list:
         out = [v for v, tr in self.release.items() if tr <= t]
         for v in out:

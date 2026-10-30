@@ -116,9 +116,10 @@ def _crash(vids: tuple) -> None:
 
 
 def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None,
-            hours: tuple | None = None, courtesy: bool = False, squeeze: bool = False, teleport: bool = True) -> dict:
+            hours: tuple | None = None, courtesy: bool = False, squeeze: bool = False, teleport: bool = True,
+            forced: dict | None = None) -> dict:
     """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed; a crash process always
-    runs with teleporting off."""
+    runs with teleporting off. forced = {t, edge, lane, pos, duration}: one placed crash (V202), needs a crash process."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     d = fl.build_net(cfg)
@@ -132,6 +133,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                                        step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
     pz = None
+    forced_done = forced is None
     cg = rm = None
     removed, arrived_while_crashed = [], []
     loops = fl.loop_ids(cfg.geom)
@@ -158,6 +160,20 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         for vid in ls.simulation.getDepartedIDList():
             min_gap[vid] = ls.vehicle.getMinGap(vid)
         t = sim.t
+        if not forced_done and t >= forced["t"]:
+            ln = f"{forced['edge']}_{forced['lane']}"
+            hit = [v for v in ls.lane.getLastStepVehicleIDs(ln) if dem.by_id[v].cls in ("hdv_car", "truck")
+                   and ls.vehicle.getLanePosition(v) >= forced["pos"]]
+            if hit:
+                v0 = min(hit, key=ls.vehicle.getLanePosition)
+                fol = ls.vehicle.getFollower(v0, 30.0)
+                vids = (v0, fol[0]) if fol[0] and 0 <= fol[1] <= 30.0 else (v0,)
+                _crash(vids)
+                cp.force(t, vids, forced["duration"], dem.by_id[vids[-1]].cls)
+                cp.events[-1] |= {"lane": ln, "pos": round(ls.vehicle.getLanePosition(v0), 1),
+                                  "speed": round(ls.vehicle.getSpeed(v0), 2)}
+                pz.add(v0)
+                forced_done = True
         if cp is not None and cp.release:
             live = set(ls.vehicle.getIDList())
             for vid in cp.due(t):
@@ -284,6 +300,7 @@ def _common(p) -> None:
     p.add_argument("--courtesy", action="store_true", help="V194 courtesy-gap rule at the on-ramp merge")
     p.add_argument("--squeeze", action="store_true", help="V196 squeeze-in rule at the on-ramp merge")
     p.add_argument("--no-teleport", action="store_true")
+    p.add_argument("--forced", help="one placed crash: t,edge,lane,pos,duration (V202); needs --crash-k")
 
 
 def main(argv=None) -> int:
@@ -315,7 +332,12 @@ def main(argv=None) -> int:
         if a.plant:
             cfg = fl.apply_plant(a.plant, cfg)
         teleport = not a.no_teleport and fl.PLANTS.get(a.plant, {}).get("teleport", True)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze, teleport)
+        fc = None
+        if a.forced:
+            t_, e_, l_, p_, d_ = a.forced.split(",")
+            fc = {"t": float(t_), "edge": e_, "lane": int(l_), "pos": float(p_), "duration": float(d_)}
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze, teleport,
+                      fc)
         res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
@@ -329,6 +351,8 @@ def main(argv=None) -> int:
             extra += ["--hours", a.hours]
         if a.ramp_lc_assertive is not None:
             extra += ["--ramp-lc-assertive", str(a.ramp_lc_assertive)]
+        if a.forced:
+            extra += ["--forced", a.forced]
         extra += [f for f, on in (("--courtesy", a.courtesy), ("--squeeze", a.squeeze),
                                   ("--no-teleport", a.no_teleport)) if on]
         if a.cav_apparent_decel is not None:
