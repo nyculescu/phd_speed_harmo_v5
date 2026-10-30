@@ -306,8 +306,8 @@ def main(argv=None) -> int:
         cfg = dataclasses.replace(CFG, geom=a.geom)
         if a.plant:
             cfg = fl.apply_plant(a.plant, cfg)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze,
-                      not a.no_teleport)
+        teleport = not a.no_teleport and fl.PLANTS.get(a.plant, {}).get("teleport", True)
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze, teleport)
         res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
