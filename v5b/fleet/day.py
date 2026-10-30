@@ -30,6 +30,7 @@ import numpy as np
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, SUMO_BIN, clean_sumo_env
 from v5b.fleet import fleet as fl
 from v5b.fleet.crash import CrashProcess
+from v5b.fleet.merge import CourtesyGap
 from v5b.fleet.smoke import CFG, loop_speed
 from v5b.p1c import plant as pl
 from v5b.p1c.calibrate import _cpu_util
@@ -114,7 +115,7 @@ def _crash(vids: tuple) -> None:
 
 
 def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None,
-            hours: tuple | None = None) -> dict:
+            hours: tuple | None = None, courtesy: bool = False) -> dict:
     """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -128,12 +129,16 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     sim = (CrashSim if crash else Sim)(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"],
                                        step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
+    cg = None
     removed, arrived_while_crashed = [], []
     loops = fl.loop_ids(cfg.geom)
     idx = {v.vid: i for i, v in enumerate(dem.veh)}
     cls_i = np.array([fl.CLASSES.index(v.cls) for v in dem.veh], dtype=np.int8)
     sim.start()
     fl.all_green(cfg.geom)
+    if courtesy:
+        import v5b.fleet.merge as mg
+        cg = CourtesyGap(ls.lane.getLength(mg.LANE))
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
@@ -156,6 +161,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 else:
                     arrived_while_crashed.append(vid)
         if abs(t - round(t)) < 1e-6:
+            if cg is not None:
+                cg.step(t)
             ids = ls.vehicle.getIDList()
             veh_s += len(ids)
             sp = {vid: ls.vehicle.getSpeed(vid) for vid in ids}
@@ -215,6 +222,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "breakdowns_merge": breakdowns(ser, 5) if "merge_up" in loops else None,
         "ramp_queue_max": max((x[6] for x in ser if x[6] is not None), default=None),
         "crash_rule": crash, "crashes": cp.events if cp else [], "removed": len(removed),
+        "courtesy_gaps": cg.n_gaps if cg else None, "courtesy_no_follower": cg.n_no_follower if cg else None,
         "arrived_while_crashed": arrived_while_crashed, "arrived_plus_removed": res["arrived"] + len(removed),
         "vehicle_seconds": veh_s, "closing_seconds": closing_s,
         "ttc_seconds_below": {f"{x:g}": int((ttc < x).sum()) for x in (0.5, 1.0, 1.5, 2.0, 3.0)},
@@ -260,6 +268,7 @@ def _common(p) -> None:
     p.add_argument("--crash-who", default="human")
     p.add_argument("--hours", help="only these hours of the reference day, e.g. 13,20")
     p.add_argument("--ramp-lc-assertive", type=float)
+    p.add_argument("--courtesy", action="store_true", help="V194 courtesy-gap rule at the on-ramp merge")
 
 
 def main(argv=None) -> int:
@@ -290,7 +299,7 @@ def main(argv=None) -> int:
         cfg = dataclasses.replace(CFG, geom=a.geom)
         if a.plant:
             cfg = fl.apply_plant(a.plant, cfg)
-        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours)
+        res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy)
         res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
@@ -304,6 +313,8 @@ def main(argv=None) -> int:
             extra += ["--hours", a.hours]
         if a.ramp_lc_assertive is not None:
             extra += ["--ramp-lc-assertive", str(a.ramp_lc_assertive)]
+        if a.courtesy:
+            extra += ["--courtesy"]
         if a.cav_apparent_decel is not None:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:
