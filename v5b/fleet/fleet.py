@@ -73,6 +73,13 @@ HDV_ASL_SCALE = 1.0
 RAMP_LC_ASSERTIVE: float | None = None
 # V199: tau factor for human drivers passing an active crash (v5b/fleet/incident.py); 1.0 = off
 INCIDENT_TAU_FACTOR = 1.0
+# V204 weather, one state per day: name -> (human tau factor g, human speed factor SAF at 100 km/h, SHRP 2-L08);
+# g is calibrated (V204 §4). Applied after all draws, so every state shares the same vehicles.
+WEATHER_STATES = {"dry": (1.0, 1.0), "medium": (1.0, 0.946), "heavy": (1.0, 0.930)}
+WEATHER = "dry"
+WEATHER_G: float | None = None     # calibration override of the state's g
+WEATHER_CAV = False                # V204 Q5 report-only bound: CAVs get the human factors
+TRUCK_TAU = 1.0                    # SUMO's default Krauss tau (checked in 1.27.1), written only when scaled
 
 # diagnosis knobs (V178): fix every HDV car's action step or sigma; None = sourced draw
 HDV_ASL_FIXED: float | None = None
@@ -126,6 +133,7 @@ class VehSpec:
     sigma: float | None = None
     asl: float | None = None
     resampled: int = 0
+    max_speed: float | None = None     # weather cap on the desired speed (V204 Q6)
     extra: dict = field(default_factory=dict)
     lc: dict = field(default_factory=dict)
 
@@ -143,9 +151,13 @@ class VehSpec:
             if HDV_ACCEL is not None:
                 a["accel"] = f"{HDV_ACCEL:g}"
         elif self.cls == "truck":
-            a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{TRUCK_MAX:g}"}
+            a |= {"vClass": "trailer", "carFollowModel": "Krauss", "maxSpeed": f"{self.max_speed or TRUCK_MAX:g}"}
+            if self.tau is not None:
+                a["tau"] = f"{self.tau:.3f}"
         else:
             a |= {"vClass": "passenger", "carFollowModel": CAV_MODELS[self.cls], "tau": f"{self.tau:g}"}
+        if self.max_speed is not None and self.cls != "truck":
+            a["maxSpeed"] = f"{self.max_speed:.3f}"
         if self.cls in ("hdv_car", "truck") and HDV_SIGMA_STEP is not None:
             a["sigmaStep"] = f"{HDV_SIGMA_STEP:g}"
         if self.cls in ("acc", "cacc", "alks") and CAV_APPARENT_DECEL is not None:
@@ -194,7 +206,19 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
         elif cls == "alks":
             v.tau = ALKS_TAU
         out.append(v)
+    for v in out:
+        weather(v)
     return out
+
+
+def weather(v: VehSpec) -> None:
+    """Scale tau and cap the desired speed of a human (or, with WEATHER_CAV, any) vehicle for the day's state."""
+    g, saf = WEATHER_STATES[WEATHER]
+    g = g if WEATHER_G is None else WEATHER_G
+    if (g, saf) == (1.0, 1.0) or (v.cls not in ("hdv_car", "truck") and not WEATHER_CAV):
+        return
+    v.tau = round(g * (TRUCK_TAU if v.cls == "truck" else v.tau), 3)
+    v.max_speed = round(saf * v.desired, 3)
 
 
 # BN4 with a 3 km longer entry edge (V169): the peak queues (up to about 1.2 km in V168) stay inside the network
