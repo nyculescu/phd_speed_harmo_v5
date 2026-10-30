@@ -1,0 +1,840 @@
+{
+ "decision": "V202/V203",
+ "code": "ccaeccf",
+ "seeds": [
+  7430040,
+  7430041,
+  7430042,
+  7430043,
+  7430044,
+  7430045,
+  7430046,
+  7430047,
+  7430048,
+  7430049
+ ],
+ "per_seed": {
+  "zone": {
+   "7430040": {
+    "d_hdv": 498.1,
+    "d_truck": 618.7,
+    "d_alks": 504.1,
+    "d_acc": 498.4,
+    "pend": 207,
+    "ld_min": 202.0,
+    "mg_min": 174.0,
+    "w60": 163,
+    "coll": 0,
+    "eb": 4,
+    "slowed": 937,
+    "drained": true
+   },
+   "7430041": {
+    "d_hdv": 462.7,
+    "d_truck": 549.9,
+    "d_alks": 487.9,
+    "d_acc": 485.8,
+    "pend": 266,
+    "ld_min": 195.5,
+    "mg_min": 174.0,
+    "w60": 145,
+    "coll": 0,
+    "eb": 5,
+    "slowed": 945,
+    "drained": true
+   },
+   "7430042": {
+    "d_hdv": 509.9,
+    "d_truck": 583.7,
+    "d_alks": 513.5,
+    "d_acc": 511.9,
+    "pend": 183,
+    "ld_min": 197.0,
+    "mg_min": 174.0,
+    "w60": 160,
+    "coll": 0,
+    "eb": 6,
+    "slowed": 969,
+    "drained": true
+   },
+   "7430043": {
+    "d_hdv": 500.6,
+    "d_truck": 601.9,
+    "d_alks": 520.4,
+    "d_acc": 548.6,
+    "pend": 255,
+    "ld_min": 234.5,
+    "mg_min": 180.0,
+    "w60": 168,
+    "coll": 0,
+    "eb": 5,
+    "slowed": 931,
+    "drained": true
+   },
+   "7430044": {
+    "d_hdv": 544.1,
+    "d_truck": 629.0,
+    "d_alks": 540.3,
+    "d_acc": 554.6,
+    "pend": 311,
+    "ld_min": 203.5,
+    "mg_min": 179.5,
+    "w60": 170,
+    "coll": 0,
+    "eb": 5,
+    "slowed": 937,
+    "drained": true
+   },
+   "7430045": {
+    "d_hdv": 497.6,
+    "d_truck": 625.0,
+    "d_alks": 490.4,
+    "d_acc": 520.2,
+    "pend": 208,
+    "ld_min": 196.0,
+    "mg_min": 175.0,
+    "w60": 180,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 947,
+    "drained": true
+   },
+   "7430046": {
+    "d_hdv": 434.0,
+    "d_truck": 529.9,
+    "d_alks": 432.8,
+    "d_acc": 454.1,
+    "pend": 153,
+    "ld_min": 200.0,
+    "mg_min": 171.5,
+    "w60": 130,
+    "coll": 0,
+    "eb": 0,
+    "slowed": 954,
+    "drained": true
+   },
+   "7430047": {
+    "d_hdv": 576.6,
+    "d_truck": 658.4,
+    "d_alks": 616.4,
+    "d_acc": 630.1,
+    "pend": 237,
+    "ld_min": 234.5,
+    "mg_min": 198.5,
+    "w60": 177,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 891,
+    "drained": true
+   },
+   "7430048": {
+    "d_hdv": 558.5,
+    "d_truck": 633.4,
+    "d_alks": 552.4,
+    "d_acc": 555.4,
+    "pend": 256,
+    "ld_min": 232.5,
+    "mg_min": 183.5,
+    "w60": 181,
+    "coll": 0,
+    "eb": 4,
+    "slowed": 950,
+    "drained": true
+   },
+   "7430049": {
+    "d_hdv": 396.2,
+    "d_truck": 487.8,
+    "d_alks": 408.3,
+    "d_acc": 423.0,
+    "pend": 151,
+    "ld_min": 191.5,
+    "mg_min": 170.0,
+    "w60": 137,
+    "coll": 0,
+    "eb": 6,
+    "slowed": 932,
+    "drained": true
+   }
+  },
+  "nozone": {
+   "7430040": {
+    "d_hdv": 226.4,
+    "d_truck": 270.4,
+    "d_alks": 245.3,
+    "d_acc": 234.3,
+    "pend": 145,
+    "ld_min": 151.5,
+    "mg_min": 110.0,
+    "w60": 106,
+    "coll": 0,
+    "eb": 2,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430041": {
+    "d_hdv": 250.3,
+    "d_truck": 278.7,
+    "d_alks": 267.9,
+    "d_acc": 256.9,
+    "pend": 181,
+    "ld_min": 175.5,
+    "mg_min": 127.5,
+    "w60": 124,
+    "coll": 0,
+    "eb": 4,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430042": {
+    "d_hdv": 349.6,
+    "d_truck": 400.3,
+    "d_alks": 349.9,
+    "d_acc": 345.5,
+    "pend": 177,
+    "ld_min": 183.5,
+    "mg_min": 154.5,
+    "w60": 154,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430043": {
+    "d_hdv": 302.4,
+    "d_truck": 339.8,
+    "d_alks": 320.3,
+    "d_acc": 320.0,
+    "pend": 257,
+    "ld_min": 218.5,
+    "mg_min": 139.5,
+    "w60": 167,
+    "coll": 0,
+    "eb": 5,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430044": {
+    "d_hdv": 332.8,
+    "d_truck": 362.0,
+    "d_alks": 323.0,
+    "d_acc": 325.0,
+    "pend": 228,
+    "ld_min": 184.5,
+    "mg_min": 144.5,
+    "w60": 194,
+    "coll": 2,
+    "eb": 7,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430045": {
+    "d_hdv": 254.9,
+    "d_truck": 308.2,
+    "d_alks": 257.2,
+    "d_acc": 265.2,
+    "pend": 179,
+    "ld_min": 164.5,
+    "mg_min": 119.0,
+    "w60": 148,
+    "coll": 0,
+    "eb": 2,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430046": {
+    "d_hdv": 204.4,
+    "d_truck": 223.7,
+    "d_alks": 217.2,
+    "d_acc": 213.0,
+    "pend": 126,
+    "ld_min": 175.0,
+    "mg_min": 115.5,
+    "w60": 103,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430047": {
+    "d_hdv": 396.8,
+    "d_truck": 475.2,
+    "d_alks": 427.3,
+    "d_acc": 438.4,
+    "pend": 324,
+    "ld_min": 216.0,
+    "mg_min": 164.0,
+    "w60": 168,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430048": {
+    "d_hdv": 415.4,
+    "d_truck": 474.6,
+    "d_alks": 414.3,
+    "d_acc": 414.6,
+    "pend": 276,
+    "ld_min": 228.0,
+    "mg_min": 163.5,
+    "w60": 170,
+    "coll": 0,
+    "eb": 4,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430049": {
+    "d_hdv": 245.4,
+    "d_truck": 278.2,
+    "d_alks": 258.4,
+    "d_acc": 266.1,
+    "pend": 181,
+    "ld_min": 169.0,
+    "mg_min": 111.5,
+    "w60": 111,
+    "coll": 0,
+    "eb": 0,
+    "slowed": 0,
+    "drained": true
+   }
+  },
+  "ref": {
+   "7430040": {
+    "d_hdv": 248.4,
+    "d_truck": 298.4,
+    "d_alks": 263.6,
+    "d_acc": 251.5,
+    "pend": 133,
+    "ld_min": 156.0,
+    "mg_min": 118.5,
+    "w60": 116,
+    "coll": 0,
+    "eb": 0,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430041": {
+    "d_hdv": 232.2,
+    "d_truck": 228.4,
+    "d_alks": 258.6,
+    "d_acc": 242.2,
+    "pend": 212,
+    "ld_min": 156.5,
+    "mg_min": 93.0,
+    "w60": 127,
+    "coll": 0,
+    "eb": 5,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430042": {
+    "d_hdv": 273.2,
+    "d_truck": 298.6,
+    "d_alks": 280.0,
+    "d_acc": 273.6,
+    "pend": 176,
+    "ld_min": 175.5,
+    "mg_min": 111.0,
+    "w60": 124,
+    "coll": 0,
+    "eb": 2,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430043": {
+    "d_hdv": 357.3,
+    "d_truck": 397.7,
+    "d_alks": 377.0,
+    "d_acc": 377.5,
+    "pend": 307,
+    "ld_min": 224.0,
+    "mg_min": 147.5,
+    "w60": 154,
+    "coll": 0,
+    "eb": 1,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430044": {
+    "d_hdv": 321.9,
+    "d_truck": 331.1,
+    "d_alks": 318.5,
+    "d_acc": 318.4,
+    "pend": 274,
+    "ld_min": 182.0,
+    "mg_min": 133.5,
+    "w60": 152,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430045": {
+    "d_hdv": 267.8,
+    "d_truck": 318.0,
+    "d_alks": 277.9,
+    "d_acc": 279.0,
+    "pend": 160,
+    "ld_min": 168.0,
+    "mg_min": 123.0,
+    "w60": 166,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430046": {
+    "d_hdv": 223.1,
+    "d_truck": 250.3,
+    "d_alks": 239.9,
+    "d_acc": 239.5,
+    "pend": 138,
+    "ld_min": 175.0,
+    "mg_min": 108.5,
+    "w60": 127,
+    "coll": 0,
+    "eb": 7,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430047": {
+    "d_hdv": 382.0,
+    "d_truck": 438.6,
+    "d_alks": 419.8,
+    "d_acc": 430.2,
+    "pend": 344,
+    "ld_min": 226.5,
+    "mg_min": 162.0,
+    "w60": 163,
+    "coll": 0,
+    "eb": 2,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430048": {
+    "d_hdv": 346.1,
+    "d_truck": 360.7,
+    "d_alks": 350.6,
+    "d_acc": 345.2,
+    "pend": 280,
+    "ld_min": 213.5,
+    "mg_min": 141.0,
+    "w60": 161,
+    "coll": 0,
+    "eb": 3,
+    "slowed": 0,
+    "drained": true
+   },
+   "7430049": {
+    "d_hdv": 151.6,
+    "d_truck": 156.1,
+    "d_alks": 168.2,
+    "d_acc": 163.3,
+    "pend": 74,
+    "ld_min": 140.0,
+    "mg_min": 65.0,
+    "w60": 80,
+    "coll": 0,
+    "eb": 2,
+    "slowed": 0,
+    "drained": true
+   }
+  }
+ },
+ "crashes": {
+  "7430040": [
+   {
+    "t": 57600.0,
+    "follower": "main.8918",
+    "leader": "main.8784",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 680.0,
+    "speed": 7.18
+   }
+  ],
+  "7430041": [
+   {
+    "t": 57600.0,
+    "follower": "main.8871",
+    "leader": "main.8877",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 613.8,
+    "speed": 3.56
+   }
+  ],
+  "7430042": [
+   {
+    "t": 57600.0,
+    "follower": "main.8684",
+    "leader": "main.8703",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 619.2,
+    "speed": 0.55
+   }
+  ],
+  "7430043": [
+   {
+    "t": 57600.0,
+    "follower": "main.8858",
+    "leader": "main.8854",
+    "follower_cls": "acc",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 615.1,
+    "speed": 1.27
+   }
+  ],
+  "7430044": [
+   {
+    "t": 57600.0,
+    "follower": "main.8852",
+    "leader": "main.8742",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 684.3,
+    "speed": 7.73
+   }
+  ],
+  "7430045": [
+   {
+    "t": 57600.0,
+    "follower": "main.8738",
+    "leader": "main.8738",
+    "follower_cls": "hdv_car",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 632.5,
+    "speed": 18.46
+   }
+  ],
+  "7430046": [
+   {
+    "t": 57600.0,
+    "follower": "main.8694",
+    "leader": "main.8672",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 611.0,
+    "speed": 3.28
+   }
+  ],
+  "7430047": [
+   {
+    "t": 57600.0,
+    "follower": "main.8561",
+    "leader": "main.8809",
+    "follower_cls": "acc",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 612.7,
+    "speed": 0.0
+   }
+  ],
+  "7430048": [
+   {
+    "t": 57600.0,
+    "follower": "main.8930",
+    "leader": "main.8713",
+    "follower_cls": "alks",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 611.3,
+    "speed": 0.2
+   }
+  ],
+  "7430049": [
+   {
+    "t": 57600.0,
+    "follower": "main.8693",
+    "leader": "main.8674",
+    "follower_cls": "hdv_car",
+    "min_ttc": null,
+    "duration_s": 2700.0,
+    "other_crash_active": false,
+    "forced": true,
+    "lane": "3_1",
+    "pos": 611.5,
+    "speed": 13.03
+   }
+  ]
+ },
+ "paired": {
+  "d_hdv": {
+   "zone-nozone": [
+    204.75000000000003,
+    160.29999999999995,
+    229.6
+   ],
+   "nozone-ref": [
+    12.850000000000023,
+    -18.69999999999999,
+    69.29999999999995
+   ],
+   "zone-ref": [
+    226.00000000000003,
+    203.5,
+    237.55
+   ],
+   "medians": {
+    "zone": 499.35,
+    "nozone": 278.65,
+    "ref": 270.5
+   }
+  },
+  "d_truck": {
+   "zone-nozone": [
+    264.54999999999995,
+    183.40000000000003,
+    306.2
+   ],
+   "nozone-ref": [
+    33.74999999999997,
+    -26.600000000000023,
+    101.69999999999999
+   ],
+   "zone-ref": [
+    291.5,
+    249.69999999999996,
+    320.30000000000007
+   ],
+   "medians": {
+    "zone": 610.3,
+    "nozone": 324.0,
+    "ref": 308.3
+   }
+  },
+  "d_acc": {
+   "zone-nozone": [
+    228.75000000000003,
+    166.39999999999998,
+    242.30000000000004
+   ],
+   "nozone-ref": [
+    7.400000000000006,
+    -20.150000000000006,
+    69.40000000000003
+   ],
+   "zone-ref": [
+    237.25,
+    207.25000000000003,
+    244.05
+   ],
+   "medians": {
+    "zone": 516.05,
+    "nozone": 293.05,
+    "ref": 276.3
+   }
+  },
+  "d_alks": {
+   "zone-nozone": [
+    207.85,
+    163.60000000000002,
+    225.24999999999997
+   ],
+   "nozone-ref": [
+    6.0,
+    -20.69999999999999,
+    63.69999999999999
+   ],
+   "zone-ref": [
+    217.14999999999998,
+    196.59999999999997,
+    234.7
+   ],
+   "medians": {
+    "zone": 508.8,
+    "nozone": 294.1,
+    "ref": 278.95
+   }
+  },
+  "pend": {
+   "zone-nozone": [
+    16.5,
+    -20.0,
+    62.0
+   ],
+   "nozone-ref": [
+    -8.0,
+    -33.0,
+    12.0
+   ],
+   "zone-ref": [
+    26.0,
+    -24.0,
+    55.5
+   ],
+   "medians": {
+    "zone": 222.5,
+    "nozone": 181.0,
+    "ref": 194.0
+   }
+  },
+  "ld_min": {
+   "zone-nozone": [
+    19.5,
+    16.0,
+    27.0
+   ],
+   "nozone-ref": [
+    1.25,
+    -4.5,
+    14.5
+   ],
+   "zone-ref": [
+    23.25,
+    16.0,
+    39.0
+   ],
+   "medians": {
+    "zone": 201.0,
+    "nozone": 179.5,
+    "ref": 175.25
+   }
+  },
+  "mg_min": {
+   "zone-nozone": [
+    43.5,
+    27.5,
+    57.25
+   ],
+   "nozone-ref": [
+    9.0,
+    -4.0,
+    34.5
+   ],
+   "zone-ref": [
+    53.75,
+    41.25,
+    72.0
+   ],
+   "medians": {
+    "zone": 174.5,
+    "nozone": 133.5,
+    "ref": 120.75
+   }
+  },
+  "w60": {
+   "zone-nozone": [
+    16.0,
+    5.0,
+    29.0
+   ],
+   "nozone-ref": [
+    7.0,
+    -10.5,
+    30.0
+   ],
+   "zone-ref": [
+    18.0,
+    14.0,
+    36.0
+   ],
+   "medians": {
+    "zone": 165.5,
+    "nozone": 151.0,
+    "ref": 139.5
+   }
+  },
+  "coll": {
+   "zone-nozone": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nozone-ref": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "zone-ref": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "medians": {
+    "zone": 0.0,
+    "nozone": 0.0,
+    "ref": 0.0
+   }
+  },
+  "eb": {
+   "zone-nozone": [
+    0.5,
+    -1.0,
+    2.0
+   ],
+   "nozone-ref": [
+    1.0,
+    -1.5,
+    2.5
+   ],
+   "zone-ref": [
+    1.5,
+    0.0,
+    4.0
+   ],
+   "medians": {
+    "zone": 4.5,
+    "nozone": 3.0,
+    "ref": 2.5
+   }
+  },
+  "slowed": {
+   "zone-nozone": [
+    941.0,
+    932.0,
+    950.5
+   ],
+   "nozone-ref": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "zone-ref": [
+    941.0,
+    932.0,
+    950.5
+   ],
+   "medians": {
+    "zone": 941.0,
+    "nozone": 0.0,
+    "ref": 0.0
+   }
+  }
+ }
+}
