@@ -1,0 +1,2081 @@
+{
+ "decision": "V198",
+ "code": "cc33275",
+ "plant": "v190 (teleporting off, V197)",
+ "adt": 45000,
+ "reference_days": {
+  "day_s7430040": {
+   "seed": 7430040,
+   "generated": 45047,
+   "arrived": 45047,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 29160.0,
+     "t_recover": 30090.0,
+     "min": 15.5,
+     "pre": 3444.0,
+     "qdf": 3038.181818181818,
+     "drop": 0.11783338612606908
+    },
+    {
+     "t_break": 57990.0,
+     "t_recover": 68970.0,
+     "min": 183.0,
+     "pre": 3336.0,
+     "qdf": 3003.0252100840335,
+     "drop": 0.09981258690526573
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58650.0,
+     "t_recover": 66420.0,
+     "min": 129.5,
+     "pre": 3336.0,
+     "qdf": 3030.24,
+     "drop": 0.09165467625899282
+    },
+    {
+     "t_break": 66570.0,
+     "t_recover": 66720.0,
+     "min": 2.5,
+     "pre": 3360.0,
+     "qdf": null,
+     "drop": null
+    }
+   ],
+   "ramp_queue_max": 55,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 344,
+     "60": 145,
+     "300": 1
+    },
+    "wait_max_s": 313.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45047,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3266,
+    "2": 11907,
+    "3": 50180
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 159.4,
+    "truck": 160.9,
+    "acc": 163.1,
+    "cacc": 156.7,
+    "alks": 162.5
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "13c25f3a74958739",
+   "wall_s": 2831.7
+  },
+  "day_s7430041": {
+   "seed": 7430041,
+   "generated": 45080,
+   "arrived": 45080,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 58260.0,
+     "t_recover": 67950.0,
+     "min": 161.5,
+     "pre": 3456.0,
+     "qdf": 3085.605095541401,
+     "drop": 0.10717445152158533
+    },
+    {
+     "t_break": 68130.0,
+     "t_recover": 68250.0,
+     "min": 2.0,
+     "pre": 3528.0,
+     "qdf": null,
+     "drop": null
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60540.0,
+     "t_recover": 66270.0,
+     "min": 95.5,
+     "pre": 3576.0,
+     "qdf": 3000.6593406593406,
+     "drop": 0.16088944612434541
+    }
+   ],
+   "ramp_queue_max": 56,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 281,
+     "60": 129,
+     "300": 5
+    },
+    "wait_max_s": 456.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45080,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 2959,
+    "2": 10360,
+    "3": 43016
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 115.0,
+    "truck": 112.4,
+    "acc": 120.2,
+    "cacc": 117.8,
+    "alks": 128.4
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "385102cec93037d2",
+   "wall_s": 2763.9
+  },
+  "day_s7430042": {
+   "seed": 7430042,
+   "generated": 44759,
+   "arrived": 44759,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 26790.0,
+     "t_recover": 27330.0,
+     "min": 9.0,
+     "pre": 3192.0,
+     "qdf": 3040.0,
+     "drop": 0.04761904761904767
+    },
+    {
+     "t_break": 27870.0,
+     "t_recover": 28170.0,
+     "min": 5.0,
+     "pre": 3312.0,
+     "qdf": 3960.0,
+     "drop": -0.19565217391304346
+    },
+    {
+     "t_break": 28710.0,
+     "t_recover": 29160.0,
+     "min": 7.5,
+     "pre": 3480.0,
+     "qdf": 3120.0,
+     "drop": 0.10344827586206895
+    },
+    {
+     "t_break": 58740.0,
+     "t_recover": 66390.0,
+     "min": 127.5,
+     "pre": 3396.0,
+     "qdf": 3070.243902439024,
+     "drop": 0.09592346806860297
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60660.0,
+     "t_recover": 62370.0,
+     "min": 28.5,
+     "pre": 3456.0,
+     "qdf": 3182.5,
+     "drop": 0.07913773148148151
+    },
+    {
+     "t_break": 62940.0,
+     "t_recover": 65460.0,
+     "min": 42.0,
+     "pre": 3624.0,
+     "qdf": 3033.6,
+     "drop": 0.1629139072847683
+    }
+   ],
+   "ramp_queue_max": 51,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 257,
+     "60": 84,
+     "300": 1
+    },
+    "wait_max_s": 351.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44759,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 2793,
+    "2": 9249,
+    "3": 38074
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 84.5,
+    "truck": 84.3,
+    "acc": 91.2,
+    "cacc": 86.6,
+    "alks": 97.5
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "b5579d3d717bdaed",
+   "wall_s": 2675.9
+  },
+  "day_s7430043": {
+   "seed": 7430043,
+   "generated": 45241,
+   "arrived": 45241,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27930.0,
+     "t_recover": 29430.0,
+     "min": 25.0,
+     "pre": 3492.0,
+     "qdf": 3108.2926829268295,
+     "drop": 0.10988182046768913
+    },
+    {
+     "t_break": 29700.0,
+     "t_recover": 30030.0,
+     "min": 5.5,
+     "pre": 3624.0,
+     "qdf": 3240.0,
+     "drop": 0.10596026490066224
+    },
+    {
+     "t_break": 55800.0,
+     "t_recover": 69060.0,
+     "min": 221.0,
+     "pre": 3372.0,
+     "qdf": 3016.0739030023096,
+     "drop": 0.10555340954854397
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58560.0,
+     "t_recover": 59550.0,
+     "min": 16.5,
+     "pre": 3516.0,
+     "qdf": 3185.0,
+     "drop": 0.09414106939704214
+    },
+    {
+     "t_break": 59760.0,
+     "t_recover": 67470.0,
+     "min": 128.5,
+     "pre": 3552.0,
+     "qdf": 2960.8064516129034,
+     "drop": 0.16643962510897992
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 380,
+     "60": 149,
+     "300": 8
+    },
+    "wait_max_s": 662.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45241,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3541,
+    "2": 13178,
+    "3": 56770
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 173.2,
+    "truck": 185.8,
+    "acc": 179.3,
+    "cacc": 172.2,
+    "alks": 186.3
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "8a22e5d84ff06aca",
+   "wall_s": 2891.0
+  },
+  "day_s7430044": {
+   "seed": 7430044,
+   "generated": 45290,
+   "arrived": 45290,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 28290.0,
+     "t_recover": 29010.0,
+     "min": 12.0,
+     "pre": 3516.0,
+     "qdf": 3248.0,
+     "drop": 0.07622298065984068
+    },
+    {
+     "t_break": 30390.0,
+     "t_recover": 30870.0,
+     "min": 8.0,
+     "pre": 3516.0,
+     "qdf": 3137.1428571428573,
+     "drop": 0.10775231594344215
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56040.0,
+     "min": 2.0,
+     "pre": 3408.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 56430.0,
+     "t_recover": 57060.0,
+     "min": 10.5,
+     "pre": 3408.0,
+     "qdf": 3550.0,
+     "drop": -0.04166666666666674
+    },
+    {
+     "t_break": 57390.0,
+     "t_recover": 57750.0,
+     "min": 6.0,
+     "pre": 3660.0,
+     "qdf": 3000.0,
+     "drop": 0.180327868852459
+    },
+    {
+     "t_break": 58410.0,
+     "t_recover": 59220.0,
+     "min": 13.5,
+     "pre": 3660.0,
+     "qdf": 3353.3333333333335,
+     "drop": 0.08378870673952632
+    },
+    {
+     "t_break": 59520.0,
+     "t_recover": 67320.0,
+     "min": 130.0,
+     "pre": 3660.0,
+     "qdf": 3098.964143426295,
+     "drop": 0.15328848540265172
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 59610.0,
+     "t_recover": 66300.0,
+     "min": 111.5,
+     "pre": 3660.0,
+     "qdf": 3082.9906542056074,
+     "drop": 0.15765282671977943
+    }
+   ],
+   "ramp_queue_max": 56,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 304,
+     "60": 135,
+     "300": 1
+    },
+    "wait_max_s": 556.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45290,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3246,
+    "2": 11648,
+    "3": 48923
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 127.1,
+    "truck": 137.7,
+    "acc": 132.6,
+    "cacc": 133.1,
+    "alks": 138.9
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "cb71dc040d327530",
+   "wall_s": 2792.2
+  },
+  "day_s7430045": {
+   "seed": 7430045,
+   "generated": 45006,
+   "arrived": 45006,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 55830.0,
+     "t_recover": 68790.0,
+     "min": 216.0,
+     "pre": 3348.0,
+     "qdf": 3068.936170212766,
+     "drop": 0.08335239838328379
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58620.0,
+     "t_recover": 60870.0,
+     "min": 37.5,
+     "pre": 3564.0,
+     "qdf": 3221.818181818182,
+     "drop": 0.09601061116212628
+    },
+    {
+     "t_break": 61020.0,
+     "t_recover": 61140.0,
+     "min": 2.0,
+     "pre": 3576.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 61410.0,
+     "t_recover": 66450.0,
+     "min": 84.0,
+     "pre": 3576.0,
+     "qdf": 3034.7169811320755,
+     "drop": 0.15136549744628758
+    },
+    {
+     "t_break": 66570.0,
+     "t_recover": 66930.0,
+     "min": 6.0,
+     "pre": 3576.0,
+     "qdf": 3080.0,
+     "drop": 0.13870246085011184
+    }
+   ],
+   "ramp_queue_max": 52,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 381,
+     "60": 169,
+     "300": 6
+    },
+    "wait_max_s": 384.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45006,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3358,
+    "2": 12580,
+    "3": 53133
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 148.3,
+    "truck": 151.3,
+    "acc": 161.9,
+    "cacc": 150.3,
+    "alks": 158.0
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "8a2474998b5dd775",
+   "wall_s": 2823.9
+  },
+  "day_s7430046": {
+   "seed": 7430046,
+   "generated": 45021,
+   "arrived": 45021,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 2,
+   "breakdowns": [
+    {
+     "t_break": 27210.0,
+     "t_recover": 27510.0,
+     "min": 5.0,
+     "pre": 3204.0,
+     "qdf": 2520.0,
+     "drop": 0.2134831460674157
+    },
+    {
+     "t_break": 28620.0,
+     "t_recover": 28860.0,
+     "min": 4.0,
+     "pre": 3348.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 28980.0,
+     "t_recover": 29610.0,
+     "min": 10.5,
+     "pre": 3348.0,
+     "qdf": 3150.0,
+     "drop": 0.05913978494623651
+    },
+    {
+     "t_break": 58080.0,
+     "t_recover": 69030.0,
+     "min": 182.5,
+     "pre": 3468.0,
+     "qdf": 3037.752808988764,
+     "drop": 0.12406205046460084
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58980.0,
+     "t_recover": 67080.0,
+     "min": 135.0,
+     "pre": 3360.0,
+     "qdf": 3047.816091954023,
+     "drop": 0.09291187739463602
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 332,
+     "60": 158,
+     "300": 5
+    },
+    "wait_max_s": 519.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45021,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3301,
+    "2": 11708,
+    "3": 49863
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 154.0,
+    "truck": 171.3,
+    "acc": 162.3,
+    "cacc": 154.3,
+    "alks": 173.7
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "b9dc7aa2d4bd6cdd",
+   "wall_s": 2858.2
+  },
+  "day_s7430047": {
+   "seed": 7430047,
+   "generated": 44770,
+   "arrived": 44770,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27120.0,
+     "t_recover": 27450.0,
+     "min": 5.5,
+     "pre": 3300.0,
+     "qdf": 3840.0,
+     "drop": -0.16363636363636358
+    },
+    {
+     "t_break": 27690.0,
+     "t_recover": 30300.0,
+     "min": 43.5,
+     "pre": 3336.0,
+     "qdf": 3081.5384615384614,
+     "drop": 0.07627743958679212
+    },
+    {
+     "t_break": 55860.0,
+     "t_recover": 56190.0,
+     "min": 5.5,
+     "pre": 3384.0,
+     "qdf": 2700.0,
+     "drop": 0.2021276595744681
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 58710.0,
+     "min": 6.0,
+     "pre": 3468.0,
+     "qdf": 4080.0,
+     "drop": -0.17647058823529416
+    },
+    {
+     "t_break": 58830.0,
+     "t_recover": 66900.0,
+     "min": 134.5,
+     "pre": 3468.0,
+     "qdf": 3081.230769230769,
+     "drop": 0.11152515304764443
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60600.0,
+     "t_recover": 60930.0,
+     "min": 5.5,
+     "pre": 3456.0,
+     "qdf": 3060.0,
+     "drop": 0.11458333333333337
+    },
+    {
+     "t_break": 62070.0,
+     "t_recover": 65040.0,
+     "min": 49.5,
+     "pre": 3600.0,
+     "qdf": 3088.0,
+     "drop": 0.14222222222222225
+    }
+   ],
+   "ramp_queue_max": 52,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 268,
+     "60": 105,
+     "300": 1
+    },
+    "wait_max_s": 311.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44770,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3173,
+    "2": 10800,
+    "3": 44747
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 96.2,
+    "truck": 96.9,
+    "acc": 104.2,
+    "cacc": 102.3,
+    "alks": 113.8
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "a90f6e86586fe6c6",
+   "wall_s": 2760.7
+  },
+  "day_s7430048": {
+   "seed": 7430048,
+   "generated": 45604,
+   "arrived": 45604,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27780.0,
+     "t_recover": 28140.0,
+     "min": 6.0,
+     "pre": 3432.0,
+     "qdf": 3560.0,
+     "drop": -0.037296037296037365
+    },
+    {
+     "t_break": 28740.0,
+     "t_recover": 29370.0,
+     "min": 10.5,
+     "pre": 3444.0,
+     "qdf": 3210.0,
+     "drop": 0.06794425087108014
+    },
+    {
+     "t_break": 32010.0,
+     "t_recover": 32130.0,
+     "min": 2.0,
+     "pre": 3492.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56880.0,
+     "min": 16.0,
+     "pre": 3108.0,
+     "qdf": 3255.6521739130435,
+     "drop": -0.047507134463656175
+    },
+    {
+     "t_break": 57000.0,
+     "t_recover": 69450.0,
+     "min": 207.5,
+     "pre": 3648.0,
+     "qdf": 3015.960591133005,
+     "drop": 0.1732564169043298
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58050.0,
+     "t_recover": 58260.0,
+     "min": 3.5,
+     "pre": 3648.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 58440.0,
+     "t_recover": 68220.0,
+     "min": 163.0,
+     "pre": 3648.0,
+     "qdf": 3012.4921135646687,
+     "drop": 0.17420720571143955
+    }
+   ],
+   "ramp_queue_max": 53,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 410,
+     "60": 191,
+     "300": 10
+    },
+    "wait_max_s": 596.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45604,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3901,
+    "2": 14442,
+    "3": 61187
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 198.0,
+    "truck": 216.9,
+    "acc": 204.2,
+    "cacc": 196.3,
+    "alks": 204.8
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "7869a9eafe9e1e10",
+   "wall_s": 2957.6
+  },
+  "day_s7430049": {
+   "seed": 7430049,
+   "generated": 44947,
+   "arrived": 44947,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 28440.0,
+     "t_recover": 29250.0,
+     "min": 13.5,
+     "pre": 3384.0,
+     "qdf": 2853.3333333333335,
+     "drop": 0.15681639085894405
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 69330.0,
+     "min": 183.0,
+     "pre": 3504.0,
+     "qdf": 2984.201680672269,
+     "drop": 0.14834426921453514
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58920.0,
+     "t_recover": 67980.0,
+     "min": 151.0,
+     "pre": 3504.0,
+     "qdf": 2999.590443686007,
+     "drop": 0.1439524989480574
+    },
+    {
+     "t_break": 68280.0,
+     "t_recover": 68460.0,
+     "min": 3.0,
+     "pre": 3432.0,
+     "qdf": null,
+     "drop": null
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 332,
+     "60": 150,
+     "300": 9
+    },
+    "wait_max_s": 549.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44947,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3363,
+    "2": 12338,
+    "3": 52899
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 170.8,
+    "truck": 191.2,
+    "acc": 188.5,
+    "cacc": 176.8,
+    "alks": 186.4
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "80068647d8778250",
+   "wall_s": 2832.5
+  }
+ },
+ "crash_calibration": {
+  "human_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "human_u1.5_linear": {
+   "k": 0.0010850783185079138,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 1868.4,
+   "p_day_mean": 0.24999999999999992,
+   "p_day_range": [
+    0.2153,
+    0.291
+   ],
+   "expected_crashes_per_day": 0.287984149910783,
+   "p_max": 0.0003275026067025661
+  },
+  "human_u1.5_constant": {
+   "k": 0.00015420756748357745,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 1868.4,
+   "p_day_mean": 0.2500000000000492,
+   "p_day_range": [
+    0.2073,
+    0.2955
+   ],
+   "expected_crashes_per_day": 0.28812141908631606,
+   "p_max": 0.00015420756748357745
+  },
+  "human_u3_linear": {
+   "k": 8.39518720018206e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 12292.9,
+   "p_day_mean": 0.25,
+   "p_day_range": [
+    0.1941,
+    0.3004
+   ],
+   "expected_crashes_per_day": 0.28847817981947477,
+   "p_max": 5.464527813464859e-05
+  },
+  "human_u3_constant": {
+   "k": 2.34710109938141e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 12292.9,
+   "p_day_mean": 0.2500000000007273,
+   "p_day_range": [
+    0.1923,
+    0.3007
+   ],
+   "expected_crashes_per_day": 0.2885267910458573,
+   "p_max": 2.34710109938141e-05
+  },
+  "all_u1_linear": {
+   "k": null,
+   "u": 1.0,
+   "shape": "linear",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1_constant": {
+   "k": null,
+   "u": 1.0,
+   "shape": "constant",
+   "encounters_per_day": 0.0,
+   "p_day_mean": 0.0
+  },
+  "all_u1.5_linear": {
+   "k": 0.0009054084344777141,
+   "u": 1.5,
+   "shape": "linear",
+   "encounters_per_day": 2292.5,
+   "p_day_mean": 0.24999999999999994,
+   "p_day_range": [
+    0.2164,
+    0.2903
+   ],
+   "expected_crashes_per_day": 0.28795910730328605,
+   "p_max": 0.00028723191545727345
+  },
+  "all_u1.5_constant": {
+   "k": 0.00012565870811259705,
+   "u": 1.5,
+   "shape": "constant",
+   "encounters_per_day": 2292.5,
+   "p_day_mean": 0.25000000000006767,
+   "p_day_range": [
+    0.2094,
+    0.2933
+   ],
+   "expected_crashes_per_day": 0.2880725883481287,
+   "p_max": 0.00012565870811259705
+  },
+  "all_u3_linear": {
+   "k": 5.270061748650928e-05,
+   "u": 3.0,
+   "shape": "linear",
+   "encounters_per_day": 21451.3,
+   "p_day_mean": 0.2500000000000001,
+   "p_day_range": [
+    0.1949,
+    0.2992
+   ],
+   "expected_crashes_per_day": 0.288416176711744,
+   "p_max": 3.4709684871202416e-05
+  },
+  "all_u3_constant": {
+   "k": 1.3448996800835555e-05,
+   "u": 3.0,
+   "shape": "constant",
+   "encounters_per_day": 21451.3,
+   "p_day_mean": 0.250000000000714,
+   "p_day_range": [
+    0.1921,
+    0.3004
+   ],
+   "expected_crashes_per_day": 0.28849846507376375,
+   "p_max": 1.3448996800835555e-05
+  }
+ },
+ "replay": {
+  "7430040": {
+   "replay": null,
+   "hash_free": "13c25f3a74958739"
+  },
+  "7430041": {
+   "replay": {
+    "t": 60975.0,
+    "follower": "main.33783",
+    "leader": "main.33776",
+    "follower_cls": "hdv_car",
+    "min_ttc": 1.361,
+    "duration_s": 1981.7,
+    "other_crash_active": false
+   },
+   "hash_free": "385102cec93037d2"
+  },
+  "7430042": {
+   "replay": null,
+   "hash_free": "b5579d3d717bdaed"
+  },
+  "7430043": {
+   "replay": null,
+   "hash_free": "8a22e5d84ff06aca"
+  },
+  "7430044": {
+   "replay": null,
+   "hash_free": "cb71dc040d327530"
+  },
+  "7430045": {
+   "replay": null,
+   "hash_free": "8a2474998b5dd775"
+  },
+  "7430046": {
+   "replay": null,
+   "hash_free": "b9dc7aa2d4bd6cdd"
+  },
+  "7430047": {
+   "replay": null,
+   "hash_free": "a90f6e86586fe6c6"
+  },
+  "7430048": {
+   "replay": null,
+   "hash_free": "7869a9eafe9e1e10"
+  },
+  "7430049": {
+   "replay": null,
+   "hash_free": "80068647d8778250"
+  }
+ },
+ "crash_live": {
+  "day_s7430040": {
+   "seed": 7430040,
+   "generated": 45047,
+   "arrived": 45047,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 29160.0,
+     "t_recover": 30090.0,
+     "min": 15.5,
+     "pre": 3444.0,
+     "qdf": 3038.181818181818,
+     "drop": 0.11783338612606908
+    },
+    {
+     "t_break": 57990.0,
+     "t_recover": 68970.0,
+     "min": 183.0,
+     "pre": 3336.0,
+     "qdf": 3003.0252100840335,
+     "drop": 0.09981258690526573
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58650.0,
+     "t_recover": 66420.0,
+     "min": 129.5,
+     "pre": 3336.0,
+     "qdf": 3030.24,
+     "drop": 0.09165467625899282
+    },
+    {
+     "t_break": 66570.0,
+     "t_recover": 66720.0,
+     "min": 2.5,
+     "pre": 3360.0,
+     "qdf": null,
+     "drop": null
+    }
+   ],
+   "ramp_queue_max": 55,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 344,
+     "60": 145,
+     "300": 1
+    },
+    "wait_max_s": 313.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45047,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3266,
+    "2": 11907,
+    "3": 50180
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 159.4,
+    "truck": 160.9,
+    "acc": 163.1,
+    "cacc": 156.7,
+    "alks": 162.5
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "13c25f3a74958739",
+   "wall_s": 4363.9
+  },
+  "day_s7430041": {
+   "seed": 7430041,
+   "generated": 45080,
+   "arrived": 45078,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 3,
+   "breakdowns": [
+    {
+     "t_break": 58260.0,
+     "t_recover": 66630.0,
+     "min": 139.5,
+     "pre": 3456.0,
+     "qdf": 3095.1111111111113,
+     "drop": 0.10442386831275718
+    },
+    {
+     "t_break": 66750.0,
+     "t_recover": 67470.0,
+     "min": 12.0,
+     "pre": 3660.0,
+     "qdf": 3480.0,
+     "drop": 0.049180327868852514
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60540.0,
+     "t_recover": 62880.0,
+     "min": 39.0,
+     "pre": 3576.0,
+     "qdf": 2902.608695652174,
+     "drop": 0.18830853029860906
+    },
+    {
+     "t_break": 63420.0,
+     "t_recover": 65130.0,
+     "min": 28.5,
+     "pre": 3648.0,
+     "qdf": 3210.0,
+     "drop": 0.12006578947368418
+    }
+   ],
+   "ramp_queue_max": 56,
+   "crashes": [
+    {
+     "t": 60975.0,
+     "follower": "main.33783",
+     "leader": "main.33776",
+     "follower_cls": "hdv_car",
+     "min_ttc": 1.361,
+     "duration_s": 1981.7,
+     "other_crash_active": false,
+     "lane": "r_0",
+     "pos": 335.9,
+     "speed": 9.68
+    }
+   ],
+   "removed": 2,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 261,
+     "60": 86,
+     "300": 0
+    },
+    "wait_max_s": 292.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45080,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 2597,
+    "2": 9101,
+    "3": 38461
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 112.1,
+    "truck": 103.2,
+    "acc": 117.0,
+    "cacc": 117.4,
+    "alks": 127.5
+   },
+   "health_codes": [
+    "H-E2",
+    "H-R1",
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "afea6b25efd257cb",
+   "wall_s": 4292.3
+  },
+  "day_s7430042": {
+   "seed": 7430042,
+   "generated": 44759,
+   "arrived": 44759,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 26790.0,
+     "t_recover": 27330.0,
+     "min": 9.0,
+     "pre": 3192.0,
+     "qdf": 3040.0,
+     "drop": 0.04761904761904767
+    },
+    {
+     "t_break": 27870.0,
+     "t_recover": 28170.0,
+     "min": 5.0,
+     "pre": 3312.0,
+     "qdf": 3960.0,
+     "drop": -0.19565217391304346
+    },
+    {
+     "t_break": 28710.0,
+     "t_recover": 29160.0,
+     "min": 7.5,
+     "pre": 3480.0,
+     "qdf": 3120.0,
+     "drop": 0.10344827586206895
+    },
+    {
+     "t_break": 58740.0,
+     "t_recover": 66390.0,
+     "min": 127.5,
+     "pre": 3396.0,
+     "qdf": 3070.243902439024,
+     "drop": 0.09592346806860297
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60660.0,
+     "t_recover": 62370.0,
+     "min": 28.5,
+     "pre": 3456.0,
+     "qdf": 3182.5,
+     "drop": 0.07913773148148151
+    },
+    {
+     "t_break": 62940.0,
+     "t_recover": 65460.0,
+     "min": 42.0,
+     "pre": 3624.0,
+     "qdf": 3033.6,
+     "drop": 0.1629139072847683
+    }
+   ],
+   "ramp_queue_max": 51,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 257,
+     "60": 84,
+     "300": 1
+    },
+    "wait_max_s": 351.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44759,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 2793,
+    "2": 9249,
+    "3": 38074
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 84.5,
+    "truck": 84.3,
+    "acc": 91.2,
+    "cacc": 86.6,
+    "alks": 97.5
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "b5579d3d717bdaed",
+   "wall_s": 4258.7
+  },
+  "day_s7430043": {
+   "seed": 7430043,
+   "generated": 45241,
+   "arrived": 45241,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27930.0,
+     "t_recover": 29430.0,
+     "min": 25.0,
+     "pre": 3492.0,
+     "qdf": 3108.2926829268295,
+     "drop": 0.10988182046768913
+    },
+    {
+     "t_break": 29700.0,
+     "t_recover": 30030.0,
+     "min": 5.5,
+     "pre": 3624.0,
+     "qdf": 3240.0,
+     "drop": 0.10596026490066224
+    },
+    {
+     "t_break": 55800.0,
+     "t_recover": 69060.0,
+     "min": 221.0,
+     "pre": 3372.0,
+     "qdf": 3016.0739030023096,
+     "drop": 0.10555340954854397
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58560.0,
+     "t_recover": 59550.0,
+     "min": 16.5,
+     "pre": 3516.0,
+     "qdf": 3185.0,
+     "drop": 0.09414106939704214
+    },
+    {
+     "t_break": 59760.0,
+     "t_recover": 67470.0,
+     "min": 128.5,
+     "pre": 3552.0,
+     "qdf": 2960.8064516129034,
+     "drop": 0.16643962510897992
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 380,
+     "60": 149,
+     "300": 8
+    },
+    "wait_max_s": 662.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45241,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3541,
+    "2": 13178,
+    "3": 56770
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 173.2,
+    "truck": 185.8,
+    "acc": 179.3,
+    "cacc": 172.2,
+    "alks": 186.3
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "8a22e5d84ff06aca",
+   "wall_s": 4098.1
+  },
+  "day_s7430044": {
+   "seed": 7430044,
+   "generated": 45290,
+   "arrived": 45290,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 28290.0,
+     "t_recover": 29010.0,
+     "min": 12.0,
+     "pre": 3516.0,
+     "qdf": 3248.0,
+     "drop": 0.07622298065984068
+    },
+    {
+     "t_break": 30390.0,
+     "t_recover": 30870.0,
+     "min": 8.0,
+     "pre": 3516.0,
+     "qdf": 3137.1428571428573,
+     "drop": 0.10775231594344215
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56040.0,
+     "min": 2.0,
+     "pre": 3408.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 56430.0,
+     "t_recover": 57060.0,
+     "min": 10.5,
+     "pre": 3408.0,
+     "qdf": 3550.0,
+     "drop": -0.04166666666666674
+    },
+    {
+     "t_break": 57390.0,
+     "t_recover": 57750.0,
+     "min": 6.0,
+     "pre": 3660.0,
+     "qdf": 3000.0,
+     "drop": 0.180327868852459
+    },
+    {
+     "t_break": 58410.0,
+     "t_recover": 59220.0,
+     "min": 13.5,
+     "pre": 3660.0,
+     "qdf": 3353.3333333333335,
+     "drop": 0.08378870673952632
+    },
+    {
+     "t_break": 59520.0,
+     "t_recover": 67320.0,
+     "min": 130.0,
+     "pre": 3660.0,
+     "qdf": 3098.964143426295,
+     "drop": 0.15328848540265172
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 59610.0,
+     "t_recover": 66300.0,
+     "min": 111.5,
+     "pre": 3660.0,
+     "qdf": 3082.9906542056074,
+     "drop": 0.15765282671977943
+    }
+   ],
+   "ramp_queue_max": 56,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 304,
+     "60": 135,
+     "300": 1
+    },
+    "wait_max_s": 556.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45290,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3246,
+    "2": 11648,
+    "3": 48923
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 127.1,
+    "truck": 137.7,
+    "acc": 132.6,
+    "cacc": 133.1,
+    "alks": 138.9
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "cb71dc040d327530",
+   "wall_s": 4319.5
+  },
+  "day_s7430045": {
+   "seed": 7430045,
+   "generated": 45006,
+   "arrived": 45006,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 55830.0,
+     "t_recover": 68790.0,
+     "min": 216.0,
+     "pre": 3348.0,
+     "qdf": 3068.936170212766,
+     "drop": 0.08335239838328379
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58620.0,
+     "t_recover": 60870.0,
+     "min": 37.5,
+     "pre": 3564.0,
+     "qdf": 3221.818181818182,
+     "drop": 0.09601061116212628
+    },
+    {
+     "t_break": 61020.0,
+     "t_recover": 61140.0,
+     "min": 2.0,
+     "pre": 3576.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 61410.0,
+     "t_recover": 66450.0,
+     "min": 84.0,
+     "pre": 3576.0,
+     "qdf": 3034.7169811320755,
+     "drop": 0.15136549744628758
+    },
+    {
+     "t_break": 66570.0,
+     "t_recover": 66930.0,
+     "min": 6.0,
+     "pre": 3576.0,
+     "qdf": 3080.0,
+     "drop": 0.13870246085011184
+    }
+   ],
+   "ramp_queue_max": 52,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 381,
+     "60": 169,
+     "300": 6
+    },
+    "wait_max_s": 384.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45006,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3358,
+    "2": 12580,
+    "3": 53133
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 148.3,
+    "truck": 151.3,
+    "acc": 161.9,
+    "cacc": 150.3,
+    "alks": 158.0
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "8a2474998b5dd775",
+   "wall_s": 4129.3
+  },
+  "day_s7430046": {
+   "seed": 7430046,
+   "generated": 45021,
+   "arrived": 45021,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 2,
+   "breakdowns": [
+    {
+     "t_break": 27210.0,
+     "t_recover": 27510.0,
+     "min": 5.0,
+     "pre": 3204.0,
+     "qdf": 2520.0,
+     "drop": 0.2134831460674157
+    },
+    {
+     "t_break": 28620.0,
+     "t_recover": 28860.0,
+     "min": 4.0,
+     "pre": 3348.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 28980.0,
+     "t_recover": 29610.0,
+     "min": 10.5,
+     "pre": 3348.0,
+     "qdf": 3150.0,
+     "drop": 0.05913978494623651
+    },
+    {
+     "t_break": 58080.0,
+     "t_recover": 69030.0,
+     "min": 182.5,
+     "pre": 3468.0,
+     "qdf": 3037.752808988764,
+     "drop": 0.12406205046460084
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58980.0,
+     "t_recover": 67080.0,
+     "min": 135.0,
+     "pre": 3360.0,
+     "qdf": 3047.816091954023,
+     "drop": 0.09291187739463602
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 332,
+     "60": 158,
+     "300": 5
+    },
+    "wait_max_s": 519.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45021,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3301,
+    "2": 11708,
+    "3": 49863
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 154.0,
+    "truck": 171.3,
+    "acc": 162.3,
+    "cacc": 154.3,
+    "alks": 173.7
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "b9dc7aa2d4bd6cdd",
+   "wall_s": 4137.6
+  },
+  "day_s7430047": {
+   "seed": 7430047,
+   "generated": 44770,
+   "arrived": 44770,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27120.0,
+     "t_recover": 27450.0,
+     "min": 5.5,
+     "pre": 3300.0,
+     "qdf": 3840.0,
+     "drop": -0.16363636363636358
+    },
+    {
+     "t_break": 27690.0,
+     "t_recover": 30300.0,
+     "min": 43.5,
+     "pre": 3336.0,
+     "qdf": 3081.5384615384614,
+     "drop": 0.07627743958679212
+    },
+    {
+     "t_break": 55860.0,
+     "t_recover": 56190.0,
+     "min": 5.5,
+     "pre": 3384.0,
+     "qdf": 2700.0,
+     "drop": 0.2021276595744681
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 58710.0,
+     "min": 6.0,
+     "pre": 3468.0,
+     "qdf": 4080.0,
+     "drop": -0.17647058823529416
+    },
+    {
+     "t_break": 58830.0,
+     "t_recover": 66900.0,
+     "min": 134.5,
+     "pre": 3468.0,
+     "qdf": 3081.230769230769,
+     "drop": 0.11152515304764443
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 60600.0,
+     "t_recover": 60930.0,
+     "min": 5.5,
+     "pre": 3456.0,
+     "qdf": 3060.0,
+     "drop": 0.11458333333333337
+    },
+    {
+     "t_break": 62070.0,
+     "t_recover": 65040.0,
+     "min": 49.5,
+     "pre": 3600.0,
+     "qdf": 3088.0,
+     "drop": 0.14222222222222225
+    }
+   ],
+   "ramp_queue_max": 52,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 268,
+     "60": 105,
+     "300": 1
+    },
+    "wait_max_s": 311.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44770,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3173,
+    "2": 10800,
+    "3": 44747
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 96.2,
+    "truck": 96.9,
+    "acc": 104.2,
+    "cacc": 102.3,
+    "alks": 113.8
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "a90f6e86586fe6c6",
+   "wall_s": 3257.0
+  },
+  "day_s7430048": {
+   "seed": 7430048,
+   "generated": 45604,
+   "arrived": 45604,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 4,
+   "breakdowns": [
+    {
+     "t_break": 27780.0,
+     "t_recover": 28140.0,
+     "min": 6.0,
+     "pre": 3432.0,
+     "qdf": 3560.0,
+     "drop": -0.037296037296037365
+    },
+    {
+     "t_break": 28740.0,
+     "t_recover": 29370.0,
+     "min": 10.5,
+     "pre": 3444.0,
+     "qdf": 3210.0,
+     "drop": 0.06794425087108014
+    },
+    {
+     "t_break": 32010.0,
+     "t_recover": 32130.0,
+     "min": 2.0,
+     "pre": 3492.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 55920.0,
+     "t_recover": 56880.0,
+     "min": 16.0,
+     "pre": 3108.0,
+     "qdf": 3255.6521739130435,
+     "drop": -0.047507134463656175
+    },
+    {
+     "t_break": 57000.0,
+     "t_recover": 69450.0,
+     "min": 207.5,
+     "pre": 3648.0,
+     "qdf": 3015.960591133005,
+     "drop": 0.1732564169043298
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58050.0,
+     "t_recover": 58260.0,
+     "min": 3.5,
+     "pre": 3648.0,
+     "qdf": null,
+     "drop": null
+    },
+    {
+     "t_break": 58440.0,
+     "t_recover": 68220.0,
+     "min": 163.0,
+     "pre": 3648.0,
+     "qdf": 3012.4921135646687,
+     "drop": 0.17420720571143955
+    }
+   ],
+   "ramp_queue_max": 53,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 410,
+     "60": 191,
+     "300": 10
+    },
+    "wait_max_s": 596.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 45604,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3901,
+    "2": 14442,
+    "3": 61187
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 198.0,
+    "truck": 216.9,
+    "acc": 204.2,
+    "cacc": 196.3,
+    "alks": 204.8
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "7869a9eafe9e1e10",
+   "wall_s": 4230.2
+  },
+  "day_s7430049": {
+   "seed": 7430049,
+   "generated": 44947,
+   "arrived": 44947,
+   "drained": true,
+   "sumo_errors": 0,
+   "teleports": 0,
+   "collisions": 0,
+   "emergency_braking_warnings": 1,
+   "breakdowns": [
+    {
+     "t_break": 28440.0,
+     "t_recover": 29250.0,
+     "min": 13.5,
+     "pre": 3384.0,
+     "qdf": 2853.3333333333335,
+     "drop": 0.15681639085894405
+    },
+    {
+     "t_break": 58350.0,
+     "t_recover": 69330.0,
+     "min": 183.0,
+     "pre": 3504.0,
+     "qdf": 2984.201680672269,
+     "drop": 0.14834426921453514
+    }
+   ],
+   "breakdowns_merge": [
+    {
+     "t_break": 58920.0,
+     "t_recover": 67980.0,
+     "min": 151.0,
+     "pre": 3504.0,
+     "qdf": 2999.590443686007,
+     "drop": 0.1439524989480574
+    },
+    {
+     "t_break": 68280.0,
+     "t_recover": 68460.0,
+     "min": 3.0,
+     "pre": 3432.0,
+     "qdf": null,
+     "drop": null
+    }
+   ],
+   "ramp_queue_max": 54,
+   "crashes": [],
+   "removed": 0,
+   "ramp_merge": {
+    "waits_over_s": {
+     "10": 332,
+     "60": 150,
+     "300": 9
+    },
+    "wait_max_s": 549.0,
+    "squeezes": null,
+    "squeezes_failed": null
+   },
+   "teleport": false,
+   "arrived_plus_removed": 44947,
+   "ttc_seconds_below": {
+    "0.5": 0,
+    "1": 0,
+    "1.5": 3363,
+    "2": 12338,
+    "3": 52899
+   },
+   "delay_mean_by_class": {
+    "hdv_car": 170.8,
+    "truck": 191.2,
+    "acc": 188.5,
+    "cacc": 176.8,
+    "alks": 186.4
+   },
+   "health_codes": [
+    "H-R2",
+    "H-R4b",
+    "H-R5"
+   ],
+   "hash": "80068647d8778250",
+   "wall_s": 3899.3
+  }
+ }
+}
