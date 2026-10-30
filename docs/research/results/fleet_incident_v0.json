@@ -1,0 +1,216 @@
+{
+ "target_eta": 0.54,
+ "tol": 0.05,
+ "chosen": {
+  "f": 3.0,
+  "road": "inc3",
+  "crash_lane": 0,
+  "zone": 100.0,
+  "n": 10,
+  "n_valid": 10,
+  "eta_median": 0.5324500000000001,
+  "eta_ci95": [
+   0.5285,
+   0.5398
+  ],
+  "F_median": 0.35495,
+  "discharge_median": 1910.4,
+  "collisions": 0,
+  "teleports": 0,
+  "emergency_braking": 0,
+  "sumo_errors": 0
+ },
+ "pass": true,
+ "groups": {
+  "inc2_f1_l0_z100": {
+   "f": 1.0,
+   "road": "inc2",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 8,
+   "eta_median": 1.3037,
+   "eta_ci95": [
+    1.2936,
+    1.315
+   ],
+   "F_median": 0.65185,
+   "discharge_median": 2338.8,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc2_f3_l0_z100": {
+   "f": 3.0,
+   "road": "inc2",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.5378000000000001,
+   "eta_ci95": [
+    0.5311,
+    0.5445
+   ],
+   "F_median": 0.26890000000000003,
+   "discharge_median": 964.8,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f1.5_l0_z100": {
+   "f": 1.5,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.96655,
+   "eta_ci95": [
+    0.9472,
+    0.9863
+   ],
+   "F_median": 0.64435,
+   "discharge_median": 3468.0,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f1_l0_z100": {
+   "f": 1.0,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 4,
+   "eta_median": 1.2893,
+   "eta_ci95": [
+    1.2763,
+    1.3365
+   ],
+   "F_median": 0.8594999999999999,
+   "discharge_median": 4626.0,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f2.5_l0_z100": {
+   "f": 2.5,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.61575,
+   "eta_ci95": [
+    0.6077,
+    0.6294
+   ],
+   "F_median": 0.41045,
+   "discharge_median": 2209.2,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f2_l0_z100": {
+   "f": 2.0,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.7388,
+   "eta_ci95": [
+    0.7358,
+    0.7478
+   ],
+   "F_median": 0.49255000000000004,
+   "discharge_median": 2650.8,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f3_l0_z100": {
+   "f": 3.0,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.5324500000000001,
+   "eta_ci95": [
+    0.5285,
+    0.5398
+   ],
+   "F_median": 0.35495,
+   "discharge_median": 1910.4,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f3_l0_z300": {
+   "f": 3.0,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 300.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.54115,
+   "eta_ci95": [
+    0.5378,
+    0.5478
+   ],
+   "F_median": 0.36075,
+   "discharge_median": 1941.6,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  },
+  "inc3_f3_l2_z100": {
+   "f": 3.0,
+   "road": "inc3",
+   "crash_lane": 2,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.5298,
+   "eta_ci95": [
+    0.5264,
+    0.5321
+   ],
+   "F_median": 0.3532,
+   "discharge_median": 1900.8,
+   "collisions": 2,
+   "teleports": 0,
+   "emergency_braking": 1,
+   "sumo_errors": 0
+  },
+  "inc3_f4_l0_z100": {
+   "f": 4.0,
+   "road": "inc3",
+   "crash_lane": 0,
+   "zone": 100.0,
+   "n": 10,
+   "n_valid": 10,
+   "eta_median": 0.42745,
+   "eta_ci95": [
+    0.4247,
+    0.4328
+   ],
+   "F_median": 0.28495,
+   "discharge_median": 1533.6,
+   "collisions": 0,
+   "teleports": 0,
+   "emergency_braking": 0,
+   "sumo_errors": 0
+  }
+ }
+}
