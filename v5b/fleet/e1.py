@@ -254,6 +254,8 @@ def report_w1(root: Path = ROOT) -> dict:
     if any(v is None or not (v["valid"] and v["blocker_stopped"] and v["schema"]) for v in sm.values()):
         stop.append("smoke")
     out["wall_s_I_days"] = [base["I"][s]["wall_s"] for s in THROWAWAY]
+    jl = root / "w1_jobs.json"
+    out["l_bar_m"] = json.loads(jl.read_text())["l_bar_m"] if jl.exists() else None
     out["stop"] = stop
     return out
 
@@ -746,30 +748,118 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
         rep["intrusion_flags"] = {k: ea.intrusion_flag(v, intr["nc/base"]) for k, v in intr.items() if k != "nc/base"}
     return rep
 
+T3_REPEATS = 5
+
+
+def wave2b(fz: dict) -> list:
+    """§10.4: b_min 0.5 at the chosen K_I (report-only), T3 at 0.85 x ô_cr (5 repeats per arm, 3-h I slices), and one
+    MC full day run twice."""
+    st, js = "stage0_w2", []
+    od = fz["o_cr"][fz["c_loop"]]
+    for s in GAIN_SEEDS:
+        js.append(job(st, "R", "bmin", "b0.5", s, ctrl={"alks": alks_ctrl(round(0.95 * od, 4), "long", k_i=fz["gains"]["k_i"],
+                                                                         b_min=0.5, loop=fz["c_loop"])}, hours="13,20"))
+    pts = grid({**fz, "setpoints": {v: (0.85,) for v in VARIANTS}})
+    arms = {"ma": pts["ma/p0.85"], "mp": pts["mp/p0.85"], "c": pts["c/p0.85_long"],
+            "mc": mc_ctrl(pts, "mp/p0.85", "c/p0.85_long")}
+    a = THROWAWAY[0]
+    js.append(job(st, "I", "t3_nc", "slice", a, hours="15,18"))
+    for k, c in arms.items():
+        js += [job(st, "I", f"t3_{k}", f"rep{i}", a, ctrl=c, hours="15,18") for i in range(T3_REPEATS)]
+    js += [job(st, "I", "t3_mc_day", f"rep{i}", THROWAWAY[1], ctrl=arms["mc"]) for i in range(2)]
+    return js
+
+
+def report_w2b(fz: dict, root: Path = ROOT) -> dict:
+    st, out = root / "stage0_w2", {}
+    a = THROWAWAY[0]
+    nc = _day(st, "I", "t3_nc", "slice", a)
+    for k in ("ma", "mp", "c", "mc"):
+        reps = [_day(st, "I", f"t3_{k}", f"rep{i}", a) for i in range(T3_REPEATS)]
+        if None in reps or nc is None:
+            out[k] = {"pass": False, "missing": True}
+            continue
+        logs = [json.dumps([d.get("meter", {}) and d["meter"]["log"], d.get("alks", {}) and d["alks"]["log"]]) for d in reps]
+        act = [((d["meter"] or {}).get("red_phases", 0) >= 10) or
+               (d["alks"] is not None and sum(1 for r in d["alks"]["log"] if r[1] < 1.0) >= 10) for d in reps]
+        out[k] = {"hashes_identical": len({d["hash"] for d in reps}) == 1, "logs_identical": len(set(logs)) == 1,
+                  "active": all(act), "differs_from_nc": reps[0]["hash"] != nc["hash"]}
+        out[k]["pass"] = all(out[k].values())
+    days = [_day(st, "I", "t3_mc_day", f"rep{i}", THROWAWAY[1]) for i in range(2)]
+    out["mc_full_day"] = {"pass": None not in days and days[0]["hash"] == days[1]["hash"]
+                          and all(valid(d) for d in days)}
+    bm = {}
+    for s in GAIN_SEEDS:
+        b5 = _day(st, "R", "bmin", "b0.5", s)
+        b3 = _day(st, "R", "gain_mtfc", f"ki{fz['gains']['k_i']:g}", s)
+        if b5 and b3:
+            bm[s] = {f"b{b}": {"ttc_below_1.5": d["ttc_seconds_below"]["1.5"], "intrusions": d["mingap_intrusions"],
+                               "min_at_bmin": sum(1 for r in d["alks"]["log"] if abs(r[1] - d["alks"]["b_min"]) < 1e-9)}
+                     for b, d in (("0.3", b3), ("0.5", b5))}
+    out["b_min_report"] = bm
+    out["stop"] = [k for k, v in out.items() if isinstance(v, dict) and v.get("pass") is False]
+    return out
+
+
 def main(argv_=None) -> int:
+    """make: write a job list; run: run one; report: write a stage report. Frozen inputs come from JSON files."""
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
-    rp = sub.add_parser("report")
-    rp.add_argument("--wave", choices=("w1",), required=True)
-    rp.add_argument("--out", required=True)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1",), required=True)
+    m.add_argument("--wave", choices=("w1", "w2a", "w2b", "A1", "A2", "B1", "B2", "C"), required=True)
     m.add_argument("--out", required=True)
+    m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
+    m.add_argument("--cal", help="wave-1 report JSON (for w2a)")
+    m.add_argument("--stage-report", help="stage report JSON (for B1, B2, C)")
+    m.add_argument("--rule2", action="store_true")
+    rp = sub.add_parser("report")
+    rp.add_argument("--wave", choices=("w1", "w2a", "w2b", "stage", "verdict"), required=True)
+    rp.add_argument("--out", required=True)
+    rp.add_argument("--freeze")
+    rp.add_argument("--cal")
+    rp.add_argument("--stage-report")
+    rp.add_argument("--rule2", action="store_true")
     a = ap.parse_args(argv_)
-    if a.cmd == "make":
-        lb = l_bar()
-        js = wave1(lb)
-        Path(a.out).write_text(json.dumps({"l_bar_m": lb, "jobs": js}, indent=1))
-        print(f"{len(js)} jobs, L_bar {lb:.4f} m")
-    elif a.cmd == "report":
-        rep = report_w1()
-        Path(a.out).write_text(json.dumps(rep, indent=1, default=str))
-        print("stop:", rep.get("stop", rep))
-    else:
+    rd = lambda x: json.loads(Path(x).read_text()) if x else None      # noqa: E731
+    fz, cal, srep = rd(getattr(a, "freeze", None)), rd(getattr(a, "cal", None)), rd(getattr(a, "stage_report", None))
+    if a.cmd == "run":
         run(json.loads(Path(a.jobs).read_text())["jobs"], a.workers)
+        return 0
+    if a.cmd == "make":
+        if a.wave == "w1":
+            lb = l_bar()
+            js, extra = wave1(lb), {"l_bar_m": lb}
+        elif a.wave == "w2a":
+            js, extra = wave2a(cal["calibration"], cal["l_bar_m"]), {}
+        elif a.wave == "w2b":
+            js, extra = wave2b(fz), {}
+        elif a.wave in ("A1", "A2"):
+            js, extra = stage_a(fz, fz["n"], a.wave == "A1"), {}
+        elif a.wave == "B1":
+            js, fzc = stage_b1(srep, fz, fz["n"])
+            extra = {"fz_by_cell": fzc}
+        elif a.wave == "B2":
+            js, extra = stage_b2(srep, srep["fz_by_cell"], fz["n"]), {}
+        else:
+            js, extra = stage_c(srep, fz["n"], a.rule2), {}
+        Path(a.out).write_text(json.dumps({**extra, "jobs": js}, indent=1))
+        print(f"{len(js)} jobs")
+        return 0
+    if a.wave == "w1":
+        rep = report_w1()
+    elif a.wave == "w2a":
+        rep = report_w2a(cal["calibration"], cal["l_bar_m"])
+    elif a.wave == "w2b":
+        rep = report_w2b(fz)
+    elif a.wave == "stage":
+        rep = report_stage(fz["n"])
+    else:
+        rep = final_verdict(srep, fz["n"], fz["powered"], a.rule2)
+    Path(a.out).write_text(json.dumps(rep, indent=1, default=str))
+    print("stop:" if a.wave != "verdict" else "verdict:", rep.get("stop", rep.get("verdict")))
     return 0
 
 
