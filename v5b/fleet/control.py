@@ -301,8 +301,10 @@ class SumoALKS:
         self.x_cmd, self.x_hold = ZONES[zone]
         self.zone, self.edge = zone, edge
         self.own, self.last, self.v_prev, self.over = {}, {}, {}, {}
-        self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "restores": 0}
-        self.max_decel = 0.0
+        self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "restores": 0, "compliant_steps": 0}
+        self.max_decel = self.max_decel_all = 0.0
+        self.at_hold = {}                  # speed minus c when first seen in the held stretch
+        self.ever, self.released, self.recovery = set(), {}, []
 
     def update(self, t: float, release: bool = True) -> float:
         return self.law.update(t, self.bank.occ60(self.loop), release)
@@ -327,13 +329,20 @@ class SumoALKS:
             if v not in self.own:
                 self.own[v] = ls.vehicle.getMaxSpeed(v)
             if v in self.v_prev:
-                self.max_decel = max(self.max_decel, (self.v_prev[v] - sp) / STEP)
+                dec = (self.v_prev[v] - sp) / STEP
+                self.max_decel_all = max(self.max_decel_all, dec)
+                if abs(sp - self.last.get(v, -9.0)) < 0.005:         # the cap bound this step, not a leader
+                    self.max_decel = max(self.max_decel, dec)
             self.v_prev[v] = sp
             cmd = command(cap, sp, self.own[v])
             if abs(cmd - self.last.get(v, -1.0)) > 0.01:
                 ls.vehicle.setMaxSpeed(v, cmd)
                 self.last[v] = cmd
             self.n["cmd_steps"] += 1
+            self.n["compliant_steps"] += sp <= cap + 1.0
+            if x >= self.x_hold and v not in self.at_hold:
+                self.at_hold[v] = sp - c
+            self.ever.add(v)
             if abs(t - round(t)) < 1e-6:
                 self.over[v] = self.over.get(v, 0) + 1 if sp > cap + 0.5 else 0
                 if self.over[v] == 21:
@@ -354,9 +363,29 @@ class SumoALKS:
             self.n["restores"] += 1
             if abs(ls.vehicle.getMaxSpeed(v) - own) > 1e-9:
                 self.n["restore_mismatch"] += 1
+            self.released[v] = t
+        if self.released and abs(t - round(t)) < 1e-6:
+            self._recovery()
+
+    def _recovery(self) -> None:
+        """T0 (§10.3): speed / desired of a released ALKS when it first reaches the next edge, with its leader gap."""
+        for v in list(self.released):
+            try:
+                road = ls.vehicle.getRoadID(v)
+            except ls.TraCIException:
+                self.released.pop(v)
+                continue
+            if road and road != self.edge and not road.startswith(":"):
+                lead = ls.vehicle.getLeader(v, 200.0)
+                self.recovery.append((round(ls.vehicle.getSpeed(v) / self.desired[v], 3),
+                                      round(lead[1], 1) if lead and lead[0] else None))
+                self.released.pop(v)
 
     def summary(self) -> dict:
         return {"setpoint": self.law.setpoint, "k_i": self.law.k_i, "b_min": self.law.b_min, "fixed_b": self.law.fixed_b,
                 "zone": self.zone, "x_cmd": round(self.x_cmd, 1), "x_hold": round(self.x_hold, 1), "loop": self.loop,
                 "alks_seconds": round(self.n["cmd_steps"] * STEP, 1), **self.n, "max_decel": round(self.max_decel, 3),
-                "log": self.law.log}
+                "max_decel_any_cause": round(self.max_decel_all, 3), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
+                "hold_excess_p95": (round(float(sorted(max(0.0, x) for x in self.at_hold.values())
+                                             [int(0.95 * (len(self.at_hold) - 1))]), 3) if self.at_hold else None),
+                "recovery": self.recovery, "commanded_ids": sorted(self.ever), "log": self.law.log}

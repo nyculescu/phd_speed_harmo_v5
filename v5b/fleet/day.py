@@ -289,6 +289,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         if cp is not None and cp.release:
             live = set(ls.vehicle.getIDList())
             for vid in cp.due(t):
+                if blk is not None and vid == blk["vid"] and vid in live:
+                    blk["stopped_at_removal"] = ls.vehicle.isStopped(vid)
+                    blk["x_removal"] = round(ls.vehicle.getLanePosition(vid), 1)
                 if vid in live:
                     ls.vehicle.remove(vid)
                     removed.append(vid)
