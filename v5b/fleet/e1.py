@@ -426,6 +426,197 @@ def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
     return out
 
 
+MAIN0 = 7430230
+FIRST = 3                                  # seeds per point that run first (idle check, §4)
+
+
+def main_seeds(n: int) -> list:
+    return list(range(MAIN0, MAIN0 + n))
+
+
+def fresh_seeds(n: int) -> list:
+    """C1: the 10 seeds after the main set (§6)."""
+    return list(range(MAIN0 + n, MAIN0 + n + 10))
+
+
+def grid(fz: dict) -> dict:
+    """§4: point name -> ctrl at the frozen stage-0 values fz = {o_cr, drop_loop, c_loop, gains, l_bar}."""
+    om, od, oc = fz["o_cr"]["alinea"], fz["o_cr"][fz["drop_loop"]], fz["o_cr"][fz["c_loop"]]
+    g, pts = fz["gains"], {}
+    for sp in fz.get("setpoints", {}).get("ma", (0.85, 0.95, 1.05)):
+        pts[f"ma/p{sp:g}"] = {"meter": meter_ctrl("alinea", round(sp * om, 4), k_r=g["k_r"])}
+    for sp in fz.get("setpoints", {}).get("mp", (0.85, 0.95, 1.05)):
+        pts[f"mp/p{sp:g}"] = {"meter": meter_ctrl("pi", round(sp * od, 4), pi=PI_CAND[g["pi"]], l_bar_m=fz["l_bar"])
+                              | {"loop": fz["drop_loop"]}}
+    for zone in ("short", "long"):
+        for sp in fz.get("setpoints", {}).get(f"c_{zone}", (0.85, 0.95, 1.05)):
+            pts[f"c/p{sp:g}_{zone}"] = {"alks": alks_ctrl(round(sp * oc, 4), zone, k_i=g["k_i"], b_min=fz.get("b_min", ct.B_MIN),
+                                                         loop=fz["c_loop"])}
+    return pts
+
+
+def mc_ctrl(pts: dict, m_star: str, c_star: str) -> dict:
+    """§3.4: M* and C* together; a cascade when M* is PI-ALINEA (both laws on the drop loop)."""
+    return {**pts[m_star], **pts[c_star], "cascade": m_star.startswith("mp/")}
+
+
+def stage_a(fz: dict, n: int, first: bool) -> list:
+    """§9.3 stage A: NC + 12 points x n seeds x 2 cells; first=True gives the first 3 seeds of every point."""
+    seeds = main_seeds(n)[:FIRST] if first else main_seeds(n)[FIRST:]
+    pts = {"nc/base": None, **grid(fz)}
+    return [job("A", cell, k.split("/")[0], k.split("/")[1], s, ctrl=c) for cell in ("R", "I") for k, c in pts.items()
+            for s in seeds]
+
+
+def idle(d: dict) -> bool:
+    """§4: a run where the meter meters < 5 min and b < 1 for < 5 min over the day."""
+    m, a = d.get("meter"), d.get("alks")
+    on_m = (m["metering_s"] >= 300) if m else False
+    on_c = (sum(1 for r in a["log"] if r[1] < 1.0) >= 5) if a else False
+    return not (on_m or on_c)
+
+
+def idle_points(root: Path = ROOT, n: int = 10) -> list:
+    """Points idle on all 3 first seeds in both cells."""
+    out = []
+    base = root / "A"
+    for cell_dir in (base / "R",):
+        for arm in sorted(p.name for p in cell_dir.iterdir() if p.is_dir() and p.name != "nc"):
+            for point in sorted(p.name for p in (cell_dir / arm).iterdir()):
+                ds = [_day(base, "R", arm, point, s) for s in main_seeds(n)[:FIRST]]
+                if all(d is not None and idle(d) for d in ds):
+                    out.append(f"{arm}/{point}")
+    return out
+
+
+K_CRASH, U_CRASH = 0.001085, 1.5
+BRAKE_TOL = 5.0
+
+
+def expected_crashes(npz: Path) -> float:
+    """§7.5: expected crashes per day from a run's conflict records (V198 offline replay rule)."""
+    from v5b.fleet import crash as cr
+    with np.load(npz) as z:
+        m = cr.encounters(z, U_CRASH, "human")
+    return float(cr.p_crash(m, K_CRASH, U_CRASH, "linear").sum())
+
+
+def load_stage(stages: tuple, cell: str, seeds: list, root: Path = ROOT) -> dict:
+    """point 'arm/point' -> (stage, per-seed day dicts, None if missing), over the given stage folders."""
+    out = {}
+    for st in stages:
+        base = root / st / cell
+        if not base.exists():
+            continue
+        for arm in sorted(p.name for p in base.iterdir() if p.is_dir()):
+            for point in sorted(p.name for p in (base / arm).iterdir() if p.is_dir()):
+                out[f"{arm}/{point}"] = (st, [_day(root / st, cell, arm, point, s) for s in seeds])
+    return out
+
+
+def _npz(root: Path, st: str, cell: str, key: str, s: int) -> Path:
+    arm, pt = key.split("/")
+    return root / st / cell / arm / pt / f"ss{s}" / f"conflicts_s{s}.npz"
+
+
+def flags(nc: list, x: list, nc_npz: list, x_npz: list, cell: str) -> dict:
+    """§7.2-7.5 flags of one arm (or of the oracle's per-day composite) against NC in one cell."""
+    from v5b.fleet import e1_analysis as ea
+    f = {}
+    e = ea.effect(np.array([d["emergency_braking_warnings"] for d in x], float),
+                  np.array([d["emergency_braking_warnings"] for d in nc], float))      # d = x - nc
+    f["braking"] = bool(e["diff"] > BRAKE_TOL and e["diff_ci"][0] > 0)
+    ec_nc, ec_x = [expected_crashes(p) for p in nc_npz], [expected_crashes(p) for p in x_npz]
+    f["expected_crashes"] = bool(ea.effect(np.array(ec_nc), np.array(ec_x))["rel_ci"][1] < -0.05)
+    pm = lambda d: d["served"]["pm"]["main"] + d["served"]["pm"]["ramp"]      # noqa: E731
+    f["throughput_loss"] = ea.throughput_loss([pm(d) for d in nc], [pm(d) for d in x])
+    f["ttt_conflict"] = ea.ttt_conflict([d["ttt_w_h"] for d in nc], [d["ttt_w_h"] for d in x])
+    if cell == "I":
+        dt = [abs((b["blocker"] or {}).get("t_stop", 1e9) - (a["blocker"] or {}).get("t_stop", 0.0)) for a, b in zip(nc, x)]
+        f["incident_unbalanced"] = sum(t > 60.0 for t in dt) >= 3
+    f["intrusions"] = sum(d["mingap_intrusions"] for d in x)
+    f["expected_crashes_mean"] = {"nc": float(np.mean(ec_nc)), "x": float(np.mean(ec_x))}
+    return f
+
+
+VARIANTS = {"ma": lambda k: k.startswith("ma/"), "mp": lambda k: k.startswith("mp/"),
+            "c_short": lambda k: k.startswith("c/") and k.endswith("_short"),
+            "c_long": lambda k: k.startswith("c/") and k.endswith("_long")}
+
+
+def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
+    """§8-9 on stages A-B: tuned arms, O_off, the B1, C1, C2 and Rule 2 triggers, flags and labels. Every outcome is read
+    only through these pre-registered rules."""
+    from v5b.fleet import e1_analysis as ea
+    seeds = main_seeds(n)
+    rep = {"n": n, "seeds": [seeds[0], seeds[-1]], "cells": {}}
+    intr = {}
+    for cell in ("R", "I"):
+        runs = load_stage(stages, cell, seeds, root)
+        st_nc, nc = runs.pop("nc/base")
+        missing = [k for k, (_, v) in runs.items() if any(d is None for d in v)] + (["nc"] if None in nc else [])
+        if missing:
+            rep["cells"][cell] = {"incomplete": missing}
+            continue
+        nc_npz = [_npz(root, st_nc, cell, "nc/base", s) for s in seeds]
+        d_nc = np.array([d["d_all"] for d in nc])
+        D = {k: np.array([d["d_all"] for d in v]) for k, (_, v) in runs.items()}
+        eff = {k: ea.effect(d_nc, v) for k, v in D.items()}
+        grid_pts = {k: v for k, v in D.items() if not k.startswith("mc/")}
+        tuned_arms = {"M*": ea.tuned(d_nc, grid_pts, ("ma", "mp")), "C*": ea.tuned(d_nc, grid_pts, ("c",))}
+        if "mc/star" in D:
+            tuned_arms["MC*"] = "mc/star"
+        tuned_pass = any(eff[k]["pass"] for k in tuned_arms.values())
+        edges = {}
+        for var, member in VARIANTS.items():
+            pts = {k: v for k, v in grid_pts.items() if member(k)}
+            if len(pts) >= 3:
+                best = max(pts, key=lambda k: float(np.median(d_nc - pts[k])))
+                edges[var] = {"best": best, "next": ea.edge_fires(d_nc, pts, best, tuned_pass)}
+        o, picks = ea.o_off(d_nc, D)
+        eo = ea.effect(d_nc, o)
+        best_tuned = max(tuned_arms.values(), key=lambda k: eff[k]["rel"])
+        fl_ = {name: flags(nc, runs[k][1], nc_npz, [_npz(root, runs[k][0], cell, k, s) for s in seeds], cell)
+               for name, k in tuned_arms.items()}
+        o_days = [nc[i] if p == "nc" else runs[p][1][i] for i, p in enumerate(picks)]
+        o_npz = [nc_npz[i] if p == "nc" else _npz(root, runs[p][0], cell, p, s) for i, (p, s) in enumerate(zip(picks, seeds))]
+        fl_["O_off"] = flags(nc, o_days, nc_npz, o_npz, cell)
+        for k, (_, v) in runs.items():
+            intr[k] = intr.get(k, 0) + sum(d["mingap_intrusions"] for d in v)
+        intr["O_off"] = intr.get("O_off", 0) + fl_["O_off"]["intrusions"]
+        intr["nc/base"] = intr.get("nc/base", 0) + sum(d["mingap_intrusions"] for d in nc)
+        loo = []
+        for i in range(n):
+            rest = [j for j in range(n) if j != i]
+            k = max(grid_pts, key=lambda q: float(np.median(d_nc[rest] - grid_pts[q][rest])))
+            loo.append(float(grid_pts[k][i]))
+        keep = ("diff", "diff_ci", "rel", "rel_ci", "pass", "sign")
+        rep["cells"][cell] = {
+            "invalid_runs": {k: sum(not valid(d) for d in v) for k, (_, v) in runs.items() if any(not valid(d) for d in v)}
+            | ({"nc/base": sum(not valid(d) for d in nc)} if any(not valid(d) for d in nc) else {}),
+            "median_D_NC": float(np.median(d_nc)),
+            "effects": {k: {x: e[x] for x in keep} | {"mean_rel": e["mean"]["rel"],
+                                                      "seeds_ge_10pct": int(np.sum((d_nc - D[k]) >= 0.10 * d_nc))}
+                        for k, e in eff.items()},
+            "tuned": tuned_arms, "best_tuned": best_tuned, "tuned_pass": tuned_pass,
+            "o_off": {x: eo[x] for x in keep}, "o_off_picks": picks, "o_off_nc_picks": picks.count("nc"),
+            "o_off_edge_picks": sum(1 for p in picks if p != "nc" and not p.startswith("mc/")
+                                    and p.split("/")[1].split("_")[0] != "p0.95"),
+            "leave_one_out_rel": ea.effect(d_nc, np.array(loo))["rel"],
+            "G": float((np.median(D[best_tuned]) - np.median(o)) / np.median(D[best_tuned])),
+            "B1_edges": edges, "C1_needed": bool(ea.c1_needed(eff[best_tuned]) and not tuned_pass),
+            "C2_needed": bool(eo["pass"] and not tuned_pass), "flags": fl_,
+            "lane_drop_pm": [next(((e["drop"], e["qdf"]) for e in (d["breakdowns_drop"] or []) if e["t_break"] >= 43200),
+                                  None) for d in nc],
+        }
+    if all("effects" in c for c in rep["cells"].values()):
+        for cell, other in (("R", "I"), ("I", "R")):
+            c, o_ = rep["cells"][cell], rep["cells"][other]
+            c["harm_in_other_cell"] = {name: ea.harm_label({"rel_ci": o_["effects"][k]["rel_ci"]})
+                                       for name, k in c["tuned"].items() if k in o_["effects"]}
+        rep["intrusion_flags"] = {k: ea.intrusion_flag(v, intr["nc/base"]) for k, v in intr.items() if k != "nc/base"}
+    return rep
+
 def main(argv_=None) -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
