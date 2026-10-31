@@ -53,14 +53,34 @@ def profile(adt: float = ADT) -> list:
 
 
 def _first_steps(coll: list) -> list:
-    """One row per collision: SUMO reports a pair again on every step while it overlaps."""
-    seen, out = {}, []
+    """One row per collision: SUMO reports a pair again on every step while it overlaps. The row keeps the smallest
+    bumper distance over the event's steps (None if any step had none)."""
+    seen, out, row = {}, [], {}
     for c in coll:
         k = (c["collider"], c["victim"])
         if k not in seen or c["t"] - seen[k] > 1.0:
-            out.append(c)
+            row[k] = dict(c)
+            out.append(row[k])
+        elif "bumper" in c:
+            b0, b1 = row[k].get("bumper"), c["bumper"]
+            row[k]["bumper"] = None if b0 is None or b1 is None else min(b0, b1)
         seen[k] = c["t"]
     return out
+
+
+def _bumper(collider: str, victim: str) -> float | None:
+    """Collider front to victim back in m, when SUMO sees the victim as the collider's leader (V211)."""
+    lead = ls.vehicle.getLeader(collider, 50.0)
+    if lead and lead[0] == victim:
+        return round(lead[1] + ls.vehicle.getMinGap(collider), 3)
+    return None
+
+
+def contact_counts(events: list) -> dict:
+    """V211: a SUMO collision is a physical contact unless its bumper distance stayed above 0; no distance counts as
+    contact."""
+    contact = sum(1 for e in events if e.get("bumper") is None or e["bumper"] <= 0)
+    return {"contacts": contact, "mingap_intrusions": len(events) - contact}
 
 
 def breakdowns(ser: list, k: int = 2) -> list:
@@ -156,7 +176,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     while True:
         sim.step()
         coll += [{"t": round(sim.t, 1), "collider": c.collider, "victim": c.victim, "type": c.type, "lane": c.lane,
-                  "v_collider": round(c.colliderSpeed, 2), "v_victim": round(c.victimSpeed, 2)}
+                  "v_collider": round(c.colliderSpeed, 2), "v_victim": round(c.victimSpeed, 2),
+                  "bumper": _bumper(c.collider, c.victim)}
                  for c in ls.simulation.getCollisions()]
         for vid in ls.simulation.getDepartedIDList():
             min_gap[vid] = ls.vehicle.getMinGap(vid)
@@ -248,7 +269,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "sumo_errors": log.count("Error"), "teleports": res["teleports"], "collisions": res["collisions"],
         "collision_pairs": dict(Counter(f"{dem.by_id[c['collider']].cls}>{dem.by_id[c['victim']].cls}" for c in coll
                                         if c["collider"] in dem.by_id and c["victim"] in dem.by_id)),
-        "collision_events": _first_steps(coll),
+        "collision_events": (ev := _first_steps(coll)), **contact_counts(ev),
         "emergency_stops": res["emergency_stops"], "emergency_braking_warnings": log.count("performs emergency braking"),
         "breakdowns": breakdowns(ser), "max_pending": res.get("max_pending"),
         "breakdowns_merge": breakdowns(ser, 5) if "merge_up" in loops else None,

@@ -6,19 +6,6 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
 
 ## Open
 
-### A. Plant collision rule (proposed 2026-10-31, after V209)
-- Proposal: count physical contacts and minGap intrusions separately. Any physical contact keeps the V207 stop rule.
-  - Intrusions are counted, reported per weather state and per controller arm, and disclosed.
-  - An arm whose intrusion rate is above no control's (paired CI excluding 0) gets a safety flag; its cells are not claimed without the author.
-  - Code: record the bumper-to-bumper distance at each SUMO collision event. Dynamics and hashes stay unchanged.
-- Potential challenges:
-  - The tolerance is Claude's choice, not sourced.
-  - SUMO's lane-change check ignores the follower's planned acceleration. Controllers that create more stop-and-go near the lane drop may raise the intrusion rate.
-  - A reviewer may read "SUMO collisions" as a plant defect. The answer is the physical-contact count, which so far is 0.
-  - Events recorded before the code change (1 so far, V209) have speeds only. Each needs a replay to settle contact, about 25 min of one core for an 08:00 event.
-- Confirmed issues: none yet.
-- Status: open.
-
 ### Weather results strategy (proposed 2026-10-31, `docs/research/weather_plant_strategy_v0.md`)
 - Proposal: rows A-E (collision, distinct wet cells, Q5 bracket, k_s, headroom check with early KILL).
 - Potential challenges:
@@ -71,8 +58,8 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
 ### V207. Weather plant checks (2026-10-30)
 - Decision: phases 1-4 on seeds 7,431,080-109; stop for the author on a SUMO collision or a day that fails to drain.
 - Potential challenges: stop rules written before collisions and minGap intrusions were told apart.
-- Confirmed issues: the stop rule fired on dry seed 7,431,093 (V209). It was a minGap intrusion, not contact; the batch continues, and its use waits for row A.
-- Status: holds, issue pending row A.
+- Confirmed issues: the stop rule fired on dry seed 7,431,093 (V209). It was a minGap intrusion, not contact; the batch continues. Settled by V211.
+- Status: holds, issue disclosed.
 
 ### V208. Away mode: 95 % CPU, pad 1,000 rpm (2026-10-31)
 - Decision: applied on the author's word that they are leaving home.
@@ -84,4 +71,17 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
 - Decision: this file; every new decision gets an entry in the same turn, and confirmed issues are added when they appear.
 - Potential challenges: two records to keep in step (this file and `docs/decisions.md`).
 - Confirmed issues: none.
+- Status: holds.
+
+### V211. Collision rule A: contacts and minGap intrusions apart (2026-10-31)
+- Decision: count physical contacts and minGap intrusions separately. Any physical contact keeps the V207 stop rule.
+  - Intrusions are counted, reported per weather state and per controller arm, and disclosed.
+  - An arm whose intrusion rate is above no control's (paired CI excluding 0) gets a safety flag; its cells are not claimed without the author.
+  - Code: record the bumper-to-bumper distance at each SUMO collision event. Dynamics and hashes stay unchanged.
+- Potential challenges:
+  - The tolerance is Claude's choice, not sourced.
+  - SUMO's lane-change check ignores the follower's planned acceleration. Controllers that create more stop-and-go near the lane drop may raise the intrusion rate.
+  - A reviewer may read "SUMO collisions" as a plant defect. The answer is the physical-contact count, which so far is 0.
+  - Events recorded before the code change (1 so far, V209) have speeds only. Each needs a replay to settle contact, about 25 min of one core for an 08:00 event.
+- Confirmed issues: none yet.
 - Status: holds.
