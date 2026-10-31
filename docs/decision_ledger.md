@@ -102,3 +102,13 @@ None.
   - The meter actuator, the CAV cap profile and the MTFC gain range are Claude's choices, accepted only through T0 and the gain check.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V214. Weather rows B and C: numbers (2026-10-31)
+- Decision: none; report-only numbers under V212 rows B and C. Interpretation waits for Extra High with ultracode on.
+- Potential challenges:
+  - All-vehicle D is rebuilt from class means and regenerated class counts, because the batch code predates the E1 all-vehicle metric. It is exact for the paired bound-minus-base difference (same vehicles), and a weighted mean otherwise.
+  - QDF is taken from the longest breakdown episode, which under the heavy bound starts in the morning, not at the PM peak.
+  - The batch code predates V211, so collisions are SUMO events; the one dry event is the V209 minGap intrusion.
+- Confirmed issues: none yet.
+- Status: holds.
+

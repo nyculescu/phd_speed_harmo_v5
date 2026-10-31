@@ -1,0 +1,215 @@
+{
+ "method": "all-vehicle D from class means weighted by class counts regenerated from the demand seed; the bound D adds the paired TTT difference per vehicle (same vehicles and routes); QDF and minutes of the longest breakdown episode at the up loop; report-only (V212 rows B, C)",
+ "row_C_phase2": {
+  "medium": {
+   "valid": 30,
+   "D_dryref": {
+    "dry_median": 148.5,
+    "wet_median": 197.7,
+    "wet_minus_dry": [
+     40.5,
+     [
+      23.94,
+      54.87
+     ]
+    ]
+   },
+   "D_wetref": {
+    "wet_minus_dry": [
+     33.93,
+     [
+      17.38,
+      48.34
+     ]
+    ]
+   },
+   "TTT_h_wet_minus_dry": [
+    505.85,
+    [
+     297.8,
+     685.75
+    ]
+   ],
+   "longest_breakdown_min_wet_minus_dry": [
+    32.0,
+    [
+     20.25,
+     49.25
+    ]
+   ],
+   "longest_QDF_wet_minus_dry": [
+    -72.38,
+    [
+     -86.31,
+     -53.82
+    ]
+   ],
+   "ramp_queue_max_wet_minus_dry": [
+    0.0,
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "accel_lane_wait_max_wet_minus_dry": [
+    0.5,
+    [
+     -44.5,
+     61.0
+    ]
+   ],
+   "sumo_collision_events": 0
+  },
+  "heavy": {
+   "valid": 30,
+   "D_dryref": {
+    "dry_median": 148.5,
+    "wet_median": 254.6,
+    "wet_minus_dry": [
+     105.81,
+     [
+      85.19,
+      124.26
+     ]
+    ]
+   },
+   "D_wetref": {
+    "wet_minus_dry": [
+     97.19,
+     [
+      76.57,
+      115.64
+     ]
+    ]
+   },
+   "TTT_h_wet_minus_dry": [
+    1320.55,
+    [
+     1064.1,
+     1555.35
+    ]
+   ],
+   "longest_breakdown_min_wet_minus_dry": [
+    57.75,
+    [
+     47.25,
+     74.75
+    ]
+   ],
+   "longest_QDF_wet_minus_dry": [
+    -117.7,
+    [
+     -138.74,
+     -105.79
+    ]
+   ],
+   "ramp_queue_max_wet_minus_dry": [
+    0.0,
+    [
+     -0.5,
+     0.5
+    ]
+   ],
+   "accel_lane_wait_max_wet_minus_dry": [
+    -43.0,
+    [
+     -108.5,
+     22.5
+    ]
+   ],
+   "sumo_collision_events": 0
+  },
+  "dry": {
+   "valid": 30,
+   "sumo_collision_events": 2,
+   "seeds_with_events": [
+    7431093
+   ]
+  }
+ },
+ "row_B_phase3": {
+  "medium": {
+   "valid": 20,
+   "D_base_median": 190.4,
+   "D_bound_median": 419.4,
+   "bound_minus_base_D": [
+    249.84,
+    [
+     201.47,
+     284.43
+    ]
+   ],
+   "bound_minus_base_QDF": [
+    -163.45,
+    [
+     -169.58,
+     -143.93
+    ]
+   ],
+   "longest_episode_min_median": {
+    "base": 207.5,
+    "bound": 282.25
+   },
+   "longest_episode_start_h_bound": [
+    14.8,
+    15.0,
+    15.1,
+    15.1,
+    15.2,
+    15.2,
+    15.2,
+    15.2,
+    15.4,
+    16.1
+   ],
+   "sumo_collision_events_bound": 0
+  },
+  "heavy": {
+   "valid": 20,
+   "D_base_median": 245.2,
+   "D_bound_median": 1138.1,
+   "bound_minus_base_D": [
+    937.18,
+    [
+     843.08,
+     1023.27
+    ]
+   ],
+   "bound_minus_base_QDF": [
+    -301.04,
+    [
+     -330.6,
+     -269.92
+    ]
+   ],
+   "longest_episode_min_median": {
+    "base": 232.0,
+    "bound": 814.5
+   },
+   "longest_episode_start_h_bound": [
+    7.2,
+    7.2,
+    7.3,
+    7.3,
+    7.3,
+    7.3,
+    7.3,
+    7.3,
+    7.4,
+    7.4
+   ],
+   "sumo_collision_events_bound": 0
+  }
+ },
+ "phase3_human_only_valid": {
+  "dry": 10,
+  "medium": 10,
+  "heavy": 10
+ },
+ "phase3_human_only_sumo_collision_events": {
+  "dry": 0,
+  "medium": 0,
+  "heavy": 0
+ },
+ "collision_note": "the batch code (8d74cf5) predates V211: SUMO collision events are counted; each needs the V209 replay to tell contact from minGap intrusion"
+}
