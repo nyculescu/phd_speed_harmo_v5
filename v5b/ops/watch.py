@@ -41,6 +41,14 @@ def jobs(pattern: str) -> list:
     return sorted(started, key=started.get)
 
 
+def _stopped(pid: int) -> bool:
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return f.read().rsplit(")", 1)[1].split()[0] == "T"
+    except OSError:
+        return False
+
+
 def unit_active(unit: str) -> bool:
     return subprocess.run(["systemctl", "--user", "is-active", "-q", unit]).returncode == 0
 
@@ -56,7 +64,7 @@ def main(argv=None) -> int:
     ap.add_argument("--cpu-limit", type=float, help="lower than the 0.90 default, e.g. for quiet nights")
     a = ap.parse_args(argv)
     g = ComputeGuard(overrides={"cpu_limit": a.cpu_limit} if a.cpu_limit else None)
-    paused = []
+    paused = [p for p in jobs(a.pattern) if _stopped(p)]     # adopt jobs a previous guard left paused
     signal.signal(signal.SIGTERM, _stop)
     try:
         while True:
