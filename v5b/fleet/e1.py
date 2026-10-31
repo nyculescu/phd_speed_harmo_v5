@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -307,6 +308,122 @@ def t0_report(st: Path) -> dict:
 
 def out_dir(st: Path, cell: str, arm: str, point: str, seed: int, ss: int | None = None) -> Path:
     return st / cell / arm / point / f"ss{ss or seed}"
+
+
+K_R_CAND = (35.0, 70.0, 140.0)
+PI_CAND = {"wang": WANG, "conservative": CONSERVATIVE}
+K_I_CAND = (0.005, 0.01, 0.02, 0.04, 0.08, 0.16)
+NOMINAL = {"alinea": "kr70", "pi": "wang", "mtfc": "ki0.02"}
+GAIN_SEEDS = THROWAWAY[:3]
+
+
+def gain_points(cal: dict, l_bar_m: float) -> dict:
+    """§10.4 candidates at 0.95 x ô_cr: law -> {candidate: ctrl}."""
+    om, od, loop = 0.95 * cal["o_cr"]["alinea"], 0.95 * cal["o_cr"][cal["drop_loop"]], cal["drop_loop"]
+    pi = {k: meter_ctrl("pi", od, pi=v, l_bar_m=l_bar_m) | {"loop": loop} for k, v in PI_CAND.items()}
+    return {"alinea": {f"kr{k:g}": {"meter": meter_ctrl("alinea", om, k_r=k)} for k in K_R_CAND},
+            "pi": {k: {"meter": c} for k, c in pi.items()},
+            "mtfc": {f"ki{k:g}": {"alks": alks_ctrl(od, "long", k_i=k, loop=loop)} for k in K_I_CAND}}
+
+
+def wave2a(cal: dict, l_bar_m: float) -> list:
+    """§10.4: the gain check (R, 13:00-20:00) and the self-reaction slices (10:00-13:00, also the ALKS recovery test)."""
+    st, js = "stage0_w2", []
+    for law, cands in gain_points(cal, l_bar_m).items():
+        for k, c in cands.items():
+            js += [job(st, "R", f"gain_{law}", k, s, ctrl=c, hours="13,20") for s in GAIN_SEEDS]
+    for s in GAIN_SEEDS:
+        js += [job(st, "R", "nc", "offpeak", s, hours="10,13"),
+               job(st, "R", "self_alks", "b0.5_long", s, ctrl={"alks": alks_ctrl(None, fixed_b=0.5, loop=cal["drop_loop"])},
+                   hours="10,13")]
+    return js
+
+
+def swings(x: list, top: float, bottom: float) -> int:
+    """Top -> bottom -> top cycles in a sequence."""
+    n, state = 0, None
+    for v in x:
+        if v >= top:
+            if state == "down":
+                n += 1
+            state = "top"
+        elif v <= bottom and state == "top":
+            state = "down"
+    return n
+
+
+def max_swings_per_hour(t: list, x: list, active: list, top: float, bottom: float) -> int:
+    best = 0
+    for h0 in range(int(min(t) // 3600), int(max(t) // 3600) + 1):
+        k = [i for i, ti in enumerate(t) if h0 * 3600 <= ti < (h0 + 1) * 3600]
+        if k and any(active[i] for i in k):
+            best = max(best, swings([x[i] for i in k], top, bottom))
+    return best
+
+
+def gain_stats(d: dict, law: str) -> dict:
+    """Swing count, lead time and the RMS of the controlled occupancy around ô, from one gain-check slice."""
+    onset = next((e["t_break"] for e in d["breakdowns_drop"] or [] if e["t_break"] >= 13 * 3600), None)
+    if law == "mtfc":
+        a = d["alks"]
+        t, x, o = [r[0] for r in a["log"]], [r[1] for r in a["log"]], [r[2] for r in a["log"]]
+        act = [v < 1.0 for v in x]
+        sw = max_swings_per_hour(t, x, act, 0.9, 0.4)
+        ref = a["setpoint"]
+    else:
+        m = d["meter"]
+        t, x, o = [r[0] for r in m["log"]], [r[1] for r in m["log"]], [r[3] for r in m["log"]]
+        act = [bool(r[6] and not (r[7] or r[8])) for r in m["log"]]
+        sw = max_swings_per_hour(t, x, act, 850.0, 300.0)
+        ref = m["law"]["setpoint"]
+    on = [ti for ti, a_ in zip(t, act) if a_]
+    rms = (math.sqrt(sum((oi - ref) ** 2 for oi, a_ in zip(o, act) if a_) / sum(act)) if any(act) else None)
+    return {"swings": sw, "acts": bool(on), "lead": bool(onset is None or (on and on[0] < onset)), "rms": rms,
+            "onset": onset, "first_active": on[0] if on else None}
+
+
+def choose_gain(stats: dict, law: str) -> dict:
+    """§10.4: exclude swinging candidates, prefer lead time (drop-loop laws), then the lowest median RMS; the nominal
+    wins within 10 %; a candidate that never acts on >= 2 of 3 seeds has no RMS."""
+    ok = {k: v for k, v in stats.items() if sum(x["swings"] > 2 for x in v) < 2}
+    if not ok:
+        return {"choice": None, "stop": True}
+    if law in ("pi", "mtfc"):
+        lead = {k: v for k, v in ok.items() if sum(x["lead"] for x in v) >= 2}
+        ok = lead or ok
+    rms = {k: float(np.median([x["rms"] for x in v if x["rms"] is not None])) for k, v in ok.items()
+           if sum(x["acts"] for x in v) >= 2}
+    nom = NOMINAL[law]
+    if not rms:
+        return {"choice": nom, "rms": {}, "note": "no candidate acts on >= 2 of 3 seeds: nominal"}
+    best = min(rms, key=rms.get)
+    pick = nom if nom in rms and rms[nom] <= 1.10 * rms[best] else best
+    return {"choice": pick, "rms": rms, "kept": sorted(ok), "stop": False}
+
+
+def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
+    st = root / "stage0_w2"
+    out = {}
+    for law, cands in gain_points(cal, l_bar_m).items():
+        stats = {k: [gain_stats(d, law) for s in GAIN_SEEDS if (d := _day(st, "R", f"gain_{law}", k, s))] for k in cands}
+        out[law] = {"stats": stats, **choose_gain(stats, law)}
+    sr = {}
+    for s in GAIN_SEEDS:
+        n, c = _day(st, "R", "nc", "offpeak", s), _day(st, "R", "self_alks", "b0.5_long", s)
+        if n is None or c is None:
+            continue
+        from v5b.fleet.e1_analysis import loop_arrays
+        on = [o for t, o in zip(*loop_arrays(c, cal["drop_loop"])[::2])]
+        off = [o for t, o in zip(*loop_arrays(n, cal["drop_loop"])[::2])]
+        free = [v for v, g in c["alks"]["recovery"] if g is None or g > 100.0]
+        sr[s] = {"occ_rise": float(np.mean(on) / np.mean(off) - 1.0) if np.mean(off) > 0 else None,
+                 "recovered_share": round(sum(v >= 0.9 for v in free) / len(free), 3) if free else None,
+                 "n_free": len(free)}
+    out["self_reaction"] = sr
+    rises = [v["occ_rise"] for v in sr.values() if v["occ_rise"] is not None]
+    out["c_loop"] = "dropend" if rises and np.median(rises) > 0.10 and cal["tests"]["dropend"]["pass"] else cal["drop_loop"]
+    out["recovery_pass"] = bool(sr) and all((v["recovered_share"] or 0) >= 1.0 for v in sr.values())
+    return out
 
 
 def main(argv_=None) -> int:

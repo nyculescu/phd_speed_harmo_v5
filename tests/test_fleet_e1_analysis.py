@@ -56,3 +56,38 @@ def test_lead_and_spill():
     late = np.full(t.size, 10.0)
     late[t >= 11500] = 30.0
     assert ea.spill_ok(t, late, 20.0, 10000.0) and not ea.lead_ok(t, late, 20.0, 10000.0)
+
+
+def test_tuned_oracle_edge_and_verdict():
+    nc = np.full(10, 100.0)
+    pts = {"ma/p0.85": np.full(10, 95.0), "ma/p0.95": np.full(10, 97.0), "ma/p1.05": np.full(10, 99.0),
+           "c/p0.85_short": np.full(10, 96.0), "c/p0.95_short": np.full(10, 95.95)}
+    assert ea.tuned(nc, pts, ("ma", "mp")) == "ma/p0.85"
+    assert ea.tuned(nc, pts, ("c",)) == "c/p0.95_short"          # within 0.1 s/veh: the middle setpoint wins
+    pts2 = dict(pts, **{"ma/p0.95": np.r_[np.full(5, 80.0), np.full(5, 101.0)]})
+    d, pick = ea.o_off(nc, pts2)
+    assert d.max() <= 100.0 and pick[0] == "ma/p0.95" and pick[9] == "ma/p0.85"
+    d3, pick3 = ea.o_off(nc, {"x/p": np.full(10, 101.0)})
+    assert (d3 == 100.0).all() and set(pick3) == {"nc"}
+    assert ea.edge_fires(nc, pts, "ma/p0.85", False) == 0.75
+    assert ea.edge_fires(nc, pts, "ma/p0.85", True) is None
+    up = dict(pts, **{"ma/p1.05": np.full(10, 90.0)})
+    assert ea.edge_fires(nc, up, "ma/p1.05", False) == 1.15
+    base = {"P_T": False, "P_O": False, "F": [], "powered": True}
+    assert ea.verdict({"R": base, "I": base})["verdict"] == "KILL"
+    assert ea.verdict({"R": base, "I": dict(base, P_O=True)})["verdict"] == "I-ONLY"
+    assert ea.verdict({"R": dict(base, F=["x"]), "I": base})["kill_label"] == "powered"
+    assert ea.verdict({"R": dict(base, P_O=True), "I": dict(base, P_T=True)})["verdict"] == "CONTINUE-O"
+    assert ea.verdict({"R": base, "I": dict(base, powered=False)})["kill_label"] == "underpowered: I"
+
+
+def test_safety_and_conflict_rules():
+    assert ea.intrusion_flag(5, 0)["flag"] and not ea.intrusion_flag(4, 0)["flag"]
+    assert ea.intrusion_flag(5, 0)["p"] == pytest.approx(1 / 32)
+    nc = np.full(10, 10000.0)
+    assert ea.throughput_loss(nc, nc - 200.0) and not ea.throughput_loss(nc, nc - 50.0)
+    assert ea.ttt_conflict(np.full(10, 100.0), np.full(10, 110.0))
+    assert ea.harm_label(ea.effect(np.full(10, 100.0), np.full(10, 106.0))) == "clearly worse"
+    assert ea.harm_label(ea.effect(np.full(10, 100.0), np.full(10, 103.0))) == "no harm"
+    mixed = np.r_[np.full(5, 92.0), np.full(5, 110.0)]
+    assert ea.harm_label(ea.effect(np.full(10, 100.0), mixed)) == "harm not excluded"

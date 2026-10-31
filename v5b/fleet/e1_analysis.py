@@ -147,3 +147,115 @@ def calibrate(days: list, groups: tuple = ("drop", "dropend", "alinea")) -> dict
     out["drop_loop"] = "drop" if tests["drop"]["pass"] else "dropend" if tests["dropend"]["pass"] else None
     out["stop"] = out["drop_loop"] is None or not tests["alinea"]["pass"]
     return out
+
+
+# Stages A-C (V213 §8-9): D arrays per point are aligned by seed; NC is the reference.
+TIE = 0.1                                  # s/veh: ties go to the middle setpoint, then the short zone, then ALINEA
+SETPOINTS = (0.85, 0.95, 1.05)
+EDGE_STEP = 0.10
+HARM = -0.05
+FRESH_MIN = 0.05
+
+
+def effect(d_nc, d_x) -> dict:
+    from v5b.p1.stats import paired, rule_cell
+    st = paired(d_nc, d_x)
+    return {**st, "pass": rule_cell(st)["a"], "sign": int(np.sum(np.asarray(d_x) < np.asarray(d_nc))),
+            "mean": paired(d_nc, d_x, mean=True)}
+
+
+def _tie_key(point: str) -> tuple:
+    """Lower is preferred: distance of the setpoint from 0.95, then short zone, then ALINEA (point 'ma/p0.95')."""
+    fam, p = point.split("/", 1)
+    sp = float(p.split("_")[0][1:])
+    return abs(sp - 0.95), 0 if "short" in p or "_" not in p else 1, 0 if fam == "ma" else 1
+
+
+def tuned(d_nc, points: dict, family: tuple) -> str:
+    """M* or C*: the point of the family with the largest median paired difference (ties within TIE s/veh)."""
+    cand = {k: float(np.median(np.asarray(d_nc) - np.asarray(v))) for k, v in points.items() if k.split("/")[0] in family}
+    best = max(cand.values())
+    return min((k for k, v in cand.items() if v >= best - TIE), key=_tie_key)
+
+
+def o_off(d_nc, points: dict) -> tuple:
+    """Per-day oracle that may choose no control: (D per seed, pick per seed; 'nc' when no point beats NC)."""
+    keys = list(points)
+    m = np.vstack([np.asarray(d_nc)] + [np.asarray(points[k]) for k in keys])
+    j = m.argmin(axis=0)
+    return m.min(axis=0), ["nc" if i == 0 else keys[i - 1] for i in j]
+
+
+def edge_fires(d_nc, points: dict, best: str, any_tuned_pass: bool) -> float | None:
+    """§8 edge rule: the next setpoint beyond the grid edge, or None. 'best' is a family's tuned point."""
+    if any_tuned_pass:
+        return None
+    fam, p = best.split("/", 1)
+    sp = float(p.split("_")[0][1:])
+    rest = "_".join(p.split("_")[1:])
+    sps = sorted({float(k.split("/", 1)[1].split("_")[0][1:]) for k in points if k.startswith(fam + "/")
+                  and "_".join(k.split("/", 1)[1].split("_")[1:]) == rest})
+    if sp not in (sps[0], sps[-1]) or len(sps) < 3:
+        return None
+    mid = f"{fam}/p0.95" + (f"_{rest}" if rest else "")
+    if mid not in points or np.median(np.asarray(d_nc) - np.asarray(points[best])) <= \
+            np.median(np.asarray(d_nc) - np.asarray(points[mid])):
+        return None
+    return round(sp - EDGE_STEP, 2) if sp == sps[0] else round(sp + EDGE_STEP, 2)
+
+
+def c1_needed(eff: dict) -> bool:
+    return eff["rel"] >= 0.10 and eff["diff_ci"][0] <= 0.0
+
+
+def c1_pass(d_nc_all, d_x_all, n_first: int) -> dict:
+    """§9.6: §9.2 on all seeds, and the fresh seeds alone give rel >= 0.05."""
+    a = effect(d_nc_all, d_x_all)
+    f = effect(d_nc_all[n_first:], d_x_all[n_first:])
+    return {"all": a, "fresh": f, "pass": bool(a["pass"] and f["rel"] >= FRESH_MIN)}
+
+
+def harm_label(eff: dict) -> str:
+    lo, hi = eff["rel_ci"]
+    return "clearly worse" if hi < HARM else "harm not excluded" if lo < HARM else "no harm"
+
+
+def intrusion_flag(x_arm: int, x_nc: int, alpha: float = 0.05) -> dict:
+    """§7.5 (Q8): exact one-sided conditional binomial test, equal exposure."""
+    from scipy.stats import binomtest
+    n = x_arm + x_nc
+    p = binomtest(x_arm, n, 0.5, alternative="greater").pvalue if n else 1.0
+    return {"x_arm": x_arm, "x_nc": x_nc, "p": float(p), "flag": bool(p < alpha)}
+
+
+def throughput_loss(served_nc, served_x) -> bool:
+    """§7.2: the whole CI of the PM served difference lies below -1 % of NC's PM throughput."""
+    from v5b.p1.stats import paired
+    st = paired(np.asarray(served_x, float), np.asarray(served_nc, float))   # d = x - nc
+    return bool(st["diff_ci"][1] < -0.01 * float(np.median(served_nc)))
+
+
+def ttt_conflict(ttt_nc, ttt_x) -> bool:
+    """§7.3: the whole CI of the relative TTT_w difference lies below -5 %."""
+    return harm_label(effect(ttt_nc, ttt_x)) == "clearly worse"
+
+
+def verdict(cells: dict) -> dict:
+    """§9.7 decision tree. cells[τ] = {"P_T": bool, "P_O": bool, "F": list of flagged passes, "powered": bool}."""
+    r, i = cells["R"], cells["I"]
+    if r["P_T"]:
+        v = "CONTINUE-T"
+    elif r["P_O"]:
+        v = "CONTINUE-O"
+    elif i["P_T"] or i["P_O"]:
+        v = "I-ONLY"
+    elif r["F"] or i["F"]:
+        v = "FLAGGED-ONLY"
+    else:
+        v = "KILL"
+    default = {"I-ONLY": "KILL of the recurrent line; E2 does not start; an incident study needs its own protocol",
+               "FLAGGED-ONLY": "treated as no pass: KILL, flags reported"}.get(v)
+    powered = [c for c in ("R", "I") if not cells[c]["powered"]]
+    return {"verdict": v, "default_next": default,
+            "kill_label": None if v not in ("KILL", "FLAGGED-ONLY") else
+            "powered" if not powered else "underpowered: " + ", ".join(powered)}
