@@ -6,13 +6,7 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
 
 ## Open
 
-### Weather results strategy (proposed 2026-10-31, `docs/research/weather_plant_strategy_v0.md`)
-- Proposal: rows A-E (collision, distinct wet cells, Q5 bracket, k_s, headroom check with early KILL).
-- Potential challenges:
-  - The distinctness rule (C) uses congestion delay. A reviewer may want the primary metric instead, but that one is distinct by construction.
-  - The headroom check (E) uses tuned proven controllers only. Its KILL does not cover learning arms; the CLAUDE.md early-KILL rule accepts this.
-- Confirmed issues: none yet.
-- Status: open.
+None.
 
 ## Decided
 
@@ -83,5 +77,18 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
   - SUMO's lane-change check ignores the follower's planned acceleration. Controllers that create more stop-and-go near the lane drop may raise the intrusion rate.
   - A reviewer may read "SUMO collisions" as a plant defect. The answer is the physical-contact count, which so far is 0.
   - Events recorded before the code change (1 so far, V209) have speeds only. Each needs a replay to settle contact, about 25 min of one core for an 08:00 event.
+- Confirmed issues: none yet.
+- Status: holds.
+
+### V212. Weather results strategy v1 (2026-10-31)
+- Decision: rows B-E of `docs/research/weather_plant_strategy_v0.md` (B: CAV bound as robustness row; C: report-only, no cell dropped; D: automatic k_s; E: staged headroom check, E1 dry with early KILL).
+- Potential challenges:
+  - B: the bound (CAVs as cautious as humans) is unsourced at both ends; "not clearly worse" needs the harm margin of the later claim protocol.
+  - C: wet cells kept even if they change little; their cost is carried until E sets their role.
+  - E1: 6-point grids may miss the best setting and understate headroom; the per-seed oracle bounds this from above.
+  - E1: the CAV harmonization rule is not built yet; its design choices bias headroom.
+  - E1: 10 seeds give wide CIs.
+  - E1: the forced-incident placement is one choice of time and place.
+  - E1: the KILL tests dry only; a heavy-rain-only advantage is left to E2, which runs only if E1 passes.
 - Confirmed issues: none yet.
 - Status: holds.
