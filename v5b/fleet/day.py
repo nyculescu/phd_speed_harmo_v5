@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import json
 import os
 import subprocess
@@ -28,7 +29,7 @@ import libsumo as ls
 import numpy as np
 
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, SUMO_BIN, clean_sumo_env
-from v5b.fleet import corridor, fleet as fl, merge as mg
+from v5b.fleet import control as ct, corridor, fleet as fl, merge as mg
 from v5b.fleet.calib import HUMAN_SHARES
 from v5b.fleet.crash import CrashProcess
 from v5b.fleet.incident import PassingZone
@@ -136,11 +137,88 @@ def _crash(vids: tuple) -> None:
         ls.vehicle.setSpeed(vid, 0.0)
 
 
+WINDOWS = {"am": (7 * 3600.0, 10 * 3600.0), "pm": (15 * 3600.0, 20 * 3600.0), "day": (0.0, 24 * 3600.0)}
+
+
+def _controllers(ctrl: dict | None, bank, dem, cp) -> tuple:
+    """V213 §3. ctrl["meter"] = {law: alinea | pi | fixed, loop, setpoint, k_r | k_p, k_i (veh/h per %) | rate,
+    overrides}; ctrl["alks"] = {loop, zone: short | long, setpoint, k_i, b_min, fixed_b}; ctrl["cascade"]: the ALKS
+    rule waits for the meter to saturate (§3.4)."""
+    if not ctrl:
+        return None, None, None
+    if bank is None:
+        raise ValueError("E1 controllers exist only on ramp32")
+    meter = alks = gate = None
+    if "meter" in ctrl:
+        c = ctrl["meter"]
+        law = ct.MeterLaw(c["law"], c.get("setpoint", 0.0), c.get("k_r", 70.0), c.get("k_p", 0.0), c.get("k_i", 0.0),
+                          c.get("rate", ct.R_MAX))
+        meter = ct.SumoMeter(ct.Meter(law, c.get("overrides", True)), bank, c.get("loop", "alinea"))
+    if "alks" in ctrl:
+        c = ctrl["alks"]
+        law = ct.MTFC(c.get("setpoint", 0.0), c.get("k_i", 0.02), c.get("b_min", ct.B_MIN), c.get("fixed_b"))
+        alks = ct.SumoALKS(law, bank, c.get("loop", "drop"), c.get("zone", "long"),
+                           {v.vid for v in dem.veh if v.cls in fl.COMMANDED}, {v.vid: v.desired for v in dem.veh},
+                           cp.blocked if cp is not None else (lambda vid: False))
+    if ctrl.get("cascade"):
+        if meter is None or alks is None:
+            raise ValueError("the cascade needs a meter and an ALKS rule")
+        gate = ct.Cascade()
+    return meter, alks, gate
+
+
+def _block(b: dict, dem, t: float) -> dict | None:
+    """V213 §5.2: the human vehicle on the lane nearest to pos that can stop there at its own decel with 10 m to
+    spare gets a stop at pos; None if there is none yet."""
+    ln = f"{b['edge']}_{b['lane']}"
+    cand = []
+    for v in ls.lane.getLastStepVehicleIDs(ln):
+        if dem.by_id[v].cls not in ("hdv_car", "truck"):
+            continue
+        x, sp = ls.vehicle.getLanePosition(v), ls.vehicle.getSpeed(v)
+        if x <= b["pos"] - sp * sp / (2.0 * ls.vehicle.getDecel(v)) - 10.0:
+            cand.append((x, sp, v))
+    for x, sp, v in sorted(cand, reverse=True):
+        try:
+            ls.vehicle.setStop(v, b["edge"], pos=b["pos"], laneIndex=b["lane"], duration=b["duration"] + 300.0)
+        except ls.TraCIException:
+            continue
+        ls.vehicle.setLaneChangeMode(v, 0)
+        return {"vid": v, "cls": dem.by_id[v].cls, "lane": ln, "pos": round(x, 1), "speed": round(sp, 2),
+                "t": round(t, 1), "duration": b["duration"]}
+    return None
+
+
+def e1_metrics(tr: np.ndarray, blk: dict | None) -> dict:
+    """V213 §7: all-vehicle D by origin and departure window, tails, served throughput per window (removed vehicles
+    are already left out of tr)."""
+    d, sched, arr, ramp = tr[:, 0], tr[:, 1], tr[:, 2], tr[:, 3].astype(bool)
+
+    def m(mask):
+        return round(float(d[mask].mean()), 3) if mask.any() else None
+
+    out = {"d_all": m(np.ones(d.size, bool)), "d_main": m(~ramp), "d_ramp": m(ramp),
+           "d_pm_depart": m((sched >= 15 * 3600.0) & (sched < 20 * 3600.0)),
+           "d_p95": round(float(np.percentile(d, 95)), 1) if d.size else None,
+           "share_over_600": round(float((d > 600.0).mean()), 5) if d.size else None,
+           "delay_after24_share": round(float(d[arr > 86400.0].sum() / d.sum()), 5) if d.size and d.sum() > 0 else None,
+           "served": {w: {"main": int(((arr >= a) & (arr < b) & ~ramp).sum()),
+                          "ramp": int(((arr >= a) & (arr < b) & ramp).sum())} for w, (a, b) in WINDOWS.items()},
+           "n_trips": int(d.size)}
+    if blk:
+        out["d_recovery"] = m((sched >= blk["t"] + blk["duration"]) & (sched < 20 * 3600.0))
+    return out
+
+
 def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, crash: dict | None = None,
             hours: tuple | None = None, courtesy: bool = False, squeeze: bool = False, teleport: bool = True,
-            forced: dict | None = None) -> dict:
+            forced: dict | None = None, ctrl: dict | None = None, sumo_seed: int | None = None,
+            blocker: dict | None = None) -> dict:
     """crash = None (crash-free reference day) or CrashProcess keyword arguments except seed; a crash process always
-    runs with teleporting off. forced = {t, edge, lane, pos, duration}: one placed crash (V202), needs a crash process."""
+    runs with teleporting off. forced = {t, edge, lane, pos, duration}: one placed crash (V202), needs a crash process.
+    E1 (V213): ctrl = {"meter": {...}, "alks": {...}, "cascade": bool} (see _controllers); sumo_seed changes only SUMO's
+    driver noise (default: the demand seed); blocker = {t, edge, lane, pos, duration}: one stalled human vehicle that
+    stops at pos with normal braking (§5.2), needs a crash process."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     d = fl.build_net(cfg)
@@ -151,10 +229,12 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     rou, trip = run_dir / f"r_{tag}.rou.xml", run_dir / f"t_{tag}.xml"
     dem.write(rou)
     sim = (CrashSim if crash or not teleport else Sim)(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"],
-                                       step_length=cfg.step, seed=seed, extra_args=["--tripinfo-output", str(trip)])
+                                       step_length=cfg.step, seed=seed if sumo_seed is None else sumo_seed,
+                                       extra_args=["--tripinfo-output", str(trip)])
     cp = CrashProcess(seed, **crash) if crash else None
     pz = None
     forced_done = forced is None
+    blocker_done, blk = blocker is None, None
     cg = rm = None
     removed, arrived_while_crashed = [], []
     loops = fl.loop_ids(cfg.geom)
@@ -168,6 +248,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         rm = RampMerge(ls.lane.getLength(mg.LANE), squeeze)
     if cp is not None:
         pz = PassingZone(lambda vid: dem.by_id[vid].cls, fl.INCIDENT_TAU_FACTOR)
+    bank = ct.LoopBank(loops) if cfg.geom == corridor.NAME else None
+    meter, alks, gate = _controllers(ctrl, bank, dem, cp)
+    ttt_w_s = 0
     rec, ser, coll = [], [], []
     veh_s = closing_s = 0
     min_gap = {}
@@ -196,6 +279,13 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                                   "speed": round(ls.vehicle.getSpeed(v0), 2)}
                 pz.add(v0)
                 forced_done = True
+        if not blocker_done and t >= blocker["t"]:
+            blk = _block(blocker, dem, t)
+            if blk is not None:
+                cp.force(t, (blk["vid"],), blocker["duration"], blk["cls"])
+                cp.events[-1] |= {"lane": blk["lane"], "pos": blk["pos"], "speed": blk["speed"], "kind": "blocker"}
+                pz.add(blk["vid"])
+                blocker_done = True
         if cp is not None and cp.release:
             live = set(ls.vehicle.getIDList())
             for vid in cp.due(t):
@@ -204,6 +294,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                     removed.append(vid)
                 else:
                     arrived_while_crashed.append(vid)
+        if alks is not None:
+            alks.step(t)
         if abs(t - round(t)) < 1e-6:
             if cg is not None:
                 cg.step(t)
@@ -211,8 +303,18 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 rm.step(t, cp.blocked if cp is not None else (lambda vid: False))
             if pz is not None:
                 pz.step(cp.blocked)
+            if bank is not None and abs(t / pl.LOOP_PERIOD - round(t / pl.LOOP_PERIOD)) < 1e-6:
+                bank.read(t)
+            if meter is not None:
+                meter.step(t)
+            if alks is not None and int(round(t)) % 60 == 0:
+                alks.update(t, gate.update(meter.m.saturated) if gate is not None else True)
+            if blk is not None and "t_stop" not in blk and ls.vehicle.isStopped(blk["vid"]):
+                blk["t_stop"], blk["x_stop"] = round(t, 1), round(ls.vehicle.getLanePosition(blk["vid"]), 1)
             ids = ls.vehicle.getIDList()
             veh_s += len(ids)
+            if t <= 86400.0:
+                ttt_w_s += len(ids) + len(ls.simulation.getPendingVehicles())
             sp = {vid: ls.vehicle.getSpeed(vid) for vid in ids}
             for vid in ids:
                 lead = ls.vehicle.getLeader(vid, LEADER_RANGE)
@@ -237,7 +339,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                             loop_speed(loops["up"]), int(sim.departed), len(ls.simulation.getPendingVehicles()),
                             loop_speed(loops["merge_up"]) if "merge_up" in loops else None,
                             sum(ls.lane.getLastStepVehicleNumber(f"{e}_0") for e in ("r",)) if "ramp_q" in loops
-                            else None))
+                            else None,
+                            loop_speed(loops["drop"]) if "drop" in loops else None,
+                            loop_speed(loops["dropend"]) if "dropend" in loops else None))
         if t >= t_end and sim.departed == sim._total and ls.vehicle.getIDCount() == 0 \
                 and not ls.simulation.getPendingVehicles():
             drained = True
@@ -249,14 +353,24 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     delays = {c: [] for c in fl.CLASSES}
     delays_wet = {c: [] for c in fl.CLASSES}      # V204 §7 secondary: against the weather-capped desired speed
     ttt = 0.0
+    gone = set(removed)
+    trips = []                 # E1 per vehicle: delay, scheduled departure, arrival, ramp origin, class
     for _, el in ET.iterparse(trip, events=("end",)):
         if el.tag == "tripinfo":
             v = dem.by_id[el.get("id")]
             tt = float(el.get("duration")) + float(el.get("departDelay"))
             ttt += tt
-            delays[v.cls].append(tt - float(el.get("routeLength")) / v.desired)
+            dl = tt - float(el.get("routeLength")) / v.desired
+            delays[v.cls].append(dl)
             delays_wet[v.cls].append(tt - float(el.get("routeLength")) / min(v.desired, v.max_speed or v.desired))
+            if el.get("id") not in gone:
+                trips.append((dl, float(el.get("depart")) - float(el.get("departDelay")), float(el.get("arrival")),
+                              el.get("departLane", "").startswith("r_"), fl.CLASSES.index(v.cls)))
             el.clear()
+    tr = np.array(trips, dtype=np.float64).reshape(-1, 5)
+    np.savez_compressed(run_dir.parent / f"trips_s{seed}.npz", delay=tr[:, 0].astype(np.float32),
+                        sched=tr[:, 1].astype(np.float32), arrival=tr[:, 2].astype(np.float32),
+                        ramp=tr[:, 3].astype(bool), cls=tr[:, 4].astype(np.int8))
     r = np.array(rec, dtype=np.float64).reshape(-1, 6)
     np.savez_compressed(run_dir.parent / f"conflicts_s{seed}.npz", t=r[:, 0].astype(np.float32),
                         follower=r[:, 1].astype(np.int32), leader=r[:, 2].astype(np.int32),
@@ -286,8 +400,14 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "delay_wetref_mean_by_class": {c: round(float(np.mean(x)), 1) if x else None for c, x in delays_wet.items()},
         "ttt_h": round(ttt / 3600, 1), "weather": fl.WEATHER, "weather_cav": fl.WEATHER_CAV,
         "human_only": fl.SHARES == HUMAN_SHARES,
+        **e1_metrics(tr, blk), "ttt_w_h": round(ttt_w_s / 3600, 2), "ctrl": ctrl, "sumo_seed": sumo_seed,
+        "meter": meter.summary() if meter else None, "alks": alks.summary() if alks else None,
+        "cascade": gate is not None, "blocker": blk, "removed_ids": sorted(gone),
+        "breakdowns_drop": breakdowns(ser, 7) if "drop" in loops else None,
+        "loops30": {"groups": list(bank.groups), "rows": bank.rows} if bank else None,
         "series": ser, "health": res["health"]["status"], "health_codes": sorted(res["health"]["by_code"]), "hash": res["hash"], "wall_s": round(time.time() - t_w0, 1),
     }
+    out["route_sha1"] = hashlib.sha1(rou.read_bytes()).hexdigest()[:16]
     sim.log_file.replace(run_dir.parent / f"sumo_s{seed}.log")
     for f in (rou, trip, sim.stat_file):
         f.unlink(missing_ok=True)
@@ -333,6 +453,9 @@ def _common(p) -> None:
     p.add_argument("--weather", default="dry", choices=tuple(fl.WEATHER_STATES), help="V204 weather state of the day")
     p.add_argument("--weather-cav", action="store_true", help="V204 Q5 bound: CAVs get the human rain factors")
     p.add_argument("--human-only", action="store_true", help="human fleet of V187 (no CAVs)")
+    p.add_argument("--ctrl", help="E1 controllers as JSON (V213 §3, see _controllers)")
+    p.add_argument("--sumo-seed", type=int, help="SUMO --seed (driver noise); default the demand seed (V213 twins)")
+    p.add_argument("--blocker", help="one stalled vehicle: t,edge,lane,pos,duration (V213 §5.2); needs --crash-k")
 
 
 def main(argv=None) -> int:
@@ -371,8 +494,14 @@ def main(argv=None) -> int:
         if a.forced:
             t_, e_, l_, p_, d_ = a.forced.split(",")
             fc = {"t": float(t_), "edge": e_, "lane": int(l_), "pos": float(p_), "duration": float(d_)}
+        bk = None
+        if a.blocker:
+            t_, e_, l_, p_, d_ = a.blocker.split(",")
+            bk = {"t": float(t_), "edge": e_, "lane": int(l_), "pos": float(p_), "duration": float(d_)}
+        if (fc or bk) and crash is None:
+            raise SystemExit("--forced and --blocker need --crash-k")
         res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze, teleport,
-                      fc)
+                      fc, json.loads(a.ctrl) if a.ctrl else None, a.sumo_seed, bk)
         res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))

@@ -2,7 +2,7 @@
 
 Edges (mainline x in m): 1 entry 0-3,000 and 2 3,000-3,500 (3 lanes); 3a 3,500-3,800 (4 lanes: lane 0 is the
 acceleration lane, which ends); 3 3,800-5,000 (3 lanes); drop at 5,000 (the left lane ends); 4 bottleneck 5,000-6,000
-(2 lanes); 5 exit 6,000-6,500. Ramp r 400 m, 1 lane, joining lane 0 of 3a, with the meter signal 'meter' at its end.
+(2 lanes); 5 exit 6,000-6,500. Ramp r 400 m, 1 lane, joining lane 0 of 3a, with the meter signal at its end (TLS "rm").
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pathlib import Path
 from v5b.d1.config import NET_CACHE, NETCONVERT_BIN, clean_sumo_env
 
 NAME = "ramp32"
-METER = "meter"
+METER = "rm"
 ROUTES = {"main": "1 2 3a 3 4 5", "ramp": "r rj 3a 3 4 5"}
 RAMP_SHARE = 0.15
 ENTRY_LANES = {"main": 3, "ramp": 1}
@@ -24,9 +24,11 @@ NODES = [("n1", 0.0, 0.0), ("n2", 3000.0, 0.0), ("m", 3500.0, 0.0), ("ae", 3800.
 EDGES = [("1", "n1", "n2", 3), ("2", "n2", "m", 3), ("3a", "m", "ae", 4), ("3", "ae", "d", 3), ("4", "d", "b", 2),
          ("5", "b", "x", 2), ("r", "r0", "rm", 1)]
 # loop name -> [(edge, position; negative = from the lane end)]; 'up' 1 km before the drop (V186),
-# 'merge_up' just before the merge, 'ramp_q' near the ramp start (queue override), 'ramp_out' at the meter
+# 'merge_up' just before the merge, 'ramp_q' near the ramp start (queue override), 'ramp_out' at the meter;
+# E1 (V213): 'alinea' 100 m past the merge area, 'drop' 150 m and 'dropend' 20 m before the lane end
 LOOPS = {"up": [("3", 200.0)], "merge_up": [("2", -50.0)], "e4": [("4", 100.0)], "exit": [("5", -15.0)],
-         "ramp_q": [("r", 30.0)], "ramp_out": [("r", -5.0)]}
+         "ramp_q": [("r", 30.0)], "ramp_out": [("r", -5.0)], "alinea": [("3", 100.0)], "drop": [("3", -150.0)],
+         "dropend": [("3", -20.0)]}
 LOOP_PERIOD = 30.0
 
 

@@ -94,7 +94,9 @@ ETA, ETA_TOL, MIN_VALID = 0.54, 0.05, 8
 GRID = (1.0, 1.5, 2.0, 2.5, 3.0, 4.0)
 
 
-def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_dir: Path, weather: str = "dry") -> dict:
+def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_dir: Path, weather: str = "dry",
+            blocker: bool = False) -> dict:
+    """blocker: a stalled vehicle that stops at the site with normal braking instead of a crash (V213 §5.2 check)."""
     from v5b.fleet.day import CrashSim, _crash      # day imports this module
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -117,11 +119,15 @@ def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_di
         sim.step()
         t = sim.t
         if t_c is None and t >= WARM:
-            hit = [v for v in ls.lane.getLastStepVehicleIDs(lane)
-                   if dem.by_id[v].cls in HUMAN and ls.vehicle.getLanePosition(v) >= corridor.STRAIGHT_CRASH]
-            if hit:
-                crashed = min(hit, key=ls.vehicle.getLanePosition)
-                _crash((crashed,))
+            if blocker:
+                crashed = _stall(lane, crash_lane, dem)
+            else:
+                hit = [v for v in ls.lane.getLastStepVehicleIDs(lane)
+                       if dem.by_id[v].cls in HUMAN and ls.vehicle.getLanePosition(v) >= corridor.STRAIGHT_CRASH]
+                if hit:
+                    crashed = min(hit, key=ls.vehicle.getLanePosition)
+                    _crash((crashed,))
+            if crashed is not None:
                 pz.add(crashed)
                 t_c = t
         if abs(t - round(t)) < 1e-6:
@@ -138,6 +144,7 @@ def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_di
     cong = sum(v is None or v < V_CONG for _, _, v in win) / len(win)
     n = corridor.STRAIGHT[road]
     out = {"seed": seed, "f": f, "road": road, "crash_lane": crash_lane, "zone": zone, "weather": weather, "t_crash": t_c,
+           "blocker": blocker,
            "crash_pos": corridor.STRAIGHT_CRASH, "discharge_vph": round(q, 1), "eta": round(q / ((n - 1) * QDF_LANE), 4),
            "F": round(q / (n * QDF_LANE), 4), "congested_share": round(cong, 3), "valid": cong >= 0.9,
            "minutes": len(win), "slowed": pz.n_slowed, "collisions": res["collisions"], "teleports": res["teleports"],
@@ -153,25 +160,42 @@ def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_di
     return out
 
 
-def _name(f, road, lane, zone, weather="dry") -> str:
-    return f"{road}_f{f:g}_l{lane}_z{zone:g}" + ("" if weather == "dry" else f"_{weather}")
+def _stall(lane: str, idx: int, dem) -> str | None:
+    """The human vehicle nearest to the site that can stop there at its own decel with 10 m to spare."""
+    x0 = corridor.STRAIGHT_CRASH
+    cand = sorted(((ls.vehicle.getLanePosition(v), v) for v in ls.lane.getLastStepVehicleIDs(lane)
+                   if dem.by_id[v].cls in HUMAN and ls.vehicle.getLanePosition(v)
+                   <= x0 - ls.vehicle.getSpeed(v) ** 2 / (2.0 * ls.vehicle.getDecel(v)) - 10.0), reverse=True)
+    for _, v in cand:
+        try:
+            ls.vehicle.setStop(v, "a", pos=x0, laneIndex=idx, duration=HOLD + 900.0)
+        except ls.TraCIException:
+            continue
+        ls.vehicle.setLaneChangeMode(v, 0)
+        return v
+    return None
+
+
+def _name(f, road, lane, zone, weather="dry", blocker=False) -> str:
+    return (f"{road}_f{f:g}_l{lane}_z{zone:g}" + ("" if weather == "dry" else f"_{weather}")
+            + ("_blk" if blocker else ""))
 
 
 def batch(out: Path, jobs: list, workers: int) -> None:
-    """jobs: (seed, f, road, crash lane, zone, weather)."""
+    """jobs: (seed, f, road, crash lane, zone, weather, blocker)."""
     (out / "runs").mkdir(parents=True, exist_ok=True)
     jobs = [j for j in jobs if not (out / "runs" / f"{_name(*j[1:])}_s{j[0]}.json").exists()]
     env = clean_sumo_env()
     print(f"{len(jobs)} runs, cpu {_cpu_util():.0f} %", flush=True)
 
     def one(j):
-        sd, f, road, lane, zone, weather = j
+        sd, f, road, lane, zone, weather, blk = j
         while _cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
         r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.incident", "one", "--seed", str(sd),
                             "--f", str(f), "--road", road, "--lane", str(lane), "--zone", str(zone),
-                            "--weather", weather,
-                            "--out", str(out / "runs" / f"{_name(f, road, lane, zone, weather)}_s{sd}.json")],
+                            "--weather", weather, *(["--blocker"] if blk else []),
+                            "--out", str(out / "runs" / f"{_name(f, road, lane, zone, weather, blk)}_s{sd}.json")],
                            cwd=REPO_ROOT, env=env, capture_output=True, text=True)
         return j, r.returncode, r.stderr[-300:] if r.returncode else ""
 
@@ -189,7 +213,8 @@ def analyse(out: Path) -> dict:
     rows = [json.loads(p.read_text()) for p in sorted((out / "runs").glob("*.json"))]
     groups = {}
     for r in rows:
-        groups.setdefault(_name(r["f"], r["road"], r["crash_lane"], r["zone"], r.get("weather", "dry")), []).append(r)
+        groups.setdefault(_name(r["f"], r["road"], r["crash_lane"], r["zone"], r.get("weather", "dry"),
+                                r.get("blocker", False)), []).append(r)
     rng = np.random.default_rng(0)
     summ = {}
     for k, rs in sorted(groups.items()):
@@ -198,7 +223,7 @@ def analyse(out: Path) -> dict:
         ci = (np.percentile(np.median(rng.choice(e, (10000, e.size)), axis=1), [2.5, 97.5]).round(4).tolist()
               if e.size else None)
         summ[k] = {"f": rs[0]["f"], "road": rs[0]["road"], "crash_lane": rs[0]["crash_lane"], "zone": rs[0]["zone"],
-                   "weather": rs[0].get("weather", "dry"),
+                   "weather": rs[0].get("weather", "dry"), "blocker": rs[0].get("blocker", False),
                    "n": len(rs), "n_valid": len(ok), "eta_median": float(np.median(e)) if e.size else None,
                    "eta_ci95": ci, "F_median": float(np.median([r["F"] for r in ok])) if ok else None,
                    "discharge_median": float(np.median([r["discharge_vph"] for r in ok])) if ok else None,
@@ -228,6 +253,7 @@ def main(argv=None) -> int:
     o.add_argument("--lane", type=int, default=0)
     o.add_argument("--zone", type=float, default=ZONE_UP)
     o.add_argument("--weather", default="dry")
+    o.add_argument("--blocker", action="store_true", help="stalled vehicle instead of a crash (V213 §5.2)")
     o.add_argument("--out", required=True)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
@@ -239,18 +265,19 @@ def main(argv=None) -> int:
     b.add_argument("--lane", type=int, default=0)
     b.add_argument("--zone", type=float, default=ZONE_UP)
     b.add_argument("--weather", default="dry", help="comma-separated weather states")
+    b.add_argument("--blocker", action="store_true")
     a_ = sub.add_parser("analyse")
     a_.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
         r = run_one(a.seed, a.f, a.road, a.lane, a.zone, out.parent.parent / f"rd_s{a.seed}_pid{os.getpid()}",
-                    a.weather)
+                    a.weather, a.blocker)
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(r))
         tmp.replace(out)
     elif a.cmd == "batch":
-        jobs = [(sd, float(f), a.road, a.lane, a.zone, w) for w in a.weather.split(",") for f in a.f.split(",")
+        jobs = [(sd, float(f), a.road, a.lane, a.zone, w, a.blocker) for w in a.weather.split(",") for f in a.f.split(",")
                 for sd in range(a.seed0, a.seed0 + a.n)]
         batch(Path(a.out), jobs, a.workers)
     else:
