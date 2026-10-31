@@ -53,8 +53,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pattern", required=True)
     ap.add_argument("--unit", required=True)
+    ap.add_argument("--cpu-limit", type=float, help="lower than the 0.90 default, e.g. for quiet nights")
     a = ap.parse_args(argv)
-    g = ComputeGuard()
+    g = ComputeGuard(overrides={"cpu_limit": a.cpu_limit} if a.cpu_limit else None)
     paused = []
     signal.signal(signal.SIGTERM, _stop)
     try:
