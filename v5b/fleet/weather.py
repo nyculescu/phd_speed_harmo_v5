@@ -37,6 +37,7 @@ QDF_SKIP, QDF_LEN = 300.0, 1200.0
 FIT_SEEDS = range(7_431_000, 7_431_020)
 CONFIRM_SEEDS = range(7_431_020, 7_431_050)
 TOL, MIN_VALID = 0.02, 0.8
+PLANT_SEEDS = range(7_431_080, 7_431_110)
 
 
 def profile(k: int) -> list:
@@ -77,12 +78,14 @@ def measure(ser: list, k: int) -> dict:
     return out
 
 
-def run_one(seed: int, state: str, g: float, run_dir: Path) -> dict:
+def run_one(seed: int, state: str, g: float, run_dir: Path, mix: bool = False, cav: bool = False) -> dict:
+    """mix: the full V160-V161 fleet (protocol §5.1); cav: CAVs get the human factors (§5.5)."""
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     cfg = fl.apply_plant("v188", CFG)
-    fl.SHARES = HUMAN_SHARES
-    fl.WEATHER, fl.WEATHER_G = STATE_OF[state], g
+    if not mix:
+        fl.SHARES = HUMAN_SHARES
+    fl.WEATHER, fl.WEATHER_G, fl.WEATHER_CAV = STATE_OF[state], g, cav
     d = fl.build_net(cfg)
     k = lanes_out(cfg.geom)
     dem = fl.FleetDemand(seed, profile(k), cfg)
@@ -112,7 +115,8 @@ def run_one(seed: int, state: str, g: float, run_dir: Path) -> dict:
     res = sim.close(drained=drained)
     log = sim.log_file.read_text(errors="replace")
     sp = np.array([x for x in seen.values() if x > 0])
-    out = {"seed": seed, "state": state, "g": g, "saf": fl.WEATHER_STATES[STATE_OF[state]][1], **measure(ser, k),
+    out = {"seed": seed, "state": state, "g": g, "saf": fl.WEATHER_STATES[STATE_OF[state]][1], "mix": mix, "cav": cav,
+           **measure(ser, k),
            "v_free_hm": float(len(sp) / np.sum(1 / sp)) if sp.size else None, "n_free": int(sp.size),
            "drained": drained, "t_end": round(sim.t, 1), "collisions": res["collisions"], "teleports": res["teleports"],
            "emergency_braking": log.count("performs emergency braking"), "sumo_errors": log.count("Error"),
@@ -131,8 +135,8 @@ def _name(state: str, g: float, seed: int) -> str:
     return f"{state}_g{g:g}_s{seed}"
 
 
-def batch(out: Path, jobs: list, workers: int) -> None:
-    """jobs: (seed, state, g)."""
+def batch(out: Path, jobs: list, workers: int, extra: tuple = ()) -> None:
+    """jobs: (seed, state, g); extra: flags passed to every run (--mix, --cav)."""
     (out / "runs").mkdir(parents=True, exist_ok=True)
     jobs = [j for j in jobs if not (out / "runs" / f"{_name(j[1], j[2], j[0])}.json").exists()]
     env = clean_sumo_env()
@@ -143,7 +147,8 @@ def batch(out: Path, jobs: list, workers: int) -> None:
         while _cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
         r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.weather", "one", "--seed", str(sd),
-                            "--state", state, "--g", str(g), "--out", str(out / "runs" / f"{_name(state, g, sd)}.json")],
+                            "--state", state, "--g", str(g), *extra,
+                            "--out", str(out / "runs" / f"{_name(state, g, sd)}.json")],
                            cwd=REPO_ROOT, env=env, capture_output=True, text=True)
         return j, r.returncode, r.stderr[-300:] if r.returncode else ""
 
@@ -245,9 +250,11 @@ def main(argv=None) -> int:
     o.add_argument("--state", required=True)
     o.add_argument("--g", type=float, required=True)
     o.add_argument("--out", required=True)
+    o.add_argument("--mix", action="store_true")
+    o.add_argument("--cav", action="store_true")
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
-    b.add_argument("--stage", choices=("fit", "confirm"), required=True)
+    b.add_argument("--stage", choices=("fit", "confirm", "mix", "mixcav"), required=True)
     b.add_argument("--g", help="confirm: state=g pairs, e.g. medium=1.12,heavy=1.27")
     b.add_argument("--workers", type=int, default=30)
     f = sub.add_parser("fit")
@@ -258,7 +265,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
-        r = run_one(a.seed, a.state, a.g, out.parent.parent / f"rd_s{a.seed}_pid{os.getpid()}")
+        r = run_one(a.seed, a.state, a.g, out.parent.parent / f"rd_s{a.seed}_pid{os.getpid()}", a.mix, a.cav)
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(r))
         tmp.replace(out)
@@ -266,11 +273,16 @@ def main(argv=None) -> int:
         if a.stage == "fit":
             jobs = [(s, "dry", 1.0) for s in FIT_SEEDS] + [(s, st, g) for st in ("medium", "heavy") for g in GRID
                                                           for s in FIT_SEEDS]
-        else:
+        elif a.stage == "confirm":
             pairs = [x.split("=") for x in a.g.split(",")]
             jobs = [(s, "dry", 1.0) for s in CONFIRM_SEEDS] + [(s, STATE_OF[st], float(g)) for st, g in pairs
                                                               for s in CONFIRM_SEEDS]
-        batch(Path(a.out), jobs, a.workers)
+        else:      # §5.1 full mix on the plant seeds at the adopted g; §5.5 CAV bound on 10 of them
+            seeds = PLANT_SEEDS if a.stage == "mix" else PLANT_SEEDS[:10]
+            states = ("dry", "medium", "heavy") if a.stage == "mix" else ("medium", "heavy")
+            jobs = [(s, st, fl.WEATHER_STATES[st][0]) for st in states for s in seeds]
+        batch(Path(a.out), jobs, a.workers, {"fit": (), "confirm": (), "mix": ("--mix",),
+                                             "mixcav": ("--mix", "--cav")}[a.stage])
     elif a.cmd == "fit":
         res = {st: fit(Path(a.out), st) for st in CAF}
         (Path(a.out) / "fit.json").write_text(json.dumps(res, indent=1))

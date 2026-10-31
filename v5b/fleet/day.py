@@ -29,6 +29,7 @@ import numpy as np
 
 from v5b.d1.config import PYTHON_BIN, REPO_ROOT, SUMO_BIN, clean_sumo_env
 from v5b.fleet import corridor, fleet as fl, merge as mg
+from v5b.fleet.calib import HUMAN_SHARES
 from v5b.fleet.crash import CrashProcess
 from v5b.fleet.incident import PassingZone
 from v5b.fleet.merge import CourtesyGap, RampMerge
@@ -225,11 +226,15 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
     res = sim.close(drained=drained)
     log = sim.log_file.read_text(errors="replace")
     delays = {c: [] for c in fl.CLASSES}
+    delays_wet = {c: [] for c in fl.CLASSES}      # V204 §7 secondary: against the weather-capped desired speed
+    ttt = 0.0
     for _, el in ET.iterparse(trip, events=("end",)):
         if el.tag == "tripinfo":
             v = dem.by_id[el.get("id")]
-            delays[v.cls].append(float(el.get("duration")) + float(el.get("departDelay"))
-                                 - float(el.get("routeLength")) / v.desired)
+            tt = float(el.get("duration")) + float(el.get("departDelay"))
+            ttt += tt
+            delays[v.cls].append(tt - float(el.get("routeLength")) / v.desired)
+            delays_wet[v.cls].append(tt - float(el.get("routeLength")) / min(v.desired, v.max_speed or v.desired))
             el.clear()
     r = np.array(rec, dtype=np.float64).reshape(-1, 6)
     np.savez_compressed(run_dir.parent / f"conflicts_s{seed}.npz", t=r[:, 0].astype(np.float32),
@@ -257,6 +262,9 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "ttc_seconds_below": {f"{x:g}": int((ttc < x).sum()) for x in (0.5, 1.0, 1.5, 2.0, 3.0)},
         "ttc_min": float(ttc.min()) if ttc.size else None,
         "delay_mean_by_class": {c: round(float(np.mean(x)), 1) if x else None for c, x in delays.items()},
+        "delay_wetref_mean_by_class": {c: round(float(np.mean(x)), 1) if x else None for c, x in delays_wet.items()},
+        "ttt_h": round(ttt / 3600, 1), "weather": fl.WEATHER, "weather_cav": fl.WEATHER_CAV,
+        "human_only": fl.SHARES == HUMAN_SHARES,
         "series": ser, "health": res["health"]["status"], "health_codes": sorted(res["health"]["by_code"]), "hash": res["hash"], "wall_s": round(time.time() - t_w0, 1),
     }
     sim.log_file.replace(run_dir.parent / f"sumo_s{seed}.log")
@@ -301,6 +309,9 @@ def _common(p) -> None:
     p.add_argument("--squeeze", action="store_true", help="V196 squeeze-in rule at the on-ramp merge")
     p.add_argument("--no-teleport", action="store_true")
     p.add_argument("--forced", help="one placed crash: t,edge,lane,pos,duration (V202); needs --crash-k")
+    p.add_argument("--weather", default="dry", choices=tuple(fl.WEATHER_STATES), help="V204 weather state of the day")
+    p.add_argument("--weather-cav", action="store_true", help="V204 Q5 bound: CAVs get the human rain factors")
+    p.add_argument("--human-only", action="store_true", help="human fleet of V187 (no CAVs)")
 
 
 def main(argv=None) -> int:
@@ -323,6 +334,9 @@ def main(argv=None) -> int:
         fl.CAV_APPARENT_DECEL = a.cav_apparent_decel
     fl.CAV_MODELS.update({c: getattr(a, f"{c}_model") for c in fl.CAV_MODELS})
     fl.RAMP_LC_ASSERTIVE = a.ramp_lc_assertive
+    fl.WEATHER, fl.WEATHER_CAV = a.weather, a.weather_cav
+    if a.human_only:
+        fl.SHARES = HUMAN_SHARES
     hours = tuple(int(x) for x in a.hours.split(",")) if a.hours else None
     crash = None if a.crash_k is None else {"k": a.crash_k, "u": a.crash_u, "shape": a.crash_shape,
                                              "who": a.crash_who}
@@ -353,8 +367,10 @@ def main(argv=None) -> int:
             extra += ["--ramp-lc-assertive", str(a.ramp_lc_assertive)]
         if a.forced:
             extra += ["--forced", a.forced]
+        extra += ["--weather", a.weather]
         extra += [f for f, on in (("--courtesy", a.courtesy), ("--squeeze", a.squeeze),
-                                  ("--no-teleport", a.no_teleport)) if on]
+                                  ("--no-teleport", a.no_teleport), ("--weather-cav", a.weather_cav),
+                                  ("--human-only", a.human_only)) if on]
         if a.cav_apparent_decel is not None:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:

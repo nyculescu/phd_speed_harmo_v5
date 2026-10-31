@@ -94,15 +94,16 @@ ETA, ETA_TOL, MIN_VALID = 0.54, 0.05, 8
 GRID = (1.0, 1.5, 2.0, 2.5, 3.0, 4.0)
 
 
-def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_dir: Path) -> dict:
+def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_dir: Path, weather: str = "dry") -> dict:
     from v5b.fleet.day import CrashSim, _crash      # day imports this module
     t_w0 = time.time()
     run_dir.mkdir(parents=True, exist_ok=True)
     cfg = dataclasses.replace(fl.apply_plant("v188", CFG), geom=road)
     fl.SHARES = HUMAN_SHARES
+    fl.WEATHER = weather
     d = fl.build_net(cfg)
     dem = fl.FleetDemand(seed, [(0.0, WARM + HOLD + 600.0, Q[road])], cfg)
-    tag = f"inc_{road}_f{f:g}_l{crash_lane}_z{zone:g}_s{seed}_pid{os.getpid()}"
+    tag = f"inc_{road}_f{f:g}_l{crash_lane}_z{zone:g}_{weather}_s{seed}_pid{os.getpid()}"
     rou = run_dir / f"r_{tag}.rou.xml"
     dem.write(rou)
     sim = CrashSim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
@@ -136,7 +137,7 @@ def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_di
     q = 3600.0 * sum(n for _, n, _ in win) / (60.0 * len(win))
     cong = sum(v is None or v < V_CONG for _, _, v in win) / len(win)
     n = corridor.STRAIGHT[road]
-    out = {"seed": seed, "f": f, "road": road, "crash_lane": crash_lane, "zone": zone, "t_crash": t_c,
+    out = {"seed": seed, "f": f, "road": road, "crash_lane": crash_lane, "zone": zone, "weather": weather, "t_crash": t_c,
            "crash_pos": corridor.STRAIGHT_CRASH, "discharge_vph": round(q, 1), "eta": round(q / ((n - 1) * QDF_LANE), 4),
            "F": round(q / (n * QDF_LANE), 4), "congested_share": round(cong, 3), "valid": cong >= 0.9,
            "minutes": len(win), "slowed": pz.n_slowed, "collisions": res["collisions"], "teleports": res["teleports"],
@@ -152,24 +153,25 @@ def run_one(seed: int, f: float, road: str, crash_lane: int, zone: float, run_di
     return out
 
 
-def _name(f, road, lane, zone) -> str:
-    return f"{road}_f{f:g}_l{lane}_z{zone:g}"
+def _name(f, road, lane, zone, weather="dry") -> str:
+    return f"{road}_f{f:g}_l{lane}_z{zone:g}" + ("" if weather == "dry" else f"_{weather}")
 
 
 def batch(out: Path, jobs: list, workers: int) -> None:
-    """jobs: (seed, f, road, crash lane, zone)."""
+    """jobs: (seed, f, road, crash lane, zone, weather)."""
     (out / "runs").mkdir(parents=True, exist_ok=True)
     jobs = [j for j in jobs if not (out / "runs" / f"{_name(*j[1:])}_s{j[0]}.json").exists()]
     env = clean_sumo_env()
     print(f"{len(jobs)} runs, cpu {_cpu_util():.0f} %", flush=True)
 
     def one(j):
-        sd, f, road, lane, zone = j
+        sd, f, road, lane, zone, weather = j
         while _cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
             time.sleep(30)
         r = subprocess.run(["nice", "-n", "10", PYTHON_BIN, "-m", "v5b.fleet.incident", "one", "--seed", str(sd),
                             "--f", str(f), "--road", road, "--lane", str(lane), "--zone", str(zone),
-                            "--out", str(out / "runs" / f"{_name(f, road, lane, zone)}_s{sd}.json")],
+                            "--weather", weather,
+                            "--out", str(out / "runs" / f"{_name(f, road, lane, zone, weather)}_s{sd}.json")],
                            cwd=REPO_ROOT, env=env, capture_output=True, text=True)
         return j, r.returncode, r.stderr[-300:] if r.returncode else ""
 
@@ -187,7 +189,7 @@ def analyse(out: Path) -> dict:
     rows = [json.loads(p.read_text()) for p in sorted((out / "runs").glob("*.json"))]
     groups = {}
     for r in rows:
-        groups.setdefault(_name(r["f"], r["road"], r["crash_lane"], r["zone"]), []).append(r)
+        groups.setdefault(_name(r["f"], r["road"], r["crash_lane"], r["zone"], r.get("weather", "dry")), []).append(r)
     rng = np.random.default_rng(0)
     summ = {}
     for k, rs in sorted(groups.items()):
@@ -196,6 +198,7 @@ def analyse(out: Path) -> dict:
         ci = (np.percentile(np.median(rng.choice(e, (10000, e.size)), axis=1), [2.5, 97.5]).round(4).tolist()
               if e.size else None)
         summ[k] = {"f": rs[0]["f"], "road": rs[0]["road"], "crash_lane": rs[0]["crash_lane"], "zone": rs[0]["zone"],
+                   "weather": rs[0].get("weather", "dry"),
                    "n": len(rs), "n_valid": len(ok), "eta_median": float(np.median(e)) if e.size else None,
                    "eta_ci95": ci, "F_median": float(np.median([r["F"] for r in ok])) if ok else None,
                    "discharge_median": float(np.median([r["discharge_vph"] for r in ok])) if ok else None,
@@ -203,7 +206,7 @@ def analyse(out: Path) -> dict:
                    "emergency_braking": sum(r["emergency_braking"] for r in rs),
                    "sumo_errors": sum(r["sumo_errors"] for r in rs)}
     main = [s for s in summ.values() if s["road"] == "inc3" and s["crash_lane"] == 0 and s["zone"] == ZONE_UP
-            and s["eta_median"] is not None]
+            and s["weather"] == "dry" and s["eta_median"] is not None]
     best = min(main, key=lambda s: abs(s["eta_median"] - ETA), default=None)
     passed = best is not None and abs(best["eta_median"] - ETA) <= ETA_TOL and best["n_valid"] >= MIN_VALID
     res = {"target_eta": ETA, "tol": ETA_TOL, "chosen": best, "pass": passed, "groups": summ}
@@ -224,6 +227,7 @@ def main(argv=None) -> int:
     o.add_argument("--road", default="inc3")
     o.add_argument("--lane", type=int, default=0)
     o.add_argument("--zone", type=float, default=ZONE_UP)
+    o.add_argument("--weather", default="dry")
     o.add_argument("--out", required=True)
     b = sub.add_parser("batch")
     b.add_argument("--out", required=True)
@@ -234,17 +238,20 @@ def main(argv=None) -> int:
     b.add_argument("--road", default="inc3")
     b.add_argument("--lane", type=int, default=0)
     b.add_argument("--zone", type=float, default=ZONE_UP)
+    b.add_argument("--weather", default="dry", help="comma-separated weather states")
     a_ = sub.add_parser("analyse")
     a_.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "one":
         out = Path(a.out)
-        r = run_one(a.seed, a.f, a.road, a.lane, a.zone, out.parent.parent / f"rd_s{a.seed}_pid{os.getpid()}")
+        r = run_one(a.seed, a.f, a.road, a.lane, a.zone, out.parent.parent / f"rd_s{a.seed}_pid{os.getpid()}",
+                    a.weather)
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(r))
         tmp.replace(out)
     elif a.cmd == "batch":
-        jobs = [(sd, float(f), a.road, a.lane, a.zone) for f in a.f.split(",") for sd in range(a.seed0, a.seed0 + a.n)]
+        jobs = [(sd, float(f), a.road, a.lane, a.zone, w) for w in a.weather.split(",") for f in a.f.split(",")
+                for sd in range(a.seed0, a.seed0 + a.n)]
         batch(Path(a.out), jobs, a.workers)
     else:
         analyse(Path(a.out))

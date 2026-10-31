@@ -87,11 +87,44 @@ def calibrate(days: list, u: float, shape: str, target: float = TARGET) -> dict:
             "p_max": max((float(p_crash(m, k, u, shape).max()) for m in days if len(m)), default=None)}
 
 
+RAIN_R = (1.71, 1.31, 2.11, 1.0)     # V204 Q4: Qiu & Nixon 2008 pooled +71 % (CI 31-111 %), and 1.0 = k unchanged
+
+
+def scale_k(dry: list, wet: list, k: float, r: float, u: float = U_MAIN, shape: str = "linear",
+            who: str = "human") -> dict:
+    """k for a wet state so that its expected crashes per day are r × the dry ones on the same seeds (V204 §5.3)."""
+    sw_dry = sum(float(weight(encounters(z, u, who), u, shape).sum()) for z in dry)
+    sw_wet = sum(float(weight(encounters(z, u, who), u, shape).sum()) for z in wet)
+    ks = r * k * sw_dry / sw_wet
+    mins = [encounters(z, u, who) for z in wet]
+    return {"r": r, "k": ks, "weight_ratio_wet_dry": sw_wet / sw_dry,
+            "encounters_per_day": float(np.mean([len(m) for m in mins])),
+            "expected_crashes_per_day": float(np.mean([p_crash(m, ks, u, shape).sum() for m in mins])),
+            "p_day_mean": float(np.mean([p_day(m, ks, u, shape) for m in mins])),
+            "p_max": float(max((p_crash(m, ks, u, shape).max() for m in mins if len(m)), default=0.0))}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--dry", help="with --k: scale k for the wet days in --runs against these dry days (V204 §5.3)")
+    ap.add_argument("--k", type=float)
     a = ap.parse_args(argv)
+    if a.dry:
+        seeds = sorted({f.stem.split("_s")[1] for f in Path(a.runs).glob("conflicts_s*.npz")}
+                       & {f.stem.split("_s")[1] for f in Path(a.dry).glob("conflicts_s*.npz")})
+        wet = [np.load(Path(a.runs) / f"conflicts_s{s}.npz") for s in seeds]
+        dry = [np.load(Path(a.dry) / f"conflicts_s{s}.npz") for s in seeds]
+        mins = [encounters(z, U_MAIN, "human") for z in dry]
+        res = {"seeds": seeds, "k_dry": a.k,
+               "dry": {"encounters_per_day": float(np.mean([len(m) for m in mins])),
+                       "expected_crashes_per_day": float(np.mean([p_crash(m, a.k, U_MAIN, "linear").sum() for m in mins])),
+                       "p_day_mean": float(np.mean([p_day(m, a.k, U_MAIN, "linear") for m in mins]))},
+               "wet": [scale_k(dry, wet, a.k, r) for r in RAIN_R]}
+        Path(a.out).write_text(json.dumps(res, indent=1))
+        print(json.dumps(res, indent=1))
+        return 0
     files = sorted(Path(a.runs).glob("conflicts_s*.npz"))
     zs = [np.load(f) for f in files]
     res = {"runs": a.runs, "days": len(zs), "target": TARGET, "arms": {}}
