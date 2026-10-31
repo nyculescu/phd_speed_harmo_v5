@@ -1,0 +1,250 @@
+"""E1 controllers (V213 §3, §10.1): meter law and actuator, MTFC, cascade, cap profile, ALKS adapter on a fake libsumo."""
+import math
+from collections import deque
+from types import SimpleNamespace
+
+import pytest
+
+from v5b.fleet import control as ct
+
+
+def test_alinea_and_pi_laws():
+    a = ct.MeterLaw("alinea", setpoint=20.0, k_r=70.0)
+    assert a(600.0, 25.0, 25.0, 600.0) == pytest.approx(250.0)
+    p = ct.MeterLaw("pi", setpoint=20.0, k_p=100.0, k_i=10.0)
+    # occupancy rising by 2 points lowers the rate by K_P x 2; below the setpoint the I term raises it
+    assert p(600.0, 18.0, 16.0, 600.0) == pytest.approx(600.0 - 200.0 + 20.0)
+    assert p(300.0, 0.0, 0.0, 50.0) == pytest.approx(450.0)         # +400 cap on the measured rate
+    assert ct.MeterLaw("fixed", rate=300.0)(900.0, 50.0, 50.0, 0.0) == 300.0
+
+
+def test_pi_gain_conversion():
+    k_p, k_i = ct.pi_gains(100.0, 4.0, 5.2)
+    assert k_p == pytest.approx(192.31, abs=0.01) and k_i == pytest.approx(7.692, abs=0.001)
+
+
+def test_rest_green_without_need():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=20.0))
+    m.update(60.0, 5.0, 0, 300.0)
+    assert not m.metering and m.r_law == ct.R_MAX
+    assert m.step(61.0, 0, 0, False, 0.0) == "G"
+
+
+def test_bounds_and_queue_law():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=10.0))
+    m.update(60.0, 80.0, 0, 500.0)
+    assert m.r_law == ct.R_MIN
+    m.update(120.0, 80.0, 22, 500.0)
+    assert m.r_law == pytest.approx(24.0 * 22)
+    assert m.saturated
+
+
+def test_onset_amber_then_red_then_green_per_vehicle():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=360.0), overrides=False)
+    m.update(0.0, 30.0, 5, 500.0)
+    assert m.metering and m.state == "y" and m.amber == ct.AMBER_ONSET
+    states = [m.step(float(t), 0, 1, False, 0.0) for t in range(1, 12)]
+    assert states[:4] == ["y"] * 4 and states[4] == "r"
+    # 360 veh/h owes one vehicle after 10 s; a vehicle waits at the line, so the green starts then
+    assert "G" in states[5:] and states.index("G") == 9
+    s = [m.step(12.0, 1, 1, False, 0.0), m.step(13.0, 0, 1, False, 0.0)]
+    assert s == ["y", "r"] and m.amber == ct.AMBER_CAR
+    assert m.n["red_passages"] == 0
+
+
+def test_red_passage_is_counted():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=300.0), overrides=False)
+    m.update(0.0, 30.0, 5, 500.0)
+    for t in range(1, 7):
+        m.step(float(t), 0, 0, False, 0.0)
+    assert m.state == "r"
+    m.step(7.0, 1, 0, False, 0.0)
+    assert m.n["red_passages"] == 1
+
+
+def test_anti_windup_uses_realised_rate_when_not_metered():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=20.0, k_r=70.0))
+    for t in range(1, 61):
+        m.step(float(t), 1 if t % 6 == 0 else 0, 0, False, 0.0)      # 10 releases: 600 veh/h, resting green
+    m.update(60.0, 20.0, 0, 600.0)
+    assert m.log[-1][2] == pytest.approx(600.0)
+    assert m.r_law == pytest.approx(600.0) and not m.metering
+    m2 = ct.Meter(ct.MeterLaw("alinea", setpoint=20.0, k_r=70.0))
+    for t in range(1, 61):
+        m2.step(float(t), 1 if t % 6 == 0 else 0, 0, False, 0.0)
+    m2.update(60.0, 22.0, 0, 600.0)
+    assert m2.r_law == pytest.approx(600.0 - 140.0) and m2.metering
+
+
+def test_override_and_backstop_hysteresis():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=10.0))
+    m.update(60.0, 60.0, 5, 500.0)
+    assert m.metering
+    m.queue_check(31.0)
+    assert m.step(61.0, 0, 1, False, 0.0) == "G" and m.override
+    m.queue_check(20.0)
+    assert m.override
+    m.queue_check(14.0)
+    assert not m.override
+    m.step(62.0, 0, 1, False, 211.0)
+    assert m.backstop and m.r_cmd == ct.R_MAX
+    m.step(63.0, 0, 1, False, 160.0)
+    assert m.backstop
+    m.step(64.0, 0, 1, False, 149.0)
+    assert not m.backstop
+
+
+def test_downstream_blocked_green_is_held():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=900.0 - 1), overrides=False)
+    m.update(0.0, 30.0, 5, 500.0)
+    for t in range(1, 7):
+        m.step(float(t), 0, 1, False, 0.0)
+    assert m.state == "G"
+    for t in range(7, 20):
+        assert m.step(float(t), 0, 1, True, 0.0) == "G"
+    assert m.n["dlim_s"] > 0 and m.p_dlim
+
+
+def _queue_run(hours: float = 2.0, arrivals: float = 523.0):
+    """FIFO ramp queue at the meter: deterministic arrivals; the head leaves on green at most every 2 s; ALINEA pinned
+    at the lower bound by an occupancy far above its setpoint."""
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=1.0, k_r=70.0))
+    q, gap, nxt, last_rel, worst = deque(), 3600.0 / arrivals, 0.0, -10.0, 0.0
+    shown = "G"
+    for t in range(1, int(hours * 3600) + 1):
+        while nxt <= t:
+            q.append(nxt)
+            nxt += gap
+        rel = 0
+        if shown == "G" and q and t - q[0] >= 14.1 and t - last_rel >= 2.0:
+            q.popleft()
+            rel, last_rel = 1, t
+        if t % 30 == 0:
+            m.queue_check(5.0)
+        if t % 60 == 0:
+            m.update(float(t), 90.0, len(q), arrivals)
+        wait = max(0.0, t - q[0] - 14.1) if q else 0.0
+        worst = max(worst, wait) if t > 600 else worst
+        near = 1 if q and t - q[0] >= 14.1 else 0
+        shown = m.step(float(t), rel, near, False, wait)
+    return m, worst
+
+
+def test_queue_law_keeps_waits_inside_the_backstop():
+    m, worst = _queue_run()
+    assert m.n["backstop_s"] == 0
+    assert worst < ct.WAIT_ON
+    assert m.n["red_passages"] == 0
+
+
+def test_mtfc_saturation_rate_limit_and_hold():
+    c = ct.MTFC(setpoint=20.0, k_i=0.02)
+    c.update(60.0, 40.0)
+    assert c.b == pytest.approx(0.8)       # 0.02 x 20 = 0.4, limited to 0.2
+    for k in range(10):
+        c.update(120.0 + 60 * k, 60.0)
+    assert c.b == ct.B_MIN
+    c.update(800.0, 0.0, release=False)
+    assert c.b == pytest.approx(ct.B_MIN + 0.2)
+    f = ct.MTFC(setpoint=20.0, k_i=0.02, fixed_b=0.5)
+    f.update(60.0, 99.0)
+    assert f.b == 0.5
+
+
+def test_cascade_gate():
+    g = ct.Cascade()
+    assert not g.update(False)
+    assert g.update(True)
+    for _ in range(4):
+        assert g.update(False)
+    assert not g.update(False)
+
+
+def test_cap_profile_and_command():
+    lo, hold = ct.ZONES["short"]
+    assert hold == 592.0 and lo == pytest.approx(592.0 - 234.1, abs=0.1)
+    assert ct.ZONES["long"][1] == pytest.approx(384.1, abs=0.1)
+    c = ct.B_MIN * ct.V_ALKS
+    assert ct.cap_at(hold, c, hold) == pytest.approx(c)
+    assert ct.cap_at(lo, c, hold) == pytest.approx(ct.V_ALKS, abs=1e-6)
+    mid = ct.cap_at(hold - 100.0, c, hold)
+    assert mid == pytest.approx(math.sqrt(c * c + 300.0))
+    assert ct.command(10.0, 27.0, 55.0) == pytest.approx(27.0 - 0.15)
+    assert ct.command(20.0, 15.0, 55.0) == 20.0
+    assert ct.command(25.0, 15.0, 22.0) == 22.0          # an E2 weather cap is kept
+
+
+class _FakeLS:
+    """Just enough libsumo for SumoALKS: vehicles on edge '3' with position, speed and maxSpeed."""
+
+    class TraCIException(Exception):
+        pass
+
+    def __init__(self, veh: dict):
+        self.veh = veh
+        self.edge = SimpleNamespace(getLastStepVehicleIDs=lambda e: [v for v in self.veh if self.veh[v]["live"]])
+        self.vehicle = SimpleNamespace(getLanePosition=lambda v: self.veh[v]["x"],
+                                       getSpeed=lambda v: self.veh[v]["v"],
+                                       getMaxSpeed=lambda v: self.veh[v]["max"],
+                                       setMaxSpeed=self._set)
+        self.inductionloop = None
+
+    def _set(self, v, s):
+        if not self.veh[v]["live"]:
+            raise self.TraCIException(v)
+        self.veh[v]["max"] = s
+
+
+class _Bank:
+    def __init__(self, o):
+        self.o = o
+
+    def occ60(self, _):
+        return self.o
+
+
+def _alks(monkeypatch, veh, blocked=lambda v: False, b=0.5):
+    fake = _FakeLS(veh)
+    monkeypatch.setattr(ct, "ls", fake)
+    law = ct.MTFC(setpoint=20.0, k_i=0.02, fixed_b=b)
+    h = ct.SumoALKS(law, _Bank(30.0), "drop", "short", set(veh), {v: ct.V_ALKS for v in veh}, blocked)
+    return fake, h
+
+
+def test_alks_command_restore_and_blocked(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 30.0, "live": True},     # 30.0: a pre-set vType maxSpeed (E2 bound)
+           "b": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True},
+           "far": {"x": 100.0, "v": 27.0, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh, blocked=lambda v: v == "b")
+    h.step(0.1)
+    assert veh["a"]["max"] == pytest.approx(27.0 - 0.15)
+    assert veh["b"]["max"] == 55.5 and veh["far"]["max"] == 55.5      # blocked and outside: untouched
+    veh["a"]["x"] = 900.0                                               # leaves the zone
+    h.step(0.2)
+    assert veh["a"]["max"] == 30.0 and h.n["restores"] == 1 and h.n["restore_mismatch"] == 0
+
+
+def test_alks_no_command_at_b1(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh, b=1.0)
+    h.step(0.1)
+    assert veh["a"]["max"] == 55.5 and h.n["cmd_steps"] == 0
+
+
+def test_alks_restore_when_b_returns_to_1(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 13.0, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh, b=0.5)
+    h.step(0.1)
+    assert veh["a"]["max"] == pytest.approx(0.5 * ct.V_ALKS)
+    h.law.b = 1.0
+    h.step(0.2)
+    assert veh["a"]["max"] == 55.5 and not h.own
+
+
+def test_alks_vehicle_gone_is_not_an_error(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 20.0, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh)
+    h.step(0.1)
+    veh["a"]["live"] = False
+    h.step(0.2)
+    assert not h.own and h.n["restores"] == 0
