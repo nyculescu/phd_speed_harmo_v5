@@ -75,7 +75,7 @@ RAMP_LC_ASSERTIVE: float | None = None
 INCIDENT_TAU_FACTOR = 1.0
 # V204 weather, one state per day: name -> (human tau factor g, human speed factor SAF at 100 km/h, SHRP 2-L08);
 # g is calibrated (V204 §4). Applied after all draws, so every state shares the same vehicles.
-WEATHER_STATES = {"dry": (1.0, 1.0), "medium": (1.0, 0.946), "heavy": (1.0, 0.930)}
+WEATHER_STATES = {"dry": (1.0, 1.0), "medium": (1.12, 0.946), "heavy": (1.23, 0.930)}   # g: V206
 WEATHER = "dry"
 WEATHER_G: float | None = None     # calibration override of the state's g
 WEATHER_CAV = False                # V204 Q5 report-only bound: CAVs get the human factors
