@@ -1,6 +1,6 @@
 # E1 staged headroom check: protocol v1
 
-Status: proposal (2026-10-31), not approved, nothing has run. It implements row E of `docs/research/weather_plant_strategy_v0.md` (V212). The draft came from two independent drafts, a merge, and three adversarial reviews (statistics, controllers, build); Claude then applied the fixes in §14. Tags [Qn] mark text that depends on an author answer in §13; the text shows Claude's recommendation. After the answers, the protocol is logged as the next V# with this file's sha256 and a ledger entry. E1 uses no phase 2-4 weather result.
+Status: approved 2026-10-31 (V213, author "all OK" to Q1-Q8 as recommended). Nothing has run. It implements row E of `docs/research/weather_plant_strategy_v0.md` (V212). The draft came from two independent drafts, a merge, and three adversarial reviews (statistics, controllers, build); Claude then applied the fixes in §14. Tags [Qn] mark text that the author answers in §13 settled as shown. E1 uses no phase 2-4 weather result.
 
 ## 1. Scope and question
 - **Question:** on plant v199, in dry weather, at the realistic demand level (§9.1), does any proven controller cut door-to-door delay by ≥ 10 % against no control? The same question is asked of a per-day oracle that may also choose no control.
