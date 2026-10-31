@@ -86,28 +86,48 @@ def _fake_day(seed, d, intr=0, brake=2, t_stop=57620.0):
             "breakdowns_drop": [{"t_break": 58000.0, "drop": 0.11, "qdf": 3050.0}]}
 
 
-def test_report_stage_end_to_end(tmp_path):
+def _fake_root(root, gains, intr_arm="ma"):
     import json as js
     seeds = e1.main_seeds(10)
-    gains = {"nc/base": 0.0, "ma/p0.85": 0.25, "ma/p0.95": 0.12, "ma/p1.05": 0.05, "c/p0.85_long": 0.02,
-             "c/p0.95_long": 0.01, "c/p1.05_long": 0.0}
     rng = np.random.default_rng(0)
     for cell in ("R", "I"):
         for k, g in gains.items():
             arm, pt = k.split("/")
             for s in seeds:
-                p = e1.out_path(e1.job("A", cell, arm, pt, s), tmp_path)
+                p = e1.out_path(e1.job("A", cell, arm, pt, s), root)
                 p.parent.mkdir(parents=True)
-                p.write_text(js.dumps(_fake_day(s, 400.0 * (1 - g) + rng.normal(0, 2.0), intr=6 if arm == "ma" else 0)))
+                p.write_text(js.dumps(_fake_day(s, 400.0 * (1 - g) + rng.normal(0, 2.0), intr=6 if arm == intr_arm else 0)))
                 np.savez(p.parent / f"conflicts_s{s}.npz", t=np.array([1.0, 2.0], np.float32),
                          follower=np.array([0, 0], np.int32), leader=np.array([1, 1], np.int32),
                          ttc=np.array([1.0, 0.8], np.float32), v_f=np.zeros(2, np.float32), v_l=np.zeros(2, np.float32),
                          cls=np.array([0, 0], np.int8))
+
+
+def test_report_stage_end_to_end(tmp_path):
+    _fake_root(tmp_path, {"nc/base": 0.0, "ma/p0.85": 0.25, "ma/p0.95": 0.12, "ma/p1.05": 0.05, "c/p0.85_long": 0.02,
+                          "c/p0.95_long": 0.01, "c/p1.05_long": 0.0})
     rep = e1.report_stage(10, tmp_path, ("A",))
     r = rep["cells"]["R"]
     assert r["tuned"]["M*"] == "ma/p0.85" and r["tuned_pass"]
-    assert r["B1_edges"]["ma"]["next"] is None                     # a tuned arm passed: no extension
+    assert r["B1_edges"]["M"]["next"] is None                      # a tuned arm passed: no extension
+    assert r["B1_edges"]["C"]["variant"] == "c_long"
     assert r["o_off"]["pass"] and r["o_off_nc_picks"] == 0
     assert not r["C2_needed"] and not r["flags"]["M*"]["braking"]
     assert rep["intrusion_flags"]["ma/p0.85"]["flag"] and not rep["intrusion_flags"]["c/p0.95_long"]["flag"]
     assert r["harm_in_other_cell"]["M*"] == "no harm"
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, False, tmp_path)
+    assert v["verdict"] == "FLAGGED-ONLY" and v["cells"]["R"]["F"] == ["M*"]       # the meter arm carries the V211 flag
+    js, fzc = e1.stage_b1(rep, FZ, 10)
+    assert js == [] and len(e1.stage_b2(rep, fzc, 10)) == 20
+
+
+def test_edge_extension_jobs(tmp_path):
+    _fake_root(tmp_path, {"nc/base": 0.0, "ma/p0.85": 0.06, "ma/p0.95": 0.03, "ma/p1.05": 0.01, "c/p0.85_long": 0.0,
+                          "c/p0.95_long": 0.01, "c/p1.05_long": 0.0}, intr_arm=None)
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    r = rep["cells"]["R"]
+    assert not r["tuned_pass"] and r["B1_edges"]["M"]["next"] == 0.75
+    js, fzc = e1.stage_b1(rep, FZ, 10)
+    assert {(j["cell"], j["arm"], j["point"]) for j in js} == {("R", "ma", "p0.75"), ("I", "ma", "p0.75")}
+    assert js[0]["ctrl"]["meter"]["setpoint"] == pytest.approx(0.75 * 12.0)
+    assert len(js) == 20

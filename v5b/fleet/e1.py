@@ -544,6 +544,136 @@ VARIANTS = {"ma": lambda k: k.startswith("ma/"), "mp": lambda k: k.startswith("m
             "c_long": lambda k: k.startswith("c/") and k.endswith("_long")}
 
 
+def variant(key: str) -> str:
+    return next(v for v, member in VARIANTS.items() if member(key))
+
+
+def with_setpoint(fz: dict, var: str, sp: float) -> dict:
+    """fz with one more setpoint for a grid variant (edge extension, §8)."""
+    sps = dict(fz.get("setpoints", {}))
+    sps[var] = tuple(sorted(set(sps.get(var, (0.85, 0.95, 1.05))) | {sp}))
+    return {**fz, "setpoints": sps}
+
+
+def stage_b1(rep: dict, fz: dict, n: int) -> tuple:
+    """§8 B1: the edge extensions per cell; returns (jobs, fz per cell with the new setpoints)."""
+    js, fzc = [], {}
+    for cell, c in rep["cells"].items():
+        fzc[cell] = fz
+        for fam, e in c["B1_edges"].items():
+            if e["next"] is None:
+                continue
+            fzc[cell] = with_setpoint(fzc[cell], e["variant"], e["next"])
+            key = next(k for k in grid(fzc[cell]) if VARIANTS[e["variant"]](k) and k.split("/")[1].startswith(f"p{e['next']:g}"))
+            js += [job("B", cell, *key.split("/"), s, ctrl=grid(fzc[cell])[key]) for s in main_seeds(n)]
+    return js, fzc
+
+
+def stage_b2(rep: dict, fzc: dict, n: int) -> list:
+    """§3.4 B2: MC* = the cell's tuned M* and C* (recomputed after B1) together."""
+    js = []
+    for cell, c in rep["cells"].items():
+        pts = grid(fzc[cell])
+        js += [job("B", cell, "mc", "star", s, ctrl=mc_ctrl(pts, c["tuned"]["M*"], c["tuned"]["C*"])) for s in main_seeds(n)]
+    return js
+
+
+def _ctrl_of(root: Path, cell: str, key: str, seed: int) -> dict | None:
+    for st in ("A", "B"):
+        d = _day(root / st, cell, *key.split("/"), seed)
+        if d is not None:
+            return d["ctrl"]
+    raise FileNotFoundError(key)
+
+
+def stage_c(rep: dict, n: int, rule2: bool, root: Path = ROOT) -> list:
+    """§9.4-9.6: C1 for a borderline tuned arm; C2 replicates of the O_off picks; Rule 2 replicates of a tuned pass.
+    Twins: SUMO seed = demand seed + 5,000."""
+    js = []
+    for cell, c in rep["cells"].items():
+        seeds = main_seeds(n)
+        if c["C1_needed"]:
+            k = c["best_tuned"]
+            ctrl = _ctrl_of(root, cell, k, seeds[0])
+            js += [job("C1", cell, "nc", "base", s) for s in fresh_seeds(n)]
+            js += [job("C1", cell, *k.split("/"), s, ctrl=ctrl) for s in fresh_seeds(n)]
+        twins = []
+        if c["C2_needed"]:
+            twins += [(s, p) for s, p in zip(seeds, c["o_off_picks"]) if p != "nc"]
+        if rule2 and c["tuned_pass"]:
+            for k in {v for v in c["tuned"].values() if c["effects"][v]["pass"]}:
+                twins += [(s, k) for s in seeds]
+        if twins:
+            js += [job("C2", cell, "nc", "base", s, s + TWIN) for s in seeds]
+            js += [job("C2", cell, *k.split("/"), s, s + TWIN, ctrl=_ctrl_of(root, cell, k, s)) for s, k in sorted(set(twins))]
+    return js
+
+
+FLAG_KEYS = ("braking", "expected_crashes", "throughput_loss", "ttt_conflict", "incident_unbalanced")
+
+
+def final_verdict(rep: dict, n: int, powered: dict, rule2: bool, root: Path = ROOT) -> dict:
+    """§9.7 on the stage report plus the stage-C runs. powered[cell]: the power rule held for that cell."""
+    from v5b.fleet import e1_analysis as ea
+    seeds, cells, detail = main_seeds(n), {}, {}
+    for cell, c in rep["cells"].items():
+        nc_tw = [_day(root / "C2", cell, "nc", "base", s, s + TWIN) for s in seeds]
+        intr = rep["intrusion_flags"]
+
+        def flagged(name, key):
+            f = c["flags"][name]
+            return any(f.get(x) for x in FLAG_KEYS) or intr.get(key, {}).get("flag", False)
+
+        def replicate(picks):
+            if any(d is None for d in nc_tw):
+                return None
+            xs = []
+            for s, p, d0 in zip(seeds, picks, nc_tw):
+                xs.append(d0["d_all"] if p == "nc" else _day(root / "C2", cell, *p.split("/"), s, s + TWIN)["d_all"])
+            return ea.effect(np.array([d["d_all"] for d in nc_tw]), np.array(xs))
+
+        pt, f_list, det = False, [], {}
+        for name, key in c["tuned"].items():
+            e = c["effects"][key]
+            ok = e["pass"]
+            if not ok and c["C1_needed"] and key == c["best_tuned"]:
+                a = [_day(root / "C1", cell, "nc", "base", s) for s in fresh_seeds(n)]
+                b = [_day(root / "C1", cell, *key.split("/"), s) for s in fresh_seeds(n)]
+                if None not in a and None not in b:
+                    D0 = np.array([d["d_all"] for d in _all(root, cell, "nc/base", seeds)] + [d["d_all"] for d in a])
+                    D1 = np.array([d["d_all"] for d in _all(root, cell, key, seeds)] + [d["d_all"] for d in b])
+                    det[f"{name}_C1"] = ea.c1_pass(D0, D1, n)
+                    ok = det[f"{name}_C1"]["pass"]
+            if ok and rule2:
+                r = replicate([key] * n)
+                det[f"{name}_rule2"] = r
+                ok = bool(r and r["pass"])
+            if ok and flagged(name, key):
+                f_list.append(name)
+            elif ok:
+                pt = True
+        po = False
+        if c["o_off"]["pass"]:
+            r = replicate(c["o_off_picks"]) if c["C2_needed"] else None
+            det["O_off_C2"] = r
+            ok = bool(r and r["pass"])
+            if ok and flagged("O_off", "O_off"):
+                f_list.append("O_off")
+            elif ok:
+                po = True
+        cells[cell] = {"P_T": pt, "P_O": po, "F": f_list, "powered": powered[cell]}
+        detail[cell] = det
+    return {**ea.verdict(cells), "cells": cells, "detail": detail}
+
+
+def _all(root: Path, cell: str, key: str, seeds: list) -> list:
+    out = []
+    for s in seeds:
+        d = next((x for st in ("A", "B") if (x := _day(root / st, cell, *key.split("/"), s)) is not None), None)
+        out.append(d)
+    return out
+
+
 def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
     """§8-9 on stages A-B: tuned arms, O_off, the B1, C1, C2 and Rule 2 triggers, flags and labels. Every outcome is read
     only through these pre-registered rules."""
@@ -568,11 +698,10 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
             tuned_arms["MC*"] = "mc/star"
         tuned_pass = any(eff[k]["pass"] for k in tuned_arms.values())
         edges = {}
-        for var, member in VARIANTS.items():
-            pts = {k: v for k, v in grid_pts.items() if member(k)}
-            if len(pts) >= 3:
-                best = max(pts, key=lambda k: float(np.median(d_nc - pts[k])))
-                edges[var] = {"best": best, "next": ea.edge_fires(d_nc, pts, best, tuned_pass)}
+        for fam, star in (("M", tuned_arms["M*"]), ("C", tuned_arms["C*"])):
+            var = variant(star)
+            pts = {k: v for k, v in grid_pts.items() if VARIANTS[var](k)}
+            edges[fam] = {"best": star, "variant": var, "next": ea.edge_fires(d_nc, pts, star, tuned_pass)}
         o, picks = ea.o_off(d_nc, D)
         eo = ea.effect(d_nc, o)
         best_tuned = max(tuned_arms.values(), key=lambda k: eff[k]["rel"])
