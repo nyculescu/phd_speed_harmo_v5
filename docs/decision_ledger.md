@@ -6,7 +6,15 @@ Status: **open** (proposed, not decided), **holds** (no confirmed issue), **hold
 
 ## Open
 
-None.
+### E1 headroom-check protocol v1 (proposed 2026-10-31)
+- Proposal: `docs/research/protocols/e1_headroom.md`, the V212 row E design after three adversarial reviews (49 issues, 2 blockers, all resolved in its §14). Eight author questions (Q1-Q8).
+- Potential challenges:
+  - The compute grows from V212's about 22 h to about 34-38 h expected at 10 seeds, and about 69 h if the power rule needs 20 seeds.
+  - The KILL is stated as "no gain ≥ 15 % with probability 0.80"; gains of 10-15 % can be missed.
+  - The stalled-vehicle incident departs from V202 and needs its η check.
+  - The meter actuator, the CAV cap profile and the MTFC gain range are Claude's choices, accepted only through T0 and the gain check.
+- Confirmed issues: none yet.
+- Status: open.
 
 ## Decided
 
