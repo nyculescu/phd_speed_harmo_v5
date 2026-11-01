@@ -203,4 +203,13 @@ None.
 - Confirmed issues:
   - The hold deficit sits in the ending lane in congestion; lanes 0-1 and uncongested minutes pass.
   - Recovery fails on traffic interactions; the release itself is exact.
-- Status: open.
+- Status: resolved by V226.
+
+### V226. Stage-0 stops resolved (2026-11-01)
+- Decision: kinematic amber; T0 ALKS hold over uncongested seconds and an exact-restore stop rule; PI-ALINEA on a 3-min mean occupancy with a fixed fallback; E1 at n = 20.
+- Potential challenges:
+  - Every rule here was chosen after stage-0 data on throw-away seeds; no controller outcome was read.
+  - The 3-min mean adds about 1 min of lag to PI-ALINEA.
+  - A third T0 meter run goes beyond the protocol's "repeat once".
+- Confirmed issues: none yet.
+- Status: implementing.
