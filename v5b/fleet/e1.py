@@ -61,7 +61,7 @@ def order(jobs: list) -> list:
     return sorted(jobs, key=lambda j: (j["cell"] != "I", j["hours"] is not None))
 
 
-MAIN_STAGES = ("A", "B", "C1", "C2")
+MAIN_STAGES = ("A", "B", "C1", "C2", "L")
 MAX_WORKERS = 27                           # §10.6
 
 
@@ -750,6 +750,52 @@ def grid(fz: dict) -> dict:
     return pts
 
 
+LITE_HOURS = "13,20"
+
+
+def lite_jobs(fz: dict, ext: bool = False) -> list:
+    """V236 E1-lite: NC and the frozen grid on PM slices in the R cell; ext = the 10 extension seeds."""
+    seeds = fresh_seeds(10) if ext else main_seeds(10)
+    pts = {"nc/base": None, **grid(fz)}
+    return [job("L", "R", k.split("/")[0], k.split("/")[1], s, ctrl=c, hours=LITE_HOURS) for k, c in pts.items()
+            for s in seeds]
+
+
+def lite_report(fz: dict, ext: bool = False, root: Path = ROOT) -> dict:
+    """V236 direction rule on the best arm; every arm reported."""
+    from v5b.fleet import e1_analysis as ea
+    seeds = main_seeds(10) + (fresh_seeds(10) if ext else [])
+    pts = ["nc/base", *grid(fz)]
+    runs = {k: [_day(root / "L", "R", *k.split("/"), s) for s in seeds] for k in pts}
+    missing = [(k, s) for k, v in runs.items() for s, d in zip(seeds, v) if d is None]
+    if missing:
+        return {"incomplete": missing[:20]}
+    nc = np.array([d["d_all"] for d in runs["nc/base"]])
+    arms = {}
+    for k in pts[1:]:
+        e = ea.effect(nc, np.array([d["d_all"] for d in runs[k]]))
+        why = sorted({w for d in runs[k] for w in stop_reasons(d, "R")})
+        arms[k] = {"rel": e["rel"], "rel_ci": e["rel_ci"], "D": e["treat"], "counts": not why, "stop": why,
+                   "ttt_w_h": float(np.median([d["ttt_w_h"] for d in runs[k]])),
+                   "braking": [braking_by_lane(out_dir(root / "L", "R", *k.split("/"), s) / f"sumo_s{s}.log") for s in seeds]}
+    ok = {k: v for k, v in arms.items() if v["counts"]}
+    best = max(ok, key=lambda k: ok[k]["rel"]) if ok else None
+    b = ok.get(best)
+    if b is None:
+        direction = "NO VALID ARM"
+    elif b["rel"] < 0.05 and b["rel_ci"][1] < 0.10:
+        direction = "KILL direction"
+    elif b["rel"] >= 0.10 and b["rel_ci"][0] > 0:
+        direction = "GO direction"
+    else:
+        direction = "UNCLEAR"
+    oracle = ea.effect(nc, np.min([[d["d_all"] for d in runs[k]] for k in pts], axis=0))
+    return {"n": len(seeds), "D_NC_median": float(np.median(nc)), "nc_valid": all(valid(d) for d in runs["nc/base"]),
+            "nc_braking": [braking_by_lane(out_dir(root / "L", "R", "nc", "base", s) / f"sumo_s{s}.log") for s in seeds],
+            "arms": arms, "best": best, "direction": direction,
+            "oracle_noise_dominated": {"rel": oracle["rel"], "rel_ci": oracle["rel_ci"]}}
+
+
 def floors(fz: dict, w1: dict) -> dict:
     """V234: the §9.4 noise floors and global null at the frozen grid (report_w1 assumed 12 points, 6 per family);
     Rule 2 uses the larger family."""
@@ -1291,7 +1337,7 @@ def main(argv_=None) -> int:
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2c", "w2d", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
+    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2c", "w2d", "w2b", "L1", "L2", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
                    required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
@@ -1302,7 +1348,7 @@ def main(argv_=None) -> int:
     sm.add_argument("--jobs", required=True)
     sm.add_argument("--workers", type=int, default=16)
     rp = sub.add_parser("report")
-    rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "floors", "stage", "verdict"), required=True)
+    rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "floors", "L1", "L2", "stage", "verdict"), required=True)
     rp.add_argument("--out", required=True)
     rp.add_argument("--freeze")
     rp.add_argument("--cal")
@@ -1336,6 +1382,8 @@ def main(argv_=None) -> int:
             js, extra = wave2c(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2d":
             js, extra = wave2d(cal["calibration"], cal["l_bar_m"]), {}
+        elif a.wave in ("L1", "L2"):
+            js, extra = lite_jobs(fz, ext=a.wave == "L2"), {}
         elif a.wave == "w2b":
             js, extra = wave2b(fz), {}
         elif a.wave == "A1":
@@ -1368,6 +1416,11 @@ def main(argv_=None) -> int:
         rep = report_w2b(fz)
     elif a.wave == "floors":
         rep = floors(fz, cal)
+    elif a.wave in ("L1", "L2"):
+        rep = lite_report(fz, ext=a.wave == "L2")
+        Path(a.out).write_text(json.dumps(rep, indent=1, default=str))
+        print("direction:", rep.get("direction"), rep.get("best"))
+        return 0
     elif a.wave == "stage":
         rep = report_stage(fz["n"])
     else:

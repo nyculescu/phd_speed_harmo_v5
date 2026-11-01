@@ -437,3 +437,16 @@ def test_resume_refuses_after_a_stop_and_other_code(tmp_path):
     with pytest.raises(SystemExit, match="stop rule fired before"):
         e1.run([j], 1, tmp_path)
     assert e1.smoke_jobs([j])[0]["stage"] == f"smoke/{code_id()}"
+
+
+def test_lite_jobs_and_direction(tmp_path):
+    fz = {"o_cr": {"alinea": 6.6, "drop": 10.7}, "drop_loop": "drop", "c_loop": "drop", "l_bar": 5.2,
+          "gains": {"k_r": 70.0, "pi": None, "k_i": 0.02}, "n": 10}
+    js = e1.lite_jobs(fz)
+    assert len(js) == 100 and {j["hours"] for j in js} == {"13,20"} and {j["cell"] for j in js} == {"R"}
+    assert len(e1.lite_jobs(fz, ext=True)) == 100 and js[0]["stage"] in e1.MAIN_STAGES
+    for k in ["nc/base", *e1.grid(fz)]:
+        for i, s in enumerate(e1.main_seeds(10)):
+            _write(tmp_path, "L", "R", k, s, 400.0 if k == "nc/base" else (330.0 + i if k == "ma/p0.85" else 399.0 + i % 3))
+    r = e1.lite_report(fz, root=tmp_path)
+    assert r["best"] == "ma/p0.85" and r["direction"] == "GO direction"
