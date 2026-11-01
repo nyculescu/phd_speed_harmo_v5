@@ -337,3 +337,21 @@ def test_hold_test_skips_breakdown_episodes(monkeypatch):
          "blocker": {"t": 2080.0, "duration": 100.0}}
     assert e1.hold_uncongested(d) == [-0.2, -0.4]
     assert e1.hold_uncongested(d, blockage=True) == [-0.2]
+
+
+def test_ratio_rows_skip_supply_limited_minutes():
+    row = lambda t, starved: (t, 500.0, 480.0, 10.0, 5, 500.0, 1, 0, 0, 0, 500.0, 10.0, starved)   # noqa: E731
+    m = {"log": [row(60, 0), row(120, 1), row(180, 0), (240, 500.0, 480.0, 10.0, 5, 500.0, 1, 0, 0, 0, 500.0)]}
+    assert e1.ratio_rows(m) == [(500.0, 480.0), (500.0, 480.0)]
+
+
+def test_grid_and_t3_arms_without_pi():
+    fz = {"o_cr": {"alinea": 6.6, "drop": 10.7}, "drop_loop": "drop", "c_loop": "drop", "l_bar": 5.2,
+          "gains": {"k_r": 35.0, "pi": None, "k_i": 0.02}}
+    pts = e1.grid(fz)
+    assert len(pts) == 9 and not any(k.startswith("mp/") for k in pts)
+    js = e1.wave2b(fz)
+    arms = {j["arm"] for j in js}
+    assert "t3_mp" not in arms and {"t3_ma", "t3_c", "t3_mc"} <= arms
+    mc = next(j for j in js if j["arm"] == "t3_mc")["ctrl"]
+    assert mc["meter"]["law"] == "alinea" and not mc["cascade"]

@@ -25,7 +25,8 @@ WAIT_ON, WAIT_OFF = 210.0, 150.0   # backstop on the longest wait at the meter, 
 G_MIN, G_MAX, AMBER_CAR, AMBER_ONSET = 2.0, 4.0, 1.0, 5.0
 OWED_CAP = 2.0
 NEAR_LINE, NEAR_SPEED = 15.0, 3.0  # a vehicle waits at the line: within 15 m of it, below 3 m/s
-STOP_DECEL, STOP_MARGIN = 4.5, 5.0  # V226 kinematic amber: an approach faster than 3 m/s within v²/(2·4.5) + 5 m
+STOP_DECEL, STOP_MARGIN = 3.0, 5.0  # V228 kinematic amber: faster than 3 m/s within v²/(2·3.0) + 5 m (SUMO's
+                                    # tls.yellow.min-decel; a 1-s amber inside that zone gives emergency braking)
 BLOCK_SPEED, BLOCK_TAIL = 2.0, 50.0
 FREE_GAP = 120.0                   # m: SUMO's ACC is in speed control only beyond 120 m (MSCFModel_ACC.cpp; V220)
 GAP_BINS = (100.0, 120.0, 150.0, 200.0)
@@ -83,11 +84,11 @@ class Meter:
         self.override = self.backstop = False
         self.o_prev = None
         self.saturated = False
-        self.p_red = self.p_dlim = self.p_ovr = False
+        self.p_red = self.p_dlim = self.p_ovr = self.p_starved = False
         self.p_rel = 0
         self.p_cmd = self.p_s = 0.0
         self.n = {"red_phases": 0, "red_passages": 0, "override_s": 0, "backstop_s": 0, "dlim_s": 0,
-                  "metering_s": 0, "owed_s": 0, "owed_released": 0, "amber_kin": 0}
+                  "metering_s": 0, "owed_s": 0, "owed_released": 0, "amber_kin": 0, "starved_s": 0}
         self.log = []
 
     def update(self, t: float, o: float, n_q: int, q_arr: float, o_raw: float | None = None) -> None:
@@ -113,10 +114,11 @@ class Meter:
         applied = self.p_cmd / self.p_s if self.p_s else None
         self.log.append((round(t), round(self.r_law, 1), round(realised, 1), round(o, 2), n_q, round(q_arr, 1),
                          int(self.metering), int(self.p_ovr), int(self.backstop), int(self.p_dlim),
-                         None if applied is None else round(applied, 1), round(o if o_raw is None else o_raw, 2)))
+                         None if applied is None else round(applied, 1), round(o if o_raw is None else o_raw, 2),
+                         int(self.p_starved)))
         self.p_cmd = self.p_s = 0.0
         self.o_prev = o
-        self.p_red = self.p_dlim = self.p_ovr = False
+        self.p_red = self.p_dlim = self.p_ovr = self.p_starved = False
         self.p_rel = 0
 
     def queue_check(self, occ: float) -> None:
@@ -182,6 +184,9 @@ class Meter:
                 self._set("r", t)
         elif owed >= ONE and n_near > 0:
             self._set("G", t)
+        elif owed >= ONE:
+            self.n["starved_s"] += 1             # V228: supply-limited, nobody waits at the line
+            self.p_starved = True
         return self.state
 
     def _set(self, s: str, t: float) -> None:

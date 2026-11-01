@@ -211,6 +211,11 @@ def wave2c(cal: dict, l_bar_m: float) -> list:
             + [j for j in wave2a(cal, l_bar_m) if j["arm"] in ("gain_alinea", "gain_pi", "self_alks")])
 
 
+def wave2d(cal: dict, l_bar_m: float) -> list:
+    """V228: the T0 meter slices and the ALINEA gain check again, after the 3.0 m/s² amber threshold."""
+    return [j for j in wave2c(cal, l_bar_m) if j["arm"] in ("t0_meter", "gain_alinea")]
+
+
 def pick_n(ns: list) -> int:
     """§9.3: both cells use the larger n; a cell without 0.80 power at 20 (None) still runs at 20."""
     return 20 if None in ns else max(ns)
@@ -249,9 +254,11 @@ def _occ(d: dict, group: str) -> float:
 
 def ratio_rows(m: dict, min_queue: int = 3) -> list:
     """(commanded, realised) per clean metered minute: the rate set at minute k-1 for minute k against the releases
-    counted at k; metering, no override, backstop or downstream-limited second, >= 3 vehicles on r_0 at its start."""
+    counted at k; metering, no override, backstop, downstream-limited or supply-limited second (V228), >= 3 vehicles
+    on r_0 at its start."""
     lg = m["log"]
-    return [(a[1], b[2]) for a, b in zip(lg, lg[1:]) if a[6] and not (b[7] or b[9]) and a[4] >= min_queue]
+    return [(a[1], b[2]) for a, b in zip(lg, lg[1:])
+            if a[6] and not (b[7] or b[9] or (len(b) > 12 and b[12])) and a[4] >= min_queue]
 
 
 def meter_ratio(m: dict, min_queue: int = 3) -> list:
@@ -610,7 +617,8 @@ def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
     # V226: the stop rule is the exact restore; the recovered share is report-only
     out["recovery_pass"] = len(sr) == len(GAIN_SEEDS) and all(
         v["restores"] > 0 and v["restore_mismatch"] == 0 and v["allowed_mismatch"] == 0 for v in sr.values())
-    out["stop"] = ([f"gain: no admissible {law} candidate" for law in ("alinea", "pi", "mtfc") if out[law].get("stop")]
+    out["pi"]["dropped"] = bool(out["pi"].get("stop"))      # V226: no admissible PI-ALINEA set drops the variant
+    out["stop"] = ([f"gain: no admissible {law} candidate" for law in ("alinea", "mtfc") if out[law].get("stop")]
                    + ([] if out["recovery_pass"] else ["ALKS exact-restore test (V226)"]))
     return out
 
@@ -634,7 +642,7 @@ def grid(fz: dict) -> dict:
     g, pts = fz["gains"], {}
     for sp in fz.get("setpoints", {}).get("ma", (0.85, 0.95, 1.05)):
         pts[f"ma/p{sp:g}"] = {"meter": meter_ctrl("alinea", round(sp * om, 4), k_r=g["k_r"])}
-    for sp in fz.get("setpoints", {}).get("mp", (0.85, 0.95, 1.05)):
+    for sp in fz.get("setpoints", {}).get("mp", (0.85, 0.95, 1.05)) if g.get("pi") else ():   # V226: may be dropped
         pts[f"mp/p{sp:g}"] = {"meter": meter_ctrl("pi", round(sp * od, 4), pi=PI_CAND[g["pi"]], l_bar_m=fz["l_bar"])
                               | {"loop": fz["drop_loop"]}}
     for zone in ("short", "long"):
@@ -1102,8 +1110,10 @@ def wave2b(fz: dict) -> list:
         js.append(job(st, "R", "bmin", "b0.5", s, ctrl={"alks": alks_ctrl(0.95 * od, "long", k_i=fz["gains"]["k_i"],
                                                                          b_min=0.5, loop=fz["drop_loop"])}, hours="13,20"))
     pts = grid({**fz, "setpoints": {v: (0.85,) for v in VARIANTS}})
-    arms = {"ma": pts["ma/p0.85"], "mp": pts["mp/p0.85"], "c": pts["c/p0.85_long"],
-            "mc": mc_ctrl(pts, "mp/p0.85", "c/p0.85_long")}
+    m_star = "mp/p0.85" if "mp/p0.85" in pts else "ma/p0.85"
+    arms = {"ma": pts["ma/p0.85"], "c": pts["c/p0.85_long"], "mc": mc_ctrl(pts, m_star, "c/p0.85_long")}
+    if "mp/p0.85" in pts:
+        arms["mp"] = pts["mp/p0.85"]
     a = THROWAWAY[0]
     js.append(job(st, "I", "t3_nc", "slice", a, hours="15,18"))
     for k, c in arms.items():
@@ -1116,7 +1126,7 @@ def report_w2b(fz: dict, root: Path = ROOT) -> dict:
     st, out = root / "stage0_w2", {}
     a = THROWAWAY[0]
     nc = _day(st, "I", "t3_nc", "slice", a)
-    for k in ("ma", "mp", "c", "mc"):
+    for k in ("ma", "mp", "c", "mc") if fz["gains"].get("pi") else ("ma", "c", "mc"):
         reps = [_day(st, "I", f"t3_{k}", f"rep{i}", a) for i in range(T3_REPEATS)]
         if None in reps or nc is None:
             out[k] = {"pass": False, "missing": True}
@@ -1160,7 +1170,7 @@ def main(argv_=None) -> int:
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2c", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
+    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2c", "w2d", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
                    required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
@@ -1190,6 +1200,8 @@ def main(argv_=None) -> int:
             js, extra = wave2a(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2c":
             js, extra = wave2c(cal["calibration"], cal["l_bar_m"]), {}
+        elif a.wave == "w2d":
+            js, extra = wave2d(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2b":
             js, extra = wave2b(fz), {}
         elif a.wave == "A1":

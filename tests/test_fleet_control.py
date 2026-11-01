@@ -438,3 +438,16 @@ def test_fixed_rate_keeps_its_owed_release_across_minutes():
         shown = m.step(float(t), rel, 1, False, 0.0)
     assert len(rel_t) >= 49                          # 300 veh/h over 600 s, less the onset
     assert m.amber == ct.AMBER_CAR and m.n["red_phases"] >= 49
+
+
+def test_supply_limited_seconds_are_flagged():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=360.0), overrides=False)
+    m.update(0.0, 30.0, 5, 500.0)
+    for t in range(1, 21):
+        m.step(float(t), 0, 0, False, 0.0)          # owed from t = 10, nobody at the line
+    assert m.state == "r" and m.n["starved_s"] >= 10
+    m.update(60.0, 30.0, 5, 500.0)
+    assert m.log[-1][12] == 1
+    m.update(120.0, 30.0, 5, 500.0)
+    assert m.log[-1][12] == 0
+    assert ct.STOP_DECEL == 3.0
