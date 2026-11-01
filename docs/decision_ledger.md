@@ -194,4 +194,13 @@ None.
   - The trace must not change the run; the day files are compared with the stored ones.
   - Restricting the hold test to uncongested minutes as V215 A5 says needs a rule for "uncongested"; that is the author's call.
 - Confirmed issues: the T0 hold test runs over all PM seconds with a free leader, not over uncongested minutes (V215 A5).
-- Status: running.
+- Status: done (V225).
+
+### V225. ALKS diagnostic results (2026-11-01)
+- Decision: none; the hold and recovery rules wait for the author.
+- Potential challenges:
+  - Any new rule for the hold test or the recovery test is chosen after seeing stage-0 data (throw-away seeds, disclosed).
+- Confirmed issues:
+  - The hold deficit sits in the ending lane in congestion; lanes 0-1 and uncongested minutes pass.
+  - Recovery fails on traffic interactions; the release itself is exact.
+- Status: open.
