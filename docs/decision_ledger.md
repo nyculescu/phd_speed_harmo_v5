@@ -187,3 +187,11 @@ None.
   - PI-ALINEA's swinging is at both pre-registered gain sets; gains outside them would be a protocol change.
 - Confirmed issues: none yet.
 - Status: open.
+
+### V224. ALKS diagnostic trace (2026-11-01)
+- Decision: trace the T0 ALKS PM slice and one off-peak slice on seed 7,430,040 (author "Run").
+- Potential challenges:
+  - The trace must not change the run; the day files are compared with the stored ones.
+  - Restricting the hold test to uncongested minutes as V215 A5 says needs a rule for "uncongested"; that is the author's call.
+- Confirmed issues: the T0 hold test runs over all PM seconds with a free leader, not over uncongested minutes (V215 A5).
+- Status: running.
