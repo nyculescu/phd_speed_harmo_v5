@@ -165,3 +165,10 @@ None.
   - Wave 2a runs before the T0 repeat has passed; if T0 fails again, its compute is lost but nothing is read from it.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V221. Quiet night at 30 % CPU (2026-10-31)
+- Decision: tonight's guard limit is 30 % CPU instead of 70 %.
+- Potential challenges:
+  - Wave 2a takes about a third longer (about 9 of 12 jobs running).
+- Confirmed issues: none yet.
+- Status: holds.
