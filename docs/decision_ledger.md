@@ -131,3 +131,12 @@ None.
   - 10 live days per state check the code path, not the crash rate.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V217. Held blocker adopted; review fixes in (2026-10-31)
+- Decision: the I-cell blocker is held at speed 0 once stopped (η 0.530 passes); the review defects are fixed; wave 1b re-runs the superseded stage-0 jobs.
+- Potential challenges:
+  - The hold makes the stalled vehicle behave like the crash once stopped; only the approach (normal braking) differs from V202.
+  - About 1,500 changed lines between the review and stage A; the re-review of the diff covers them.
+  - The 20 NC R days come from `f9b020c`, the rest of stage 0 from `dd0e114`; the R/I prefix check tests that both give the same R paths.
+- Confirmed issues: none yet.
+- Status: holds.
