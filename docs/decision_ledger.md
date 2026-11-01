@@ -172,3 +172,10 @@ None.
   - Wave 2a takes about a third longer (about 9 of 12 jobs running).
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V222. Evening at 90 %, then the 30 % night (2026-10-31)
+- Decision: 27 workers at 90 % until 23:32, then the 30 % night guard.
+- Potential challenges:
+  - At 30 % most of the 27 jobs sit paused overnight; they hold memory (about 0.3 GB each), not CPU.
+- Confirmed issues: none yet.
+- Status: holds.
