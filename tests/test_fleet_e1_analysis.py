@@ -111,3 +111,10 @@ def test_global_null_procedure():
     h = ea.global_null(0.25, 10, False, r=200)
     assert h["p_continue_cell"] > 0.1 and h["p_continue_either_cell"] >= h["p_continue_cell"]
     assert ea.global_null(0.25, 10, True, r=200)["p_tuned"] <= h["p_tuned"]       # Rule 2 only removes passes
+
+
+def test_onset_is_the_first_episode_of_5_min():
+    # 13:00 a 2.5-min blip; 14:00 a 6-min episode; 15:30 a 60-min episode (V219)
+    sp = ([27.0] * 1560 + [10.0] * 5 + [27.0] * 115 + [10.0] * 12 + [27.0] * 168 + [10.0] * 120 + [27.0] * 30)
+    assert ea.drop_onset(_ser(sp)) == pytest.approx(30.0 * 1681)
+    assert ea.main_pm(_ser(sp))["t_break"] == pytest.approx(30.0 * 1861)          # drop and QDF: the longest

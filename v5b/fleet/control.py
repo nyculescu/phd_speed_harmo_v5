@@ -24,7 +24,8 @@ G_MIN, G_MAX, AMBER_CAR, AMBER_ONSET = 2.0, 4.0, 1.0, 5.0
 OWED_CAP = 2.0
 NEAR_LINE, NEAR_SPEED = 15.0, 3.0  # a vehicle waits at the line: within 15 m of it, below 3 m/s
 BLOCK_SPEED, BLOCK_TAIL = 2.0, 50.0
-FREE_GAP = 100.0                   # m: a leader farther than this leaves the ALKS free (§10.3, V215 A5)
+FREE_GAP = 120.0                   # m: SUMO's ACC is in speed control only beyond 120 m (MSCFModel_ACC.cpp; V220)
+GAP_BINS = (100.0, 120.0, 150.0, 200.0)
 
 V_ALKS = 100.0 / 3.6               # ALKS desired speed (sf 1.0)
 A_CAP = 1.5
@@ -98,7 +99,7 @@ class Meter:
         if self.metering and self.law.kind != "fixed":
             if self.r_law >= R_MAX or (self.r_law >= REST_MARGIN * q_arr and n_q <= REST_MAX_QUEUE):
                 self.metering = False
-        elif self.r_law < R_MAX and (self.r_law < RESUME_MARGIN * q_arr or self.law.kind == "fixed"):
+        elif not self.metering and self.r_law < R_MAX and (self.r_law < RESUME_MARGIN * q_arr or self.law.kind == "fixed"):
             self.metering = True
             if self.state == "G" and not self.override:
                 self.state, self.t_state, self.amber = "y", t, AMBER_ONSET
@@ -333,7 +334,8 @@ class SumoALKS:
         self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "restores": 0, "compliant_steps": 0}
         self.max_decel = self.max_decel_all = 0.0
         self.at_hold = {}                  # speed minus c when first seen in the held stretch
-        self.hold_free = []                # speed minus c per second in the held stretch with no leader within 100 m
+        self.hold_free = []                # speed minus c per second in the held stretch, no leader within 120 m
+        self.hold_bins = {}                # leader-gap bin -> (sum of speed minus c, seconds), report-only
         self.ever, self.released, self.recovery = set(), {}, []
 
     def update(self, t: float, release: bool = True) -> float:
@@ -377,9 +379,13 @@ class SumoALKS:
             self.ever.add(v)
             if abs(t - round(t)) < 1e-6:
                 if x >= self.x_hold:
-                    lead = ls.vehicle.getLeader(v, FREE_GAP)
-                    if not lead or not lead[0] or lead[1] > FREE_GAP:
+                    lead = ls.vehicle.getLeader(v, GAP_BINS[-1])
+                    gap = lead[1] if lead and lead[0] else math.inf
+                    if gap > FREE_GAP:
                         self.hold_free.append(sp - c)
+                    k = sum(gap > g for g in GAP_BINS)
+                    s_, n_ = self.hold_bins.get(k, (0.0, 0))
+                    self.hold_bins[k] = (s_ + sp - c, n_ + 1)
                 self.over[v] = self.over.get(v, 0) + 1 if sp > cap + 0.5 else 0
                 if self.over[v] == 21:
                     self.n["cap_violations"] += 1
@@ -426,4 +432,6 @@ class SumoALKS:
                                              [int(0.95 * (len(self.at_hold) - 1))]), 3) if self.at_hold else None),
                 "hold_free_mean": round(sum(self.hold_free) / len(self.hold_free), 3) if self.hold_free else None,
                 "hold_free_n": len(self.hold_free),
+                "hold_by_gap": {f">{([0.0] + list(GAP_BINS))[k]:g} m": (round(s_ / n_, 3), n_)
+                                for k, (s_, n_) in sorted(self.hold_bins.items())},
                 "recovery": self.recovery, "commanded_ids": sorted(self.ever), "log": self.law.log}

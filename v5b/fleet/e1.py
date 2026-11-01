@@ -510,9 +510,8 @@ def max_swings_per_hour(t: list, x: list, active: list, top: float, bottom: floa
 
 def gain_stats(d: dict, law: str) -> dict:
     """Swing count, lead time and the RMS of the controlled occupancy around ô, from one gain-check slice."""
-    from v5b.fleet.e1_analysis import main_pm
-    pm = main_pm(d["series"], start=13 * 3600.0)
-    onset = pm["t_break"] if pm else None
+    from v5b.fleet.e1_analysis import drop_onset
+    onset = drop_onset(d["series"], start=13 * 3600.0)
     if law == "mtfc":
         a = d["alks"]
         t, x, o = [r[0] for r in a["log"]], [r[1] for r in a["log"]], [r[2] for r in a["log"]]

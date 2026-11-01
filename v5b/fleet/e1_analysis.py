@@ -18,7 +18,8 @@ MC_R, MC_B, MC_SEED = 2000, 2000, 20261031
 NOISE_RULE = 0.05
 NOON = 12 * 3600.0
 FRESH_MIN = 0.05
-MERGE_GAP = 600.0                          # V215 A3: episodes closer than 10 min are one breakdown
+MERGE_GAP = 600.0
+DEVIATION_MIN = 7                          # V219                          # V215 A3: episodes closer than 10 min are one breakdown
 
 
 def s_upper(s: float, n_pairs: int = 10, level: float = 0.80) -> float:
@@ -132,10 +133,14 @@ def main_pm(ser: list, field: int = 7, start: float = NOON) -> dict | None:
             "drop": (1.0 - qdf / pre) if pre and qdf else None, "n_merged": sum(1 for a, _ in ep if tb <= a <= tr)}
 
 
-def drop_onset(ser: list, field: int = 7) -> float | None:
-    """§10.3 with V215 A3: start of the main PM breakdown at the drop loop."""
-    e = main_pm(ser, field)
-    return e["t_break"] if e else None
+ONSET_MIN = 300.0                          # V219: the onset is the first PM episode lasting at least 5 min
+
+
+def drop_onset(ser: list, field: int = 7, start: float = NOON) -> float | None:
+    """§10.3 with V219: t_b = start of the first episode at the drop loop after `start` that lasts >= 5 min (the
+    breakdowns() speed rule). The drop and QDF stay on the main PM breakdown (main_pm, V215 A3)."""
+    return next((e["t_break"] for e in breakdowns(ser, field)
+                 if e["t_break"] >= start and e["t_recover"] - e["t_break"] >= ONSET_MIN), None)
 
 
 def _episodes(ser: list, field: int) -> list:
@@ -226,7 +231,15 @@ def calibrate(days: list, groups: tuple = ("drop", "dropend", "alinea")) -> dict
         tests[g] = {"n_ok": int(sum(ok)), "n": len(ok), "pass": sum(ok) >= 8}
     out["tests"] = tests
     out["drop_loop"] = "drop" if tests["drop"]["pass"] else "dropend" if tests["dropend"]["pass"] else None
-    out["stop"] = out["drop_loop"] is None or not tests["alinea"]["pass"]
+    out["deviations"] = []
+    # V219: drop_3 and alinea_3 are kept when they qualify on 7 of 10 days instead of 8 (logged deviation)
+    if out["drop_loop"] is None and tests["drop"]["n_ok"] >= DEVIATION_MIN:
+        out["drop_loop"] = "drop"
+        out["deviations"].append(f"V219: drop_3 kept at {tests['drop']['n_ok']}/10 on the lead test")
+    alinea_ok = tests["alinea"]["pass"] or tests["alinea"]["n_ok"] >= DEVIATION_MIN
+    if not tests["alinea"]["pass"] and alinea_ok:
+        out["deviations"].append(f"V219: alinea_3 kept at {tests['alinea']['n_ok']}/10 on the spillback test")
+    out["stop"] = out["drop_loop"] is None or not alinea_ok
     return out
 
 

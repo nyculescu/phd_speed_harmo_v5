@@ -307,12 +307,14 @@ def test_alks_vehicle_gone_is_not_an_error(monkeypatch):
 def test_alks_hold_speed_counts_free_seconds_only(monkeypatch):
     c = 0.5 * ct.V_ALKS
     veh = {"f": {"x": 700.0, "v": c + 0.4, "max": 55.5, "live": True},
-           "q": {"x": 700.0, "v": c - 8.0, "max": 55.5, "live": True, "lead": ("x", 12.0)}}
+           "q": {"x": 700.0, "v": c - 8.0, "max": 55.5, "live": True, "lead": ("x", 12.0)},
+           "g": {"x": 700.0, "v": c - 2.0, "max": 55.5, "live": True, "lead": ("x", 110.0)}}
     fake, h = _alks(monkeypatch, veh)
     for k in range(1, 11):
         h.step(k * 0.1)
     s = h.summary()
-    assert s["hold_free_n"] == 1 and s["hold_free_mean"] == pytest.approx(0.4)
+    assert s["hold_free_n"] == 1 and s["hold_free_mean"] == pytest.approx(0.4)     # 110 m: ACC still gap-closing
+    assert s["hold_by_gap"][">100 m"] == (pytest.approx(-2.0), 1)
 
 
 def test_anti_windup_keeps_the_command_after_an_override_with_red():
@@ -373,3 +375,18 @@ def test_alks_recovery_still_measured_at_b_1(monkeypatch):
     fake.vehicle.getRoadID = lambda v: "3a"
     h.step(1.0)
     assert h.recovery and not h.released
+
+
+def test_fixed_rate_keeps_its_owed_release_across_minutes():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=300.0), overrides=False)
+    m.update(0.0, 30.0, 5, 500.0)
+    shown, rel_t = "y", []
+    for t in range(1, 601):
+        if t % 60 == 0:
+            m.update(float(t), 30.0, 5, 500.0)
+        rel = 1 if shown == "G" and (not rel_t or t - rel_t[-1] > 2) else 0
+        if rel:
+            rel_t.append(t)
+        shown = m.step(float(t), rel, 1, False, 0.0)
+    assert len(rel_t) >= 49                          # 300 veh/h over 600 s, less the onset
+    assert m.amber == ct.AMBER_CAR and m.n["red_phases"] >= 49
