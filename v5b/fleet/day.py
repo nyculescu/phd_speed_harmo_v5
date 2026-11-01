@@ -48,6 +48,19 @@ LEADER_RANGE = 200.0
 DRAIN_CAP = 7200.0
 
 
+ANALYSIS_ONLY = {"e1.py", "e1_analysis.py", "alks_trace.py", "meter_trace.py", "meter_variant.py"}
+
+
+def code_id() -> str:
+    """Hash of the simulation code a run used (v5b/d1, d2, fleet, p1c sources, without the analysis-only modules), so
+    a resume refuses runs from other code (V234)."""
+    root = Path(__file__).resolve().parents[1]
+    h = hashlib.sha1()
+    for p in sorted(x for d in ("d1", "d2", "fleet", "p1c") for x in (root / d).glob("*.py") if x.name not in ANALYSIS_ONLY):
+        h.update(p.name.encode() + p.read_bytes())
+    return h.hexdigest()[:12]
+
+
 def profile(adt: float = ADT) -> list:
     tot = sum(UK_WEEKDAY)
     return [(3600.0 * h, 3600.0 * (h + 1), adt * s / tot) for h, s in enumerate(UK_WEEKDAY)]
@@ -415,6 +428,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "ttt_h": round(ttt / 3600, 1), "weather": fl.WEATHER, "weather_cav": fl.WEATHER_CAV,
         "human_only": fl.SHARES == HUMAN_SHARES,
         **e1_metrics(tr, blk), "ttt_w_h": round(ttt_w_s / 3600, 2), "ctrl": ctrl, "sumo_seed": sumo_seed,
+        "code": code_id(),
         "meter": meter.summary() if meter else None, "alks": alks.summary() if alks else None,
         "cascade": gate is not None, "blocker": blk, "removed_ids": sorted(set(removed)),
         "breakdowns_drop": breakdowns(ser, 7) if "drop" in loops else None,
@@ -539,8 +553,8 @@ def main(argv=None) -> int:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:
             extra += [x for k, v in crash.items() for x in (f"--crash-{k}", str(v))]
-        if any(getattr(a, x, None) is not None for x in ("ctrl", "sumo_seed", "blocker", "forced")):
-            raise SystemExit("--ctrl, --sumo-seed, --blocker and --forced work with 'one' only (E1 uses v5b.fleet.e1 run)")
+        if any(getattr(a, x, None) is not None for x in ("ctrl", "sumo_seed", "blocker")):
+            raise SystemExit("--ctrl, --sumo-seed and --blocker work with 'one' only (E1 uses v5b.fleet.e1 run)")
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers, extra)
     return 0
 

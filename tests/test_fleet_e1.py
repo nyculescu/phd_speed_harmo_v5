@@ -277,9 +277,10 @@ def test_idle_replacement(tmp_path):
                 p.write_text(js.dumps({"meter": {"metering_s": 900 if on else 0}, "alks": None}))
     r = e1.replace_idle(FZ, 10, tmp_path)
     assert set(r["idle"]) == {"ma/p1.05", "ma/p0.95"}
-    assert r["replaced"] == {"ma/p0.95": "ma/p0.75"} and r["extra_idle"] == ["ma/p1.05"]   # once per variant
-    assert len(r["jobs"]) == 20 and r["fz"]["setpoints"]["ma"] == (0.75, 0.85, 1.05)
-    assert all(j["point"] != "p0.95" or j["arm"] != "ma" for j in e1.stage_a(r["fz"], 10, False, tuple(r["replaced"])))
+    # V234: the highest idle point goes first, so p0.95 (the edge rule's middle) stays; once per variant
+    assert r["replaced"] == {"ma/p1.05": "ma/p0.75"} and r["extra_idle"] == ["ma/p0.95"]
+    assert len(r["jobs"]) == 20 and r["fz"]["setpoints"]["ma"] == (0.75, 0.85, 0.95)
+    assert all(j["point"] != "p1.05" or j["arm"] != "ma" for j in e1.stage_a(r["fz"], 10, False, tuple(r["replaced"])))
 
 
 def test_tie_break_prefers_the_middle_then_short_then_alinea():
@@ -312,14 +313,14 @@ def test_gain_stats_on_a_meter_slice():
     assert s["acts"] and s["first_active"] == 46800 + 1800 and s["onset"] is None and s["lead"]
     idle = {**d, "meter": {"log": [r[:6] + (0,) + r[7:] for r in log], "law": {"setpoint": 12.0}}}
     assert not e1.gain_stats(idle, "alinea")["acts"]                       # r_law < 900 while resting green
-    assert s["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)
+    assert s["rms"] == pytest.approx((15 / 29) ** 0.5)          # active rows 30-58 pair with occupancies 31-59
 
 
 def test_gain_stats_rms_reads_the_raw_occupancy():
     log = [(46800 + 60 * i, 400.0, 0.0, 12.0, 5, 500.0, 1, 0, 0, 0, None, 12.0 + (i % 2)) for i in range(60)]
     d = {"series": [(46800.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)],
          "meter": {"log": log, "law": {"setpoint": 12.0}}}
-    assert e1.gain_stats(d, "pi")["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)
+    assert e1.gain_stats(d, "pi")["rms"] == pytest.approx((30 / 59) ** 0.5)
 
 
 def test_pi_reads_the_3_min_window_and_wave2c():
@@ -387,3 +388,48 @@ def test_smoke_check_catches_window_and_constants():
     d4["meter"]["constants"] = {**e1.SMOKE_CONST["meter"], "STOP_DECEL": 4.5}
     assert "meter constants" in e1.smoke_check(d4, j)["bad"]
     assert len(e1.smoke_jobs([j, dict(j, seed=1), dict(j, ctrl=None)])) == 1
+
+
+def test_c1_run_breaking_a_stop_rule_refuses_the_verdict(tmp_path):
+    _grid_root(tmp_path, {"ma/p0.85": [320.0] * 6 + [440.0] * 4})
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    red = {"log": [], "red_passages": 1, "max_red_exposure_s": 10.0}
+    for cell in ("R", "I"):
+        for i, s in enumerate(e1.fresh_seeds(10)):
+            _write(tmp_path, "C1", cell, "nc/base", s, 400.0)
+            _write(tmp_path, "C1", cell, "ma/p0.85", s, 330.0, **({"meter": red} if i == 0 else {}))
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": False, "I": False}, tmp_path)
+    assert v["verdict"] is None and "red passage" in v["stop"]["R C1"]
+
+
+def test_flagged_tuned_pass_blocks_the_oracle_under_rule2(tmp_path):
+    _fake_root(tmp_path, {"nc/base": 0.0, "ma/p0.85": 0.25, "ma/p0.95": 0.12, "ma/p1.05": 0.05, "c/p0.85_long": 0.02,
+                          "c/p0.95_long": 0.01, "c/p1.05_long": 0.0})
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    for cell in ("R", "I"):
+        for s in e1.main_seeds(10):
+            _write(tmp_path, "C2", cell, "nc/base", s, 400.0, ss=s + e1.TWIN)
+            _write(tmp_path, "C2", cell, "ma/p0.85", s, 300.0, ss=s + e1.TWIN)      # M* replicates, flagged
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": True, "I": True}, tmp_path)
+    assert v["verdict"] == "FLAGGED-ONLY" and "O_off_C2" not in v["detail"]["R"]
+
+
+def test_prefix_check_skips_a_per_cell_mc_star(tmp_path):
+    _grid_root(tmp_path, {})
+    for cell, of, v in (("R", "ma/p0.85+c/p0.95_long", 27.0), ("I", "ma/p0.95+c/p0.85_long", 20.0)):
+        for s in e1.main_seeds(10):
+            ser = [(43200.0 + 30.0 * i, 25, None, 0, 0, None, None, v, None) for i in range(40)]
+            _write(tmp_path, "B", cell, "mc/star", s, 401.0, ctrl={"of": of}, series=ser)
+    rep = e1.report_stage(10, tmp_path, ("A", "B"))
+    assert not any("prefix" in x for x in rep["stop"])
+
+
+def test_resume_refuses_after_a_stop_and_other_code(tmp_path):
+    from v5b.fleet.day import code_id
+    j = e1.job("A", "R", "ma", "p0.85", 1, ctrl={"meter": {"setpoint": 10.0}})
+    d = {"ctrl": j["ctrl"], "sumo_seed": None, "hours": None, "code": code_id()}
+    assert e1.matches(d, j) and not e1.matches(dict(d, code="other"), j)
+    (tmp_path / "STOP.txt").write_text("x")
+    with pytest.raises(SystemExit, match="stop rule fired before"):
+        e1.run([j], 1, tmp_path)
+    assert e1.smoke_jobs([j])[0]["stage"] == f"smoke/{code_id()}"

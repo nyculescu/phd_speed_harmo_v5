@@ -66,8 +66,10 @@ MAX_WORKERS = 27                           # §10.6
 
 
 def matches(d: dict, j: dict) -> bool:
-    """A stored run belongs to this job: same controller, SUMO seed and hours."""
-    return d.get("ctrl") == j["ctrl"] and d.get("sumo_seed") == j["ss"] and d.get("hours") == j["hours"]
+    """A stored run belongs to this job: same controller, SUMO seed, hours and simulation code (V234)."""
+    from v5b.fleet.day import code_id
+    return (d.get("ctrl") == j["ctrl"] and d.get("sumo_seed") == j["ss"] and d.get("hours") == j["hours"]
+            and d.get("code") == code_id())
 
 
 def package_temp() -> float | None:
@@ -84,12 +86,15 @@ def package_temp() -> float | None:
 def run(jobs: list, workers: int, root: Path = ROOT) -> None:
     """Runs the jobs whose output is missing; a failed job is retried once, and a second failure, or a main-stage run
     that breaks a §10.6 stop rule, stops new launches (§10.6). A stored run with other settings, or a job folder that
-    holds FAILED.txt, refuses the batch: archive it first."""
+    holds FAILED.txt, or a STOP.txt in root, refuses the batch: archive it first. A job whose attempt 1 failed before a
+    stop gets one attempt on resume (ATTEMPT1_FAILED.txt)."""
     import threading
     from concurrent.futures import as_completed
     if workers > MAX_WORKERS:
         raise SystemExit(f"at most {MAX_WORKERS} workers (§10.6)")
     todo, bad = [], []
+    if (root / "STOP.txt").exists():
+        bad.append(f"stop rule fired before: {root / 'STOP.txt'}")
     for j in order(jobs):
         p = out_path(j, root)
         if (p.parent / "FAILED.txt").exists():
@@ -109,10 +114,14 @@ def run(jobs: list, workers: int, root: Path = ROOT) -> None:
         p = out_path(j, root)
         p.parent.mkdir(parents=True, exist_ok=True)
         errs = []
-        for attempt in (1, 2):
+        first = p.parent / "ATTEMPT1_FAILED.txt"
+        for attempt in ((2,) if first.exists() else (1, 2)):
             while _cpu_util(1.0) > 90.0 and not stop.is_set():      # CLAUDE.md CPU rule: launch only below 90 %
                 time.sleep(30)
             if stop.is_set():
+                if errs:
+                    first.write_text("\n".join(errs))
+                    return j, -1, 0, "stopped after a failed attempt 1"
                 return j, -1, 0, "not started: stopped"
             t0 = time.time()
             r = subprocess.run(["nice", "-n", "10", *argv(j, root)], cwd=REPO_ROOT, env=env, capture_output=True,
@@ -125,7 +134,7 @@ def run(jobs: list, workers: int, root: Path = ROOT) -> None:
                     return j, attempt, round(time.time() - t0), "STOP " + ", ".join(why)
                 return j, attempt, round(time.time() - t0), ""
             errs.append(f"attempt {attempt}:\n{r.stderr[-4000:]}")
-        (p.parent / "FAILED.txt").write_text("\n".join(errs))
+        (p.parent / "FAILED.txt").write_text("\n".join(([first.read_text()] if first.exists() else []) + errs))
         stop.set()
         (root / "STOP.txt").open("a").write(f"{p}: second process failure\n")
         return j, 0, round(time.time() - t0), r.stderr[-300:]
@@ -270,13 +279,15 @@ def smoke_check(d: dict, j: dict) -> dict:
 
 
 def smoke_jobs(jobs: list) -> list:
-    """One short slice per distinct controller in a job list, on its first seed and SUMO seed."""
-    seen, out = set(), []
+    """One short slice per distinct controller in a job list, on its first seed and SUMO seed, in a folder per
+    simulation code, so a repeat after a code change runs again (V234)."""
+    from v5b.fleet.day import code_id
+    seen, out, code = set(), [], code_id()
     for j in jobs:
         k = json.dumps(j["ctrl"], sort_keys=True)
         if j["ctrl"] and k not in seen:
             seen.add(k)
-            out.append(dict(j, stage="smoke", hours=SMOKE_HOURS, point=f"{j['point']}_{len(out)}"))
+            out.append(dict(j, stage=f"smoke/{code}", hours=SMOKE_HOURS, point=f"{j['point']}_{len(out)}"))
     return out
 
 
@@ -331,10 +342,22 @@ def ratio_rows(m: dict, min_queue: int = 3) -> list:
 
 
 def meter_ratio(m: dict, min_queue: int = 3) -> list:
-    """T0: realised / commanded per 5 clean minutes."""
+    """T0: realised / commanded per 5 clean minutes, not necessarily adjacent (the V234 reading of §10.3's 5-min
+    interval; meter_ratio_clock gives the clock-interval reading, report-only)."""
     rows = ratio_rows(m, min_queue)
     return [round(sum(b for _, b in rows[i:i + 5]) / sum(a for a, _ in rows[i:i + 5]), 3)
             for i in range(0, len(rows) - 4, 5)]
+
+
+def meter_ratio_clock(m: dict, min_queue: int = 3) -> list:
+    """Report-only (V234): realised / commanded over the clean minutes inside each clock 5-min interval, with their
+    number."""
+    lg, by = m["log"], {}
+    for a, b in zip(lg, lg[1:]):
+        if a[6] and not (b[7] or b[9] or (len(b) > 12 and b[12])) and a[4] >= min_queue:
+            c, r, k = by.get(b[0] // 300, (0.0, 0.0, 0))
+            by[b[0] // 300] = (c + a[1], r + b[2], k + 1)
+    return [(round(r / c, 3), k) for _, (c, r, k) in sorted(by.items())]
 
 
 def stop_reasons(d: dict, cell: str) -> list:
@@ -507,6 +530,7 @@ def t0_report(st: Path) -> dict:
         ratio = meter_ratio(m)
         lanes = [e.get("lane", "") for e in d["collision_events"]]
         r = {"ratio": ratio, "ratio_ok": bool(ratio) and all(0.95 <= x <= 1.05 for x in ratio),
+             "ratio_clock": meter_ratio_clock(m),
              "red_passages": m["red_passages"], "contacts": d["contacts"],
              "intrusions_ramp": sum(1 for x in lanes if x.startswith(("r_", "rj_", "3a_", ":rm"))),
              "braking": braking_by_lane(out_dir(st, "R", "t0_meter", point, s) / f"sumo_s{s}.log"),
@@ -628,7 +652,9 @@ def gain_stats(d: dict, law: str) -> dict:
         sw = max_swings_per_hour(t, x, act, 850.0, 300.0)
         ref = m["law"]["setpoint"]
     on = [ti for ti, a_ in zip(t, act) if a_]
-    rms = (math.sqrt(sum((oi - ref) ** 2 for oi, a_ in zip(o, act) if a_) / sum(act)) if any(act) else None)
+    # a row's flag is the mode for the next minute, whose occupancy the next row logs (V234)
+    pair = [(oi, a_) for oi, a_ in zip(o[1:], act[:-1]) if a_]
+    rms = math.sqrt(sum((oi - ref) ** 2 for oi, _ in pair) / len(pair)) if pair else None
     return {"swings": sw, "acts": bool(on), "lead": bool(onset is None or (on and on[0] < onset)), "rms": rms,
             "onset": onset, "first_active": on[0] if on else None}
 
@@ -721,6 +747,20 @@ def grid(fz: dict) -> dict:
     return pts
 
 
+def floors(fz: dict, w1: dict) -> dict:
+    """V234: the §9.4 noise floors and global null at the frozen grid (report_w1 assumed 12 points, 6 per family);
+    Rule 2 uses the larger family."""
+    from v5b.fleet import e1_analysis as ea
+    pts = grid(fz)
+    mf, cf = sum(k.startswith(("ma/", "mp/")) for k in pts), sum(k.startswith("c/") for k in pts)
+    out = {"points": len(pts), "meter_family": mf, "cav_family": cf, "n": fz["n"]}
+    for c in ("R", "I"):
+        s = w1["power"][c]["s"]
+        nf = ea.noise_floors(s, fz["n"], points=len(pts), family=max(mf, cf))
+        out[c] = {"s": s, **nf, "global_null": ea.global_null(s, fz["n"], nf["rule2_tuned_replicate"], mf=mf, cf=cf)}
+    return out
+
+
 def mc_ctrl(pts: dict, m_star: str, c_star: str) -> dict:
     """§3.4: M* and C* together; a cascade when both laws use the drop loop (M* is PI-ALINEA and C kept that loop)."""
     m, c = pts[m_star], pts[c_star]
@@ -762,7 +802,7 @@ def replace_idle(fz: dict, n: int, root: Path = ROOT) -> dict:
     sp_of = lambda k: float(k.split("/")[1].split("_")[0][1:])      # noqa: E731
     out = {"idle": idle_points(fz, n, root), "replaced": {}, "extra_idle": []}
     new_fz, jobs = fz, []
-    for k in sorted(out["idle"], key=sp_of):
+    for k in sorted(out["idle"], key=sp_of, reverse=True):     # V234: the highest first keeps p0.95 where possible
         var = variant(k)
         if any(variant(x) == var for x in out["replaced"]):
             out["extra_idle"].append(k)
@@ -907,6 +947,7 @@ def c1_result(rep: dict, cell: str, n: int, root: Path = ROOT) -> dict | None:
     d1 = np.array([d["d_all"] for d in _all(root, cell, key, seeds)] + [d["d_all"] for d in b])
     r = ea.c1_pass(d0, d1, n)
     r["pass"] = bool(r["pass"] and all(valid(d) for d in a + b))
+    r["stop"] = sorted({w for d in a + b for w in stop_reasons(d, cell)})      # §10.6 on the C1 runs (V234)
     return {**r, "key": key}
 
 
@@ -969,12 +1010,13 @@ def final_verdict(rep: dict, n: int, powered: dict, rule2: dict, root: Path = RO
                     return None
                 xs.append(d)
             e = ea.effect(np.array([d["d_all"] for d in nc_tw]), np.array([d["d_all"] for d in xs]))
-            return {**e, "pass": bool(e["pass"] and all(valid(d) for d in nc_tw + xs))}
+            why = sorted({w for d in nc_tw + xs for w in stop_reasons(d, cell)})      # §10.6 on the C2 runs (V234)
+            return {**e, "pass": bool(e["pass"] and all(valid(d) for d in nc_tw + xs)), "stop": why}
 
         det = {"C1": c1_result(rep, cell, n, root)}
         if det["C1"] and det["C1"].get("incomplete"):
             missing.append(f"{cell} C1")
-        pt, f_list = False, []
+        pt, any_ok, f_list = False, False, []
         names = {k: name for name, k in c["tuned"].items()}
         tp = passes_after_c1(rep, cell, n, root)
         for key in tp:
@@ -986,12 +1028,14 @@ def final_verdict(rep: dict, n: int, powered: dict, rule2: dict, root: Path = RO
                 if r is None:
                     missing.append(f"{cell} Rule 2 {name}")
                 ok = bool(r and r["pass"])
+            any_ok |= ok
             if ok and flagged(name, key):
                 f_list.append(name)
             elif ok:
                 pt = True
         po = False
-        if c["o_off"]["pass"] and not pt and (not tp or rule2[cell]):      # C2 ran (§9.5, stage_c2)
+        # §9.5: O_off counts only where no tuned arm passes, flagged or not (V234)
+        if c["o_off"]["pass"] and not any_ok and (not tp or rule2[cell]):      # C2 ran (stage_c2)
             r = replicate(c["o_off_picks"])
             det["O_off_C2"] = r
             if r is None:
@@ -1006,6 +1050,9 @@ def final_verdict(rep: dict, n: int, powered: dict, rule2: dict, root: Path = RO
         detail[cell] = det
     if missing:
         return {"verdict": None, "incomplete": missing}
+    stops = {f"{cell} {k}": r["stop"] for cell, det in detail.items() for k, r in det.items() if r and r.get("stop")}
+    if stops:
+        return {"verdict": None, "refused": "stage-C runs break stop rules", "stop": stops}
     v = ea.verdict(cells)
     if rep["oracle_fails_both"] and v["verdict"] != "KILL":
         v["note"] = "O_off failed in both cells; the continue comes from a C1 pass (V215 A4)"
@@ -1134,7 +1181,7 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
             "G": float((np.median(D[best_tuned]) - np.median(o)) / np.median(D[best_tuned])),
             "B1_edges": edges, "C1_needed": bool(ea.c1_needed(eff[best_tuned])),
             "flags": fl_, "s_post": s_post,
-            "post_hoc_power": ea.p_pass(n, ea.MDE, ea.s_upper(s_post)),
+            "post_hoc_power": ea.p_pass(n, ea.MDE, ea.s_upper(s_post, n_pairs=n)),
             "lane_drop_pm": {"nc/base": drop_of(nc)} | {k: drop_of(v) for k, (_, v) in runs.items()},
             "intrusion_table": {"nc/base": intrusion_table(nc)} | {k: intrusion_table(v) for k, (_, v) in runs.items()},
         }
@@ -1145,6 +1192,8 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
                 rep["stop"].append(f"replacement {new} of {old} is idle too")
         for k in ["nc/base"] + [k for k in runs_r if k in runs_i]:
             a, b = (nc_r, nc_i) if k == "nc/base" else (runs_r[k][1], runs_i[k][1])
+            if k != "nc/base" and a and b and a[0].get("ctrl") != b[0].get("ctrl"):
+                continue                      # V234: a per-cell controller (MC*) differs by design
             if not all(prefix_same(x, y) for x, y in zip(a, b)):
                 rep["stop"].append(f"R/I prefix mismatch: {k}")
     if all("effects" in c for c in rep["cells"].values()):
@@ -1250,7 +1299,7 @@ def main(argv_=None) -> int:
     sm.add_argument("--jobs", required=True)
     sm.add_argument("--workers", type=int, default=16)
     rp = sub.add_parser("report")
-    rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "stage", "verdict"), required=True)
+    rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "floors", "stage", "verdict"), required=True)
     rp.add_argument("--out", required=True)
     rp.add_argument("--freeze")
     rp.add_argument("--cal")
@@ -1314,6 +1363,8 @@ def main(argv_=None) -> int:
         rep = report_w2a(cal["calibration"], cal["l_bar_m"])
     elif a.wave == "w2b":
         rep = report_w2b(fz)
+    elif a.wave == "floors":
+        rep = floors(fz, cal)
     elif a.wave == "stage":
         rep = report_stage(fz["n"])
     else:

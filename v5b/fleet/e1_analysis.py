@@ -64,21 +64,24 @@ def _passes(d: np.ndarray, idx: np.ndarray) -> np.ndarray:
     return (np.median(d, axis=1) >= REL_MIN) & (lo > 0)
 
 
-def global_null(s: float, n: int, rule2: bool, r: int = 500, b: int = 1000, seed: int = MC_SEED) -> dict:
-    """§9.4 report-only: P(a continue in one cell) under the global null for the whole procedure: M* and C* (best of
-    6), MC* as a 7th point, C1 on 10 fresh seeds for a borderline best, Rule 2 twins if rule2, O_off over NC + 13
-    points with its C2 twins. The B1 extension (one more point) is left out. Per-run noise SD s / sqrt 2."""
+def global_null(s: float, n: int, rule2: bool, r: int = 500, b: int = 1000, seed: int = MC_SEED, mf: int = 6,
+                cf: int = 6) -> dict:
+    """§9.4 report-only: P(a continue in one cell) under the global null for the whole procedure: M* (best of mf
+    meter points) and C* (best of cf), MC* as one more point, C1 on 10 fresh seeds for a borderline best, Rule 2 twins
+    if rule2, O_off over NC + all points with its C2 twins. The B1 extension (one more point) is left out. Per-run
+    noise SD s / sqrt 2."""
     rng = np.random.default_rng(seed)
     sd = s / math.sqrt(2.0)
-    e = sd * rng.standard_normal((r, 14, n))                 # row 0 NC, 1-6 meter, 7-12 CAV, 13 MC*
-    tw = sd * rng.standard_normal((r, 14, n))                # twin SUMO seeds
+    rows_n = mf + cf + 2                                     # row 0 NC, then meter, CAV, MC*
+    e = sd * rng.standard_normal((r, rows_n, n))
+    tw = sd * rng.standard_normal((r, rows_n, n))            # twin SUMO seeds
     fr = sd * rng.standard_normal((r, 2, 10))                # C1 fresh seeds: NC and the arm
     idx, idx2 = boot_idx(n, b), boot_idx(n + 10, b)
     d = e[:, :1] - e[:, 1:]                                  # (r, 13, n)
     med = np.median(d, axis=2)
-    m_i, c_i = med[:, :6].argmax(axis=1), 6 + med[:, 6:12].argmax(axis=1)
+    m_i, c_i = med[:, :mf].argmax(axis=1), mf + med[:, mf:mf + cf].argmax(axis=1)
     rows = np.arange(r)
-    tuned = {"M*": m_i, "C*": c_i, "MC*": np.full(r, 12)}
+    tuned = {"M*": m_i, "C*": c_i, "MC*": np.full(r, mf + cf)}
     tp = np.zeros(r, bool)
     best_rel, best_k = np.full(r, -np.inf), np.zeros(r, int)
     for k in tuned.values():
@@ -103,7 +106,7 @@ def global_null(s: float, n: int, rule2: bool, r: int = 500, b: int = 1000, seed
     twin_pick = np.take_along_axis(tw, j[:, None, :], axis=1)[:, 0]
     po = o_in & ~tp & _passes(tw[:, 0] - twin_pick, idx)
     cont = tp | po
-    return {"s": s, "n": n, "rule2": rule2, "r": r, "p_continue_cell": float(cont.mean()),
+    return {"s": s, "n": n, "rule2": rule2, "r": r, "mf": mf, "cf": cf, "p_continue_cell": float(cont.mean()),
             "p_tuned": float(tp.mean()), "p_c1": float(c1_ok.mean()), "p_oracle": float(po.mean()),
             "p_continue_either_cell": float(1.0 - (1.0 - cont.mean()) ** 2), "b1_left_out": True}
 
@@ -291,6 +294,8 @@ def edge_fires(d_nc, points: dict, best: str, any_tuned_pass: bool) -> float | N
     if sp not in (sps[0], sps[-1]) or len(sps) < 3:
         return None
     mid = f"{fam}/p0.95" + (f"_{rest}" if rest else "")
+    if mid not in points:                    # V234: p0.95 replaced, so compare with the grid's middle setpoint
+        mid = f"{fam}/p{sps[len(sps) // 2]:g}" + (f"_{rest}" if rest else "")
     if mid not in points or np.median(np.asarray(d_nc) - np.asarray(points[best])) <= \
             np.median(np.asarray(d_nc) - np.asarray(points[mid])):
         return None

@@ -118,3 +118,14 @@ def test_onset_is_the_first_episode_of_5_min():
     sp = ([27.0] * 1560 + [10.0] * 5 + [27.0] * 115 + [10.0] * 12 + [27.0] * 168 + [10.0] * 120 + [27.0] * 30)
     assert ea.drop_onset(_ser(sp)) == pytest.approx(30.0 * 1681)
     assert ea.main_pm(_ser(sp))["t_break"] == pytest.approx(30.0 * 1861)          # drop and QDF: the longest
+
+
+def test_edge_rule_uses_the_grid_middle_when_p095_was_replaced():
+    nc = [400.0] * 10
+    pts = {"ma/p0.75": [300.0] * 10, "ma/p0.85": [350.0] * 10, "ma/p1.05": [390.0] * 10}
+    assert ea.edge_fires(nc, pts, "ma/p0.75", False) == pytest.approx(0.65)
+
+
+def test_global_null_family_sizes():
+    g = ea.global_null(0.15, 10, False, r=100, mf=3, cf=6)
+    assert g["mf"] == 3 and g["cf"] == 6 and 0.0 <= g["p_continue_cell"] <= 1.0
