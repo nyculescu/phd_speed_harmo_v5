@@ -103,3 +103,11 @@ def test_safety_and_conflict_rules():
     assert ea.harm_label(ea.effect(np.full(10, 100.0), np.full(10, 103.0))) == "no harm"
     mixed = np.r_[np.full(5, 92.0), np.full(5, 110.0)]
     assert ea.harm_label(ea.effect(np.full(10, 100.0), mixed)) == "harm not excluded"
+
+
+def test_global_null_procedure():
+    g = ea.global_null(0.02, 10, False, r=200)
+    assert g["p_continue_cell"] == 0.0
+    h = ea.global_null(0.25, 10, False, r=200)
+    assert h["p_continue_cell"] > 0.1 and h["p_continue_either_cell"] >= h["p_continue_cell"]
+    assert ea.global_null(0.25, 10, True, r=200)["p_tuned"] <= h["p_tuned"]       # Rule 2 only removes passes

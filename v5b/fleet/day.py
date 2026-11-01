@@ -137,6 +137,28 @@ def _crash(vids: tuple) -> None:
         ls.vehicle.setSpeed(vid, 0.0)
 
 
+def parse_trips(path, by_id: dict, gone: set) -> tuple:
+    """Tripinfo to the E1 rows (delay, scheduled departure, arrival, ramp origin, class index), the per-class delays
+    against the desired and the weather-capped desired speed, and the summed travel time (s). Vehicles removed through
+    TraCI (blockers, crashes) are left out of all of them (§7.1). Travel time includes the insertion wait."""
+    delays = {c: [] for c in fl.CLASSES}
+    delays_wet = {c: [] for c in fl.CLASSES}      # V204 §7 secondary: against the weather-capped desired speed
+    trips, ttt = [], 0.0
+    for _, el in ET.iterparse(path, events=("end",)):
+        if el.tag == "tripinfo" and el.get("id") not in gone:
+            v = by_id[el.get("id")]
+            tt = float(el.get("duration")) + float(el.get("departDelay"))
+            ttt += tt
+            dl = tt - float(el.get("routeLength")) / v.desired
+            delays[v.cls].append(dl)
+            delays_wet[v.cls].append(tt - float(el.get("routeLength")) / min(v.desired, v.max_speed or v.desired))
+            trips.append((dl, float(el.get("depart")) - float(el.get("departDelay")), float(el.get("arrival")),
+                          el.get("departLane", "").startswith("r_"), fl.CLASSES.index(v.cls)))
+        if el.tag == "tripinfo":
+            el.clear()
+    return trips, delays, delays_wet, ttt
+
+
 WINDOWS = {"am": (7 * 3600.0, 10 * 3600.0), "pm": (15 * 3600.0, 20 * 3600.0), "day": (0.0, 24 * 3600.0)}
 
 
@@ -260,7 +282,8 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         sim.step()
         coll += [{"t": round(sim.t, 1), "collider": c.collider, "victim": c.victim, "type": c.type, "lane": c.lane,
                   "v_collider": round(c.colliderSpeed, 2), "v_victim": round(c.victimSpeed, 2),
-                  "bumper": _bumper(c.collider, c.victim)}
+                  "bumper": _bumper(c.collider, c.victim), "pos": round(c.pos, 1),
+                  "behind_cmd": bool(alks is not None and c.victim in alks.own)}
                  for c in ls.simulation.getCollisions()]
         for vid in ls.simulation.getDepartedIDList():
             min_gap[vid] = ls.vehicle.getMinGap(vid)
@@ -356,23 +379,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
             break
     res = sim.close(drained=drained)
     log = sim.log_file.read_text(errors="replace")
-    delays = {c: [] for c in fl.CLASSES}
-    delays_wet = {c: [] for c in fl.CLASSES}      # V204 §7 secondary: against the weather-capped desired speed
-    ttt = 0.0
-    gone = set(removed)
-    trips = []                 # E1 per vehicle: delay, scheduled departure, arrival, ramp origin, class
-    for _, el in ET.iterparse(trip, events=("end",)):
-        if el.tag == "tripinfo":
-            v = dem.by_id[el.get("id")]
-            tt = float(el.get("duration")) + float(el.get("departDelay"))
-            ttt += tt
-            dl = tt - float(el.get("routeLength")) / v.desired
-            delays[v.cls].append(dl)
-            delays_wet[v.cls].append(tt - float(el.get("routeLength")) / min(v.desired, v.max_speed or v.desired))
-            if el.get("id") not in gone:
-                trips.append((dl, float(el.get("depart")) - float(el.get("departDelay")), float(el.get("arrival")),
-                              el.get("departLane", "").startswith("r_"), fl.CLASSES.index(v.cls)))
-            el.clear()
+    trips, delays, delays_wet, ttt = parse_trips(trip, dem.by_id, set(removed))
     tr = np.array(trips, dtype=np.float64).reshape(-1, 5)
     np.savez_compressed(run_dir.parent / f"trips_s{seed}.npz", delay=tr[:, 0].astype(np.float32),
                         sched=tr[:, 1].astype(np.float32), arrival=tr[:, 2].astype(np.float32),
@@ -408,7 +415,7 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
         "human_only": fl.SHARES == HUMAN_SHARES,
         **e1_metrics(tr, blk), "ttt_w_h": round(ttt_w_s / 3600, 2), "ctrl": ctrl, "sumo_seed": sumo_seed,
         "meter": meter.summary() if meter else None, "alks": alks.summary() if alks else None,
-        "cascade": gate is not None, "blocker": blk, "removed_ids": sorted(gone),
+        "cascade": gate is not None, "blocker": blk, "removed_ids": sorted(set(removed)),
         "breakdowns_drop": breakdowns(ser, 7) if "drop" in loops else None,
         "loops30": {"groups": list(bank.groups), "rows": bank.rows} if bank else None,
         "series": ser, "health": res["health"]["status"], "health_codes": sorted(res["health"]["by_code"]), "hash": res["hash"], "wall_s": round(time.time() - t_w0, 1),
@@ -531,6 +538,8 @@ def main(argv=None) -> int:
             extra += ["--cav-apparent-decel", str(a.cav_apparent_decel)]
         if crash:
             extra += [x for k, v in crash.items() for x in (f"--crash-{k}", str(v))]
+        if any(getattr(a, x, None) is not None for x in ("ctrl", "sumo_seed", "blocker", "forced")):
+            raise SystemExit("--ctrl, --sumo-seed, --blocker and --forced work with 'one' only (E1 uses v5b.fleet.e1 run)")
         batch(Path(a.out), list(range(a.seed0, a.seed0 + a.n)), a.workers, extra)
     return 0
 

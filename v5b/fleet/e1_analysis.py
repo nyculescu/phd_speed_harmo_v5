@@ -17,6 +17,7 @@ N_STEPS = (10, 15, 20)
 MC_R, MC_B, MC_SEED = 2000, 2000, 20261031
 NOISE_RULE = 0.05
 NOON = 12 * 3600.0
+FRESH_MIN = 0.05
 MERGE_GAP = 600.0                          # V215 A3: episodes closer than 10 min are one breakdown
 
 
@@ -54,6 +55,56 @@ def noise_floors(s: float, n: int, points: int = 12, family: int = 6, r: int = M
     return {"phi_O": float(o.mean()), "p_O": float((o >= REL_MIN).mean()), "phi_T": float(t.mean()),
             "p_T": float((t >= REL_MIN).mean()), "rule1_c2_budgeted": bool(o.mean() >= NOISE_RULE),
             "rule2_tuned_replicate": bool(t.mean() >= NOISE_RULE)}
+
+
+def _passes(d: np.ndarray, idx: np.ndarray) -> np.ndarray:
+    """§9.2 (1)-(2) per row of paired differences d (relative to median D_NC = 1)."""
+    lo = np.percentile(np.median(d[:, idx], axis=2), 2.5, axis=1)
+    return (np.median(d, axis=1) >= REL_MIN) & (lo > 0)
+
+
+def global_null(s: float, n: int, rule2: bool, r: int = 500, b: int = 1000, seed: int = MC_SEED) -> dict:
+    """§9.4 report-only: P(a continue in one cell) under the global null for the whole procedure: M* and C* (best of
+    6), MC* as a 7th point, C1 on 10 fresh seeds for a borderline best, Rule 2 twins if rule2, O_off over NC + 13
+    points with its C2 twins. The B1 extension (one more point) is left out. Per-run noise SD s / sqrt 2."""
+    rng = np.random.default_rng(seed)
+    sd = s / math.sqrt(2.0)
+    e = sd * rng.standard_normal((r, 14, n))                 # row 0 NC, 1-6 meter, 7-12 CAV, 13 MC*
+    tw = sd * rng.standard_normal((r, 14, n))                # twin SUMO seeds
+    fr = sd * rng.standard_normal((r, 2, 10))                # C1 fresh seeds: NC and the arm
+    idx, idx2 = boot_idx(n, b), boot_idx(n + 10, b)
+    d = e[:, :1] - e[:, 1:]                                  # (r, 13, n)
+    med = np.median(d, axis=2)
+    m_i, c_i = med[:, :6].argmax(axis=1), 6 + med[:, 6:12].argmax(axis=1)
+    rows = np.arange(r)
+    tuned = {"M*": m_i, "C*": c_i, "MC*": np.full(r, 12)}
+    tp = np.zeros(r, bool)
+    best_rel, best_k = np.full(r, -np.inf), np.zeros(r, int)
+    for k in tuned.values():
+        dk = d[rows, k]
+        ok = _passes(dk, idx)
+        if rule2:
+            ok &= _passes(tw[:, 0] - tw[rows, k + 1], idx)
+        tp |= ok
+        rel = np.median(dk, axis=1)
+        better = rel > best_rel
+        best_rel, best_k = np.where(better, rel, best_rel), np.where(better, k, best_k)
+    db = d[rows, best_k]
+    lo = np.percentile(np.median(db[:, idx], axis=2), 2.5, axis=1)
+    c1 = (best_rel >= REL_MIN) & (lo <= 0)
+    dall = np.concatenate([db, fr[:, 0] - fr[:, 1]], axis=1)
+    c1_ok = c1 & _passes(dall, idx2) & (np.median(fr[:, 0] - fr[:, 1], axis=1) >= FRESH_MIN)
+    if rule2:
+        c1_ok &= _passes(tw[:, 0] - tw[rows, best_k + 1], idx)
+    tp |= c1_ok
+    j = e.argmin(axis=1)                                     # O_off picks per seed (0 = NC)
+    o_in = _passes(e[:, 0] - e.min(axis=1), idx)
+    twin_pick = np.take_along_axis(tw, j[:, None, :], axis=1)[:, 0]
+    po = o_in & ~tp & _passes(tw[:, 0] - twin_pick, idx)
+    cont = tp | po
+    return {"s": s, "n": n, "rule2": rule2, "r": r, "p_continue_cell": float(cont.mean()),
+            "p_tuned": float(tp.mean()), "p_c1": float(c1_ok.mean()), "p_oracle": float(po.mean()),
+            "p_continue_either_cell": float(1.0 - (1.0 - cont.mean()) ** 2), "b1_left_out": True}
 
 
 def main_pm(ser: list, field: int = 7, start: float = NOON) -> dict | None:
@@ -184,7 +235,6 @@ TIE = 0.1                                  # s/veh: ties go to the middle setpoi
 SETPOINTS = (0.85, 0.95, 1.05)
 EDGE_STEP = 0.10
 HARM = -0.05
-FRESH_MIN = 0.05
 
 
 def effect(d_nc, d_x) -> dict:
@@ -198,7 +248,7 @@ def _tie_key(point: str) -> tuple:
     """Lower is preferred: distance of the setpoint from 0.95, then short zone, then ALINEA (point 'ma/p0.95')."""
     fam, p = point.split("/", 1)
     sp = float(p.split("_")[0][1:])
-    return abs(sp - 0.95), 0 if "short" in p or "_" not in p else 1, 0 if fam == "ma" else 1
+    return round(abs(sp - 0.95), 6), 0 if "short" in p or "_" not in p else 1, 0 if fam == "ma" else 1
 
 
 def tuned(d_nc, points: dict, family: tuple) -> str:

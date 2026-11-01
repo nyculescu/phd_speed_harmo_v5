@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -38,6 +40,7 @@ def build(speed: float) -> Path:
     d = NET_CACHE / f"{NAME}_{h}"
     if (d / "net.xml").exists() and (d / "add.xml").exists():
         return d
+    final, d = d, NET_CACHE / f"{NAME}_{h}.tmp{os.getpid()}"     # built aside, then renamed: parallel first builds
     d.mkdir(parents=True, exist_ok=True)
     nod = ["<nodes>"] + [f'  <node id="{n}" x="{x}" y="{y}" type="{"traffic_light" if n == "rm" else "priority"}"'
                          + (' tlType="static"' if n == "rm" else "") + "/>" for n, x, y in NODES] + ["</nodes>"]
@@ -75,7 +78,11 @@ def build(speed: float) -> Path:
     add.append("</additional>")
     (d / "add.xml").write_text("\n".join(add) + "\n")
     (d / "spec.json").write_text(json.dumps({**spec, "lane_lengths": lens, "tls": tls}, indent=1))
-    return d
+    try:
+        d.rename(final)
+    except OSError:                    # another process won the race
+        shutil.rmtree(d, ignore_errors=True)
+    return final
 
 
 def loop_ids() -> dict:

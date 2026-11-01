@@ -80,13 +80,14 @@ class Meter:
         self.saturated = False
         self.p_red = self.p_dlim = self.p_ovr = False
         self.p_rel = 0
+        self.p_cmd = self.p_s = 0.0
         self.n = {"red_phases": 0, "red_passages": 0, "override_s": 0, "backstop_s": 0, "dlim_s": 0,
                   "metering_s": 0, "owed_s": 0, "owed_released": 0}
         self.log = []
 
     def update(self, t: float, o: float, n_q: int, q_arr: float) -> None:
         realised = self.p_rel * 60.0
-        clean = self.p_red and not (self.p_dlim or self.p_ovr)
+        clean = self.p_red and not self.p_dlim           # §3.2: metered, no downstream-limited second
         r_s = self.r_law if clean else clip(realised, R_MIN, R_MAX)
         o_prev = o if self.o_prev is None else self.o_prev
         r = self.law(r_s, o, o_prev, realised)
@@ -103,8 +104,11 @@ class Meter:
                 self.state, self.t_state, self.amber = "y", t, AMBER_ONSET
                 self.resting = False
             self.target = float(self.released)
+        applied = self.p_cmd / self.p_s if self.p_s else None
         self.log.append((round(t), round(self.r_law, 1), round(realised, 1), round(o, 2), n_q, round(q_arr, 1),
-                         int(self.metering), int(self.p_ovr), int(self.backstop), int(self.p_dlim)))
+                         int(self.metering), int(self.p_ovr), int(self.backstop), int(self.p_dlim),
+                         None if applied is None else round(applied, 1)))
+        self.p_cmd = self.p_s = 0.0
         self.o_prev = o
         self.p_red = self.p_dlim = self.p_ovr = False
         self.p_rel = 0
@@ -144,6 +148,8 @@ class Meter:
             return self.state
         self.n["metering_s"] += 1
         self.r_cmd = R_MAX if self.backstop else self.r_law
+        self.p_cmd += self.r_cmd
+        self.p_s += 1
         self.target = min(self.target + self.r_cmd / 3600.0, self.released + OWED_CAP)
         owed = self.target - self.released
         if owed >= ONE:
@@ -268,7 +274,7 @@ class SumoMeter:
         self.free = self.len / ls.lane.getMaxSpeed(lane)
         self.prev, self.enter, self.red_exp, self.left_at = set(), {}, {}, {}
         self.max_red_exposure = 0.0
-        self.waits = []
+        self.waits, self.red_list = [], []
         self.tail = ls.lane.getLength("3a_0") - BLOCK_TAIL
         self.exit_lanes = ["rj_0"] + [k[2] for links in ls.trafficlight.getControlledLinks(tls) for k in links if k[2]]
 
@@ -286,7 +292,7 @@ class SumoMeter:
         left = self.prev - cur
         for v in left:
             self.waits.append(round(t - self.enter.pop(v, t) - self.free, 1))
-            self.red_exp.pop(v, None)
+            self.red_list.append(self.red_exp.pop(v, 0.0))
             self.left_at[v] = t
         if len(self.left_at) > 200:
             self.left_at = {v: x for v, x in self.left_at.items() if t - x < 5.0}
@@ -311,7 +317,8 @@ class SumoMeter:
         w = sorted(self.waits)
         return {**self.m.summary(), "loop": self.loop, "max_red_exposure_s": self.max_red_exposure,
                 "wait_max_s": w[-1] if w else None, "wait_p95_s": w[int(0.95 * (len(w) - 1))] if w else None,
-                "waits_over_240": sum(1 for x in w if x > 240.0), "n_waits": len(w)}
+                "waits_over_240": sum(1 for x in w if x > 240.0), "n_waits": len(w), "waits": self.waits,
+                "red_exposure": self.red_list}
 
 
 class SumoALKS:
@@ -335,6 +342,8 @@ class SumoALKS:
     def step(self, t: float) -> None:
         b = self.law.b
         if b >= 1.0 and not self.own:
+            if self.released and abs(t - round(t)) < 1e-6:
+                self._recovery()
             return
         c = b * V_ALKS
         seen = set()

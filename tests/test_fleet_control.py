@@ -313,3 +313,63 @@ def test_alks_hold_speed_counts_free_seconds_only(monkeypatch):
         h.step(k * 0.1)
     s = h.summary()
     assert s["hold_free_n"] == 1 and s["hold_free_mean"] == pytest.approx(0.4)
+
+
+def test_anti_windup_keeps_the_command_after_an_override_with_red():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=20.0, k_r=70.0))
+    m.update(60.0, 30.0, 5, 500.0)                   # metering at 240
+    for t in range(60, 120):
+        m.step(float(t), 0, 1, False, 0.0)
+    assert m.n["red_phases"] >= 1
+    m.p_ovr = True                                   # an override second in the period
+    m.update(120.0, 20.0, 5, 500.0)
+    assert m.r_law == pytest.approx(240.0)           # r_s = the commanded 240, not the realised 0 (clipped to 240)
+    assert m.log[-1][10] == pytest.approx(240.0)     # applied rate logged
+
+
+def test_saturated_flag_with_an_override():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=10.0))
+    m.update(60.0, 5.0, 0, 500.0)
+    assert not m.saturated
+    m.p_ovr = True
+    m.update(120.0, 5.0, 0, 500.0)
+    assert m.saturated
+
+
+def test_alks_only_alks_on_edge_3_and_the_step_limit(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True},
+           "h": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True}}
+    fake = _FakeLS(veh)
+    monkeypatch.setattr(ct, "ls", fake)
+    law = ct.MTFC(setpoint=20.0, k_i=0.02, fixed_b=0.5)
+    h = ct.SumoALKS(law, _Bank(30.0), "drop", "short", {"a"}, {v: ct.V_ALKS for v in veh}, lambda v: False)
+    prev = 27.0
+    for k in range(1, 30):
+        h.step(k * 0.1)
+        assert prev - veh["a"]["max"] <= ct.A_CAP * ct.STEP + 1e-9
+        prev = veh["a"]["max"]
+        veh["a"]["v"] = veh["a"]["max"]
+    assert veh["h"]["max"] == 55.5                   # not an ALKS
+
+
+def test_alks_blocked_after_command_is_not_restored(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True}}
+    state = {"blocked": False}
+    fake, h = _alks(monkeypatch, veh, blocked=lambda v: state["blocked"])
+    h.step(0.1)
+    assert veh["a"]["max"] < 55.5
+    state["blocked"] = True
+    h.step(0.2)
+    assert veh["a"]["max"] < 55.5 and h.n["restores"] == 0
+
+
+def test_alks_recovery_still_measured_at_b_1(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh)
+    h.step(0.1)
+    h.law.fixed_b = h.law.b = 1.0
+    h.step(0.2)                                      # restored, released
+    assert h.released
+    fake.vehicle.getRoadID = lambda v: "3a"
+    h.step(1.0)
+    assert h.recovery and not h.released

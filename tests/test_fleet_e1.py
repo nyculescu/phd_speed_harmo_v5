@@ -82,9 +82,10 @@ def test_idle():
 def _fake_day(seed, d, intr=0, brake=2, t_stop=57620.0):
     return {"seed": seed, "d_all": d, "drained": True, "teleports": 0, "sumo_errors": 0, "contacts": 0,
             "arrived_plus_removed": 100, "generated": 100, "mingap_intrusions": intr, "emergency_braking_warnings": brake,
-            "served": {"pm": {"main": 9000, "ramp": 1500}}, "ttt_w_h": 3000.0 + d, "blocker": {"t_stop": t_stop},
+            "served": {"pm": {"main": 9000, "ramp": 1500}}, "ttt_w_h": 3000.0 + d, "blocker": {"t_stop": t_stop, "x_stop": 650.0},
             "breakdowns_drop": [{"t_break": 58000.0, "drop": 0.11, "qdf": 3050.0}],
-            "series": [(43200.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)]}
+            "series": [(43200.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)],
+            "loops30": {"groups": [], "rows": []}, "collision_events": [], "meter": None, "alks": None, "ctrl": None}
 
 
 def _fake_root(root, gains, intr_arm="ma"):
@@ -113,10 +114,14 @@ def test_report_stage_end_to_end(tmp_path):
     assert r["B1_edges"]["M"]["next"] is None                      # a tuned arm passed: no extension
     assert r["B1_edges"]["C"]["variant"] == "c_long"
     assert r["o_off"]["pass"] and r["o_off_nc_picks"] == 0
-    assert not r["C2_needed"] and not r["flags"]["M*"]["braking"]
+    assert not r["C1_needed"] and not r["flags"]["M*"]["braking"]
+    no_rule2 = {"R": False, "I": False}
+    assert e1.stage_c1(rep, 10, tmp_path) == [] and e1.stage_c2(rep, 10, no_rule2, tmp_path) == []
+    assert len(e1.stage_c2(rep, 10, {"R": True, "I": False}, tmp_path)) == 20     # NC and M* twins; O_off picks M*
     assert rep["intrusion_flags"]["ma/p0.85"]["flag"] and not rep["intrusion_flags"]["c/p0.95_long"]["flag"]
     assert r["harm_in_other_cell"]["M*"] == "no harm"
-    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, False, tmp_path)
+    assert rep["stop"] == [] and not rep["oracle_fails_both"]
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": False, "I": False}, tmp_path)
     assert v["verdict"] == "FLAGGED-ONLY" and v["cells"]["R"]["F"] == ["M*"]       # the meter arm carries the V211 flag
     js, fzc = e1.stage_b1(rep, FZ, 10)
     assert js == [] and len(e1.stage_b2(rep, fzc, 10)) == 20
@@ -152,3 +157,147 @@ def test_wave1b_and_n_rule():
     assert sum(j["cell"] == "I" and j["point"] == "base" for j in js) == 20
     assert {j["arm"] for j in js} >= {"t0_meter", "t0_alks", "smoke_mc", "nc"}
     assert e1.pick_n([10, 15]) == 15 and e1.pick_n([10, None]) == 20 and e1.pick_n([None, None]) == 20
+
+
+def _write(root, stage, cell, key, seed, d_all, ss=None, **kw):
+    import json as js
+    arm, pt = key.split("/")
+    p = e1.out_path(e1.job(stage, cell, arm, pt, seed, ss), root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(js.dumps(_fake_day(seed, d_all) | kw))
+    np.savez(p.parent / f"conflicts_s{seed}.npz", t=np.array([1.0], np.float32), follower=np.array([0], np.int32),
+             leader=np.array([1], np.int32), ttc=np.array([1.0], np.float32), v_f=np.zeros(1, np.float32),
+             v_l=np.zeros(1, np.float32), cls=np.array([0], np.int8))
+
+
+def _grid_root(root, special: dict):
+    """NC at 400 and every grid point at 401 in both cells, except the per-seed D lists in special."""
+    keys = ["nc/base"] + [k for k in e1.grid(FZ)]
+    for cell in ("R", "I"):
+        for k in keys:
+            for i, s in enumerate(e1.main_seeds(10)):
+                v = special.get(k, [400.0 if k == "nc/base" else 401.0] * 10)[i]
+                _write(root, "A", cell, k, s, v)
+
+
+def test_c1_rescues_an_oracle_fail_and_rule2_follows(tmp_path):
+    _grid_root(tmp_path, {"ma/p0.85": [320.0] * 6 + [440.0] * 4})
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    r = rep["cells"]["R"]
+    assert not r["o_off"]["pass"] and rep["oracle_fails_both"]
+    assert r["best_tuned"] == "ma/p0.85" and r["C1_needed"]
+    js = e1.stage_c1(rep, 10, tmp_path)
+    assert len(js) == 2 * 2 * 10 and {j["seed"] for j in js} == set(e1.fresh_seeds(10))
+    assert e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": False, "I": False}, tmp_path)["incomplete"]
+    for cell in ("R", "I"):
+        for s in e1.fresh_seeds(10):
+            _write(tmp_path, "C1", cell, "nc/base", s, 400.0)
+            _write(tmp_path, "C1", cell, "ma/p0.85", s, 330.0)
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": False, "I": False}, tmp_path)
+    assert v["verdict"] == "CONTINUE-T" and "C1" in v["note"]                          # V215 A4
+    c2 = e1.stage_c2(rep, 10, {"R": True, "I": True}, tmp_path)
+    assert {(j["arm"], j["point"]) for j in c2} == {("nc", "base"), ("ma", "p0.85")}   # Rule 2 on the C1 pass
+    v2 = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": True, "I": True}, tmp_path)
+    assert v2["verdict"] is None and v2["incomplete"]
+
+
+def test_invalid_run_blocks_the_pass_and_stops(tmp_path):
+    _grid_root(tmp_path, {"ma/p0.85": [300.0] * 10})
+    _write(tmp_path, "A", "R", "ma/p0.85", e1.main_seeds(10)[3], 300.0, drained=False)
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    assert not rep["cells"]["R"]["effects"]["ma/p0.85"]["pass_valid"] and rep["cells"]["R"]["effects"]["ma/p0.85"]["pass"]
+    assert any("invalid run" in x for x in rep["stop"])
+    assert e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": False, "I": False}, tmp_path)["refused"]
+
+
+def test_rule2_fail_leaves_room_for_the_oracle_replicate(tmp_path):
+    _grid_root(tmp_path, {"ma/p0.85": [300.0] * 10})
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    c2 = e1.stage_c2(rep, 10, {"R": True, "I": True}, tmp_path)
+    assert {(j["arm"], j["point"]) for j in c2 if j["cell"] == "R"} == {("nc", "base"), ("ma", "p0.85")}
+    for cell in ("R", "I"):
+        for s in e1.main_seeds(10):
+            _write(tmp_path, "C2", cell, "nc/base", s, 400.0, ss=s + e1.TWIN)
+            _write(tmp_path, "C2", cell, "ma/p0.85", s, 395.0, ss=s + e1.TWIN)      # the replicate fails
+    v = e1.final_verdict(rep, 10, {"R": True, "I": True}, {"R": True, "I": True}, tmp_path)
+    assert v["detail"]["R"]["M*_rule2"]["pass"] is False and v["verdict"] == "KILL"   # O_off picks M*: same twins
+
+
+def test_intrusions_pool_nc_only_over_the_cells_a_point_ran_in():
+    from v5b.fleet import e1_analysis as ea
+    assert ea.intrusion_flag(5, 0)["flag"]
+    # a one-cell point with 5 intrusions against NC's 2 in that cell only, not 4 over both cells
+    assert ea.intrusion_flag(5, 2)["p"] < ea.intrusion_flag(5, 4)["p"]
+
+
+def test_decision_tree_order():
+    from v5b.fleet import e1_analysis as ea
+    base = {"P_T": False, "P_O": False, "F": [], "powered": True}
+    assert ea.verdict({"R": dict(base, P_T=True), "I": base})["verdict"] == "CONTINUE-T"
+    assert ea.verdict({"R": dict(base, F=["M*"]), "I": dict(base, P_O=True)})["verdict"] == "I-ONLY"
+    assert ea.verdict({"R": dict(base, F=["M*"]), "I": base})["verdict"] == "FLAGGED-ONLY"
+
+
+def test_stop_reasons_and_ratio_pairing():
+    log = [(60, 300.0, 0.0, 30.0, 5, 500.0, 1, 0, 0, 0, None), (120, 400.0, 300.0, 30.0, 5, 500.0, 1, 0, 0, 0, 300.0),
+           (180, 400.0, 400.0, 30.0, 5, 500.0, 1, 0, 0, 0, 400.0)]
+    m = {"log": log, "red_passages": 0, "max_red_exposure_s": 100.0}
+    assert e1.ratio_rows(m) == [(300.0, 300.0), (400.0, 400.0)]          # minute k's command against minute k+1
+    d = _fake_day(1, 100.0) | {"meter": m, "alks": None}
+    assert e1.stop_reasons(d, "R") == []
+    bad = dict(m, log=[r[:2] + (r[2] * 0.5,) + r[3:] for r in log], red_passages=1)
+    why = e1.stop_reasons(_fake_day(1, 100.0) | {"meter": bad, "alks": None, "blocker": None}, "I")
+    assert {"red passage", "meter actuator fault", "blocker did not stop"} <= set(why)
+
+
+def test_resume_refuses_stale_and_failed(tmp_path):
+    j = e1.job("A", "R", "ma", "p0.85", 1, ctrl={"meter": {"setpoint": 10.0}})
+    p = e1.out_path(j, tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text('{"ctrl": {"meter": {"setpoint": 11.0}}, "sumo_seed": null, "hours": null}')
+    with pytest.raises(SystemExit, match="stale"):
+        e1.run([j], 1, tmp_path)
+    p.unlink()
+    (p.parent / "FAILED.txt").write_text("x")
+    with pytest.raises(SystemExit, match="failed before"):
+        e1.run([j], 1, tmp_path)
+    with pytest.raises(SystemExit, match="27"):
+        e1.run([], 28, tmp_path)
+
+
+def test_idle_replacement(tmp_path):
+    import json as js
+    for cell in ("R", "I"):
+        for k in e1.grid(FZ):
+            for s in e1.main_seeds(10)[:3]:
+                arm, pt = k.split("/")
+                p = e1.out_path(e1.job("A", cell, arm, pt, s), tmp_path)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                on = not (k in ("ma/p1.05", "ma/p0.95"))
+                p.write_text(js.dumps({"meter": {"metering_s": 900 if on else 0}, "alks": None}))
+    r = e1.replace_idle(FZ, 10, tmp_path)
+    assert set(r["idle"]) == {"ma/p1.05", "ma/p0.95"}
+    assert r["replaced"] == {"ma/p0.95": "ma/p0.75"} and r["extra_idle"] == ["ma/p1.05"]   # once per variant
+    assert len(r["jobs"]) == 20 and r["fz"]["setpoints"]["ma"] == (0.75, 0.85, 1.05)
+    assert all(j["point"] != "p0.95" or j["arm"] != "ma" for j in e1.stage_a(r["fz"], 10, False, tuple(r["replaced"])))
+
+
+def test_tie_break_prefers_the_middle_then_short_then_alinea():
+    from v5b.fleet import e1_analysis as ea
+    nc = np.full(10, 100.0)
+    pts = {"c/p0.85_short": np.full(10, 95.0), "c/p0.95_long": np.full(10, 95.05), "c/p1.05_short": np.full(10, 94.95)}
+    assert ea.tuned(nc, pts, ("c",)) == "c/p0.95_long"             # not the strict best
+    pts2 = {"c/p0.85_long": np.full(10, 95.0), "c/p1.05_short": np.full(10, 95.0)}
+    assert ea.tuned(nc, pts2, ("c",)) == "c/p1.05_short"           # equal distance from 0.95: the short zone
+
+
+def test_braking_flag_fires_on_a_clear_increase(tmp_path):
+    import json as js
+    _grid_root(tmp_path, {"ma/p0.85": [300.0] * 10})
+    for s in e1.main_seeds(10):
+        p = e1.out_path(e1.job("A", "R", "ma", "p0.85", s), tmp_path)
+        d = js.loads(p.read_text())
+        d["emergency_braking_warnings"] = 12 + s % 3
+        p.write_text(js.dumps(d))
+    rep = e1.report_stage(10, tmp_path, ("A",))
+    assert rep["cells"]["R"]["flags"]["M*"]["braking"] and not rep["cells"]["I"]["flags"]["M*"]["braking"]

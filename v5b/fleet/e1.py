@@ -59,33 +59,86 @@ def order(jobs: list) -> list:
     return sorted(jobs, key=lambda j: (j["cell"] != "I", j["hours"] is not None))
 
 
+MAIN_STAGES = ("A", "B", "C1", "C2")
+MAX_WORKERS = 27                           # §10.6
+
+
+def matches(d: dict, j: dict) -> bool:
+    """A stored run belongs to this job: same controller, SUMO seed and hours."""
+    return d.get("ctrl") == j["ctrl"] and d.get("sumo_seed") == j["ss"] and d.get("hours") == j["hours"]
+
+
+def package_temp() -> float | None:
+    """CPU package temperature in °C from hwmon (coretemp), logged per batch (§10.5)."""
+    for h in Path("/sys/class/hwmon").glob("hwmon*"):
+        try:
+            if (h / "name").read_text().strip() == "coretemp":
+                return int((h / "temp1_input").read_text()) / 1000.0
+        except OSError:
+            continue
+    return None
+
+
 def run(jobs: list, workers: int, root: Path = ROOT) -> None:
-    """Runs the jobs whose output is missing; a failed job is retried once (§10.6)."""
-    todo = [j for j in order(jobs) if not out_path(j, root).exists()]
+    """Runs the jobs whose output is missing; a failed job is retried once, and a second failure, or a main-stage run
+    that breaks a §10.6 stop rule, stops new launches (§10.6). A stored run with other settings, or a job folder that
+    holds FAILED.txt, refuses the batch: archive it first."""
+    import threading
+    from concurrent.futures import as_completed
+    if workers > MAX_WORKERS:
+        raise SystemExit(f"at most {MAX_WORKERS} workers (§10.6)")
+    todo, bad = [], []
+    for j in order(jobs):
+        p = out_path(j, root)
+        if (p.parent / "FAILED.txt").exists():
+            bad.append(f"failed before: {p.parent}")
+        elif p.exists():
+            if not matches(json.loads(p.read_text()), j):
+                bad.append(f"stale result: {p}")
+        else:
+            todo.append(j)
+    if bad:
+        raise SystemExit("refused, archive these first:\n" + "\n".join(bad[:20]))
     env = clean_sumo_env()
-    print(f"{len(todo)} of {len(jobs)} jobs to run, cpu {_cpu_util():.0f} %", flush=True)
+    stop = threading.Event()
+    print(f"{len(todo)} of {len(jobs)} jobs to run, cpu {_cpu_util():.0f} %, package {package_temp()} °C", flush=True)
 
     def one(j):
         p = out_path(j, root)
         p.parent.mkdir(parents=True, exist_ok=True)
+        errs = []
         for attempt in (1, 2):
-            while _cpu_util(1.0) > 90.0:          # CLAUDE.md CPU rule: launch only below 90 %
+            while _cpu_util(1.0) > 90.0 and not stop.is_set():      # CLAUDE.md CPU rule: launch only below 90 %
                 time.sleep(30)
+            if stop.is_set():
+                return j, -1, 0, "not started: stopped"
             t0 = time.time()
             r = subprocess.run(["nice", "-n", "10", *argv(j, root)], cwd=REPO_ROOT, env=env, capture_output=True,
                                text=True)
             if r.returncode == 0 and p.exists():
+                why = stop_reasons(json.loads(p.read_text()), j["cell"]) if j["stage"] in MAIN_STAGES else []
+                if why:
+                    stop.set()
+                    (root / "STOP.txt").open("a").write(f"{p}: {', '.join(why)}\n")
+                    return j, attempt, round(time.time() - t0), "STOP " + ", ".join(why)
                 return j, attempt, round(time.time() - t0), ""
-        (p.parent / "FAILED.txt").write_text(r.stderr[-4000:])
+            errs.append(f"attempt {attempt}:\n{r.stderr[-4000:]}")
+        (p.parent / "FAILED.txt").write_text("\n".join(errs))
+        stop.set()
+        (root / "STOP.txt").open("a").write(f"{p}: second process failure\n")
         return j, 0, round(time.time() - t0), r.stderr[-300:]
 
     t0 = time.time()
     with ThreadPoolExecutor(workers) as ex:
-        for i, (j, att, wall, err) in enumerate(ex.map(one, todo), 1):
+        futs = [ex.submit(one, j) for j in todo]
+        for i, f in enumerate(as_completed(futs), 1):
+            j, att, wall, err = f.result()
             tag = f"{j['stage']}/{j['cell']}/{j['arm']}/{j['point']}/ss{j['ss'] or j['seed']}/s{j['seed']}"
-            print(("FAIL " if not att else "done ") + tag, f"attempt {att}", f"{wall} s", f"[{i}/{len(todo)}]",
-                  f"{time.time() - t0:.0f} s", err, flush=True)
-    print(f"all done in {time.time() - t0:.0f} s", flush=True)
+            word = "done " if att > 0 else "FAIL " if att == 0 else "skip "
+            print(word + tag, f"attempt {att}", f"{wall} s", f"[{i}/{len(todo)}]", f"{time.time() - t0:.0f} s", err,
+                  flush=True)
+    print(f"all done in {time.time() - t0:.0f} s, package {package_temp()} °C" + (", STOPPED" if stop.is_set() else ""),
+          flush=True)
 
 
 def l_bar(seed: int = L_BAR_SEED) -> float:
@@ -185,11 +238,42 @@ def _occ(d: dict, group: str) -> float:
     return float(o.sum())
 
 
+def ratio_rows(m: dict, min_queue: int = 3) -> list:
+    """(commanded, realised) per clean metered minute: the rate set at minute k-1 for minute k against the releases
+    counted at k; metering, no override, backstop or downstream-limited second, >= 3 vehicles on r_0 at its start."""
+    lg = m["log"]
+    return [(a[1], b[2]) for a, b in zip(lg, lg[1:]) if a[6] and not (b[7] or b[9]) and a[4] >= min_queue]
+
+
 def meter_ratio(m: dict, min_queue: int = 3) -> list:
-    """T0: realised / commanded per 5 clean minutes (metering, no override, backstop or downstream limit, >= 3 queued)."""
-    clean = [r for r in m["log"] if r[6] and not (r[7] or r[8] or r[9]) and r[4] >= min_queue]
-    return [round(sum(r[2] for r in clean[i:i + 5]) / sum(r[1] for r in clean[i:i + 5]), 3)
-            for i in range(0, len(clean) - 4, 5)]
+    """T0: realised / commanded per 5 clean minutes."""
+    rows = ratio_rows(m, min_queue)
+    return [round(sum(b for _, b in rows[i:i + 5]) / sum(a for a, _ in rows[i:i + 5]), 3)
+            for i in range(0, len(rows) - 4, 5)]
+
+
+def stop_reasons(d: dict, cell: str) -> list:
+    """§10.6 and §7.5 stop rules of one main-stage run."""
+    why = []
+    if not valid(d):
+        why.append("invalid run (drain, teleport, SUMO error, contact or vehicle count)")
+    m, a = d.get("meter"), d.get("alks")
+    if m:
+        if m["red_passages"]:
+            why.append("red passage")
+        if (m.get("max_red_exposure_s") or 0.0) > 245.0:
+            why.append("red exposure above 245 s")
+        rows = ratio_rows(m)
+        if rows and not 0.90 <= sum(b for _, b in rows) / sum(x for x, _ in rows) <= 1.10:
+            why.append("meter actuator fault")
+    if a:
+        if a["cap_violations"] or a["restore_mismatch"]:
+            why.append("ALKS invariant")
+        if a["compliance"] is not None and a["compliance"] < 0.90:
+            why.append("ALKS compliance below 90 %")
+    if cell == "I" and not (d.get("blocker") or {}).get("x_stop"):
+        why.append("blocker did not stop")
+    return why
 
 
 def report_w1(root: Path = ROOT, r_only: bool = False) -> dict:
@@ -249,7 +333,9 @@ def report_w1(root: Path = ROOT, r_only: bool = False) -> dict:
     # §9.3: an underpowered cell still runs at 20, and both cells use the larger n; floors at the n that runs
     out["n"] = pick_n(ns)
     for c in cells:
-        out["power"][c]["noise_floors"] = ea.noise_floors(out["power"][c]["s"], out["n"])
+        nf = ea.noise_floors(out["power"][c]["s"], out["n"])
+        out["power"][c]["noise_floors"] = nf
+        out["power"][c]["global_null"] = ea.global_null(out["power"][c]["s"], out["n"], nf["rule2_tuned_replicate"])
     out["I_minus_R_D_NC"] = {s: round(base["I"][s]["d_all"] - base["R"][s]["d_all"], 2) for s in THROWAWAY}
     pre = {}
     for s in THROWAWAY:
@@ -279,13 +365,35 @@ def report_w1(root: Path = ROOT, r_only: bool = False) -> dict:
             "valid": valid(d), "blocker_stopped": bool(d["blocker"] and d["blocker"].get("x_stop")),
             "schema": all(d.get(x) is not None for x in ("d_all", "d_ramp", "served", "ttt_w_h", "loops30", "route_sha1",
                                                           "d_recovery")) and (d["meter"] or d["alks"]) is not None,
+            "removed_handling": d["removed_ids"] == [d["blocker"]["vid"]] and d["arrived_plus_removed"] == d["generated"]
+            and _n_trips(sb, "I", f"smoke_{k}", "provisional", THROWAWAY[1]) == d["generated"] - 1,
             "wall_s": d["wall_s"]}
     out["smoke"] = sm
-    if any(v is None or not (v["valid"] and v["blocker_stopped"] and v["schema"]) for v in sm.values()):
+    if any(v is None or not (v["valid"] and v["blocker_stopped"] and v["schema"] and v["removed_handling"])
+           for v in sm.values()):
         stop.append("smoke")
     out["wall_s_I_days"] = [base["I"][s]["wall_s"] for s in THROWAWAY]
     out["stop"] = stop
     return out
+
+
+def _scalars(x: dict | None) -> dict | None:
+    return None if x is None else {k: v for k, v in x.items() if not isinstance(v, (list, dict))}
+
+
+def _n_trips(st: Path, cell: str, arm: str, point: str, seed: int) -> int:
+    with np.load(out_dir(st, cell, arm, point, seed) / f"trips_s{seed}.npz") as z:
+        return int(z["delay"].size)
+
+
+def _ttc_behind(st: Path, cell: str, arm: str, point: str, seed: int, ids: set) -> int:
+    """T0 (§10.3, report-only): human TTC < 1.5 s records whose leader is one of the given ALKS."""
+    p = out_dir(st, cell, arm, point, seed) / f"conflicts_s{seed}.npz"
+    if not p.exists():
+        return -1
+    with np.load(p) as z:
+        lead = z["leader"][z["ttc"] < 1.5]
+    return int(sum(f"main.{i}" in ids for i in lead))
 
 
 def t0_report(st: Path) -> dict:
@@ -309,7 +417,7 @@ def t0_report(st: Path) -> dict:
              "braking_nc": braking_by_lane(out_dir(st, "R", "nc", "slice", s) / f"sumo_s{s}.log"),
              "ramp_flow_differs": _flow(d, "ramp_out") != _flow(n, "ramp_out"),
              "alinea_occ_differs": _occ(d, "alinea") != _occ(n, "alinea"),
-             "merge_waits": (d["ramp_merge"] or {}).get("waits_over_s"), "merge_waits_nc": (n["ramp_merge"] or {}).get("waits_over_s")}
+             "merge": _scalars(d["ramp_merge"]), "merge_nc": _scalars(n["ramp_merge"])}
         common = (r["red_passages"] == 0 and r["contacts"] == 0 and r["intrusions_ramp"] == 0
                   and r["braking"] is not None and r["braking_nc"] is not None and r["braking"] <= r["braking_nc"]
                   and r["ramp_flow_differs"] and r["alinea_occ_differs"])
@@ -331,7 +439,10 @@ def t0_report(st: Path) -> dict:
              "max_decel": k["max_decel"], "hold_excess_p95": k["hold_excess_p95"],
              "hold_free_mean": k.get("hold_free_mean"), "hold_free_n": k.get("hold_free_n", 0),
              "recovered_share": round(sum(v >= 0.9 for v in free) / len(free), 3) if free else None, "n_free": len(free),
-             "drop_flow_differs": _flow(d, "drop") != _flow(n, "drop"), "contacts": d["contacts"]}
+             "drop_flow_differs": _flow(d, "drop") != _flow(n, "drop") or _occ(d, "drop") != _occ(n, "drop"),
+             "contacts": d["contacts"], "max_decel_any_cause": k["max_decel_any_cause"],
+             "ttc15_behind_commanded": _ttc_behind(st, cell, "t0_alks", "b0.5_long", a, set(k["commanded_ids"])),
+             "ttc15_behind_same_ids_nc": _ttc_behind(st, cell, "nc", "slice", a, set(k["commanded_ids"]))}
         r["pass"] = (r["cap_violations"] == 0 and r["restore_mismatch"] == 0 and (r["compliance"] or 0) >= 0.95
                      and r["max_decel"] <= 1.6 and r["hold_free_n"] >= HOLD_MIN_N
                      and abs(r["hold_free_mean"]) <= 1.0 and r["drop_flow_differs"] and r["contacts"] == 0)
@@ -504,14 +615,17 @@ def grid(fz: dict) -> dict:
 
 
 def mc_ctrl(pts: dict, m_star: str, c_star: str) -> dict:
-    """§3.4: M* and C* together; a cascade when M* is PI-ALINEA (both laws on the drop loop)."""
-    return {**pts[m_star], **pts[c_star], "cascade": m_star.startswith("mp/")}
+    """§3.4: M* and C* together; a cascade when both laws use the drop loop (M* is PI-ALINEA and C kept that loop)."""
+    m, c = pts[m_star], pts[c_star]
+    return {**m, **c, "cascade": m_star.startswith("mp/") and m["meter"].get("loop") == c["alks"]["loop"],
+            "of": f"{m_star}+{c_star}"}
 
 
-def stage_a(fz: dict, n: int, first: bool) -> list:
-    """§9.3 stage A: NC + 12 points x n seeds x 2 cells; first=True gives the first 3 seeds of every point."""
+def stage_a(fz: dict, n: int, first: bool, skip: tuple = ()) -> list:
+    """§9.3 stage A: NC + 12 points x n seeds x 2 cells; first=True gives the first 3 seeds of every point. skip: idle
+    points already replaced (§4), whose later seeds do not run."""
     seeds = main_seeds(n)[:FIRST] if first else main_seeds(n)[FIRST:]
-    pts = {"nc/base": None, **grid(fz)}
+    pts = {"nc/base": None, **{k: v for k, v in grid(fz).items() if k not in skip}}
     return [job("A", cell, k.split("/")[0], k.split("/")[1], s, ctrl=c) for cell in ("R", "I") for k, c in pts.items()
             for s in seeds]
 
@@ -524,17 +638,42 @@ def idle(d: dict) -> bool:
     return not (on_m or on_c)
 
 
-def idle_points(root: Path = ROOT, n: int = 10) -> list:
-    """Points idle on all 3 first seeds in both cells."""
+def idle_points(fz: dict, n: int, root: Path = ROOT) -> list:
+    """Grid points idle on all 3 first seeds in both cells."""
+    seeds = main_seeds(n)[:FIRST]
     out = []
-    base = root / "A"
-    for cell_dir in (base / "R",):
-        for arm in sorted(p.name for p in cell_dir.iterdir() if p.is_dir() and p.name != "nc"):
-            for point in sorted(p.name for p in (cell_dir / arm).iterdir()):
-                ds = [_day(base, "R", arm, point, s) for s in main_seeds(n)[:FIRST]]
-                if all(d is not None and idle(d) for d in ds):
-                    out.append(f"{arm}/{point}")
+    for k in grid(fz):
+        ds = [_day(root / "A", cell, *k.split("/"), s) for cell in ("R", "I") for s in seeds]
+        if all(d is not None and idle(d) for d in ds):
+            out.append(k)
     return out
+
+
+def replace_idle(fz: dict, n: int, root: Path = ROOT) -> dict:
+    """§4: each idle point is replaced, once per family variant, by the next lower setpoint not in the grid (step
+    0.10), run on all main seeds in both cells. Returns {idle, replaced: {idle point: new point}, extra_idle, fz, jobs}."""
+    sp_of = lambda k: float(k.split("/")[1].split("_")[0][1:])      # noqa: E731
+    out = {"idle": idle_points(fz, n, root), "replaced": {}, "extra_idle": []}
+    new_fz, jobs = fz, []
+    for k in sorted(out["idle"], key=sp_of):
+        var = variant(k)
+        if any(variant(x) == var for x in out["replaced"]):
+            out["extra_idle"].append(k)
+            continue
+        have = {sp_of(x) for x in grid(new_fz) if VARIANTS[var](x)}
+        sp = round(min(have) - EDGE_STEP_A, 2)
+        while sp in have:
+            sp = round(sp - EDGE_STEP_A, 2)
+        sps = dict(new_fz.get("setpoints", {}))
+        sps[var] = tuple(sorted((set(sps.get(var, (0.85, 0.95, 1.05))) - {sp_of(k)}) | {sp}))
+        new_fz = {**new_fz, "setpoints": sps}
+        key = next(x for x in grid(new_fz) if VARIANTS[var](x) and sp_of(x) == sp)
+        out["replaced"][k] = key
+        jobs += [job("A", cell, *key.split("/"), s, ctrl=grid(new_fz)[key]) for cell in ("R", "I") for s in main_seeds(n)]
+    return {**out, "fz": new_fz, "jobs": jobs}
+
+
+EDGE_STEP_A = 0.10
 
 
 K_CRASH, U_CRASH = 0.001085, 1.5
@@ -581,7 +720,7 @@ def flags(nc: list, x: list, nc_npz: list, x_npz: list, cell: str) -> dict:
     f["ttt_conflict"] = ea.ttt_conflict([d["ttt_w_h"] for d in nc], [d["ttt_w_h"] for d in x])
     if cell == "I":
         dt = [abs((b["blocker"] or {}).get("t_stop", 1e9) - (a["blocker"] or {}).get("t_stop", 0.0)) for a, b in zip(nc, x)]
-        f["incident_unbalanced"] = sum(t > 60.0 for t in dt) >= 3
+        f["incident_unbalanced"] = sum(t > 60.0 for t in dt) >= math.ceil(0.3 * len(dt))     # 3 of 10 (§5.3)
     f["intrusions"] = sum(d["mingap_intrusions"] for d in x)
     f["expected_crashes_mean"] = {"nc": float(np.mean(ec_nc)), "x": float(np.mean(ec_x))}
     return f
@@ -618,7 +757,7 @@ def stage_b1(rep: dict, fz: dict, n: int) -> tuple:
 
 
 def stage_b2(rep: dict, fzc: dict, n: int) -> list:
-    """§3.4 B2: MC* = the cell's tuned M* and C* (recomputed after B1) together."""
+    """§3.4 B2: MC* = the cell's tuned M* and C* (recomputed on stages A and B1) together."""
     js = []
     for cell, c in rep["cells"].items():
         pts = grid(fzc[cell])
@@ -626,7 +765,7 @@ def stage_b2(rep: dict, fzc: dict, n: int) -> list:
     return js
 
 
-def _ctrl_of(root: Path, cell: str, key: str, seed: int) -> dict | None:
+def _ctrl_of(root: Path, cell: str, key: str, seed: int) -> dict:
     for st in ("A", "B"):
         d = _day(root / st, cell, *key.split("/"), seed)
         if d is not None:
@@ -634,84 +773,139 @@ def _ctrl_of(root: Path, cell: str, key: str, seed: int) -> dict | None:
     raise FileNotFoundError(key)
 
 
-def stage_c(rep: dict, n: int, rule2: bool, root: Path = ROOT) -> list:
-    """§9.4-9.6: C1 for a borderline tuned arm; C2 replicates of the O_off picks; Rule 2 replicates of a tuned pass.
-    Twins: SUMO seed = demand seed + 5,000."""
+def stage_c1(rep: dict, n: int, root: Path = ROOT) -> list:
+    """§9.6 C1 (runs first, §9.3): NC and the borderline best tuned arm on the 10 fresh seeds."""
     js = []
     for cell, c in rep["cells"].items():
-        seeds = main_seeds(n)
         if c["C1_needed"]:
             k = c["best_tuned"]
-            ctrl = _ctrl_of(root, cell, k, seeds[0])
+            ctrl = _ctrl_of(root, cell, k, main_seeds(n)[0])
             js += [job("C1", cell, "nc", "base", s) for s in fresh_seeds(n)]
             js += [job("C1", cell, *k.split("/"), s, ctrl=ctrl) for s in fresh_seeds(n)]
-        twins = []
-        if c["C2_needed"]:
-            twins += [(s, p) for s, p in zip(seeds, c["o_off_picks"]) if p != "nc"]
-        if rule2 and c["tuned_pass"]:
-            for k in {v for v in c["tuned"].values() if c["effects"][v]["pass"]}:
-                twins += [(s, k) for s in seeds]
+    return js
+
+
+def c1_result(rep: dict, cell: str, n: int, root: Path = ROOT) -> dict | None:
+    """C1 on all n + 10 seeds; None when it was not needed, {'incomplete': True} while runs are missing."""
+    from v5b.fleet import e1_analysis as ea
+    c = rep["cells"][cell]
+    if not c["C1_needed"]:
+        return None
+    key, seeds = c["best_tuned"], main_seeds(n)
+    a = [_day(root / "C1", cell, "nc", "base", s) for s in fresh_seeds(n)]
+    b = [_day(root / "C1", cell, *key.split("/"), s) for s in fresh_seeds(n)]
+    if None in a or None in b:
+        return {"incomplete": True}
+    d0 = np.array([d["d_all"] for d in _all(root, cell, "nc/base", seeds)] + [d["d_all"] for d in a])
+    d1 = np.array([d["d_all"] for d in _all(root, cell, key, seeds)] + [d["d_all"] for d in b])
+    r = ea.c1_pass(d0, d1, n)
+    r["pass"] = bool(r["pass"] and all(valid(d) for d in a + b))
+    return {**r, "key": key}
+
+
+def passes_after_c1(rep: dict, cell: str, n: int, root: Path = ROOT) -> list:
+    """Tuned keys that pass in-sample (§9.2, valid runs) or through C1."""
+    c = rep["cells"][cell]
+    keys = sorted({k for k in c["tuned"].values() if c["effects"][k]["pass_valid"]})
+    r = c1_result(rep, cell, n, root)
+    if r and r.get("pass") and r["key"] not in keys:
+        keys.append(r["key"])
+    return keys
+
+
+def stage_c2(rep: dict, n: int, rule2: dict, root: Path = ROOT) -> list:
+    """§9.4-9.5 after C1: the Rule 2 replicates of every tuned pass (in-sample or C1) where Rule 2 holds, and the O_off
+    pick replicates where O_off passes in-sample and no tuned arm passes, or where every tuned pass still needs its
+    Rule 2 replicate (so that one round covers a tuned pass that then fails). Twins: SUMO seed = seed + 5,000."""
+    js = []
+    for cell, c in rep["cells"].items():
+        seeds, twins = main_seeds(n), set()
+        tp = passes_after_c1(rep, cell, n, root)
+        if rule2[cell]:
+            twins |= {(s, k) for k in tp for s in seeds}
+        if c["o_off"]["pass"] and (not tp or rule2[cell]):
+            twins |= {(s, p) for s, p in zip(seeds, c["o_off_picks"]) if p != "nc"}
         if twins:
             js += [job("C2", cell, "nc", "base", s, s + TWIN) for s in seeds]
-            js += [job("C2", cell, *k.split("/"), s, s + TWIN, ctrl=_ctrl_of(root, cell, k, s)) for s, k in sorted(set(twins))]
+            js += [job("C2", cell, *k.split("/"), s, s + TWIN, ctrl=_ctrl_of(root, cell, k, s)) for s, k in sorted(twins)]
     return js
 
 
 FLAG_KEYS = ("braking", "expected_crashes", "throughput_loss", "ttt_conflict", "incident_unbalanced")
 
 
-def final_verdict(rep: dict, n: int, powered: dict, rule2: bool, root: Path = ROOT) -> dict:
-    """§9.7 on the stage report plus the stage-C runs. powered[cell]: the power rule held for that cell."""
+def final_verdict(rep: dict, n: int, powered: dict, rule2: dict, root: Path = ROOT) -> dict:
+    """§9.7 on the stage report and the stage-C runs. powered[cell]: the stage-0 power rule held for that cell; the
+    post-hoc power of report_stage is combined with it. 'incomplete' while a required replicate is missing."""
     from v5b.fleet import e1_analysis as ea
-    seeds, cells, detail = main_seeds(n), {}, {}
+    if rep.get("stop"):
+        return {"verdict": None, "refused": "stage report has stop reasons", "stop": rep["stop"]}
+    seeds, cells, detail, missing = main_seeds(n), {}, {}, []
     for cell, c in rep["cells"].items():
         nc_tw = [_day(root / "C2", cell, "nc", "base", s, s + TWIN) for s in seeds]
         intr = rep["intrusion_flags"]
 
         def flagged(name, key):
-            f = c["flags"][name]
-            return any(f.get(x) for x in FLAG_KEYS) or intr.get(key, {}).get("flag", False)
+            # flags of a C1 pass are those of its main seeds
+            fr = intr.get(key, {})
+            if key == "mc/star":
+                fr = fr.get(cell, {})
+            return any(c["flags"][name].get(x) for x in FLAG_KEYS) or fr.get("flag", False)
 
         def replicate(picks):
             if any(d is None for d in nc_tw):
                 return None
             xs = []
             for s, p, d0 in zip(seeds, picks, nc_tw):
-                xs.append(d0["d_all"] if p == "nc" else _day(root / "C2", cell, *p.split("/"), s, s + TWIN)["d_all"])
-            return ea.effect(np.array([d["d_all"] for d in nc_tw]), np.array(xs))
+                d = d0 if p == "nc" else _day(root / "C2", cell, *p.split("/"), s, s + TWIN)
+                if d is None:
+                    return None
+                xs.append(d)
+            e = ea.effect(np.array([d["d_all"] for d in nc_tw]), np.array([d["d_all"] for d in xs]))
+            return {**e, "pass": bool(e["pass"] and all(valid(d) for d in nc_tw + xs))}
 
-        pt, f_list, det = False, [], {}
-        for name, key in c["tuned"].items():
-            e = c["effects"][key]
-            ok = e["pass"]
-            if not ok and c["C1_needed"] and key == c["best_tuned"]:
-                a = [_day(root / "C1", cell, "nc", "base", s) for s in fresh_seeds(n)]
-                b = [_day(root / "C1", cell, *key.split("/"), s) for s in fresh_seeds(n)]
-                if None not in a and None not in b:
-                    D0 = np.array([d["d_all"] for d in _all(root, cell, "nc/base", seeds)] + [d["d_all"] for d in a])
-                    D1 = np.array([d["d_all"] for d in _all(root, cell, key, seeds)] + [d["d_all"] for d in b])
-                    det[f"{name}_C1"] = ea.c1_pass(D0, D1, n)
-                    ok = det[f"{name}_C1"]["pass"]
-            if ok and rule2:
+        det = {"C1": c1_result(rep, cell, n, root)}
+        if det["C1"] and det["C1"].get("incomplete"):
+            missing.append(f"{cell} C1")
+        pt, f_list = False, []
+        names = {k: name for name, k in c["tuned"].items()}
+        tp = passes_after_c1(rep, cell, n, root)
+        for key in tp:
+            name = names.get(key, key)
+            ok = True
+            if rule2[cell]:
                 r = replicate([key] * n)
                 det[f"{name}_rule2"] = r
+                if r is None:
+                    missing.append(f"{cell} Rule 2 {name}")
                 ok = bool(r and r["pass"])
             if ok and flagged(name, key):
                 f_list.append(name)
             elif ok:
                 pt = True
         po = False
-        if c["o_off"]["pass"]:
-            r = replicate(c["o_off_picks"]) if c["C2_needed"] else None
+        if c["o_off"]["pass"] and not pt and (not tp or rule2[cell]):      # C2 ran (§9.5, stage_c2)
+            r = replicate(c["o_off_picks"])
             det["O_off_C2"] = r
+            if r is None:
+                missing.append(f"{cell} C2")
             ok = bool(r and r["pass"])
             if ok and flagged("O_off", "O_off"):
                 f_list.append("O_off")
             elif ok:
                 po = True
-        cells[cell] = {"P_T": pt, "P_O": po, "F": f_list, "powered": powered[cell]}
+        cells[cell] = {"P_T": pt, "P_O": po, "F": f_list,
+                       "powered": bool(powered[cell] and c["post_hoc_power"] >= ea.POWER)}
         detail[cell] = det
-    return {**ea.verdict(cells), "cells": cells, "detail": detail}
+    if missing:
+        return {"verdict": None, "incomplete": missing}
+    v = ea.verdict(cells)
+    if rep["oracle_fails_both"] and v["verdict"] != "KILL":
+        v["note"] = "O_off failed in both cells; the continue comes from a C1 pass (V215 A4)"
+    if v["kill_label"] and any(not rep["cells"][x]["post_hoc_power"] >= ea.POWER for x in cells):
+        v["kill_label"] += "; underpowered (post hoc): " + ", ".join(
+            x for x in cells if rep["cells"][x]["post_hoc_power"] < ea.POWER)
+    return {**v, "cells": cells, "detail": detail}
 
 
 def _all(root: Path, cell: str, key: str, seeds: list) -> list:
@@ -722,29 +916,73 @@ def _all(root: Path, cell: str, key: str, seeds: list) -> list:
     return out
 
 
+def prefix_same(a: dict, b: dict) -> bool:
+    """§5.3: an R and an I day of one arm and seed match up to 57,600 s (30-s series and loop rows)."""
+    pre = lambda d, k: [x for x in d[k] if x[0] <= 57600.0]      # noqa: E731
+    return pre(a, "series") == pre(b, "series") and \
+        [x for x in a["loops30"]["rows"] if x[0] <= 57600.0] == [x for x in b["loops30"]["rows"] if x[0] <= 57600.0]
+
+
+def intrusion_table(days: list) -> dict:
+    """§7.5: minGap intrusions by location and by whether the follower trails a commanded ALKS."""
+    def where(e):
+        ln, x = e.get("lane", ""), e.get("pos", -1.0)
+        if ln.startswith(("r_", "rj_", ":rm")):
+            return "ramp"
+        if ln.startswith("3a_"):
+            return "3a"
+        if ln.startswith("3_"):
+            if 600.0 <= x <= 700.0:
+                return "incident site"
+            if x >= 1092.0:
+                return "lane-end area"
+            return "zone" if x >= 150.0 else "3 upstream"
+        return "other"
+    tab = {}
+    for d in days:
+        for e in d["collision_events"]:
+            if e.get("bumper") is not None and e["bumper"] > 0:
+                k = f"{where(e)}{' behind commanded ALKS' if e.get('behind_cmd') else ''}"
+                tab[k] = tab.get(k, 0) + 1
+    return tab
+
+
 def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
-    """§8-9 on stages A-B: tuned arms, O_off, the B1, C1, C2 and Rule 2 triggers, flags and labels. Every outcome is read
-    only through these pre-registered rules."""
+    """§8-9 on stages A-B: stop rules, tuned arms, O_off, the B1, C1 and C2 triggers, flags and labels. Every outcome is
+    read only through these pre-registered rules."""
     from v5b.fleet import e1_analysis as ea
     seeds = main_seeds(n)
-    rep = {"n": n, "seeds": [seeds[0], seeds[-1]], "cells": {}}
-    intr = {}
+    rep = {"n": n, "seeds": [seeds[0], seeds[-1]], "cells": {}, "stop": []}
+    rp = root / "A" / "replaced.json"
+    repl = json.loads(rp.read_text()) if rp.exists() else {"idle": [], "replaced": {}, "extra_idle": []}
+    rep["idle"] = repl
+    intr, intr_nc, runs_by_cell = {}, {}, {}
     for cell in ("R", "I"):
         runs = load_stage(stages, cell, seeds, root)
+        for k in repl["replaced"]:
+            runs.pop(k, None)                  # the kept idle runs (first 3 seeds) are reported in rep["idle"]
         st_nc, nc = runs.pop("nc/base")
         missing = [k for k, (_, v) in runs.items() if any(d is None for d in v)] + (["nc"] if None in nc else [])
         if missing:
             rep["cells"][cell] = {"incomplete": missing}
             continue
+        runs_by_cell[cell] = (nc, runs)
+        for k, (_, v) in [("nc/base", (st_nc, nc))] + list(runs.items()):
+            for s, d in zip(seeds, v):
+                if why := stop_reasons(d, cell):
+                    rep["stop"].append(f"{cell} {k} s{s}: {', '.join(why)}")
         nc_npz = [_npz(root, st_nc, cell, "nc/base", s) for s in seeds]
         d_nc = np.array([d["d_all"] for d in nc])
         D = {k: np.array([d["d_all"] for d in v]) for k, (_, v) in runs.items()}
         eff = {k: ea.effect(d_nc, v) for k, v in D.items()}
+        ok_nc = all(valid(d) for d in nc)
+        for k, e in eff.items():
+            e["pass_valid"] = bool(e["pass"] and ok_nc and all(valid(d) for d in runs[k][1]))     # §9.2 (3)
         grid_pts = {k: v for k, v in D.items() if not k.startswith("mc/")}
         tuned_arms = {"M*": ea.tuned(d_nc, grid_pts, ("ma", "mp")), "C*": ea.tuned(d_nc, grid_pts, ("c",))}
         if "mc/star" in D:
             tuned_arms["MC*"] = "mc/star"
-        tuned_pass = any(eff[k]["pass"] for k in tuned_arms.values())
+        tuned_pass = any(eff[k]["pass_valid"] for k in tuned_arms.values())
         edges = {}
         for fam, star in (("M", tuned_arms["M*"]), ("C", tuned_arms["C*"])):
             var = variant(star)
@@ -752,46 +990,75 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
             edges[fam] = {"best": star, "variant": var, "next": ea.edge_fires(d_nc, pts, star, tuned_pass)}
         o, picks = ea.o_off(d_nc, D)
         eo = ea.effect(d_nc, o)
+        o_days = [nc[i] if p == "nc" else runs[p][1][i] for i, p in enumerate(picks)]
+        eo["pass"] = bool(eo["pass"] and ok_nc and all(valid(d) for d in o_days))
         best_tuned = max(tuned_arms.values(), key=lambda k: eff[k]["rel"])
         fl_ = {name: flags(nc, runs[k][1], nc_npz, [_npz(root, runs[k][0], cell, k, s) for s in seeds], cell)
                for name, k in tuned_arms.items()}
-        o_days = [nc[i] if p == "nc" else runs[p][1][i] for i, p in enumerate(picks)]
         o_npz = [nc_npz[i] if p == "nc" else _npz(root, runs[p][0], cell, p, s) for i, (p, s) in enumerate(zip(picks, seeds))]
         fl_["O_off"] = flags(nc, o_days, nc_npz, o_npz, cell)
-        for k, (_, v) in runs.items():
-            intr[k] = intr.get(k, 0) + sum(d["mingap_intrusions"] for d in v)
-        intr["O_off"] = intr.get("O_off", 0) + fl_["O_off"]["intrusions"]
-        intr["nc/base"] = intr.get("nc/base", 0) + sum(d["mingap_intrusions"] for d in nc)
+        mc_of = runs["mc/star"][1][0]["ctrl"].get("of") if "mc/star" in runs else None
+        for k, (_, v) in list(runs.items()) + [("O_off", (None, o_days))]:
+            kk = f"mc/star:{mc_of}" if k == "mc/star" else k
+            intr[kk] = intr.get(kk, 0) + sum(d["mingap_intrusions"] for d in v)
+            intr_nc[kk] = intr_nc.get(kk, 0) + sum(d["mingap_intrusions"] for d in nc)
         loo = []
         for i in range(n):
             rest = [j for j in range(n) if j != i]
             k = max(grid_pts, key=lambda q: float(np.median(d_nc[rest] - grid_pts[q][rest])))
             loo.append(float(grid_pts[k][i]))
-        keep = ("diff", "diff_ci", "rel", "rel_ci", "pass", "sign")
+        dd = d_nc - D[best_tuned]
+        s_post = float(np.std(dd, ddof=1) / np.median(d_nc))
+        keep = ("diff", "diff_ci", "rel", "rel_ci", "pass", "pass_valid", "sign")
+        drop_of = lambda v: [e and (e["drop"], e["qdf"]) for e in (ea.main_pm(d["series"]) for d in v)]   # noqa: E731
         rep["cells"][cell] = {
             "invalid_runs": {k: sum(not valid(d) for d in v) for k, (_, v) in runs.items() if any(not valid(d) for d in v)}
-            | ({"nc/base": sum(not valid(d) for d in nc)} if any(not valid(d) for d in nc) else {}),
+            | ({"nc/base": sum(not valid(d) for d in nc)} if not ok_nc else {}),
             "median_D_NC": float(np.median(d_nc)),
             "effects": {k: {x: e[x] for x in keep} | {"mean_rel": e["mean"]["rel"],
                                                       "seeds_ge_10pct": int(np.sum((d_nc - D[k]) >= 0.10 * d_nc))}
                         for k, e in eff.items()},
-            "tuned": tuned_arms, "best_tuned": best_tuned, "tuned_pass": tuned_pass,
-            "o_off": {x: eo[x] for x in keep}, "o_off_picks": picks, "o_off_nc_picks": picks.count("nc"),
+            "tuned": tuned_arms, "best_tuned": best_tuned, "tuned_pass": tuned_pass, "mc_star_of": mc_of,
+            "o_off": {x: eo[x] for x in ("diff", "diff_ci", "rel", "rel_ci", "pass", "sign")}, "o_off_picks": picks,
+            "o_off_nc_picks": picks.count("nc"),
             "o_off_edge_picks": sum(1 for p in picks if p != "nc" and not p.startswith("mc/")
                                     and p.split("/")[1].split("_")[0] != "p0.95"),
             "leave_one_out_rel": ea.effect(d_nc, np.array(loo))["rel"],
             "G": float((np.median(D[best_tuned]) - np.median(o)) / np.median(D[best_tuned])),
-            "B1_edges": edges, "C1_needed": bool(ea.c1_needed(eff[best_tuned]) and not tuned_pass),
-            "C2_needed": bool(eo["pass"] and not tuned_pass), "flags": fl_,
-            "lane_drop_pm": [(e["drop"], e["qdf"]) if (e := ea.main_pm(d["series"])) else None for d in nc],
+            "B1_edges": edges, "C1_needed": bool(ea.c1_needed(eff[best_tuned])),
+            "flags": fl_, "s_post": s_post,
+            "post_hoc_power": ea.p_pass(n, ea.MDE, ea.s_upper(s_post)),
+            "lane_drop_pm": {"nc/base": drop_of(nc)} | {k: drop_of(v) for k, (_, v) in runs.items()},
+            "intrusion_table": {"nc/base": intrusion_table(nc)} | {k: intrusion_table(v) for k, (_, v) in runs.items()},
         }
+    if len(runs_by_cell) == 2:
+        (nc_r, runs_r), (nc_i, runs_i) = runs_by_cell["R"], runs_by_cell["I"]
+        for old, new in repl["replaced"].items():
+            if new in runs_r and new in runs_i and all(idle(d) for d in runs_r[new][1][:FIRST] + runs_i[new][1][:FIRST]):
+                rep["stop"].append(f"replacement {new} of {old} is idle too")
+        for k in ["nc/base"] + [k for k in runs_r if k in runs_i]:
+            a, b = (nc_r, nc_i) if k == "nc/base" else (runs_r[k][1], runs_i[k][1])
+            if not all(prefix_same(x, y) for x, y in zip(a, b)):
+                rep["stop"].append(f"R/I prefix mismatch: {k}")
     if all("effects" in c for c in rep["cells"].values()):
         for cell, other in (("R", "I"), ("I", "R")):
             c, o_ = rep["cells"][cell], rep["cells"][other]
-            c["harm_in_other_cell"] = {name: ea.harm_label({"rel_ci": o_["effects"][k]["rel_ci"]})
-                                       for name, k in c["tuned"].items() if k in o_["effects"]}
-        rep["intrusion_flags"] = {k: ea.intrusion_flag(v, intr["nc/base"]) for k, v in intr.items() if k != "nc/base"}
+            lab = {}
+            for name, k in c["tuned"].items():
+                if k == "mc/star" and c["mc_star_of"] != o_["mc_star_of"]:
+                    lab[name] = "not run in the other cell (MC* differs)"
+                elif k in o_["effects"]:
+                    lab[name] = ea.harm_label({"rel_ci": o_["effects"][k]["rel_ci"]})
+                else:
+                    lab[name] = "not run in the other cell"
+            c["harm_in_other_cell"] = lab
+        rep["intrusion_flags"] = {k: ea.intrusion_flag(v, intr_nc[k]) for k, v in intr.items()}
+        for cell, c in rep["cells"].items():
+            if c["mc_star_of"] and f"mc/star:{c['mc_star_of']}" in rep["intrusion_flags"]:
+                rep["intrusion_flags"].setdefault("mc/star", {})[cell] = rep["intrusion_flags"][f"mc/star:{c['mc_star_of']}"]
+        rep["oracle_fails_both"] = not any(c["o_off"]["pass"] for c in rep["cells"].values())
     return rep
+
 
 T3_REPEATS = 5
 
@@ -849,6 +1116,12 @@ def report_w2b(fz: dict, root: Path = ROOT) -> dict:
     return out
 
 
+def _fz_a(fz: dict) -> dict:
+    """The frozen values with the stage-A idle replacements (§4) applied."""
+    p = ROOT / "A" / "replaced.json"
+    return json.loads(p.read_text())["fz"] if p.exists() else fz
+
+
 def main(argv_=None) -> int:
     """make: write a job list; run: run one; report: write a stage report. Frozen inputs come from JSON files."""
     ap = argparse.ArgumentParser()
@@ -857,19 +1130,19 @@ def main(argv_=None) -> int:
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2b", "A1", "A2", "B1", "B2", "C"), required=True)
+    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
+                   required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
     m.add_argument("--cal", help="wave-1 report JSON (for w2a)")
     m.add_argument("--stage-report", help="stage report JSON (for B1, B2, C)")
-    m.add_argument("--rule2", action="store_true")
+    m.add_argument("--b1", help="the B1 job file (its fz_by_cell, for B2)")
     rp = sub.add_parser("report")
     rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "stage", "verdict"), required=True)
     rp.add_argument("--out", required=True)
     rp.add_argument("--freeze")
     rp.add_argument("--cal")
     rp.add_argument("--stage-report")
-    rp.add_argument("--rule2", action="store_true")
     a = ap.parse_args(argv_)
     rd = lambda x: json.loads(Path(x).read_text()) if x else None      # noqa: E731
     fz, cal, srep = rd(getattr(a, "freeze", None)), rd(getattr(a, "cal", None)), rd(getattr(a, "stage_report", None))
@@ -887,15 +1160,25 @@ def main(argv_=None) -> int:
             js, extra = wave2a(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2b":
             js, extra = wave2b(fz), {}
-        elif a.wave in ("A1", "A2"):
-            js, extra = stage_a(fz, fz["n"], a.wave == "A1"), {}
+        elif a.wave == "A1":
+            js, extra = stage_a(fz, fz["n"], True), {}
+        elif a.wave == "Arep":
+            r = replace_idle(fz, fz["n"])
+            (ROOT / "A" / "replaced.json").write_text(json.dumps({k: r[k] for k in ("idle", "replaced", "extra_idle", "fz")},
+                                                                 indent=1))
+            js, extra = r["jobs"], {}
+        elif a.wave == "A2":
+            r = json.loads((ROOT / "A" / "replaced.json").read_text())
+            js, extra = stage_a(r["fz"], fz["n"], False, skip=tuple(r["replaced"])), {}
         elif a.wave == "B1":
-            js, fzc = stage_b1(srep, fz, fz["n"])
+            js, fzc = stage_b1(srep, _fz_a(fz), fz["n"])
             extra = {"fz_by_cell": fzc}
         elif a.wave == "B2":
-            js, extra = stage_b2(srep, srep["fz_by_cell"], fz["n"]), {}
+            js, extra = stage_b2(srep, rd(a.b1)["fz_by_cell"], fz["n"]), {}
+        elif a.wave == "C1":
+            js, extra = stage_c1(srep, fz["n"]), {}
         else:
-            js, extra = stage_c(srep, fz["n"], a.rule2), {}
+            js, extra = stage_c2(srep, fz["n"], fz["rule2"]), {}
         Path(a.out).write_text(json.dumps({**extra, "jobs": js}, indent=1))
         print(f"{len(js)} jobs")
         return 0
@@ -908,7 +1191,7 @@ def main(argv_=None) -> int:
     elif a.wave == "stage":
         rep = report_stage(fz["n"])
     else:
-        rep = final_verdict(srep, fz["n"], fz["powered"], a.rule2)
+        rep = final_verdict(srep, fz["n"], fz["powered"], fz["rule2"])
     Path(a.out).write_text(json.dumps(rep, indent=1, default=str))
     print("stop:" if a.wave != "verdict" else "verdict:", rep.get("stop", rep.get("verdict")))
     return 0
