@@ -530,7 +530,8 @@ def main(argv=None) -> int:
             raise SystemExit("--forced and --blocker need --crash-k")
         res = run_day(a.seed, out.parent / f"rd_s{a.seed}", a.adt, cfg, crash, hours, a.courtesy, a.squeeze, teleport,
                       fc, json.loads(a.ctrl) if a.ctrl else None, a.sumo_seed, bk)
-        res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive}
+        res |= {"plant": a.plant, "hours": a.hours, "ramp_lc_assertive": a.ramp_lc_assertive,
+                "inputs": {"adt": a.adt, "crash_k": a.crash_k, "blocker": a.blocker, "forced": a.forced}}
         tmp = out.with_suffix(f".tmp{os.getpid()}")
         tmp.write_text(json.dumps(res))
         tmp.replace(out)

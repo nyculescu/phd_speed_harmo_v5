@@ -427,8 +427,12 @@ def test_prefix_check_skips_a_per_cell_mc_star(tmp_path):
 def test_resume_refuses_after_a_stop_and_other_code(tmp_path):
     from v5b.fleet.day import code_id
     j = e1.job("A", "R", "ma", "p0.85", 1, ctrl={"meter": {"setpoint": 10.0}})
-    d = {"ctrl": j["ctrl"], "sumo_seed": None, "hours": None, "code": code_id()}
-    assert e1.matches(d, j) and not e1.matches(dict(d, code="other"), j)
+    d = {"ctrl": j["ctrl"], "sumo_seed": None, "hours": None, "code": code_id(), "plant": e1.PLANT,
+         "inputs": {"adt": e1.ADT, "crash_k": None, "blocker": None, "forced": None}}
+    assert e1.matches(d, j) and not e1.matches(dict(d, code="other"), j) and not e1.matches(dict(d, plant="v200"), j)
+    ji = dict(j, cell="I")
+    di = dict(d, inputs={"adt": e1.ADT, "crash_k": 0.0, "blocker": e1.BLOCKER, "forced": None})
+    assert e1.matches(di, ji) and not e1.matches(d, ji)
     (tmp_path / "STOP.txt").write_text("x")
     with pytest.raises(SystemExit, match="stop rule fired before"):
         e1.run([j], 1, tmp_path)

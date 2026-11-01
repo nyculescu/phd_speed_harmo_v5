@@ -66,10 +66,13 @@ MAX_WORKERS = 27                           # §10.6
 
 
 def matches(d: dict, j: dict) -> bool:
-    """A stored run belongs to this job: same controller, SUMO seed, hours and simulation code (V234)."""
+    """A stored run belongs to this job: same controller, SUMO seed, hours, simulation code, plant and the inputs that
+    argv() passes (V234)."""
     from v5b.fleet.day import code_id
+    inputs = {"adt": ADT, "crash_k": 0.0 if j["cell"] == "I" else None, "blocker": BLOCKER if j["cell"] == "I" else None,
+              "forced": None}
     return (d.get("ctrl") == j["ctrl"] and d.get("sumo_seed") == j["ss"] and d.get("hours") == j["hours"]
-            and d.get("code") == code_id())
+            and d.get("code") == code_id() and d.get("plant") == PLANT and d.get("inputs") == inputs)
 
 
 def package_temp() -> float | None:
