@@ -3,8 +3,8 @@
 Same arguments as `day one`; writes <out>.trace.jsonl next to the day file. Rows:
   ["h", t, vid, x, lane, speed, accel, maxSpeed, allowed, gap, c]: commanded ALKS in the held stretch, no leader
       within 120 m (gap None = none within 200 m);
-  ["r", t, vid, dist, road, lane, speed/desired, accel, gap, gap_at_release]: a released ALKS over the 300 m after
-      its release.
+  ["r", t, vid, dist, road, lane, speed/desired, accel, gap, gap_at_release, maxSpeed, allowed, lc_right, lc_left]:
+      a released ALKS over the 300 m after its release (lc_*: SUMO's lane-change state names without TraCI).
 The trace only reads vehicle state, so the day file must match the untraced run of the same job."""
 
 import json
@@ -57,7 +57,9 @@ def main(argv: list) -> int:
                     continue
                 rows.append(["r", round(t), v, round(d, 1), ls.vehicle.getRoadID(v), ls.vehicle.getLaneIndex(v),
                              round(ls.vehicle.getSpeed(v) / self.desired[v], 3),
-                             round(ls.vehicle.getAcceleration(v), 3), _gap(v), g0])
+                             round(ls.vehicle.getAcceleration(v), 3), _gap(v), g0,
+                             round(ls.vehicle.getMaxSpeed(v), 3), round(ls.vehicle.getAllowedSpeed(v), 3),
+                             ls.vehicle.getLaneChangeStatePretty(v, -1)[0], ls.vehicle.getLaneChangeStatePretty(v, 1)[0]])
             except ls.TraCIException:
                 rel.pop(v)
 
