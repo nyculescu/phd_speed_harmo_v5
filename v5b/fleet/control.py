@@ -24,6 +24,7 @@ G_MIN, G_MAX, AMBER_CAR, AMBER_ONSET = 2.0, 4.0, 1.0, 5.0
 OWED_CAP = 2.0
 NEAR_LINE, NEAR_SPEED = 15.0, 3.0  # a vehicle waits at the line: within 15 m of it, below 3 m/s
 BLOCK_SPEED, BLOCK_TAIL = 2.0, 50.0
+FREE_GAP = 100.0                   # m: a leader farther than this leaves the ALKS free (§10.3, V215 A5)
 
 V_ALKS = 100.0 / 3.6               # ALKS desired speed (sf 1.0)
 A_CAP = 1.5
@@ -325,6 +326,7 @@ class SumoALKS:
         self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "restores": 0, "compliant_steps": 0}
         self.max_decel = self.max_decel_all = 0.0
         self.at_hold = {}                  # speed minus c when first seen in the held stretch
+        self.hold_free = []                # speed minus c per second in the held stretch with no leader within 100 m
         self.ever, self.released, self.recovery = set(), {}, []
 
     def update(self, t: float, release: bool = True) -> float:
@@ -365,6 +367,10 @@ class SumoALKS:
                 self.at_hold[v] = sp - c
             self.ever.add(v)
             if abs(t - round(t)) < 1e-6:
+                if x >= self.x_hold:
+                    lead = ls.vehicle.getLeader(v, FREE_GAP)
+                    if not lead or not lead[0] or lead[1] > FREE_GAP:
+                        self.hold_free.append(sp - c)
                 self.over[v] = self.over.get(v, 0) + 1 if sp > cap + 0.5 else 0
                 if self.over[v] == 21:
                     self.n["cap_violations"] += 1
@@ -409,4 +415,6 @@ class SumoALKS:
                 "max_decel_any_cause": round(self.max_decel_all, 3), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
                 "hold_excess_p95": (round(float(sorted(max(0.0, x) for x in self.at_hold.values())
                                              [int(0.95 * (len(self.at_hold) - 1))]), 3) if self.at_hold else None),
+                "hold_free_mean": round(sum(self.hold_free) / len(self.hold_free), 3) if self.hold_free else None,
+                "hold_free_n": len(self.hold_free),
                 "recovery": self.recovery, "commanded_ids": sorted(self.ever), "log": self.law.log}

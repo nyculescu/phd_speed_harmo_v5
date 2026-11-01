@@ -83,7 +83,8 @@ def _fake_day(seed, d, intr=0, brake=2, t_stop=57620.0):
     return {"seed": seed, "d_all": d, "drained": True, "teleports": 0, "sumo_errors": 0, "contacts": 0,
             "arrived_plus_removed": 100, "generated": 100, "mingap_intrusions": intr, "emergency_braking_warnings": brake,
             "served": {"pm": {"main": 9000, "ramp": 1500}}, "ttt_w_h": 3000.0 + d, "blocker": {"t_stop": t_stop},
-            "breakdowns_drop": [{"t_break": 58000.0, "drop": 0.11, "qdf": 3050.0}]}
+            "breakdowns_drop": [{"t_break": 58000.0, "drop": 0.11, "qdf": 3050.0}],
+            "series": [(43200.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)]}
 
 
 def _fake_root(root, gains, intr_arm="ma"):
@@ -131,3 +132,14 @@ def test_edge_extension_jobs(tmp_path):
     assert {(j["cell"], j["arm"], j["point"]) for j in js} == {("R", "ma", "p0.75"), ("I", "ma", "p0.75")}
     assert js[0]["ctrl"]["meter"]["setpoint"] == pytest.approx(0.75 * 12.0)
     assert len(js) == 20
+
+
+def test_gain_choice_rules():
+    st = lambda sw, rms, acts=True, lead=True: {"swings": sw, "rms": rms, "acts": acts, "lead": lead}
+    s = {"kr35": [st(0, 2.0)] * 3, "kr70": [st(3, 1.0)] * 3, "kr140": [st(0, 2.1)] * 3}
+    assert e1.choose_gain(s, "alinea")["choice"] == "kr35"            # the swinging nominal is out
+    idle = {"kr35": [st(0, None, False)] * 3, "kr70": [st(3, None, False)] * 3}
+    assert e1.choose_gain(idle, "alinea")["stop"]                      # nothing acts and the nominal swings
+    t = [60.0 * i for i in range(120)]
+    x = ([900.0] * 25 + [250.0] * 10 + [900.0] * 10 + [250.0] * 10 + [900.0] * 10 + [250.0] * 10 + [900.0] * 45)
+    assert e1.max_swings_per_hour(t, x, [True] * 120, 850.0, 300.0) == 3   # 3 swings across a clock-hour edge

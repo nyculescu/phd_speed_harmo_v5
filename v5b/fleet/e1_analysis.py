@@ -17,6 +17,7 @@ N_STEPS = (10, 15, 20)
 MC_R, MC_B, MC_SEED = 2000, 2000, 20261031
 NOISE_RULE = 0.05
 NOON = 12 * 3600.0
+MERGE_GAP = 600.0                          # V215 A3: episodes closer than 10 min are one breakdown
 
 
 def s_upper(s: float, n_pairs: int = 10, level: float = 0.80) -> float:
@@ -55,10 +56,35 @@ def noise_floors(s: float, n: int, points: int = 12, family: int = 6, r: int = M
             "rule2_tuned_replicate": bool(t.mean() >= NOISE_RULE)}
 
 
+def main_pm(ser: list, field: int = 7, start: float = NOON) -> dict | None:
+    """V215 A3: the main PM breakdown at the drop loop. Episodes of the breakdowns() speed rule starting after
+    `start` are merged when the gap is below 10 min; the longest merged episode, with its pre-queue flow (highest
+    5-min exit flow in the hour before), QDF (mean exit flow from 5 min after the onset to the recovery) and drop."""
+    ep = [(e["t_break"], e["t_recover"]) for e in breakdowns(ser, field) if e["t_break"] >= start]
+    if not ep:
+        return None
+    merged = [list(ep[0])]
+    for a, b in ep[1:]:
+        if a - merged[-1][1] < MERGE_GAP:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b])
+    tb, tr = max(merged, key=lambda e: e[1] - e[0])
+    t = np.array([x[0] for x in ser], dtype=float)
+    q = np.array([x[1] for x in ser], dtype=float) * 120.0
+    roll = np.convolve(q, np.ones(10) / 10, mode="valid")
+    cand = roll[(t[9:] > tb - 3600.0) & (t[9:] < tb)]
+    m = (t >= tb + 300.0) & (t <= tr)
+    pre = float(cand.max()) if cand.size else None
+    qdf = float(q[m].mean()) if m.any() else None
+    return {"t_break": tb, "t_recover": tr, "min": round((tr - tb) / 60.0, 1), "pre": pre, "qdf": qdf,
+            "drop": (1.0 - qdf / pre) if pre and qdf else None, "n_merged": sum(1 for a, _ in ep if tb <= a <= tr)}
+
+
 def drop_onset(ser: list, field: int = 7) -> float | None:
-    """§10.3: start of the first breakdown after 12:00 at the drop loop (the breakdowns() speed rule), any length."""
-    ep = [e["t_break"] for e in breakdowns(ser, field) if e["t_break"] >= NOON]
-    return min(ep) if ep else None
+    """§10.3 with V215 A3: start of the main PM breakdown at the drop loop."""
+    e = main_pm(ser, field)
+    return e["t_break"] if e else None
 
 
 def _episodes(ser: list, field: int) -> list:
@@ -71,7 +97,7 @@ def ocr_day(t: np.ndarray, q: np.ndarray, occ: np.ndarray, t_b: float, earlier: 
     best, val = -1.0, None
     for i in range(9, len(t)):
         a, z = t[i - 9] - 30.0, t[i]          # the window covers (a, z]
-        if a < t_b - 3600.0 or z > t_b:
+        if a < t_b - 3600.0 or z >= t_b:     # the interval stamped t_b is the first slow one
             continue
         if any(r0 < z and a < r1 + 600.0 for r0, r1 in earlier if r0 < t_b):
             continue
@@ -89,12 +115,16 @@ def occ60(t: np.ndarray, occ: np.ndarray) -> tuple:
 
 
 def lead_ok(t: np.ndarray, occ: np.ndarray, o_cr: float, t_b: float) -> bool:
-    """Drop-loop choice (§10.3): the 60-s occupancy reaches ô_cr within [t_b - 5 min, t_b + 2 min] and stays below it
-    for >= 80 % of the hour before t_b - 5 min."""
+    """Drop-loop choice (§10.3): the 60-s occupancy crosses ô_cr upward within [t_b - 5 min, t_b + 2 min] (below at
+    the previous mark, at or above at this one) and stays below it for >= 80 % of the hour before t_b - 5 min."""
     tm, o = occ60(t, occ)
+    up = np.r_[False, (o[1:] >= o_cr) & (o[:-1] < o_cr)]
     near = (tm >= t_b - 300.0) & (tm <= t_b + 120.0)
     pre = (tm > t_b - 3900.0) & (tm <= t_b - 300.0)
-    return bool((o[near] >= o_cr).any() and pre.any() and (o[pre] < o_cr).mean() >= 0.80)
+    if not (up & near).any() or not pre.any():
+        return False
+    above_at_window = o[np.where(tm < t_b - 300.0)[0][-1]] >= o_cr if (tm < t_b - 300.0).any() else False
+    return bool(not above_at_window and (o[pre] < o_cr).mean() >= 0.80)
 
 
 def spill_ok(t: np.ndarray, occ: np.ndarray, o_cr: float, t_b: float) -> bool:

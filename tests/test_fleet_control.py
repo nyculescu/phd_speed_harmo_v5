@@ -239,7 +239,8 @@ class _FakeLS:
         self.vehicle = SimpleNamespace(getLanePosition=lambda v: self.veh[v]["x"],
                                        getSpeed=lambda v: self.veh[v]["v"],
                                        getMaxSpeed=lambda v: self.veh[v]["max"],
-                                       setMaxSpeed=self._set)
+                                       setMaxSpeed=self._set,
+                                       getLeader=lambda v, d: self.veh[v].get("lead", ("", -1.0)))
         self.inductionloop = None
 
     def _set(self, v, s):
@@ -301,3 +302,14 @@ def test_alks_vehicle_gone_is_not_an_error(monkeypatch):
     veh["a"]["live"] = False
     h.step(0.2)
     assert not h.own and h.n["restores"] == 0
+
+
+def test_alks_hold_speed_counts_free_seconds_only(monkeypatch):
+    c = 0.5 * ct.V_ALKS
+    veh = {"f": {"x": 700.0, "v": c + 0.4, "max": 55.5, "live": True},
+           "q": {"x": 700.0, "v": c - 8.0, "max": 55.5, "live": True, "lead": ("x", 12.0)}}
+    fake, h = _alks(monkeypatch, veh)
+    for k in range(1, 11):
+        h.step(k * 0.1)
+    s = h.summary()
+    assert s["hold_free_n"] == 1 and s["hold_free_mean"] == pytest.approx(0.4)

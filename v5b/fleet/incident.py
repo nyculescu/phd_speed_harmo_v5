@@ -235,7 +235,9 @@ def analyse(out: Path) -> dict:
                    "collisions": sum(r["collisions"] for r in rs), "teleports": sum(r["teleports"] for r in rs),
                    "emergency_braking": sum(r["emergency_braking"] for r in rs),
                    "sumo_errors": sum(r["sumo_errors"] for r in rs)}
-    main = [s for s in summ.values() if s["road"] == "inc3" and s["crash_lane"] == 0 and s["zone"] == ZONE_UP
+    lanes = {s["crash_lane"] for s in summ.values()}
+    lane = 0 if 0 in lanes else min(lanes, default=0)          # a middle-lane-only batch reports its own lane
+    main = [s for s in summ.values() if s["road"] == "inc3" and s["crash_lane"] == lane and s["zone"] == ZONE_UP
             and s["weather"] == "dry" and s["eta_median"] is not None]
     best = min(main, key=lambda s: abs(s["eta_median"] - ETA), default=None)
     passed = best is not None and abs(best["eta_median"] - ETA) <= ETA_TOL and best["n_valid"] >= MIN_VALID

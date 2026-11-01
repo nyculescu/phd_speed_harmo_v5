@@ -286,11 +286,16 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 cp.events[-1] |= {"lane": blk["lane"], "pos": blk["pos"], "speed": blk["speed"], "kind": "blocker"}
                 pz.add(blk["vid"])
                 blocker_done = True
+        if blk is not None and "t_stop" not in blk and ls.vehicle.isStopped(blk["vid"]):
+            # V215 A1: once stopped, the blocker is held at speed 0 like a crash (a SUMO stop discharges less)
+            ls.vehicle.resume(blk["vid"])
+            ls.vehicle.setSpeed(blk["vid"], 0.0)
+            blk["t_stop"], blk["x_stop"] = round(t, 1), round(ls.vehicle.getLanePosition(blk["vid"]), 1)
         if cp is not None and cp.release:
             live = set(ls.vehicle.getIDList())
             for vid in cp.due(t):
                 if blk is not None and vid == blk["vid"] and vid in live:
-                    blk["stopped_at_removal"] = ls.vehicle.isStopped(vid)
+                    blk["stopped_at_removal"] = ls.vehicle.getSpeed(vid) < 0.01
                     blk["x_removal"] = round(ls.vehicle.getLanePosition(vid), 1)
                 if vid in live:
                     ls.vehicle.remove(vid)
@@ -312,8 +317,6 @@ def run_day(seed: int, run_dir: Path, adt: float = ADT, cfg: pl.Config = CFG, cr
                 meter.step(t)
             if alks is not None and int(round(t)) % 60 == 0:
                 alks.update(t, gate.update(meter.m.saturated) if gate is not None else True)
-            if blk is not None and "t_stop" not in blk and ls.vehicle.isStopped(blk["vid"]):
-                blk["t_stop"], blk["x_stop"] = round(t, 1), round(ls.vehicle.getLanePosition(blk["vid"]), 1)
             ids = ls.vehicle.getIDList()
             veh_s += len(ids)
             if t <= 86400.0:

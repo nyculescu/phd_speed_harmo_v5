@@ -153,7 +153,7 @@ def valid(d: dict) -> bool:
 def braking_by_lane(log: Path, lanes: tuple = ("r_0", "rj_0", ":rm")) -> int:
     """Emergency-braking warnings on the meter's lanes, from a day's SUMO log."""
     if not log.exists():
-        return -1
+        return None
     return sum(1 for ln in log.read_text(errors="replace").splitlines()
                if "performs emergency braking" in ln and any(f"lane '{x}" in ln for x in lanes))
 
@@ -162,6 +162,12 @@ def _flow(d: dict, group: str) -> float:
     from v5b.fleet.e1_analysis import loop_arrays
     _, q, _ = loop_arrays(d, group)
     return float(q.sum())
+
+
+def _occ(d: dict, group: str) -> float:
+    from v5b.fleet.e1_analysis import loop_arrays
+    _, _, o = loop_arrays(d, group)
+    return float(o.sum())
 
 
 def meter_ratio(m: dict, min_queue: int = 3) -> list:
@@ -195,14 +201,11 @@ def report_w1(root: Path = ROOT) -> dict:
     out["twins"] = tw
     if any(v != 10 for c in tw.values() for v in c.values()):
         stop.append("twin check")
-    drops = []
-    for d in base["R"].values():
-        pm = [e for e in (d["breakdowns_drop"] or []) if e["t_break"] >= ea.NOON and e["drop"] is not None]
-        drops.append(pm[0]["drop"] if pm else None)
+    pm = [ea.main_pm(d["series"]) for d in base["R"].values()]
+    drops = [e and e["drop"] for e in pm]
     dd = [x for x in drops if x is not None]
     out["T1"] = {"pm_drop_per_day": drops, "median_drop": float(np.median(dd)) if dd else None,
-                 "qdf": [next((e["qdf"] for e in (d["breakdowns_drop"] or []) if e["t_break"] >= ea.NOON), None)
-                         for d in base["R"].values()]}
+                 "qdf": [e and e["qdf"] for e in pm], "main_pm": pm}
     if not dd or np.median(dd) < 0.02:
         stop.append("T1: median drop below 2 %")
     cal = ea.calibrate(list(base["R"].values()))
@@ -235,10 +238,11 @@ def report_w1(root: Path = ROOT) -> dict:
     out["blocker"] = {s: base["I"][s]["blocker"] for s in THROWAWAY}
     if any(b is None or b.get("x_stop") is None for b in out["blocker"].values()):
         stop.append("blocker did not stop on every NC I day")
-    for name in ("eta", "eta_mid"):
+    for name in ("eta", "eta_mid", "eta_hold", "eta_hold_mid"):
         p = st / name / "analysis.json"
         out[name] = json.loads(p.read_text())["chosen"] if p.exists() else None
-    if out["eta"] is None or not (abs(out["eta"]["eta_median"] - 0.54) <= 0.05 and out["eta"]["n_valid"] >= 8):
+    e = out["eta_hold"]                        # V215 A1: the held blocker replaced the stop hold
+    if e is None or not (abs(e["eta_median"] - 0.54) <= 0.05 and e["n_valid"] >= 8):
         stop.append("blocker eta check")
     out["T0"] = t0_report(st)
     stop += [f"T0 {k}" for k, v in out["T0"].items() if not v.get("pass", True)]
@@ -280,13 +284,16 @@ def t0_report(st: Path) -> dict:
              "braking": braking_by_lane(out_dir(st, "R", "t0_meter", point, s) / f"sumo_s{s}.log"),
              "braking_nc": braking_by_lane(out_dir(st, "R", "nc", "slice", s) / f"sumo_s{s}.log"),
              "ramp_flow_differs": _flow(d, "ramp_out") != _flow(n, "ramp_out"),
-             "alinea_occ_differs": _flow(d, "alinea") != _flow(n, "alinea"),
+             "alinea_occ_differs": _occ(d, "alinea") != _occ(n, "alinea"),
              "merge_waits": (d["ramp_merge"] or {}).get("waits_over_s"), "merge_waits_nc": (n["ramp_merge"] or {}).get("waits_over_s")}
-        r["pass"] = (r["ratio_ok"] and r["red_passages"] == 0 and r["contacts"] == 0 and r["intrusions_ramp"] == 0
-                     and r["braking"] <= r["braking_nc"] and r["ramp_flow_differs"])
+        common = (r["red_passages"] == 0 and r["contacts"] == 0 and r["intrusions_ramp"] == 0
+                  and r["braking"] is not None and r["braking_nc"] is not None and r["braking"] <= r["braking_nc"]
+                  and r["ramp_flow_differs"] and r["alinea_occ_differs"])
+        r["pass"] = r["ratio_ok"] and common
         if point == "r300_ovr":
+            # overrides make most minutes unclean; the ratio applies to the clean ones that remain
             r |= {"override_s": m["override_s"], "backstop_s": m["backstop_s"], "max_red_exposure_s": m["max_red_exposure_s"]}
-            r["pass"] = (r["red_passages"] == 0 and r["contacts"] == 0 and m["override_s"] > 0 and m["backstop_s"] > 0
+            r["pass"] = (common and (not ratio or r["ratio_ok"]) and m["override_s"] > 0 and m["backstop_s"] > 0
                          and m["max_red_exposure_s"] <= 245.0)
         res[point] = r
     for cell in ("R", "I"):
@@ -298,12 +305,13 @@ def t0_report(st: Path) -> dict:
         free = [v for v, g in k["recovery"] if g is None or g > 100.0]
         r = {"cap_violations": k["cap_violations"], "restore_mismatch": k["restore_mismatch"], "compliance": k["compliance"],
              "max_decel": k["max_decel"], "hold_excess_p95": k["hold_excess_p95"],
+             "hold_free_mean": k.get("hold_free_mean"), "hold_free_n": k.get("hold_free_n", 0),
              "recovered_share": round(sum(v >= 0.9 for v in free) / len(free), 3) if free else None, "n_free": len(free),
              "drop_flow_differs": _flow(d, "drop") != _flow(n, "drop"), "contacts": d["contacts"]}
         r["pass"] = (r["cap_violations"] == 0 and r["restore_mismatch"] == 0 and (r["compliance"] or 0) >= 0.95
-                     and r["max_decel"] <= 1.6 and r["hold_excess_p95"] is not None and r["hold_excess_p95"] <= 1.0
-                     and r["drop_flow_differs"] and r["contacts"] == 0)
-        r["recovery_note"] = "report-only in PM slices; the recovery test runs on the wave-2 off-peak slices"
+                     and r["max_decel"] <= 1.6 and r["hold_free_n"] >= HOLD_MIN_N
+                     and abs(r["hold_free_mean"]) <= 1.0 and r["drop_flow_differs"] and r["contacts"] == 0)
+        r["recovery_note"] = "report-only in PM slices; the recovery stop rule runs on the wave-2a off-peak slices (V215 A5)"
         res[f"alks_{cell}"] = r
     return res
 
@@ -317,6 +325,7 @@ PI_CAND = {"wang": WANG, "conservative": CONSERVATIVE}
 K_I_CAND = (0.005, 0.01, 0.02, 0.04, 0.08, 0.16)
 NOMINAL = {"alinea": "kr70", "pi": "wang", "mtfc": "ki0.02"}
 GAIN_SEEDS = THROWAWAY[:3]
+HOLD_MIN_N = 30                            # free ALKS-seconds in the held stretch for the T0 hold test (V215 A5)
 
 
 def gain_points(cal: dict, l_bar_m: float) -> dict:
@@ -355,17 +364,20 @@ def swings(x: list, top: float, bottom: float) -> int:
 
 
 def max_swings_per_hour(t: list, x: list, active: list, top: float, bottom: float) -> int:
+    """The most swings in any 60-min window (starting at each sample) that contains active control."""
     best = 0
-    for h0 in range(int(min(t) // 3600), int(max(t) // 3600) + 1):
-        k = [i for i, ti in enumerate(t) if h0 * 3600 <= ti < (h0 + 1) * 3600]
-        if k and any(active[i] for i in k):
+    for t0 in t:
+        k = [i for i, ti in enumerate(t) if t0 <= ti < t0 + 3600]
+        if any(active[i] for i in k):
             best = max(best, swings([x[i] for i in k], top, bottom))
     return best
 
 
 def gain_stats(d: dict, law: str) -> dict:
     """Swing count, lead time and the RMS of the controlled occupancy around ô, from one gain-check slice."""
-    onset = next((e["t_break"] for e in d["breakdowns_drop"] or [] if e["t_break"] >= 13 * 3600), None)
+    from v5b.fleet.e1_analysis import main_pm
+    pm = main_pm(d["series"], start=13 * 3600.0)
+    onset = pm["t_break"] if pm else None
     if law == "mtfc":
         a = d["alks"]
         t, x, o = [r[0] for r in a["log"]], [r[1] for r in a["log"]], [r[2] for r in a["log"]]
@@ -375,7 +387,7 @@ def gain_stats(d: dict, law: str) -> dict:
     else:
         m = d["meter"]
         t, x, o = [r[0] for r in m["log"]], [r[1] for r in m["log"]], [r[3] for r in m["log"]]
-        act = [bool(r[6] and not (r[7] or r[8])) for r in m["log"]]
+        act = [r[1] < R_MAX for r in m["log"]]                  # §10.4: acts = r < 900
         sw = max_swings_per_hour(t, x, act, 850.0, 300.0)
         ref = m["law"]["setpoint"]
     on = [ti for ti, a_ in zip(t, act) if a_]
@@ -397,7 +409,11 @@ def choose_gain(stats: dict, law: str) -> dict:
            if sum(x["acts"] for x in v) >= 2}
     nom = NOMINAL[law]
     if not rms:
-        return {"choice": nom, "rms": {}, "note": "no candidate acts on >= 2 of 3 seeds: nominal"}
+        if nom in ok:
+            return {"choice": nom, "rms": {}, "kept": sorted(ok), "stop": False,
+                    "note": "no candidate acts on >= 2 of 3 seeds: nominal"}
+        return {"choice": None, "rms": {}, "kept": sorted(ok), "stop": True,
+                "note": "no candidate acts and the nominal is excluded"}
     best = min(rms, key=rms.get)
     pick = nom if nom in rms and rms[nom] <= 1.10 * rms[best] else best
     return {"choice": pick, "rms": rms, "kept": sorted(ok), "stop": False}
@@ -406,8 +422,12 @@ def choose_gain(stats: dict, law: str) -> dict:
 def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
     st = root / "stage0_w2"
     out = {}
+    missing = [(law, k, s) for law, cands in gain_points(cal, l_bar_m).items() for k in cands for s in GAIN_SEEDS
+               if _day(st, "R", f"gain_{law}", k, s) is None]
+    if missing:
+        return {"incomplete": missing}
     for law, cands in gain_points(cal, l_bar_m).items():
-        stats = {k: [gain_stats(d, law) for s in GAIN_SEEDS if (d := _day(st, "R", f"gain_{law}", k, s))] for k in cands}
+        stats = {k: [gain_stats(_day(st, "R", f"gain_{law}", k, s), law) for s in GAIN_SEEDS] for k in cands}
         out[law] = {"stats": stats, **choose_gain(stats, law)}
     sr = {}
     for s in GAIN_SEEDS:
@@ -424,7 +444,9 @@ def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
     out["self_reaction"] = sr
     rises = [v["occ_rise"] for v in sr.values() if v["occ_rise"] is not None]
     out["c_loop"] = "dropend" if rises and np.median(rises) > 0.10 and cal["tests"]["dropend"]["pass"] else cal["drop_loop"]
-    out["recovery_pass"] = bool(sr) and all((v["recovered_share"] or 0) >= 1.0 for v in sr.values())
+    out["recovery_pass"] = len(sr) == len(GAIN_SEEDS) and all((v["recovered_share"] or 0) >= 1.0 for v in sr.values())
+    out["stop"] = ([f"gain: no admissible {law} candidate" for law in ("alinea", "pi", "mtfc") if out[law].get("stop")]
+                   + ([] if out["recovery_pass"] else ["ALKS recovery test (V215 A5)"]))
     return out
 
 
@@ -737,8 +759,7 @@ def report_stage(n: int, root: Path = ROOT, stages: tuple = ("A", "B")) -> dict:
             "G": float((np.median(D[best_tuned]) - np.median(o)) / np.median(D[best_tuned])),
             "B1_edges": edges, "C1_needed": bool(ea.c1_needed(eff[best_tuned]) and not tuned_pass),
             "C2_needed": bool(eo["pass"] and not tuned_pass), "flags": fl_,
-            "lane_drop_pm": [next(((e["drop"], e["qdf"]) for e in (d["breakdowns_drop"] or []) if e["t_break"] >= 43200),
-                                  None) for d in nc],
+            "lane_drop_pm": [(e["drop"], e["qdf"]) if (e := ea.main_pm(d["series"])) else None for d in nc],
         }
     if all("effects" in c for c in rep["cells"].values()):
         for cell, other in (("R", "I"), ("I", "R")):
@@ -755,10 +776,10 @@ def wave2b(fz: dict) -> list:
     """§10.4: b_min 0.5 at the chosen K_I (report-only), T3 at 0.85 x ô_cr (5 repeats per arm, 3-h I slices), and one
     MC full day run twice."""
     st, js = "stage0_w2", []
-    od = fz["o_cr"][fz["c_loop"]]
+    od = fz["o_cr"][fz["drop_loop"]]          # the same law and loop as the gain-check run it is compared with
     for s in GAIN_SEEDS:
-        js.append(job(st, "R", "bmin", "b0.5", s, ctrl={"alks": alks_ctrl(round(0.95 * od, 4), "long", k_i=fz["gains"]["k_i"],
-                                                                         b_min=0.5, loop=fz["c_loop"])}, hours="13,20"))
+        js.append(job(st, "R", "bmin", "b0.5", s, ctrl={"alks": alks_ctrl(0.95 * od, "long", k_i=fz["gains"]["k_i"],
+                                                                         b_min=0.5, loop=fz["drop_loop"])}, hours="13,20"))
     pts = grid({**fz, "setpoints": {v: (0.85,) for v in VARIANTS}})
     arms = {"ma": pts["ma/p0.85"], "mp": pts["mp/p0.85"], "c": pts["c/p0.85_long"],
             "mc": mc_ctrl(pts, "mp/p0.85", "c/p0.85_long")}
@@ -780,8 +801,11 @@ def report_w2b(fz: dict, root: Path = ROOT) -> dict:
             out[k] = {"pass": False, "missing": True}
             continue
         logs = [json.dumps([d.get("meter", {}) and d["meter"]["log"], d.get("alks", {}) and d["alks"]["log"]]) for d in reps]
-        act = [((d["meter"] or {}).get("red_phases", 0) >= 10) or
-               (d["alks"] is not None and sum(1 for r in d["alks"]["log"] if r[1] < 1.0) >= 10) for d in reps]
+        def busy(d):
+            m_ok = (d["meter"] or {}).get("red_phases", 0) >= 10
+            a_ok = d["alks"] is not None and sum(1 for r in d["alks"]["log"] if r[1] < 1.0) >= 10
+            return {"ma": m_ok, "mp": m_ok, "c": a_ok, "mc": m_ok and a_ok}[k]
+        act = [busy(d) for d in reps]
         out[k] = {"hashes_identical": len({d["hash"] for d in reps}) == 1, "logs_identical": len(set(logs)) == 1,
                   "active": all(act), "differs_from_nc": reps[0]["hash"] != nc["hash"]}
         out[k]["pass"] = all(out[k].values())

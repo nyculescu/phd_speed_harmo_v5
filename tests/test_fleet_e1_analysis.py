@@ -37,6 +37,15 @@ def test_drop_onset_after_noon():
     assert ea.drop_onset(_ser([27.0] * 100 + [10.0] * 10 + [27.0] * 20)) is None
 
 
+def test_main_pm_breakdown_skips_blips_and_merges_gaps():
+    # 13:00 a 2.5-min blip; 15:30 a 30-min episode, a 5-min recovery, then 60 more minutes (V215 A3)
+    sp = [27.0] * 1560 + [10.0] * 5 + [27.0] * 295 + [10.0] * 60 + [27.0] * 10 + [10.0] * 120 + [27.0] * 30
+    e = ea.main_pm(_ser(sp))
+    assert e["t_break"] == pytest.approx(30.0 * 1861) and e["n_merged"] == 2
+    assert e["min"] == pytest.approx(95.0, abs=2.5)
+    assert ea.drop_onset(_ser(sp)) == e["t_break"]
+
+
 def test_ocr_day_takes_the_peak_flow_window():
     t = np.arange(30.0, 7230.0, 30.0)
     q = np.full(t.size, 3000.0)
@@ -56,6 +65,9 @@ def test_lead_and_spill():
     late = np.full(t.size, 10.0)
     late[t >= 11500] = 30.0
     assert ea.spill_ok(t, late, 20.0, 10000.0) and not ea.lead_ok(t, late, 20.0, 10000.0)
+    early = np.full(t.size, 10.0)
+    early[t >= 10000 - 540] = 30.0                         # crossed 9 min before t_b, 15 % of the pre-hour above
+    assert not ea.lead_ok(t, early, 20.0, 10000.0)
 
 
 def test_tuned_oracle_edge_and_verdict():
