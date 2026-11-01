@@ -100,7 +100,9 @@ None.
   - The KILL is stated as "no gain ≥ 15 % with probability 0.80"; gains of 10-15 % can be missed.
   - The stalled-vehicle incident departs from V202 and needs its η check.
   - The meter actuator, the CAV cap profile and the MTFC gain range are Claude's choices, accepted only through T0 and the gain check.
-- Confirmed issues: none yet.
+- Confirmed issues:
+  - The blocker η check failed (0.396 against 0.54 ± 0.05), V215.
+  - The checkpoint review confirmed about 45 distinct code defects, 10 critical; §8 and §9.6 contradict each other on C1; "of any length" makes t_b a blip, V215.
 - Status: holds.
 
 ### V214. Weather rows B and C: numbers (2026-10-31)
@@ -112,3 +114,12 @@ None.
 - Confirmed issues: none yet.
 - Status: holds.
 
+### V215. E1 checkpoint review and stage-0 amendments (2026-10-31)
+- Decision: A1 a hold-at-speed-0 blocker diagnostic before the crash fallback; A2 fix every confirmed review defect to the protocol text, with tests; A3 t_b from the main PM breakdown (longest episode after 12:00, gaps < 10 min merged); A4 a C1 pass can rescue a cell where O_off failed; A5 T0 ALKS hold test over uncongested minutes, recovery test as a stop rule.
+- Potential challenges:
+  - A3 is set after a reviewer saw fragment drop values (no controller outcome); the 10-min merge gap is a choice.
+  - A4 adds a route to a continue that §8 excluded; C1 runs on fresh seeds only.
+  - A1 changes how the incident is held; if it passes, the I cell differs from V213 §5.2 in the hold only.
+  - About 45 fixes at once can bring new bugs; the re-review of the diff covers this.
+- Confirmed issues: none yet.
+- Status: holds.
