@@ -116,6 +116,7 @@ None.
 
 ### V215. E1 checkpoint review and stage-0 amendments (2026-10-31)
 - Decision: A1 a hold-at-speed-0 blocker diagnostic before the crash fallback; A2 fix every confirmed review defect to the protocol text, with tests; A3 t_b from the main PM breakdown (longest episode after 12:00, gaps < 10 min merged); A4 a C1 pass can rescue a cell where O_off failed; A5 T0 ALKS hold test over uncongested minutes, recovery test as a stop rule.
+- Confirmed issues: A3 put t_b late on intermittent days and failed the lead test (2/10); replaced for t_b by V219. A5's 100-m free gap was inside SUMO ACC's 120-m interaction range; fixed in V220.
 - Potential challenges:
   - A3 is set after a reviewer saw fragment drop values (no controller outcome); the 10-min merge gap is a choice.
   - A4 adds a route to a continue that §8 excluded; C1 runs on fresh seeds only.
@@ -145,5 +146,22 @@ None.
 - Decision: nights at 10-15 workers to start, CPU guard 70 %, pad ≤ 400 rpm; adjusted on the author's word after hearing the noise.
 - Potential challenges:
   - At about half the day rate, each night adds hours to the E1 wall time.
+- Confirmed issues: none yet.
+- Status: holds.
+
+### V219. E1 onset rule and loop deviation (2026-10-31)
+- Decision: t_b = first PM episode ≥ 5 min; drop_3 and alinea_3 kept at 7/10 instead of 8/10.
+- Potential challenges:
+  - Chosen after comparing three definitions on calibration days (selection disclosed).
+  - Feedback on the kept loops may act late on some days: bias toward a false KILL.
+  - ô_cr fell from 13.1 % to 10.7 % at drop_3; the grid moves with it.
+- Confirmed issues: none yet.
+- Status: holds.
+
+### V220. Wave 1 report: T0 fixes, stage-0 numbers (2026-10-31)
+- Decision: none beyond the §10.3 fix-and-repeat; numbers only.
+- Potential challenges:
+  - R is underpowered at n = 20 (s = 0.155): an R non-pass cannot give a powered KILL; E1 costs the n = 20 compute (about 69 h expected).
+  - Wave 2a runs before the T0 repeat has passed; if T0 fails again, its compute is lost but nothing is read from it.
 - Confirmed issues: none yet.
 - Status: holds.
