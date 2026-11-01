@@ -221,3 +221,11 @@ None.
   - The T0 ratio counts a minute in which the meter had nobody to release.
 - Confirmed issues: an allowed-speed tolerance below the net's 0.01 m/s rounding (fixed, `bb12c7a`).
 - Status: open (T0 meter).
+
+### V228. Amber threshold and supply-limited minutes (2026-11-01)
+- Decision: the kinematic amber uses 3.0 m/s²; the T0 rate check skips supply-limited minutes.
+- Potential challenges:
+  - A fourth T0 meter attempt; each fix so far was chosen after seeing a failure.
+  - Longer ambers lower the meter's top rate slightly when cars approach at speed.
+- Confirmed issues: none yet.
+- Status: implementing.
