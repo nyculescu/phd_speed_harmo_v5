@@ -301,3 +301,13 @@ def test_braking_flag_fires_on_a_clear_increase(tmp_path):
         p.write_text(js.dumps(d))
     rep = e1.report_stage(10, tmp_path, ("A",))
     assert rep["cells"]["R"]["flags"]["M*"]["braking"] and not rep["cells"]["I"]["flags"]["M*"]["braking"]
+
+
+def test_gain_stats_on_a_meter_slice():
+    log = [(46800 + 60 * i, 900.0 if i < 30 else 400.0, 0.0, 12.0 + (i % 2), 5, 500.0, int(i >= 30), 0, 0, 0, None)
+           for i in range(60)]
+    d = {"series": [(46800.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)],
+         "meter": {"log": log, "law": {"setpoint": 12.0}}}
+    s = e1.gain_stats(d, "alinea")
+    assert s["acts"] and s["first_active"] == 46800 + 1800 and s["onset"] is None and s["lead"]
+    assert s["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)
