@@ -140,3 +140,10 @@ None.
   - The 20 NC R days come from `f9b020c`, the rest of stage 0 from `dd0e114`; the R/I prefix check tests that both give the same R paths.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V218. Quiet nights for E1 batches (2026-10-31)
+- Decision: nights at 10-15 workers to start, CPU guard 70 %, pad ≤ 400 rpm; adjusted on the author's word after hearing the noise.
+- Potential challenges:
+  - At about half the day rate, each night adds hours to the E1 wall time.
+- Confirmed issues: none yet.
+- Status: holds.
