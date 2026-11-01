@@ -179,3 +179,11 @@ None.
   - At 30 % most of the 27 jobs sit paused overnight; they hold memory (about 0.3 GB each), not CPU.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V223. Stage 0: four stops (2026-10-31)
+- Decision: none; the stops wait for the author.
+- Potential challenges:
+  - Items 2 and 3 may share one cause (ALKS below their commanded or desired speed); not yet diagnosed.
+  - PI-ALINEA's swinging is at both pre-registered gain sets; gains outside them would be a protocol change.
+- Confirmed issues: none yet.
+- Status: open.
