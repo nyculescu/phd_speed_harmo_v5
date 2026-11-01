@@ -355,3 +355,35 @@ def test_grid_and_t3_arms_without_pi():
     assert "t3_mp" not in arms and {"t3_ma", "t3_c", "t3_mc"} <= arms
     mc = next(j for j in js if j["arm"] == "t3_mc")["ctrl"]
     assert mc["meter"]["law"] == "alinea" and not mc["cascade"]
+
+
+def _smoke_day(window=180.0, used=None):
+    occ = [float(k % 7) for k in range(1, 21)]
+    rows = [[30 * k, 0, occ[k - 1], None] for k in range(1, 21)]
+    log = []
+    for t in range(60, 601, 60):
+        o6 = np.mean([r[2] for r in rows if r[0] <= t][-int(window // 30):])
+        o2 = np.mean([r[2] for r in rows if r[0] <= t][-2:])
+        log.append((t, 500.0, 480.0, round(float(o6 if used is None else used), 2), 5, 500.0, 1, 0, 0, 0, 500.0,
+                    round(float(o2), 2), 0))
+    cm = e1.meter_ctrl("pi", 10.0)
+    j = e1.job("smoke", "R", "gain_pi", "wang_0", 7430040, ctrl={"meter": cm}, hours=e1.SMOKE_HOURS)
+    d = {"ctrl": j["ctrl"], "hours": j["hours"], "sumo_seed": None, "plant": e1.PLANT, "drained": True, "teleports": 0,
+         "sumo_errors": 0, "contacts": 0, "arrived_plus_removed": 5, "generated": 5,
+         "loops30": {"groups": ["drop"], "rows": rows},
+         "meter": {"law": {"kind": "pi", "setpoint": 10.0, "k_r": 70.0, "k_p": cm["k_p"], "k_i": cm["k_i"], "rate": 900.0},
+                   "loop": "drop", "window": window, "constants": e1.SMOKE_CONST["meter"], "metering_s": 100, "log": log}}
+    return d, j
+
+
+def test_smoke_check_catches_window_and_constants():
+    d, j = _smoke_day()
+    assert e1.smoke_check(d, j) == {"ok": True, "bad": [], "active": {"meter": True}}
+    d2, _ = _smoke_day(window=60.0)
+    assert "meter loop or window" in e1.smoke_check(d2, j)["bad"]
+    d3, _ = _smoke_day(used=99.0)
+    assert any(b.startswith("meter input occupancy off") for b in e1.smoke_check(d3, j)["bad"])
+    d4, _ = _smoke_day()
+    d4["meter"]["constants"] = {**e1.SMOKE_CONST["meter"], "STOP_DECEL": 4.5}
+    assert "meter constants" in e1.smoke_check(d4, j)["bad"]
+    assert len(e1.smoke_jobs([j, dict(j, seed=1), dict(j, ctrl=None)])) == 1

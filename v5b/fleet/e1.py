@@ -211,6 +211,75 @@ def wave2c(cal: dict, l_bar_m: float) -> list:
             + [j for j in wave2a(cal, l_bar_m) if j["arm"] in ("gain_alinea", "gain_pi", "self_alks")])
 
 
+SMOKE_CONST = {"meter": {"STOP_DECEL": 3.0, "STOP_MARGIN": 5.0, "AMBER_CAR": 1.0, "AMBER_ONSET": 5.0, "G_MIN": 2.0,
+                         "G_MAX": 4.0, "NEAR_SPEED": 3.0},                         # V213 §3.2, V226, V228
+               "alks": {"A_CAP": 1.5, "V_ALKS": 100.0 / 3.6, "ZONE_END": 892.0, "FREE_GAP": 120.0}}
+SMOKE_HOURS = "15,17"
+
+
+def _occ_at(d: dict, loop: str, t: float, n: int) -> float:
+    from v5b.fleet.e1_analysis import loop_arrays
+    ts, _, o = loop_arrays(d, loop)
+    x = o[ts <= t + 1e-6][-n:]
+    return float(x.mean()) if x.size else 0.0
+
+
+def smoke_check(d: dict, j: dict) -> dict:
+    """V231: the run carries the job's inputs. Config echo, the law parameters read back, the actuator constants,
+    and the occupancy each law used equals the mean of its loop over its window. 'active' says whether the
+    controller acted, i.e. whether the alignment was exercised."""
+    bad, c = [], j["ctrl"] or {}
+    if d.get("ctrl") != j["ctrl"] or d.get("hours") != j["hours"] or d.get("sumo_seed") != j["ss"] or d.get("plant") != PLANT:
+        bad.append("config echo")
+    if not valid(d):
+        bad.append("invalid run")
+    active = {}
+    if "meter" in c:
+        m, cm = d["meter"], c["meter"]
+        want = {"kind": cm["law"], "setpoint": cm.get("setpoint", 0.0), "k_r": cm.get("k_r", 70.0),
+                "k_p": cm.get("k_p", 0.0), "k_i": cm.get("k_i", 0.0), "rate": cm.get("rate", ct.R_MAX)}
+        if cm["law"] == "fixed":
+            want = {"kind": "fixed", "rate": cm["rate"]}
+        bad += [f"meter law {k}" for k, v in want.items() if m["law"].get(k) != v]
+        if m["loop"] != cm.get("loop", "alinea") or m["window"] != cm.get("window", 60.0):
+            bad.append("meter loop or window")
+        if m.get("constants") != SMOKE_CONST["meter"]:
+            bad.append("meter constants")
+        n = int(round(m["window"] / 30.0))
+        off = [r[0] for r in m["log"] if abs(r[3] - _occ_at(d, m["loop"], r[0], n)) > 0.01
+               or abs(r[11] - _occ_at(d, m["loop"], r[0], 2)) > 0.01]
+        if off:
+            bad.append(f"meter input occupancy off at {len(off)} minutes")
+        active["meter"] = m["metering_s"] > 0
+    if "alks" in c:
+        a, ca = d["alks"], c["alks"]
+        want = {"setpoint": ca.get("setpoint", 0.0), "k_i": ca.get("k_i", 0.02), "b_min": ca.get("b_min", ct.B_MIN),
+                "fixed_b": ca.get("fixed_b"), "zone": ca.get("zone", "long"), "loop": ca.get("loop", "drop")}
+        bad += [f"alks {k}" for k, v in want.items() if a.get(k) != v]
+        if (a["x_cmd"], a["x_hold"]) != tuple(round(x, 1) for x in ct.ZONES[want["zone"]]):
+            bad.append("alks zone geometry")
+        if a.get("constants") != SMOKE_CONST["alks"]:
+            bad.append("alks constants")
+        off = [r[0] for r in a["log"] if abs(r[2] - _occ_at(d, a["loop"], r[0], 2)) > 0.01]
+        if off:
+            bad.append(f"alks input occupancy off at {len(off)} minutes")
+        active["alks"] = a["cmd_steps"] > 0
+    if c.get("cascade") != (d.get("ctrl") or {}).get("cascade"):
+        bad.append("cascade flag")
+    return {"ok": not bad, "bad": bad, "active": active}
+
+
+def smoke_jobs(jobs: list) -> list:
+    """One short slice per distinct controller in a job list, on its first seed and SUMO seed."""
+    seen, out = set(), []
+    for j in jobs:
+        k = json.dumps(j["ctrl"], sort_keys=True)
+        if j["ctrl"] and k not in seen:
+            seen.add(k)
+            out.append(dict(j, stage="smoke", hours=SMOKE_HOURS, point=f"{j['point']}_{len(out)}"))
+    return out
+
+
 def wave2d(cal: dict, l_bar_m: float) -> list:
     """V228: the T0 meter slices and the ALINEA gain check again, after the 3.0 m/s² amber threshold."""
     return [j for j in wave2c(cal, l_bar_m) if j["arm"] in ("t0_meter", "gain_alinea")]
@@ -1177,6 +1246,9 @@ def main(argv_=None) -> int:
     m.add_argument("--cal", help="wave-1 report JSON (for w2a)")
     m.add_argument("--stage-report", help="stage report JSON (for B1, B2, C)")
     m.add_argument("--b1", help="the B1 job file (its fz_by_cell, for B2)")
+    sm = sub.add_parser("smoke", help="V231: run one short slice per distinct ctrl of a job list and check read-back")
+    sm.add_argument("--jobs", required=True)
+    sm.add_argument("--workers", type=int, default=16)
     rp = sub.add_parser("report")
     rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "stage", "verdict"), required=True)
     rp.add_argument("--out", required=True)
@@ -1189,6 +1261,16 @@ def main(argv_=None) -> int:
     if a.cmd == "run":
         run(json.loads(Path(a.jobs).read_text())["jobs"], a.workers)
         return 0
+    if a.cmd == "smoke":
+        js = smoke_jobs(json.loads(Path(a.jobs).read_text())["jobs"])
+        run(js, a.workers)
+        rep = {f"{j['cell']}/{j['arm']}/{j['point']}": (smoke_check(d, j) if (d := json.loads(out_path(j).read_text())
+                                                                               if out_path(j).exists() else None)
+                                                         else {"ok": False, "bad": ["missing"]}) for j in js}
+        Path(a.jobs).with_suffix(".smoke.json").write_text(json.dumps(rep, indent=1))
+        bad = {k: v["bad"] for k, v in rep.items() if not v["ok"]}
+        print(f"smoke: {len(rep)} controllers, {len(bad)} failed", bad or "")
+        return 1 if bad else 0
     if a.cmd == "make":
         if a.wave == "w1":
             lb = l_bar()

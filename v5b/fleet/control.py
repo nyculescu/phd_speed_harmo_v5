@@ -338,7 +338,10 @@ class SumoMeter:
 
     def summary(self) -> dict:
         w = sorted(self.waits)
-        return {**self.m.summary(), "loop": self.loop, "max_red_exposure_s": self.max_red_exposure,
+        return {**self.m.summary(), "loop": self.loop, "window": self.n_win * 30.0,
+                "constants": {"STOP_DECEL": STOP_DECEL, "STOP_MARGIN": STOP_MARGIN, "AMBER_CAR": AMBER_CAR,
+                              "AMBER_ONSET": AMBER_ONSET, "G_MIN": G_MIN, "G_MAX": G_MAX, "NEAR_SPEED": NEAR_SPEED},
+                "max_red_exposure_s": self.max_red_exposure,
                 "wait_max_s": w[-1] if w else None, "wait_p95_s": w[int(0.95 * (len(w) - 1))] if w else None,
                 "waits_over_240": sum(1 for x in w if x > 240.0), "n_waits": len(w), "waits": self.waits,
                 "red_exposure": self.red_list}
@@ -453,6 +456,7 @@ class SumoALKS:
     def summary(self) -> dict:
         return {"setpoint": self.law.setpoint, "k_i": self.law.k_i, "b_min": self.law.b_min, "fixed_b": self.law.fixed_b,
                 "zone": self.zone, "x_cmd": round(self.x_cmd, 1), "x_hold": round(self.x_hold, 1), "loop": self.loop,
+                "constants": {"A_CAP": A_CAP, "V_ALKS": V_ALKS, "ZONE_END": ZONE_END, "FREE_GAP": FREE_GAP},
                 "alks_seconds": round(self.n["cmd_steps"] * STEP, 1), **self.n, "max_decel": round(self.max_decel, 3),
                 "max_decel_any_cause": round(self.max_decel_all, 3), "allowed_max_dev": round(self.allowed_dev, 4), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
                 "hold_excess_p95": (round(float(sorted(max(0.0, x) for x in self.at_hold.values())
