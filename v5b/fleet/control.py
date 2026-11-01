@@ -72,7 +72,8 @@ class Meter:
         self.r_law = self.r_cmd = R_MAX
         self.metering = False
         self.state, self.t_state, self.amber = "G", 0.0, AMBER_CAR
-        self.target, self.released = 0.0, 0
+        self.resting = True
+        self.target, self.released, self.t_rel = 0.0, 0, 0.0
         self.override = self.backstop = False
         self.o_prev = None
         self.saturated = False
@@ -99,6 +100,7 @@ class Meter:
             self.metering = True
             if self.state == "G" and not self.override:
                 self.state, self.t_state, self.amber = "y", t, AMBER_ONSET
+                self.resting = False
             self.target = float(self.released)
         self.log.append((round(t), round(self.r_law, 1), round(realised, 1), round(o, 2), n_q, round(q_arr, 1),
                          int(self.metering), int(self.p_ovr), int(self.backstop), int(self.p_dlim)))
@@ -115,10 +117,15 @@ class Meter:
         elif self.override and occ < OVR_OFF:
             self.override = False
 
-    def step(self, t: float, rel: int, n_near: int, dn_blocked: bool, longest_wait: float) -> str:
-        """rel: vehicles that left 'r' during the last second, while the signal showed self.state."""
+    def step(self, t: float, rel: int, n_near: int, dn_blocked: bool, longest_wait: float,
+             n_close: int | None = None) -> str:
+        """rel: vehicles that left 'r' during the last second, while the signal showed self.state. n_near: vehicles
+        within 15 m of the line below 3 m/s (a green starts); n_close: within 15 m at any speed (it extends)."""
+        n_close = n_near if n_close is None else n_close
         if rel and self.state == "r":
             self.n["red_passages"] += rel
+        if rel:
+            self.t_rel = t
         self.released += rel
         self.p_rel += rel
         if self.overrides:
@@ -132,6 +139,7 @@ class Meter:
         if self.override or not self.metering:
             self.target = float(self.released)
             self._set("G", t)
+            self.resting = True
             return self.state
         self.n["metering_s"] += 1
         self.r_cmd = R_MAX if self.backstop else self.r_law
@@ -140,11 +148,18 @@ class Meter:
         if owed >= ONE:
             self.n["owed_s"] += 1
         el = t - self.t_state
+        if self.resting:
+            # leaving a rest green, also after an override, takes the onset amber (§3.2)
+            self.resting = False
+            if self.state == "G":
+                self.amber = AMBER_ONSET
+                self._set("y", t)
+                return self.state
         if self.state == "G":
-            if owed >= ONE and dn_blocked:
+            if owed >= ONE and dn_blocked and t - max(self.t_state, self.t_rel) >= G_MIN - 1e-9:
                 self.n["dlim_s"] += 1
                 self.p_dlim = True
-            elif el >= G_MIN - 1e-9 and (owed < ONE or n_near == 0 or el >= G_MAX - 1e-9):
+            if el >= G_MIN - 1e-9 and (owed < ONE or n_close == 0 or el >= G_MAX - 1e-9):
                 self.amber = AMBER_CAR
                 self._set("y", t)
         elif self.state == "y":
@@ -250,14 +265,17 @@ class SumoMeter:
         self.m, self.bank, self.loop, self.tls, self.lane = meter, bank, loop, tls, lane
         self.len = ls.lane.getLength(lane)
         self.free = self.len / ls.lane.getMaxSpeed(lane)
-        self.prev, self.enter, self.red_exp = set(), {}, {}
+        self.prev, self.enter, self.red_exp, self.left_at = set(), {}, {}, {}
         self.max_red_exposure = 0.0
         self.waits = []
         self.tail = ls.lane.getLength("3a_0") - BLOCK_TAIL
         self.exit_lanes = ["rj_0"] + [k[2] for links in ls.trafficlight.getControlledLinks(tls) for k in links if k[2]]
 
-    def _dn_blocked(self) -> bool:
-        if any(ls.vehicle.getSpeed(v) < BLOCK_SPEED for ln in self.exit_lanes for v in ls.lane.getLastStepVehicleIDs(ln)):
+    def _dn_blocked(self, t: float) -> bool:
+        """A vehicle below 2 m/s on rj, the meter link or the end of 3a_0; vehicles released in the last 5 s are
+        still pulling away from the line and do not count."""
+        if any(ls.vehicle.getSpeed(v) < BLOCK_SPEED and t - self.left_at.get(v, -1e9) >= 5.0
+               for ln in self.exit_lanes for v in ls.lane.getLastStepVehicleIDs(ln)):
             return True
         return any(ls.vehicle.getLanePosition(v) >= self.tail and ls.vehicle.getSpeed(v) < BLOCK_SPEED
                    for v in ls.lane.getLastStepVehicleIDs("3a_0"))
@@ -268,6 +286,9 @@ class SumoMeter:
         for v in left:
             self.waits.append(round(t - self.enter.pop(v, t) - self.free, 1))
             self.red_exp.pop(v, None)
+            self.left_at[v] = t
+        if len(self.left_at) > 200:
+            self.left_at = {v: x for v, x in self.left_at.items() if t - x < 5.0}
         shown = self.m.state
         for v in cur:
             self.enter.setdefault(v, t)
@@ -275,14 +296,14 @@ class SumoMeter:
                 self.red_exp[v] = self.red_exp.get(v, 0.0) + 1.0
                 self.max_red_exposure = max(self.max_red_exposure, self.red_exp[v])
         self.prev = cur
-        n_near = sum(1 for v in cur if self.len - ls.vehicle.getLanePosition(v) <= NEAR_LINE
-                     and ls.vehicle.getSpeed(v) < NEAR_SPEED)
+        close = [v for v in cur if self.len - ls.vehicle.getLanePosition(v) <= NEAR_LINE]
+        n_near = sum(1 for v in close if ls.vehicle.getSpeed(v) < NEAR_SPEED)
         wait = max((t - self.enter[v] - self.free for v in cur), default=0.0)
         if abs(t / 30.0 - round(t / 30.0)) < 1e-6:
             self.m.queue_check(ls.inductionloop.getLastIntervalOccupancy("ramp_q_r_0"))
         if abs(t / 60.0 - round(t / 60.0)) < 1e-6:
             self.m.update(t, self.bank.occ60(self.loop), len(cur), self.bank.flow5("ramp_q"))
-        s = self.m.step(t, len(left), n_near, self._dn_blocked() if self.m.metering else False, wait)
+        s = self.m.step(t, len(left), n_near, self._dn_blocked(t) if self.m.metering else False, wait, len(close))
         ls.trafficlight.setRedYellowGreenState(self.tls, s)
 
     def summary(self) -> dict:

@@ -94,15 +94,68 @@ def test_override_and_backstop_hysteresis():
     assert not m.backstop
 
 
-def test_downstream_blocked_green_is_held():
+def _green_at_6():
     m = ct.Meter(ct.MeterLaw("fixed", rate=900.0 - 1), overrides=False)
     m.update(0.0, 30.0, 5, 500.0)
     for t in range(1, 7):
         m.step(float(t), 0, 1, False, 0.0)
-    assert m.state == "G"
-    for t in range(7, 20):
-        assert m.step(float(t), 0, 1, True, 0.0) == "G"
-    assert m.n["dlim_s"] > 0 and m.p_dlim
+    assert m.state == "G" and m.t_state == 6.0
+    return m
+
+
+def test_downstream_limited_second_needs_2_s_without_a_release():
+    m = _green_at_6()
+    m.step(7.0, 0, 1, True, 0.0)
+    assert m.n["dlim_s"] == 0
+    m.step(8.0, 0, 1, True, 0.0)
+    assert m.n["dlim_s"] == 1 and m.p_dlim
+    assert [m.step(float(t), 0, 1, True, 0.0) for t in (9, 10)] == ["G", "y"]     # no hold: G_MAX ends it
+    m2 = _green_at_6()
+    m2.step(7.0, 1, 1, True, 0.0)                    # the head left in the first green second
+    m2.step(8.0, 0, 1, True, 0.0)
+    assert m2.n["dlim_s"] == 0
+
+
+def test_green_extends_on_any_close_vehicle():
+    m = _green_at_6()
+    assert [m.step(float(t), 0, 0, False, 0.0, n_close=1) for t in (7, 8, 9, 10)] == ["G", "G", "G", "y"]
+    m2 = _green_at_6()
+    assert [m2.step(float(t), 0, 0, False, 0.0, n_close=0) for t in (7, 8)] == ["G", "y"]
+
+
+def test_onset_amber_after_an_override():
+    m = ct.Meter(ct.MeterLaw("fixed", rate=600.0))
+    m.update(60.0, 30.0, 5, 500.0)
+    for t in range(61, 70):
+        m.step(float(t), 0, 1, False, 0.0)
+    m.queue_check(31.0)
+    for t in range(70, 190):
+        assert m.step(float(t), 0, 1, False, 0.0) == "G"
+    m.queue_check(10.0)
+    s = [m.step(float(t), 0, 1, False, 0.0) for t in range(190, 197)]
+    assert s[:5] == ["y"] * 5 and s[5] == "r" and m.amber == ct.AMBER_ONSET
+    m2 = ct.Meter(ct.MeterLaw("fixed", rate=600.0))
+    m2.queue_check(31.0)
+    m2.update(60.0, 30.0, 5, 500.0)                  # onset during the override
+    assert m2.step(60.0, 0, 1, False, 0.0) == "G"
+    m2.queue_check(10.0)
+    assert m2.step(61.0, 0, 1, False, 0.0) == "y" and m2.amber == ct.AMBER_ONSET
+
+
+def test_rest_and_resume_margins():
+    m = ct.Meter(ct.MeterLaw("alinea", setpoint=20.0, k_r=70.0))
+    m.update(60.0, 10.0, 0, 600.0)
+    assert not m.metering
+    m.update(120.0, 26.0, 0, 600.0)                  # r = 240 < 0.95 x 600
+    assert m.metering and m.r_law == ct.R_MIN
+    m.update(180.0, 20.0, 3, 200.0)                  # 240 >= 1.05 x 200, but 3 queued
+    assert m.metering
+    m.update(240.0, 20.0, 2, 200.0)
+    assert not m.metering
+    m.update(300.0, 20.0, 0, 250.0)                  # 240 is not below 0.95 x 250
+    assert not m.metering
+    m.update(360.0, 20.0, 0, 260.0)
+    assert m.metering
 
 
 def _queue_run(hours: float = 2.0, arrivals: float = 523.0):
