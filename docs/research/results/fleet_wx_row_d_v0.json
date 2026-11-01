@@ -1,0 +1,389 @@
+{
+ "medium": {
+  "k_s": 0.002183554164327591,
+  "rows_R": [
+   {
+    "r": 1.71,
+    "k": 0.002183554164327591,
+    "p_max": 0.0006760039782690125,
+    "p_day_mean": 0.4024632300685409,
+    "expected_crashes_per_day": 0.5188574801455487
+   },
+   {
+    "r": 1.31,
+    "k": 0.0016727812603913124,
+    "p_max": 0.0005178743927090096,
+    "p_day_mean": 0.3264331376232731,
+    "expected_crashes_per_day": 0.39748730935126825
+   },
+   {
+    "r": 2.11,
+    "k": 0.002694327068263869,
+    "p_max": 0.0008341335638290153,
+    "p_day_mean": 0.46970053740475126,
+    "expected_crashes_per_day": 0.640227650939829
+   },
+   {
+    "r": 1.0,
+    "k": 0.0012769322598406964,
+    "p_max": 0.0003953239639000073,
+    "p_day_mean": 0.26070991089632606,
+    "expected_crashes_per_day": 0.30342542698570096
+   }
+  ],
+  "dry": {
+   "encounters_per_day": 1967.5,
+   "expected_crashes_per_day": 0.30342542698570085,
+   "p_day_mean": 0.26096821042879503
+  },
+  "matched": 10,
+  "rows": [
+   {
+    "seed": 7431080,
+    "expected": {
+     "t": 61716.0,
+     "follower": "main.34171",
+     "leader": "main.34153"
+    },
+    "live": {
+     "t": 61716.0,
+     "follower": "main.34171",
+     "leader": "main.34153",
+     "lane": "3_2",
+     "pos": 1182.4,
+     "speed": 4.43
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431081,
+    "expected": {
+     "t": 29388.0,
+     "follower": "main.8493",
+     "leader": "main.8429"
+    },
+    "live": {
+     "t": 29388.0,
+     "follower": "main.8493",
+     "leader": "main.8429",
+     "lane": "3_2",
+     "pos": 1179.6,
+     "speed": 7.22
+    },
+    "n_crashes": 2,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431082,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431083,
+    "expected": {
+     "t": 57498.0,
+     "follower": "main.30619",
+     "leader": "main.30607"
+    },
+    "live": {
+     "t": 57498.0,
+     "follower": "main.30619",
+     "leader": "main.30607",
+     "lane": "3_2",
+     "pos": 559.5,
+     "speed": 4.24
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431084,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431085,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431086,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431087,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431088,
+    "expected": {
+     "t": 61733.0,
+     "follower": "main.34424",
+     "leader": "main.34416"
+    },
+    "live": {
+     "t": 61733.0,
+     "follower": "main.34424",
+     "leader": "main.34416",
+     "lane": "1_0",
+     "pos": 2802.5,
+     "speed": 6.78
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431089,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   }
+  ],
+  "crash_days": 4,
+  "all_drained": true,
+  "collisions": 0
+ },
+ "heavy": {
+  "k_s": 0.002196434514428238,
+  "rows_R": [
+   {
+    "r": 1.71,
+    "k": 0.002196434514428238,
+    "p_max": 0.0006747089743491791,
+    "p_day_mean": 0.40302840047576544,
+    "expected_crashes_per_day": 0.5188574801455486
+   },
+   {
+    "r": 1.31,
+    "k": 0.001682648663099995,
+    "p_max": 0.0005168823136827044,
+    "p_day_mean": 0.32682013546548233,
+    "expected_crashes_per_day": 0.39748730935126825
+   },
+   {
+    "r": 2.11,
+    "k": 0.0027102203657564804,
+    "p_max": 0.0008325356350156536,
+    "p_day_mean": 0.47043775052974957,
+    "expected_crashes_per_day": 0.6402276509398289
+   },
+   {
+    "r": 1.0,
+    "k": 0.0012844646283206068,
+    "p_max": 0.00039456665166618657,
+    "p_day_mean": 0.2609639842917671,
+    "expected_crashes_per_day": 0.3034254269857009
+   }
+  ],
+  "dry": {
+   "encounters_per_day": 1967.5,
+   "expected_crashes_per_day": 0.30342542698570085,
+   "p_day_mean": 0.26096821042879503
+  },
+  "matched": 10,
+  "rows": [
+   {
+    "seed": 7431080,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431081,
+    "expected": {
+     "t": 26921.0,
+     "follower": "main.6418",
+     "leader": "main.6401"
+    },
+    "live": {
+     "t": 26921.0,
+     "follower": "main.6418",
+     "leader": "main.6401",
+     "lane": "3_2",
+     "pos": 1114.5,
+     "speed": 3.06
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431082,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431083,
+    "expected": {
+     "t": 31200.0,
+     "follower": "main.10097",
+     "leader": "main.10173"
+    },
+    "live": {
+     "t": 31200.0,
+     "follower": "main.10097",
+     "leader": "main.10173",
+     "lane": "3_2",
+     "pos": 444.8,
+     "speed": 3.2
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431084,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431085,
+    "expected": {
+     "t": 62884.0,
+     "follower": "main.34789",
+     "leader": "main.34767"
+    },
+    "live": {
+     "t": 62884.0,
+     "follower": "main.34789",
+     "leader": "main.34767",
+     "lane": "3a_0",
+     "pos": 238.6,
+     "speed": 4.07
+    },
+    "n_crashes": 2,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431086,
+    "expected": {
+     "t": 69336.0,
+     "follower": "main.40423",
+     "leader": "main.40406"
+    },
+    "live": {
+     "t": 69336.0,
+     "follower": "main.40423",
+     "leader": "main.40406",
+     "lane": "3_2",
+     "pos": 624.1,
+     "speed": 4.05
+    },
+    "n_crashes": 1,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431087,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431088,
+    "expected": {
+     "t": 32735.0,
+     "follower": "main.11348",
+     "leader": "main.11311"
+    },
+    "live": {
+     "t": 32735.0,
+     "follower": "main.11348",
+     "leader": "main.11311",
+     "lane": "3_2",
+     "pos": 35.9,
+     "speed": 5.93
+    },
+    "n_crashes": 2,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   },
+   {
+    "seed": 7431089,
+    "expected": null,
+    "live": null,
+    "n_crashes": 0,
+    "match": true,
+    "drained": true,
+    "collisions": 0,
+    "teleports": 0
+   }
+  ],
+  "crash_days": 5,
+  "all_drained": true,
+  "collisions": 0
+ }
+}

@@ -123,3 +123,11 @@ None.
   - About 45 fixes at once can bring new bugs; the re-review of the diff covers this.
 - Confirmed issues: none yet.
 - Status: holds.
+
+### V216. Weather row D: k_s adopted (2026-10-31)
+- Decision: none beyond the V207 rule; k_s adopted automatically because the live check matched 10 of 10 days per wet state with p_max < 1.
+- Potential challenges:
+  - R = 1.71 is one literature ratio; the report rows 1.31 and 2.11 bracket it.
+  - 10 live days per state check the code path, not the crash rate.
+- Confirmed issues: none yet.
+- Status: holds.
