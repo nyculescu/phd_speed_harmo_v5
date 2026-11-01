@@ -242,7 +242,7 @@ class _FakeLS:
                                        setMaxSpeed=self._set,
                                        getLeader=lambda v, d: self.veh[v].get("lead", ("", -1.0)),
                                        getDistance=lambda v: self.veh[v].get("d", 0.0),
-                                       getAllowedSpeed=lambda v: self.veh[v].get("allowed", min(self.veh[v]["max"], ct.V_ALKS)))
+                                       getAllowedSpeed=lambda v: self.veh[v].get("allowed", min(self.veh[v]["max"], 27.78)))
         self.inductionloop = None
 
     def _set(self, v, s):
@@ -401,6 +401,7 @@ def test_alks_allowed_speed_mismatch_is_counted(monkeypatch):
     veh["a"]["x"] = 900.0
     h.step(0.2)
     assert h.n["restores"] == 1 and h.n["restore_mismatch"] == 0 and h.n["allowed_mismatch"] == 1
+    assert h.summary()["allowed_max_dev"] == pytest.approx(ct.V_ALKS - 20.0, abs=1e-4)
 
 
 def test_kinematic_amber_after_a_green():

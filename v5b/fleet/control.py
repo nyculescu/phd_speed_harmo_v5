@@ -350,7 +350,7 @@ class SumoALKS:
         self.own, self.last, self.v_prev, self.over = {}, {}, {}, {}
         self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "allowed_mismatch": 0, "restores": 0,
                   "compliant_steps": 0}
-        self.max_decel = self.max_decel_all = 0.0
+        self.max_decel = self.max_decel_all = self.allowed_dev = 0.0
         self.at_hold = {}                  # speed minus c when first seen in the held stretch
         self.hold_free = []                # (t, speed minus c) per second in the held stretch, no leader within 120 m
         self.hold_bins = {}                # leader-gap bin -> (sum of speed minus c, seconds), report-only
@@ -423,7 +423,9 @@ class SumoALKS:
             self.n["restores"] += 1
             if abs(ls.vehicle.getMaxSpeed(v) - own) > 1e-9:
                 self.n["restore_mismatch"] += 1
-            if abs(ls.vehicle.getAllowedSpeed(v) - min(own, self.desired[v])) > 1e-3:
+            dev = abs(ls.vehicle.getAllowedSpeed(v) - min(own, self.desired[v]))
+            self.allowed_dev = max(self.allowed_dev, dev)
+            if dev > 0.01:                   # the net file rounds lane speeds to 0.01 m/s (27.78 for 100 km/h)
                 self.n["allowed_mismatch"] += 1
             lead = ls.vehicle.getLeader(v, 200.0)
             self.released[v] = [ls.vehicle.getDistance(v), round(lead[1], 1) if lead and lead[0] else None, 0.0]
@@ -447,7 +449,7 @@ class SumoALKS:
         return {"setpoint": self.law.setpoint, "k_i": self.law.k_i, "b_min": self.law.b_min, "fixed_b": self.law.fixed_b,
                 "zone": self.zone, "x_cmd": round(self.x_cmd, 1), "x_hold": round(self.x_hold, 1), "loop": self.loop,
                 "alks_seconds": round(self.n["cmd_steps"] * STEP, 1), **self.n, "max_decel": round(self.max_decel, 3),
-                "max_decel_any_cause": round(self.max_decel_all, 3), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
+                "max_decel_any_cause": round(self.max_decel_all, 3), "allowed_max_dev": round(self.allowed_dev, 4), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
                 "hold_excess_p95": (round(float(sorted(max(0.0, x) for x in self.at_hold.values())
                                              [int(0.95 * (len(self.at_hold) - 1))]), 3) if self.at_hold else None),
                 "hold_free_mean": (round(sum(x for _, x in self.hold_free) / len(self.hold_free), 3)
