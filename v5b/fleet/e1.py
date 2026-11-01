@@ -212,7 +212,7 @@ def wave2c(cal: dict, l_bar_m: float) -> list:
 
 
 SMOKE_CONST = {"meter": {"STOP_DECEL": 3.0, "STOP_MARGIN": 5.0, "AMBER_CAR": 1.0, "AMBER_ONSET": 5.0, "G_MIN": 2.0,
-                         "G_MAX": 4.0, "NEAR_SPEED": 3.0},                         # V213 §3.2, V226, V228
+                         "G_MAX": 4.0, "NEAR_SPEED": 3.0, "APPROACH_SPEED": 3.0, "SKIP_SERVED": True},   # V226, V228
                "alks": {"A_CAP": 1.5, "V_ALKS": 100.0 / 3.6, "ZONE_END": 892.0, "FREE_GAP": 120.0}}
 SMOKE_HOURS = "15,17"
 

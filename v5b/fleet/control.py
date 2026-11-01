@@ -27,6 +27,7 @@ OWED_CAP = 2.0
 NEAR_LINE, NEAR_SPEED = 15.0, 3.0  # a vehicle waits at the line: within 15 m of it, below 3 m/s
 STOP_DECEL, STOP_MARGIN = 3.0, 5.0  # V228 kinematic amber: faster than 3 m/s within v²/(2·3.0) + 5 m (SUMO's
                                     # tls.yellow.min-decel; a 1-s amber inside that zone gives emergency braking)
+APPROACH_SPEED, SKIP_SERVED = NEAR_SPEED, True   # who counts as approaching (V230 diagnostic varies them)
 BLOCK_SPEED, BLOCK_TAIL = 2.0, 50.0
 FREE_GAP = 120.0                   # m: SUMO's ACC is in speed control only beyond 120 m (MSCFModel_ACC.cpp; V220)
 GAP_BINS = (100.0, 120.0, 150.0, 200.0)
@@ -321,9 +322,10 @@ class SumoMeter:
         self.prev = cur
         close = [v for v in cur if self.len - ls.vehicle.getLanePosition(v) <= NEAR_LINE]
         n_near = sum(1 for v in close if ls.vehicle.getSpeed(v) < NEAR_SPEED)
-        approach = shown == "G" and any(sp > NEAR_SPEED and self.len - ls.vehicle.getLanePosition(v)
+        approach = shown == "G" and any(sp > APPROACH_SPEED and self.len - ls.vehicle.getLanePosition(v)
                                         <= sp * sp / (2.0 * STOP_DECEL) + STOP_MARGIN
-                                        for v in cur - self.served for sp in (ls.vehicle.getSpeed(v),))
+                                        for v in (cur - self.served if SKIP_SERVED else cur)
+                                        for sp in (ls.vehicle.getSpeed(v),))
         wait = max((t - self.enter[v] - self.free for v in cur), default=0.0)
         if abs(t / 30.0 - round(t / 30.0)) < 1e-6:
             self.m.queue_check(ls.inductionloop.getLastIntervalOccupancy("ramp_q_r_0"))
@@ -340,7 +342,8 @@ class SumoMeter:
         w = sorted(self.waits)
         return {**self.m.summary(), "loop": self.loop, "window": self.n_win * 30.0,
                 "constants": {"STOP_DECEL": STOP_DECEL, "STOP_MARGIN": STOP_MARGIN, "AMBER_CAR": AMBER_CAR,
-                              "AMBER_ONSET": AMBER_ONSET, "G_MIN": G_MIN, "G_MAX": G_MAX, "NEAR_SPEED": NEAR_SPEED},
+                              "AMBER_ONSET": AMBER_ONSET, "G_MIN": G_MIN, "G_MAX": G_MAX, "NEAR_SPEED": NEAR_SPEED,
+                              "APPROACH_SPEED": APPROACH_SPEED, "SKIP_SERVED": SKIP_SERVED},
                 "max_red_exposure_s": self.max_red_exposure,
                 "wait_max_s": w[-1] if w else None, "wait_p95_s": w[int(0.95 * (len(w) - 1))] if w else None,
                 "waits_over_240": sum(1 for x in w if x > 240.0), "n_waits": len(w), "waits": self.waits,
