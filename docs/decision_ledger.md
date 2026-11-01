@@ -212,4 +212,12 @@ None.
   - The 3-min mean adds about 1 min of lag to PI-ALINEA.
   - A third T0 meter run goes beyond the protocol's "repeat once".
 - Confirmed issues: none yet.
-- Status: implementing.
+- Status: done; results in V227.
+
+### V227. Wave 2c results (2026-11-01)
+- Decision: none beyond the V226 fallback (PI-ALINEA dropped).
+- Potential challenges:
+  - The kinematic-amber threshold is below SUMO's yellow decision distance at ramp speed.
+  - The T0 ratio counts a minute in which the meter had nobody to release.
+- Confirmed issues: an allowed-speed tolerance below the net's 0.01 m/s rounding (fixed, `bb12c7a`).
+- Status: open (T0 meter).
