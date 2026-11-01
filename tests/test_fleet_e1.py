@@ -143,3 +143,12 @@ def test_gain_choice_rules():
     t = [60.0 * i for i in range(120)]
     x = ([900.0] * 25 + [250.0] * 10 + [900.0] * 10 + [250.0] * 10 + [900.0] * 10 + [250.0] * 10 + [900.0] * 45)
     assert e1.max_swings_per_hour(t, x, [True] * 120, 850.0, 300.0) == 3   # 3 swings across a clock-hour edge
+
+
+def test_wave1b_and_n_rule():
+    js = e1.wave1b(5.22)
+    assert all(j["stage"] == e1.W1B for j in js)
+    assert not any(j["cell"] == "R" and j["arm"] == "nc" and j["point"] == "base" for j in js)
+    assert sum(j["cell"] == "I" and j["point"] == "base" for j in js) == 20
+    assert {j["arm"] for j in js} >= {"t0_meter", "t0_alks", "smoke_mc", "nc"}
+    assert e1.pick_n([10, 15]) == 15 and e1.pick_n([10, None]) == 20 and e1.pick_n([None, None]) == 20

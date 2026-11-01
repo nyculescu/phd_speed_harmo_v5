@@ -139,6 +139,21 @@ def wave1(l_bar_m: float) -> list:
     return js
 
 
+def wave1b(l_bar_m: float) -> list:
+    """V215: the wave-1 jobs that used the stop-held blocker or the pre-review controllers, re-run from the fixed
+    code into stage0_w1b (I days, I slice, smoke, T0 and their NC R slices); the NC R days stand."""
+    return [dict(j, stage=W1B) for j in wave1(l_bar_m)
+            if j["cell"] == "I" or j["arm"] in ("t0_meter", "t0_alks") or (j["arm"], j["point"]) == ("nc", "slice")]
+
+
+W1B = "stage0_w1b"
+
+
+def pick_n(ns: list) -> int:
+    """§9.3: both cells use the larger n; a cell without 0.80 power at 20 (None) still runs at 20."""
+    return 20 if None in ns else max(ns)
+
+
 def _day(st: Path, cell: str, arm: str, point: str, seed: int, ss: int | None = None) -> dict | None:
     p = st / cell / arm / point / f"ss{ss or seed}" / f"day_s{seed}.json"
     return json.loads(p.read_text()) if p.exists() else None
@@ -177,19 +192,23 @@ def meter_ratio(m: dict, min_queue: int = 3) -> list:
             for i in range(0, len(clean) - 4, 5)]
 
 
-def report_w1(root: Path = ROOT) -> dict:
-    """§10.3 criteria on wave 1. Reads checks only: no controller outcome (delay of a controlled run) is used."""
+def report_w1(root: Path = ROOT, r_only: bool = False) -> dict:
+    """§10.3 criteria on wave 1. Reads checks only: no controller outcome (delay of a controlled run) is used.
+    NC R days come from stage0_w1, everything else from stage0_w1b (V215). r_only: the R-day checks and the
+    calibration that wave 2a needs."""
     from v5b.fleet import e1_analysis as ea
-    st = root / "stage0_w1"
+    st, sb = root / "stage0_w1", root / W1B
     ref = json.loads((REPO_ROOT / "docs/research/results/fleet_v190_tpoff_v0.json").read_text())["reference_days"]
     out, stop = {}, []
-    base = {c: {s: _day(st, c, "nc", "base", s) for s in THROWAWAY} for c in ("R", "I")}
-    twin = {c: {s: _day(st, c, "nc", "base", s, s + TWIN) for s in THROWAWAY} for c in ("R", "I")}
-    missing = [(c, s) for c in ("R", "I") for s in THROWAWAY if base[c][s] is None or twin[c][s] is None]
+    cells = ("R",) if r_only else ("R", "I")
+    src = {"R": st, "I": sb}
+    base = {c: {s: _day(src[c], c, "nc", "base", s) for s in THROWAWAY} for c in cells}
+    twin = {c: {s: _day(src[c], c, "nc", "base", s, s + TWIN) for s in THROWAWAY} for c in cells}
+    missing = [(c, s) for c in cells for s in THROWAWAY if base[c][s] is None or twin[c][s] is None]
     if missing:
         return {"incomplete": missing}
     out["validity"] = {c: {"base": sum(valid(d) for d in base[c].values()), "twin": sum(valid(d) for d in twin[c].values())}
-                       for c in ("R", "I")}
+                       for c in cells}
     if any(v != 10 for c in out["validity"].values() for v in c.values()):
         stop.append("invalid NC day")
     inert = {s: base["R"][s]["hash"] == ref[f"day_s{s}"]["hash"] for s in THROWAWAY}
@@ -197,7 +216,7 @@ def report_w1(root: Path = ROOT) -> dict:
     if out["inert_hashes_match"] != 10:
         stop.append("NC R days do not reproduce the V198 hashes")
     tw = {c: {"route_same": sum(base[c][s]["route_sha1"] == twin[c][s]["route_sha1"] for s in THROWAWAY),
-              "hash_differs": sum(base[c][s]["hash"] != twin[c][s]["hash"] for s in THROWAWAY)} for c in ("R", "I")}
+              "hash_differs": sum(base[c][s]["hash"] != twin[c][s]["hash"] for s in THROWAWAY)} for c in cells}
     out["twins"] = tw
     if any(v != 10 for c in tw.values() for v in c.values()):
         stop.append("twin check")
@@ -212,18 +231,25 @@ def report_w1(root: Path = ROOT) -> dict:
     out["calibration"] = cal
     if cal["stop"]:
         stop.append("calibration: onset, drop loop or alinea_3 test")
+    jl = root / "w1_jobs.json"
+    out["l_bar_m"] = json.loads(jl.read_text())["l_bar_m"] if jl.exists() else None
+    if r_only:
+        out["stop"] = stop
+        return out
     out["power"] = {}
-    for c in ("R", "I"):
+    for c in cells:
         dn = np.array([base[c][s]["d_all"] for s in THROWAWAY])
         d0 = dn - np.array([twin[c][s]["d_all"] for s in THROWAWAY])
         sc = float(np.std(d0, ddof=1) / np.median(dn))
         ch = ea.choose_n(sc)
-        ch["noise_floors"] = ea.noise_floors(sc, ch["n"] or 20)
-        ch["median_D_NC"] = float(np.median(dn))
+        ch["s"], ch["median_D_NC"] = sc, float(np.median(dn))
         out["power"][c] = ch
-    ns = [out["power"][c]["n"] for c in ("R", "I")]
-    out["n"] = max(n for n in ns if n is not None) if any(n is not None for n in ns) else 20
-    out["underpowered_cells"] = [c for c in ("R", "I") if out["power"][c]["n"] is None]
+    ns = [out["power"][c]["n"] for c in cells]
+    out["underpowered_cells"] = [c for c in cells if out["power"][c]["n"] is None]
+    # §9.3: an underpowered cell still runs at 20, and both cells use the larger n; floors at the n that runs
+    out["n"] = pick_n(ns)
+    for c in cells:
+        out["power"][c]["noise_floors"] = ea.noise_floors(out["power"][c]["s"], out["n"])
     out["I_minus_R_D_NC"] = {s: round(base["I"][s]["d_all"] - base["R"][s]["d_all"], 2) for s in THROWAWAY}
     pre = {}
     for s in THROWAWAY:
@@ -244,11 +270,11 @@ def report_w1(root: Path = ROOT) -> dict:
     e = out["eta_hold"]                        # V215 A1: the held blocker replaced the stop hold
     if e is None or not (abs(e["eta_median"] - 0.54) <= 0.05 and e["n_valid"] >= 8):
         stop.append("blocker eta check")
-    out["T0"] = t0_report(st)
+    out["T0"] = t0_report(sb)
     stop += [f"T0 {k}" for k, v in out["T0"].items() if not v.get("pass", True)]
     sm = {}
     for k in ("ma", "mp", "c", "mc"):
-        d = _day(st, "I", f"smoke_{k}", "provisional", THROWAWAY[1])
+        d = _day(sb, "I", f"smoke_{k}", "provisional", THROWAWAY[1])
         sm[k] = None if d is None else {
             "valid": valid(d), "blocker_stopped": bool(d["blocker"] and d["blocker"].get("x_stop")),
             "schema": all(d.get(x) is not None for x in ("d_all", "d_ramp", "served", "ttt_w_h", "loops30", "route_sha1",
@@ -258,8 +284,6 @@ def report_w1(root: Path = ROOT) -> dict:
     if any(v is None or not (v["valid"] and v["blocker_stopped"] and v["schema"]) for v in sm.values()):
         stop.append("smoke")
     out["wall_s_I_days"] = [base["I"][s]["wall_s"] for s in THROWAWAY]
-    jl = root / "w1_jobs.json"
-    out["l_bar_m"] = json.loads(jl.read_text())["l_bar_m"] if jl.exists() else None
     out["stop"] = stop
     return out
 
@@ -833,14 +857,14 @@ def main(argv_=None) -> int:
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1", "w2a", "w2b", "A1", "A2", "B1", "B2", "C"), required=True)
+    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2b", "A1", "A2", "B1", "B2", "C"), required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
     m.add_argument("--cal", help="wave-1 report JSON (for w2a)")
     m.add_argument("--stage-report", help="stage report JSON (for B1, B2, C)")
     m.add_argument("--rule2", action="store_true")
     rp = sub.add_parser("report")
-    rp.add_argument("--wave", choices=("w1", "w2a", "w2b", "stage", "verdict"), required=True)
+    rp.add_argument("--wave", choices=("cal", "w1", "w2a", "w2b", "stage", "verdict"), required=True)
     rp.add_argument("--out", required=True)
     rp.add_argument("--freeze")
     rp.add_argument("--cal")
@@ -856,6 +880,9 @@ def main(argv_=None) -> int:
         if a.wave == "w1":
             lb = l_bar()
             js, extra = wave1(lb), {"l_bar_m": lb}
+        elif a.wave == "w1b":
+            lb = json.loads((ROOT / "w1_jobs.json").read_text())["l_bar_m"]
+            js, extra = wave1b(lb), {"l_bar_m": lb}
         elif a.wave == "w2a":
             js, extra = wave2a(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2b":
@@ -872,8 +899,8 @@ def main(argv_=None) -> int:
         Path(a.out).write_text(json.dumps({**extra, "jobs": js}, indent=1))
         print(f"{len(js)} jobs")
         return 0
-    if a.wave == "w1":
-        rep = report_w1()
+    if a.wave in ("cal", "w1"):
+        rep = report_w1(r_only=a.wave == "cal")
     elif a.wave == "w2a":
         rep = report_w2a(cal["calibration"], cal["l_bar_m"])
     elif a.wave == "w2b":
