@@ -310,4 +310,6 @@ def test_gain_stats_on_a_meter_slice():
          "meter": {"log": log, "law": {"setpoint": 12.0}}}
     s = e1.gain_stats(d, "alinea")
     assert s["acts"] and s["first_active"] == 46800 + 1800 and s["onset"] is None and s["lead"]
+    idle = {**d, "meter": {"log": [r[:6] + (0,) + r[7:] for r in log], "law": {"setpoint": 12.0}}}
+    assert not e1.gain_stats(idle, "alinea")["acts"]                       # r_law < 900 while resting green
     assert s["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)

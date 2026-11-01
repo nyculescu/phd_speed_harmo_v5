@@ -521,7 +521,7 @@ def gain_stats(d: dict, law: str) -> dict:
     else:
         m = d["meter"]
         t, x, o = [r[0] for r in m["log"]], [r[1] for r in m["log"]], [r[3] for r in m["log"]]
-        act = [r[1] < ct.R_MAX for r in m["log"]]               # §10.4: acts = r < 900
+        act = [bool(r[6]) for r in m["log"]]        # §10.4 r < 900 is the applied rate: 900 while resting green
         sw = max_swings_per_hour(t, x, act, 850.0, 300.0)
         ref = m["law"]["setpoint"]
     on = [ti for ti, a_ in zip(t, act) if a_]
