@@ -28,6 +28,8 @@ THROWAWAY = tuple(range(7430040, 7430050))
 L_BAR_SEED = 7430040
 WAVE1_PROVISIONAL_O = 20.0          # placeholder setpoint for the smoke days (§10.2); outcomes are not read
 WANG, CONSERVATIVE = (100.0, 4.0), (60.0, 1.0)   # PI-ALINEA K_P, K_I in km·lane/h (§3.2)
+PI_WINDOW = 180.0                  # V226: PI-ALINEA reads the 3-min mean drop-loop occupancy
+HOLD_MARGIN = 60.0                 # V226: the T0 hold test skips breakdown episodes ± 60 s
 
 
 def job(stage: str, cell: str, arm: str, point: str, seed: int, ss: int | None = None, ctrl: dict | None = None,
@@ -160,7 +162,7 @@ def meter_ctrl(law: str, o: float, overrides: bool = True, k_r: float = 70.0, pi
         return {"law": "alinea", "loop": "alinea", "setpoint": o, "k_r": k_r, "overrides": overrides}
     k_p, k_i = ct.pi_gains(*pi, l_bar_m)
     return {"law": "pi", "loop": "drop", "setpoint": o, "k_p": round(k_p, 4), "k_i": round(k_i, 4),
-            "overrides": overrides}
+            "overrides": overrides, "window": PI_WINDOW}
 
 
 def alks_ctrl(o: float | None, zone: str = "long", k_i: float = 0.02, b_min: float = ct.B_MIN,
@@ -200,6 +202,13 @@ def wave1b(l_bar_m: float) -> list:
 
 
 W1B = "stage0_w1b"
+
+
+def wave2c(cal: dict, l_bar_m: float) -> list:
+    """V226: the T0 meter and ALKS slices, the meter gain check and the self-reaction slices again, after the
+    kinematic amber, the PI-ALINEA input window and the ALKS T0 measures (their old results are archived first)."""
+    return ([j for j in wave1b(l_bar_m) if j["arm"] in ("t0_meter", "t0_alks")]
+            + [j for j in wave2a(cal, l_bar_m) if j["arm"] in ("gain_alinea", "gain_pi", "self_alks")])
 
 
 def pick_n(ns: list) -> int:
@@ -396,6 +405,17 @@ def _ttc_behind(st: Path, cell: str, arm: str, point: str, seed: int, ids: set) 
     return int(sum(f"main.{i}" in ids for i in lead))
 
 
+def hold_uncongested(d: dict, blockage: bool = False) -> list:
+    """V226 (V215 A5): speed minus c of free held ALKS in seconds outside the run's own drop-loop breakdown
+    episodes ± 60 s; blockage = True (report-only) also skips the blocker's stop."""
+    from v5b.fleet.e1_analysis import _episodes
+    ep = _episodes(d["series"], 7)
+    if blockage and d.get("blocker"):
+        ep.append((d["blocker"]["t"], d["blocker"]["t"] + d["blocker"]["duration"]))
+    return [x for t, x in d["alks"].get("hold_free", [])
+            if not any(a - HOLD_MARGIN <= t <= b + HOLD_MARGIN for a, b in ep)]
+
+
 def t0_report(st: Path) -> dict:
     """§10.3 T0 meter and CAV criteria against the paired NC slices."""
     a, b = THROWAWAY[0], THROWAWAY[1]
@@ -417,7 +437,7 @@ def t0_report(st: Path) -> dict:
              "braking_nc": braking_by_lane(out_dir(st, "R", "nc", "slice", s) / f"sumo_s{s}.log"),
              "ramp_flow_differs": _flow(d, "ramp_out") != _flow(n, "ramp_out"),
              "alinea_occ_differs": _occ(d, "alinea") != _occ(n, "alinea"),
-             "merge": _scalars(d["ramp_merge"]), "merge_nc": _scalars(n["ramp_merge"])}
+             "merge": _scalars(d["ramp_merge"]), "merge_nc": _scalars(n["ramp_merge"]), "amber_kin": m.get("amber_kin")}
         common = (r["red_passages"] == 0 and r["contacts"] == 0 and r["intrusions_ramp"] == 0
                   and r["braking"] is not None and r["braking_nc"] is not None and r["braking"] <= r["braking_nc"]
                   and r["ramp_flow_differs"] and r["alinea_occ_differs"])
@@ -435,18 +455,24 @@ def t0_report(st: Path) -> dict:
             continue
         k = d["alks"]
         free = [v for v, g in k["recovery"] if g is None or g > 100.0]
-        r = {"cap_violations": k["cap_violations"], "restore_mismatch": k["restore_mismatch"], "compliance": k["compliance"],
+        unc = hold_uncongested(d)
+        r = {"cap_violations": k["cap_violations"], "restore_mismatch": k["restore_mismatch"],
+             "allowed_mismatch": k.get("allowed_mismatch"), "compliance": k["compliance"],
              "max_decel": k["max_decel"], "hold_excess_p95": k["hold_excess_p95"],
-             "hold_free_mean": k.get("hold_free_mean"), "hold_free_n": k.get("hold_free_n", 0),
+             "hold_free_mean_all": k.get("hold_free_mean"), "hold_free_n_all": k.get("hold_free_n", 0),
+             "hold_free_mean": round(float(np.mean(unc)), 3) if unc else None, "hold_free_n": len(unc),
              "recovered_share": round(sum(v >= 0.9 for v in free) / len(free), 3) if free else None, "n_free": len(free),
              "drop_flow_differs": _flow(d, "drop") != _flow(n, "drop") or _occ(d, "drop") != _occ(n, "drop"),
              "contacts": d["contacts"], "max_decel_any_cause": k["max_decel_any_cause"],
              "ttc15_behind_commanded": _ttc_behind(st, cell, "t0_alks", "b0.5_long", a, set(k["commanded_ids"])),
              "ttc15_behind_same_ids_nc": _ttc_behind(st, cell, "nc", "slice", a, set(k["commanded_ids"]))}
-        r["pass"] = (r["cap_violations"] == 0 and r["restore_mismatch"] == 0 and (r["compliance"] or 0) >= 0.95
-                     and r["max_decel"] <= 1.6 and r["hold_free_n"] >= HOLD_MIN_N
+        r["pass"] = (r["cap_violations"] == 0 and r["restore_mismatch"] == 0 and r["allowed_mismatch"] == 0
+                     and (r["compliance"] or 0) >= 0.95 and r["max_decel"] <= 1.6 and r["hold_free_n"] >= HOLD_MIN_N
                      and abs(r["hold_free_mean"]) <= 1.0 and r["drop_flow_differs"] and r["contacts"] == 0)
-        r["recovery_note"] = "report-only in PM slices; the recovery stop rule runs on the wave-2a off-peak slices (V215 A5)"
+        if cell == "I":
+            u = hold_uncongested(d, blockage=True)
+            r["hold_free_mean_outside_blockage"] = (round(float(np.mean(u)), 3) if u else None, len(u))
+        r["recovery_note"] = "report-only (V226); the exact-restore stop rule also runs on the off-peak slices"
         res[f"alks_{cell}"] = r
     return res
 
@@ -520,7 +546,8 @@ def gain_stats(d: dict, law: str) -> dict:
         ref = a["setpoint"]
     else:
         m = d["meter"]
-        t, x, o = [r[0] for r in m["log"]], [r[1] for r in m["log"]], [r[3] for r in m["log"]]
+        # the RMS is on the raw 60-s occupancy (element 11), not on a filtered law input (V226)
+        t, x, o = [r[0] for r in m["log"]], [r[1] for r in m["log"]], [r[11] if len(r) > 11 else r[3] for r in m["log"]]
         act = [bool(r[6]) for r in m["log"]]        # §10.4 r < 900 is the applied rate: 900 while resting green
         sw = max_swings_per_hour(t, x, act, 850.0, 300.0)
         ref = m["law"]["setpoint"]
@@ -572,15 +599,19 @@ def report_w2a(cal: dict, l_bar_m: float, root: Path = ROOT) -> dict:
         on = [o for t, o in zip(*loop_arrays(c, cal["drop_loop"])[::2])]
         off = [o for t, o in zip(*loop_arrays(n, cal["drop_loop"])[::2])]
         free = [v for v, g in c["alks"]["recovery"] if g is None or g > 100.0]
+        k = c["alks"]
         sr[s] = {"occ_rise": float(np.mean(on) / np.mean(off) - 1.0) if np.mean(off) > 0 else None,
                  "recovered_share": round(sum(v >= 0.9 for v in free) / len(free), 3) if free else None,
-                 "n_free": len(free)}
+                 "n_free": len(free), "restores": k["restores"], "restore_mismatch": k["restore_mismatch"],
+                 "allowed_mismatch": k.get("allowed_mismatch")}
     out["self_reaction"] = sr
     rises = [v["occ_rise"] for v in sr.values() if v["occ_rise"] is not None]
     out["c_loop"] = "dropend" if rises and np.median(rises) > 0.10 and cal["tests"]["dropend"]["pass"] else cal["drop_loop"]
-    out["recovery_pass"] = len(sr) == len(GAIN_SEEDS) and all((v["recovered_share"] or 0) >= 1.0 for v in sr.values())
+    # V226: the stop rule is the exact restore; the recovered share is report-only
+    out["recovery_pass"] = len(sr) == len(GAIN_SEEDS) and all(
+        v["restores"] > 0 and v["restore_mismatch"] == 0 and v["allowed_mismatch"] == 0 for v in sr.values())
     out["stop"] = ([f"gain: no admissible {law} candidate" for law in ("alinea", "pi", "mtfc") if out[law].get("stop")]
-                   + ([] if out["recovery_pass"] else ["ALKS recovery test (V215 A5)"]))
+                   + ([] if out["recovery_pass"] else ["ALKS exact-restore test (V226)"]))
     return out
 
 
@@ -1129,7 +1160,7 @@ def main(argv_=None) -> int:
     r.add_argument("--jobs", required=True, help="job list JSON")
     r.add_argument("--workers", type=int, default=16)
     m = sub.add_parser("make")
-    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
+    m.add_argument("--wave", choices=("w1", "w1b", "w2a", "w2c", "w2b", "A1", "Arep", "A2", "B1", "B2", "C1", "C2"),
                    required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--freeze", help="JSON with the stage-0 values (o_cr, drop_loop, c_loop, gains, l_bar, n)")
@@ -1157,6 +1188,8 @@ def main(argv_=None) -> int:
             js, extra = wave1b(lb), {"l_bar_m": lb}
         elif a.wave == "w2a":
             js, extra = wave2a(cal["calibration"], cal["l_bar_m"]), {}
+        elif a.wave == "w2c":
+            js, extra = wave2c(cal["calibration"], cal["l_bar_m"]), {}
         elif a.wave == "w2b":
             js, extra = wave2b(fz), {}
         elif a.wave == "A1":

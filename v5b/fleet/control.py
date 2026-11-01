@@ -1,7 +1,9 @@
 """E1 controllers on ramp32 (V213, docs/research/protocols/e1_headroom.md §3).
 
 Meter at TLS 'rm': ALINEA at 'alinea_3' or PI-ALINEA at the drop loop, the 150-s queue law, the V190 bounds and
-overrides, and a red-rest actuator (one short green per waiting vehicle, 5-s amber at metering onset). ALKS rule:
+overrides, and a red-rest actuator (one short green per waiting vehicle, 5-s amber at metering onset and, after a
+green, whenever a vehicle approaches within its stopping distance; V226). PI-ALINEA reads the 3-min mean occupancy
+(V226). ALKS rule:
 I-type MTFC on the drop loop, a cap profile that tapers at 1.5 m/s^2 so the cap holds over the zone, applied every
 0.1-s step. MC*: a cascade when both laws use the drop loop. Meter, MTFC and the cap profile are pure; SumoMeter,
 SumoALKS and LoopBank read and write libsumo.
@@ -23,9 +25,11 @@ WAIT_ON, WAIT_OFF = 210.0, 150.0   # backstop on the longest wait at the meter, 
 G_MIN, G_MAX, AMBER_CAR, AMBER_ONSET = 2.0, 4.0, 1.0, 5.0
 OWED_CAP = 2.0
 NEAR_LINE, NEAR_SPEED = 15.0, 3.0  # a vehicle waits at the line: within 15 m of it, below 3 m/s
+STOP_DECEL, STOP_MARGIN = 4.5, 5.0  # V226 kinematic amber: an approach faster than 3 m/s within v²/(2·4.5) + 5 m
 BLOCK_SPEED, BLOCK_TAIL = 2.0, 50.0
 FREE_GAP = 120.0                   # m: SUMO's ACC is in speed control only beyond 120 m (MSCFModel_ACC.cpp; V220)
 GAP_BINS = (100.0, 120.0, 150.0, 200.0)
+RECOVERY_SPAN = 300.0              # m after release (§10.3)
 
 V_ALKS = 100.0 / 3.6               # ALKS desired speed (sf 1.0)
 A_CAP = 1.5
@@ -83,10 +87,11 @@ class Meter:
         self.p_rel = 0
         self.p_cmd = self.p_s = 0.0
         self.n = {"red_phases": 0, "red_passages": 0, "override_s": 0, "backstop_s": 0, "dlim_s": 0,
-                  "metering_s": 0, "owed_s": 0, "owed_released": 0}
+                  "metering_s": 0, "owed_s": 0, "owed_released": 0, "amber_kin": 0}
         self.log = []
 
-    def update(self, t: float, o: float, n_q: int, q_arr: float) -> None:
+    def update(self, t: float, o: float, n_q: int, q_arr: float, o_raw: float | None = None) -> None:
+        """o: the law's input; o_raw: the 60-s occupancy, logged for the RMS (default o)."""
         realised = self.p_rel * 60.0
         clean = self.p_red and not self.p_dlim           # §3.2: metered, no downstream-limited second
         r_s = self.r_law if clean else clip(realised, R_MIN, R_MAX)
@@ -108,7 +113,7 @@ class Meter:
         applied = self.p_cmd / self.p_s if self.p_s else None
         self.log.append((round(t), round(self.r_law, 1), round(realised, 1), round(o, 2), n_q, round(q_arr, 1),
                          int(self.metering), int(self.p_ovr), int(self.backstop), int(self.p_dlim),
-                         None if applied is None else round(applied, 1)))
+                         None if applied is None else round(applied, 1), round(o if o_raw is None else o_raw, 2)))
         self.p_cmd = self.p_s = 0.0
         self.o_prev = o
         self.p_red = self.p_dlim = self.p_ovr = False
@@ -124,9 +129,10 @@ class Meter:
             self.override = False
 
     def step(self, t: float, rel: int, n_near: int, dn_blocked: bool, longest_wait: float,
-             n_close: int | None = None) -> str:
+             n_close: int | None = None, approach: bool = False) -> str:
         """rel: vehicles that left 'r' during the last second, while the signal showed self.state. n_near: vehicles
-        within 15 m of the line below 3 m/s (a green starts); n_close: within 15 m at any speed (it extends)."""
+        within 15 m of the line below 3 m/s (a green starts); n_close: within 15 m at any speed (it extends);
+        approach: a vehicle that was not waiting at the green's start is within its stopping distance (5-s amber)."""
         n_close = n_near if n_close is None else n_close
         if rel and self.state == "r":
             self.n["red_passages"] += rel
@@ -168,7 +174,8 @@ class Meter:
                 self.n["dlim_s"] += 1
                 self.p_dlim = True
             if el >= G_MIN - 1e-9 and (owed < ONE or n_close == 0 or el >= G_MAX - 1e-9):
-                self.amber = AMBER_CAR
+                self.amber = AMBER_ONSET if approach else AMBER_CAR
+                self.n["amber_kin"] += approach
                 self._set("y", t)
         elif self.state == "y":
             if el >= self.amber - 1e-9:
@@ -255,9 +262,9 @@ class LoopBank:
         j = 1 + 3 * list(self.groups).index(group) + field
         return [r[j] for r in self.rows]
 
-    def occ60(self, group: str) -> float:
-        """Mean occupancy of the last two complete 30-s intervals."""
-        x = self.col(group, 1)[-2:]
+    def occ60(self, group: str, n: int = 2) -> float:
+        """Mean occupancy of the last n complete 30-s intervals (n = 2: 60 s)."""
+        x = self.col(group, 1)[-n:]
         return sum(x) / len(x) if x else 0.0
 
     def flow5(self, group: str) -> float:
@@ -269,8 +276,11 @@ class LoopBank:
 class SumoMeter:
     """Meter on TLS 'rm' and lane 'r_0': releases, waits, red exposure and the downstream test from libsumo."""
 
-    def __init__(self, meter: Meter, bank: LoopBank, loop: str, tls: str = "rm", lane: str = "r_0"):
+    def __init__(self, meter: Meter, bank: LoopBank, loop: str, tls: str = "rm", lane: str = "r_0",
+                 window: float = 60.0):
         self.m, self.bank, self.loop, self.tls, self.lane = meter, bank, loop, tls, lane
+        self.n_win = int(round(window / 30.0))
+        self.served = set()
         self.len = ls.lane.getLength(lane)
         self.free = self.len / ls.lane.getMaxSpeed(lane)
         self.prev, self.enter, self.red_exp, self.left_at = set(), {}, {}, {}
@@ -306,12 +316,19 @@ class SumoMeter:
         self.prev = cur
         close = [v for v in cur if self.len - ls.vehicle.getLanePosition(v) <= NEAR_LINE]
         n_near = sum(1 for v in close if ls.vehicle.getSpeed(v) < NEAR_SPEED)
+        approach = shown == "G" and any(sp > NEAR_SPEED and self.len - ls.vehicle.getLanePosition(v)
+                                        <= sp * sp / (2.0 * STOP_DECEL) + STOP_MARGIN
+                                        for v in cur - self.served for sp in (ls.vehicle.getSpeed(v),))
         wait = max((t - self.enter[v] - self.free for v in cur), default=0.0)
         if abs(t / 30.0 - round(t / 30.0)) < 1e-6:
             self.m.queue_check(ls.inductionloop.getLastIntervalOccupancy("ramp_q_r_0"))
         if abs(t / 60.0 - round(t / 60.0)) < 1e-6:
-            self.m.update(t, self.bank.occ60(self.loop), len(cur), self.bank.flow5("ramp_q"))
-        s = self.m.step(t, len(left), n_near, self._dn_blocked(t) if self.m.metering else False, wait, len(close))
+            self.m.update(t, self.bank.occ60(self.loop, self.n_win), len(cur), self.bank.flow5("ramp_q"),
+                          self.bank.occ60(self.loop))
+        s = self.m.step(t, len(left), n_near, self._dn_blocked(t) if self.m.metering else False, wait, len(close),
+                        approach)
+        if s == "G" and shown != "G":
+            self.served = set(close)
         ls.trafficlight.setRedYellowGreenState(self.tls, s)
 
     def summary(self) -> dict:
@@ -331,12 +348,13 @@ class SumoALKS:
         self.x_cmd, self.x_hold = ZONES[zone]
         self.zone, self.edge = zone, edge
         self.own, self.last, self.v_prev, self.over = {}, {}, {}, {}
-        self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "restores": 0, "compliant_steps": 0}
+        self.n = {"cmd_steps": 0, "cap_violations": 0, "restore_mismatch": 0, "allowed_mismatch": 0, "restores": 0,
+                  "compliant_steps": 0}
         self.max_decel = self.max_decel_all = 0.0
         self.at_hold = {}                  # speed minus c when first seen in the held stretch
-        self.hold_free = []                # speed minus c per second in the held stretch, no leader within 120 m
+        self.hold_free = []                # (t, speed minus c) per second in the held stretch, no leader within 120 m
         self.hold_bins = {}                # leader-gap bin -> (sum of speed minus c, seconds), report-only
-        self.ever, self.released, self.recovery = set(), {}, []
+        self.ever, self.released, self.recovery = set(), {}, []   # released: vid -> [odometer, gap, best ratio]
 
     def update(self, t: float, release: bool = True) -> float:
         return self.law.update(t, self.bank.occ60(self.loop), release)
@@ -382,7 +400,7 @@ class SumoALKS:
                     lead = ls.vehicle.getLeader(v, GAP_BINS[-1])
                     gap = lead[1] if lead and lead[0] else math.inf
                     if gap > FREE_GAP:
-                        self.hold_free.append(sp - c)
+                        self.hold_free.append((round(t), round(sp - c, 3)))
                     k = sum(gap > g for g in GAP_BINS)
                     s_, n_ = self.hold_bins.get(k, (0.0, 0))
                     self.hold_bins[k] = (s_ + sp - c, n_ + 1)
@@ -405,22 +423,24 @@ class SumoALKS:
             self.n["restores"] += 1
             if abs(ls.vehicle.getMaxSpeed(v) - own) > 1e-9:
                 self.n["restore_mismatch"] += 1
-            self.released[v] = t
+            if abs(ls.vehicle.getAllowedSpeed(v) - min(own, self.desired[v])) > 1e-3:
+                self.n["allowed_mismatch"] += 1
+            lead = ls.vehicle.getLeader(v, 200.0)
+            self.released[v] = [ls.vehicle.getDistance(v), round(lead[1], 1) if lead and lead[0] else None, 0.0]
         if self.released and abs(t - round(t)) < 1e-6:
             self._recovery()
 
     def _recovery(self) -> None:
-        """T0 (§10.3): speed / desired of a released ALKS when it first reaches the next edge, with its leader gap."""
-        for v in list(self.released):
+        """T0 (§10.3, V226, report-only): the best speed / desired of a released ALKS within 300 m of its release,
+        with its leader gap at release."""
+        for v, r in list(self.released.items()):
             try:
-                road = ls.vehicle.getRoadID(v)
+                d = ls.vehicle.getDistance(v) - r[0]
+                r[2] = max(r[2], ls.vehicle.getSpeed(v) / self.desired[v])
             except ls.TraCIException:
-                self.released.pop(v)
-                continue
-            if road and road != self.edge and not road.startswith(":"):
-                lead = ls.vehicle.getLeader(v, 200.0)
-                self.recovery.append((round(ls.vehicle.getSpeed(v) / self.desired[v], 3),
-                                      round(lead[1], 1) if lead and lead[0] else None))
+                d = math.inf
+            if d >= RECOVERY_SPAN:
+                self.recovery.append((round(r[2], 3), r[1]))
                 self.released.pop(v)
 
     def summary(self) -> dict:
@@ -430,8 +450,9 @@ class SumoALKS:
                 "max_decel_any_cause": round(self.max_decel_all, 3), "compliance": round(self.n["compliant_steps"] / self.n["cmd_steps"], 4) if self.n["cmd_steps"] else None,
                 "hold_excess_p95": (round(float(sorted(max(0.0, x) for x in self.at_hold.values())
                                              [int(0.95 * (len(self.at_hold) - 1))]), 3) if self.at_hold else None),
-                "hold_free_mean": round(sum(self.hold_free) / len(self.hold_free), 3) if self.hold_free else None,
-                "hold_free_n": len(self.hold_free),
+                "hold_free_mean": (round(sum(x for _, x in self.hold_free) / len(self.hold_free), 3)
+                                   if self.hold_free else None),
+                "hold_free_n": len(self.hold_free), "hold_free": self.hold_free,
                 "hold_by_gap": {f">{([0.0] + list(GAP_BINS))[k]:g} m": (round(s_ / n_, 3), n_)
                                 for k, (s_, n_) in sorted(self.hold_bins.items())},
                 "recovery": self.recovery, "commanded_ids": sorted(self.ever), "log": self.law.log}

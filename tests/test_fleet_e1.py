@@ -313,3 +313,27 @@ def test_gain_stats_on_a_meter_slice():
     idle = {**d, "meter": {"log": [r[:6] + (0,) + r[7:] for r in log], "law": {"setpoint": 12.0}}}
     assert not e1.gain_stats(idle, "alinea")["acts"]                       # r_law < 900 while resting green
     assert s["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)
+
+
+def test_gain_stats_rms_reads_the_raw_occupancy():
+    log = [(46800 + 60 * i, 400.0, 0.0, 12.0, 5, 500.0, 1, 0, 0, 0, None, 12.0 + (i % 2)) for i in range(60)]
+    d = {"series": [(46800.0 + 30.0 * i, 25, None, 0, 0, None, None, 27.0, None) for i in range(40)],
+         "meter": {"log": log, "law": {"setpoint": 12.0}}}
+    assert e1.gain_stats(d, "pi")["rms"] == pytest.approx(((0.0 ** 2 + 1.0 ** 2) / 2) ** 0.5)
+
+
+def test_pi_reads_the_3_min_window_and_wave2c():
+    assert e1.meter_ctrl("pi", 20.0)["window"] == 180.0 and "window" not in e1.meter_ctrl("alinea", 20.0)
+    cal = {"o_cr": {"alinea": 20.0, "drop": 18.0}, "drop_loop": "drop"}
+    js = e1.wave2c(cal, 5.2)
+    assert {j["arm"] for j in js} == {"t0_meter", "t0_alks", "gain_alinea", "gain_pi", "self_alks"}
+    assert len(js) == 4 + 2 + 9 + 6 + 3
+
+
+def test_hold_test_skips_breakdown_episodes(monkeypatch):
+    from v5b.fleet import e1_analysis as ea
+    monkeypatch.setattr(ea, "_episodes", lambda ser, f: [(1000.0, 2000.0)])
+    d = {"series": [], "alks": {"hold_free": [(500, -0.2), (950, -5.0), (1500, -6.0), (2050, -4.0), (2100, -0.4)]},
+         "blocker": {"t": 2080.0, "duration": 100.0}}
+    assert e1.hold_uncongested(d) == [-0.2, -0.4]
+    assert e1.hold_uncongested(d, blockage=True) == [-0.2]

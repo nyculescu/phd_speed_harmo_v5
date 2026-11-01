@@ -164,7 +164,7 @@ WINDOWS = {"am": (7 * 3600.0, 10 * 3600.0), "pm": (15 * 3600.0, 20 * 3600.0), "d
 
 def _controllers(ctrl: dict | None, bank, dem, cp) -> tuple:
     """V213 §3. ctrl["meter"] = {law: alinea | pi | fixed, loop, setpoint, k_r | k_p, k_i (veh/h per %) | rate,
-    overrides}; ctrl["alks"] = {loop, zone: short | long, setpoint, k_i, b_min, fixed_b}; ctrl["cascade"]: the ALKS
+    overrides, window (s of occupancy the law reads)}; ctrl["alks"] = {loop, zone: short | long, setpoint, k_i, b_min, fixed_b}; ctrl["cascade"]: the ALKS
     rule waits for the meter to saturate (§3.4)."""
     if not ctrl:
         return None, None, None
@@ -175,7 +175,8 @@ def _controllers(ctrl: dict | None, bank, dem, cp) -> tuple:
         c = ctrl["meter"]
         law = ct.MeterLaw(c["law"], c.get("setpoint", 0.0), c.get("k_r", 70.0), c.get("k_p", 0.0), c.get("k_i", 0.0),
                           c.get("rate", ct.R_MAX))
-        meter = ct.SumoMeter(ct.Meter(law, c.get("overrides", True)), bank, c.get("loop", "alinea"))
+        meter = ct.SumoMeter(ct.Meter(law, c.get("overrides", True)), bank, c.get("loop", "alinea"),
+                             window=c.get("window", 60.0))
     if "alks" in ctrl:
         c = ctrl["alks"]
         law = ct.MTFC(c.get("setpoint", 0.0), c.get("k_i", 0.02), c.get("b_min", ct.B_MIN), c.get("fixed_b"))

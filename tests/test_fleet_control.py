@@ -240,7 +240,9 @@ class _FakeLS:
                                        getSpeed=lambda v: self.veh[v]["v"],
                                        getMaxSpeed=lambda v: self.veh[v]["max"],
                                        setMaxSpeed=self._set,
-                                       getLeader=lambda v, d: self.veh[v].get("lead", ("", -1.0)))
+                                       getLeader=lambda v, d: self.veh[v].get("lead", ("", -1.0)),
+                                       getDistance=lambda v: self.veh[v].get("d", 0.0),
+                                       getAllowedSpeed=lambda v: self.veh[v].get("allowed", min(self.veh[v]["max"], ct.V_ALKS)))
         self.inductionloop = None
 
     def _set(self, v, s):
@@ -314,6 +316,7 @@ def test_alks_hold_speed_counts_free_seconds_only(monkeypatch):
         h.step(k * 0.1)
     s = h.summary()
     assert s["hold_free_n"] == 1 and s["hold_free_mean"] == pytest.approx(0.4)     # 110 m: ACC still gap-closing
+    assert s["hold_free"] == [(1, pytest.approx(0.4))]
     assert s["hold_by_gap"][">100 m"] == (pytest.approx(-2.0), 1)
 
 
@@ -372,9 +375,53 @@ def test_alks_recovery_still_measured_at_b_1(monkeypatch):
     h.law.fixed_b = h.law.b = 1.0
     h.step(0.2)                                      # restored, released
     assert h.released
-    fake.vehicle.getRoadID = lambda v: "3a"
+    veh["a"]["d"] = 300.0
     h.step(1.0)
     assert h.recovery and not h.released
+
+
+def test_alks_recovery_best_ratio_within_300_m_and_gap_at_release(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 13.9, "max": 55.5, "live": True}}
+    fake, h = _alks(monkeypatch, veh)
+    h.step(0.1)
+    veh["a"]["x"], veh["a"]["lead"] = 900.0, ("x", 150.0)
+    h.step(0.2)                                      # released 150 m behind its leader
+    veh["a"].pop("lead")
+    for k, (d, v) in enumerate([(100.0, 26.0), (200.0, 24.0), (299.0, 25.0), (301.0, 27.7)]):
+        veh["a"]["d"], veh["a"]["v"] = d, v
+        h.step(float(k + 1))
+    assert h.recovery == [(round(27.7 / ct.V_ALKS, 3), 150.0)]
+    assert h.n["allowed_mismatch"] == 0
+
+
+def test_alks_allowed_speed_mismatch_is_counted(monkeypatch):
+    veh = {"a": {"x": 600.0, "v": 27.0, "max": 55.5, "live": True, "allowed": 20.0}}
+    fake, h = _alks(monkeypatch, veh)
+    h.step(0.1)
+    veh["a"]["x"] = 900.0
+    h.step(0.2)
+    assert h.n["restores"] == 1 and h.n["restore_mismatch"] == 0 and h.n["allowed_mismatch"] == 1
+
+
+def test_kinematic_amber_after_a_green():
+    for approach, amber in ((False, ct.AMBER_CAR), (True, ct.AMBER_ONSET)):
+        m = ct.Meter(ct.MeterLaw("fixed", rate=360.0), overrides=False)
+        m.update(0.0, 30.0, 5, 500.0)
+        states = [m.step(float(t), 0, 1, False, 0.0) for t in range(1, 11)]
+        assert states[-1] == "G"
+        assert m.step(12.0, 1, 0, False, 0.0, 0, approach) == "y" and m.amber == amber
+        assert m.n["amber_kin"] == approach
+
+
+def test_loop_window_and_raw_occupancy_log():
+    b = ct.LoopBank({"drop": ["d0"]})
+    b.rows = [[30 * k, 0, float(k), None] for k in range(1, 7)]
+    assert b.occ60("drop") == pytest.approx(5.5) and b.occ60("drop", 6) == pytest.approx(3.5)
+    m = ct.Meter(ct.MeterLaw("pi", setpoint=20.0, k_p=10.0, k_i=1.0))
+    m.update(60.0, 3.5, 0, 500.0, 5.5)
+    assert m.log[-1][3] == 3.5 and m.log[-1][11] == 5.5
+    m.update(120.0, 4.0, 0, 500.0)
+    assert m.log[-1][11] == 4.0
 
 
 def test_fixed_rate_keeps_its_owed_release_across_minutes():
