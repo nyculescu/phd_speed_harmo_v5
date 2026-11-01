@@ -1,7 +1,7 @@
 """E1 stage-0 diagnostic (V230, throw-away seeds, report-only): per-second trace of the meter for the T0 braking.
 
 Same arguments as `day one`; writes <out>.trace.jsonl next to the day file. Rows, every whole second:
-  ["s", t, state, owed, n_near, approach-flag]: the signal after the step;
+  ["s", t, state, owed, amber length, kinematic ambers so far]: the meter after the step;
   ["v", t, vid, distance to the line, speed, accel, leader, gap]: each vehicle on r_0.
 The trace only reads state, so the day file must match the untraced run of the same job."""
 
