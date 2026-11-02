@@ -3,6 +3,7 @@
 Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train train --out DIR --learner 0 [--updates 500] [--n-envs 8]
        python -m v5b.fleet.b_train eval --out DIR --model FILE [--seeds 20] [--workers 24]
+       python -m v5b.fleet.b_train sweep --out DIR [--seeds 20] [--workers 24]
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
 from __future__ import annotations
@@ -78,12 +79,12 @@ def _eval_one(a: tuple) -> dict:
     from stable_baselines3 import PPO
     from v5b.fleet import b_env as be
     torch.set_num_threads(1)
-    model = PPO.load(model_path, device="cpu") if model_path else None
+    model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
     env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed])
     o, _ = env.reset()
-    zero = np.zeros(be.K, int)
+    fixed = np.full(be.K, model_path or 0, int)
     while True:
-        act = model.predict(o, deterministic=True)[0] if model is not None else zero
+        act = model.predict(o, deterministic=True)[0] if model is not None else fixed
         o, r, _, tr, inf = env.step(act)
         if tr:
             break
@@ -157,7 +158,7 @@ def smoke(out: Path) -> list:
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=("smoke", "train", "eval"))
+    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=500)
@@ -174,6 +175,13 @@ def main(argv: list) -> int:
         return 1 if bad else 0
     if a.phase == "train":
         print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS), flush=True)
+        return 0
+    if a.phase == "sweep":
+        from v5b.fleet import b_env as be
+        out.mkdir(parents=True, exist_ok=True)
+        for i in range(1, len(be.OFFSETS_KMH)):
+            rep = evaluate(out, i, a.seeds, a.workers, SHARE, LEVELS)
+            (out / f"eval_const{be.OFFSETS_KMH[i]:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
     rep = evaluate(out, a.model, a.seeds, a.workers, SHARE, LEVELS)
     (out / f"eval_{Path(a.model).stem}.json").write_text(json.dumps(rep, indent=1))
