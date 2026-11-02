@@ -378,7 +378,7 @@ def stop_reasons(d: dict, cell: str) -> list:
         if rows and not 0.90 <= sum(b for _, b in rows) / sum(x for x, _ in rows) <= 1.10:
             why.append("meter actuator fault")
     if a:
-        if a["cap_violations"] or a["restore_mismatch"]:
+        if a["cap_violations"] or a["restore_mismatch"] or a.get("allowed_mismatch"):     # V226 exact restore
             why.append("ALKS invariant")
         if a["compliance"] is not None and a["compliance"] < 0.90:
             why.append("ALKS compliance below 90 %")
@@ -770,6 +770,10 @@ def lite_report(fz: dict, ext: bool = False, root: Path = ROOT) -> dict:
     missing = [(k, s) for k, v in runs.items() for s, d in zip(seeds, v) if d is None]
     if missing:
         return {"incomplete": missing[:20]}
+    codes = sorted({str(d.get("code")) for v in runs.values() for d in v})
+    if len(codes) > 1 or (root / "STOP.txt").exists():
+        return {"refused": {"codes": codes, "stop_file": (root / "STOP.txt").exists()}}
+    nc_valid = all(valid(d) for d in runs["nc/base"])
     nc = np.array([d["d_all"] for d in runs["nc/base"]])
     arms = {}
     for k in pts[1:]:
@@ -781,7 +785,9 @@ def lite_report(fz: dict, ext: bool = False, root: Path = ROOT) -> dict:
     ok = {k: v for k, v in arms.items() if v["counts"]}
     best = max(ok, key=lambda k: ok[k]["rel"]) if ok else None
     b = ok.get(best)
-    if b is None:
+    if not nc_valid:
+        direction = "NC INVALID"
+    elif b is None:
         direction = "NO VALID ARM"
     elif b["rel"] < 0.05 and b["rel_ci"][1] < 0.10:
         direction = "KILL direction"
@@ -790,7 +796,7 @@ def lite_report(fz: dict, ext: bool = False, root: Path = ROOT) -> dict:
     else:
         direction = "UNCLEAR"
     oracle = ea.effect(nc, np.min([[d["d_all"] for d in runs[k]] for k in pts], axis=0))
-    return {"n": len(seeds), "D_NC_median": float(np.median(nc)), "nc_valid": all(valid(d) for d in runs["nc/base"]),
+    return {"n": len(seeds), "D_NC_median": float(np.median(nc)), "nc_valid": nc_valid, "codes": codes,
             "nc_braking": [braking_by_lane(out_dir(root / "L", "R", "nc", "base", s) / f"sumo_s{s}.log") for s in seeds],
             "arms": arms, "best": best, "direction": direction,
             "oracle_noise_dominated": {"rel": oracle["rel"], "rel_ci": oracle["rel_ci"]}}

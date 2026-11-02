@@ -450,3 +450,25 @@ def test_lite_jobs_and_direction(tmp_path):
             _write(tmp_path, "L", "R", k, s, 400.0 if k == "nc/base" else (330.0 + i if k == "ma/p0.85" else 399.0 + i % 3))
     r = e1.lite_report(fz, root=tmp_path)
     assert r["best"] == "ma/p0.85" and r["direction"] == "GO direction"
+
+
+def test_lite_report_refuses_mixed_code_stop_and_invalid_nc(tmp_path):
+    fz = {"o_cr": {"alinea": 6.6, "drop": 10.7}, "drop_loop": "drop", "c_loop": "drop", "l_bar": 5.2,
+          "gains": {"k_r": 70.0, "pi": None, "k_i": 0.02}, "n": 10}
+    for k in ["nc/base", *e1.grid(fz)]:
+        for i, s in enumerate(e1.main_seeds(10)):
+            _write(tmp_path, "L", "R", k, s, 400.0 if k == "nc/base" else 330.0 + i, code="a")
+    assert e1.lite_report(fz, root=tmp_path)["direction"] == "GO direction"
+    _write(tmp_path, "L", "R", "nc/base", e1.main_seeds(10)[0], 400.0, code="a", teleports=1)
+    assert e1.lite_report(fz, root=tmp_path)["direction"] == "NC INVALID"
+    _write(tmp_path, "L", "R", "ma/p0.85", e1.main_seeds(10)[0], 330.0, code="b")
+    assert e1.lite_report(fz, root=tmp_path)["refused"]["codes"] == ["a", "b"]
+    _write(tmp_path, "L", "R", "ma/p0.85", e1.main_seeds(10)[0], 330.0, code="a")
+    (tmp_path / "STOP.txt").write_text("x")
+    assert e1.lite_report(fz, root=tmp_path)["refused"]["stop_file"]
+
+
+def test_stop_reasons_counts_allowed_speed_mismatch():
+    a = {"cap_violations": 0, "restore_mismatch": 0, "allowed_mismatch": 1, "compliance": 1.0}
+    assert "ALKS invariant" in e1.stop_reasons(_fake_day(1, 100.0) | {"alks": a}, "R")
+    assert e1.stop_reasons(_fake_day(1, 100.0) | {"alks": dict(a, allowed_mismatch=0)}, "R") == []
