@@ -1,0 +1,93 @@
+{
+ "levels": {
+  "0.25": [
+   1.1,
+   1.25
+  ],
+  "0.5": [
+   1.1,
+   1.25
+  ],
+  "0.8": [
+   1.1,
+   1.25
+  ]
+ },
+ "rows": {
+  "s0.25_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.25_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.25_step": {
+   "pairs": 0,
+   "median_ratio": null,
+   "threshold": null,
+   "pass": false
+  },
+  "s0.5_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.5_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.5_step": {
+   "pairs": 0,
+   "median_ratio": null,
+   "threshold": null,
+   "pass": false
+  },
+  "s0.8_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.8_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 0,
+   "lattice_pass": 0,
+   "qdf_cv_ok": true,
+   "qdf": {}
+  },
+  "s0.8_step": {
+   "pairs": 0,
+   "median_ratio": null,
+   "threshold": null,
+   "pass": false
+  }
+ },
+ "shares": {
+  "0.25": {
+   "ok01": false,
+   "ok005": false
+  },
+  "0.5": {
+   "ok01": false,
+   "ok005": false
+  },
+  "0.8": {
+   "ok01": false,
+   "ok005": false
+  }
+ },
+ "b_step": "B-UNTESTABLE(m32, step)"
+}
