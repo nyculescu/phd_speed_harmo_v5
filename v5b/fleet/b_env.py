@@ -29,6 +29,7 @@ TTC_EVAL, TTC_REWARD = 1.5, 3.0
 HARD_BRAKE, EMERG_BRAKE = 3.0, 4.5
 LOCK = 1537
 MIN_GAP = 2.5
+V2V_RANGE = 150.0
 V_FLOOR = 5.0
 GAP_NORM = 100.0
 COLLISION_COST = 10.0
@@ -48,12 +49,14 @@ class MergeEnv(gym.Env):
     def __init__(self, share: float = 0.5, levels: tuple = (4000.0, 4090.0), episode: float = 1500.0, warm: float = 300.0,
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
-                 n_ep0: int = 0, reward: str = "safety", tau: float | None = None):
+                 n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
+                 v2v_tau: float | None = None, alks_asl: float | None = None):
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
         self.n_ep = n_ep0
         self.shared, self.decision, self.reward, self.tau = shared, decision, reward, tau
+        self.v2v_tau, self.alks_asl = v2v_tau, alks_asl
         self.offsets = SHARED_OFFSETS_KMH if shared else OFFSETS_KMH
         self.sim = None
         self.action_space = gym.spaces.Discrete(len(self.offsets)) if shared else gym.spaces.MultiDiscrete([len(self.offsets)] * K)
@@ -83,11 +86,15 @@ class MergeEnv(gym.Env):
         self.n_ep += 1
         self.cfg = bm.setup(self.share, self.dt)
         fl.ALKS_TAU = ALKS_TAU0 if self.tau is None else self.tau
+        if self.alks_asl is not None:
+            fl.ALKS_EXPLICIT["actionStepLength"] = self.alks_asl
         d = fl.build_net(self.cfg)
         self.t_end = self.warm + self.episode
         self.dem = fl.FleetDemand(s, [(0.0, self.t_end, q)], self.cfg)
         self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r == "ramp"}
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
+        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
+        self.v2v_lead, self.v2v_on = {}, set()
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
@@ -99,14 +106,39 @@ class MergeEnv(gym.Env):
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
-                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0,
+                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "alks_s": 0, "v2v_s": 0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
+        per_s = int(round(1.0 / self.dt))
+        k = 0
         while self.sim.t < self.warm - 1e-9:
             self._sim_step()
+            k += 1
+            if k % per_s == 0:
+                self._v2v()
         self.q = q
         self.seen4 = set(ls.edge.getLastStepVehicleIDs("4"))
         self.ema_b3, self.ema_e30 = REF_LEVEL[q][:2] if q in REF_LEVEL else (0.0, 0.0)
         return self._obs(), {"seed": s, "q": q, "share": self.share}
+
+    def _v2v(self) -> None:
+        """Short headway only behind an ALKS within V2V range, seen as the same leader on two updates; else the contract's."""
+        if self.v2v_tau is None:
+            return
+        for v in ls.vehicle.getIDList():
+            if v not in self.alks_all:
+                continue
+            lead = ls.vehicle.getLeader(v, V2V_RANGE)
+            cur = lead[0] if lead and lead[0] in self.alks_all else None
+            on = cur is not None and self.v2v_lead.get(v) == cur
+            self.v2v_lead[v] = cur
+            if on and v not in self.v2v_on:
+                ls.vehicle.setTau(v, self.v2v_tau)
+                self.v2v_on.add(v)
+            elif not on and v in self.v2v_on:
+                ls.vehicle.setTau(v, ALKS_TAU0)
+                self.v2v_on.discard(v)
+            self.ep["alks_s"] += 1
+            self.ep["v2v_s"] += on
 
     def _sim_step(self) -> None:
         self.sim.step()
@@ -244,6 +276,7 @@ class MergeEnv(gym.Env):
             self._taper()
             self._sim_step()
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
+        self._v2v()
         e15, e30, b3, b45 = self._merge_stats()
         if self.report_net:
             ne30, nb3 = self._net_stats()

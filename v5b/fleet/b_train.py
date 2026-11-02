@@ -5,6 +5,7 @@ Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train eval --out DIR --model FILE [--seeds 20] [--workers 24]
        python -m v5b.fleet.b_train sweep --out DIR [--seeds 20] [--workers 24]
        python -m v5b.fleet.b_train headway --out DIR [--seeds 20] [--workers 27]
+       python -m v5b.fleet.b_train v2v --out DIR [--seeds 20] [--workers 27]
        --cfg 2 or 3 on train, eval or sweep selects a later agent (CFG)
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
@@ -28,9 +29,11 @@ CFG = {1: {"env": {}, "nep0": 0, "first_val": 0, "steps": N_STEPS_TOTAL, "gamma"
        2: {"env": {"shared": True, "decision": 10.0}, "nep0": 200, "first_val": 20, "steps": 304, "gamma": 0.95, "norm": True},
        3: {"env": {"shared": True, "decision": 10.0, "reward": "efficiency"}, "nep0": 0, "first_val": 40, "steps": 304,
            "gamma": 0.95, "norm": True},
-       4: {"env": {"shared": True, "decision": 10.0}, "first_val": 60}}
+       4: {"env": {"shared": True, "decision": 10.0}, "first_val": 60},
+       5: {"env": {"shared": True, "decision": 10.0}, "first_val": 80}}
 HEADWAYS = (1.2, 1.0, 0.8)
 HEADWAY_LEVELS = (4090.0, 4300.0, 4600.0, 5300.0)
+V2V_ASLS = (None, 0.5)
 
 
 def make_env(worker: int, run_dir: str, share: float, levels: tuple, kw: dict):
@@ -132,6 +135,7 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
                       "better": int((d > 0).sum())}
         row["collisions"] = {"policy": sum(pol[s]["collisions"] for s in seeds), "nc": sum(nc[s]["collisions"] for s in seeds)}
         row["gap25_sum"] = {"arm": sum(pol[s]["gap25"] for s in seeds), "base": sum(nc[s]["gap25"] for s in seeds)}
+        row["v2v_share"] = float(np.median([pol[s]["v2v_s"] / max(pol[s]["alks_s"], 1) for s in seeds]))
         row["commands"] = float(np.median([pol[s]["commands"] for s in seeds]))
         row["mismatch"] = sum(pol[s]["restore_mismatch"] + pol[s]["lock_mismatch"] for s in seeds)
         rep[f"{q:g}"] = row
@@ -178,7 +182,7 @@ def smoke(out: Path) -> list:
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway"))
+    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway", "v2v"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=500)
@@ -197,6 +201,13 @@ def main(argv: list) -> int:
         return 1 if bad else 0
     if a.phase == "train":
         print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS, cfg=a.cfg), flush=True)
+        return 0
+    if a.phase == "v2v":
+        out.mkdir(parents=True, exist_ok=True)
+        for tau in HEADWAYS:
+            for asl in V2V_ASLS:
+                rep = evaluate(out, None, a.seeds, a.workers, SHARE, HEADWAY_LEVELS, 5, {"v2v_tau": tau, "alks_asl": asl})
+                (out / f"eval_v2v{tau:g}_asl{asl or 0.1:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
     if a.phase == "headway":
         out.mkdir(parents=True, exist_ok=True)
