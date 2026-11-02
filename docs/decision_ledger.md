@@ -246,3 +246,12 @@ None.
   - MTFC saturates on this plant, so the screen effectively tests ALINEA alone.
 - Confirmed issues: none yet.
 - Status: waiting for L2.
+
+### V243. E1-lite R closed; the DRL-only rule retired (2026-11-01)
+- Decision: R cell closed as inconclusive (V242); the upper grid edges are not run and are disclosed; no v199 compute now; the 2026-10-05 "only positive DRL results count" rule is retired; a full-day capacity-drop check, by analysis only.
+- Potential challenges:
+  - +10 % stays unexcluded for ALINEA on R.
+  - v5.B.1 still has no positive control result, with about 10 months to submission.
+  - If the T1 capacity drop turns out to be noise, every v199 study rests on a demand-only queue.
+- Confirmed issues: none yet.
+- Status: plant check running.
