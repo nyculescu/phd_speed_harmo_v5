@@ -4,6 +4,7 @@ Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train train --out DIR --learner 0 [--updates 500] [--n-envs 8]
        python -m v5b.fleet.b_train eval --out DIR --model FILE [--seeds 20] [--workers 24]
        python -m v5b.fleet.b_train sweep --out DIR [--seeds 20] [--workers 24]
+       python -m v5b.fleet.b_train headway --out DIR [--seeds 20] [--workers 27]
        --cfg 2 or 3 on train, eval or sweep selects a later agent (CFG)
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
@@ -26,7 +27,10 @@ N_STEPS_TOTAL = 3072
 CFG = {1: {"env": {}, "nep0": 0, "first_val": 0, "steps": N_STEPS_TOTAL, "gamma": 0.99, "norm": False},
        2: {"env": {"shared": True, "decision": 10.0}, "nep0": 200, "first_val": 20, "steps": 304, "gamma": 0.95, "norm": True},
        3: {"env": {"shared": True, "decision": 10.0, "reward": "efficiency"}, "nep0": 0, "first_val": 40, "steps": 304,
-           "gamma": 0.95, "norm": True}}
+           "gamma": 0.95, "norm": True},
+       4: {"env": {"shared": True, "decision": 10.0}, "first_val": 60}}
+HEADWAYS = (1.2, 1.0, 0.8)
+HEADWAY_LEVELS = (4090.0, 4300.0, 4600.0, 5300.0)
 
 
 def make_env(worker: int, run_dir: str, share: float, levels: tuple, kw: dict):
@@ -85,7 +89,7 @@ def train(out: Path, learner: int, updates: int, n_envs: int, share: float, leve
 
 
 def _eval_one(a: tuple) -> dict:
-    model_path, share, q, seed, run_dir, kw = a
+    model_path, share, q, seed, run_dir, kw, is_arm = a
     import torch
     from stable_baselines3 import PPO
     from v5b.fleet import b_env as be
@@ -101,14 +105,15 @@ def _eval_one(a: tuple) -> dict:
         if tr:
             break
     env.close()
-    return {"policy": bool(model_path), **{k: v for k, v in inf["ep"].items()}}
+    return {"policy": is_arm, **{k: v for k, v in inf["ep"].items()}}
 
 
-def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, levels: tuple, cfg: int = 1) -> dict:
+def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, levels: tuple, cfg: int = 1, arm_kw: dict | None = None) -> dict:
     first = CFG[cfg]["first_val"]
     seeds = VAL_SEEDS[first:first + n_seeds]
     kw = CFG[cfg]["env"]
-    jobs = [(p, share, q, s, str(out / "rd"), kw) for q in levels for s in seeds for p in (model, None)]
+    jobs = [j for q in levels for s in seeds for j in ((model, share, q, s, str(out / "rd"), {**kw, **(arm_kw or {})}, True),
+                                                       (None, share, q, s, str(out / "rd"), kw, False))]
     ctx = mp.get_context("spawn")
     with ProcessPoolExecutor(workers, mp_context=ctx, max_tasks_per_child=1) as ex:
         rows = list(ex.map(_eval_one, jobs))
@@ -117,7 +122,7 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
         pol = {r["seed"]: r for r in rows if r["q"] == q and r["policy"]}
         nc = {r["seed"]: r for r in rows if r["q"] == q and not r["policy"]}
         row = {}
-        for k in ("E15", "E30", "brake3", "brake45", "N", "out_E30", "out_b3", "arrived", "passed", "mean_v"):
+        for k in ("E15", "E30", "brake3", "brake45", "N", "out_E30", "out_b3", "arrived", "passed", "mean_v", "gap25"):
             d = np.array([(nc[s][k] - pol[s][k]) for s in seeds])
             base = np.median([nc[s][k] for s in seeds])
             rng = np.random.default_rng(20261102)
@@ -126,6 +131,7 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
                       "rel_ci": [float(x / base) for x in np.percentile(bs, [2.5, 97.5])] if base else None,
                       "better": int((d > 0).sum())}
         row["collisions"] = {"policy": sum(pol[s]["collisions"] for s in seeds), "nc": sum(nc[s]["collisions"] for s in seeds)}
+        row["gap25_sum"] = {"arm": sum(pol[s]["gap25"] for s in seeds), "base": sum(nc[s]["gap25"] for s in seeds)}
         row["commands"] = float(np.median([pol[s]["commands"] for s in seeds]))
         row["mismatch"] = sum(pol[s]["restore_mismatch"] + pol[s]["lock_mismatch"] for s in seeds)
         rep[f"{q:g}"] = row
@@ -172,7 +178,7 @@ def smoke(out: Path) -> list:
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep"))
+    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=500)
@@ -191,6 +197,12 @@ def main(argv: list) -> int:
         return 1 if bad else 0
     if a.phase == "train":
         print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS, cfg=a.cfg), flush=True)
+        return 0
+    if a.phase == "headway":
+        out.mkdir(parents=True, exist_ok=True)
+        for tau in HEADWAYS:
+            rep = evaluate(out, None, a.seeds, a.workers, SHARE, HEADWAY_LEVELS, 4, {"tau": tau})
+            (out / f"eval_tau{tau:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
     if a.phase == "sweep":
         from v5b.fleet import b_env as be
