@@ -86,6 +86,13 @@ HDV_ASL_FIXED: float | None = None
 HDV_TAU_FIXED: float | None = None
 # Krauss dawdling redraw interval for humans (SUMO sigmaStep; default = step length); V178 test
 HDV_SIGMA_STEP: float | None = None
+# B (V256, V258): ALKS share of all vehicles with 7.5 % trucks and human cars otherwise, no ACC/CACC; one uniform per
+# vehicle, so the trucks are the same and the ALKS sets nest across shares. None keeps the SHARES draw.
+B_ALKS_SHARE: float | None = None
+B_TRUCK_SHARE = 0.075
+# B: SUMO's passenger defaults (1.27.1 source), written into the ALKS vType so the route file states them.
+ALKS_EXPLICIT: dict | None = None
+ALKS_DEFAULTS = {"accel": 2.6, "decel": 4.5, "emergencyDecel": 9.0}
 HDV_SIGMA_FIXED: float | None = None
 
 STREAMS = {"class": 1, "dims": 2, "speed": 3, "cf": 4, "lane": 5, "route": 6}
@@ -156,6 +163,8 @@ class VehSpec:
                 a["tau"] = f"{self.tau:.3f}"
         else:
             a |= {"vClass": "passenger", "carFollowModel": CAV_MODELS[self.cls], "tau": f"{self.tau:g}"}
+            if self.cls == "alks" and ALKS_EXPLICIT:
+                a |= {k: f"{v:g}" for k, v in ALKS_EXPLICIT.items()}
         if self.max_speed is not None and self.cls != "truck":
             a["maxSpeed"] = f"{self.max_speed:.3f}"
         if self.cls in ("hdv_car", "truck") and HDV_SIGMA_STEP is not None:
@@ -173,7 +182,11 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
     seg_p = np.array([s[0] for s in CAR_SEGMENTS]) / sum(s[0] for s in CAR_SEGMENTS)
     out = []
     for i in range(n):
-        cls = CLASSES[int(rc.choice(len(CLASSES), p=SHARES))]
+        if B_ALKS_SHARE is None:
+            cls = CLASSES[int(rc.choice(len(CLASSES), p=SHARES))]
+        else:
+            u = rc.random()
+            cls = "truck" if u < B_TRUCK_SHARE else "alks" if u < B_TRUCK_SHARE + B_ALKS_SHARE else "hdv_car"
         if cls == "truck":
             length, width = float(rd.uniform(*TRUCK_LEN)), float(rd.uniform(*TRUCK_WIDTH))
             sf = _normc(rs, *TRUCK_SF)
@@ -247,6 +260,7 @@ PLANTS = {"v188": {"geom": "ld32", "merge": "laneend", "tau_scale": 0.8, "asl_sc
                    "cav_models": {"acc": "IDM", "cacc": "IDM", "alks": "IDM"}}}
 PLANTS["v190"] = {**PLANTS["v188"], "geom": corridor.NAME, "teleport": False}   # teleporting off: V197
 PLANTS["v199"] = {**PLANTS["v190"], "incident_tau_factor": 3.0}   # passing zone calibrated in V200
+PLANTS["m32"] = {**PLANTS["v199"], "geom": corridor.M32}         # B (V256): v199 drivers, the drop removed
 
 
 def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
@@ -261,8 +275,8 @@ def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
 
 def build_net(cfg: pl.Config) -> Path:
     """The p1c geometry (or the V190 on-ramp corridor) with a 100 km/h limit on every edge (V156)."""
-    if cfg.geom == corridor.NAME:
-        return corridor.build(LIMIT)
+    if cfg.geom in corridor.NETS:
+        return corridor.build(LIMIT, cfg.geom)
     if cfg.geom in corridor.STRAIGHT:
         return corridor.build_straight(cfg.geom, LIMIT)
     with mock.patch.object(pl, "SPEED", LIMIT):
@@ -272,20 +286,20 @@ def build_net(cfg: pl.Config) -> Path:
 def loop_ids(geom: str) -> dict:
     if geom in corridor.STRAIGHT:
         return corridor.straight_loop_ids(geom)
-    return corridor.loop_ids() if geom == corridor.NAME else pl.loop_ids(geom)
+    return corridor.loop_ids(geom) if geom in corridor.NETS else pl.loop_ids(geom)
 
 
 def all_green(geom: str) -> None:
     """No control: the p1c mainline signal or the V190 ramp meter stays green."""
     import libsumo as ls
     for tls in ls.trafficlight.getIDList():
-        if geom == corridor.NAME or tls == pl.TLS_ID:
+        if geom in corridor.NETS or tls == pl.TLS_ID:
             ls.trafficlight.setRedYellowGreenState(tls, "G" * len(ls.trafficlight.getRedYellowGreenState(tls)))
 
 
 def routes(geom: str) -> dict:
     """route id -> (edges, share of vehicles, entry lanes)."""
-    if geom == corridor.NAME:
+    if geom in corridor.NETS:
         return {r: (e, corridor.RAMP_SHARE if r == "ramp" else 1 - corridor.RAMP_SHARE, corridor.ENTRY_LANES[r])
                 for r, e in corridor.ROUTES.items()}
     if geom in corridor.STRAIGHT:

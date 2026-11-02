@@ -32,29 +32,36 @@ LOOPS = {"up": [("3", 200.0)], "merge_up": [("2", -50.0)], "e4": [("4", 100.0)],
          "ramp_q": [("r", 30.0)], "ramp_out": [("r", -5.0)], "alinea": [("3", 100.0)], "drop": [("3", -150.0)],
          "dropend": [("3", -20.0)]}
 LOOP_PERIOD = 30.0
+# B (V258): ramp32 without the 3 -> 2 drop, so the merge is the only bottleneck; 'a_end' 1 m before the end of 3a
+# (B reads lane 3a_1, road lane 0) and 'ma_end' 300 m into edge 3 register vehicle ids for the section counts.
+M32 = "m32"
+NETS = {NAME: (EDGES, LOOPS), M32: ([(e, a, b, 3 if e in ("4", "5") else k) for e, a, b, k in EDGES],
+                                    {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]})}
 
 
-def build(speed: float) -> Path:
-    spec = {"v": 1, "name": NAME, "nodes": NODES, "edges": EDGES, "loops": LOOPS, "speed": speed}
+def build(speed: float, name: str = NAME) -> Path:
+    edges, loops = NETS[name]
+    spec = {"v": 1, "name": name, "nodes": NODES, "edges": edges, "loops": loops, "speed": speed}
     h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
-    d = NET_CACHE / f"{NAME}_{h}"
+    d = NET_CACHE / f"{name}_{h}"
     if (d / "net.xml").exists() and (d / "add.xml").exists():
         return d
-    final, d = d, NET_CACHE / f"{NAME}_{h}.tmp{os.getpid()}"     # built aside, then renamed: parallel first builds
+    final, d = d, NET_CACHE / f"{name}_{h}.tmp{os.getpid()}"     # built aside, then renamed: parallel first builds
     d.mkdir(parents=True, exist_ok=True)
     nod = ["<nodes>"] + [f'  <node id="{n}" x="{x}" y="{y}" type="{"traffic_light" if n == "rm" else "priority"}"'
                          + (' tlType="static"' if n == "rm" else "") + "/>" for n, x, y in NODES] + ["</nodes>"]
     edg = ["<edges>"] + [f'  <edge id="{e}" from="{a}" to="{b}" numLanes="{k}" speed="{speed}"/>'
-                         for e, a, b, k in EDGES]
+                         for e, a, b, k in edges]
     edg += ['  <edge id="rj" from="rm" to="m" numLanes="1" speed="%s"/>' % speed, "</edges>"]
     con = ["<connections>",
            '  <connection from="r" to="rj" fromLane="0" toLane="0"/>',
            '  <connection from="rj" to="3a" fromLane="0" toLane="0"/>']
     con += [f'  <connection from="2" to="3a" fromLane="{i}" toLane="{i + 1}"/>' for i in range(3)]
     con += [f'  <connection from="3a" to="3" fromLane="{i + 1}" toLane="{i}"/>' for i in range(3)]
-    con += [f'  <connection from="3" to="4" fromLane="{i}" toLane="{i}"/>' for i in range(2)]
+    n45 = dict((x[0], x[3]) for x in edges)["4"]
+    con += [f'  <connection from="3" to="4" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
     con += [f'  <connection from="1" to="2" fromLane="{i}" toLane="{i}"/>' for i in range(3)]
-    con += [f'  <connection from="4" to="5" fromLane="{i}" toLane="{i}"/>' for i in range(2)]
+    con += [f'  <connection from="4" to="5" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
     con += ["</connections>"]
     for f, lines in (("nod.xml", nod), ("edg.xml", edg), ("con.xml", con)):
         (d / f).write_text("\n".join(lines) + "\n")
@@ -68,12 +75,12 @@ def build(speed: float) -> Path:
             if not ln.get("id").startswith(":")}
     tls = [t.get("id") for t in ET.parse(d / "net.xml").getroot().iter("tlLogic")]
     add = ["<additional>"]
-    for name, spots in LOOPS.items():
+    for g, spots in loops.items():
         for e, pos in spots:
-            for i in range(dict((x[0], x[3]) for x in EDGES)[e]):
+            for i in range(dict((x[0], x[3]) for x in edges)[e]):
                 ln = f"{e}_{i}"
                 p = pos if pos >= 0 else lens[ln] + pos
-                add.append(f'  <inductionLoop id="{name}_{e}_{i}" lane="{ln}" pos="{p:.2f}" period="{LOOP_PERIOD}" '
+                add.append(f'  <inductionLoop id="{g}_{e}_{i}" lane="{ln}" pos="{p:.2f}" period="{LOOP_PERIOD}" '
                            f'file="NUL"/>')
     add.append("</additional>")
     (d / "add.xml").write_text("\n".join(add) + "\n")
@@ -85,9 +92,10 @@ def build(speed: float) -> Path:
     return final
 
 
-def loop_ids() -> dict:
-    lanes = {e: k for e, _, _, k in EDGES}
-    return {name: [f"{name}_{e}_{i}" for e, _ in spots for i in range(lanes[e])] for name, spots in LOOPS.items()}
+def loop_ids(name: str = NAME) -> dict:
+    edges, loops = NETS[name]
+    lanes = {e: k for e, _, _, k in edges}
+    return {g: [f"{g}_{e}_{i}" for e, _ in spots for i in range(lanes[e])] for g, spots in loops.items()}
 
 
 # V199 incident calibration roads: one straight 5 km edge "a"; loops relative to the crash position
