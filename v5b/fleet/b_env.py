@@ -23,6 +23,7 @@ from v5b.fleet.day import CrashSim
 
 K, R = 6, 4
 OFFSETS_KMH = (0.0, 5.0, 10.0, 15.0, 20.0, 30.0)
+SHARED_OFFSETS_KMH = (0.0, 10.0, 20.0, 30.0, 40.0, 50.0)
 CZ = 1500.0
 TTC_EVAL, TTC_REWARD = 1.5, 3.0
 HARD_BRAKE, EMERG_BRAKE = 3.0, 4.5
@@ -41,13 +42,16 @@ class MergeEnv(gym.Env):
 
     def __init__(self, share: float = 0.5, levels: tuple = (4000.0, 4090.0), episode: float = 1500.0, warm: float = 300.0,
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
-                 run_dir: str | None = None, report_net: bool = False):
+                 run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
+                 n_ep0: int = 0):
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
-        self.n_ep = 0
+        self.n_ep = n_ep0
+        self.shared, self.decision = shared, decision
+        self.offsets = SHARED_OFFSETS_KMH if shared else OFFSETS_KMH
         self.sim = None
-        self.action_space = gym.spaces.MultiDiscrete([len(OFFSETS_KMH)] * K)
+        self.action_space = gym.spaces.Discrete(len(self.offsets)) if shared else gym.spaces.MultiDiscrete([len(self.offsets)] * K)
         self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 5 + 4,), dtype=np.float32)
 
     def _close(self) -> None:
@@ -124,10 +128,12 @@ class MergeEnv(gym.Env):
 
     def _apply(self, action) -> None:
         slots = self._slots()
+        if self.shared:
+            action = [action] * K
         live = set(ls.vehicle.getIDList())
         keep = set()
         for (_, v), a in zip(slots, action):
-            off = OFFSETS_KMH[int(a)] / 3.6
+            off = self.offsets[int(a)] / 3.6
             if off <= 0:
                 continue
             des = self.desired[v]
@@ -212,7 +218,7 @@ class MergeEnv(gym.Env):
                 o += [min(d / CZ, 1.0), min(ls.vehicle.getSpeed(v) / fl.LIMIT, 1.0),
                       min(max(lead[1], 0.0) / GAP_NORM, 1.0) if lead and lead[0] else 1.0,
                       min(max(fol[1], 0.0) / GAP_NORM, 1.0) if fol and fol[0] else 1.0,
-                      min((des - cap) * 3.6 / OFFSETS_KMH[-1], 1.0)]
+                      min((des - cap) * 3.6 / self.offsets[-1], 1.0)]
             else:
                 o += [1.0, 0.0, 1.0, 1.0, 0.0]
         pend = len(ls.simulation.getPendingVehicles())
@@ -221,10 +227,8 @@ class MergeEnv(gym.Env):
               min(self.sim.t / self.t_end, 1.0)]
         return np.array(o, dtype=np.float32)
 
-    def step(self, action):
-        self._apply(action)
-        n_sub = int(round(1.0 / self.dt))
-        for _ in range(n_sub):
+    def _second(self) -> float:
+        for _ in range(int(round(1.0 / self.dt))):
             self._taper()
             self._sim_step()
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
@@ -240,7 +244,12 @@ class MergeEnv(gym.Env):
         c0 = self.ep.setdefault("_c", 0)
         new_c = self.ep["collisions"] - c0
         self.ep["_c"] = self.ep["collisions"]
-        r = -W_BRAKE * b3 / REF_BRAKE - W_E3 * e30 / REF_E3 - W_N * (n / REF_N - 1.0) - COLLISION_COST * new_c
+        return -W_BRAKE * b3 / REF_BRAKE - W_E3 * e30 / REF_E3 - W_N * (n / REF_N - 1.0) - COLLISION_COST * new_c
+
+    def step(self, action):
+        self._apply(action)
+        secs = int(round(self.decision))
+        r = sum(self._second() for _ in range(secs)) / secs
         trunc = self.sim.t >= self.t_end - 1e-9
         info = {}
         if trunc:
