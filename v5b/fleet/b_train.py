@@ -93,7 +93,8 @@ def _eval_one(a: tuple) -> dict:
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
     env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
     o, _ = env.reset()
-    fixed = int(model_path or 0) if kw.get("shared") else np.full(be.K, model_path or 0, int)
+    arm = model_path if isinstance(model_path, int) else 0
+    fixed = arm if kw.get("shared") else np.full(be.K, arm, int)
     while True:
         act = model.predict(o, deterministic=True)[0] if model is not None else fixed
         o, r, _, tr, inf = env.step(act)
