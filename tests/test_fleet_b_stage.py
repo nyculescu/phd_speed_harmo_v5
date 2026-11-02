@@ -78,3 +78,9 @@ def test_lattice_counts():
     assert bs.lattice_ok([3, 4, 5, 6, 4, 5])
     assert not bs.lattice_ok([7, 8] * 10)
     assert not bs.lattice_ok([4] * 6 + [5, 6, 7])
+
+
+def test_lane0_onset_input_counts_occupied_empty_interval_as_standing():
+    assert bm.lane0_speed(3, 20.0, 12.5) == 12.5
+    assert bm.lane0_speed(0, 35.0, None) == 0.0
+    assert bm.lane0_speed(0, 0.0, None) is None

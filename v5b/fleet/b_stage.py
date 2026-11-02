@@ -27,7 +27,7 @@ from v5b.fleet import b_merge as bm, corridor, fleet as fl
 from v5b.p1c.calibrate import _cpu_util
 
 SEED_SMOKE = 7_431_110
-SEEDS_C = list(range(7_431_111, 7_431_121))
+SEEDS_C = list(range(7_431_191, 7_431_201))     # V262: replaces 7,431,111-120 (used by the first C0, V261)
 LADDER = [round(0.60 + 0.05 * i, 2) for i in range(11)]
 EXT_HIGH = [1.15, 1.20, 1.25, 1.30]
 EXT_LOW = [0.40, 0.45, 0.50, 0.55]
@@ -79,8 +79,9 @@ def arrays(j: dict) -> dict:
 
 
 def onset(r: dict) -> dict | None:
-    """The first merge breakdown with its onset in the window."""
-    return next((e for e in r["breakdowns_merge"] if bm.WARM <= e["t_break"] < bm.WINDOW_END), None)
+    """The first merge breakdown episode that overlaps the window (V262: at overloaded levels the queue forms during
+    the warm-up, and a run queued throughout the window counts as broken down)."""
+    return next((e for e in r["breakdowns_merge"] if e["t_break"] < bm.WINDOW_END and e["t_recover"] > bm.WARM), None)
 
 
 def queued(r: dict) -> list:

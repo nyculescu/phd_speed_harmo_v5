@@ -5,6 +5,8 @@ One run: constant Poisson demand Q for WINDOW_END s (warm-up to 600 s, window 60
 then drain; teleporting off; meter green. Counts that feed a rule are taken by vehicle id (§4): merges (a ramp-origin
 vehicle's first exit from 3a_0, every step), first passages of the 3a_1 end and of the MA end (id loops read every
 step). The deadlock detector reads every whole second; a run stops at a 600-s event.
+Merge onset (V262): the approved 4-reading rule on the lane-0 `merge_up` speed (series field 13), an occupied interval
+without a passing vehicle counting as standing; the all-lane reading stays report-only.
 """
 from __future__ import annotations
 
@@ -44,6 +46,14 @@ def setup(share: float, step: float, explicit: bool = True) -> object:
     fl.B_ALKS_SHARE = share
     fl.ALKS_EXPLICIT = dict(fl.ALKS_DEFAULTS) if explicit else None
     return dataclasses.replace(cfg, geom=PLANT)
+
+
+def lane0_speed(n: int, occ: float, v: float | None) -> float | None:
+    """V262 onset input: the lane-0 `merge_up` speed, with an interval in which the loop was occupied but no vehicle
+    passed counted as standing (0), not as free."""
+    if n:
+        return v
+    return 0.0 if occ > 0 else None
 
 
 def trip_hash(rows: list, coll: list) -> str:
@@ -224,7 +234,10 @@ def run(seed: int, share: float, q: float, step: float, arm: str, out: Path, exp
                 ser.append((round(t, 1), bin_ma, None, int(sim.departed), len(ls.simulation.getPendingVehicles()),
                             loop_speed(mu_ids), bin_merges, stand, int(sched_ramp[int(t // 30) - 1]),
                             loop_speed(["merge_up_2_0"]), bin_ma0, bool(empty_occ),
-                            int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in ma_end))))
+                            int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in ma_end)),
+                            lane0_speed(n0 := ls.inductionloop.getLastIntervalVehicleNumber("merge_up_2_0"),
+                                        occ0 := ls.inductionloop.getLastIntervalOccupancy("merge_up_2_0"),
+                                        loop_speed(["merge_up_2_0"])), round(occ0, 2), n0))
                 bin_merges = bin_ma = bin_ma0 = 0
         if t >= t_end and sim.departed == sim._total and ls.vehicle.getIDCount() == 0 \
                 and not ls.simulation.getPendingVehicles():
@@ -272,7 +285,8 @@ def run(seed: int, share: float, q: float, step: float, arm: str, out: Path, exp
          "insert_delay_p95": round(float(np.percentile(ins_delay, 95)), 1) if ins_delay else None,
          "alks_readback_dev": round(readback_dev, 9), "alks_departed": n_alks, "nc_mu": mu,
          "d_all_window": round(float(np.mean([delay[v] for v in win if v in delay])), 3) if win else None,
-         "breakdowns_merge": breakdowns(ser, 5), "breakdowns_lane0": breakdowns(ser, 9),
+         "breakdowns_merge": breakdowns(ser, 13), "breakdowns_merge_alllane": breakdowns(ser, 5),
+         "breakdowns_lane0": breakdowns(ser, 9),
          "series": ser, "trip_hash": trip_hash(rows, ev_coll), "hash": res["hash"],
          "health_codes": sorted(res["health"]["by_code"]), "wall_s": round(time.time() - t_w0, 1),
          "sim_s": round(sim.t, 1)}
