@@ -1,0 +1,168 @@
+{
+ "levels": {
+  "0.25": [
+   1.1
+  ],
+  "0.5": [
+   1.1
+  ],
+  "0.8": [
+   1.1
+  ]
+ },
+ "rows": {
+  "s0.25_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": true,
+   "qdf": {
+    "1.1": [
+     5163,
+     5173,
+     5106,
+     5145,
+     5181,
+     5272,
+     5186,
+     5149,
+     5136,
+     5298
+    ]
+   }
+  },
+  "s0.25_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": true,
+   "qdf": {
+    "1.1": [
+     5098,
+     5169,
+     5080,
+     5118,
+     5219,
+     5243,
+     5180,
+     5170,
+     5158,
+     5204
+    ]
+   }
+  },
+  "s0.25_step": {
+   "pairs": 10,
+   "median_ratio": 0.996879258262082,
+   "threshold": 0.02,
+   "pass": true
+  },
+  "s0.5_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": true,
+   "qdf": {
+    "1.1": [
+     4761,
+     4799,
+     4816,
+     4827,
+     4796,
+     4843,
+     4799,
+     4860,
+     4803,
+     4837
+    ]
+   }
+  },
+  "s0.5_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": false,
+   "qdf": {
+    "1.1": [
+     4762,
+     4810,
+     4783,
+     4803,
+     4820,
+     4839,
+     4804,
+     4795,
+     4812,
+     4800
+    ]
+   }
+  },
+  "s0.5_step": {
+   "pairs": 10,
+   "median_ratio": 0.9997588699700444,
+   "threshold": 0.02,
+   "pass": true
+  },
+  "s0.8_st0.1": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": true,
+   "qdf": {
+    "1.1": [
+     4476,
+     4411,
+     4466,
+     4446,
+     4375,
+     4442,
+     4472,
+     4443,
+     4388,
+     4446
+    ]
+   }
+  },
+  "s0.8_st0.05": {
+   "deadlock_ok": true,
+   "evaluable": 10,
+   "lattice_pass": 10,
+   "qdf_cv_ok": true,
+   "qdf": {
+    "1.1": [
+     4387,
+     4408,
+     4425,
+     4384,
+     4390,
+     4359,
+     4440,
+     4382,
+     4382,
+     4389
+    ]
+   }
+  },
+  "s0.8_step": {
+   "pairs": 10,
+   "median_ratio": 0.9890646119681078,
+   "threshold": 0.02,
+   "pass": true
+  }
+ },
+ "shares": {
+  "0.25": {
+   "ok01": true,
+   "ok005": true
+  },
+  "0.5": {
+   "ok01": true,
+   "ok005": false
+  },
+  "0.8": {
+   "ok01": true,
+   "ok005": true
+  }
+ },
+ "b_step": "0.1"
+}

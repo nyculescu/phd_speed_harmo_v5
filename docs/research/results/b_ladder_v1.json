@@ -1,0 +1,611 @@
+{
+ "0.25": {
+  "levels": [
+   0.6,
+   0.65,
+   0.7,
+   0.75,
+   0.8,
+   0.85,
+   0.9,
+   0.95,
+   1.0,
+   1.05,
+   1.1,
+   1.15,
+   1.2,
+   1.25,
+   1.3
+  ],
+  "p_onset": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.0,
+   "0.9": 0.0,
+   "0.95": 0.2,
+   "1": 0.7,
+   "1.05": 1.0,
+   "1.1": 1.0,
+   "1.15": 1.0,
+   "1.2": 1.0,
+   "1.25": 1.0,
+   "1.3": 1.0
+  },
+  "fit": {
+   "method": "logistic",
+   "b": [
+    -55.26479121266704,
+    56.38564815677335
+   ],
+   "L1": 4520.0,
+   "L2": 4640.0
+  },
+  "loading": {
+   "pass": true,
+   "n": 10,
+   "median_ratio": 0.8723777528928705,
+   "low_min": 0.9793388429752066,
+   "queue_at_merge": 1.0
+  },
+  "p_sustained": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.0,
+   "0.9": 0.0,
+   "0.95": 0.0,
+   "1": 0.0,
+   "1.05": 0.4,
+   "1.1": 0.6,
+   "1.15": 0.9,
+   "1.2": 1.0,
+   "1.25": 1.0,
+   "1.3": 1.0
+  },
+  "p_onset_lane0": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.0,
+   "0.9": 0.0,
+   "0.95": 0.1,
+   "1": 0.7,
+   "1.05": 1.0,
+   "1.1": 0.7,
+   "1.15": 0.6,
+   "1.2": 0.4,
+   "1.25": 0.0,
+   "1.3": 0.0
+  },
+  "report": {
+   "0.6": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 97,
+    "max_pending_med": 4.0
+   },
+   "0.65": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 85,
+    "max_pending_med": 5.0
+   },
+   "0.7": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 85,
+    "max_pending_med": 5.5
+   },
+   "0.75": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 101,
+    "max_pending_med": 6.0
+   },
+   "0.8": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 118,
+    "max_pending_med": 6.0
+   },
+   "0.85": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 117,
+    "max_pending_med": 7.5
+   },
+   "0.9": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 139,
+    "max_pending_med": 9.5
+   },
+   "0.95": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 137,
+    "max_pending_med": 12.5
+   },
+   "1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 179,
+    "max_pending_med": 15.0
+   },
+   "1.05": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 178,
+    "max_pending_med": 21.5
+   },
+   "1.1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 186,
+    "max_pending_med": 65.0
+   },
+   "1.15": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 177,
+    "max_pending_med": 172.0
+   },
+   "1.2": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 239,
+    "max_pending_med": 260.0
+   },
+   "1.25": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 193,
+    "max_pending_med": 371.5
+   },
+   "1.3": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 251,
+    "max_pending_med": 563.0
+   }
+  },
+  "tool": {
+   "L1": {
+    "bracket": [
+     0.9,
+     0.95
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   },
+   "L2": {
+    "bracket": [
+     0.95,
+     1.0
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   }
+  },
+  "state": "ok"
+ },
+ "0.5": {
+  "levels": [
+   0.6,
+   0.65,
+   0.7,
+   0.75,
+   0.8,
+   0.85,
+   0.9,
+   0.95,
+   1.0,
+   1.05,
+   1.1
+  ],
+  "p_onset": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.3,
+   "0.9": 0.9,
+   "0.95": 1.0,
+   "1": 1.0,
+   "1.05": 1.0,
+   "1.1": 1.0
+  },
+  "fit": {
+   "method": "logistic",
+   "b": [
+    -59.06022520069982,
+    68.32125636875581
+   ],
+   "L1": 4000.0,
+   "L2": 4090.0
+  },
+  "loading": {
+   "pass": true,
+   "n": 10,
+   "median_ratio": 0.9198294080042679,
+   "low_min": 0.9800275482093664,
+   "queue_at_merge": 1.0
+  },
+  "p_sustained": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.0,
+   "0.9": 0.2,
+   "0.95": 0.7,
+   "1": 1.0,
+   "1.05": 1.0,
+   "1.1": 1.0
+  },
+  "p_onset_lane0": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.0,
+   "0.85": 0.2,
+   "0.9": 0.9,
+   "0.95": 0.8,
+   "1": 0.5,
+   "1.05": 0.1,
+   "1.1": 0.0
+  },
+  "report": {
+   "0.6": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 67,
+    "max_pending_med": 4.5
+   },
+   "0.65": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 80,
+    "max_pending_med": 6.0
+   },
+   "0.7": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 105,
+    "max_pending_med": 6.0
+   },
+   "0.75": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 122,
+    "max_pending_med": 7.5
+   },
+   "0.8": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 120,
+    "max_pending_med": 9.5
+   },
+   "0.85": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 136,
+    "max_pending_med": 12.5
+   },
+   "0.9": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 116,
+    "max_pending_med": 15.0
+   },
+   "0.95": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 166,
+    "max_pending_med": 21.0
+   },
+   "1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 163,
+    "max_pending_med": 50.5
+   },
+   "1.05": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 163,
+    "max_pending_med": 164.5
+   },
+   "1.1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 186,
+    "max_pending_med": 222.5
+   }
+  },
+  "tool": {
+   "L1": {
+    "bracket": [
+     0.8,
+     0.85
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   },
+   "L2": {
+    "bracket": [
+     0.85,
+     0.9
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   }
+  },
+  "state": "ok"
+ },
+ "0.8": {
+  "levels": [
+   0.6,
+   0.65,
+   0.7,
+   0.75,
+   0.8,
+   0.85,
+   0.9,
+   0.95,
+   1.0,
+   1.05,
+   1.1
+  ],
+  "p_onset": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.4,
+   "0.8": 0.7,
+   "0.85": 1.0,
+   "0.9": 1.0,
+   "0.95": 1.0,
+   "1": 1.0,
+   "1.05": 1.0,
+   "1.1": 1.0
+  },
+  "fit": {
+   "method": "logistic",
+   "b": [
+    -35.778701038052155,
+    46.46793815909887
+   ],
+   "L1": 3470.0,
+   "L2": 3610.0
+  },
+  "loading": {
+   "pass": true,
+   "n": 10,
+   "median_ratio": 0.8429672787193974,
+   "low_min": 0.9834710743801653,
+   "queue_at_merge": 1.0
+  },
+  "p_sustained": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.0,
+   "0.8": 0.1,
+   "0.85": 0.3,
+   "0.9": 0.7,
+   "0.95": 1.0,
+   "1": 1.0,
+   "1.05": 1.0,
+   "1.1": 1.0
+  },
+  "p_onset_lane0": {
+   "0.6": 0.0,
+   "0.65": 0.0,
+   "0.7": 0.0,
+   "0.75": 0.4,
+   "0.8": 0.7,
+   "0.85": 1.0,
+   "0.9": 0.5,
+   "0.95": 0.1,
+   "1": 0.0,
+   "1.05": 0.0,
+   "1.1": 0.0
+  },
+  "report": {
+   "0.6": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 82,
+    "max_pending_med": 6.0
+   },
+   "0.65": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 99,
+    "max_pending_med": 8.5
+   },
+   "0.7": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 116,
+    "max_pending_med": 10.5
+   },
+   "0.75": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 111,
+    "max_pending_med": 12.0
+   },
+   "0.8": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 125,
+    "max_pending_med": 15.5
+   },
+   "0.85": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 146,
+    "max_pending_med": 23.0
+   },
+   "0.9": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 126,
+    "max_pending_med": 32.0
+   },
+   "0.95": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 168,
+    "max_pending_med": 86.5
+   },
+   "1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 165,
+    "max_pending_med": 178.0
+   },
+   "1.05": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 186,
+    "max_pending_med": 368.5
+   },
+   "1.1": {
+    "deadlock_runs": 0,
+    "undrained": 0,
+    "stuck_runs": 0,
+    "empty_occ_intervals": 0,
+    "loop_minus_id_ma": 202,
+    "max_pending_med": 632.0
+   }
+  },
+  "tool": {
+   "L1": {
+    "bracket": [
+     0.7,
+     0.75
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   },
+   "L2": {
+    "bracket": [
+     0.75,
+     0.8
+    ],
+    "n": 20,
+    "deadlock": 0,
+    "undrained": 0,
+    "stuck": 0,
+    "artefact_runs": 0,
+    "pass": true
+   }
+  },
+  "state": "ok"
+ }
+}
