@@ -41,9 +41,9 @@ class MergeEnv(gym.Env):
 
     def __init__(self, share: float = 0.5, levels: tuple = (4000.0, 4090.0), episode: float = 1500.0, warm: float = 300.0,
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
-                 run_dir: str | None = None):
+                 run_dir: str | None = None, report_net: bool = False):
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
-        self.seed0, self.dt, self.seeds = seed0, step, seeds
+        self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
         self.n_ep = 0
         self.sim = None
@@ -89,6 +89,7 @@ class MergeEnv(gym.Env):
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
+                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
         while self.sim.t < self.warm - 1e-9:
             self._sim_step()
@@ -172,6 +173,18 @@ class MergeEnv(gym.Env):
                 e30 += ttc < TTC_REWARD
         return e15, e30, b3, b45
 
+    def _net_stats(self) -> tuple:
+        """The same counts over every vehicle on the network (report-only, to see exposure moved out of the merge area)."""
+        e30 = b3 = 0
+        for v in ls.vehicle.getIDList():
+            b3 += ls.vehicle.getAcceleration(v) <= -HARD_BRAKE
+            lead = ls.vehicle.getLeader(v, 200.0)
+            if not lead or not lead[0]:
+                continue
+            dv = ls.vehicle.getSpeed(v) - ls.vehicle.getSpeed(lead[0])
+            e30 += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < TTC_REWARD
+        return e30, b3
+
     def _obs(self) -> np.ndarray:
         o = []
         ramp = []
@@ -214,7 +227,12 @@ class MergeEnv(gym.Env):
         for _ in range(n_sub):
             self._taper()
             self._sim_step()
+            self.ep["arrived"] += ls.simulation.getArrivedNumber()
         e15, e30, b3, b45 = self._merge_stats()
+        if self.report_net:
+            ne30, nb3 = self._net_stats()
+            self.ep["out_E30"] += ne30 - e30
+            self.ep["out_b3"] += nb3 - b3
         n = ls.vehicle.getIDCount() + len(ls.simulation.getPendingVehicles())
         for k, x in (("E15", e15), ("E30", e30), ("brake3", b3), ("brake45", b45), ("N", n)):
             self.ep[k] += x

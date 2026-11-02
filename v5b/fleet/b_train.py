@@ -80,7 +80,7 @@ def _eval_one(a: tuple) -> dict:
     from v5b.fleet import b_env as be
     torch.set_num_threads(1)
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
-    env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed])
+    env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True)
     o, _ = env.reset()
     fixed = np.full(be.K, model_path or 0, int)
     while True:
@@ -103,7 +103,7 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
         pol = {r["seed"]: r for r in rows if r["q"] == q and r["policy"]}
         nc = {r["seed"]: r for r in rows if r["q"] == q and not r["policy"]}
         row = {}
-        for k in ("E15", "E30", "brake3", "brake45", "N"):
+        for k in ("E15", "E30", "brake3", "brake45", "N", "out_E30", "out_b3", "arrived"):
             d = np.array([(nc[s][k] - pol[s][k]) for s in seeds])
             base = np.median([nc[s][k] for s in seeds])
             rng = np.random.default_rng(20261102)
@@ -166,6 +166,7 @@ def main(argv: list) -> int:
     ap.add_argument("--model")
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--offsets", default="1,2,3,4,5")
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -179,7 +180,7 @@ def main(argv: list) -> int:
     if a.phase == "sweep":
         from v5b.fleet import b_env as be
         out.mkdir(parents=True, exist_ok=True)
-        for i in range(1, len(be.OFFSETS_KMH)):
+        for i in map(int, a.offsets.split(",")):
             rep = evaluate(out, i, a.seeds, a.workers, SHARE, LEVELS)
             (out / f"eval_const{be.OFFSETS_KMH[i]:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
