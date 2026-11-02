@@ -20,7 +20,24 @@ def test_worker_runs_out_of_seeds_instead_of_leaving_its_range():
 
 
 def test_shared_agent_has_one_action_and_starts_on_fresh_seeds():
-    env = be.MergeEnv(run_dir="/tmp", n_ep0=bt.RUN2_NEP0, **bt.RUN2_ENV)
+    c = bt.CFG[2]
+    env = be.MergeEnv(run_dir="/tmp", n_ep0=c["nep0"], **c["env"])
     assert env.action_space.n == len(be.SHARED_OFFSETS_KMH)
-    assert env.n_ep == bt.RUN2_NEP0
-    assert bt.RUN2_NEP0 + 500 * bt.RUN2_STEPS / 8 / 150 <= be.SEEDS_PER_WORKER
+    assert env.n_ep == c["nep0"]
+    assert c["nep0"] + 500 * c["steps"] / 8 / 150 <= be.SEEDS_PER_WORKER
+
+
+def test_efficiency_reward_rewards_flow_and_speed_and_charges_only_excess_exposure():
+    env = be.MergeEnv(run_dir="/tmp", reward="efficiency")
+    env.q = 4090.0
+    b3, e30, n = be.REF_LEVEL[env.q]
+    env.ema_b3, env.ema_e30 = b3, e30
+    base = env._efficiency(1, 25.0, int(n), 0, 0)
+    env.ema_b3, env.ema_e30 = b3, e30
+    assert env._efficiency(2, 25.0, int(n), 0, 0) > base
+    env.ema_b3, env.ema_e30 = b3, e30
+    assert env._efficiency(1, 27.0, int(n), 0, 0) > base
+    env.ema_b3, env.ema_e30 = b3, e30
+    assert env._efficiency(1, 25.0, int(n), 60, 0) < base
+    env.ema_b3, env.ema_e30 = 0.0, 0.0
+    assert env._efficiency(1, 25.0, int(n), 0, 0) == pytest.approx(base)

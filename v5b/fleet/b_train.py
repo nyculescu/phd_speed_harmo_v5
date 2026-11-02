@@ -4,7 +4,7 @@ Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train train --out DIR --learner 0 [--updates 500] [--n-envs 8]
        python -m v5b.fleet.b_train eval --out DIR --model FILE [--seeds 20] [--workers 24]
        python -m v5b.fleet.b_train sweep --out DIR [--seeds 20] [--workers 24]
-       --run2 on train, eval or sweep selects the V267 agent: one shared offset every 10 s
+       --cfg 2 or 3 on train, eval or sweep selects a later agent (CFG)
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
 from __future__ import annotations
@@ -23,11 +23,10 @@ SHARE = 0.5
 LEVELS = (4090.0, 4300.0, 4600.0)
 VAL_SEEDS = list(range(7_419_800, 7_419_900))
 N_STEPS_TOTAL = 3072
-RUN2_ENV = {"shared": True, "decision": 10.0}
-RUN2_NEP0 = 200
-RUN2_FIRST_VAL = 20
-RUN2_STEPS = 304
-RUN2_GAMMA = 0.95
+CFG = {1: {"env": {}, "nep0": 0, "first_val": 0, "steps": N_STEPS_TOTAL, "gamma": 0.99, "norm": False},
+       2: {"env": {"shared": True, "decision": 10.0}, "nep0": 200, "first_val": 20, "steps": 304, "gamma": 0.95, "norm": True},
+       3: {"env": {"shared": True, "decision": 10.0, "reward": "efficiency"}, "nep0": 0, "first_val": 40, "steps": 304,
+           "gamma": 0.95, "norm": True}}
 
 
 def make_env(worker: int, run_dir: str, share: float, levels: tuple, kw: dict):
@@ -37,7 +36,7 @@ def make_env(worker: int, run_dir: str, share: float, levels: tuple, kw: dict):
     return _f
 
 
-def train(out: Path, learner: int, updates: int, n_envs: int, share: float, levels: tuple, stem: str = "", run2: bool = False) -> Path:
+def train(out: Path, learner: int, updates: int, n_envs: int, share: float, levels: tuple, stem: str = "", cfg: int = 1) -> Path:
     import torch
     from stable_baselines3 import PPO
     from stable_baselines3.common.callbacks import BaseCallback
@@ -48,13 +47,14 @@ def train(out: Path, learner: int, updates: int, n_envs: int, share: float, leve
     workers = [learner * n_envs + i for i in range(n_envs)]
     if max(workers) > 23:
         raise ValueError("worker ids above 23 leave the training seeds")
-    kw = {**RUN2_ENV, "n_ep0": RUN2_NEP0} if run2 else {}
+    c = CFG[cfg]
+    kw = {**c["env"], "n_ep0": c["nep0"]}
     env = VecMonitor(SubprocVecEnv([make_env(w, str(out / "rd"), share, levels, kw) for w in workers], start_method="spawn"))
-    total = RUN2_STEPS if run2 else N_STEPS_TOTAL
-    gamma = RUN2_GAMMA if run2 else 0.99
-    if run2:
+    gamma = c["gamma"]
+    if c["norm"]:
         env = VecNormalize(env, norm_obs=False, norm_reward=True, gamma=gamma)
-    n_steps = total // n_envs
+    n_steps = c["steps"] // n_envs
+    total = n_steps * n_envs
     model = PPO("MlpPolicy", env, n_steps=n_steps, batch_size=total // 4, n_epochs=10, learning_rate=3e-4, gamma=gamma,
                 gae_lambda=0.95, ent_coef=0.01, clip_range=0.2, device="cpu", seed=20261102 + learner, verbose=0)
     log = (out / f"{name}_episodes.jsonl").open("a")
@@ -93,7 +93,7 @@ def _eval_one(a: tuple) -> dict:
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
     env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
     o, _ = env.reset()
-    fixed = int(model_path or 0) if kw else np.full(be.K, model_path or 0, int)
+    fixed = int(model_path or 0) if kw.get("shared") else np.full(be.K, model_path or 0, int)
     while True:
         act = model.predict(o, deterministic=True)[0] if model is not None else fixed
         o, r, _, tr, inf = env.step(act)
@@ -103,10 +103,10 @@ def _eval_one(a: tuple) -> dict:
     return {"policy": bool(model_path), **{k: v for k, v in inf["ep"].items()}}
 
 
-def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, levels: tuple, run2: bool = False) -> dict:
-    first = RUN2_FIRST_VAL if run2 else 0
+def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, levels: tuple, cfg: int = 1) -> dict:
+    first = CFG[cfg]["first_val"]
     seeds = VAL_SEEDS[first:first + n_seeds]
-    kw = RUN2_ENV if run2 else {}
+    kw = CFG[cfg]["env"]
     jobs = [(p, share, q, s, str(out / "rd"), kw) for q in levels for s in seeds for p in (model, None)]
     ctx = mp.get_context("spawn")
     with ProcessPoolExecutor(workers, mp_context=ctx, max_tasks_per_child=1) as ex:
@@ -116,7 +116,7 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
         pol = {r["seed"]: r for r in rows if r["q"] == q and r["policy"]}
         nc = {r["seed"]: r for r in rows if r["q"] == q and not r["policy"]}
         row = {}
-        for k in ("E15", "E30", "brake3", "brake45", "N", "out_E30", "out_b3", "arrived"):
+        for k in ("E15", "E30", "brake3", "brake45", "N", "out_E30", "out_b3", "arrived", "passed", "mean_v"):
             d = np.array([(nc[s][k] - pol[s][k]) for s in seeds])
             base = np.median([nc[s][k] for s in seeds])
             rng = np.random.default_rng(20261102)
@@ -180,7 +180,7 @@ def main(argv: list) -> int:
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--offsets", default="1,2,3,4,5")
-    ap.add_argument("--run2", action="store_true")
+    ap.add_argument("--cfg", type=int, default=1)
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -189,17 +189,17 @@ def main(argv: list) -> int:
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
     if a.phase == "train":
-        print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS, run2=a.run2), flush=True)
+        print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS, cfg=a.cfg), flush=True)
         return 0
     if a.phase == "sweep":
         from v5b.fleet import b_env as be
         out.mkdir(parents=True, exist_ok=True)
         for i in map(int, a.offsets.split(",")):
-            rep = evaluate(out, i, a.seeds, a.workers, SHARE, LEVELS, a.run2)
-            off = (be.SHARED_OFFSETS_KMH if a.run2 else be.OFFSETS_KMH)[i]
+            rep = evaluate(out, i, a.seeds, a.workers, SHARE, LEVELS, a.cfg)
+            off = (be.SHARED_OFFSETS_KMH if CFG[a.cfg]["env"].get("shared") else be.OFFSETS_KMH)[i]
             (out / f"eval_const{off:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
-    rep = evaluate(out, a.model, a.seeds, a.workers, SHARE, LEVELS, a.run2)
+    rep = evaluate(out, a.model, a.seeds, a.workers, SHARE, LEVELS, a.cfg)
     (out / f"eval_{Path(a.model).stem}.json").write_text(json.dumps(rep, indent=1))
     print(json.dumps({k: {m: (v[m]["rel"], v[m]["better"]) for m in ("E15", "E30", "brake3", "N")} for k, v in rep.items()
                       if isinstance(v, dict)}), flush=True)

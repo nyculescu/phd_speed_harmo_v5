@@ -35,6 +35,9 @@ SEED0 = 7_410_000
 SEEDS_PER_WORKER = 400     # workers 0-23 stay below 7,419,600; the top of the block is validation and the V265 scan
 REF_BRAKE, REF_E3, REF_N = 0.6, 0.5, 350.0     # no-control scan, V265
 W_BRAKE, W_E3, W_N = 1.0, 1.0, 10.0
+# No control per level (V267): braking >= 3 m/s² /s, TTC < 3 s /s, vehicles in system.
+REF_LEVEL = {4090.0: (0.48, 0.249, 299.3), 4300.0: (0.672, 0.606, 321.9), 4600.0: (0.813, 0.784, 369.5)}
+SAFETY_TAU = 60.0
 
 
 class MergeEnv(gym.Env):
@@ -43,12 +46,12 @@ class MergeEnv(gym.Env):
     def __init__(self, share: float = 0.5, levels: tuple = (4000.0, 4090.0), episode: float = 1500.0, warm: float = 300.0,
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
-                 n_ep0: int = 0):
+                 n_ep0: int = 0, reward: str = "safety"):
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
         self.n_ep = n_ep0
-        self.shared, self.decision = shared, decision
+        self.shared, self.decision, self.reward = shared, decision, reward
         self.offsets = SHARED_OFFSETS_KMH if shared else OFFSETS_KMH
         self.sim = None
         self.action_space = gym.spaces.Discrete(len(self.offsets)) if shared else gym.spaces.MultiDiscrete([len(self.offsets)] * K)
@@ -93,10 +96,13 @@ class MergeEnv(gym.Env):
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
-                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0,
+                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
         while self.sim.t < self.warm - 1e-9:
             self._sim_step()
+        self.q = q
+        self.seen4 = set(ls.edge.getLastStepVehicleIDs("4"))
+        self.ema_b3, self.ema_e30 = REF_LEVEL[q][:2] if q in REF_LEVEL else (0.0, 0.0)
         return self._obs(), {"seed": s, "q": q, "share": self.share}
 
     def _sim_step(self) -> None:
@@ -244,7 +250,26 @@ class MergeEnv(gym.Env):
         c0 = self.ep.setdefault("_c", 0)
         new_c = self.ep["collisions"] - c0
         self.ep["_c"] = self.ep["collisions"]
-        return -W_BRAKE * b3 / REF_BRAKE - W_E3 * e30 / REF_E3 - W_N * (n / REF_N - 1.0) - COLLISION_COST * new_c
+        ids4 = set(ls.edge.getLastStepVehicleIDs("4"))
+        passed = len(ids4 - self.seen4)
+        self.seen4 |= ids4
+        live = ls.vehicle.getIDList()
+        vbar = sum(ls.vehicle.getSpeed(v) for v in live) / len(live) if live else fl.LIMIT
+        self.ep["passed"] += passed
+        self.ep["mean_v"] += vbar
+        if self.reward == "safety":
+            return -W_BRAKE * b3 / REF_BRAKE - W_E3 * e30 / REF_E3 - W_N * (n / REF_N - 1.0) - COLLISION_COST * new_c
+        return self._efficiency(passed, vbar, n, b3, e30) - COLLISION_COST * new_c
+
+    def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
+        """Past-merge flow against demand, mean speed and vehicles in system; safety only as a limit: a smoothed exposure
+        above its no-control level costs, below it earns nothing."""
+        ref_b3, ref_e30, ref_n = REF_LEVEL[self.q]
+        w = 1.0 / SAFETY_TAU
+        self.ema_b3 += w * (b3 - self.ema_b3)
+        self.ema_e30 += w * (e30 - self.ema_e30)
+        over = max(self.ema_b3 / ref_b3 - 1.0, 0.0) + max(self.ema_e30 / ref_e30 - 1.0, 0.0)
+        return passed / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0) - over
 
     def step(self, action):
         self._apply(action)
