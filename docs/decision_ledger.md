@@ -255,3 +255,12 @@ None.
   - If the T1 capacity drop turns out to be noise, every v199 study rests on a demand-only queue.
 - Confirmed issues: none yet.
 - Status: plant check running.
+
+### V256. Old mobility results withdrawn; A closed; B primary (2026-11-02)
+- Decision: D5.10, R6, P1/P1b and C1 are withdrawn as claims and kept in the ledger with their mechanism label; A is closed for SUMO; B's bind check is approved with the stage-0 amendment.
+- Potential challenges:
+  - No positive mobility result is left in the project.
+  - B's expected mobility effect is small; its claim is merge safety, and a KILL covers only speed caps on m32.
+  - SUMO lane-change artefacts at the merge (V193-V195) may make B's shares untestable.
+- Confirmed issues: the earlier positive results rest on a degenerate zipper + Flow-IDM discharge (V255).
+- Status: B amendment and review.
