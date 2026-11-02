@@ -184,11 +184,18 @@ def run(seed: int, share: float, q: float, step: float, arm: str, out: Path, exp
                         + ls.vehicle.getSpeed(v) ** 2 / (2 * ls.vehicle.getDecel(v)) <= ln_len - 1.0
                         and (hold["lane"] != MERGE_LANE or v in ramp)]
                 if cand:
+                    # setSpeed(0) alone lets a standing vehicle change lanes, which would free the lane it holds
                     held["vid"], held["t"] = max(cand, key=ls.vehicle.getLanePosition), t
+                    held["lc_mode"] = ls.vehicle.getLaneChangeMode(held["vid"])
+                    ls.vehicle.setLaneChangeMode(held["vid"], 0)
                     ls.vehicle.setSpeed(held["vid"], 0.0)
             elif held["vid"] is not None and t >= held["t"] + hold["dur"]:
                 if held["vid"] in ls.vehicle.getIDList():
+                    held["lane_at_release"] = ls.vehicle.getLaneID(held["vid"])
+                    held["to_end_at_release"] = round(ls.lane.getLength(held["lane_at_release"])
+                                                      - ls.vehicle.getLanePosition(held["vid"]), 2)
                     ls.vehicle.setSpeed(held["vid"], -1)
+                    ls.vehicle.setLaneChangeMode(held["vid"], held["lc_mode"])
                 held["done"] = True
         if abs(t - round(t)) < 1e-6:
             ids = _ma_vehicles(l2, internal)
@@ -251,7 +258,7 @@ def run(seed: int, share: float, q: float, step: float, arm: str, out: Path, exp
                                                                                  for v in order], np.int8))
     log = sim.log_file.read_text(errors="replace")
     o = {"plant": PLANT, "arm": arm, "share": share, "q": q, "step": step, "seed": seed, "sumo_seed": seed,
-         "explicit_vtype": explicit, "hold": hold, "tls_rm": tls_rm, "held": {k: held[k] for k in ("vid", "t")}, "code": code_id(),
+         "explicit_vtype": explicit, "hold": hold, "tls_rm": tls_rm, "held": {k: held.get(k) for k in ("vid", "t", "lane_at_release", "to_end_at_release")}, "code": code_id(),
          "generated": len(dem.veh), "inserted": sim.departed, "trips": len(rows), "ramp_generated": len(ramp),
          "alks_generated": sum(v.cls == "alks" for v in dem.veh), "truck_generated": sum(v.cls == "truck" for v in dem.veh),
          "window_vehicles": len(win), "merges": len(t_merge), "ramp_trips": sum(1 for v in by if v in ramp),

@@ -252,7 +252,7 @@ def smoke_jobs(out: Path) -> list:
                job("smoke", s, f, 0.1, "NCmu", s0, out, t_end=1200.0)]
     js += [job("smoke", 0.5, f, 0.1, "NC", s0, out, t_end=1200.0, explicit=False, tag="_unset"),
            job("smoke", 0.5, f, 0.1, "NC", s0, out, t_end=1200.0, tag="_hold1",
-               hold={"lane": bm.ROAD0, "t": 700.0, "dur": 200.0, "tail": 10.0}),
+               hold={"lane": bm.ROAD0, "t": 700.0, "dur": 200.0, "tail": 5.0}),   # 10 m admits a squeezing car
            job("smoke", 0.5, f, 0.1, "NC", s0, out, t_end=1200.0, tag="_hold2",
                hold={"lane": bm.MERGE_LANE, "t": 700.0, "dur": 200.0, "tail": 25.0})]
     return js
@@ -295,7 +295,9 @@ def smoke_check(js: list) -> list:
             bad.append(f"{n}: NC has commands")
         if j.get("hold"):
             want = 1 if j["hold"]["lane"] == bm.ROAD0 else 0
-            if r["held"]["vid"] is None or len(r["deadlock_events"]) != want:
+            h = r["held"]
+            if (h["vid"] is None or h["lane_at_release"] != j["hold"]["lane"]
+                    or h["to_end_at_release"] > j["hold"]["tail"] or len(r["deadlock_events"]) != want):
                 bad.append(f"{n}: hold on {j['hold']['lane']} held {r['held']} events {r['deadlock_events']}")
         elif r["deadlock_events"]:
             bad.append(f"{n}: unexpected deadlock events {r['deadlock_events']}")
