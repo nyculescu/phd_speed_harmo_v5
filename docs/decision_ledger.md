@@ -229,3 +229,20 @@ None.
   - Longer ambers lower the meter's top rate slightly when cars approach at speed.
 - Confirmed issues: none yet.
 - Status: implementing.
+
+### V236. E1-lite instead of the 69-h E1 (2026-11-01)
+- Decision: R cell, PM slices, NC + 9 grid points, n = 10, a direction rule (KILL / GO / UNCLEAR), one 10-seed extension on UNCLEAR.
+- Potential challenges:
+  - The best arm is chosen in-sample.
+  - The KILL branch is nearly unreachable at n = 10.
+- Confirmed issues: the noise floor and CI width were understated (V239).
+- Status: running (L2).
+
+### V240. Rules fixed before the n = 20 read (2026-11-01)
+- Decision: an ALINEA GO is conditional; an n = 20 UNCLEAR means no GO; ma/p0.75 runs if the best point is at the grid edge; a GO is confirmed on 7,430,260-279, best arm only.
+- Potential challenges:
+  - The rules were set after L1 was read (L1 only, n = 10).
+  - The ALINEA meter still fails T0, and its waits exceed the V190 4-min limit.
+  - MTFC saturates on this plant, so the screen effectively tests ALINEA alone.
+- Confirmed issues: none yet.
+- Status: waiting for L2.

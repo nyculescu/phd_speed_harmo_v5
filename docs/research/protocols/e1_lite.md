@@ -46,3 +46,23 @@ Applied to the best arm, the one with the largest rel (in-sample; best-of-9 nois
 - no I cell;
 - PM slice instead of the full day;
 - R was underpowered for the full E1 (V220).
+
+## Addendum (V239-V240, fixed before L2 was read)
+
+- **ALINEA GO:** conditional. No confirmation and no build until the meter passes T0 and the V190 4-min wait question is settled.
+- **UNCLEAR at n = 20:** no GO. The best arm's estimate is reported with its upper CI as the largest effect not excluded; E1 builds nothing on this plant.
+- **Grid edge:** if the n = 20 best ALINEA point is 0.85, ma/p0.75 runs on the same 20 seeds, report-only (best-of-10, disclosed).
+- **GO confirmation:** seeds 7,430,260-279 (seed check first), the n = 20 best arm only, pass = rel ≥ 0.10 and lower CI > 0 on those seeds alone.
+- **Corrected limits:**
+  - best-of-9 noise floor under the global null: about +6.7 to +9.9 % at n = 10 and +5.0 to +7.3 % at n = 20;
+  - observed n = 10 CI half-widths 0.12-0.22;
+  - a slice rel of 0.10 ≈ a full-day rel of 0.086;
+  - the n = 20 rule's P(UNCLEAR) is about 0.72 with no effect and 0.48 at +10 %;
+  - the pooled n = 20 look is a second look at the same family after L1 was read.
+- **Report-only additions** (separate code; the rule code is unchanged):
+  - per-block L1 and L2 effects;
+  - diff, sign, mean version and harm label;
+  - the §7.2-7.5 flags;
+  - all-lane and `:m_0_0` braking;
+  - served throughput with its caveat;
+  - the slice loop tests.
