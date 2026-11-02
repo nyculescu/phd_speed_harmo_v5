@@ -6,7 +6,7 @@ from v5b/d2/incidents.incident_window (rng(seed + 3301), same for every arm of a
 Arms: 'NC' (all green) or a meter plan id (v5b/p1c/meter.py); optional 'post' plan switched in at incident onset.
 Outputs: per-vehicle delay against nominal free flow (route length / (speed factor x 23 m/s)), window TTT, served
 flow, safety counters (teleports, collisions incl. junctions, emergency stops, emergency-braking warnings by edge),
-30-s series (exit flow, edge-3/4 speeds, commanded rate).
+30-s series (exit flow, edge-3/4 speeds, commanded rate, 'up' speed, e4 count, longest current standing time).
 """
 from __future__ import annotations
 
@@ -32,11 +32,13 @@ _EMERG = re.compile(r"Vehicle '([^']+)' performs emergency (braking|stop).*?lane
 
 
 class Sim(SumoSim):
+    ttt = 300.0
+
     def start(self) -> None:
         self.log_file = self.run_dir / f"sumo_pid{os.getpid()}.log"
         self.stat_file = self.run_dir / f"stats_pid{os.getpid()}.xml"
         args = [SUMO_BIN, "-n", str(self.net_file), "-r", str(self.route_file), "--step-length", str(self.dt),
-                "--seed", str(self.seed), "--route-steps", "0", "--time-to-teleport", "300",
+                "--seed", str(self.seed), "--route-steps", "0", "--time-to-teleport", f"{self.ttt:g}",
                 "--collision.action", "warn", "--collision.check-junctions", "true",
                 "--no-step-log", "true", "--duration-log.disable", "true",
                 "--log", str(self.log_file), "--statistic-output", str(self.stat_file)]
@@ -103,10 +105,14 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
     dem.write(rou)
     sim = Sim(d / "net.xml", rou, run_dir, dem, additional=[d / "add.xml"], step_length=cfg.step, seed=seed,
               extra_args=["--tripinfo-output", str(trip)])
+    sim.ttt = cfg.teleport
     inc = Incident(incident, onset, dur, pl.GEOMS[cfg.geom]["bott_edge"])
     loops = pl.loop_ids(cfg.geom)
     sim.start()
     ls.trafficlight.setProgram(pl.TLS_ID, "allgreen")
+    probe = {"dt": ls.simulation.getDeltaT(), "accel": ls.vehicletype.getAccel("car"),
+             "decel": ls.vehicletype.getDecel("car"), "min_gap": ls.vehicletype.getMinGap("car"),
+             "ttt": ls.simulation.getOption("time-to-teleport")}
     meter = None
     if arm != "NC":
         meter = Meter(arm, read_occ=lambda e: _mean(loops[e], ls.inductionloop.getLastIntervalOccupancy),
@@ -137,7 +143,9 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
                         round(_mean(loops["e4"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
                         round(_mean(loops["e3"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
                         None if meter is None else round(meter.r, 1),
-                        round(_mean(loops["up"], ls.inductionloop.getLastIntervalMeanSpeed), 2)))
+                        round(_mean(loops["up"], ls.inductionloop.getLastIntervalMeanSpeed), 2),
+                        int(sum(ls.inductionloop.getLastIntervalVehicleNumber(i) for i in loops["e4"])),
+                        round(max((ls.vehicle.getWaitingTime(v) for v in ls.vehicle.getIDList()), default=0.0), 1)))
 
     while sim.t < end_ctrl - 1e-9:
         tick(sim.t)
@@ -175,7 +183,7 @@ def run(cfg: pl.Config, arm: str, incident: str, profile: list, seed: int, run_d
            "drained": drained, "teleports": res["teleports"], "collisions": res["collisions"],
            "emergency_stops": res["emergency_stops"], "emerg_by_edge": em, "health": res["health"]["status"],
            "health_codes": sorted(res["health"]["by_code"]), "hash": res["hash"], "series": ser,
-           "blocker_depart_delay": None, "valid": bool(drained) and len(trips) == dem.counts_by_route()["main"] and res["teleports"] == 0
+           "blocker_depart_delay": None, "probe": probe, "valid": bool(drained) and len(trips) == dem.counts_by_route()["main"] and res["teleports"] == 0
            and res["collisions"] == 0, "wall_s": round(time.time() - t_w0, 1)}
     if not keep_files:
         for f in (rou, trip, sim.log_file, sim.stat_file):
@@ -193,7 +201,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     j = json.loads(a.job)
     res = run(pl.Config(**j["cfg"]), j["arm"], j["incident"], j["profile"], j["seed"], Path(a.run_dir),
-              post=j.get("post"), r_min=j.get("r_min", 600.0), series=j.get("series", True))
+              post=j.get("post"), r_min=j.get("r_min", 600.0), series=j.get("series", True),
+              **{k: j[k] for k in ("warmup", "control", "t_cap") if k in j})
     out = Path(j["out"])
     tmp = out.with_suffix(f".tmp{os.getpid()}")
     tmp.write_text(json.dumps(res))

@@ -44,6 +44,14 @@ GEOMS = {
            "block_pos": 250.0, "loops": {"e4": [("4", 100.0)], "e5": [("5", "mid")], "exit": [("5", -15.0)],
                                           "e3": [("3", -20.0)], "up": [("3", -150.0)]}},
 }
+# V251 stage 0: bn4 with edge 1 lengthened to 1,100 m so the E1 zones fit upstream of the 4->2 drop; the null plant
+# keeps 4 lanes throughout, so the node-3 meter at a fixed rate is the only bottleneck (no drop by construction), and
+# its 'e4' and 'exit' loops sit 180 m before and 138 m after the signal, as bn4L's do around the 2->1 drop.
+GEOMS["bn4L"] = {**GEOMS["bn4"], "nodes": [("1", 0.0), ("2", 1100.0), ("3", 1410.0), ("4", 1550.0), ("5", 1830.0),
+                                           ("6", 1985.0)]}
+GEOMS["bn4L_null"] = {**GEOMS["bn4L"], "lanes": {"1": 4, "2": 4, "3": 4, "4": 4, "5": 4}, "drops": (),
+                      "loops": {"e4": [("2", 130.0)], "e5": [("5", "mid")], "exit": [("3", -2.0)],
+                                "e3": [("3", -20.0)], "up": [("2", 130.0)]}}
 EDGE_NODES = {"1": ("1", "2"), "2": ("2", "3"), "3": ("3", "4"), "4": ("4", "5"), "5": ("5", "6")}
 
 
@@ -57,6 +65,8 @@ class Config:
     geom: str = "bn4"             # bn4 | wz
     lc_coop_speed: float | None = None   # stage 2 knob (gate §2)
     decel: float | None = None           # stage 2 knob: comfortable deceleration b (m/s^2)
+    accel: float | None = None           # V251 knob: human acceleration (IDM default 1.0, Krauss SUMO default)
+    teleport: float = 300.0              # --time-to-teleport; -1 = off (V197)
 
     def tag(self) -> str:
         t = f"{self.geom}_{self.merge}_{self.cf}_lc{self.lc_coop:g}_sd{self.speed_dev:g}_st{self.step:g}"
@@ -64,6 +74,10 @@ class Config:
             t += f"_lcs{self.lc_coop_speed:g}"
         if self.decel is not None:
             t += f"_b{self.decel:g}"
+        if self.accel is not None:
+            t += f"_a{self.accel:g}"
+        if self.teleport != 300.0:
+            t += f"_tt{self.teleport:g}"
         return t
 
 
@@ -152,11 +166,12 @@ def vtype_xml(cfg: Config) -> str:
     if cfg.lc_coop_speed is not None:
         lc += f' lcCooperativeSpeed="{cfg.lc_coop_speed:g}"'
     if cfg.cf == "IDM":
-        cf = f'carFollowModel="IDM" accel="1.0" decel="{cfg.decel or 1.5:g}" tau="1.0" minGap="2.0" delta="4"'
+        cf = f'carFollowModel="IDM" accel="{cfg.accel or 1.0:g}" decel="{cfg.decel or 1.5:g}" tau="1.0" minGap="2.0" delta="4"'
     elif cfg.cf == "EIDM":
         cf = 'carFollowModel="EIDM"' + (f' decel="{cfg.decel:g}"' if cfg.decel else "")
     elif cfg.cf == "Krauss":
-        cf = 'carFollowModel="Krauss"' + (f' decel="{cfg.decel:g}"' if cfg.decel else "")
+        cf = 'carFollowModel="Krauss"' + (f' decel="{cfg.decel:g}"' if cfg.decel else "") + (
+            f' accel="{cfg.accel:g}"' if cfg.accel else "")
     else:
         raise ValueError(cfg.cf)
     return f'  <vType id="car" vClass="passenger" length="5" {cf} {lc}/>'
