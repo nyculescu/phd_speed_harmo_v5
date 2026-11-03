@@ -78,7 +78,8 @@ class MergeEnv(gym.Env):
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
                  n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
-                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False):
+                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None):
+        self.plant = plant or {}
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
@@ -113,6 +114,7 @@ class MergeEnv(gym.Env):
         q = opt.get("q", self.levels[self.n_ep % len(self.levels)])
         self.n_ep += 1
         self.cfg = bm.setup(self.share, self.dt)
+        fl.tune(self.plant)
         fl.ALKS_TAU = ALKS_TAU0 if self.tau is None else self.tau
         if self.alks_asl is not None:
             fl.ALKS_EXPLICIT["actionStepLength"] = self.alks_asl
@@ -131,6 +133,9 @@ class MergeEnv(gym.Env):
                             step_length=self.dt, seed=s)
         self.sim.start()
         fl.all_green(bm.PLANT)
+        if "limit" in self.plant:
+            for x in ls.lane.getIDList():
+                ls.lane.setMaxSpeed(x, self.plant["limit"])
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
         self.contact = set()

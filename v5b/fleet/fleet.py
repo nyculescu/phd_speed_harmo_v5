@@ -67,6 +67,9 @@ CAV_MODELS = {"acc": "ACC", "cacc": "CACC", "alks": "ACC"}
 
 # calibration knobs (V177): HDV-car tau scale (shape kept) and accel; None = SUMO default
 HDV_TAU_SCALE = 1.0
+HDV_SIGMA_SCALE = 1.0
+VTYPE_TUNE = {}
+ACCEL_LEN = 300.0
 HDV_ACCEL: float | None = None
 HDV_ASL_SCALE = 1.0
 # V192 test: LC2013 lcAssertive for vehicles entering by the on-ramp; None = SUMO default
@@ -173,6 +176,8 @@ class VehSpec:
             a["apparentDecel"] = f"{CAV_APPARENT_DECEL:g}"
         if self.cls != "acc" or CAV_MODELS["acc"] == "ACC":     # ACC gains exist only in SUMO's ACC model
             a |= {k: f"{v:g}" for k, v in self.extra.items()}
+        a |= {k: str(v) for k, v in VTYPE_TUNE.get("lc", {}).items()}
+        a |= {k: str(v) for k, v in VTYPE_TUNE.get({"hdv_car": "hdv", "truck": "truck"}.get(self.cls, ""), {}).items()}
         return "  <vType " + " ".join(f'{k}="{v}"' for k, v in a.items()) + "/>"
 
 
@@ -201,7 +206,7 @@ def sample(n: int, seed: int, n_lanes: int, departs: list) -> list:
             while True:                       # tau >= actionStepLength per vehicle (note §4)
                 tau = HDV_TAU_SCALE * (TAU_RANGE[0] + (TAU_RANGE[1] - TAU_RANGE[0]) * float(rf.beta(*TAU_AB)))
                 asl = max(0.1, round(HDV_ASL_SCALE * _quantile(rf, ASL_Q) * 10) / 10)
-                sig = _quantile(rf, SIGMA_Q)
+                sig = _quantile(rf, SIGMA_Q) * HDV_SIGMA_SCALE
                 if tau >= asl:
                     break
                 v.resampled += 1
@@ -273,10 +278,20 @@ def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
     return dataclasses.replace(cfg, geom=p["geom"], merge=p["merge"])
 
 
+def tune(p: dict) -> None:
+    """Plant settings for the V314 sweeps, applied after apply_plant; an empty dict leaves the adopted plant unchanged."""
+    global HDV_TAU_SCALE, HDV_ASL_SCALE, HDV_SIGMA_SCALE, VTYPE_TUNE, ACCEL_LEN
+    HDV_TAU_SCALE = p.get("tau_scale", HDV_TAU_SCALE)
+    HDV_ASL_SCALE = p.get("asl_scale", HDV_ASL_SCALE)
+    HDV_SIGMA_SCALE = p.get("sigma_scale", 1.0)
+    VTYPE_TUNE = {k: p.get(k, {}) for k in ("lc", "hdv", "truck")}
+    ACCEL_LEN = p.get("accel_len", 300.0)
+
+
 def build_net(cfg: pl.Config) -> Path:
     """The p1c geometry (or the V190 on-ramp corridor) with a 100 km/h limit on every edge (V156)."""
     if cfg.geom in corridor.NETS:
-        return corridor.build(LIMIT, cfg.geom)
+        return corridor.build(LIMIT, cfg.geom, ACCEL_LEN)
     if cfg.geom in corridor.STRAIGHT:
         return corridor.build_straight(cfg.geom, LIMIT)
     with mock.patch.object(pl, "SPEED", LIMIT):

@@ -39,9 +39,11 @@ NETS = {NAME: (EDGES, LOOPS), M32: ([(e, a, b, 3 if e in ("4", "5") else k) for 
                                     {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]})}
 
 
-def build(speed: float, name: str = NAME) -> Path:
+def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
     edges, loops = NETS[name]
-    spec = {"v": 1, "name": name, "nodes": NODES, "edges": edges, "loops": loops, "speed": speed}
+    x_ae = dict((n, x) for n, x, _ in NODES)["ae"]
+    nodes = [(n, x + (accel_len - 300.0 if x >= x_ae else 0.0), y) for n, x, y in NODES]
+    spec = {"v": 1, "name": name, "nodes": nodes, "edges": edges, "loops": loops, "speed": speed}
     h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
     d = NET_CACHE / f"{name}_{h}"
     if (d / "net.xml").exists() and (d / "add.xml").exists():
@@ -49,7 +51,7 @@ def build(speed: float, name: str = NAME) -> Path:
     final, d = d, NET_CACHE / f"{name}_{h}.tmp{os.getpid()}"     # built aside, then renamed: parallel first builds
     d.mkdir(parents=True, exist_ok=True)
     nod = ["<nodes>"] + [f'  <node id="{n}" x="{x}" y="{y}" type="{"traffic_light" if n == "rm" else "priority"}"'
-                         + (' tlType="static"' if n == "rm" else "") + "/>" for n, x, y in NODES] + ["</nodes>"]
+                         + (' tlType="static"' if n == "rm" else "") + "/>" for n, x, y in nodes] + ["</nodes>"]
     edg = ["<edges>"] + [f'  <edge id="{e}" from="{a}" to="{b}" numLanes="{k}" speed="{speed}"/>'
                          for e, a, b, k in edges]
     edg += ['  <edge id="rj" from="rm" to="m" numLanes="1" speed="%s"/>' % speed, "</edges>"]

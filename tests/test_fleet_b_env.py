@@ -221,3 +221,21 @@ def test_cav_rule_lane_mode_moves_only_due_mainline_alks_upstream():
     assert a["a"] == 0
     a = be.CavRule((0, 0, 0), lane=2)((["a", "b", "c", "d"], lo, None, np.array([True, True, True, True])))
     assert a == {"a": 4, "b": 4, "c": 0, "d": 0}
+
+
+def test_plant_score_is_paired_clipped_and_counts_collisions():
+    from v5b.fleet import plant_sweep as ps
+    base = {"passed": 100.0, "N": 100.0, "fuel_km": 100.0, "ttc_net": 100.0, "brake_net": 100.0, "b45_net": 100.0, "collisions": 0}
+    rows = [{"name": "base", "q": 1.0, "seed": 1, **base}, {"name": "x", "q": 1.0, "seed": 1, **{**base, "passed": 110.0, "N": 10.0, "collisions": 2}}]
+    s = ps.score(rows)["x"]
+    assert s["flow"] == pytest.approx(10.0)
+    assert s["ttt"] == pytest.approx(90.0)
+    assert s["S"] == pytest.approx((10.0 + 30.0) / 6.0)
+    assert s["collisions"] == 2
+
+
+def test_plant_settings_reach_the_right_groups():
+    from v5b.fleet import plant_sweep as ps
+    p = ps.to_plant({"lcSpeedGain": 5, "limit_kmh": 90, "model": "IDM", "sigma_scale": 0.5, "accel_len": 450})
+    assert p["lc"] == {"lcSpeedGain": 5} and p["limit"] == pytest.approx(25.0) and p["hdv"] == {"carFollowModel": "IDM"}
+    assert p["truck"] == {"sigma": 0.25} and p["sigma_scale"] == 0.5 and p["accel_len"] == 450

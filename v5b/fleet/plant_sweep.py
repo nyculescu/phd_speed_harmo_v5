@@ -1,0 +1,223 @@
+"""V314: staged no-control sweeps towards the best no-control plant. Only no-control runs are scored, so no controller
+result can shape the plant. Stages: A one setting at a time; B random combinations in three families (lane changing;
+plus road; plus drivers); C the best of each family on more seeds; D each family's winner against the adopted plant on a
+demand ladder. The author picks from D; a frozen plant is then checked on unused seeds.
+
+Usage: python -m v5b.fleet.plant_sweep stages --out DIR --workers 28
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import multiprocessing as mp
+import sys
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
+
+import numpy as np
+
+LC = {"lcStrategic": [0.5, 2, 5], "lcCooperative": [0.5, 0.8], "lcSpeedGain": [0.5, 2, 5, 10], "lcKeepRight": [0, 0.5, 2],
+      "lcAssertive": [0.5, 1.5, 2, 3], "lcLookaheadLeft": [1, 4], "lcSpeedGainLookahead": [5, 10], "lcImpatience": [0.5, 1]}
+ROAD = {"limit_kmh": [80, 90, 110, 120], "accel_len": [200, 450, 600]}
+DRIVER = {"tau_scale": [0.7, 0.9, 1.0], "asl_scale": [0.25, 1.0], "sigma_scale": [0.25, 0.5, 0.75], "accel": [2.0, 3.2], "model": ["IDM", "EIDM"]}
+FAMILIES = {"lc": LC, "lc_road": {**LC, **ROAD}, "all": {**LC, **ROAD, **DRIVER}}
+SEEDS = {"A": range(7_419_610, 7_419_615), "B": range(7_419_615, 7_419_618), "C": range(7_419_618, 7_419_623), "D": range(7_419_623, 7_419_640)}
+LEVELS, LADDER = (4600.0, 5300.0), (4090.0, 4600.0, 5300.0, 6000.0)
+N_RANDOM, N_TOP = 100, 5
+METRICS = (("flow", "passed", 1), ("ttt", "N", -1), ("fuel", "fuel_km", -1), ("ttc", "ttc_net", -1), ("brake", "brake_net", -1), ("hard", "b45_net", -1))
+CLIP = 30.0     # no single metric may decide the score
+REF_SPEED = 100.0 / 3.6
+
+
+def to_plant(c: dict) -> dict:
+    p = {"lc": {k: v for k, v in c.items() if k in LC}}
+    for k in ("tau_scale", "asl_scale", "sigma_scale", "accel_len"):
+        if k in c:
+            p[k] = c[k]
+    if "limit_kmh" in c:
+        p["limit"] = c["limit_kmh"] / 3.6
+    p["hdv"] = {}
+    if "accel" in c:
+        p["hdv"]["accel"] = c["accel"]
+    if "model" in c:
+        p["hdv"]["carFollowModel"] = c["model"]
+    if "sigma_scale" in c:
+        p["truck"] = {"sigma": 0.5 * c["sigma_scale"]}     # trucks use SUMO's default Krauss sigma
+    return p
+
+
+def run_one(a: tuple) -> dict:
+    name, c, q, seed, rd = a
+    import libsumo as ls
+    from v5b.fleet import b_env as be
+    env = be.make(zones=True, decision=10.0, alks_asl=0.5, w_change=0.1, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c))
+    S, arr, prev = defaultdict(float), {}, {}
+    flow_min, v20_min = defaultdict(int), defaultdict(list)
+    step0, sec0 = env._sim_step, env._second
+
+    def step():
+        step0()
+        for v in ls.simulation.getArrivedIDList():
+            arr[v] = env.sim.t
+
+    def sec():
+        p0 = env.ep["passed"]
+        r = sec0()
+        m = int(env.sim.t // 60)
+        flow_min[m] += env.ep["passed"] - p0
+        v20_min[m].append(ls.lane.getLastStepMeanSpeed("2_0"))
+        for v in ls.vehicle.getIDList():
+            x, s, f = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v), ls.vehicle.getFuelConsumption(v)
+            S["vs"] += 1
+            S["dist"] += s
+            S["a2"] += x * x
+            S["jerk"] += abs(x - prev.get(v, x))
+            prev[v] = x
+            S["fuel"] += f
+            S["fuel_truck"] += f * (v in trucks)
+            S["b45"] += x <= -4.5
+            S["b7"] += x <= -7.0
+        for x in ("3a_0", "3a_1"):
+            S["halt_" + x] += ls.lane.getLastStepHaltingNumber(x)
+        for x in ("3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2"):
+            n = ls.lane.getLastStepVehicleNumber(x)
+            S["n_" + x] += n
+            S["nv_" + x] += n * ls.lane.getLastStepMeanSpeed(x)
+        l3a = ls.lane.getLength("3a_0")
+        S["end_stop"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l3a - 30.0 for v in ls.lane.getLastStepVehicleIDs("3a_0"))
+        S["teleports"] += ls.simulation.getStartingTeleportNumber()
+        return r
+
+    env._sim_step, env._second = step, sec
+    env.reset()
+    trucks = {v.vid for v in env.dem.veh if v.cls == "truck"}
+    while True:
+        *_, tr, inf = env.step(np.zeros(3, int))
+        if tr:
+            break
+    length = {r: sum(ls.lane.getLength(f"{e}_0") for e in edges) for r, edges in (("main", ("1", "2", "3a", "3", "4", "5")), ("ramp", ("r", "rj", "3a", "3", "4", "5")))}
+    delay, ramp = [], []
+    planned = done = 0
+    for v, r in zip(env.dem.veh, env.dem.route_of):
+        if env.warm <= v.depart < env.t_end:
+            planned += 1
+            t = arr.get(v.vid)
+            if t is not None and t <= env.t_end:
+                done += 1
+                d = t - v.depart - length[r] / (REF_SPEED * v.sf)
+                delay.append(d)
+                if r == "ramp":
+                    ramp.append(d)
+    env.close()
+    ep = inf["ep"]
+    row = {"name": name, "cfg": c, **{k: ep[k] for k in ("q", "seed", "passed", "arrived", "N", "mean_v", "E15", "E30", "out_E30", "brake3", "brake45", "out_b3", "collisions", "contact_steps", "stop_gap", "gap25", "steps")}}
+    row |= {k: float(v) for k, v in S.items()}
+    row |= {"ttc_net": ep["E30"] + ep["out_E30"], "brake_net": ep["brake3"] + ep["out_b3"], "b45_net": S["b45"], "b7_net": S["b7"], "fuel_km": S["fuel"] / max(S["dist"], 1.0) * 1000.0,
+            "delay": float(np.mean(delay)) if delay else None, "delay_p95": float(np.percentile(delay, 95)) if delay else None, "delay_ramp": float(np.mean(ramp)) if ramp else None,
+            "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
+    return row
+
+
+def matrix(cfgs: dict, levels: tuple, seeds, f: Path, workers: int, rd: str) -> list:
+    done = {(r["name"], r["q"], r["seed"]) for r in map(json.loads, f.read_text().splitlines())} if f.exists() else set()
+    jobs = [(n, c, q, s, rd) for n, c in cfgs.items() for q in levels for s in seeds if (n, q, s) not in done]
+    print(f.name, len(jobs), "jobs", flush=True)
+    with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex, f.open("a") as w:
+        for fut in as_completed([ex.submit(run_one, j) for j in jobs]):
+            w.write(json.dumps(fut.result()) + "\n")
+            w.flush()
+    return [json.loads(x) for x in f.read_text().splitlines()]
+
+
+def score(rows: list, base: str = "base") -> dict:
+    """Per setting: the mean over levels and metrics of the median paired % improvement on the adopted plant, each clipped."""
+    T = defaultdict(dict)
+    for r in rows:
+        T[(r["name"], r["q"])][r["seed"]] = r
+    out = defaultdict(lambda: {"parts": defaultdict(list), "collisions": 0, "n": 0})
+    for (n, q), A in T.items():
+        B = T.get((base, q), {})
+        ds = sorted(set(A) & set(B))
+        if not ds:
+            continue
+        o = out[n]
+        o["collisions"] += sum(A[k]["collisions"] for k in ds)
+        o["n"] += len(ds)
+        for lab, key, sign in METRICS:
+            ref = max(float(np.median([B[k][key] for k in ds])), 1.0)
+            o["parts"][lab].append(float(np.median([sign * (A[k][key] - B[k][key]) / ref * 100.0 for k in ds])))
+    res = {}
+    for n, o in out.items():
+        parts = {k: float(np.mean(v)) for k, v in o["parts"].items()}
+        res[n] = {"S": float(np.mean([np.clip(x, -CLIP, CLIP) for x in parts.values()])), "collisions": o["collisions"], "n": o["n"], **parts}
+    return res
+
+
+def family_of(c: dict) -> str:
+    if set(c) & set(DRIVER):
+        return "all"
+    return "lc_road" if set(c) & set(ROAD) else "lc"
+
+
+def stages(out: Path, workers: int) -> None:
+    out.mkdir(parents=True, exist_ok=True)
+    rd = str(out / "rd")
+    cfgs = {"base": {}}
+    for k, vals in FAMILIES["all"].items():
+        for v in vals:
+            cfgs[f"{k}={v}"] = {k: v}
+    ra = matrix(cfgs, LEVELS, SEEDS["A"], out / "stage_a.jsonl", workers, rd)
+    sa = score(ra)
+    (out / "stage_a_score.json").write_text(json.dumps(sa, indent=0))
+    good = defaultdict(list)
+    for n, s in sa.items():
+        if n != "base" and s["S"] > 0:
+            k, c = n, cfgs[n]
+            good[next(iter(c))].append(next(iter(c.values())))
+    print("stage A, values that improve:", dict(good), flush=True)
+    rng = np.random.default_rng(20261103)
+    cb = {"base": {}}
+    for fam, knobs in FAMILIES.items():
+        pool = {k: good[k] for k in knobs if good.get(k)}
+        for i in range(N_RANDOM):
+            c = {}
+            for k, vals in pool.items():     # each setting: stay at its default, or one improving value
+                j = int(rng.integers(0, len(vals) + 1))
+                if j:
+                    c[k] = vals[j - 1]
+            cb[f"{fam}#{i}"] = c
+    (out / "stage_b_cfgs.json").write_text(json.dumps(cb, indent=0))
+    rb = matrix(cb, LEVELS, SEEDS["B"], out / "stage_b.jsonl", workers, rd)
+    sb = score(rb)
+    (out / "stage_b_score.json").write_text(json.dumps(sb, indent=0))
+    cc = {"base": {}}
+    for fam in FAMILIES:
+        ok = sorted((n for n in sb if n.startswith(fam + "#") and not sb[n]["collisions"] and family_of(cb[n]) == fam), key=lambda n: -sb[n]["S"])
+        cc |= {n: cb[n] for n in ok[:N_TOP]}
+    rc = matrix(cc, LEVELS, SEEDS["C"], out / "stage_c.jsonl", workers, rd)
+    sc = score(rc)
+    (out / "stage_c_score.json").write_text(json.dumps(sc, indent=0))
+    cd = {"base": {}}
+    for fam in FAMILIES:
+        ok = sorted((n for n in cc if n.startswith(fam + "#")), key=lambda n: (bool(sc[n]["collisions"]), -sc[n]["S"]))
+        if ok:
+            cd[fam] = cc[ok[0]]
+    (out / "stage_d_cfgs.json").write_text(json.dumps(cd, indent=0))
+    rd_rows = matrix(cd, LADDER, SEEDS["D"], out / "stage_d.jsonl", workers, rd)
+    (out / "stage_d_score.json").write_text(json.dumps(score(rd_rows), indent=0))
+    print("done", flush=True)
+
+
+def main(argv: list) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("phase", choices=("stages",))
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--workers", type=int, default=28)
+    a = ap.parse_args(argv)
+    stages(Path(a.out), a.workers)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
