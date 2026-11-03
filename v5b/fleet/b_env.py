@@ -35,7 +35,6 @@ N_ZONES = 3
 ZONE_UP, ZONE_MERGE, ZONE_DOWN = 0, 1, 2
 ZONE_NORM = 300.0
 ZONE_HOLD = 60.0
-W_CHANGE = 0.1     # per applied change, per decision; a useful change held for one 60-s hold earns more (V281)
 W_GAP = 2.0     # per follower-second with a bumper gap < 2.5 m; about the size of the flow and speed gains (V276)
 V_FLOOR = 5.0
 GAP_NORM = 100.0
