@@ -201,7 +201,7 @@ def update(net: Net, opt, batch: tuple, scale: float, rng: np.random.Generator) 
     return {"entropy": ent / max(k, 1), "value_loss": vl / max(k, 1), "n": n}
 
 
-def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None) -> Path:
+def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None, resume: str | None = None) -> Path:
     torch.set_num_threads(1)
     seed = 20261103 + learner
     torch.manual_seed(seed)
@@ -220,11 +220,15 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
     net = Net()
     opt = torch.optim.Adam(net.parameters(), lr=LR, eps=1e-5)
     scale = 1.0
+    if resume:
+        ck = torch.load(resume, map_location="cpu")
+        net.load_state_dict(ck["net"])
+        scale = ck["scale"]
     t0 = time.time()
     with (out / f"{name}_episodes.jsonl").open("a") as lg, (out / f"{name}_updates.jsonl").open("a") as lu:
         for u in range(updates):
             batch = collect(net, scale, conns)
-            if u == 0:     # the critic's unit is fixed once, from the first returns
+            if u == 0 and not resume:     # the critic's unit is fixed once, from the first returns
                 scale = max(float(batch[5].std()), 1e-3)
             st = update(net, opt, batch, scale, rng)
             for ep in batch[7]:
@@ -321,6 +325,7 @@ def main(argv: list) -> int:
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=250)
     ap.add_argument("--n-envs", type=int, default=3)
+    ap.add_argument("--resume")
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -328,7 +333,7 @@ def main(argv: list) -> int:
         bad = smoke(out)
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
-    print("model:", train(out, a.learner, a.updates, a.n_envs), flush=True)
+    print("model:", train(out, a.learner, a.updates, a.n_envs, resume=a.resume), flush=True)
     return 0
 
 

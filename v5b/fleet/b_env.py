@@ -57,8 +57,8 @@ BIN_M = 200.0
 RAMP_LEN, RAMP_R_LEN = 420.0, 392.0     # edges r + rj before the 3a start
 LEN_3, LEN_4 = 1196.0, 1000.0
 RAMP_ZONE_END = 295.0 + bm.MA_EDGE3_HEAD     # end of the merge zone from the 3a start
-# Per-vehicle reward (V289). Own level hardly moves own speed; randomised per trip, the flow term at 0.4 makes short headways pay outside the merge zone and 1.6 s pay inside it at 4,600 and 5,300.
-W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC, W_CAV_BRAKE = 0.5, 0.5, 10.0, 10.0
+# Per-vehicle reward (V289, V292). Own level hardly moves own speed; randomised per trip, the flow term at 0.4 makes short headways pay outside the merge zone. Safety 20: at 10, run 3 kept 0.8 s through the merge zone.
+W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC, W_CAV_BRAKE = 0.5, 0.5, 20.0, 20.0
 W_CAV_FLOW = 0.4
 Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
 FREE_SPACING = 200.0     # no leader within sensing range

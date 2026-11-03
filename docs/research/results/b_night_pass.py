@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 
-ARMS = ("a111", "a222", "a333", "a101", "a202", "a303", "a300", "a030", "a003")
+ARMS = ("a111", "a222", "a333", "a101", "a202", "a303", "a300", "a030", "a003", "p101", "p202", "p303")     # p: per-vehicle patterns, V286
 T = defaultdict(dict)
 for f in sys.argv[1].split(","):
     for line in open(f):
