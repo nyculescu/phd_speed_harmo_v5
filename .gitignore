@@ -11,6 +11,10 @@ runs/raw/
 *.sumocfg.tmp
 .DS_Store
 
-# Thesis PDFs: third-party copyright, kept local only (V151)
+# Thesis and paper PDFs: third-party copyright, kept local only (V151)
 docs/theses/*.pdf
 docs/theses/*.notpdf
+papers/refs_papers/
+
+# Temporary folders at the repo root
+/tmp*/
