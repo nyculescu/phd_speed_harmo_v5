@@ -41,3 +41,11 @@ def test_efficiency_reward_rewards_flow_and_speed_and_charges_only_excess_exposu
     assert env._efficiency(1, 25.0, int(n), 60, 0) < base
     env.ema_b3, env.ema_e30 = 0.0, 0.0
     assert env._efficiency(1, 25.0, int(n), 0, 0) == pytest.approx(base)
+
+
+def test_zone_agent_spaces_and_seeds_stay_outside_training():
+    env = be.make(zones=True, run_dir="/tmp", decision=10.0)
+    assert env.action_space.nvec.tolist() == [len(be.HEADWAYS_S)] * be.N_ZONES
+    assert env.observation_space.shape == (be.R * 3 + be.K * 4 + be.N_ZONES * 3 + 3,)
+    assert min(bt.CFG[6]["seeds"]) > 7_419_902 and max(bt.CFG[6]["seeds"]) < 7_420_000
+    assert len(bt.ZONE_ARMS) == 12 and (1, 0, 0) in bt.ZONE_ARMS and (3, 3, 3) in bt.ZONE_ARMS

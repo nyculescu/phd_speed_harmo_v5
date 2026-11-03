@@ -30,6 +30,11 @@ HARD_BRAKE, EMERG_BRAKE = 3.0, 4.5
 LOCK = 1537
 MIN_GAP = 2.5
 V2V_RANGE = 150.0
+HEADWAYS_S = (1.6, 1.2, 1.0, 0.8)
+N_ZONES = 3
+ZONE_UP, ZONE_MERGE, ZONE_DOWN = 0, 1, 2
+ZONE_NORM = 300.0
+W_GAP = 2.0     # per follower-second with a bumper gap < 2.5 m; about the size of the flow and speed gains (V276)
 V_FLOOR = 5.0
 GAP_NORM = 100.0
 COLLISION_COST = 10.0
@@ -38,9 +43,14 @@ SEEDS_PER_WORKER = 400     # workers 0-23 stay below 7,419,600; the top of the b
 REF_BRAKE, REF_E3, REF_N = 0.6, 0.5, 350.0     # no-control scan, V265
 W_BRAKE, W_E3, W_N = 1.0, 1.0, 10.0
 # No control per level (V267): braking >= 3 m/s² /s, TTC < 3 s /s, vehicles in system.
-REF_LEVEL = {4090.0: (0.48, 0.249, 299.3), 4300.0: (0.672, 0.606, 321.9), 4600.0: (0.813, 0.784, 369.5)}
+REF_LEVEL = {4090.0: (0.48, 0.249, 299.3), 4300.0: (0.672, 0.606, 321.9), 4600.0: (0.813, 0.784, 369.5),
+             5300.0: (0.603, 0.64, 539.8)}
 SAFETY_TAU = 60.0
 ALKS_TAU0 = fl.ALKS_TAU
+
+
+def make(zones: bool = False, **kw):
+    return ZoneEnv(**kw) if zones else MergeEnv(**kw)
 
 
 class MergeEnv(gym.Env):
@@ -94,7 +104,7 @@ class MergeEnv(gym.Env):
         self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r == "ramp"}
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
         self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
-        self.v2v_lead, self.v2v_on = {}, set()
+        self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
@@ -322,3 +332,106 @@ class MergeEnv(gym.Env):
                 self._release(v, live)
             info["ep"] = {k: v for k, v in self.ep.items() if not k.startswith("_")}
         return self._obs(), float(r), False, trunc, info
+
+
+class ZoneEnv(MergeEnv):
+    """V277: a central policy picks a target headway per zone every decision; the V2V rule applies it. An ALKS behind an
+    ALKS within V2V range, the same leader on two updates, uses its zone's target; any other ALKS keeps the contract's
+    tau. No speed or lane-change commands. Observation: the ramp vehicles and mainline slots of MergeEnv without their
+    cap, plus per zone the mean speed, vehicle count and current target, plus the lane speed, 3a count and insertion queue."""
+
+    def __init__(self, **kw):
+        kw.setdefault("reward", "efficiency")
+        super().__init__(**kw)
+        self.action_space = gym.spaces.MultiDiscrete([len(HEADWAYS_S)] * N_ZONES)
+        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 3 + 3,), dtype=np.float32)
+        self.target = np.zeros(N_ZONES, int)
+
+    def reset(self, *, seed=None, options=None):
+        self.target = np.zeros(N_ZONES, int)
+        self.v2v_tau = HEADWAYS_S[0]
+        return super().reset(seed=seed, options=options)
+
+    def _zone(self, v: str) -> int:
+        e = ls.vehicle.getRoadID(v)
+        if e == "2":
+            return ZONE_MERGE if ls.vehicle.getLanePosition(v) > self.l2 - bm.MA_EDGE2_TAIL else ZONE_UP
+        if e == "3":
+            return ZONE_MERGE if ls.vehicle.getLanePosition(v) < bm.MA_EDGE3_HEAD else ZONE_DOWN
+        if e in ("3a", ":m", ":ae") or e.startswith((":m_", ":ae_")):
+            return ZONE_MERGE
+        if e in ("4", "5") or e.startswith((":d_", ":b_")):
+            return ZONE_DOWN
+        return ZONE_UP
+
+    def _apply(self, action) -> None:
+        self.target = np.asarray(action, int)
+
+    def _taper(self) -> None:
+        pass
+
+    def _v2v(self) -> None:
+        for v in ls.vehicle.getIDList():
+            if v not in self.alks_all:
+                continue
+            lead = ls.vehicle.getLeader(v, V2V_RANGE)
+            cur = lead[0] if lead and lead[0] in self.alks_all else None
+            on = cur is not None and self.v2v_lead.get(v) == cur
+            self.v2v_lead[v] = cur
+            want = HEADWAYS_S[self.target[self._zone(v)]] if on else ALKS_TAU0
+            if self.v2v_cur.get(v, ALKS_TAU0) != want:
+                ls.vehicle.setTau(v, want)
+                self.v2v_cur[v] = want
+                self.ep["commands"] += 1
+            self.ep["alks_s"] += 1
+            self.ep["v2v_s"] += want != ALKS_TAU0
+
+    def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
+        g0 = self.ep["gap25"]
+        self._net_stats_gap()
+        return super()._efficiency(passed, vbar, n, b3, e30) - W_GAP * (self.ep["gap25"] - g0)
+
+    def _net_stats_gap(self) -> None:
+        """Counts bumper gaps below 2.5 m unless the reporting pass has just done it."""
+        if not self.report_net:
+            self._net_stats()
+
+    def _obs(self) -> np.ndarray:
+        o = []
+        ramp = []
+        for lane, base in (("3a_0", 0.0), ("rj_0", ls.lane.getLength("3a_0")),
+                           ("r_0", ls.lane.getLength("3a_0") + ls.lane.getLength("rj_0"))):
+            ln = ls.lane.getLength(lane)
+            for v in ls.lane.getLastStepVehicleIDs(lane):
+                if v in self.ramp:
+                    ramp.append((base + ln - ls.vehicle.getLanePosition(v), v, lane == "3a_0"))
+        ramp.sort()
+        for i in range(R):
+            if i < len(ramp):
+                d, v, on = ramp[i]
+                o += [min(d / 750.0, 1.0), min(ls.vehicle.getSpeed(v) / fl.LIMIT, 1.0), float(on)]
+            else:
+                o += [1.0, 0.0, 0.0]
+        slots = self._slots()
+        for i in range(K):
+            if i < len(slots):
+                d, v = slots[i]
+                lead = ls.vehicle.getLeader(v, GAP_NORM)
+                fol = ls.vehicle.getFollower(v, GAP_NORM)
+                o += [min(d / CZ, 1.0), min(ls.vehicle.getSpeed(v) / fl.LIMIT, 1.0),
+                      min(max(lead[1], 0.0) / GAP_NORM, 1.0) if lead and lead[0] else 1.0,
+                      min(max(fol[1], 0.0) / GAP_NORM, 1.0) if fol and fol[0] else 1.0]
+            else:
+                o += [1.0, 0.0, 1.0, 1.0]
+        sp, cnt = [0.0] * N_ZONES, [0] * N_ZONES
+        for v in ls.vehicle.getIDList():
+            z = self._zone(v)
+            sp[z] += ls.vehicle.getSpeed(v)
+            cnt[z] += 1
+        for z in range(N_ZONES):
+            o += [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0, min(cnt[z] / ZONE_NORM, 1.0),
+                  HEADWAYS_S[self.target[z]] / HEADWAYS_S[0]]
+        o += [min(max(ls.lane.getLastStepMeanSpeed("2_0"), 0.0) / fl.LIMIT, 1.0),
+              min(ls.lane.getLastStepVehicleNumber("3a_0") / 40.0, 1.0),
+              min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0)]
+        return np.array(o, dtype=np.float32)

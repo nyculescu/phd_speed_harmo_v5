@@ -6,6 +6,7 @@ Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train sweep --out DIR [--seeds 20] [--workers 24]
        python -m v5b.fleet.b_train headway --out DIR [--seeds 20] [--workers 27]
        python -m v5b.fleet.b_train v2v --out DIR [--seeds 20] [--workers 27]
+       python -m v5b.fleet.b_train zones --out DIR [--seeds 20] [--workers 27]
        --cfg 2 or 3 on train, eval or sweep selects a later agent (CFG)
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
@@ -30,16 +31,20 @@ CFG = {1: {"env": {}, "nep0": 0, "first_val": 0, "steps": N_STEPS_TOTAL, "gamma"
        3: {"env": {"shared": True, "decision": 10.0, "reward": "efficiency"}, "nep0": 0, "first_val": 40, "steps": 304,
            "gamma": 0.95, "norm": True},
        4: {"env": {"shared": True, "decision": 10.0}, "first_val": 60},
-       5: {"env": {"shared": True, "decision": 10.0}, "first_val": 80}}
+       5: {"env": {"shared": True, "decision": 10.0}, "first_val": 80},
+       6: {"env": {"zones": True, "decision": 10.0}, "nep0": 0, "steps": 304, "gamma": 0.95, "norm": True,
+           "levels": (4090.0, 4600.0, 5300.0), "seeds": list(range(7_419_910, 7_419_930))}}
 HEADWAYS = (1.2, 1.0, 0.8)
 HEADWAY_LEVELS = (4090.0, 4300.0, 4600.0, 5300.0)
 V2V_ASLS = (None, 0.5)
+# Tuned fixed opponents for the zone agent: the same index everywhere, or a short headway in one zone only.
+ZONE_ARMS = [(i, i, i) for i in (1, 2, 3)] + [tuple(i if z == k else 0 for z in range(3)) for k in range(3) for i in (1, 2, 3)]
 
 
 def make_env(worker: int, run_dir: str, share: float, levels: tuple, kw: dict):
     def _f():
-        from v5b.fleet.b_env import MergeEnv
-        return MergeEnv(share=share, levels=levels, worker=worker, run_dir=run_dir, **kw)
+        from v5b.fleet.b_env import make
+        return make(share=share, levels=levels, worker=worker, run_dir=run_dir, **kw)
     return _f
 
 
@@ -98,10 +103,13 @@ def _eval_one(a: tuple) -> dict:
     from v5b.fleet import b_env as be
     torch.set_num_threads(1)
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
-    env = be.MergeEnv(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
+    env = be.make(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
     o, _ = env.reset()
     arm = model_path if isinstance(model_path, int) else 0
-    fixed = arm if kw.get("shared") else np.full(be.K, arm, int)
+    if kw.get("zones"):
+        fixed = np.array(model_path if isinstance(model_path, tuple) else (0,) * be.N_ZONES)
+    else:
+        fixed = arm if kw.get("shared") else np.full(be.K, arm, int)
     while True:
         act = model.predict(o, deterministic=True)[0] if model is not None else fixed
         o, r, _, tr, inf = env.step(act)
@@ -112,8 +120,7 @@ def _eval_one(a: tuple) -> dict:
 
 
 def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, levels: tuple, cfg: int = 1, arm_kw: dict | None = None) -> dict:
-    first = CFG[cfg]["first_val"]
-    seeds = VAL_SEEDS[first:first + n_seeds]
+    seeds = CFG[cfg]["seeds"][:n_seeds] if "seeds" in CFG[cfg] else VAL_SEEDS[CFG[cfg]["first_val"]:CFG[cfg]["first_val"] + n_seeds]
     kw = CFG[cfg]["env"]
     jobs = [j for q in levels for s in seeds for j in ((model, share, q, s, str(out / "rd"), {**kw, **(arm_kw or {})}, True),
                                                        (None, share, q, s, str(out / "rd"), kw, False))]
@@ -182,7 +189,7 @@ def smoke(out: Path) -> list:
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway", "v2v"))
+    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway", "v2v", "zones"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=500)
@@ -192,6 +199,7 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--offsets", default="1,2,3,4,5")
     ap.add_argument("--cfg", type=int, default=1)
+    ap.add_argument("--asl", type=float)
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -200,7 +208,16 @@ def main(argv: list) -> int:
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
     if a.phase == "train":
-        print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, LEVELS, cfg=a.cfg), flush=True)
+        print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, CFG[a.cfg].get("levels", LEVELS), cfg=a.cfg), flush=True)
+        return 0
+    if a.phase == "zones":
+        out.mkdir(parents=True, exist_ok=True)
+        lv = CFG[a.cfg]["levels"]
+        for arm in ZONE_ARMS:
+            rep = evaluate(out, arm, a.seeds, a.workers, SHARE, lv, a.cfg)
+            (out / f"eval_zone{''.join(map(str, arm))}.json").write_text(json.dumps(rep, indent=1))
+        rep = evaluate(out, (0, 0, 0), a.seeds, a.workers, SHARE, lv, a.cfg, {"alks_asl": 0.5})
+        (out / "eval_delay_only.json").write_text(json.dumps(rep, indent=1))
         return 0
     if a.phase == "v2v":
         out.mkdir(parents=True, exist_ok=True)
@@ -223,8 +240,9 @@ def main(argv: list) -> int:
             off = (be.SHARED_OFFSETS_KMH if CFG[a.cfg]["env"].get("shared") else be.OFFSETS_KMH)[i]
             (out / f"eval_const{off:g}.json").write_text(json.dumps(rep, indent=1))
         return 0
-    rep = evaluate(out, a.model, a.seeds, a.workers, SHARE, LEVELS, a.cfg)
-    (out / f"eval_{Path(a.model).stem}.json").write_text(json.dumps(rep, indent=1))
+    lv = CFG[a.cfg].get("levels", LEVELS)
+    rep = evaluate(out, a.model, a.seeds, a.workers, SHARE, lv, a.cfg, {"alks_asl": a.asl} if a.asl else None)
+    (out / f"eval_{Path(a.model).stem}{f'_asl{a.asl:g}' if a.asl else ''}.json").write_text(json.dumps(rep, indent=1))
     print(json.dumps({k: {m: (v[m]["rel"], v[m]["better"]) for m in ("E15", "E30", "brake3", "N")} for k, v in rep.items()
                       if isinstance(v, dict)}), flush=True)
     return 0
