@@ -1,0 +1,1094 @@
+{
+ "b_train/night/c/train3/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.586552619934082",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train3/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.49000197649002075",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train3/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.43639883399009705",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train4/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.586552619934082",
+   "u": "200"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train4/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.49000197649002075",
+   "u": "200"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train4/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.43639883399009705",
+   "u": "200"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train5/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.586552619934082",
+   "u": "170"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train5/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.49000197649002075",
+   "u": "170"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train5/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "0.43639883399009705",
+   "u": "170"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train7/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "1.5587626695632935",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train7/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "1.7873495817184448",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c/train7/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "1.4697428941726685",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainG/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "2.29254150390625",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainG/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "2.5630717277526855",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainG/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "2.313274383544922",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainH/C0_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "3.896641969680786",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainH/C1_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "4.268310546875",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainH/C2_final.pt": {
+  "top_keys": [
+   "net",
+   "scale",
+   "u"
+  ],
+  "extra": {
+   "scale": "4.080934047698975",
+   "u": "250"
+  },
+  "shapes": {
+   "actor.0.weight": [
+    64,
+    16
+   ],
+   "actor.0.bias": [
+    64
+   ],
+   "actor.2.weight": [
+    64,
+    64
+   ],
+   "actor.2.bias": [
+    64
+   ],
+   "actor.4.weight": [
+    4,
+    64
+   ],
+   "actor.4.bias": [
+    4
+   ],
+   "critic.0.weight": [
+    64,
+    26
+   ],
+   "critic.0.bias": [
+    64
+   ],
+   "critic.2.weight": [
+    64,
+    64
+   ],
+   "critic.2.bias": [
+    64
+   ],
+   "critic.4.weight": [
+    1,
+    64
+   ],
+   "critic.4.bias": [
+    1
+   ]
+  },
+  "params": 11461
+ },
+ "b_train/night/c8/trainB/L0_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ },
+ "b_train/night/c8/trainB/L1_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ },
+ "b_train/night/c8/trainB/L2_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ },
+ "b_train/night/run5b/L0_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ },
+ "b_train/night/run5b/L1_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ },
+ "b_train/night/run5b/L2_final.zip": {
+  "policy": "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (pi_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (vf_features_extractor): FlattenExtractor(\n    (flatten): Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n    (policy_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n      (0): Linear(in_features=51, out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n    )\n  )\n  (action_net): Linear(in_features=64, out_features=12, bias=True)\n  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)",
+  "params": 15821,
+  "gamma": 0.95,
+  "gae_lambda": 0.95,
+  "n_steps": 101,
+  "batch_size": 75,
+  "n_epochs": 10,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "clip": "FloatSchedule(ConstantSchedule(val=0.2))",
+  "lr": "0.0003",
+  "timesteps": 151500
+ }
+}

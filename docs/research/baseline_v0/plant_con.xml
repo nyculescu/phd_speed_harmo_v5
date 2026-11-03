@@ -1,0 +1,19 @@
+<connections>
+  <connection from="r" to="rj" fromLane="0" toLane="0"/>
+  <connection from="rj" to="3a" fromLane="0" toLane="0"/>
+  <connection from="2" to="3a" fromLane="0" toLane="1"/>
+  <connection from="2" to="3a" fromLane="1" toLane="2"/>
+  <connection from="2" to="3a" fromLane="2" toLane="3"/>
+  <connection from="3a" to="3" fromLane="1" toLane="0"/>
+  <connection from="3a" to="3" fromLane="2" toLane="1"/>
+  <connection from="3a" to="3" fromLane="3" toLane="2"/>
+  <connection from="3" to="4" fromLane="0" toLane="0"/>
+  <connection from="3" to="4" fromLane="1" toLane="1"/>
+  <connection from="3" to="4" fromLane="2" toLane="2"/>
+  <connection from="1" to="2" fromLane="0" toLane="0"/>
+  <connection from="1" to="2" fromLane="1" toLane="1"/>
+  <connection from="1" to="2" fromLane="2" toLane="2"/>
+  <connection from="4" to="5" fromLane="0" toLane="0"/>
+  <connection from="4" to="5" fromLane="1" toLane="1"/>
+  <connection from="4" to="5" fromLane="2" toLane="2"/>
+</connections>

@@ -1,0 +1,181 @@
+total 632
+drwxrwxr-x  72 catalin catalin   4096 Nov  3 14:41 .
+drwxrwxr-x  22 catalin catalin   4096 Oct 21 14:00 ..
+-rw-rw-r--   1 catalin catalin    556 Oct 19 17:07 D1_BUGRERUN_V100.json
+-rw-rw-r--   1 catalin catalin    481 Oct 19 00:06 D1_EVAL_STARTED.json
+-rw-rw-r--   1 catalin catalin    506 Oct 19 17:15 D2_BUGRERUN_V100.json
+-rw-rw-r--   1 catalin catalin    431 Oct 19 10:45 D2_EVAL_STARTED.json
+-rw-rw-r--   1 catalin catalin    366 Oct 19 10:24 D2_TCHECK_RECORD.json
+-rw-rw-r--   1 catalin catalin    427 Oct 20 21:27 P1B_C1_STARTED.json
+-rw-rw-r--   1 catalin catalin    421 Oct 20 13:07 P1B_EVAL_STARTED.json
+-rw-rw-r--   1 catalin catalin    534 Oct 20 11:03 P1B_TCHECK_RECORD.json
+-rw-rw-r--   1 catalin catalin    540 Oct 19 21:13 P1_EVAL_STARTED.json
+-rw-rw-r--   1 catalin catalin    537 Oct 19 19:19 P1_TCHECK_RECORD.json
+-rw-rw-r--   1 catalin catalin    115 Oct 20 21:29 STATUS.md
+drwxrwxr-x  31 catalin catalin   4096 Nov  2 09:01 _netcache
+drwxrwxr-x   4 catalin catalin   4096 Nov  1 22:55 a_stage0
+drwxrwxr-x  26 catalin catalin   4096 Oct 21 09:33 audit_paper1_2026-10-21
+drwxrwxr-x   8 catalin catalin   4096 Nov  2 09:59 b_bind
+drwxrwxr-x  32 catalin catalin   4096 Nov  3 10:12 b_train
+drwxrwxr-x   4 catalin catalin   4096 Nov  3 14:41 baseline_v0
+drwxrwxr-x   2 catalin catalin   4096 Oct 16 22:34 confirm1
+drwxrwxr-x   4 catalin catalin   4096 Oct 18 23:44 d1_smoke_20261018a
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 00:01 d1_smoke_20261019a
+drwxrwxr-x   9 catalin catalin   4096 Oct 19 07:03 d2_probe
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 07:15 d2_smoke_20261019a
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 08:47 d2_smoke_20261019b
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 10:05 d2_smoke_v92
+-rw-rw-r--   1 catalin catalin    952 Oct 19 10:05 d2_smoke_v92.stdout
+drwxrwxr-x   3 catalin catalin   4096 Oct 31 11:30 diag_coll_s7431093
+drwxrwxr-x  30 catalin catalin   4096 Nov  1 19:23 e1
+drwxrwxr-x   4 catalin catalin   4096 Oct 31 14:18 e1_smoke0
+drwxrwxr-x   5 catalin catalin   4096 Oct 31 14:19 e1_smoke1
+drwxrwxr-x   3 catalin catalin   4096 Oct 31 14:33 e1_smoke2
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 13:44 fleet_calib_diag3_991cb95
+drwxrwxr-x   3 catalin catalin   4096 Oct 29 13:15 fleet_calib_diag_806d146
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 13:17 fleet_calib_diag_8a88735
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 13:14 fleet_calib_human_dad2588
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 13:30 fleet_calib_human_s2_9eeb4d7
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 13:43 fleet_calib_human_s3_004b4df
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 14:10 fleet_calib_human_s4_787b9d3
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 14:35 fleet_calib_human_s4b_975b9c6
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 13:21 fleet_calib_sigmastep_f54ec7a
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 13:24 fleet_calib_verify_5cf9aeb
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 13:19 fleet_calib_walk_793a51b
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 09:54 fleet_day_cal_1310ae3
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 11:36 fleet_day_cal_3da2ca1_bn4x_accIDM_caccCACC
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 11:46 fleet_day_cal_3da2ca1_bn4x_allIDM
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 10:57 fleet_day_cal_5439e84_bn4x_alksACC
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 10:57 fleet_day_cal_5439e84_bn4x_alksIDM
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 09:34 fleet_day_cal_6448b0d
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 10:13 fleet_day_cal_ac36996_ad9
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 12:09 fleet_day_crash_475edcc
+drwxrwxr-x   4 catalin catalin   4096 Oct 30 10:12 fleet_incident_3cfe6c3
+drwxrwxr-x   6 catalin catalin   4096 Oct 29 08:26 fleet_smoke_20261029a
+drwxrwxr-x   6 catalin catalin   4096 Oct 29 08:27 fleet_smoke_20261029b
+drwxrwxr-x  11 catalin catalin   4096 Oct 29 08:29 fleet_smoke_20261029c
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 15:21 fleet_v188_days_aef680b
+drwxrwxr-x   4 catalin catalin   4096 Oct 29 14:38 fleet_v188_mix_aef680b
+drwxrwxr-x   5 catalin catalin   4096 Oct 30 08:36 fleet_v190_days_cc33275
+drwxrwxr-x  13 catalin catalin   4096 Oct 29 16:48 fleet_v190_days_d4d533e
+drwxrwxr-x   6 catalin catalin   4096 Oct 29 16:50 fleet_v190_merge_2ec7976
+drwxrwxr-x   5 catalin catalin   4096 Oct 29 20:51 fleet_v190_squeeze_f25dcd0
+drwxrwxr-x   4 catalin catalin   4096 Oct 30 10:27 fleet_v199_crashlive_520446f
+drwxrwxr-x   4 catalin catalin   4096 Oct 30 19:13 fleet_weather_93b3eb9
+drwxrwxr-x  16 catalin catalin   4096 Oct 31 15:23 fleet_wx_plant_8d74cf5
+drwxrwxr-x   6 catalin catalin   4096 Oct 30 11:16 fleet_zone_demo_ccaeccf
+drwxrwxr-x   5 catalin catalin   4096 Oct 20 21:10 jobs
+drwxrwxr-x   2 catalin catalin   4096 Oct 20 21:10 jobs_prompts
+drwxrwxr-x   4 catalin catalin   4096 Oct 21 20:31 lit_phd_theses_2026-10-21
+drwxrwxr-x   3 catalin catalin   4096 Oct 19 18:42 p1
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 14:44 p1_smoke_20261019a
+-rw-rw-r--   1 catalin catalin   2033 Oct 19 14:44 p1_smoke_20261019a.stdout
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 16:39 p1_smoke_20261019b
+drwxrwxr-x   3 catalin catalin   4096 Oct 20 10:38 p1b
+drwxrwxr-x   3 catalin catalin   4096 Oct 20 21:27 p1b_c1
+drwxrwxr-x   4 catalin catalin   4096 Oct 20 10:14 p1b_smoke_75a0fdc
+drwxrwxr-x   5 catalin catalin   4096 Oct 20 10:30 p1b_smoke_93ba655
+drwxrwxr-x  10 catalin catalin   4096 Oct 21 14:00 p1c
+drwxrwxr-x 165 catalin catalin  12288 Oct 13 21:16 pilot_20261013
+-rw-rw-r--   1 catalin catalin  10233 Oct 19 18:51 queue_v100.log
+-rwxrwxr-x   1 catalin catalin   2703 Oct 19 17:06 queue_v100.sh
+-rwxrwxr-x   1 catalin catalin   1624 Oct 16 22:31 run_confirm1.sh
+-rwxrwxr-x   1 catalin catalin   1043 Oct 16 19:08 run_screen1b.sh
+-rwxrwxr-x   1 catalin catalin   1670 Oct 16 16:43 run_screens.sh
+drwxrwxr-x   3 catalin catalin   4096 Oct 20 21:14 scratch
+drwxrwxr-x   2 catalin catalin   4096 Oct 16 17:08 screen1
+drwxrwxr-x   2 catalin catalin   4096 Oct 16 19:25 screen1b
+drwxrwxr-x   2 catalin catalin   4096 Oct 16 17:30 screen2
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 17:07 screen_d1
+drwxrwxr-x   4 catalin catalin   4096 Oct 19 17:15 screen_d2
+drwxrwxr-x   6 catalin catalin   4096 Oct 19 17:03 smoke_v100
+-rw-rw-r--   1 catalin catalin 261581 Oct 30 14:41 weather_review_wf_cce5885b.json
+17M	/home/catalin/work/phd/v5b1_runs/a_stage0
+76M	/home/catalin/work/phd/v5b1_runs/audit_paper1_2026-10-21
+180M	/home/catalin/work/phd/v5b1_runs/baseline_v0
+139M	/home/catalin/work/phd/v5b1_runs/b_bind
+181M	/home/catalin/work/phd/v5b1_runs/b_train
+196K	/home/catalin/work/phd/v5b1_runs/confirm1
+4.0K	/home/catalin/work/phd/v5b1_runs/D1_BUGRERUN_V100.json
+4.0K	/home/catalin/work/phd/v5b1_runs/D1_EVAL_STARTED.json
+416K	/home/catalin/work/phd/v5b1_runs/d1_smoke_20261018a
+416K	/home/catalin/work/phd/v5b1_runs/d1_smoke_20261019a
+4.0K	/home/catalin/work/phd/v5b1_runs/D2_BUGRERUN_V100.json
+4.0K	/home/catalin/work/phd/v5b1_runs/D2_EVAL_STARTED.json
+13M	/home/catalin/work/phd/v5b1_runs/d2_probe
+6.5M	/home/catalin/work/phd/v5b1_runs/d2_smoke_20261019a
+8.8M	/home/catalin/work/phd/v5b1_runs/d2_smoke_20261019b
+14M	/home/catalin/work/phd/v5b1_runs/d2_smoke_v92
+4.0K	/home/catalin/work/phd/v5b1_runs/d2_smoke_v92.stdout
+4.0K	/home/catalin/work/phd/v5b1_runs/D2_TCHECK_RECORD.json
+19M	/home/catalin/work/phd/v5b1_runs/diag_coll_s7431093
+1014M	/home/catalin/work/phd/v5b1_runs/e1
+932K	/home/catalin/work/phd/v5b1_runs/e1_smoke0
+3.4M	/home/catalin/work/phd/v5b1_runs/e1_smoke1
+832K	/home/catalin/work/phd/v5b1_runs/e1_smoke2
+1.1M	/home/catalin/work/phd/v5b1_runs/fleet_calib_diag3_991cb95
+756K	/home/catalin/work/phd/v5b1_runs/fleet_calib_diag_806d146
+1.2M	/home/catalin/work/phd/v5b1_runs/fleet_calib_diag_8a88735
+3.2M	/home/catalin/work/phd/v5b1_runs/fleet_calib_human_dad2588
+1.9M	/home/catalin/work/phd/v5b1_runs/fleet_calib_human_s2_9eeb4d7
+1.8M	/home/catalin/work/phd/v5b1_runs/fleet_calib_human_s3_004b4df
+2.6M	/home/catalin/work/phd/v5b1_runs/fleet_calib_human_s4_787b9d3
+2.6M	/home/catalin/work/phd/v5b1_runs/fleet_calib_human_s4b_975b9c6
+1.1M	/home/catalin/work/phd/v5b1_runs/fleet_calib_sigmastep_f54ec7a
+3.5M	/home/catalin/work/phd/v5b1_runs/fleet_calib_verify_5cf9aeb
+1.3M	/home/catalin/work/phd/v5b1_runs/fleet_calib_walk_793a51b
+5.6M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_1310ae3
+12M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_3da2ca1_bn4x_accIDM_caccCACC
+12M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_3da2ca1_bn4x_allIDM
+9.5M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_5439e84_bn4x_alksACC
+12M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_5439e84_bn4x_alksIDM
+4.5M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_6448b0d
+6.6M	/home/catalin/work/phd/v5b1_runs/fleet_day_cal_ac36996_ad9
+13M	/home/catalin/work/phd/v5b1_runs/fleet_day_crash_475edcc
+1.6M	/home/catalin/work/phd/v5b1_runs/fleet_incident_3cfe6c3
+2.0M	/home/catalin/work/phd/v5b1_runs/fleet_smoke_20261029a
+96K	/home/catalin/work/phd/v5b1_runs/fleet_smoke_20261029b
+184K	/home/catalin/work/phd/v5b1_runs/fleet_smoke_20261029c
+7.3M	/home/catalin/work/phd/v5b1_runs/fleet_v188_days_aef680b
+996K	/home/catalin/work/phd/v5b1_runs/fleet_v188_mix_aef680b
+17M	/home/catalin/work/phd/v5b1_runs/fleet_v190_days_cc33275
+8.7M	/home/catalin/work/phd/v5b1_runs/fleet_v190_days_d4d533e
+21M	/home/catalin/work/phd/v5b1_runs/fleet_v190_merge_2ec7976
+15M	/home/catalin/work/phd/v5b1_runs/fleet_v190_squeeze_f25dcd0
+8.8M	/home/catalin/work/phd/v5b1_runs/fleet_v199_crashlive_520446f
+8.1M	/home/catalin/work/phd/v5b1_runs/fleet_weather_93b3eb9
+137M	/home/catalin/work/phd/v5b1_runs/fleet_wx_plant_8d74cf5
+22M	/home/catalin/work/phd/v5b1_runs/fleet_zone_demo_ccaeccf
+243M	/home/catalin/work/phd/v5b1_runs/jobs
+16K	/home/catalin/work/phd/v5b1_runs/jobs_prompts
+4.1M	/home/catalin/work/phd/v5b1_runs/lit_phd_theses_2026-10-21
+1.1M	/home/catalin/work/phd/v5b1_runs/_netcache
+6.5G	/home/catalin/work/phd/v5b1_runs/p1
+6.6G	/home/catalin/work/phd/v5b1_runs/p1b
+22M	/home/catalin/work/phd/v5b1_runs/p1b_c1
+4.0K	/home/catalin/work/phd/v5b1_runs/P1B_C1_STARTED.json
+4.0K	/home/catalin/work/phd/v5b1_runs/P1B_EVAL_STARTED.json
+8.7M	/home/catalin/work/phd/v5b1_runs/p1b_smoke_75a0fdc
+71M	/home/catalin/work/phd/v5b1_runs/p1b_smoke_93ba655
+4.0K	/home/catalin/work/phd/v5b1_runs/P1B_TCHECK_RECORD.json
+40M	/home/catalin/work/phd/v5b1_runs/p1c
+4.0K	/home/catalin/work/phd/v5b1_runs/P1_EVAL_STARTED.json
+59M	/home/catalin/work/phd/v5b1_runs/p1_smoke_20261019a
+4.0K	/home/catalin/work/phd/v5b1_runs/p1_smoke_20261019a.stdout
+45M	/home/catalin/work/phd/v5b1_runs/p1_smoke_20261019b
+4.0K	/home/catalin/work/phd/v5b1_runs/P1_TCHECK_RECORD.json
+2.4G	/home/catalin/work/phd/v5b1_runs/pilot_20261013
+12K	/home/catalin/work/phd/v5b1_runs/queue_v100.log
+4.0K	/home/catalin/work/phd/v5b1_runs/queue_v100.sh
+4.0K	/home/catalin/work/phd/v5b1_runs/run_confirm1.sh
+4.0K	/home/catalin/work/phd/v5b1_runs/run_screen1b.sh
+4.0K	/home/catalin/work/phd/v5b1_runs/run_screens.sh
+932K	/home/catalin/work/phd/v5b1_runs/scratch
+28K	/home/catalin/work/phd/v5b1_runs/screen1
+28K	/home/catalin/work/phd/v5b1_runs/screen1b
+28K	/home/catalin/work/phd/v5b1_runs/screen2
+76M	/home/catalin/work/phd/v5b1_runs/screen_d1
+2.1G	/home/catalin/work/phd/v5b1_runs/screen_d2
+28M	/home/catalin/work/phd/v5b1_runs/smoke_v100
+4.0K	/home/catalin/work/phd/v5b1_runs/STATUS.md
+256K	/home/catalin/work/phd/v5b1_runs/weather_review_wf_cce5885b.json

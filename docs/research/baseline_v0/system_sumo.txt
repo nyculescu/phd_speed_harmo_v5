@@ -1,0 +1,2 @@
+libsumo /home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/lib/python3.14/site-packages/libsumo/__init__.py
+(22, 'SUMO 1.27.1')

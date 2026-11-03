@@ -1,0 +1,374 @@
+1ef4e2b 2026-11-03 14:33:00 -0700 decision: explore directions on C; V305
+9580456 2026-11-03 14:00:13 -0700 results: no DRL setting beats rules on m32; V304
+1324a22 2026-11-03 10:14:35 -0700 decision: CPU guard at 95 % for V302; V303
+f4ceb62 2026-11-03 10:12:54 -0700 decision: rule grid, C weights, B reward; V302
+b7c535a 2026-11-03 10:11:38 -0700 fleet: zone agent option with C's shared reward
+84ab641 2026-11-03 10:08:22 -0700 decision: cheaper DRL tests, no ultracode; V301
+e965444 2026-11-03 08:38:53 -0700 results: C wins no map cell; V300
+8fca922 2026-11-03 08:31:25 -0700 decision: C operating map against p303; V299
+06c7431 2026-11-03 08:29:13 -0700 results: C fails fresh-seed check; V298
+8057426 2026-11-03 08:13:08 -0700 results: C meets bar at 5,300; V297
+1e41637 2026-11-03 06:58:31 -0700 decision: train C with intended reward; V296
+d4bea2b 2026-11-03 06:00:54 -0700 results: night closed, C reward run; V295
+b7a1d83 2026-11-03 05:38:01 -0700 tests: skip stats pass without a simulation
+c1e0ac3 2026-11-03 05:37:53 -0700 fleet: per-vehicle reward reaches training; V294
+f314bdd 2026-11-03 04:44:03 -0700 results: C run 4 fails; attribution run; V293
+4fdfc5d 2026-11-03 03:51:21 -0700 results: C run 3; run 4 with safety 20; V292
+07fa70e 2026-11-03 03:15:22 -0700 results: collisions traced to lane end; V291
+3aa49fc 2026-11-03 02:45:52 -0700 fleet: C decides per vehicle every 30 s; V290
+69f96ad 2026-11-03 02:08:59 -0700 fleet: C flow-contribution reward; V289
+9700631 2026-11-03 02:05:27 -0700 results: p303 check, C run 1 collapse; V288
+25b5142 2026-11-03 01:45:27 -0700 results: per-vehicle ramp p303; V287
+51429bc 2026-11-03 01:16:21 -0700 fleet: per-CAV control C and rules; V286
+eeeecc2 2026-11-03 01:03:21 -0700 results: run 5 fails, C starts; V285
+1cfbd2a 2026-11-02 23:33:15 -0700 results: B rule tuned, merge zone lever; V284
+539b65e 2026-11-02 23:17:00 -0700 fleet: B short gaps exclude stopped queues; V283
+b2928c7 2026-11-02 23:12:11 -0700 fleet: B run 5 config; headway cutoff; V282
+b9ccc54 2026-11-02 23:06:33 -0700 fleet: B delay training options and rule; V281
+5003c7c 2026-11-02 20:13:16 -0700 results: B run 4b paired per seed; V280
+728a6e5 2026-11-02 19:52:59 -0700 results: B zone headways trade flow for gaps; V279
+11b3ebc 2026-11-02 17:35:34 -0700 fleet: B rate limit on zone headways; V278
+a325198 2026-11-02 17:28:07 -0700 fleet: B zone headway agent for run 4; V277
+774335e 2026-11-02 17:27:05 -0700 decisions: zone headways for run 4; V277
+ee0ae03 2026-11-02 17:09:31 -0700 results: B V2V headway keeps part of gain; V276
+d992f92 2026-11-02 16:41:09 -0700 fleet: B V2V-conditional headway sweep; V275
+53e81b2 2026-11-02 16:40:20 -0700 decisions: approve V2V headway sweep; V275
+93d6371 2026-11-02 16:38:11 -0700 results: B fixed headway adds flow, speed; V274
+08787b4 2026-11-02 16:25:15 -0700 fleet: B fixed-headway sweep; V273
+7b6702b 2026-11-02 16:24:01 -0700 decisions: approve fixed-headway sweep; V273
+3130e38 2026-11-02 16:21:14 -0700 results: B run 3 still slows, flow flat; V272
+68dfa58 2026-11-02 14:51:26 -0700 decisions: slowing bias and m32 drop; V271
+dd12589 2026-11-02 14:46:42 -0700 results: B PPO run 2 matches fixed offset; V270
+2863282 2026-11-02 14:20:19 -0700 fleet: B fix policy arm in evaluation
+47076bb 2026-11-02 14:13:45 -0700 fleet: B efficiency reward for run 3; V269
+784a486 2026-11-02 13:34:28 -0700 decisions: efficiency goal, run 2 sweep; V268
+7b01783 2026-11-02 12:46:39 -0700 fleet: B shared-offset agent for run 2; V267
+7dd092c 2026-11-02 12:44:03 -0700 results: B fixed 30 km/h cap beats PPO; V267
+60ffd6d 2026-11-02 12:39:37 -0700 fleet: B report exposure outside the merge area
+ae7b191 2026-11-02 12:25:31 -0700 fleet: B constant-cap sweep; V266
+e7cc3ca 2026-11-02 12:24:50 -0700 results: B PPO run 1 shows no learning; V266
+4b146b0 2026-11-02 10:44:06 -0700 fleet: B training env and PPO trainer; V265
+8a29559 2026-11-02 10:37:46 -0700 results: B C0 and ladder pass; V264
+b084ff6 2026-11-02 10:21:58 -0700 decisions: move to training this week; V263
+e72d0d6 2026-11-02 09:59:05 -0700 fleet: B lane-0 onset rule, fresh C0 seeds; V262
+a98dad2 2026-11-02 09:52:43 -0700 results: B C0 untestable by onset rule; V261
+9730f3f 2026-11-02 09:20:25 -0700 decisions: CPU 95 %, B batch relaunched; V260
+db64a9a 2026-11-02 09:15:15 -0700 decisions: B build and smoke; V259
+7da3c02 2026-11-02 09:14:22 -0700 fleet: B smoke hold control locks lane changes
+f3f0c4c 2026-11-02 09:11:58 -0700 fleet: B m32 plant, C0 and ladder runner; V258
+310413e 2026-11-02 08:20:21 -0700 decisions: B v2 N1, N2 approved; V258
+c519f0e 2026-11-02 08:19:14 -0700 research: B bind check v2, reviewed; V257
+1395861 2026-11-02 07:34:10 -0700 decisions: withdraw old results, close A; V256
+c0cbfde 2026-11-02 00:05:57 -0700 decisions: stage-0 audit, archive re-read; V255
+3b717f9 2026-11-01 23:05:06 -0700 results: A stage 0 untestable on BN4; V254
+60e9664 2026-11-01 22:54:48 -0700 p1c: A stage 0 runner, bn4L, null plant; V251
+b6ecc99 2026-11-01 22:52:21 -0700 decisions: stage-0 null and smoke seeds; V253
+233b7f1 2026-11-01 22:49:11 -0700 decisions: CPU 60 % then 30 %; V252
+8c208f0 2026-11-01 22:48:04 -0700 decisions: A stage 0 approved; V251
+2f2f532 2026-11-01 22:47:04 -0700 research: slim A/B bind drafts; V250
+3b03267 2026-11-01 22:24:50 -0700 decisions: BN4 zipper discharge step-locked; V249
+a851522 2026-11-01 22:24:10 -0700 decisions: A/B contract choices; V248
+6bdb549 2026-11-01 22:23:14 -0700 research: A/B prior art and bind drafts; V247
+f42b70f 2026-11-01 21:20:36 -0700 decisions: direction A + B; V246
+86ac478 2026-11-01 21:06:44 -0700 decisions: synthetic plants preferred; V245
+3b15dbf 2026-11-01 20:51:50 -0700 decisions: v199 capacity drop is noise; V244
+ad06943 2026-11-01 20:18:49 -0700 decisions: close E1-lite R, retire DRL rule; V243
+55ca5a1 2026-11-01 20:12:25 -0700 decisions: E1-lite R interpretation; V242
+c1a7ac9 2026-11-01 19:25:03 -0700 e1: lite report guards; allowed-speed stop
+029d07f 2026-11-01 19:23:48 -0700 decisions: E1-lite n=20 UNCLEAR, no GO; V241
+59d03ae 2026-11-01 18:56:28 -0700 e1: report-only E1-lite extras; V240
+4d7a2f8 2026-11-01 18:53:50 -0700 decisions: L1 checks, pre-L2 rules; V239-V240
+eafc266 2026-11-01 16:18:31 -0700 decisions: E1-lite L1 result; V238
+d58e666 2026-11-01 15:40:05 -0700 decisions: queue E1-lite L2; V237
+8eb212c 2026-11-01 13:18:50 -0700 e1: E1-lite direction check; V236
+c8e6093 2026-11-01 12:39:37 -0700 e1: resume compares plant and inputs; V235
+e49a883 2026-11-01 12:31:12 -0700 e1: re-review fixes; V234
+3be06b8 2026-11-01 12:16:54 -0700 decisions: approach variant fails; V233
+b632f81 2026-11-01 12:09:17 -0700 e1: approach-rule diagnostic; V232
+911cdef 2026-11-01 12:05:56 -0700 e1: smoke check before batches; V231
+39fbe42 2026-11-01 12:00:31 -0700 decisions: wave 2d results, meter trace; V230
+04705ce 2026-11-01 12:00:21 -0700 e1: meter diagnostic trace
+fa06893 2026-11-01 11:57:54 -0700 decisions: away mode 95 %; V229
+e0f1abd 2026-11-01 11:40:35 -0700 e1: amber 3.0, supply-limited minutes, PI drop
+3cfdd3c 2026-11-01 11:39:03 -0700 decisions: amber 3.0, supply-limited minutes; V228
+55e1051 2026-11-01 11:31:04 -0700 decisions: wave 2c results; V227
+bb12c7a 2026-11-01 10:50:47 -0700 e1: allowed-speed check at net precision
+683962e 2026-11-01 10:45:28 -0700 e1: kinematic amber, PI window, T0 ALKS rules
+cbf582c 2026-11-01 10:38:22 -0700 decisions: stage-0 stops resolved; V226
+1d808cc 2026-11-01 00:13:01 -0700 decisions: ALKS diagnostic results; V225
+432ea20 2026-11-01 00:09:02 -0700 e1: trace restore and lane-change state
+78ec1c3 2026-11-01 00:05:04 -0700 e1: ALKS diagnostic trace; V224
+8d4a2d1 2026-10-31 22:43:52 -0700 decisions: E1 stage 0 four stops; V223
+3921002 2026-10-31 22:43:28 -0700 e1: gain check acts means metering
+0f8611f 2026-10-31 22:42:31 -0700 e1: gain stats meter fix and test
+09c7aef 2026-10-31 21:41:37 -0700 decisions: evening 90 %, night 30 %; V222
+1c8a572 2026-10-31 21:24:51 -0700 decisions: quiet night at 30 % CPU; V221
+5203311 2026-10-31 21:21:20 -0700 decisions: onset rule V219, wave 1 report V220
+10d82f9 2026-10-31 21:20:46 -0700 e1: V219 onset, fixed-rate T0 fix, ACC free gap
+935224f 2026-10-31 21:11:03 -0700 decisions: quiet nights for E1 batches; V218
+42d3ef8 2026-10-31 18:24:03 -0700 decisions: held blocker, review fixes; V217
+dd0e114 2026-10-31 18:23:09 -0700 e1: stage A-C rules, stop rules, review fixes
+ff18826 2026-10-31 18:09:38 -0700 e1: wave 1b re-runs, R-only calibration, n rule
+e346afd 2026-10-31 18:07:43 -0700 results: weather row D, k_s adopted; V216
+a567f34 2026-10-31 18:06:34 -0700 e1: main PM breakdown, held blocker, T0 fixes
+c6eb614 2026-10-31 18:01:33 -0700 control: onset amber after rest, dlim second
+dce7edd 2026-10-31 17:59:38 -0700 incident: blocker held at speed 0 (V215 A1)
+cdfea4a 2026-10-31 17:59:05 -0700 decisions: E1 checkpoint review, A1-A5; V215
+579e278 2026-10-31 15:31:01 -0700 results: weather rows B and C numbers; V214
+cca7d3d 2026-10-31 14:48:20 -0700 fleet: E1 wave 2b and command line
+8056bb9 2026-10-31 14:47:04 -0700 fleet: E1 stage B/C jobs and verdict
+fdc31f5 2026-10-31 14:45:11 -0700 fleet: E1 stage A lists and stage report
+169b369 2026-10-31 14:42:43 -0700 fleet: E1 wave 2a and stage A-C rules
+f9b020c 2026-10-31 14:39:34 -0700 fleet: E1 T0 measures and wave-1 report
+f0d2bdb 2026-10-31 14:24:07 -0700 fleet: E1 hook, blocker, loops, runner, stage 0
+0eb4438 2026-10-31 14:15:59 -0700 fleet: E1 meter, ALKS rule and cascade
+28f36d0 2026-10-31 13:33:26 -0700 decisions: E1 protocol v1 approved; V213
+89ee140 2026-10-31 13:29:52 -0700 protocols: E1 headroom check proposal v1
+7dcf20a 2026-10-31 11:55:11 -0700 decisions: weather strategy v1 adopted; V212
+3cfa67b 2026-10-31 11:51:17 -0700 research: weather strategy v1 after B-E review
+b8dfb80 2026-10-31 11:49:59 -0700 fleet: contacts vs minGap intrusions; V211
+d84e320 2026-10-31 11:44:42 -0700 ledger: decisions, challenges, issues; V210
+8020f24 2026-10-31 11:32:31 -0700 decisions: dry collision is a SUMO artefact; V209
+05bd684 2026-10-31 11:07:42 -0700 research: weather results strategy proposal
+44eea8b 2026-10-31 10:59:01 -0700 decisions: away mode 95 % CPU, pad 1000 rpm; V208
+1f5ec52 2026-10-31 00:07:19 -0700 ops: guard adopts paused jobs
+1835133 2026-10-30 23:55:12 -0700 ops: guard cpu-limit option
+8d74cf5 2026-10-30 20:31:46 -0700 fleet: weather options for plant checks; V207
+dc97aca 2026-10-30 19:15:43 -0700 rain calibrated: g 1.12 and 1.23; V206
+93b3eb9 2026-10-30 14:58:46 -0700 fleet: weather states and g calibration; V205
+81b3485 2026-10-30 14:52:06 -0700 log weather protocol; V204
+947f0b1 2026-10-30 14:41:59 -0700 docs: weather evidence v0, protocol draft v1
+dac2aa4 2026-10-30 12:27:05 -0700 log forced-crash zone demo; V203
+ccaeccf 2026-10-30 11:16:28 -0700 fleet: forced crash for zone demo; V202
+4b89d5b 2026-10-30 11:09:35 -0700 log passing-zone adoption check; V201
+520446f 2026-10-30 10:23:31 -0700 plant v199: incident passing zone; V200
+3cfe6c3 2026-10-30 10:06:53 -0700 fleet: incident passing zone; V199
+b8c39cc 2026-10-30 09:50:28 -0700 log v190 teleport-off checks; V198
+cc33275 2026-10-29 21:15:39 -0700 plant v190: teleporting off; V197
+05d2e0d 2026-10-29 20:51:38 -0700 ops: external CPU guard for running jobs
+f25dcd0 2026-10-29 20:05:30 -0700 fleet: squeeze-in merge rule; V196
+f66b796 2026-10-29 18:37:57 -0700 log courtesy-gap failure and teleport-off probe; V195
+8288e1b 2026-10-29 18:18:06 -0700 log courtesy-gap merge test; V194
+61ba882 2026-10-29 17:50:07 -0700 log ramp-merge assertiveness test; V193
+2ec7976 2026-10-29 16:50:54 -0700 fleet: ramp lcAssertive knob; day hour slicing
+a8e736d 2026-10-29 16:50:45 -0700 log ramp-merge assertiveness test; V192
+e961066 2026-10-29 16:49:32 -0700 log v190 reference days and ramp teleports; V191
+d4d533e 2026-10-29 16:04:43 -0700 fleet: on-ramp corridor ramp32 and plant v190
+83dce9c 2026-10-29 16:02:22 -0700 log on-ramp corridor design; V190
+2b18b1c 2026-10-29 15:21:19 -0700 log plant v188 days and crash scale; V189
+aef680b 2026-10-29 14:38:06 -0700 fleet: plant v188 preset; mix ramp; day runner plant option
+dbd65ed 2026-10-29 14:37:33 -0700 log plant v188 adoption and next steps; V188
+f6972cb 2026-10-29 14:35:53 -0700 log ld32 calibration pass; V187
+975b9c6 2026-10-29 14:14:10 -0700 fleet: corridor breakdown loops 1 km before the drop
+6c4a9dc 2026-10-29 14:14:09 -0700 log 1-km breakdown detector amendment; V186
+be88d3f 2026-10-29 14:11:15 -0700 log stage-4 calibration and detector flaw; V185
+787b9d3 2026-10-29 13:49:39 -0700 fleet: 3-to-2 and 4-to-3 lane-drop corridors; calib stage 4
+a3f4f31 2026-10-29 13:47:30 -0700 log multi-lane calibration geometries; V184
+0ef03d9 2026-10-29 13:45:16 -0700 log stage-3 calibration and truck/speed diagnosis; V183
+991cb95 2026-10-29 13:44:16 -0700 calib: stage-3 ingredient diagnosis
+004b4df 2026-10-29 13:37:37 -0700 calib: stage 3 with action-step scale
+b995d7f 2026-10-29 13:37:27 -0700 log stage-3 calibration protocol; V182
+53fc03d 2026-10-29 13:31:02 -0700 log stage-2 calibration and zipper-set p1c QDF; V181
+9eeb4d7 2026-10-29 13:27:15 -0700 calib: stage 2 with lane-end merges
+4a97476 2026-10-29 13:26:54 -0700 log zipper cap at fine steps; stage-2 protocol; V180
+5cf9aeb 2026-10-29 13:24:18 -0700 calib: step-length verification
+2812470 2026-10-29 13:24:18 -0700 log step-length check plan; V179
+ea0cf92 2026-10-29 13:22:23 -0700 log human-only recalibration and step-length finding; V178
+f54ec7a 2026-10-29 13:21:01 -0700 fleet: sigmaStep knob for Krauss dawdling
+793a51b 2026-10-29 13:18:53 -0700 calib: V139-to-fleet walk
+8a88735 2026-10-29 13:16:03 -0700 calib: pass shares explicitly
+806d146 2026-10-29 13:15:39 -0700 calib: ingredient diagnosis
+dad2588 2026-10-29 13:07:19 -0700 add human-only fleet calibration runner
+fc7da93 2026-10-29 13:05:55 -0700 log fleet recalibration protocol; V177
+1686f3e 2026-10-29 12:53:50 -0700 lit: freeway nonlinear mechanisms v0; V176
+538a2fa 2026-10-29 12:13:57 -0700 log crash location and nonlinearity research; V175
+1e1367a 2026-10-29 12:10:40 -0700 log Layer B validation; record crash lane; V174
+475edcc 2026-10-29 11:49:38 -0700 add Layer B conflict-driven crash process
+1c7bfbe 2026-10-29 11:46:20 -0700 log IDM plant and human-follower crash rule; V173
+26a87a4 2026-10-29 11:37:30 -0700 log IDM CAV Layer A pass; V172
+3da2ca1 2026-10-29 10:59:00 -0700 fleet: per-class CAV model switch
+b4c3f16 2026-10-29 10:58:14 -0700 log longer-entry Layer A tests; V171
+ba5d03c 2026-10-29 10:24:09 -0700 fleet: own lane-weighted loop speed, drop p1c _mean
+3cc10cc 2026-10-29 10:22:53 -0700 log empty-lane speed bug in p1c; V170
+5439e84 2026-10-29 10:19:37 -0700 fleet: bn4x long entry, ALKS model switch
+1ad59cf 2026-10-29 10:18:23 -0700 log Layer A fix tests; V169
+5ef71a8 2026-10-29 10:14:44 -0700 log reference-day pass 1: Layer A not clean; V168
+ac36996 2026-10-29 09:55:46 -0700 day runner: CAV apparentDecel variant, diagnostics
+1310ae3 2026-10-29 09:36:22 -0700 day runner: lane-weighted speed, keep logs
+6448b0d 2026-10-29 09:17:14 -0700 add no-control reference day runner; ACC defaults
+78c9ce4 2026-10-29 09:15:32 -0700 log reference day and crash calibration plan; V167
+58e971c 2026-10-29 09:11:27 -0700 lit: crash-model evidence v0; V166
+326d3b0 2026-10-29 08:42:16 -0700 log crash model inputs; V165
+89a0d77 2026-10-29 08:39:40 -0700 log two-layer crash design; V164
+712c280 2026-10-29 08:37:05 -0700 log crash-disruption goal; V163
+9123ff1 2026-10-29 08:29:55 -0700 add mixed fleet module and smoke test; V162
+6b05afb 2026-10-29 08:20:49 -0700 log CAV split, trucks, commanded class; V161
+e8817c5 2026-10-29 08:19:59 -0700 log starting fleet mix; V160
+9e2926e 2026-10-29 08:04:20 -0700 log UK speeds and AV gap placeholder; V159
+f68f96d 2026-10-29 07:59:24 -0700 log vehicle-parameter randomization step 1; V158
+012360c 2026-10-28 23:19:33 -0700 lit: HDV/CAV driving-parameter sources; V157
+9cf21c1 2026-10-28 22:05:35 -0700 log vehicle mix and dimensions; V156
+6f3b7b0 2026-10-28 21:45:33 -0700 H1 design review; correct V154; T1d bug; V155
+e9ac4fb 2026-10-28 21:12:40 -0700 log T1f grid flaw; draft H1 re-run; V154
+6bb4a12 2026-10-21 21:31:01 -0700 plan: paper_1 v2 = C1 + C2 with exploit-first gates G0-G5 and exploration limits E1-E8; V153
+83bba6b 2026-10-21 21:09:38 -0700 lit: where RL can still add value (synthesis v0, six thesis reviews, web sweep); candidate contributions C1-C7; V152
+0f7187b 2026-10-21 20:20:07 -0700 lit: theses downloaded to docs/theses (local, git-ignored); README with sources and manual-download list; W. Zhou is an MSc; V151
+7bfb735 2026-10-21 20:17:34 -0700 lit: recent PhD theses on RL for speed harmonization / VSL (9 confirmed, 4 to confirm); V150
+d084539 2026-10-21 14:03:36 -0700 results: T1g feedback metering does not beat no control (KILL on the realistic plant); paper_1 -> methods paper; V149
+1b58869 2026-10-21 14:00:33 -0700 protocol: T1g feedback metering test (ALINEA/PI-ALINEA vs no control on BN4) fixed before data; runner; V148
+5026abd 2026-10-21 13:13:01 -0700 results: fair BN4 slowdown test (T1f fails: metering does not beat no control; KILL rule); V147
+5b98604 2026-10-21 13:12:18 -0700 p1c: V146 BN4 slowdown-only gate test runner
+9b1f4be 2026-10-21 13:12:08 -0700 docs: V146 fair BN4 slowdown-only gate test design
+84745df 2026-10-21 11:37:44 -0700 results: WZ calibration stage 2 (no pass); V145
+037bf31 2026-10-21 11:18:29 -0700 docs: V144 correct the stage-2 run count (216 configurations, 2,160 runs)
+0b1130d 2026-10-21 11:17:48 -0700 p1c: calibration stage 2 (step 0.25, lcCooperativeSpeed, decel); WZ stage-1 rerun result; V144
+da79037 2026-10-21 11:13:05 -0700 p1c: breakdown detector at the gate's single location ('up' loops, WZ 150 m upstream of the drop); stage-1 rerun on seeds 7,430,020-029; V143
+ccb2b9d 2026-10-21 11:12:28 -0700 results: WZ calibration stage 1 (no pass; breakdown-detector deviation found); V142
+ef56a96 2026-10-21 11:07:33 -0700 p1c: work-zone geometry, release-tracking actuator (T0 fix), geometry-aware calibration and tool checks; WZ gate chain (V141)
+47c8baf 2026-10-21 11:04:57 -0700 docs: V141 gate outcome: work-zone plant + release-tracking actuator; seeds and criterion adaptation
+c386e86 2026-10-21 10:50:02 -0700 results: P1c gate tool checks (T1a-d, T3 pass; T0, T1e, T1f fail); V140
+95b492c 2026-10-21 10:49:12 -0700 p1c: t1checks report fix (numpy bool to JSON); runs unchanged
+7f7a2fa 2026-10-21 10:48:01 -0700 p1c: calibration stage 1 result (zip100 + Krauss chosen); tool-check runner T0/T1a-f/T3; V139
+8c594f8 2026-10-21 10:39:08 -0700 p1c: plant v2 MVP (BN4 + lane changes, blocker lane closure, CRN route file, kinematic amber, rest-in-green, occupancy ALINEA/PI-ALINEA, control during drain, nominal-free-flow delay) and calibration stage-1 runner
+6fc67c4 2026-10-21 10:35:10 -0700 docs: V138 P1c plant gate approved (sha256 recorded)
+6bbc44a 2026-10-21 10:35:02 -0700 docs: V137 MVP demo first, unit tests deferred
+df07bee 2026-10-21 10:04:28 -0700 protocol: P1c plant gate draft (plant v2 fixed choices, calibration grid and rule, T0/T1/T3 criteria); V136
+44eff73 2026-10-21 10:01:00 -0700 docs: V135 seed block 7,430,000-7,439,999 confirmed; build phase starts
+10fa811 2026-10-21 09:57:22 -0700 docs: V134 seed block conflict (7,420,xxx is V81's); replacement 7,430,000-7,439,999 pending confirmation
+d4cfed5 2026-10-21 09:55:41 -0700 docs: V133 strengthening decisions S1-S3 (BN4 + lane changes; paper_1 evidence; incident + day-mix target)
+15e6571 2026-10-21 09:44:43 -0700 plan: strengthening plan v0 (plant, controllers, analysis, process) from the paper_1 audit; V132
+8633f27 2026-10-21 09:34:16 -0700 audit: paper_1 forensic audit report, appendices and findings register; V131 decisions D1-D3 and storage
+956ccd4 2026-10-21 09:28:50 -0700 docs: V130 paper_1 forensic audit done; address every finding first; exit rule: no CONTRADICTED/UNVERIFIED claims
+1e5e8d7 2026-10-20 23:36:00 -0700 roadmap: v0 paper 2 options and thesis structure (V129, draft)
+4de404a 2026-10-20 23:21:41 -0700 paper: drop WoS #4 (Background reworded, no citation needed); review of Argon v1 (V128)
+2a43270 2026-10-20 22:49:21 -0700 baseline: BL-2 draft paper_1 traceability record; checker handles Better BibTeX format (V127)
+74126c6 2026-10-20 22:30:25 -0700 papers: move paper/ to papers/paper_1/ (venue not fixed); figure script paths updated (V126)
+20491bd 2026-10-20 22:21:20 -0700 docs: V125 Zotero + Better BibTeX installed (user-level) for references
+0d9b386 2026-10-20 22:14:10 -0700 paper: Problem Setting + Fig. 1 schematic; Introduction and Background from Argon drafts with V120 fixes and visible CITE markers (V124)
+82699a0 2026-10-20 22:10:25 -0700 paper: fix Crossref metadata quirks (Smaragdis title, Lopez author order, SUMO case); Fig. 2 labels (V123)
+f53b9c3 2026-10-20 22:10:01 -0700 paper: Experimental Design + Results drafted with Figs 2-3 and Tables I-II from committed results; Haboian 1995 removed (V122)
+acf0764 2026-10-20 22:03:53 -0700 paper: outline, page budget, figure/table plan; references.bib from DOI registry (fixes Argon errors); IEEE citation style working (V121)
+2f824f6 2026-10-20 21:55:39 -0700 review: Argon literature v0 checked against Crossref (12 exact, 3 wrong despite VERIFIED, 6 no-DOI); reusable verifier tool; V120
+3ae39dc 2026-10-20 21:49:14 -0700 paper: Quarto + official IEEEtran skeleton with traceable figure script; render test passed (V119)
+a97f33a 2026-10-20 21:43:19 -0700 handoff: Gemini literature/introduction prompt with WoS search strings; V118
+43657ac 2026-10-20 21:31:53 -0700 baseline: BL-2026-10-20 traceability record (studies, protocols, commits, seeds, runs, results, corrections); V117
+2202fb4 2026-10-20 21:29:24 -0700 results: C1 CONFIRMED - type plan beats always-on PI-ALINEA by 16.2 % [7.3, 23.7] in block_q1600 on fresh confirmatory seeds; V116
+e7dd561 2026-10-20 21:16:00 -0700 code: C1 confirmation runner v5b/p1b/confirm_c1.py (p1b_confirm_c1.md, V114/V115)
+7c6acc8 2026-10-20 21:11:24 -0700 protocol: C1 approved (V115); confirmatory seeds 7,400,700-799
+a4e3e6d 2026-10-20 21:09:49 -0700 protocol: C1 confirmation draft (block_q1600 type plan vs always-on PI, fresh confirmatory seeds); V114
+7d7eccc 2026-10-20 21:03:51 -0700 docs: V113 P1b verified; corrected tool-check count; key readings and limits
+4f91777 2026-10-20 21:03:05 -0700 results: P1b verified - re-derivation 0/6,217 mismatches; 6/6 re-runs identical; result note p1b_result.md
+95f1f33 2026-10-20 20:31:19 -0700 results: P1b ran once - S1a FAIL, S1b PASS (same cells as P1); S2 brackets; S3 shifts; runner rows; V112 (verification pending)
+352ae37 2026-10-20 20:16:32 -0700 docs: V111 keep headless-job structure; small tasks in session
+df9806a 2026-10-20 20:08:53 -0700 tools: claude-job launcher for headless Claude Code jobs in systemd units (V110)
+8e10812 2026-10-20 10:38:01 -0700 docs: V109 P1b code review: no blockers; launch at 93ba655; spill flag recomputed post-run (report-only)
+93ba655 2026-10-20 10:17:11 -0700 p1b: fix missing TV_FIELD import in the tool-check stage (found by the smoke); synthetic tool-check test
+75a0fdc 2026-10-20 10:14:53 -0700 p1b: build P1b (V108 addendum): amber 3 s + red >= 2 s, q clip 2618 in every law, PI-law plans (G_PI top-10 per q, A = 120) with switch carry-over, runner rows (s = 10/30 %), meter safety/discharge/queue reporting, fresh seeds, run-once sentinel
+75bcd2b 2026-10-20 09:51:10 -0700 protocol: P1b addendum approved with review fixes R1-R7 (V108)
+a0144e3 2026-10-20 09:42:11 -0700 protocol: P1b addendum draft (amber + min red, runner sensitivity rows, PI-law plans, queue reporting, fresh seeds); V107 lean mode
+a1dbc6c 2026-10-20 09:22:21 -0700 handoff: P1b cloud brief and status baton; V106 cloud/laptop split
+f8c701a 2026-10-20 06:58:03 -0700 research: mainline-metering prior art (Tympakianaki 2014 closest; amber necessary, queue limit optional); V105
+c40a797 2026-10-20 06:46:19 -0700 docs: V104 mainline-metering prior-art check before paper text
+e24c02a 2026-10-20 06:44:38 -0700 docs: V103 P1 verified; corrected readings; new limits for the paper
+dc7ded8 2026-10-20 06:44:08 -0700 results: P1 result note after verification (S1a FAIL, S1b PASS with caveats, per-cell S2 brackets, limits and disclosures) + verification evidence
+c2d11c2 2026-10-20 03:19:34 -0700 results: P1 ran once - S1a FAIL (detection alone vs strong always-on), S1b PASS (type pays in 2 cells), S2 bracket positive only in block_q1600, S3 break-evens; V102 (interpretation pending verification)
+e973f6e 2026-10-19 18:43:17 -0700 results: V100 bug re-runs - D1 STOP stands (gap narrowed to -10 %); D2 flips to CONTINUE (block_q1600 passes with cross-fitted oracle vs FX/FB/IP); V101
+85f7d34 2026-10-19 17:07:07 -0700 d1/d2: V100 bug re-run mode with the corrected (continuous) meter signal
+c225049 2026-10-19 16:54:05 -0700 docs: V100 P1 review defaults; meter phase bug -> re-run D1 and D2 with corrected meter (bug rule), then P1
+0e8d49b 2026-10-19 16:32:27 -0700 p1: apply the code review (S1 fails closed, one (a) cell in both views, S3 drops seeds not cells); meter signal and four other open choices as required flags; protocol addendum I1-I16 + R/D items (launch blocked on D1-D5)
+b7d0578 2026-10-19 14:48:50 -0700 p1: report VSL alone vs NC (delay, b = 0.4, report only); list build interpretations (pending author approval)
+8f204c6 2026-10-19 14:35:43 -0700 p1: build the P1 experiment (V99 protocol, A1-A10 defaults): extended G, PI/AD/ID/IP/OR_in/ORX_R arms, replicate demand redraw, VSL check, imperfection map, S1-S3, runner
+7da4ab4 2026-10-19 14:12:22 -0700 protocol: P1 approved (V99, all defaults); corrections: BN4 is mainline metering, D2 paired gain 10-35 %
+ee3ce1e 2026-10-19 13:55:52 -0700 protocol: P1 revised after design review (ID arm, intersection-union vs every L0 incl. PI/AD, exact S1/S2/S3 rules, cost); author decisions A1-A10 open
+14d8866 2026-10-19 13:38:01 -0700 protocol: P1 draft - how much incident information does ramp metering need (L0/L1/L2 decomposition, bracketed oracle, imperfection map, VSL and placebo checks)
+b69f993 2026-10-19 13:37:00 -0700 docs: V98 VSL check under incidents added to P1 tool checks (option 2)
+8e96f1d 2026-10-19 12:09:42 -0700 research: prior-art check P1/P2; V97 reframe P1 (how much incident information does metering need), P2 as its methods section; correct V94 reading (ORX biased low)
+2cd07f1 2026-10-19 11:59:54 -0700 docs: V96 thesis frame accepted; lean prior-art check of P1/P2 ideas
+f102f47 2026-10-19 11:57:46 -0700 docs: V95 supervision: author + Claude set the claim bar; only constraint = title and related work
+fac8789 2026-10-19 11:38:20 -0700 results: screen D2 STOP (incident response pays 16-41 % via per-type plan; per-incident adaptation adds 0-1 % once selection noise is cross-fitted); V94
+72ba8f2 2026-10-19 10:06:11 -0700 d2: switch-back at clearance for IP and OR (V92(c), Addendum A12)
+74d43d8 2026-10-19 10:02:52 -0700 docs: V93 CPU up to 90 % for D2; pad manual 800 rpm, controller stopped until author hands back
+3bf3710 2026-10-19 09:58:45 -0700 docs: V92 screen D2 approved (A1-A11, derived replicate seeds, switch-back at clearance)
+099f206 2026-10-19 08:50:01 -0700 d2: apply screen D2 review fixes; page Addendum (2026-10-19) A1-A11, pending author approval
+bc69707 2026-10-19 07:15:37 -0700 d2: build screen D2 (incident-adaptive ramp metering headroom) on the D1 BN4 plant (V91 draft)
+0fa76ec 2026-10-19 06:57:39 -0700 protocol: screen D2 draft (incident-adaptive metering headroom, oracle vs per-type plan); V91 incl. cooling controller restart
+2d7e3e0 2026-10-19 00:11:03 -0700 results: screen D1 STOP (healthy feedback meter worse than constant-rate and hold-last fallbacks; constant demand made the detector useless by construction, disclosed); V90
+a23613b 2026-10-19 00:01:46 -0700 d1: apply screen D1 review fixes; page approved with Addendum (2026-10-19) A1-A7
+70d9a65 2026-10-18 23:46:15 -0700 d1: build screen D1 (detector-fault ramp metering headroom) on the ported BN4 plant (V89)
+1fea34c 2026-10-18 23:33:08 -0700 docs: V89 screen D1 approved with seeds; lean review; overnight CPU < 70 %, pad 400 rpm untouched
+f62efcf 2026-10-18 23:27:55 -0700 research: direction sweep v3 (5 directions, adaptation pays under non-recurring events); draft screen D1 (detector-fault ramp metering oracle headroom on ported BN4 plant); V88
+ece4bb0 2026-10-18 23:02:21 -0700 docs: V87 drop self-calibrated margin theme; search 5 other directions with gates G1-G6
+1fe0dee 2026-10-18 22:51:20 -0700 research: direction sweep v2 (V86, 12 agents, 18 candidates): no self-calibrated margin passes all 5 gates; pattern: fixed per-regime tables match online calibration
+574479c 2026-10-18 21:41:32 -0700 docs: V86 steer again: keep self-calibrated margin theme, 5-gate direction sweep before any build
+f7ecb06 2026-10-17 23:45:35 -0700 research: 5-year arXiv check of self-calibrating margin work (141 papers); patents blocked pending official API key
+e7fd416 2026-10-17 16:55:46 -0700 research: cracks sweep v0 (10 agents): C1 binding gate + C2 context-conditional envelope recommended, 4 killed; key finding: line-#1-style leader-braking margin rarely binds vs a 1.5 s ACC gap (exploratory, spent TGSIM)
+8e6124e 2026-10-16 23:28:31 -0700 docs: one-page status for the academic supervisor (V85 option 2): results, lessons, options A-D, 4 questions
+236a047 2026-10-16 23:27:59 -0700 docs: V85 confirmatory #1 closed VALID-ONLY (final); result note finalised; CLAUDE.md: D5.8 superseded for line #1 by V83 rule A, thesis-level bar under review
+4c685b3 2026-10-16 23:12:31 -0700 results: confirmatory #1 result note (draft for V85): VALID-ONLY verified (rules re-derived, gated cells recomputed from raw data, committed code re-run); L1 could not meet the gate (congestion in one 460-s run); full operating map; 2 open author items
+8c2c6a1 2026-10-16 22:35:25 -0700 results: confirmatory #1 ran once (V84, code 47e7410, protocol sha ac721bb5): outcome VALID-ONLY; raw outputs only, interpretation pending (Extra High + ultracode per CLAUDE.md)
+47e7410 2026-10-16 22:31:37 -0700 confirm1: apply pre-download review fixes (3 reviewers, all agreed: no leakage, decision logic conforms to V84)
+fb041b8 2026-10-16 22:05:16 -0700 confirm1: code + 13 synthetic tests (26 total pass) for confirmatory protocol #1 (V84); pre-review, nothing downloaded
+16ecc7d 2026-10-16 22:01:23 -0700 protocol: confirmatory #1 approved as V84 (alpha 0.04 all arms; placebo gates secondary claim; test vehicles unscored; seeds 7,420,200-220)
+0b81630 2026-10-16 21:56:10 -0700 protocol: confirmatory #1 DRAFT (1,498-word body; 56 review findings, 50 applied); main-session power check: aiming all arms at 4 % lifts the all-cells A1 pass chance of a good method from 0.26-0.37 to 0.85-0.91
+c62e80e 2026-10-16 20:24:34 -0700 docs: V83 claim rule A replaces D5.8, DRL dropped, TGSIM-only confirmatory, <=3-page protocol (placebo gates a secondary tracking claim)
+0512096 2026-10-16 19:26:00 -0700 results: screen #1b CONTINUE - fixed margins fail to transfer between freeways in both directions; online meets target in all gated cells; one efficiency win (DC R2 +14.8 %) comes from site-level recalibration (placebo equal, floor binds)
+ca48b58 2026-10-16 19:08:01 -0700 screen1b: code + tests (13 pass incl. leader matching, batch-normalised tracker) committed before any TGSIM read
+40b2c1f 2026-10-16 19:06:24 -0700 protocol: screen #1b (TGSIM I-90/94 Stationary + I-395, leader reconstruction, batch-normalised tracker) fixed before data (V82)
+f7e6646 2026-10-16 19:05:30 -0700 docs: V82 drop #2 (STOP), go screen #1b on TGSIM with batch-normalised tracker step
+a91580f 2026-10-16 17:31:26 -0700 results: screen #2 STOP - fixed per-group commit margins transfer week-to-week (losses 4.1-4.9 %), hindsight headroom < 1 point, online loses 2-6 points
+41fc31a 2026-10-16 17:09:29 -0700 results: screen #1 CONTINUE by rule 3(a) (fixed margins under-cover after transfer US-101->I-80; online holds 5 %), efficiency fails: shared tracker with batched delayed feedback and unnormalised step oscillates (screen design flaw, disclosed)
+b250c7f 2026-10-16 16:33:23 -0700 screen2: code + synthetic tests (6 pass, incl. no-leak) committed before any archive read; metadata snapshot sha256 b206ab5b...
+6cda52d 2026-10-16 16:29:40 -0700 screen1: code + synthetic tests (7 pass) committed before any NGSIM read
+abaa043 2026-10-16 16:27:04 -0700 protocol: one-page screens #1 (NGSIM, online leader-braking margin) and #2 (Hamburg 13-24 Sep, online green-commit margin), fixed before data (V80)
+239b2c5 2026-10-16 16:22:35 -0700 docs: V80 two tiers (one-page screens first), V81 throw-away status confirmed
+1371d8e 2026-10-16 15:45:30 -0700 research: kill-test protocol drafts v1 for #1/#2 + shared rules (not binding; ~16k words, 14 approval lines, open cross-issues); TGSIM confirmatory samples fetched by agents were deleted, disclosed
+ae41b86 2026-10-16 13:23:38 -0700 research: development plan v0 for #1 (calibrated RSS filter) and #2 (calibrated eco-approach) at machine speed; probes: NGSIM 1-4 MB/s, Hamburg 6-25 MB/s, replay 4e6-1.5e7 steps/s; IV/ITSC 2027 deadlines verified; El Halabi & Brandt 2026 covers the delayed-ACI bound
+f030d89 2026-10-16 12:03:30 -0700 docs: V79 develop #1 (conformal RSS filter) and #2 (calibrated eco-approach); kill tests at machine speed
+bb28aa1 2026-10-15 23:42:09 -0700 research: WaveX contents confirmed (33 dates, lane 1 + RDS, md5 ok, not analysed); NGSIM CC BY-SA 3.0; TGSIM licence unnamed
+b7d5726 2026-10-15 23:35:54 -0700 research: sweep v1 checks - Zhou 2026 uses scripted leaders/global quantile/no RSS; Hamburg 2023 signal archive public (31.5 GB, CC BY 4.0); Jeschor et al. IV 2024 predictability paper
+f69383f 2026-10-15 23:34:56 -0700 research: algorithm-first sweep v1 (V78) - survivors #1 conformal RSS filter, #2 online-calibrated eco-approach at actuated signals, #3 uncertainty-adaptive wave smoothing from roadside radar; seed A+B rejected; main-session check: Zhou 2026 and Xue 2025 close prior art, novelty 3-4/10
+09a5191 2026-10-15 22:48:44 -0700 docs: V78 sweep A/B rejected for title fit; algorithm-first search requested
+838a376 2026-10-15 21:35:07 -0700 research: direction sweep v0 (V77) - top options A capture-ratio vs offline oracle on I-24/WaveX, B empirical cut-in hazard, C brake demand (fallback); no DRL; main-session check: Coifman & Liu closer prior art, Ji et al. uses virtual trajectories
+6590c94 2026-10-15 20:31:17 -0700 docs: V77 scope narrowing - protocol v2 on hold, top-3 direction sweep, DRL under consideration
+5704b45 2026-10-14 01:18:14 -0700 docs: protocol P0-P2 v2 DRAFT (safety/smoothness co-primaries S and T, incident regime, lane commands, capacity-drop ladder) - 33 new AUTHOR items A36-A68, 7 relaxations vs v1 listed; not binding
+ca98798 2026-10-13 22:24:53 -0700 docs: V74-V76 details (smoothness + safety co-primary, incident default, 9-combination action)
+f391c6b 2026-10-13 22:21:45 -0700 docs: decisions V74-V76 (safety/smoothness as main claim, incident regime, lane-choice commands)
+e200897 2026-10-13 22:15:02 -0700 research: capacity-drop literature v0 (done in Claude Code after X04 failed) - no published SUMO lane-drop demonstration; field drop 2-11 % (Zhang & Levinson 2004), 7 % at a 3->2 drop; candidates C1-C4; spot-checked
+32b1e64 2026-10-13 21:58:57 -0700 docs: X04 run 3 failed again (browser tool); abandoned, research moves to Claude Code
+d2f1f14 2026-10-13 21:51:38 -0700 docs: X04 run 2 stopped on the browser tool (no answer); run-3 settings recorded
+d1f182b 2026-10-13 21:42:37 -0700 protocol: Addendum Z1 - zones on the drop's approach (V71: Z1 8-9, Z2 11-12, Z3 14-15 km), CAVs obey 100 km/h (V72 b, unchanged section 2.3), pilot expectations recorded without rule changes; system context updated
+b29f330 2026-10-13 21:42:17 -0700 docs: X04 run 1 extracted - no web search and truncated at max_tokens; orientation only, re-run needed
+dbf1527 2026-10-13 21:36:31 -0700 research: pilot extension - higher inflows (to 150 %) show no capacity drop at any level; useful range lambda 0.75-1.0; B1s report-only
+6cb7bed 2026-10-13 21:13:59 -0700 docs: V72 update - CAVs obey the 100 km/h limit (option b)
+2327744 2026-10-13 21:10:57 -0700 docs: external prompt X04 (published SUMO settings for a capacity drop, V70)
+e4134a3 2026-10-13 21:10:18 -0700 docs: decisions V70-V73 (published driver model for capacity drop, zones on the drop approach, CAV desired speed of replaced driver, higher-inflow pilot)
+c611437 2026-10-13 20:46:51 -0700 research: pre-P0 pilot on the V68 layout (136 runs, non-project seeds, no controller) - jam forms at the drop from lambda ~0.75-0.80, no capacity drop in SUMO, stop-and-go waves present, default-ACC CAVs worse than humans with collisions, energy plausible but only ~7 % congestion sensitivity; layout options O1-O4
+a41796b 2026-10-13 20:19:55 -0700 docs: V69 disclosure of the pre-P0 pilot (non-project seeds, no controller)
+71bcf7c 2026-10-13 20:09:01 -0700 docs: V67 disclosure update (V68 demo runs)
+ac8ebdc 2026-10-13 20:08:57 -0700 docs: interfaces Z3+ unit position for V68
+d272b1c 2026-10-13 20:08:53 -0700 docs: V68 - 5 km between zones (drop at 15 km, road 18.25 km); protocol Addendum G1 maps every position; system context updated
+e2475bf 2026-10-13 20:03:54 -0700 docs: V67 disclosure of informal GUI demo runs (non-project seed 1) before P0
+6366863 2026-10-13 20:00:40 -0700 protocol: P0-P2 v1 APPROVED by the author (V66) - binding before seed 7,400,000; V59 k <= 7 (six changes after the original), V61 reading (a)
+1880b54 2026-10-13 19:56:03 -0700 docs: protocol P0-P2 v1 - V64 layout (lane drop at the end of Z3) throughout, all AUTHOR answers recorded (V58-V65), A7 >= 5 % vs B1, amendment log; interfaces v0.2 (entry ramp, hold, release, delay reference by route and class, metric definitions, Z3+ V2X unit, braking y = 10 %); system context v0.2; V42 shares renormalised
+9b17264 2026-10-13 19:45:43 -0700 docs: decisions V64 (lane drop moved to the end of Z3) and V65 (remaining protocol AUTHOR items take the recommendation); V18 and V22 closed
+87c51ad 2026-10-13 19:42:35 -0700 docs: decisions V58-V63 (road redesign so first jam is in the zones, realism FAIL rule, ACC A3 allowed, >= 5 % vs B1, re-round seed range, scheduler dropped from P2)
+740cf95 2026-10-13 19:37:38 -0700 docs: protocol P0-P2 draft v0 (plant realism, tool checks T0-T3, inflow band sweep and early KILL) - 35 [AUTHOR] items pending; not binding
+c402d0a 2026-10-13 18:11:23 -0700 docs: external research prompts X01 (CAV controller laws), X02 (VSL / section-control compliance), X03 (red-team of the design) for the Claude Console; V57
+c5d5079 2026-10-13 17:12:24 -0700 docs: decisions V48-V56 (no clock, episode windows, V2V 300 m per NHTSA, B4 plans postponed, reward/controller open in exploration, no charging loss for now, truck VoT, VSL comparator rule, provisional zones); interfaces updated
+6a46425 2026-10-13 16:48:47 -0700 docs: V47 CAV target floor 50 km/h
+9911d3f 2026-10-13 16:29:53 -0700 docs: system context and interfaces v0.1 - scope, arms (B0/B1 baselines, R1-R4 rules, L1/L2 PPO, I1/I2 VSL refs, oracle), modules and dependency direction, episode loop, time base, execution layer, inflow family, metrics contract (cohort, delay, energy, generalised cost, guards), V2X messages, observation/action contract, reward, fault rows, records
+a29c484 2026-10-13 16:27:43 -0700 docs: decisions V45-V46 (band threshold g = 10 %, PHEV electric-mode share 50 %)
+c1c0957 2026-10-13 16:12:05 -0700 docs: decisions V42-V44 (2025 new-sales fleet, CAVs = 50 % of electrified+hybrid cars (~28 %), car desired-speed distribution, bar vs all-HDV and vs uncommanded CAVs); V33 superseded
+14d9882 2026-10-13 16:07:58 -0700 docs: decisions V37-V41 (2 % delay guard, SUMO PHEV pair as is, VSL/section-control rationale, 7.5 % heavy vehicles, all-HDV first baseline with real-world desired speeds and constant powertrain mix)
+4a6dc09 2026-10-13 15:56:09 -0700 docs: decisions V29-V36 (generalised-cost headline, 100 km/h, synthetic inflow band, VSL / section-control comparators, CAV 90/10 BEV/PHEV, truck road-load model, HDV hybrids as PHEV pair, agreed execution/sensing/braking items)
+e9c9be6 2026-10-13 15:31:11 -0700 docs: Irish/EU parameters - TII PAG / TAF values of time (2016 prices), occupancy, fuel functions, RED/JEC heating values, M50 facts (100 km/h, eMOS VSL, AADT, TII open counter data to 2021-03), CSO/SIMI fleet shares
+ad79a73 2026-10-13 15:27:08 -0700 docs: V28 truck energy check - HBEFA4/HBEFA3 heavy-vehicle curves fall with speed (fitting artefact); road-load + Willans recommended; SUMO 1.27.1 class strings (no HEV car class)
+49c1a79 2026-10-13 15:18:20 -0700 docs: decisions V20-V28 (SI/euro, Irish energy prices, M50-inspired, CAV powertrains and HDV estimation, energy totals, braking constraint, slowDown ramp-and-hold, V2V/V2X, truck-curve check)
+32a832d 2026-10-13 14:53:03 -0700 docs: literature check v0 - HBEFA4 energy model (+ EVM cross-check), USDOT 2025 VTTS / EIA resource-cost energy prices, no accepted hard-brake price, 3 tuned rule-based CAV comparators; citations verified, cross-topic critic
+b65527e 2026-10-13 14:39:41 -0700 docs: port map v0 - archive code classified (15 PORT, 13 TRIM, 26 REFERENCE, 163 DROP of 217 files; ~3.2k of ~40k lines kept), dead parts and traps per file, adversarially verified
+1f62641 2026-10-13 14:23:04 -0700 docs: decisions - ramp meters dropped (CAV-only actuator), all vehicles in the cost, generalised-cost mix (form A), rule-based CAV comparators (V19)
+e84b3e9 2026-10-13 14:16:31 -0700 docs: ADR-001 replaceable own shared-parameter PPO on PettingZoo; decisions V15-V18 (no VSL / CAV-only system, energy-delay-braking mix, inflow, invalid-run statistics)
+f743f61 2026-10-13 13:57:49 -0700 toolchain: own venv for v5b1 (separate from v6 venv314, V14), lock file, PettingZoo 1.27.0 pinned
+b3dd46d 2026-10-13 13:57:33 -0700 docs: architecture review v0 (40 findings, 4 blockers) and decisions V2-V14 (F3Z, per-CAV agents, NC, CAV speed mode 95, invalid runs, no pause gate, energy metric, 120 km/h, separate venvs)
+3fa67e5 2026-10-13 13:06:39 -0700 docs: decision log V1-V7 (F4R1M name, per-CAV commands, no-control definition, HDV lane limits, invalid-run rule, PettingZoo)
+f3b7c17 2026-10-13 12:38:14 -0700 project_init: v5.B.1 ground-up restart on an empty-history branch

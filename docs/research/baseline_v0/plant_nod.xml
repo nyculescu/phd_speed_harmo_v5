@@ -1,0 +1,11 @@
+<nodes>
+  <node id="n1" x="0.0" y="0.0" type="priority"/>
+  <node id="n2" x="3000.0" y="0.0" type="priority"/>
+  <node id="m" x="3500.0" y="0.0" type="priority"/>
+  <node id="ae" x="3800.0" y="0.0" type="priority"/>
+  <node id="d" x="5000.0" y="0.0" type="priority"/>
+  <node id="b" x="6000.0" y="0.0" type="priority"/>
+  <node id="x" x="6500.0" y="0.0" type="priority"/>
+  <node id="r0" x="3080.0" y="-40.0" type="priority"/>
+  <node id="rm" x="3470.0" y="-4.0" type="traffic_light" tlType="static"/>
+</nodes>
