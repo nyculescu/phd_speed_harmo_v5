@@ -188,6 +188,7 @@ def test_cav_shared_reward_has_no_excess_exposure_term():
     env = _cav()
     env.q, env.flow_ema = 4600.0, 4600.0 / 3600.0
     env.ref = be.REF_DELAY
+    env.report_net = True     # no simulation here: skips the per-vehicle pass
     n = int(env.ref[4600.0][2])
     env.ema_b3, env.ema_e30 = 100.0, 100.0
     assert env._efficiency(0, be.fl.LIMIT, n, 50, 50) == pytest.approx(-0.0213, abs=0.05)
