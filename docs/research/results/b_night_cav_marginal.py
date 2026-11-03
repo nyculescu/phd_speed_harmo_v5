@@ -46,5 +46,5 @@ if __name__ == "__main__":
             for lev in range(4):
                 m = A[q][z, lev, 1:] / max(A[q][z, lev, 0], 1)
                 sp = 0.5 * (m[0] + m[1]) / be.fl.LIMIT
-                safe = be.W_CAV_TTC * (m[3] + 0.5 * m[4]) + be.W_CAV_BRAKE * (m[6] + 0.5 * m[5])
+                safe = be.W_CAV_TTC * (m[3] + 0.5 * m[4] + m[6] + 0.5 * m[5])
                 print(f"{q:g} {name} L{lev} speed {sp:.3f} flow {m[2] / be.Q_REF:.3f} safety {safe:.3f} net {sp + be.W_CAV_FLOW * m[2] / be.Q_REF - safe:.3f}")

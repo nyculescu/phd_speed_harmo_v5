@@ -326,6 +326,7 @@ def main(argv: list) -> int:
     ap.add_argument("--updates", type=int, default=250)
     ap.add_argument("--n-envs", type=int, default=3)
     ap.add_argument("--resume")
+    ap.add_argument("--env", default="{}", help="JSON options for CavEnv")
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -333,7 +334,7 @@ def main(argv: list) -> int:
         bad = smoke(out)
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
-    print("model:", train(out, a.learner, a.updates, a.n_envs, resume=a.resume), flush=True)
+    print("model:", train(out, a.learner, a.updates, a.n_envs, json.loads(a.env), a.resume), flush=True)
     return 0
 
 

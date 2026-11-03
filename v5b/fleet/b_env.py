@@ -58,7 +58,7 @@ RAMP_LEN, RAMP_R_LEN = 420.0, 392.0     # edges r + rj before the 3a start
 LEN_3, LEN_4 = 1196.0, 1000.0
 RAMP_ZONE_END = 295.0 + bm.MA_EDGE3_HEAD     # end of the merge zone from the 3a start
 # Per-vehicle reward (V289, V292). Own level hardly moves own speed; randomised per trip, the flow term at 0.4 makes short headways pay outside the merge zone. Safety 20: at 10, run 3 kept 0.8 s through the merge zone.
-W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC, W_CAV_BRAKE = 0.5, 0.5, 20.0, 20.0
+W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC = 0.5, 0.5, 20.0
 W_CAV_FLOW = 0.4
 Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
 FREE_SPACING = 200.0     # no leader within sensing range
@@ -512,10 +512,10 @@ class CavEnv(ZoneEnv):
     an action is a dict {vehicle: level}. Everything observed is on board or a short broadcast from the roadside. The
     observation's mask marks the vehicles whose own `hold`-s clock is due: the policy decides only for them (V290)."""
 
-    def __init__(self, hold: float = 30.0, **kw):
+    def __init__(self, hold: float = 30.0, w_flow: float = W_CAV_FLOW, w_safety: float = W_CAV_TTC, **kw):
         kw.setdefault("decision", 5.0)
         super().__init__(**kw)
-        self.hold = hold
+        self.hold, self.w_flow, self.w_safety = hold, w_flow, w_safety
         self._clear_cav()
 
     def _clear_cav(self) -> None:
@@ -604,8 +604,8 @@ class CavEnv(ZoneEnv):
                 x[1] = self.bins[self._bin(v)]
         self.stats = st
         for v, (sp, near, q, ttc, ft, fh, hard) in st.items():
-            self.acc[v] += (W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(near / fl.LIMIT, 1.0) - 1.0) + W_CAV_FLOW * min(q / Q_REF, 1.5)
-                            - W_CAV_TTC * (ttc + 0.5 * ft) - W_CAV_BRAKE * (hard + 0.5 * fh))
+            self.acc[v] += (W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(near / fl.LIMIT, 1.0) - 1.0) + self.w_flow * min(q / Q_REF, 1.5)
+                            - self.w_safety * (ttc + hard + 0.5 * (ft + fh)))
         return e30, b3
 
     def _bin(self, v: str) -> tuple:
