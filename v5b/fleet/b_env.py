@@ -29,6 +29,7 @@ TTC_EVAL, TTC_REWARD = 1.5, 3.0
 HARD_BRAKE, EMERG_BRAKE = 3.0, 4.5
 LOCK = 1537
 MIN_GAP = 2.5
+MOVING = 1.0     # a stopped queue rests at about minGap (2.5 m), so only followers above this speed count as short gaps (V283)
 V2V_RANGE = 150.0
 HEADWAYS_S = (1.6, 1.2, 1.0, 0.8)
 N_ZONES = 3
@@ -120,7 +121,7 @@ class MergeEnv(gym.Env):
         self.held = {}
         self.contact = set()
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "contact_steps": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
-                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "alks_s": 0, "v2v_s": 0, "changes": 0, "reversals": 0, "ignored": 0,
+                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "stop_gap": 0, "alks_s": 0, "v2v_s": 0, "changes": 0, "reversals": 0, "ignored": 0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
         per_s = int(round(1.0 / self.dt))
         k = 0
@@ -243,7 +244,7 @@ class MergeEnv(gym.Env):
 
     def _net_stats(self) -> tuple:
         """The same counts over every vehicle on the network (report-only, to see exposure moved out of the merge area),
-        plus followers with a bumper gap below 2.5 m."""
+        plus moving followers with a bumper gap below 2.5 m."""
         e30 = b3 = 0
         for v in ls.vehicle.getIDList():
             b3 += ls.vehicle.getAcceleration(v) <= -HARD_BRAKE
@@ -251,7 +252,8 @@ class MergeEnv(gym.Env):
             if not lead or not lead[0]:
                 continue
             gap = lead[1] + ls.vehicle.getMinGap(v)
-            self.ep["gap25"] += gap < MIN_GAP
+            if gap < MIN_GAP:
+                self.ep["gap25" if ls.vehicle.getSpeed(v) > MOVING else "stop_gap"] += 1
             dv = ls.vehicle.getSpeed(v) - ls.vehicle.getSpeed(lead[0])
             e30 += dv > 0 and gap / dv < TTC_REWARD
         return e30, b3

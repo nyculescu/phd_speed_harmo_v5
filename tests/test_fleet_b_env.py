@@ -122,3 +122,19 @@ def test_one_contact_counts_once_however_long_it_lasts(monkeypatch):
     for _ in range(5):
         env._sim_step()
     assert env.ep == {"collisions": 1, "contact_steps": 5}
+
+
+def test_a_stopped_queue_is_not_a_short_gap(monkeypatch):
+    env = be.MergeEnv(run_dir="/tmp")
+    env.ep = {"gap25": 0, "stop_gap": 0}
+    speed = {"f": 0.0, "l": 0.0}
+    monkeypatch.setattr(be.ls.vehicle, "getIDList", lambda: ["f"])
+    monkeypatch.setattr(be.ls.vehicle, "getAcceleration", lambda v: 0.0)
+    monkeypatch.setattr(be.ls.vehicle, "getLeader", lambda v, d: ("l", -0.1))
+    monkeypatch.setattr(be.ls.vehicle, "getMinGap", lambda v: 2.5)
+    monkeypatch.setattr(be.ls.vehicle, "getSpeed", lambda v: speed[v])
+    env._net_stats()
+    assert env.ep == {"gap25": 0, "stop_gap": 1}
+    speed["f"] = 10.0
+    env._net_stats()
+    assert env.ep == {"gap25": 1, "stop_gap": 1}
