@@ -35,6 +35,7 @@ N_ZONES = 3
 ZONE_UP, ZONE_MERGE, ZONE_DOWN = 0, 1, 2
 ZONE_NORM = 300.0
 ZONE_HOLD = 60.0
+W_CHANGE = 0.1     # per applied change, per decision; a useful change held for one 60-s hold earns more (V281)
 W_GAP = 2.0     # per follower-second with a bumper gap < 2.5 m; about the size of the flow and speed gains (V276)
 V_FLOOR = 5.0
 GAP_NORM = 100.0
@@ -46,6 +47,8 @@ W_BRAKE, W_E3, W_N = 1.0, 1.0, 10.0
 # No control per level (V267): braking >= 3 m/s² /s, TTC < 3 s /s, vehicles in system.
 REF_LEVEL = {4090.0: (0.48, 0.249, 299.3), 4300.0: (0.672, 0.606, 321.9), 4600.0: (0.813, 0.784, 369.5),
              5300.0: (0.603, 0.64, 539.8)}
+# The same with ALKS action step 0.5 s (V280 delay-only rows, seeds 7,419,910-929).
+REF_DELAY = {4090.0: (0.696, 0.378, 299.6), 4600.0: (0.931, 0.857, 377.6), 5300.0: (0.807, 0.742, 530.3)}
 SAFETY_TAU = 60.0
 ALKS_TAU0 = fl.ALKS_TAU
 
@@ -61,13 +64,13 @@ class MergeEnv(gym.Env):
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
                  n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
-                 v2v_tau: float | None = None, alks_asl: float | None = None):
+                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False):
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
         self.n_ep = n_ep0
         self.shared, self.decision, self.reward, self.tau = shared, decision, reward, tau
-        self.v2v_tau, self.alks_asl = v2v_tau, alks_asl
+        self.v2v_tau, self.alks_asl, self.ref = v2v_tau, alks_asl, REF_DELAY if ref_delay else REF_LEVEL
         self.offsets = SHARED_OFFSETS_KMH if shared else OFFSETS_KMH
         self.sim = None
         self.action_space = gym.spaces.Discrete(len(self.offsets)) if shared else gym.spaces.MultiDiscrete([len(self.offsets)] * K)
@@ -116,7 +119,8 @@ class MergeEnv(gym.Env):
         fl.all_green(bm.PLANT)
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
-        self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
+        self.contact = set()
+        self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "contact_steps": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
                    "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "alks_s": 0, "v2v_s": 0, "changes": 0, "reversals": 0, "ignored": 0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
         per_s = int(round(1.0 / self.dt))
@@ -128,8 +132,12 @@ class MergeEnv(gym.Env):
                 self._v2v()
         self.q = q
         self.seen4 = set(ls.edge.getLastStepVehicleIDs("4"))
-        self.ema_b3, self.ema_e30 = REF_LEVEL[q][:2] if q in REF_LEVEL else (0.0, 0.0)
+        self.ema_b3, self.ema_e30 = self._ref()[:2] if q in self.ref else (0.0, 0.0)
         return self._obs(), {"seed": s, "q": q, "share": self.share}
+
+    def _ref(self) -> tuple:
+        """Levels outside the table use the nearest one; only an evaluation reaches them, where the reward is unused."""
+        return self.ref[min(self.ref, key=lambda k: abs(k - self.q))]
 
     def _v2v(self) -> None:
         """Short headway only behind an ALKS within V2V range, seen as the same leader on two updates; else the contract's."""
@@ -153,7 +161,10 @@ class MergeEnv(gym.Env):
 
     def _sim_step(self) -> None:
         self.sim.step()
-        self.ep["collisions"] += len(ls.simulation.getCollisions())
+        pairs = {(c.collider, c.victim) for c in ls.simulation.getCollisions()}
+        self.ep["collisions"] += len(pairs - self.contact)
+        self.ep["contact_steps"] += len(pairs)
+        self.contact = pairs
 
     def _dist(self, v: str, lane: str) -> float:
         """Distance to the 3a start along road lane 0."""
@@ -314,7 +325,7 @@ class MergeEnv(gym.Env):
     def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
         """Past-merge flow against demand, mean speed and vehicles in system; safety only as a limit: a smoothed exposure
         above its no-control level costs, below it earns nothing."""
-        ref_b3, ref_e30, ref_n = REF_LEVEL[self.q]
+        ref_b3, ref_e30, ref_n = self._ref()
         w = 1.0 / SAFETY_TAU
         self.ema_b3 += w * (b3 - self.ema_b3)
         self.ema_e30 += w * (e30 - self.ema_e30)
@@ -342,10 +353,11 @@ class ZoneEnv(MergeEnv):
     cap, plus per zone the mean speed, vehicle count, current target and remaining hold, plus the lane speed, 3a count and
     insertion queue. A zone's target changes at most once per ZONE_HOLD s and by one level (V278); other requests are ignored."""
 
-    def __init__(self, **kw):
+    def __init__(self, headways: tuple = HEADWAYS_S, w_change: float = 0.0, **kw):
         kw.setdefault("reward", "efficiency")
         super().__init__(**kw)
-        self.action_space = gym.spaces.MultiDiscrete([len(HEADWAYS_S)] * N_ZONES)
+        self.headways, self.w_change = tuple(headways), w_change
+        self.action_space = gym.spaces.MultiDiscrete([len(self.headways)] * N_ZONES)
         self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 4 + 3,), dtype=np.float32)
         self._clear_zones()
 
@@ -356,7 +368,7 @@ class ZoneEnv(MergeEnv):
 
     def reset(self, *, seed=None, options=None):
         self._clear_zones()
-        self.v2v_tau = HEADWAYS_S[0]
+        self.v2v_tau = self.headways[0]
         return super().reset(seed=seed, options=options)
 
     def _zone(self, v: str) -> int:
@@ -389,6 +401,11 @@ class ZoneEnv(MergeEnv):
     def _taper(self) -> None:
         pass
 
+    def step(self, action):
+        c0 = self.ep["changes"]
+        o, r, term, trunc, info = super().step(action)
+        return o, r - self.w_change * (self.ep["changes"] - c0), term, trunc, info
+
     def _v2v(self) -> None:
         for v in ls.vehicle.getIDList():
             if v not in self.alks_all:
@@ -397,7 +414,7 @@ class ZoneEnv(MergeEnv):
             cur = lead[0] if lead and lead[0] in self.alks_all else None
             on = cur is not None and self.v2v_lead.get(v) == cur
             self.v2v_lead[v] = cur
-            want = HEADWAYS_S[self.target[self._zone(v)]] if on else ALKS_TAU0
+            want = self.headways[self.target[self._zone(v)]] if on else ALKS_TAU0
             if self.v2v_cur.get(v, ALKS_TAU0) != want:
                 ls.vehicle.setTau(v, want)
                 self.v2v_cur[v] = want
@@ -449,9 +466,27 @@ class ZoneEnv(MergeEnv):
             cnt[z] += 1
         for z in range(N_ZONES):
             o += [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0, min(cnt[z] / ZONE_NORM, 1.0),
-                  HEADWAYS_S[self.target[z]] / HEADWAYS_S[0],
+                  self.headways[self.target[z]] / self.headways[0],
                   min(max(ZONE_HOLD - (self.sim.t - self.last_change[z]), 0.0) / ZONE_HOLD, 1.0)]
         o += [min(max(ls.lane.getLastStepMeanSpeed("2_0"), 0.0) / fl.LIMIT, 1.0),
               min(ls.lane.getLastStepVehicleNumber("3a_0") / 40.0, 1.0),
               min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0)]
         return np.array(o, dtype=np.float32)
+
+
+class ZoneRule:
+    """Non-learning opponent for ZoneEnv: the short level in the given zones while the merge zone's mean speed is below
+    `on` (share of the limit), back to the first level above `on` + HYST. It reads only the policy's observation."""
+    HYST = 0.1
+
+    def __init__(self, level: int, on: float, zones: tuple):
+        self.level, self.on, self.zones = level, on, tuple(zones)
+        self.active = False
+
+    def __call__(self, o: np.ndarray) -> np.ndarray:
+        v = float(o[R * 3 + K * 4 + ZONE_MERGE * 4])
+        self.active = v < self.on + (self.HYST if self.active else 0.0)
+        a = np.zeros(N_ZONES, int)
+        if self.active:
+            a[list(self.zones)] = self.level
+        return a

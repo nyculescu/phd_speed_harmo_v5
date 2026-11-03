@@ -1,4 +1,5 @@
 """B training environment (V263): spaces and seeds; the live behaviour is checked by `b_train smoke`."""
+import numpy as np
 import pytest
 
 from v5b.fleet import b_env as be, b_train as bt
@@ -84,3 +85,40 @@ def test_up_down_requests_cannot_flip_faster_than_the_hold():
         seen.append(int(env.target[0]))
     assert env.ep["changes"] <= 2
     assert all(abs(a - b) <= 1 for a, b in zip(seen, seen[1:]))
+
+
+def test_zone_headway_list_and_change_cost_are_options():
+    env = be.make(zones=True, run_dir="/tmp", headways=(1.6, 1.4, 1.2), w_change=0.1, ref_delay=True)
+    assert env.action_space.nvec.tolist() == [3] * be.N_ZONES
+    assert env.ref is be.REF_DELAY and env.w_change == 0.1
+
+
+def test_zone_rule_uses_hysteresis_and_leaves_the_other_zones_alone():
+    rule = be.ZoneRule(level=2, on=0.6, zones=(be.ZONE_UP, be.ZONE_DOWN))
+    o = np.ones(be.R * 3 + be.K * 4 + be.N_ZONES * 4 + 3)
+    i = be.R * 3 + be.K * 4 + be.ZONE_MERGE * 4
+    assert rule(o).tolist() == [0, 0, 0]
+    o[i] = 0.5
+    assert rule(o).tolist() == [2, 0, 2]
+    o[i] = 0.65
+    assert rule(o).tolist() == [2, 0, 2]
+    o[i] = 0.75
+    assert rule(o).tolist() == [0, 0, 0]
+
+
+def test_one_contact_counts_once_however_long_it_lasts(monkeypatch):
+    env = be.MergeEnv(run_dir="/tmp")
+
+    class Sim:
+        def step(self):
+            pass
+
+    class C:
+        collider, victim = "a", "b"
+    env.sim = Sim()
+    env.contact = set()
+    env.ep = {"collisions": 0, "contact_steps": 0}
+    monkeypatch.setattr(be.ls.simulation, "getCollisions", lambda: [C()])
+    for _ in range(5):
+        env._sim_step()
+    assert env.ep == {"collisions": 1, "contact_steps": 5}

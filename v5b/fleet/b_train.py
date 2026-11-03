@@ -7,6 +7,7 @@ Usage: python -m v5b.fleet.b_train smoke --out DIR
        python -m v5b.fleet.b_train headway --out DIR [--seeds 20] [--workers 27]
        python -m v5b.fleet.b_train v2v --out DIR [--seeds 20] [--workers 27]
        python -m v5b.fleet.b_train zones --out DIR [--seeds 20] [--workers 27]
+       python -m v5b.fleet.b_train matrix --out DIR --spec FILE [--workers 9]     (per-seed rows, resumes)
        --cfg 2 or 3 on train, eval or sweep selects a later agent (CFG)
 Validation and evaluation here are exploratory: a claim needs its own pre-registered evaluation on fresh seeds (V263).
 """
@@ -17,7 +18,7 @@ import json
 import multiprocessing as mp
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -103,6 +104,7 @@ def _eval_one(a: tuple) -> dict:
     from v5b.fleet import b_env as be
     torch.set_num_threads(1)
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
+    rule = be.ZoneRule(**model_path) if isinstance(model_path, dict) else None
     env = be.make(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
     o, _ = env.reset()
     arm = model_path if isinstance(model_path, int) else 0
@@ -111,7 +113,7 @@ def _eval_one(a: tuple) -> dict:
     else:
         fixed = arm if kw.get("shared") else np.full(be.K, arm, int)
     while True:
-        act = model.predict(o, deterministic=True)[0] if model is not None else fixed
+        act = model.predict(o, deterministic=True)[0] if model is not None else rule(o) if rule else fixed
         o, r, _, tr, inf = env.step(act)
         if tr:
             break
@@ -149,6 +151,32 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
         row["mismatch"] = sum(pol[s]["restore_mismatch"] + pol[s]["lock_mismatch"] for s in seeds)
         rep[f"{q:g}"] = row
     return rep
+
+
+def _matrix_job(a: tuple) -> dict:
+    spec, q, seed, run_dir = a
+    m = spec["model"]
+    m = tuple(m) if isinstance(m, list) else m
+    row = _eval_one((m, spec.get("share", SHARE), q, seed, run_dir, spec["kw"], True))
+    row["name"] = spec["name"]
+    return row
+
+
+def matrix(out: Path, spec_file: Path, workers: int) -> None:
+    """Per-seed rows for a list of specs {name, model (path, arm or rule), kw, levels, seeds, share}; done rows are skipped."""
+    specs = json.loads(spec_file.read_text())
+    f = out / "rows.jsonl"
+    done = set()
+    if f.exists():
+        done = {(r["name"], r["q"], r["seed"]) for r in map(json.loads, f.read_text().splitlines())}
+    jobs = [(s, float(q), seed, str(out / "rd")) for s in specs for q in s["levels"] for seed in s["seeds"]
+            if (s["name"], float(q), seed) not in done]
+    print(len(jobs), "jobs", flush=True)
+    with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex, f.open("a") as w:
+        for fut in as_completed([ex.submit(_matrix_job, j) for j in jobs]):
+            w.write(json.dumps(fut.result()) + "\n")
+            w.flush()
+    print("done", flush=True)
 
 
 def smoke(out: Path) -> list:
@@ -191,7 +219,7 @@ def smoke(out: Path) -> list:
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway", "v2v", "zones"))
+    ap.add_argument("phase", choices=("smoke", "train", "eval", "sweep", "headway", "v2v", "zones", "matrix"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
     ap.add_argument("--updates", type=int, default=500)
@@ -202,6 +230,7 @@ def main(argv: list) -> int:
     ap.add_argument("--offsets", default="1,2,3,4,5")
     ap.add_argument("--cfg", type=int, default=1)
     ap.add_argument("--asl", type=float)
+    ap.add_argument("--spec")
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -211,6 +240,10 @@ def main(argv: list) -> int:
         return 1 if bad else 0
     if a.phase == "train":
         print("model:", train(out, a.learner, a.updates, a.n_envs, SHARE, CFG[a.cfg].get("levels", LEVELS), cfg=a.cfg), flush=True)
+        return 0
+    if a.phase == "matrix":
+        out.mkdir(parents=True, exist_ok=True)
+        matrix(out, Path(a.spec), a.workers)
         return 0
     if a.phase == "zones":
         out.mkdir(parents=True, exist_ok=True)
