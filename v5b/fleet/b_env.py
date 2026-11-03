@@ -614,6 +614,7 @@ class CavEnv(ZoneEnv):
     def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
         """Flow, speed and vehicles in system, shared by all; flow smoothed, no excess-exposure term. V286: that term's noise
         outweighed everything else, and one vehicle barely moves it. Safety is charged per vehicle in _net_stats."""
+        self._net_stats_gap()     # per-vehicle costs come from this pass; in training nothing else runs it (V294)
         self.flow_ema += (passed - self.flow_ema) / SAFETY_TAU
         ref_n = self._ref()[2]
         return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0)

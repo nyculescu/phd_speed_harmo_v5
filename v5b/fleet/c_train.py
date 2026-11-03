@@ -311,6 +311,13 @@ def smoke(out: Path) -> list:
     if c["N"] == a["N"]:
         bad.append("level 3 changed nothing")
     env.close()
+    t = be.CavEnv(**{**base, "report_net": False})     # the mode training runs in
+    o, _ = t.reset()
+    for _ in range(5):
+        o, rew, *_ = t.step({})
+    if np.std(list(rew.values())) <= 0 or not t.stats:
+        bad.append("per-vehicle reward is absent in training mode")
+    t.close()
     f = train(out / "ppo", 0, 2, 2, {"episode": 100.0, "warm": 120.0})
     row = bt._eval_one(({"pt": str(f)}, 0.5, 4600.0, s, str(out / "rd"), {**ENV, "episode": 100.0, "warm": 120.0}, True))
     if not row["alks_s"]:
