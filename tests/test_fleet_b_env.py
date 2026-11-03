@@ -180,7 +180,7 @@ def test_cav_rule_reads_zone_from_the_observation():
     lo = np.zeros((5, be.CAV_LOCAL), np.float32)
     lo[:, 0] = [-0.5, -0.05, 0.1, 1.0, -0.02]
     lo[4, 2] = 1.0     # on the ramp, before the 3a start
-    a = be.CavRule((3, 0, 2))((list("abcde"), lo, None))
+    a = be.CavRule((3, 0, 2))((list("abcde"), lo, None, None))
     assert a == {"a": 3, "b": 0, "c": 0, "d": 2, "e": 3}
 
 

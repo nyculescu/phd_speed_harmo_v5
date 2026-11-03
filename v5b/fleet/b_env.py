@@ -509,7 +509,8 @@ class CavEnv(ZoneEnv):
     """V285: one shared policy picks each ALKS's target headway every decision. The V2V rule is unchanged: the target
     applies only behind an ALKS within V2V range, the same leader on two updates, else the contract's tau. A vehicle's
     target moves one level at most once per `hold` s. Reset, step and rewards hold per-vehicle values keyed by vehicle id;
-    an action is a dict {vehicle: level}. Everything observed is on board or a short broadcast from the roadside."""
+    an action is a dict {vehicle: level}. Everything observed is on board or a short broadcast from the roadside. The
+    observation's mask marks the vehicles whose own `hold`-s clock is due: the policy decides only for them (V290)."""
 
     def __init__(self, hold: float = 30.0, **kw):
         kw.setdefault("decision", 5.0)
@@ -519,7 +520,7 @@ class CavEnv(ZoneEnv):
 
     def _clear_cav(self) -> None:
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
-        self.ids, self.on, self.stats = [], set(), {}
+        self.ids, self.on, self.stats, self.asked = [], set(), {}, {}
 
     def reset(self, *, seed=None, options=None):
         self._clear_cav()
@@ -666,11 +667,16 @@ class CavEnv(ZoneEnv):
                          min(self.bins.get(self._bin(v), fl.LIMIT) / fl.LIMIT, 1.0),
                          vz[ZONE_MERGE], np.clip(near / GAP_NORM, -1.0, 1.0), min(n3a / 40.0, 1.0)])
         self.ids = ids
+        t = self.sim.t
+        due = np.array([t - self.asked.get(v, -1e9) >= self.hold - 1e-9 for v in ids], dtype=bool)
+        for v, d in zip(ids, due):
+            if d:
+                self.asked[v] = t
         glob = vz + [min(c / ZONE_NORM, 1.0) for c in cnt] + [min(n3a / 40.0, 1.0),
                                                               min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0),
                                                               min(self.sim.t / self.t_end, 1.0),
                                                               getattr(self, "flow_ema", 0.0) / (self.q / 3600.0) / 1.5]
-        return ids, np.array(rows, dtype=np.float32).reshape(-1, CAV_LOCAL), np.array(glob, dtype=np.float32)
+        return ids, np.array(rows, dtype=np.float32).reshape(-1, CAV_LOCAL), np.array(glob, dtype=np.float32), due
 
     def step(self, action: dict):
         before = self.ids
@@ -688,7 +694,7 @@ class CavRule:
         self.levels = np.array(levels, int)
 
     def __call__(self, o: tuple) -> dict:
-        ids, lo, _ = o
+        ids, lo = o[:2]
         x = lo[:, 0] * 1000.0
         ramp = (lo[:, 2] > 0.5) & (x < 0.0)
         up = (x < -bm.MA_EDGE2_TAIL) | ramp

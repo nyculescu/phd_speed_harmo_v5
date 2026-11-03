@@ -1,9 +1,10 @@
 """Per-CAV control (V285): PPO with one policy shared by every ALKS, each acting on its own observation; the critic also
-sees network state. SB3 needs fixed agent counts, hence this loop. A vehicle that leaves is cut off, not ended: its last
-value is bootstrapped, so leaving neither earns nor costs anything and the reward can't favour staying on the road.
+sees network state. SB3 needs fixed agent counts, hence this loop. Each vehicle decides once per hold on its own clock, so
+every sample can move its level (V290); its reward is the mean over the interval. A vehicle that leaves is cut off, not
+ended: its last value is bootstrapped, so leaving neither earns nor costs anything and the reward can't favour staying on the road.
 
 Usage: python -m v5b.fleet.c_train smoke --out DIR
-       python -m v5b.fleet.c_train train --out DIR --learner 0 [--updates 270] [--n-envs 3]
+       python -m v5b.fleet.c_train train --out DIR --learner 0 [--updates 250] [--n-envs 3]
 Results come from b_train matrix with model {"pt": FILE} and ENV as its kw.
 """
 from __future__ import annotations
@@ -24,9 +25,9 @@ from v5b.fleet import b_env as be
 ENV = {"cav": True, "decision": 5.0, "alks_asl": 0.5, "ref_delay": True}
 LEVELS = (4090.0, 4600.0, 5300.0)
 FIRST_WORKER = 9     # run 5 used workers 0-8
-NEP0 = 126     # C run 1 used the first 125 seeds of these workers
-GAMMA, LAM = 0.95, 0.95
-EPOCHS, BATCH = 3, 4096
+NEP0 = 0
+GAMMA, LAM = 0.8, 0.9     # per 30-s decision: a horizon of about 150 s, the time to cross the merge area and feel the result
+EPOCHS, BATCH = 10, 4096
 LR, CLIP, ENT, VF, GRAD = 3e-4, 0.2, 0.01, 0.5, 0.5
 
 
@@ -56,12 +57,12 @@ class Greedy:
         self.net.load_state_dict(torch.load(path, map_location="cpu")["net"])
 
     def __call__(self, o: tuple) -> dict:
-        ids, lo, _ = o
-        if not ids:
+        ids, lo, _, due = o
+        if not due.any():
             return {}
         with torch.no_grad():
-            a = self.net.actor(torch.from_numpy(lo)).argmax(1).numpy()
-        return dict(zip(ids, a.tolist()))
+            a = self.net.actor(torch.from_numpy(lo[due])).argmax(1).numpy()
+        return dict(zip((v for v, d in zip(ids, due) if d), a.tolist()))
 
 
 def gae(r: np.ndarray, v: np.ndarray, boot: float, gamma: float = GAMMA, lam: float = LAM) -> np.ndarray:
@@ -90,9 +91,10 @@ def _worker(conn, kw: dict) -> None:
 
 
 def _act(net: Net, scale: float, obs: list) -> list:
-    """One forward pass over every vehicle of every env; per env (ids, actions, log-probs, raw values)."""
-    lo = np.concatenate([o[1] for o in obs])
-    gl = np.concatenate([np.repeat(o[2][None], len(o[0]), 0) for o in obs])
+    """One forward pass over the vehicles due in every env; per env (ids, actions, log-probs, raw values, local, global)."""
+    due = [([v for v, d in zip(o[0], o[3]) if d], o[1][o[3]], o[2]) for o in obs]
+    lo = np.concatenate([d[1] for d in due])
+    gl = np.concatenate([np.repeat(d[2][None], len(d[0]), 0) for d in due])
     with torch.no_grad():
         tl, tg = torch.from_numpy(lo), torch.from_numpy(gl)
         d = net.dist(tl)
@@ -100,11 +102,17 @@ def _act(net: Net, scale: float, obs: list) -> list:
         lp, val = d.log_prob(a).numpy(), net.value(tl, tg).numpy() * scale
     a = a.numpy()
     out, i = [], 0
-    for ids, l, g in obs:
+    for ids, l, g in due:
         j = i + len(ids)
         out.append((ids, a[i:j], lp[i:j], val[i:j], l, g))
         i = j
     return out
+
+
+def _close(t: dict) -> None:
+    if t["k"]:
+        t["r"][-1] /= t["k"]
+    t["k"] = 0
 
 
 def collect(net: Net, scale: float, conns: list) -> tuple:
@@ -116,26 +124,40 @@ def collect(net: Net, scale: float, conns: list) -> tuple:
     done, logs = [], [None] * len(conns)
     while logs[0] is None:
         acted = _act(net, scale, obs)
-        for c, (ids, a, *_) in zip(conns, acted):
+        for k, (c, (ids, a, lp, val, lo, gl)) in enumerate(zip(conns, acted)):
+            for i, v in enumerate(ids):
+                t = tr[k].setdefault(v, {"lo": [], "gl": [], "a": [], "lp": [], "v": [], "r": [], "k": 0})
+                _close(t)
+                for key, x in (("lo", lo[i]), ("gl", gl), ("a", a[i]), ("lp", lp[i]), ("v", val[i]), ("r", 0.0)):
+                    t[key].append(x)
             c.send(("step", dict(zip(ids, a.tolist()))))
         res = [c.recv() for c in conns]
         obs = [r[0] for r in res]
-        for k, ((ids, a, lp, val, lo, gl), (o2, rew, _, trunc, info)) in enumerate(zip(acted, res)):
-            for i, v in enumerate(ids):
-                t = tr[k].setdefault(v, {"lo": [], "gl": [], "a": [], "lp": [], "v": [], "r": []})
-                for key, x in (("lo", lo[i]), ("gl", gl), ("a", a[i]), ("lp", lp[i]), ("v", val[i]), ("r", rew[v])):
-                    t[key].append(x)
+        for k, (o2, rew, _, trunc, info) in enumerate(res):
+            for v, x in rew.items():
+                t = tr[k].get(v)
+                if t is not None:
+                    t["r"][-1] += x
+                    t["k"] += 1
             live = set(o2[0])
             for v in [v for v in tr[k] if v not in live]:     # left: the last value stands in for what follows
                 t = tr[k].pop(v)
+                _close(t)
                 done.append((t, t["v"][-1]))
             if trunc:
                 logs[k] = info["ep"]
-    last = _act(net, scale, obs)
-    for k, (ids, _, _, val, *_rest) in enumerate(last):
-        boot = dict(zip(ids, val))
-        for v, t in tr[k].items():
-            done.append((t, boot[v]))
+    with torch.no_grad():
+        for k, o in enumerate(obs):
+            live = list(tr[k])
+            if not live:
+                continue
+            idx = {v: i for i, v in enumerate(o[0])}
+            lo = torch.from_numpy(o[1][[idx[v] for v in live]])
+            gl = torch.from_numpy(np.repeat(o[2][None], len(live), 0))
+            for v, x in zip(live, net.value(lo, gl).numpy() * scale):
+                t = tr[k][v]
+                _close(t)
+                done.append((t, x))
     lo, gl, a, lp, adv, ret, r = [], [], [], [], [], [], []
     for t, boot in done:
         rr, vv = np.array(t["r"], dtype=np.float32), np.array(t["v"], dtype=np.float32)
@@ -267,6 +289,8 @@ def smoke(out: Path) -> list:
     seen, moves = set(), {}
     while True:
         o, rew, _, tr, inf = env.step({v: 3 for v in o[0]})
+        if o[3].any() and not all(env.asked[v] == env.sim.t for v, d in zip(o[0], o[3]) if d):
+            bad.append("a due vehicle was not stamped")
         for v, m in env.moved.items():
             moves.setdefault(v, set()).add(m)
         for v in o[0]:
@@ -295,7 +319,7 @@ def main(argv: list) -> int:
     ap.add_argument("phase", choices=("smoke", "train"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
-    ap.add_argument("--updates", type=int, default=270)
+    ap.add_argument("--updates", type=int, default=250)
     ap.add_argument("--n-envs", type=int, default=3)
     a = ap.parse_args(argv)
     out = Path(a.out)
