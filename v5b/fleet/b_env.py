@@ -366,10 +366,10 @@ class ZoneEnv(MergeEnv):
     cap, plus per zone the mean speed, vehicle count, current target and remaining hold, plus the lane speed, 3a count and
     insertion queue. A zone's target changes at most once per ZONE_HOLD s and by one level (V278); other requests are ignored."""
 
-    def __init__(self, headways: tuple = HEADWAYS_S, w_change: float = 0.0, **kw):
+    def __init__(self, headways: tuple = HEADWAYS_S, w_change: float = 0.0, shared_reward: bool = False, **kw):
         kw.setdefault("reward", "efficiency")
         super().__init__(**kw)
-        self.headways, self.w_change = tuple(headways), w_change
+        self.headways, self.w_change, self.shared_reward = tuple(headways), w_change, shared_reward
         self.action_space = gym.spaces.MultiDiscrete([len(self.headways)] * N_ZONES)
         self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 4 + 3,), dtype=np.float32)
         self._clear_zones()
@@ -382,7 +382,9 @@ class ZoneEnv(MergeEnv):
     def reset(self, *, seed=None, options=None):
         self._clear_zones()
         self.v2v_tau = self.headways[0]
-        return super().reset(seed=seed, options=options)
+        o, info = super().reset(seed=seed, options=options)
+        self.flow_ema = self.q / 3600.0
+        return o, info
 
     def _zone(self, v: str) -> int:
         e = ls.vehicle.getRoadID(v)
@@ -435,7 +437,15 @@ class ZoneEnv(MergeEnv):
             self.ep["alks_s"] += 1
             self.ep["v2v_s"] += want != ALKS_TAU0
 
+    def _shared(self, passed: int, vbar: float, n: int) -> float:
+        """Flow, speed and vehicles in system; flow smoothed, no excess-exposure term (V286)."""
+        self.flow_ema += (passed - self.flow_ema) / SAFETY_TAU
+        ref_n = self._ref()[2]
+        return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0)
+
     def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
+        if self.shared_reward:
+            return self._shared(passed, vbar, n)
         g0 = self.ep["gap25"]
         self._net_stats_gap()
         return super()._efficiency(passed, vbar, n, b3, e30) - W_GAP * (self.ep["gap25"] - g0)
@@ -615,9 +625,7 @@ class CavEnv(ZoneEnv):
         """Flow, speed and vehicles in system, shared by all; flow smoothed, no excess-exposure term. V286: that term's noise
         outweighed everything else, and one vehicle barely moves it. Safety is charged per vehicle in _net_stats."""
         self._net_stats_gap()     # per-vehicle costs come from this pass; in training nothing else runs it (V294)
-        self.flow_ema += (passed - self.flow_ema) / SAFETY_TAU
-        ref_n = self._ref()[2]
-        return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0)
+        return self._shared(passed, vbar, n)
 
     def _x(self, v: str) -> float:
         """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value."""

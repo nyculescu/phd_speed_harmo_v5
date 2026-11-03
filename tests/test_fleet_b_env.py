@@ -192,3 +192,12 @@ def test_cav_shared_reward_has_no_excess_exposure_term():
     n = int(env.ref[4600.0][2])
     env.ema_b3, env.ema_e30 = 100.0, 100.0
     assert env._efficiency(0, be.fl.LIMIT, n, 50, 50) == pytest.approx(-0.0213, abs=0.05)
+
+
+def test_zone_shared_reward_has_no_excess_or_gap_term():
+    env = be.ZoneEnv(run_dir="/tmp", shared_reward=True, ref_delay=True)
+    env.q, env.flow_ema = 4600.0, 4600.0 / 3600.0
+    n = int(be.REF_DELAY[4600.0][2])
+    env.ema_b3, env.ema_e30 = 1e6, 1e6
+    r = env._efficiency(1, 25.0, n, 10**6, 10**6)
+    assert r == pytest.approx(env.flow_ema / (4600.0 / 3600.0) - 1.0 + 25.0 / be.fl.LIMIT - 1.0 - (n / be.REF_DELAY[4600.0][2] - 1.0))

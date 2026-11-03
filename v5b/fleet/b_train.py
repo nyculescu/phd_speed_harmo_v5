@@ -37,7 +37,10 @@ CFG = {1: {"env": {}, "nep0": 0, "first_val": 0, "steps": N_STEPS_TOTAL, "gamma"
            "levels": (4090.0, 4600.0, 5300.0), "seeds": list(range(7_419_910, 7_419_930))},
        # V283: trained with the delay. Change cost 0.1 per decision: a useful change held for one 60-s hold earns more.
        7: {"env": {"zones": True, "decision": 10.0, "alks_asl": 0.5, "w_change": 0.1, "ref_delay": True}, "nep0": 0, "steps": 304, "gamma": 0.95, "norm": True,
-           "levels": (4090.0, 4600.0, 5300.0), "seeds": list(range(7_419_930, 7_419_950))}}
+           "levels": (4090.0, 4600.0, 5300.0), "seeds": list(range(7_419_930, 7_419_950))},
+       # V302: as 7, with C's shared reward, so B and C differ only in the actuator.
+       8: {"env": {"zones": True, "decision": 10.0, "alks_asl": 0.5, "w_change": 0.1, "ref_delay": True, "shared_reward": True}, "nep0": 0, "steps": 304,
+           "gamma": 0.95, "norm": True, "levels": (4090.0, 4600.0, 5300.0), "seeds": list(range(7_419_650, 7_419_670))}}
 HEADWAYS = (1.2, 1.0, 0.8)
 HEADWAY_LEVELS = (4090.0, 4300.0, 4600.0, 5300.0)
 V2V_ASLS = (None, 0.5)
