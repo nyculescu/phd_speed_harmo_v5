@@ -63,6 +63,8 @@ W_CAV_FLOW = 0.4
 Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
 FREE_SPACING = 200.0     # no leader within sensing range
 W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
+LANE_LEFT, LANE_RIGHT = 1, 2
+LANE_RULE_M = 1500.0
 
 
 def make(zones: bool = False, cav: bool = False, **kw):
@@ -366,10 +368,10 @@ class ZoneEnv(MergeEnv):
     cap, plus per zone the mean speed, vehicle count, current target and remaining hold, plus the lane speed, 3a count and
     insertion queue. A zone's target changes at most once per ZONE_HOLD s and by one level (V278); other requests are ignored."""
 
-    def __init__(self, headways: tuple = HEADWAYS_S, w_change: float = 0.0, shared_reward: bool = False, **kw):
+    def __init__(self, headways: tuple = HEADWAYS_S, w_change: float = 0.0, shared_reward: bool = False, w_n: float = 1.0, **kw):
         kw.setdefault("reward", "efficiency")
         super().__init__(**kw)
-        self.headways, self.w_change, self.shared_reward = tuple(headways), w_change, shared_reward
+        self.headways, self.w_change, self.shared_reward, self.w_n = tuple(headways), w_change, shared_reward, w_n
         self.action_space = gym.spaces.MultiDiscrete([len(self.headways)] * N_ZONES)
         self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 4 + 3,), dtype=np.float32)
         self._clear_zones()
@@ -441,7 +443,7 @@ class ZoneEnv(MergeEnv):
         """Flow, speed and vehicles in system; flow smoothed, no excess-exposure term (V286)."""
         self.flow_ema += (passed - self.flow_ema) / SAFETY_TAU
         ref_n = self._ref()[2]
-        return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0)
+        return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - self.w_n * (n / ref_n - 1.0)
 
     def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
         if self.shared_reward:
@@ -515,6 +517,11 @@ class ZoneRule:
         return a
 
 
+def cav_sizes(lane_action: bool = False, residual: tuple | None = None, **_) -> tuple:
+    """Local observation size and number of actions of a CavEnv with these settings."""
+    return CAV_LOCAL + (2 if lane_action else 0), (3 if residual else len(HEADWAYS_S)) * (3 if lane_action else 1)
+
+
 class CavEnv(ZoneEnv):
     """V285: one shared policy picks each ALKS's target headway every decision. The V2V rule is unchanged: the target
     applies only behind an ALKS within V2V range, the same leader on two updates, else the contract's tau. A vehicle's
@@ -522,29 +529,38 @@ class CavEnv(ZoneEnv):
     an action is a dict {vehicle: level}. Everything observed is on board or a short broadcast from the roadside. The
     observation's mask marks the vehicles whose own `hold`-s clock is due: the policy decides only for them (V290)."""
 
-    def __init__(self, hold: float = 30.0, w_flow: float = W_CAV_FLOW, w_safety: float = W_CAV_TTC, **kw):
+    def __init__(self, hold: float = 30.0, w_flow: float = W_CAV_FLOW, w_safety: float = W_CAV_TTC, lane_action: bool = False,
+                 residual: tuple | None = None, **kw):
         kw.setdefault("decision", 5.0)
         super().__init__(**kw)
-        self.hold, self.w_flow, self.w_safety = hold, w_flow, w_safety
+        self.hold, self.w_flow, self.w_safety, self.lane_action, self.residual = hold, w_flow, w_safety, lane_action, residual
+        self.n_local = cav_sizes(lane_action, residual)[0]
+        self.n_level = 3 if residual else len(self.headways)
         self._clear_cav()
 
     def _clear_cav(self) -> None:
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
-        self.ids, self.on, self.stats, self.asked = [], set(), {}, {}
+        self.ids, self.on, self.stats, self.asked, self.lane_dir = [], set(), {}, {}, {}
 
     def reset(self, *, seed=None, options=None):
         self._clear_cav()
         o, info = super().reset(seed=seed, options=options)
         self.flow_ema = self.q / 3600.0
         self.ep["lv"] = [0] * (N_ZONES * len(self.headways))
+        self.ep["lane_cmds"] = self.ep["lane_rev"] = 0
         self.acc = defaultdict(float)
         return o, info
 
     def _apply(self, action: dict) -> None:
         t = self.sim.t
-        for v, want in action.items():
+        for v, a in action.items():
+            want, cmd = int(a) % self.n_level, int(a) // self.n_level
+            if self.residual:
+                want = int(np.clip(self.residual[self._zone(v)] + want - 1, 0, len(self.headways) - 1))
+            if cmd:
+                self._lane(v, cmd)
             cur = self.lvl.get(v, 0)
-            d = int(np.sign(int(want) - cur))
+            d = int(np.sign(want - cur))
             if not d:
                 continue
             if t - self.moved.get(v, -1e9) < self.hold - 1e-9:
@@ -556,6 +572,30 @@ class CavEnv(ZoneEnv):
             self.ep["reversals"] += self.ldir.get(v, 0) == -d
             self.ldir[v] = d
             self.acc[v] -= W_MOVE * self.decision
+
+    def _lane(self, v: str, cmd: int) -> None:
+        """Asks SUMO to move one lane and stay until the next decision; SUMO's own safety checks still apply. Never into the
+        acceleration lane or on the ramp."""
+        road = ls.vehicle.getRoadID(v)
+        if road.startswith(":") or road in ("r", "rj"):
+            return
+        d = 1 if cmd == LANE_LEFT else -1
+        j = ls.vehicle.getLaneIndex(v) + d
+        if j < 0 or j >= ls.edge.getLaneNumber(road) or (road == "3a" and j == 0):
+            return
+        ls.vehicle.changeLane(v, j, self.hold)
+        self.ep["lane_cmds"] += 1
+        self.ep["lane_rev"] += self.lane_dir.get(v, 0) == -d
+        self.lane_dir[v] = d
+        self.acc[v] -= W_MOVE * self.decision
+
+    def _lane_view(self, v: str) -> list:
+        """Mean speed on the lanes to the left and right; 0 where there is no lane to move to."""
+        road = ls.vehicle.getRoadID(v)
+        if road.startswith(":"):
+            return [1.0, 1.0]
+        i, n = ls.vehicle.getLaneIndex(v), ls.edge.getLaneNumber(road)
+        return [min(max(ls.lane.getLastStepMeanSpeed(f"{road}_{j}"), 0.0) / fl.LIMIT, 1.0) if 0 <= j < n and not (road == "3a" and j == 0) else 0.0 for j in (i + 1, i - 1)]
 
     def _v2v(self) -> None:
         lv = self.ep.get("lv")
@@ -675,6 +715,8 @@ class CavEnv(ZoneEnv):
                          min(max(self.hold - (self.sim.t - self.moved.get(v, -1e9)), 0.0) / self.hold, 1.0),
                          min(self.bins.get(self._bin(v), fl.LIMIT) / fl.LIMIT, 1.0),
                          vz[ZONE_MERGE], np.clip(near / GAP_NORM, -1.0, 1.0), min(n3a / 40.0, 1.0)])
+            if self.lane_action:
+                rows[-1] += self._lane_view(v)
         self.ids = ids
         t = self.sim.t
         due = np.array([t - self.asked.get(v, -1e9) >= self.hold - 1e-9 for v in ids], dtype=bool)
@@ -685,7 +727,7 @@ class CavEnv(ZoneEnv):
                                                               min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0),
                                                               min(self.sim.t / self.t_end, 1.0),
                                                               getattr(self, "flow_ema", 0.0) / (self.q / 3600.0) / 1.5]
-        return ids, np.array(rows, dtype=np.float32).reshape(-1, CAV_LOCAL), np.array(glob, dtype=np.float32), due
+        return ids, np.array(rows, dtype=np.float32).reshape(-1, self.n_local), np.array(glob, dtype=np.float32), due
 
     def step(self, action: dict):
         before = self.ids
@@ -699,8 +741,8 @@ class CavRule:
     """Non-learning opponent for CavEnv: a fixed level per zone, read from the policy's own observation (position, on-ramp
     flag), so each vehicle moves toward its zone's level at the allowed rate."""
 
-    def __init__(self, levels: tuple):
-        self.levels = np.array(levels, int)
+    def __init__(self, levels: tuple, lane: int = 0):
+        self.levels, self.lane = np.array(levels, int), lane
 
     def __call__(self, o: tuple) -> dict:
         ids, lo = o[:2]
@@ -708,4 +750,9 @@ class CavRule:
         ramp = (lo[:, 2] > 0.5) & (x < 0.0)
         up = (x < -bm.MA_EDGE2_TAIL) | ramp
         z = np.where(up, ZONE_UP, np.where(x < RAMP_ZONE_END, ZONE_MERGE, ZONE_DOWN))
-        return dict(zip(ids, self.levels[z].tolist()))
+        a = self.levels[z]
+        if self.lane:     # mainline ALKS leave the merge side first: 1 lane 0 anywhere upstream, 2 lanes 0-1 in the last LANE_RULE_M
+            lane = np.rint(lo[:, 3] * 3.0)
+            move = (x < 0.0) & (lo[:, 2] < 0.5) & ((lane == 0) if self.lane == 1 else ((lane <= 1) & (x > -LANE_RULE_M)))
+            a = a + len(HEADWAYS_S) * LANE_LEFT * (move & o[3])
+        return dict(zip(ids, a.tolist()))

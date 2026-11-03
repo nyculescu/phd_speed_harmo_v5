@@ -303,7 +303,7 @@ Exact use per seed for runs with rows: `seeds_used.csv`.
 - Seeds 930-949 and 960-979 have been looked at many times. Only unused seeds can support a claim.
 - H1's collision at 4,600 is not traced. Earlier traced ones were crawl-speed contact behind an ALKS stopped at the end of 3a_0.
 - No capacity drop on this plant. Realism of IDM at 0.8 s with a 0.5-s action step is unchecked.
-- C's limits so far: headway is its only action, a 30-s clock, gamma 0.8 at 5-s steps looks about 25 s ahead.
+- C's limits so far: headway is its only action, a 30-s clock, gamma 0.8 per 30-s decision looks about 150 s ahead (corrected in V309; the tagged version says 25 s).
 - Free-flow numbers are bounds. The true ceiling is unknown.
 
 ## Reproduce one row

@@ -201,3 +201,23 @@ def test_zone_shared_reward_has_no_excess_or_gap_term():
     env.ema_b3, env.ema_e30 = 1e6, 1e6
     r = env._efficiency(1, 25.0, n, 10**6, 10**6)
     assert r == pytest.approx(env.flow_ema / (4600.0 / 3600.0) - 1.0 + 25.0 / be.fl.LIMIT - 1.0 - (n / be.REF_DELAY[4600.0][2] - 1.0))
+
+
+def test_cav_sizes_cover_lane_and_residual():
+    assert be.cav_sizes() == (be.CAV_LOCAL, 4)
+    assert be.cav_sizes(lane_action=True) == (be.CAV_LOCAL + 2, 12)
+    assert be.cav_sizes(residual=(3, 0, 3)) == (be.CAV_LOCAL, 3)
+    assert be.cav_sizes(lane_action=True, residual=(3, 0, 3), hold=10.0) == (be.CAV_LOCAL + 2, 9)
+
+
+def test_cav_rule_lane_mode_moves_only_due_mainline_alks_upstream():
+    lo = np.zeros((4, be.CAV_LOCAL + 2), dtype=np.float32)
+    lo[:, 0] = [-1.0, -1.0, 0.1, -1.0]     # km from the merge start
+    lo[:, 3] = [0.0, 1.0 / 3.0, 0.0, 0.0]     # lane index / 3
+    lo[3, 2] = 1.0     # on the ramp
+    a = be.CavRule((0, 0, 0), lane=1)((["a", "b", "c", "d"], lo, None, np.array([True, True, True, True])))
+    assert a == {"a": 4, "b": 0, "c": 0, "d": 0}
+    a = be.CavRule((0, 0, 0), lane=1)((["a", "b", "c", "d"], lo, None, np.array([False, True, True, True])))
+    assert a["a"] == 0
+    a = be.CavRule((0, 0, 0), lane=2)((["a", "b", "c", "d"], lo, None, np.array([True, True, True, True])))
+    assert a == {"a": 4, "b": 4, "c": 0, "d": 0}

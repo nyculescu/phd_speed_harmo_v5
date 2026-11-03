@@ -116,7 +116,7 @@ def _eval_one(a: tuple) -> dict:
             from v5b.fleet.c_train import Greedy
             rule = Greedy(model_path["pt"])
         elif "cav_rule" in model_path:
-            rule = be.CavRule(model_path["cav_rule"])
+            rule = be.CavRule(model_path["cav_rule"], model_path.get("lane", 0))
         else:
             rule = be.ZoneRule(**model_path)
     env = be.make(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)

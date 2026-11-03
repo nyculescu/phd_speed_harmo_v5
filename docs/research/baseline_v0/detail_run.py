@@ -1,5 +1,5 @@
 """V306: re-runs evaluation rows through the unchanged evaluation path, recording every vehicle and lane.
-Reads from SUMO only; every row must equal its stored copy. usage: detail_run.py spec.json stored_rows.jsonl out_dir workers [name q seed]"""
+Reads from SUMO only; a row with a stored copy must equal it. usage: detail_run.py spec.json stored_rows.jsonl|- out_dir workers [name q seed]"""
 import dataclasses
 import gzip
 import json
@@ -87,7 +87,7 @@ def job(a):
 
 if __name__ == "__main__":
     specs = json.load(open(sys.argv[1]))
-    stored = {(r["name"], r["q"], r["seed"]): r for r in map(json.loads, open(sys.argv[2]))}
+    stored = {(r["name"], r["q"], r["seed"]): r for r in map(json.loads, open(sys.argv[2]))} if sys.argv[2] != "-" else {}
     out = Path(sys.argv[3])
     out.mkdir(parents=True, exist_ok=True)
     only = (sys.argv[5], float(sys.argv[6]), int(sys.argv[7])) if len(sys.argv) > 5 else None
@@ -98,8 +98,7 @@ if __name__ == "__main__":
     with ProcessPoolExecutor(int(sys.argv[4]), mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex, open(out.parent / "check.jsonl", "a") as w:
         for fut in as_completed([ex.submit(job, j) for j in jobs]):
             r = fut.result()
-            s = stored[(r["name"], r["q"], r["seed"])]
-            bad = [k for k in s if s[k] != r.get(k)]
+            bad = [k for k, x in stored.get((r["name"], r["q"], r["seed"]), {}).items() if x != r.get(k)]
             same += not bad
             diff += bool(bad)
             w.write(json.dumps({"name": r["name"], "q": r["q"], "seed": r["seed"], "bad": bad}) + "\n")

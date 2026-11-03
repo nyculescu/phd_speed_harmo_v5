@@ -36,10 +36,10 @@ def _mlp(n_in: int, n_out: int) -> nn.Sequential:
 
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, n_local: int = be.CAV_LOCAL, n_act: int = len(be.HEADWAYS_S)):
         super().__init__()
-        self.actor = _mlp(be.CAV_LOCAL, len(be.HEADWAYS_S))
-        self.critic = _mlp(be.CAV_LOCAL + be.CAV_GLOBAL, 1)
+        self.actor = _mlp(n_local, n_act)
+        self.critic = _mlp(n_local + be.CAV_GLOBAL, 1)
 
     def dist(self, lo: torch.Tensor) -> torch.distributions.Categorical:
         return torch.distributions.Categorical(logits=self.actor(lo))
@@ -53,8 +53,9 @@ class Greedy:
 
     def __init__(self, path: str):
         torch.set_num_threads(1)
-        self.net = Net()
-        self.net.load_state_dict(torch.load(path, map_location="cpu")["net"])
+        ck = torch.load(path, map_location="cpu")
+        self.net = Net(ck.get("n_local", be.CAV_LOCAL), ck.get("n_act", len(be.HEADWAYS_S)))
+        self.net.load_state_dict(ck["net"])
 
     def __call__(self, o: tuple) -> dict:
         ids, lo, _, due = o
@@ -115,7 +116,7 @@ def _close(t: dict) -> None:
     t["k"] = 0
 
 
-def collect(net: Net, scale: float, conns: list) -> tuple:
+def collect(net: Net, scale: float, conns: list, gamma: float = GAMMA, lam: float = LAM) -> tuple:
     """One episode per env: flat arrays of observations, actions, log-probs, advantages and returns, plus the episode logs."""
     for c in conns:
         c.send(("reset", None))
@@ -161,7 +162,7 @@ def collect(net: Net, scale: float, conns: list) -> tuple:
     lo, gl, a, lp, adv, ret, r = [], [], [], [], [], [], []
     for t, boot in done:
         rr, vv = np.array(t["r"], dtype=np.float32), np.array(t["v"], dtype=np.float32)
-        x = gae(rr, vv, float(boot))
+        x = gae(rr, vv, float(boot), gamma, lam)
         lo += t["lo"]
         gl += t["gl"]
         a += t["a"]
@@ -201,7 +202,8 @@ def update(net: Net, opt, batch: tuple, scale: float, rng: np.random.Generator) 
     return {"entropy": ent / max(k, 1), "value_loss": vl / max(k, 1), "n": n}
 
 
-def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None, resume: str | None = None) -> Path:
+def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None, resume: str | None = None,
+          gamma: float = GAMMA, lam: float = LAM, levels: tuple = LEVELS) -> Path:
     torch.set_num_threads(1)
     seed = 20261103 + learner
     torch.manual_seed(seed)
@@ -212,12 +214,13 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
     conns, procs = [], []
     for i in range(n_envs):
         a, b = ctx.Pipe()
-        kw = {**ENV, **(env_kw or {}), "share": 0.5, "levels": LEVELS, "worker": FIRST_WORKER + learner * n_envs + i, "n_ep0": NEP0 + i, "run_dir": str(out / "rd")}
+        kw = {**ENV, **(env_kw or {}), "share": 0.5, "levels": levels, "worker": FIRST_WORKER + learner * n_envs + i, "n_ep0": NEP0 + i, "run_dir": str(out / "rd")}
         p = ctx.Process(target=_worker, args=(b, kw), daemon=True)
         p.start()
         conns.append(a)
         procs.append(p)
-    net = Net()
+    sizes = be.cav_sizes(**(env_kw or {}))
+    net = Net(*sizes)
     opt = torch.optim.Adam(net.parameters(), lr=LR, eps=1e-5)
     scale = 1.0
     if resume:
@@ -227,7 +230,7 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
     t0 = time.time()
     with (out / f"{name}_episodes.jsonl").open("a") as lg, (out / f"{name}_updates.jsonl").open("a") as lu:
         for u in range(updates):
-            batch = collect(net, scale, conns)
+            batch = collect(net, scale, conns, gamma, lam)
             if u == 0 and not resume:     # the critic's unit is fixed once, from the first returns
                 scale = max(float(batch[5].std()), 1e-3)
             st = update(net, opt, batch, scale, rng)
@@ -237,10 +240,10 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
             lu.write(json.dumps({**st, "u": u, "r": float(batch[6].mean()), "scale": scale, "wall": round(time.time() - t0, 1)}) + "\n")
             lu.flush()
             if (u + 1) % 50 == 0:
-                torch.save({"net": net.state_dict(), "scale": scale, "u": u + 1}, out / f"{name}_u{u + 1}.pt")
+                torch.save({"net": net.state_dict(), "scale": scale, "u": u + 1, "n_local": sizes[0], "n_act": sizes[1]}, out / f"{name}_u{u + 1}.pt")
     f = out / f"{name}_final.pt"
-    torch.save({"net": net.state_dict(), "scale": scale, "u": updates}, f)
-    (out / f"{name}_config.json").write_text(json.dumps({"learner": learner, "updates": updates, "n_envs": n_envs, "env": ENV, "seed": seed,
+    torch.save({"net": net.state_dict(), "scale": scale, "u": updates, "n_local": sizes[0], "n_act": sizes[1]}, f)
+    (out / f"{name}_config.json").write_text(json.dumps({"learner": learner, "updates": updates, "n_envs": n_envs, "env": {**ENV, **(env_kw or {})}, "gamma": gamma, "lam": lam, "levels": levels, "seed": seed,
                                                          "workers": [FIRST_WORKER + learner * n_envs + i for i in range(n_envs)]}))
     for c in conns:
         c.send(("close", None))
@@ -334,6 +337,9 @@ def main(argv: list) -> int:
     ap.add_argument("--n-envs", type=int, default=3)
     ap.add_argument("--resume")
     ap.add_argument("--env", default="{}", help="JSON options for CavEnv")
+    ap.add_argument("--gamma", type=float, default=GAMMA)
+    ap.add_argument("--lam", type=float, default=LAM)
+    ap.add_argument("--levels", default=json.dumps(LEVELS))
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -341,7 +347,7 @@ def main(argv: list) -> int:
         bad = smoke(out)
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
-    print("model:", train(out, a.learner, a.updates, a.n_envs, json.loads(a.env), a.resume), flush=True)
+    print("model:", train(out, a.learner, a.updates, a.n_envs, json.loads(a.env), a.resume, a.gamma, a.lam, tuple(json.loads(a.levels))), flush=True)
     return 0
 
 
