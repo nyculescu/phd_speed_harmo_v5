@@ -34,6 +34,7 @@ HEADWAYS_S = (1.6, 1.2, 1.0, 0.8)
 N_ZONES = 3
 ZONE_UP, ZONE_MERGE, ZONE_DOWN = 0, 1, 2
 ZONE_NORM = 300.0
+ZONE_HOLD = 60.0
 W_GAP = 2.0     # per follower-second with a bumper gap < 2.5 m; about the size of the flow and speed gains (V276)
 V_FLOOR = 5.0
 GAP_NORM = 100.0
@@ -116,7 +117,7 @@ class MergeEnv(gym.Env):
         self.l1, self.l2 = ls.lane.getLength("1_0"), ls.lane.getLength("2_0")
         self.held = {}
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
-                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "alks_s": 0, "v2v_s": 0,
+                   "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "alks_s": 0, "v2v_s": 0, "changes": 0, "reversals": 0, "ignored": 0,
                    "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
         per_s = int(round(1.0 / self.dt))
         k = 0
@@ -338,17 +339,23 @@ class ZoneEnv(MergeEnv):
     """V277: a central policy picks a target headway per zone every decision; the V2V rule applies it. An ALKS behind an
     ALKS within V2V range, the same leader on two updates, uses its zone's target; any other ALKS keeps the contract's
     tau. No speed or lane-change commands. Observation: the ramp vehicles and mainline slots of MergeEnv without their
-    cap, plus per zone the mean speed, vehicle count and current target, plus the lane speed, 3a count and insertion queue."""
+    cap, plus per zone the mean speed, vehicle count, current target and remaining hold, plus the lane speed, 3a count and
+    insertion queue. A zone's target changes at most once per ZONE_HOLD s and by one level (V278); other requests are ignored."""
 
     def __init__(self, **kw):
         kw.setdefault("reward", "efficiency")
         super().__init__(**kw)
         self.action_space = gym.spaces.MultiDiscrete([len(HEADWAYS_S)] * N_ZONES)
-        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 3 + 3,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(R * 3 + K * 4 + N_ZONES * 4 + 3,), dtype=np.float32)
+        self._clear_zones()
+
+    def _clear_zones(self) -> None:
         self.target = np.zeros(N_ZONES, int)
+        self.last_change = [-1e9] * N_ZONES
+        self.last_dir = [0] * N_ZONES
 
     def reset(self, *, seed=None, options=None):
-        self.target = np.zeros(N_ZONES, int)
+        self._clear_zones()
         self.v2v_tau = HEADWAYS_S[0]
         return super().reset(seed=seed, options=options)
 
@@ -365,7 +372,19 @@ class ZoneEnv(MergeEnv):
         return ZONE_UP
 
     def _apply(self, action) -> None:
-        self.target = np.asarray(action, int)
+        t = self.sim.t
+        for z, want in enumerate(np.asarray(action, int)):
+            d = int(np.sign(want - self.target[z]))
+            if not d:
+                continue
+            if t - self.last_change[z] < ZONE_HOLD - 1e-9:
+                self.ep["ignored"] += 1
+                continue
+            self.target[z] += d
+            self.last_change[z] = t
+            self.ep["changes"] += 1
+            self.ep["reversals"] += self.last_dir[z] == -d
+            self.last_dir[z] = d
 
     def _taper(self) -> None:
         pass
@@ -430,7 +449,8 @@ class ZoneEnv(MergeEnv):
             cnt[z] += 1
         for z in range(N_ZONES):
             o += [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0, min(cnt[z] / ZONE_NORM, 1.0),
-                  HEADWAYS_S[self.target[z]] / HEADWAYS_S[0]]
+                  HEADWAYS_S[self.target[z]] / HEADWAYS_S[0],
+                  min(max(ZONE_HOLD - (self.sim.t - self.last_change[z]), 0.0) / ZONE_HOLD, 1.0)]
         o += [min(max(ls.lane.getLastStepMeanSpeed("2_0"), 0.0) / fl.LIMIT, 1.0),
               min(ls.lane.getLastStepVehicleNumber("3a_0") / 40.0, 1.0),
               min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0)]

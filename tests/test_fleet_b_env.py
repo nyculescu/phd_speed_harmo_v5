@@ -46,6 +46,41 @@ def test_efficiency_reward_rewards_flow_and_speed_and_charges_only_excess_exposu
 def test_zone_agent_spaces_and_seeds_stay_outside_training():
     env = be.make(zones=True, run_dir="/tmp", decision=10.0)
     assert env.action_space.nvec.tolist() == [len(be.HEADWAYS_S)] * be.N_ZONES
-    assert env.observation_space.shape == (be.R * 3 + be.K * 4 + be.N_ZONES * 3 + 3,)
+    assert env.observation_space.shape == (be.R * 3 + be.K * 4 + be.N_ZONES * 4 + 3,)
     assert min(bt.CFG[6]["seeds"]) > 7_419_902 and max(bt.CFG[6]["seeds"]) < 7_420_000
     assert len(bt.ZONE_ARMS) == 12 and (1, 0, 0) in bt.ZONE_ARMS and (3, 3, 3) in bt.ZONE_ARMS
+
+
+class _T:
+    t = 0.0
+
+
+def _limited_env():
+    env = be.make(zones=True, run_dir="/tmp", decision=10.0)
+    env.sim = _T()
+    env.ep = {"changes": 0, "reversals": 0, "ignored": 0}
+    return env
+
+
+def test_zone_target_moves_one_level_per_hold_and_ignores_the_rest():
+    env = _limited_env()
+    env._apply((3, 0, 0))
+    assert env.target.tolist() == [1, 0, 0]
+    for t in (10.0, 50.0):
+        env.sim.t = t
+        env._apply((3, 0, 0))
+    assert env.target.tolist() == [1, 0, 0] and env.ep["ignored"] == 2
+    env.sim.t = 60.0
+    env._apply((3, 0, 0))
+    assert env.target.tolist() == [2, 0, 0] and env.ep["changes"] == 2 and env.ep["reversals"] == 0
+
+
+def test_up_down_requests_cannot_flip_faster_than_the_hold():
+    env = _limited_env()
+    seen = []
+    for i in range(12):
+        env.sim.t = 10.0 * i
+        env._apply((3 if i % 2 else 0, 0, 0))
+        seen.append(int(env.target[0]))
+    assert env.ep["changes"] <= 2
+    assert all(abs(a - b) <= 1 for a, b in zip(seen, seen[1:]))

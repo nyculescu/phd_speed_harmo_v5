@@ -143,6 +143,8 @@ def evaluate(out: Path, model: str, n_seeds: int, workers: int, share: float, le
         row["collisions"] = {"policy": sum(pol[s]["collisions"] for s in seeds), "nc": sum(nc[s]["collisions"] for s in seeds)}
         row["gap25_sum"] = {"arm": sum(pol[s]["gap25"] for s in seeds), "base": sum(nc[s]["gap25"] for s in seeds)}
         row["v2v_share"] = float(np.median([pol[s]["v2v_s"] / max(pol[s]["alks_s"], 1) for s in seeds]))
+        for k in ("changes", "reversals", "ignored"):
+            row[k] = float(np.median([pol[s][k] for s in seeds]))
         row["commands"] = float(np.median([pol[s]["commands"] for s in seeds]))
         row["mismatch"] = sum(pol[s]["restore_mismatch"] + pol[s]["lock_mismatch"] for s in seeds)
         rep[f"{q:g}"] = row
