@@ -11,6 +11,7 @@ check's E_MA) is too sparse to train on (V265: 0.002-0.11 /s under no control) a
 from __future__ import annotations
 
 import os
+from collections import defaultdict
 from pathlib import Path
 
 import gymnasium as gym
@@ -51,10 +52,18 @@ REF_LEVEL = {4090.0: (0.48, 0.249, 299.3), 4300.0: (0.672, 0.606, 321.9), 4600.0
 REF_DELAY = {4090.0: (0.696, 0.378, 299.6), 4600.0: (0.931, 0.857, 377.6), 5300.0: (0.807, 0.742, 530.3)}
 SAFETY_TAU = 60.0
 ALKS_TAU0 = fl.ALKS_TAU
+CAV_LOCAL, CAV_GLOBAL = 16, 10
+BIN_M = 200.0
+RAMP_LEN, RAMP_R_LEN = 420.0, 392.0     # edges r + rj before the 3a start
+LEN_3, LEN_4 = 1196.0, 1000.0
+RAMP_ZONE_END = 295.0 + bm.MA_EDGE3_HEAD     # end of the merge zone from the 3a start
+# Per-vehicle reward (V286). With TTC and braking weight 10, the per-vehicle ramp 303 ranks first and no change neutral at every level (6 seeds).
+W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC, W_CAV_BRAKE = 0.5, 0.5, 10.0, 10.0
+W_MOVE = 0.05     # per move; repaid within a 30-s hold by a gain of about 0.01 per decision
 
 
-def make(zones: bool = False, **kw):
-    return ZoneEnv(**kw) if zones else MergeEnv(**kw)
+def make(zones: bool = False, cav: bool = False, **kw):
+    return CavEnv(**kw) if cav else ZoneEnv(**kw) if zones else MergeEnv(**kw)
 
 
 class MergeEnv(gym.Env):
@@ -491,3 +500,182 @@ class ZoneRule:
         if self.active:
             a[list(self.zones)] = self.level
         return a
+
+
+class CavEnv(ZoneEnv):
+    """V285: one shared policy picks each ALKS's target headway every decision. The V2V rule is unchanged: the target
+    applies only behind an ALKS within V2V range, the same leader on two updates, else the contract's tau. A vehicle's
+    target moves one level at most once per `hold` s. Reset, step and rewards hold per-vehicle values keyed by vehicle id;
+    an action is a dict {vehicle: level}. Everything observed is on board or a short broadcast from the roadside."""
+
+    def __init__(self, hold: float = 30.0, **kw):
+        kw.setdefault("decision", 5.0)
+        super().__init__(**kw)
+        self.hold = hold
+        self._clear_cav()
+
+    def _clear_cav(self) -> None:
+        self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
+        self.ids = []
+
+    def reset(self, *, seed=None, options=None):
+        self._clear_cav()
+        o, info = super().reset(seed=seed, options=options)
+        self.flow_ema = self.q / 3600.0
+        self.ep["lv"] = [0] * (N_ZONES * len(self.headways))
+        self.acc = defaultdict(float)
+        return o, info
+
+    def _apply(self, action: dict) -> None:
+        t = self.sim.t
+        for v, want in action.items():
+            cur = self.lvl.get(v, 0)
+            d = int(np.sign(int(want) - cur))
+            if not d:
+                continue
+            if t - self.moved.get(v, -1e9) < self.hold - 1e-9:
+                self.ep["ignored"] += 1
+                continue
+            self.lvl[v] = cur + d
+            self.moved[v] = t
+            self.ep["changes"] += 1
+            self.ep["reversals"] += self.ldir.get(v, 0) == -d
+            self.ldir[v] = d
+            self.acc[v] -= W_MOVE * self.decision
+
+    def _v2v(self) -> None:
+        lv = self.ep.get("lv")
+        for v in ls.vehicle.getIDList():
+            if v not in self.alks_all:
+                continue
+            lead = ls.vehicle.getLeader(v, V2V_RANGE)
+            cur = lead[0] if lead and lead[0] in self.alks_all else None
+            on = cur is not None and self.v2v_lead.get(v) == cur
+            self.v2v_lead[v] = cur
+            lev = self.lvl.get(v, 0)
+            want = self.headways[lev] if on else ALKS_TAU0
+            if self.v2v_cur.get(v, ALKS_TAU0) != want:
+                ls.vehicle.setTau(v, want)
+                self.v2v_cur[v] = want
+                self.ep["commands"] += 1
+            self.ep["alks_s"] += 1
+            self.ep["v2v_s"] += want != ALKS_TAU0
+            if on and lv is not None:
+                lv[self._zone(v) * len(self.headways) + lev] += 1
+
+    def _net_stats(self) -> tuple:
+        """The parent's counts, plus each ALKS's cost this second: its own speed, the speed around it, its own TTC < 3 s and
+        hard braking, and half of what its direct follower suffers."""
+        e30 = b3 = 0
+        bins, speeds = defaultdict(list), {}
+        for v in ls.vehicle.getIDList():
+            sp = ls.vehicle.getSpeed(v)
+            hard = ls.vehicle.getAcceleration(v) <= -HARD_BRAKE
+            b3 += hard
+            ttc = False
+            lead = ls.vehicle.getLeader(v, 200.0)
+            if lead and lead[0]:
+                gap = lead[1] + ls.vehicle.getMinGap(v)
+                if gap < MIN_GAP:
+                    self.ep["gap25" if sp > MOVING else "stop_gap"] += 1
+                dv = sp - ls.vehicle.getSpeed(lead[0])
+                ttc = bool(dv > 0 and gap / dv < TTC_REWARD)
+                e30 += ttc
+                if lead[0] in self.alks_all:
+                    self.acc[lead[0]] -= 0.5 * (W_CAV_TTC * ttc + W_CAV_BRAKE * hard)
+            if v in self.alks_all:
+                self.acc[v] -= W_CAV_TTC * ttc + W_CAV_BRAKE * hard
+                speeds[v] = sp
+            bins[self._bin(v)].append(sp)
+        self.bins = {b: sum(x) / len(x) for b, x in bins.items()}
+        for v, sp in speeds.items():
+            self.acc[v] += W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(self.bins[self._bin(v)] / fl.LIMIT, 1.0) - 1.0)
+        return e30, b3
+
+    def _bin(self, v: str) -> tuple:
+        return ls.vehicle.getRoadID(v), int(ls.vehicle.getLanePosition(v) // BIN_M)
+
+    def _efficiency(self, passed: int, vbar: float, n: int, b3: int, e30: int) -> float:
+        """Flow, speed and vehicles in system, shared by all; flow smoothed, no excess-exposure term. V286: that term's noise
+        outweighed everything else, and one vehicle barely moves it. Safety is charged per vehicle in _net_stats."""
+        self.flow_ema += (passed - self.flow_ema) / SAFETY_TAU
+        ref_n = self._ref()[2]
+        return self.flow_ema / (self.q / 3600.0) - 1.0 + vbar / fl.LIMIT - 1.0 - (n / ref_n - 1.0)
+
+    def _x(self, v: str) -> float:
+        """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value."""
+        e = ls.vehicle.getRoadID(v)
+        base = {"1": -self.l1 - self.l2, "2": -self.l2, "3a": 0.0, "3": self.l3a, "r": -RAMP_LEN, "rj": -RAMP_LEN + RAMP_R_LEN}.get(e)
+        if base is None:
+            if e == "4":
+                base = self.l3a + LEN_3
+            elif e == "5":
+                base = self.l3a + LEN_3 + LEN_4
+            else:
+                return self.xlast.get(v, 0.0)
+        x = base + ls.vehicle.getLanePosition(v)
+        self.xlast[v] = x
+        return x
+
+    def _obs(self) -> tuple:
+        self.l3a = ls.lane.getLength("3a_0")
+        sp, cnt = [0.0] * N_ZONES, [0] * N_ZONES
+        ids = []
+        for v in ls.vehicle.getIDList():
+            z = self._zone(v)
+            sp[z] += ls.vehicle.getSpeed(v)
+            cnt[z] += 1
+            if v in self.alks_all:
+                ids.append(v)
+        vz = [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0 for z in range(N_ZONES)]
+        n3a = ls.lane.getLastStepVehicleNumber("3a_0")
+        ramp = sorted(self._x(v) for v in ls.lane.getLastStepVehicleIDs("3a_0"))
+        rows = []
+        for v in ids:
+            x = self._x(v)
+            s = ls.vehicle.getSpeed(v)
+            lead = ls.vehicle.getLeader(v, GAP_NORM)
+            fol = ls.vehicle.getFollower(v, GAP_NORM)
+            has_lead, has_fol = lead and lead[0], fol and fol[0]
+            on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj") or (v in self.ramp and ls.vehicle.getLaneID(v) == "3a_0")
+            near = min(ramp, key=lambda r: abs(r - x)) - x if ramp else GAP_NORM
+            rows.append([np.clip(x / 1000.0, -3.5, 3.0), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
+                         s / fl.LIMIT,
+                         min(max(lead[1], 0.0) / GAP_NORM, 1.0) if has_lead else 1.0,
+                         np.clip((s - ls.vehicle.getSpeed(lead[0])) / 10.0, -1.0, 1.0) if has_lead else 0.0,
+                         float(bool(has_lead) and lead[0] in self.alks_all),
+                         min(max(fol[1], 0.0) / GAP_NORM, 1.0) if has_fol else 1.0,
+                         np.clip((ls.vehicle.getSpeed(fol[0]) - s) / 10.0, -1.0, 1.0) if has_fol else 0.0,
+                         self.lvl.get(v, 0) / (len(self.headways) - 1),
+                         min(max(self.hold - (self.sim.t - self.moved.get(v, -1e9)), 0.0) / self.hold, 1.0),
+                         min(self.bins.get(self._bin(v), fl.LIMIT) / fl.LIMIT, 1.0),
+                         vz[ZONE_MERGE], np.clip(near / GAP_NORM, -1.0, 1.0), min(n3a / 40.0, 1.0)])
+        self.ids = ids
+        glob = vz + [min(c / ZONE_NORM, 1.0) for c in cnt] + [min(n3a / 40.0, 1.0),
+                                                              min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0),
+                                                              min(self.sim.t / self.t_end, 1.0),
+                                                              getattr(self, "flow_ema", 0.0) / (self.q / 3600.0) / 1.5]
+        return ids, np.array(rows, dtype=np.float32).reshape(-1, CAV_LOCAL), np.array(glob, dtype=np.float32)
+
+    def step(self, action: dict):
+        before = self.ids
+        self.acc = defaultdict(float)
+        o, g, term, trunc, info = super().step(action)
+        secs = self.decision
+        return o, {v: g + self.acc[v] / secs for v in before}, term, trunc, info
+
+
+class CavRule:
+    """Non-learning opponent for CavEnv: a fixed level per zone, read from the policy's own observation (position, on-ramp
+    flag), so each vehicle moves toward its zone's level at the allowed rate."""
+
+    def __init__(self, levels: tuple):
+        self.levels = np.array(levels, int)
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo, _ = o
+        x = lo[:, 0] * 1000.0
+        ramp = (lo[:, 2] > 0.5) & (x < 0.0)
+        up = (x < -bm.MA_EDGE2_TAIL) | ramp
+        z = np.where(up, ZONE_UP, np.where(x < RAMP_ZONE_END, ZONE_MERGE, ZONE_DOWN))
+        return dict(zip(ids, self.levels[z].tolist()))

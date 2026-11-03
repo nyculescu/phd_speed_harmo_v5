@@ -138,3 +138,56 @@ def test_a_stopped_queue_is_not_a_short_gap(monkeypatch):
     speed["f"] = 10.0
     env._net_stats()
     assert env.ep == {"gap25": 1, "stop_gap": 1}
+
+
+def _cav():
+    env = be.CavEnv(run_dir="/tmp")
+    env.sim = type("S", (), {"t": 400.0})()
+    env.ep = {"changes": 0, "reversals": 0, "ignored": 0}
+    return env
+
+
+def test_cav_moves_one_level_and_waits_out_the_hold():
+    env = _cav()
+    env._apply({"a": 3, "b": 0})
+    assert env.lvl == {"a": 1} and env.ep["changes"] == 1
+    env.sim.t += env.hold - 5.0
+    env._apply({"a": 3})
+    assert env.lvl["a"] == 1 and env.ep["ignored"] == 1
+    env.sim.t += 5.0
+    env._apply({"a": 3})
+    assert env.lvl["a"] == 2
+
+
+def test_cav_counts_a_reversal_and_charges_a_move():
+    env = _cav()
+    env._apply({"a": 1})
+    assert env.acc["a"] == pytest.approx(-be.W_MOVE * env.decision)
+    env.sim.t += env.hold
+    env._apply({"a": 0})
+    assert env.ep["reversals"] == 1 and env.lvl["a"] == 0
+
+
+def test_gae_matches_hand_values_and_bootstraps():
+    from v5b.fleet.c_train import gae
+    r, v = np.array([1.0, 1.0]), np.array([0.5, 0.5])
+    d1 = 1.0 + 0.9 * 2.0 - 0.5
+    d0 = 1.0 + 0.9 * 0.5 - 0.5
+    assert gae(r, v, 2.0, 0.9, 0.5).tolist() == pytest.approx([d0 + 0.45 * d1, d1])
+
+
+def test_cav_rule_reads_zone_from_the_observation():
+    lo = np.zeros((5, be.CAV_LOCAL), np.float32)
+    lo[:, 0] = [-0.5, -0.05, 0.1, 1.0, -0.02]
+    lo[4, 2] = 1.0     # on the ramp, before the 3a start
+    a = be.CavRule((3, 0, 2))((list("abcde"), lo, None))
+    assert a == {"a": 3, "b": 0, "c": 0, "d": 2, "e": 3}
+
+
+def test_cav_shared_reward_has_no_excess_exposure_term():
+    env = _cav()
+    env.q, env.flow_ema = 4600.0, 4600.0 / 3600.0
+    env.ref = be.REF_DELAY
+    n = int(env.ref[4600.0][2])
+    env.ema_b3, env.ema_e30 = 100.0, 100.0
+    assert env._efficiency(0, be.fl.LIMIT, n, 50, 50) == pytest.approx(-0.0213, abs=0.05)

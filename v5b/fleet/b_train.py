@@ -107,7 +107,15 @@ def _eval_one(a: tuple) -> dict:
     from v5b.fleet import b_env as be
     torch.set_num_threads(1)
     model = PPO.load(model_path, device="cpu") if isinstance(model_path, str) else None
-    rule = be.ZoneRule(**model_path) if isinstance(model_path, dict) else None
+    rule = None
+    if isinstance(model_path, dict):
+        if "pt" in model_path:
+            from v5b.fleet.c_train import Greedy
+            rule = Greedy(model_path["pt"])
+        elif "cav_rule" in model_path:
+            rule = be.CavRule(model_path["cav_rule"])
+        else:
+            rule = be.ZoneRule(**model_path)
     env = be.make(share=share, levels=(q,), run_dir=run_dir, seeds=[seed], report_net=True, **kw)
     o, _ = env.reset()
     arm = model_path if isinstance(model_path, int) else 0
