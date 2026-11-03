@@ -57,9 +57,12 @@ BIN_M = 200.0
 RAMP_LEN, RAMP_R_LEN = 420.0, 392.0     # edges r + rj before the 3a start
 LEN_3, LEN_4 = 1196.0, 1000.0
 RAMP_ZONE_END = 295.0 + bm.MA_EDGE3_HEAD     # end of the merge zone from the 3a start
-# Per-vehicle reward (V286). With TTC and braking weight 10, the per-vehicle ramp 303 ranks first and no change neutral at every level (6 seeds).
+# Per-vehicle reward (V289). Own level hardly moves own speed; randomised per trip, the flow term at 0.4 makes short headways pay outside the merge zone and 1.6 s pay inside it at 4,600 and 5,300.
 W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC, W_CAV_BRAKE = 0.5, 0.5, 10.0, 10.0
-W_MOVE = 0.05     # per move; repaid within a 30-s hold by a gain of about 0.01 per decision
+W_CAV_FLOW = 0.4
+Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
+FREE_SPACING = 200.0     # no leader within sensing range
+W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
 
 
 def make(zones: bool = False, cav: bool = False, **kw):
@@ -516,7 +519,7 @@ class CavEnv(ZoneEnv):
 
     def _clear_cav(self) -> None:
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
-        self.ids = []
+        self.ids, self.on, self.stats = [], set(), {}
 
     def reset(self, *, seed=None, options=None):
         self._clear_cav()
@@ -554,6 +557,7 @@ class CavEnv(ZoneEnv):
             self.v2v_lead[v] = cur
             lev = self.lvl.get(v, 0)
             want = self.headways[lev] if on else ALKS_TAU0
+            (self.on.add if on else self.on.discard)(v)
             if self.v2v_cur.get(v, ALKS_TAU0) != want:
                 ls.vehicle.setTau(v, want)
                 self.v2v_cur[v] = want
@@ -564,15 +568,17 @@ class CavEnv(ZoneEnv):
                 lv[self._zone(v) * len(self.headways) + lev] += 1
 
     def _net_stats(self) -> tuple:
-        """The parent's counts, plus each ALKS's cost this second: its own speed, the speed around it, its own TTC < 3 s and
-        hard braking, and half of what its direct follower suffers."""
+        """The parent's counts, plus each ALKS's values this second: speed, speed around it, flow contribution (speed over its
+        spacing, which pays the vehicle directly for what it adds to flow), its TTC < 3 s and hard braking, and its direct
+        follower's."""
         e30 = b3 = 0
-        bins, speeds = defaultdict(list), {}
+        bins, st = defaultdict(list), {}
         for v in ls.vehicle.getIDList():
             sp = ls.vehicle.getSpeed(v)
             hard = ls.vehicle.getAcceleration(v) <= -HARD_BRAKE
             b3 += hard
             ttc = False
+            spacing = FREE_SPACING
             lead = ls.vehicle.getLeader(v, 200.0)
             if lead and lead[0]:
                 gap = lead[1] + ls.vehicle.getMinGap(v)
@@ -581,15 +587,24 @@ class CavEnv(ZoneEnv):
                 dv = sp - ls.vehicle.getSpeed(lead[0])
                 ttc = bool(dv > 0 and gap / dv < TTC_REWARD)
                 e30 += ttc
+                spacing = gap + ls.vehicle.getLength(v)
                 if lead[0] in self.alks_all:
-                    self.acc[lead[0]] -= 0.5 * (W_CAV_TTC * ttc + W_CAV_BRAKE * hard)
+                    f = st.setdefault(lead[0], [0.0, 0.0, 0.0, 0, 0, 0, 0])
+                    f[4] += ttc
+                    f[5] += hard
             if v in self.alks_all:
-                self.acc[v] -= W_CAV_TTC * ttc + W_CAV_BRAKE * hard
-                speeds[v] = sp
+                x = st.setdefault(v, [0.0, 0.0, 0.0, 0, 0, 0, 0])
+                x[0], x[2], x[3], x[6] = sp, sp / spacing, ttc, hard
             bins[self._bin(v)].append(sp)
         self.bins = {b: sum(x) / len(x) for b, x in bins.items()}
-        for v, sp in speeds.items():
-            self.acc[v] += W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(self.bins[self._bin(v)] / fl.LIMIT, 1.0) - 1.0)
+        live = set(ls.vehicle.getIDList())
+        for v, x in st.items():
+            if v in live:
+                x[1] = self.bins[self._bin(v)]
+        self.stats = st
+        for v, (sp, near, q, ttc, ft, fh, hard) in st.items():
+            self.acc[v] += (W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(near / fl.LIMIT, 1.0) - 1.0) + W_CAV_FLOW * min(q / Q_REF, 1.5)
+                            - W_CAV_TTC * (ttc + 0.5 * ft) - W_CAV_BRAKE * (hard + 0.5 * fh))
         return e30, b3
 
     def _bin(self, v: str) -> tuple:

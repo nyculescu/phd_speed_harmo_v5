@@ -3,7 +3,7 @@ sees network state. SB3 needs fixed agent counts, hence this loop. A vehicle tha
 value is bootstrapped, so leaving neither earns nor costs anything and the reward can't favour staying on the road.
 
 Usage: python -m v5b.fleet.c_train smoke --out DIR
-       python -m v5b.fleet.c_train train --out DIR --learner 0 [--updates 380] [--n-envs 3]
+       python -m v5b.fleet.c_train train --out DIR --learner 0 [--updates 270] [--n-envs 3]
 Results come from b_train matrix with model {"pt": FILE} and ENV as its kw.
 """
 from __future__ import annotations
@@ -24,6 +24,7 @@ from v5b.fleet import b_env as be
 ENV = {"cav": True, "decision": 5.0, "alks_asl": 0.5, "ref_delay": True}
 LEVELS = (4090.0, 4600.0, 5300.0)
 FIRST_WORKER = 9     # run 5 used workers 0-8
+NEP0 = 126     # C run 1 used the first 125 seeds of these workers
 GAMMA, LAM = 0.95, 0.95
 EPOCHS, BATCH = 3, 4096
 LR, CLIP, ENT, VF, GRAD = 3e-4, 0.2, 0.01, 0.5, 0.5
@@ -189,7 +190,7 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
     conns, procs = [], []
     for i in range(n_envs):
         a, b = ctx.Pipe()
-        kw = {**ENV, **(env_kw or {}), "share": 0.5, "levels": LEVELS, "worker": FIRST_WORKER + learner * n_envs + i, "n_ep0": i, "run_dir": str(out / "rd")}
+        kw = {**ENV, **(env_kw or {}), "share": 0.5, "levels": LEVELS, "worker": FIRST_WORKER + learner * n_envs + i, "n_ep0": NEP0 + i, "run_dir": str(out / "rd")}
         p = ctx.Process(target=_worker, args=(b, kw), daemon=True)
         p.start()
         conns.append(a)
@@ -294,7 +295,7 @@ def main(argv: list) -> int:
     ap.add_argument("phase", choices=("smoke", "train"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--learner", type=int, default=0)
-    ap.add_argument("--updates", type=int, default=380)
+    ap.add_argument("--updates", type=int, default=270)
     ap.add_argument("--n-envs", type=int, default=3)
     a = ap.parse_args(argv)
     out = Path(a.out)
