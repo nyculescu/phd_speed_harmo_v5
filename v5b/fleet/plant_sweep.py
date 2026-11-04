@@ -59,9 +59,13 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if "cav_rule" in ctrl else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if "cav_rule" in ctrl or "pt" in ctrl else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw |= ctrl.get("env", {})
     env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"]) if "cav_rule" in ctrl else None
+    if "pt" in ctrl:
+        from v5b.fleet.c_train import Greedy
+        rule = Greedy(ctrl["pt"])
     meter = bank = None
     S, arr, prev, left = defaultdict(float), {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)

@@ -85,12 +85,13 @@ class MergeEnv(gym.Env):
                  n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
                  v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None):
         self.plant = plant or {}
+        self.plant_ref = {float(k): tuple(v) for k, v in self.plant.get("ref", {}).items()}
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
         self.run_dir = Path(run_dir) if run_dir else RUNS_ROOT / "b_train_rd"
         self.n_ep = n_ep0
         self.shared, self.decision, self.reward, self.tau = shared, decision, reward, tau
-        self.v2v_tau, self.alks_asl, self.ref = v2v_tau, alks_asl, REF_DELAY if ref_delay else REF_LEVEL
+        self.v2v_tau, self.alks_asl, self.ref = v2v_tau, alks_asl, self.plant_ref or (REF_DELAY if ref_delay else REF_LEVEL)
         self.offsets = SHARED_OFFSETS_KMH if shared else OFFSETS_KMH
         self.sim = None
         self.action_space = gym.spaces.Discrete(len(self.offsets)) if shared else gym.spaces.MultiDiscrete([len(self.offsets)] * K)
