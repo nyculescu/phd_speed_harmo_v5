@@ -315,7 +315,8 @@ def all_green(geom: str) -> None:
 def routes(geom: str) -> dict:
     """route id -> (edges, share of vehicles, entry lanes)."""
     if geom in corridor.NETS:
-        return {r: (e, corridor.RAMP_SHARE if r == "ramp" else 1 - corridor.RAMP_SHARE, corridor.ENTRY_LANES[r])
+        lanes = dict((x[0], x[3]) for x in corridor.NETS[geom][0])
+        return {r: (e, corridor.RAMP_SHARE if r == "ramp" else 1 - corridor.RAMP_SHARE, lanes["r" if r == "ramp" else "1"])
                 for r, e in corridor.ROUTES.items()}
     if geom in corridor.STRAIGHT:
         return {"main": ("a", 1.0, corridor.STRAIGHT[geom])}

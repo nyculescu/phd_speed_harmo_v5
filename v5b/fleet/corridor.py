@@ -35,8 +35,11 @@ LOOP_PERIOD = 30.0
 # B (V258): ramp32 without the 3 -> 2 drop, so the merge is the only bottleneck; 'a_end' 1 m before the end of 3a
 # (B reads lane 3a_1, road lane 0) and 'ma_end' 300 m into edge 3 register vehicle ids for the section counts.
 M32 = "m32"
+R1M2 = "r1m2"     # V321: the same road with 2 main lanes, a test plant for settings tuned on m32
 NETS = {NAME: (EDGES, LOOPS), M32: ([(e, a, b, 3 if e in ("4", "5") else k) for e, a, b, k in EDGES],
-                                    {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]})}
+                                    {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]}),
+        R1M2: ([(e, a, b, 1 if e == "r" else 3 if e == "3a" else 2) for e, a, b, _ in EDGES],
+               {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]})}
 
 
 def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
@@ -58,11 +61,12 @@ def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
     con = ["<connections>",
            '  <connection from="r" to="rj" fromLane="0" toLane="0"/>',
            '  <connection from="rj" to="3a" fromLane="0" toLane="0"/>']
-    con += [f'  <connection from="2" to="3a" fromLane="{i}" toLane="{i + 1}"/>' for i in range(3)]
-    con += [f'  <connection from="3a" to="3" fromLane="{i + 1}" toLane="{i}"/>' for i in range(3)]
+    n_main = dict((x[0], x[3]) for x in edges)["2"]
+    con += [f'  <connection from="2" to="3a" fromLane="{i}" toLane="{i + 1}"/>' for i in range(n_main)]
+    con += [f'  <connection from="3a" to="3" fromLane="{i + 1}" toLane="{i}"/>' for i in range(n_main)]
     n45 = dict((x[0], x[3]) for x in edges)["4"]
     con += [f'  <connection from="3" to="4" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
-    con += [f'  <connection from="1" to="2" fromLane="{i}" toLane="{i}"/>' for i in range(3)]
+    con += [f'  <connection from="1" to="2" fromLane="{i}" toLane="{i}"/>' for i in range(n_main)]
     con += [f'  <connection from="4" to="5" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
     con += ["</connections>"]
     for f, lines in (("nod.xml", nod), ("edg.xml", edg), ("con.xml", con)):

@@ -10,6 +10,7 @@ check's E_MA) is too sparse to train on (V265: 0.002-0.11 /s under no control) a
 """
 from __future__ import annotations
 
+import dataclasses
 import os
 from collections import defaultdict
 from pathlib import Path
@@ -119,6 +120,8 @@ class MergeEnv(gym.Env):
         self.n_ep += 1
         self.cfg = bm.setup(self.share, self.dt)
         fl.tune(self.plant)
+        if "geom" in self.plant:
+            self.cfg = dataclasses.replace(self.cfg, geom=self.plant["geom"])
         fl.ALKS_TAU = ALKS_TAU0 if self.tau is None else self.tau
         if self.alks_asl is not None:
             fl.ALKS_EXPLICIT["actionStepLength"] = self.alks_asl

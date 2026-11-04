@@ -47,6 +47,8 @@ def to_plant(c: dict) -> dict:
         p["hdv"]["lcOvertakeRight"] = p["truck"]["lcOvertakeRight"] = c["human_undertake"]
     if c.get("smooth"):
         p["smooth"] = True
+    if "geom" in c:
+        p["geom"] = c["geom"]
     if c.get("smooth") or c.get("alks_undertake"):
         p["alks"] = {"lcOvertakeRight": 1}
     return p
@@ -93,9 +95,10 @@ def run_one(a: tuple) -> dict:
                     left[v] = {n for n, _ in ls.vehicle.getNeighbors(v, 2)}
                 else:
                     left.pop(v, None)
+        lanes = set(ls.lane.getIDList())
         for x in ("3a_0", "3a_1"):
             S["halt_" + x] += ls.lane.getLastStepHaltingNumber(x)
-        for x in ("3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2"):
+        for x in lanes & {"3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2"}:
             n = ls.lane.getLastStepVehicleNumber(x)
             S["n_" + x] += n
             S["nv_" + x] += n * ls.lane.getLastStepMeanSpeed(x)
