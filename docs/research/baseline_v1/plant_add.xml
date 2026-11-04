@@ -1,0 +1,32 @@
+<additional>
+  <inductionLoop id="up_3_0" lane="3_0" pos="200.00" period="30.0" file="NUL"/>
+  <inductionLoop id="up_3_1" lane="3_1" pos="200.00" period="30.0" file="NUL"/>
+  <inductionLoop id="up_3_2" lane="3_2" pos="200.00" period="30.0" file="NUL"/>
+  <inductionLoop id="merge_up_2_0" lane="2_0" pos="448.30" period="30.0" file="NUL"/>
+  <inductionLoop id="merge_up_2_1" lane="2_1" pos="448.30" period="30.0" file="NUL"/>
+  <inductionLoop id="merge_up_2_2" lane="2_2" pos="448.30" period="30.0" file="NUL"/>
+  <inductionLoop id="e4_4_0" lane="4_0" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="e4_4_1" lane="4_1" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="e4_4_2" lane="4_2" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="exit_5_0" lane="5_0" pos="485.00" period="30.0" file="NUL"/>
+  <inductionLoop id="exit_5_1" lane="5_1" pos="485.00" period="30.0" file="NUL"/>
+  <inductionLoop id="exit_5_2" lane="5_2" pos="485.00" period="30.0" file="NUL"/>
+  <inductionLoop id="ramp_q_r_0" lane="r_0" pos="30.00" period="30.0" file="NUL"/>
+  <inductionLoop id="ramp_out_r_0" lane="r_0" pos="386.66" period="30.0" file="NUL"/>
+  <inductionLoop id="alinea_3_0" lane="3_0" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="alinea_3_1" lane="3_1" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="alinea_3_2" lane="3_2" pos="100.00" period="30.0" file="NUL"/>
+  <inductionLoop id="drop_3_0" lane="3_0" pos="1046.00" period="30.0" file="NUL"/>
+  <inductionLoop id="drop_3_1" lane="3_1" pos="1046.00" period="30.0" file="NUL"/>
+  <inductionLoop id="drop_3_2" lane="3_2" pos="1046.00" period="30.0" file="NUL"/>
+  <inductionLoop id="dropend_3_0" lane="3_0" pos="1176.00" period="30.0" file="NUL"/>
+  <inductionLoop id="dropend_3_1" lane="3_1" pos="1176.00" period="30.0" file="NUL"/>
+  <inductionLoop id="dropend_3_2" lane="3_2" pos="1176.00" period="30.0" file="NUL"/>
+  <inductionLoop id="a_end_3a_0" lane="3a_0" pos="293.72" period="30.0" file="NUL"/>
+  <inductionLoop id="a_end_3a_1" lane="3a_1" pos="293.72" period="30.0" file="NUL"/>
+  <inductionLoop id="a_end_3a_2" lane="3a_2" pos="293.72" period="30.0" file="NUL"/>
+  <inductionLoop id="a_end_3a_3" lane="3a_3" pos="293.72" period="30.0" file="NUL"/>
+  <inductionLoop id="ma_end_3_0" lane="3_0" pos="300.00" period="30.0" file="NUL"/>
+  <inductionLoop id="ma_end_3_1" lane="3_1" pos="300.00" period="30.0" file="NUL"/>
+  <inductionLoop id="ma_end_3_2" lane="3_2" pos="300.00" period="30.0" file="NUL"/>
+</additional>
