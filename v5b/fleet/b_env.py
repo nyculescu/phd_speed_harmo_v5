@@ -836,3 +836,36 @@ class CavRule:
             move = (x < 0.0) & (lo[:, 2] < 0.5) & ((lane == 0) if self.lane == 1 else ((lane <= 1) & (x > -LANE_RULE_M)))
             a = a + len(HEADWAYS_S) * LANE_LEFT * (move & o[3])
         return dict(zip(ids, a.tolist()))
+
+
+class LocalRule:
+    """V348: non-learning opponent under disturbances. A vehicle wants 0.8 s unless the mean speed in the next `r` m, from the
+    roadside's 200-m bins, is below `th` m/s; then `level`. It knows nothing about an event in advance."""
+    NEXT = {"1": "2", "2": "3a", "3a": "3", "3": "4", "4": "5", "5": None, "r": "rj", "rj": "3a"}
+    N_BINS = {"1": 15, "2": 3, "3a": 2, "3": 6, "4": 5, "5": 3, "r": 2, "rj": 1}
+
+    def __init__(self, env, r: float, th: float, level: int = 1, free: int = 3):
+        self.env, self.k, self.th, self.level, self.free = env, int(r // BIN_M), th, level, free
+
+    def _ahead(self, v: str) -> float | None:
+        road, i = self.env._bin(v)
+        if road not in self.N_BINS:
+            return None
+        seen = []
+        for _ in range(self.k):
+            i += 1
+            if i >= self.N_BINS[road]:
+                road, i = self.NEXT[road], 0
+                if road is None:
+                    break
+            s = self.env.bins.get((road, i))
+            if s is not None:
+                seen.append(s)
+        return sum(seen) / len(seen) if seen else None
+
+    def __call__(self, o: tuple) -> dict:
+        out = {}
+        for v in o[0]:
+            s = self._ahead(v)
+            out[v] = self.level if s is not None and s < self.th else self.free
+        return out
