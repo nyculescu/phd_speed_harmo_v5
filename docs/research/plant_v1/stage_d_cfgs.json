@@ -1,0 +1,18 @@
+{
+"base": {},
+"lc": {
+"lcCooperative": 0.5
+},
+"lc_road": {
+"lcCooperative": 0.5,
+"accel_len": 200
+},
+"all": {
+"lcStrategic": 0.5,
+"lcCooperative": 0.8,
+"lcLookaheadLeft": 1,
+"accel_len": 200,
+"tau_scale": 0.9,
+"asl_scale": 0.25
+}
+}
