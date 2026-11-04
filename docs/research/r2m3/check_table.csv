@@ -1,0 +1,3 @@
+q,chosen,matters,flow,delay,ramp,ramp2,fuel,ttc,brake,hard,flow_lo,delay_lo,ramp_lo,ramp2_lo,fuel_lo,ttc_lo,brake_lo,hard_lo,flow_hi,delay_hi,ramp_hi,ramp2_hi,fuel_hi,ttc_hi,brake_hi,hard_hi
+4600.0,p13333,False,-0.1,-2.9,2.0,1.4,0.4,14.4,-1.0,19.8,-0.2,-3.7,-0.8,-2.1,0.2,-9.3,-2.8,2.1,0.0,-1.0,3.3,3.6,0.7,69.1,3.6,30.5
+5300.0,p31333,False,-0.1,0.6,0.3,2.4,0.2,8.2,-1.4,10.8,-0.6,-9.9,-15.2,-19.7,-0.5,-56.2,-7.2,-41.6,0.1,5.4,3.6,13.0,0.7,54.2,10.9,36.8
