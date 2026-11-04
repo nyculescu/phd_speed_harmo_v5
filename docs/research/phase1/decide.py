@@ -26,8 +26,8 @@ def med(A, k):
 
 
 for q in sorted({k[1] for k in T}):
-    rule = min(("p333", "a333"), key=lambda n: med(T[(n, q)], "delay"))
-    print(f"--- {q:g}: no control delay {med(T[('p0', q)], 'delay'):.1f}, p333 {med(T[('p333', q)], 'delay'):.1f}, a333 {med(T[('a333', q)], 'delay'):.1f}; opponent {rule if sys.argv[2] == 'final' else 'p333'}")
+    rule = min((n for n in ("p333", "a333", "p333v90", "p333v80") if (n, q) in T), key=lambda n: med(T[(n, q)], "delay"))
+    print(f"--- {q:g}: no control delay {med(T[('p0', q)], 'delay'):.1f}, p333 {med(T[('p333', q)], 'delay'):.1f}, a333 {med(T[('a333', q)], 'delay'):.1f}, caps {[round(med(T[(n, q)], 'delay'), 1) for n in ('p333v90', 'p333v80') if (n, q) in T]}; opponent {rule if sys.argv[2] == 'final' else 'p333'}")
     opp = T[(rule if sys.argv[2] == "final" else "p333", q)]
     n = 0
     for name in ("d0", "d1", "d2"):

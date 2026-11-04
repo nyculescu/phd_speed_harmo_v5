@@ -62,7 +62,7 @@ def run_one(a: tuple) -> dict:
     kw = {"cav": True, "decision": 5.0} if "cav_rule" in ctrl or "pt" in ctrl else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
-    rule = be.CavRule(ctrl["cav_rule"]) if "cav_rule" in ctrl else None
+    rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "pt" in ctrl:
         from v5b.fleet.c_train import Greedy
         rule = Greedy(ctrl["pt"])

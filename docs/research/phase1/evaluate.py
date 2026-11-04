@@ -12,6 +12,8 @@ if __name__ == "__main__":
     seeds = range(int(sys.argv[4]), int(sys.argv[4]) + int(sys.argv[5]))
     out = Path(sys.argv[6])
     c = {"p0": p0, "p333": {**p0, "ctrl": {"cav_rule": [3, 3, 3]}}, "a333": {**p0, "ctrl": {"zones": [3, 3, 3]}}}
+    if env.get("speed_action"):
+        c |= {f"p333v{v}": {**p0, "ctrl": {"cav_rule": [3, 3, 3], "speed": k, "env": {"speed_action": True}}} for k, v in ((1, 90), (2, 80))}
     c |= {f"d{i}": {**p0, "ctrl": {"pt": str(train / f"C{i}_final.pt"), "env": env}} for i in range(3)}
     ps.matrix(c, LEVELS, seeds, out, int(sys.argv[7]), str(out.parent / "rd"))
     print("done", flush=True)

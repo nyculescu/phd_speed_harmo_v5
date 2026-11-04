@@ -241,3 +241,13 @@ def test_plant_settings_reach_the_right_groups():
     assert p["truck"] == {"sigma": 0.25} and p["sigma_scale"] == 0.5 and p["accel_len"] == 450
     q = ps.to_plant({"smooth": True, "human_undertake": 0.5})
     assert q["smooth"] and q["alks"] == {"lcOvertakeRight": 1} and q["hdv"]["lcOvertakeRight"] == 0.5 == q["truck"]["lcOvertakeRight"]
+
+
+def test_speed_action_sizes_and_rule_encoding():
+    assert be.cav_sizes(speed_action=True) == (be.CAV_LOCAL + 1, 12)
+    lo = np.zeros((1, be.CAV_LOCAL + 1), dtype=np.float32)
+    lo[0, 0] = 1.0     # downstream of the merge
+    a = be.CavRule((3, 3, 3), speed=2)((["a"], lo, None, np.array([True])))
+    assert a == {"a": 3 + 2 * len(be.HEADWAYS_S)}
+    with pytest.raises(ValueError):
+        be.CavEnv(run_dir="/tmp", speed_action=True)
