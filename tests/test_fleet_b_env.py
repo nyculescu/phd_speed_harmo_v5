@@ -239,3 +239,5 @@ def test_plant_settings_reach_the_right_groups():
     p = ps.to_plant({"lcSpeedGain": 5, "limit_kmh": 90, "model": "IDM", "sigma_scale": 0.5, "accel_len": 450})
     assert p["lc"] == {"lcSpeedGain": 5} and p["limit"] == pytest.approx(25.0) and p["hdv"] == {"carFollowModel": "IDM"}
     assert p["truck"] == {"sigma": 0.25} and p["sigma_scale"] == 0.5 and p["accel_len"] == 450
+    q = ps.to_plant({"smooth": True, "human_undertake": 0.5})
+    assert q["smooth"] and q["alks"] == {"lcOvertakeRight": 1} and q["hdv"]["lcOvertakeRight"] == 0.5 == q["truck"]["lcOvertakeRight"]

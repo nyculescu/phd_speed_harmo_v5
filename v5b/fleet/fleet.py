@@ -177,7 +177,7 @@ class VehSpec:
         if self.cls != "acc" or CAV_MODELS["acc"] == "ACC":     # ACC gains exist only in SUMO's ACC model
             a |= {k: f"{v:g}" for k, v in self.extra.items()}
         a |= {k: str(v) for k, v in VTYPE_TUNE.get("lc", {}).items()}
-        a |= {k: str(v) for k, v in VTYPE_TUNE.get({"hdv_car": "hdv", "truck": "truck"}.get(self.cls, ""), {}).items()}
+        a |= {k: str(v) for k, v in VTYPE_TUNE.get({"hdv_car": "hdv", "truck": "truck", "alks": "alks"}.get(self.cls, ""), {}).items()}
         return "  <vType " + " ".join(f'{k}="{v}"' for k, v in a.items()) + "/>"
 
 
@@ -284,7 +284,7 @@ def tune(p: dict) -> None:
     HDV_TAU_SCALE = p.get("tau_scale", HDV_TAU_SCALE)
     HDV_ASL_SCALE = p.get("asl_scale", HDV_ASL_SCALE)
     HDV_SIGMA_SCALE = p.get("sigma_scale", 1.0)
-    VTYPE_TUNE = {k: p.get(k, {}) for k in ("lc", "hdv", "truck")}
+    VTYPE_TUNE = {k: p.get(k, {}) for k in ("lc", "hdv", "truck", "alks")}
     ACCEL_LEN = p.get("accel_len", 300.0)
 
 

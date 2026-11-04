@@ -64,6 +64,10 @@ Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
 FREE_SPACING = 200.0     # no leader within sensing range
 W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
 LANE_LEFT, LANE_RIGHT = 1, 2
+CONGESTED = 60.0 / 3.6     # SUMO's speed below which passing on the right is allowed
+SMOOTH_S = 5.0
+SMOOTH_RATIO = 1.1     # IDM brakes at accel x (ratio^4 - 1) above its desired speed: about 1.2 m/s² here, 14 m/s² uncapped at a ratio of 1.6
+FREE_MAX_SPEED = 55.56
 LANE_RULE_M = 1500.0
 
 
@@ -125,6 +129,7 @@ class MergeEnv(gym.Env):
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
         self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
+        self.smooth_cap = {}
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
@@ -149,6 +154,7 @@ class MergeEnv(gym.Env):
             k += 1
             if k % per_s == 0:
                 self._v2v()
+                self._smooth()
         self.q = q
         self.seen4 = set(ls.edge.getLastStepVehicleIDs("4"))
         self.ema_b3, self.ema_e30 = self._ref()[:2] if q in self.ref else (0.0, 0.0)
@@ -313,12 +319,31 @@ class MergeEnv(gym.Env):
               min(self.sim.t / self.t_end, 1.0)]
         return np.array(o, dtype=np.float32)
 
+    def _smooth(self) -> None:
+        """V326: ALKS do not undertake. Above the congestion speed the desired speed is capped at that of a slower vehicle
+        ahead in the left lane within SMOOTH_S, so it eases down; SUMO's abrupt version of this rule is off for ALKS."""
+        if not self.plant.get("smooth"):
+            return
+        for v in ls.vehicle.getIDList():
+            if v not in self.alks_all:
+                continue
+            cap = FREE_MAX_SPEED
+            s = ls.vehicle.getSpeed(v)
+            if s > CONGESTED and ls.vehicle.getLaneID(v) != "3a_0":
+                for nv, gap in ls.vehicle.getNeighbors(v, 2):
+                    if gap < SMOOTH_S * s:
+                        cap = min(cap, max(ls.vehicle.getSpeed(nv), CONGESTED, s / SMOOTH_RATIO))
+            if abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 0.1:
+                ls.vehicle.setMaxSpeed(v, cap)
+                self.smooth_cap[v] = cap
+
     def _second(self) -> float:
         for _ in range(int(round(1.0 / self.dt))):
             self._taper()
             self._sim_step()
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
         self._v2v()
+        self._smooth()
         e15, e30, b3, b45 = self._merge_stats()
         if self.report_net:
             ne30, nb3 = self._net_stats()

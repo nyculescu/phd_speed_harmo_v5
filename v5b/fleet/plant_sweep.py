@@ -42,8 +42,13 @@ def to_plant(c: dict) -> dict:
         p["hdv"]["accel"] = c["accel"]
     if "model" in c:
         p["hdv"]["carFollowModel"] = c["model"]
-    if "sigma_scale" in c:
-        p["truck"] = {"sigma": 0.5 * c["sigma_scale"]}     # trucks use SUMO's default Krauss sigma
+    p["truck"] = {"sigma": 0.5 * c["sigma_scale"]} if "sigma_scale" in c else {}     # trucks use SUMO's default Krauss sigma
+    if "human_undertake" in c:
+        p["hdv"]["lcOvertakeRight"] = p["truck"]["lcOvertakeRight"] = c["human_undertake"]
+    if c.get("smooth"):
+        p["smooth"] = True
+    if c.get("smooth") or c.get("alks_undertake"):
+        p["alks"] = {"lcOvertakeRight": 1}
     return p
 
 
@@ -52,7 +57,7 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be
     env = be.make(zones=True, decision=10.0, alks_asl=0.5, w_change=0.1, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c))
-    S, arr, prev = defaultdict(float), {}, {}
+    S, arr, prev, left = defaultdict(float), {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
     step0, sec0 = env._sim_step, env._second
 
@@ -78,6 +83,16 @@ def run_one(a: tuple) -> dict:
             S["fuel_truck"] += f * (v in trucks)
             S["b45"] += x <= -4.5
             S["b7"] += x <= -7.0
+            if v in env.alks_all:
+                if x <= -3.0:
+                    lead = ls.vehicle.getLeader(v, 200.0)
+                    if not (lead and lead[0]) or lead[1] / max(s, 1.0) > 3.0:
+                        S["free_brake_alks"] += 1
+                if s > 60.0 / 3.6:     # a left-lane leader one second ago is now a left-lane follower: passed on the right
+                    S["undertakes"] += sum(n in left.get(v, ()) for n, _ in ls.vehicle.getNeighbors(v, 0))
+                    left[v] = {n for n, _ in ls.vehicle.getNeighbors(v, 2)}
+                else:
+                    left.pop(v, None)
         for x in ("3a_0", "3a_1"):
             S["halt_" + x] += ls.lane.getLastStepHaltingNumber(x)
         for x in ("3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2"):
