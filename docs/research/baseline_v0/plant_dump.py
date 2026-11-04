@@ -1,4 +1,4 @@
-"""V306: dumps the plant as SUMO sees it, every module constant and the policy structures. usage: plant_dump.py baseline_dir out_dir"""
+"""V306: dumps the plant as SUMO sees it, every module constant and the policy structures. usage: plant_dump.py baseline_dir out_dir [plant.json]"""
 import json
 import shutil
 import sys
@@ -10,6 +10,7 @@ import torch
 from v5b.fleet import b_env as be, b_train as bt, c_train as ct
 
 X, out = Path(sys.argv[1]), Path(sys.argv[2])
+PLANT = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else None
 out.mkdir(parents=True, exist_ok=True)
 seed = 7_419_650
 cap = []
@@ -21,7 +22,7 @@ VT = ("Length", "MaxSpeed", "SpeedFactor", "SpeedDeviation", "Accel", "Decel", "
       "MaxSpeedLat", "LateralAlignment", "VehicleClass", "EmissionClass", "ShapeClass", "Width", "Height", "ActionStepLength")
 res = {}
 for name, kw in KW.items():
-    env = be.make(share=0.5, levels=(5300.0,), run_dir=str(out / "rd"), seeds=[seed], report_net=True, **kw)
+    env = be.make(share=0.5, levels=(5300.0,), run_dir=str(out / "rd"), seeds=[seed], report_net=True, **({"plant": PLANT} if PLANT else {}), **kw)
     env.reset()
     plain = (int, float, str, bool, type(None))
     r = {"sumo_args": cap[-1], "env": {k: v for k, v in vars(env).items() if isinstance(v, plain) or (isinstance(v, (tuple, list)) and len(v) < 40 and all(isinstance(x, plain) for x in v))}}
