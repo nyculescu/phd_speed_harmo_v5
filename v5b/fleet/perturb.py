@@ -5,6 +5,8 @@ truck: every `period` s a truck entering edge 1 is capped at `cap_kmh` for the r
 burst: ramp departures are grouped on a `cycle` s grid, as behind an upstream signal.
 slowdown: edge 4's limit drops to `limit_kmh` for `dur` s at `times`.
 outage: V2V is lost for `dur` s at `times`, so every ALKS reverts to the contract's headway.
+A slowdown with `oracle` {d, cap_kmh} also caps every ALKS within d m upstream of edge 4, from d / ORACLE_SPEED s before the
+event until it ends (V343): the upper bound of what a controller that knows the event in advance can do with a speed cap.
 """
 from __future__ import annotations
 
@@ -16,6 +18,8 @@ BRAKE_EDGE, BRAKE_LANE, BRAKE_POS, BRAKE_RANGE = "4", 1, 500.0, 200.0
 DECEL = 4.0
 TRUCK_ENTRY_M = 600.0
 SLOW_EDGE = "4"
+EDGE4_X = 4989.02
+ORACLE_SPEED = 25.0
 
 
 class Perturb:
@@ -25,6 +29,7 @@ class Perturb:
         self.active = None
         self.slow_on = False
         self.log = []
+        self.oracle_now = None
 
     def demand(self) -> None:
         if self.kind != "burst":
@@ -37,6 +42,11 @@ class Perturb:
         d.veh[:], d.route_of[:] = [d.veh[i] for i in order], [d.route_of[i] for i in order]
 
     def step(self, t: float) -> None:
+        o = self.s.get("oracle")
+        if o:
+            lead = o["d"] / ORACLE_SPEED
+            on = any(t0 - lead <= t < t0 + self.s["dur"] for t0 in self.s["times"])
+            self.oracle_now = (EDGE4_X - o["d"], o["cap_kmh"] / 3.6) if on else None
         getattr(self, "_" + self.kind, lambda _: None)(t)
 
     def _brake(self, t: float) -> None:

@@ -66,6 +66,7 @@ FREE_SPACING = 200.0     # no leader within sensing range
 W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
 LANE_LEFT, LANE_RIGHT = 1, 2
 CONGESTED = 60.0 / 3.6     # SUMO's speed below which passing on the right is allowed
+ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02}
 SMOOTH_S = 5.0
 SPEED_CAPS = (None, 90.0 / 3.6, 80.0 / 3.6)     # V334 step 3: per-CAV speed action
 SMOOTH_RATIO = 1.1     # IDM brakes at accel x (ratio^4 - 1) above its desired speed: about 1.2 m/s² here, 14 m/s² uncapped at a ratio of 1.6
@@ -338,7 +339,7 @@ class MergeEnv(gym.Env):
             if v not in self.alks_all:
                 continue
             s = ls.vehicle.getSpeed(v)
-            cap = self._cap_target(v)
+            cap = min(self._cap_target(v), self._oracle_cap(v))
             if cap < FREE_MAX_SPEED:
                 cap = max(cap, s / SMOOTH_RATIO)
             if s > CONGESTED and ls.vehicle.getLaneID(v) != "3a_0":
@@ -351,6 +352,13 @@ class MergeEnv(gym.Env):
 
     def _cap_target(self, v: str) -> float:
         return FREE_MAX_SPEED
+
+    def _oracle_cap(self, v: str) -> float:
+        o = self.pert.oracle_now if self.pert else None
+        off = ROAD_X.get(ls.vehicle.getRoadID(v)) if o else None
+        if off is None or not o[0] <= off + ls.vehicle.getLanePosition(v) < pt.EDGE4_X:
+            return FREE_MAX_SPEED
+        return o[1]
 
     def _second(self) -> float:
         for _ in range(int(round(1.0 / self.dt))):
