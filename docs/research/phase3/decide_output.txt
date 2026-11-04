@@ -1,0 +1,151 @@
+=== r1m3 S 4600: opponent p333
+  nc: flow 1893 delay 69.1 fuel 77.0 ttc 10 b3 1338 b45 36 coll 0
+  p333: flow 1908 delay 47.7 fuel 77.8 ttc 33 b3 1282 b45 46 coll 0
+  lr: flow 1908 delay 47.7 fuel 77.8 ttc 33 b3 1282 b45 46 coll 0
+  d0: flow 1911 delay 49.9 fuel 77.7 ttc 66 b3 1274 b45 52 coll 0 | flow +0.0[-0.2,+0.1] delay -1.6[-4.5,+0.8] ttc -51.5[-181.8,+36.4] brake +0.1[-7.6,+5.3] fuel -0.1[-0.4,+0.3]
+  d1: flow 1910 delay 48.8 fuel 77.8 ttc 27 b3 1286 b45 46 coll 0 | flow +0.0[-0.3,+0.2] delay -0.7[-3.0,+0.7] ttc +6.1[-150.0,+148.5] brake +0.1[-10.7,+4.3] fuel +0.0[-0.2,+0.2]
+  d2: flow 1910 delay 48.6 fuel 77.8 ttc 39 b3 1308 b45 46 coll 0 | flow +0.0[-0.3,+0.1] delay -1.1[-3.3,+2.4] ttc -19.7[-80.3,+139.4] brake -3.0[-7.7,+5.5] fuel +0.0[-0.2,+0.2]
+=== r1m3 S 5300: opponent p333
+  nc: flow 2088 delay 127.5 fuel 79.6 ttc 80 b3 1833 b45 80 coll 0
+  p333: flow 2137 delay 91.1 fuel 79.9 ttc 159 b3 1717 b45 92 coll 0
+  lr: flow 2137 delay 91.1 fuel 79.9 ttc 159 b3 1717 b45 92 coll 0
+  d0: flow 2136 delay 90.3 fuel 80.0 ttc 104 b3 1680 b45 73 coll 0 | flow +0.0[-0.3,+0.4] delay +0.7[-5.6,+4.6] ttc -3.1[-92.1,+178.6] brake +0.0[-9.3,+14.4] fuel +0.2[-0.7,+0.4]
+  d1: flow 2134 delay 90.8 fuel 79.9 ttc 74 b3 1678 b45 67 coll 0 | flow +0.1[-0.4,+0.7] delay +1.1[-1.8,+4.5] ttc +17.6[-49.4,+365.1] brake +2.9[-12.9,+20.1] fuel +0.3[-0.3,+0.9]
+  d2: flow 2129 delay 92.3 fuel 80.0 ttc 132 b3 1714 b45 65 coll 0 | flow +0.1[-1.3,+0.4] delay -0.3[-2.7,+5.0] ttc +0.6[-339.0,+297.2] brake -0.4[-28.9,+23.6] fuel +0.3[-0.9,+0.9]
+=== r1m3 X1 4600: opponent p333
+  nc: flow 1892 delay 103.3 fuel 80.8 ttc 16 b3 1528 b45 62 coll 0
+  p333: flow 1909 delay 77.4 fuel 81.1 ttc 128 b3 1635 b45 80 coll 1
+  lr: flow 1914 delay 79.2 fuel 81.1 ttc 58 b3 1608 b45 74 coll 0
+  d0: flow 1909 delay 78.1 fuel 81.1 ttc 131 b3 1632 b45 83 coll 0 | flow -0.0[-0.2,+0.2] delay -0.6[-3.2,+0.9] ttc +6.6[-38.5,+36.2] brake +0.1[-9.9,+9.0] fuel +0.1[-0.4,+0.4]
+  d1: flow 1910 delay 77.7 fuel 81.1 ttc 118 b3 1638 b45 79 coll 0 | flow -0.1[-0.2,+0.1] delay -0.8[-1.4,+1.2] ttc -1.2[-41.2,+31.1] brake +1.3[-5.9,+8.1] fuel -0.1[-0.3,+0.2]
+  d2: flow 1910 delay 78.4 fuel 81.0 ttc 130 b3 1638 b45 80 coll 0 | flow -0.0[-0.2,+0.1] delay -0.7[-3.1,+0.9] ttc +13.6[-13.2,+38.5] brake +0.4[-5.7,+10.3] fuel +0.1[-0.4,+0.4]
+=== r1m3 X1 5300: opponent p333
+  nc: flow 2056 delay 173.6 fuel 83.6 ttc 531 b3 2100 b45 182 coll 1
+  p333: flow 2134 delay 129.6 fuel 84.6 ttc 327 b3 2238 b45 152 coll 0
+  lr: flow 2135 delay 130.6 fuel 83.8 ttc 114 b3 1999 b45 96 coll 0
+  d0: flow 2134 delay 129.7 fuel 84.0 ttc 218 b3 2108 b45 130 coll 0 | flow -0.0[-0.4,+0.2] delay +0.6[-3.1,+3.8] ttc +2.4[-64.5,+51.2] brake -1.8[-11.8,+10.7] fuel +0.3[-0.7,+1.0]
+  d1: flow 2133 delay 129.0 fuel 84.3 ttc 196 b3 2086 b45 91 coll 0 | flow +0.0[-0.1,+0.4] delay +1.4[-1.4,+3.1] ttc +11.8[-35.8,+135.6] brake +5.6[-4.7,+14.1] fuel +0.4[-0.4,+1.0]
+  d2: flow 2129 delay 130.6 fuel 84.4 ttc 269 b3 2137 b45 103 coll 0 | flow -0.0[-0.2,+0.3] delay +0.3[-1.3,+3.0] ttc +7.0[-15.4,+104.0] brake +0.1[-3.7,+13.3] fuel +0.2[-0.2,+0.6]
+=== r1m3 X2 4600: opponent lr
+  nc: flow 1891 delay 107.9 fuel 81.4 ttc 531 b3 1770 b45 176 coll 0
+  p333: flow 1907 delay 77.9 fuel 80.5 ttc 235 b3 1604 b45 112 coll 0
+  lr: flow 1911 delay 77.5 fuel 81.0 ttc 404 b3 1852 b45 166 coll 0
+  d0: flow 1910 delay 78.2 fuel 81.0 ttc 148 b3 1554 b45 98 coll 0 | flow -0.1[-0.2,+0.1] delay +0.9[-5.0,+5.6] ttc +3.5[-34.8,+56.9] brake +2.3[-6.8,+14.9] fuel +0.1[-0.6,+0.9]
+  d1: flow 1912 delay 78.6 fuel 81.0 ttc 159 b3 1674 b45 123 coll 0 | flow -0.0[-0.3,+0.1] delay -0.3[-3.6,+4.4] ttc +5.1[-18.9,+42.7] brake +2.8[-6.6,+13.1] fuel -0.1[-0.5,+0.7]
+  d2: flow 1910 delay 77.9 fuel 80.5 ttc 170 b3 1590 b45 104 coll 0 | flow -0.0[-0.2,+0.1] delay +1.2[-0.8,+3.2] ttc +29.0[-13.0,+52.4] brake +4.3[-5.3,+17.6] fuel +0.3[-0.4,+1.0]
+=== r1m3 X2 5300: opponent lr
+  nc: flow 2016 delay 181.7 fuel 85.2 ttc 1234 b3 2550 b45 280 coll 0
+  p333: flow 2094 delay 145.3 fuel 85.7 ttc 2672 b3 3360 b45 530 coll 0
+  lr: flow 2091 delay 142.3 fuel 86.4 ttc 2860 b3 3674 b45 586 coll 0
+  d0: flow 2097 delay 142.8 fuel 86.1 ttc 2738 b3 3443 b45 546 coll 0 | flow +0.2[-0.9,+1.2] delay +2.9[-1.8,+8.8] ttc +12.1[-9.9,+22.7] brake +5.8[-5.4,+17.6] fuel +0.6[-0.6,+2.5]
+  d1: flow 2097 delay 143.9 fuel 86.3 ttc 2480 b3 3428 b45 526 coll 0 | flow +0.6[-0.3,+1.4] delay +3.5[-1.0,+8.4] ttc +20.0[-0.6,+34.8] brake +9.3[+0.0,+17.3] fuel +1.2[-0.2,+2.7]
+  d2: flow 2092 delay 141.9 fuel 86.7 ttc 2802 b3 3558 b45 564 coll 0 | flow +0.1[-0.6,+1.1] delay +1.9[-2.5,+6.0] ttc +4.2[-16.5,+30.3] brake +2.5[-6.4,+16.3] fuel +0.5[-0.5,+2.0]
+=== r1m3 H1 4600: opponent p333
+  nc: flow 1890 delay 74.8 fuel 77.4 ttc 22 b3 1382 b45 56 coll 0
+  p333: flow 1910 delay 54.1 fuel 78.2 ttc 74 b3 1362 b45 60 coll 0
+  lr: flow 1910 delay 54.1 fuel 78.2 ttc 74 b3 1362 b45 60 coll 0
+  d0: flow 1910 delay 54.5 fuel 78.4 ttc 49 b3 1327 b45 57 coll 0 | flow -0.0[-0.3,+0.2] delay -0.2[-3.7,+1.4] ttc +18.1[-71.1,+102.7] brake +2.1[-2.8,+8.6] fuel -0.1[-0.3,+0.2]
+  d1: flow 1911 delay 54.3 fuel 78.1 ttc 50 b3 1346 b45 54 coll 0 | flow -0.2[-0.2,+0.1] delay +0.4[-1.9,+2.4] ttc +46.3[-49.7,+113.4] brake +1.7[-6.7,+9.4] fuel +0.0[-0.4,+0.3]
+  d2: flow 1909 delay 54.6 fuel 78.4 ttc 57 b3 1332 b45 56 coll 0 | flow -0.1[-0.3,+0.1] delay -0.8[-2.8,+0.7] ttc +20.1[-30.2,+82.6] brake +0.0[-7.3,+8.8] fuel -0.0[-0.4,+0.4]
+=== r1m3 H1 5300: opponent p333
+  nc: flow 2060 delay 134.6 fuel 81.2 ttc 830 b3 2187 b45 207 coll 0
+  p333: flow 2126 delay 97.2 fuel 80.2 ttc 216 b3 1794 b45 111 coll 0
+  lr: flow 2126 delay 97.2 fuel 80.2 ttc 216 b3 1794 b45 111 coll 0
+  d0: flow 2124 delay 98.7 fuel 80.7 ttc 370 b3 1852 b45 126 coll 0 | flow -0.1[-0.7,+0.4] delay -0.9[-4.4,+3.1] ttc -14.2[-191.0,+99.8] brake -3.1[-22.0,+10.6] fuel -0.1[-0.7,+0.5]
+  d1: flow 2129 delay 96.6 fuel 80.0 ttc 179 b3 1777 b45 102 coll 0 | flow +0.1[-0.9,+0.8] delay +0.5[-2.2,+3.2] ttc +20.4[-50.1,+123.9] brake +1.9[-10.1,+16.0] fuel +0.0[-0.5,+0.7]
+  d2: flow 2123 delay 98.1 fuel 80.7 ttc 336 b3 1770 b45 124 coll 0 | flow -0.1[-0.5,+0.4] delay +0.1[-2.7,+1.3] ttc -19.0[-102.3,+71.7] brake -4.7[-11.9,+8.1] fuel -0.1[-0.5,+0.5]
+=== r1m3 H2 4600: opponent p333
+  nc: flow 1866 delay 72.7 fuel 78.5 ttc 26 b3 1394 b45 54 coll 0
+  p333: flow 1886 delay 53.7 fuel 78.8 ttc 83 b3 1344 b45 68 coll 1
+  lr: flow 1886 delay 53.7 fuel 78.8 ttc 83 b3 1344 b45 68 coll 1
+  d0: flow 1888 delay 53.9 fuel 78.8 ttc 102 b3 1344 b45 72 coll 0 | flow +0.0[-0.1,+0.3] delay -0.5[-3.1,+2.1] ttc -24.7[-92.2,+57.8] brake +0.1[-7.1,+3.3] fuel +0.0[-0.3,+0.3]
+  d1: flow 1892 delay 53.2 fuel 78.8 ttc 79 b3 1369 b45 64 coll 0 | flow +0.0[-0.1,+0.3] delay +0.7[-2.8,+2.6] ttc +8.4[-71.7,+43.4] brake +1.0[-7.9,+6.2] fuel +0.0[-0.2,+0.5]
+  d2: flow 1892 delay 54.9 fuel 79.0 ttc 74 b3 1384 b45 69 coll 0 | flow -0.1[-0.2,+0.1] delay -0.4[-5.7,+2.2] ttc +4.2[-117.5,+51.8] brake -2.7[-13.4,+7.8] fuel +0.2[-0.5,+0.5]
+=== r1m3 H2 5300: opponent p333
+  nc: flow 2049 delay 136.2 fuel 80.9 ttc 468 b3 2021 b45 178 coll 0
+  p333: flow 2105 delay 97.9 fuel 81.2 ttc 274 b3 1812 b45 124 coll 0
+  lr: flow 2105 delay 97.9 fuel 81.2 ttc 274 b3 1812 b45 124 coll 0
+  d0: flow 2109 delay 95.6 fuel 81.4 ttc 284 b3 1820 b45 132 coll 0 | flow +0.2[+0.0,+0.5] delay -0.7[-3.5,+3.5] ttc +1.5[-60.3,+42.6] brake -1.6[-8.9,+9.7] fuel +0.1[-0.6,+0.6]
+  d1: flow 2109 delay 96.7 fuel 80.5 ttc 223 b3 1768 b45 120 coll 0 | flow +0.0[-0.2,+0.4] delay -0.5[-4.1,+1.7] ttc +11.0[-43.5,+65.8] brake +2.4[-9.9,+16.2] fuel +0.0[-0.4,+0.4]
+  d2: flow 2112 delay 96.8 fuel 80.7 ttc 256 b3 1753 b45 115 coll 0 | flow +0.1[-0.4,+0.4] delay -0.3[-1.8,+3.6] ttc +19.4[-80.6,+118.1] brake +0.5[-7.3,+15.0] fuel +0.0[-0.4,+0.9]
+=== r2m3 S 4600: opponent p333
+  nc: flow 1906 delay 45.8 fuel 76.6 ttc 38 b3 1409 b45 66 coll 0
+  p333: flow 1912 delay 33.3 fuel 77.8 ttc 84 b3 1402 b45 74 coll 0
+  lr: flow 1912 delay 33.3 fuel 77.8 ttc 84 b3 1402 b45 74 coll 0
+  d0: flow 1913 delay 34.0 fuel 77.5 ttc 62 b3 1400 b45 68 coll 0 | flow +0.1[-0.0,+0.3] delay -0.8[-4.7,+1.9] ttc +19.0[-57.1,+65.5] brake -1.3[-8.9,+3.4] fuel -0.0[-0.3,+0.4]
+  d1: flow 1911 delay 34.6 fuel 77.7 ttc 65 b3 1468 b45 80 coll 0 | flow +0.1[-0.0,+0.2] delay -2.1[-5.8,+1.5] ttc +11.3[-38.1,+66.1] brake -4.5[-9.1,-0.4] fuel -0.0[-0.3,+0.2]
+  d2: flow 1914 delay 33.8 fuel 77.6 ttc 59 b3 1370 b45 70 coll 0 | flow +0.1[-0.1,+0.2] delay -2.1[-4.6,+1.0] ttc +22.0[-18.5,+45.8] brake +1.6[-9.9,+3.4] fuel +0.1[-0.2,+0.3]
+=== r2m3 S 5300: opponent p333
+  nc: flow 2132 delay 83.7 fuel 81.3 ttc 1166 b3 2546 b45 320 coll 0
+  p333: flow 2174 delay 53.5 fuel 80.0 ttc 906 b3 2502 b45 265 coll 0
+  lr: flow 2174 delay 53.5 fuel 80.0 ttc 906 b3 2502 b45 265 coll 0
+  d0: flow 2172 delay 54.5 fuel 79.8 ttc 562 b3 2281 b45 239 coll 0 | flow +0.1[-0.4,+0.8] delay -0.3[-6.1,+11.3] ttc +20.0[-10.4,+101.1] brake +4.9[-6.6,+24.7] fuel +0.0[-0.6,+1.7]
+  d1: flow 2178 delay 55.2 fuel 79.6 ttc 570 b3 2269 b45 209 coll 0 | flow +0.2[-0.3,+1.2] delay +2.8[-13.0,+9.9] ttc +36.7[-30.0,+87.0] brake +9.6[-11.2,+19.5] fuel +0.6[-0.7,+1.3]
+  d2: flow 2180 delay 56.1 fuel 79.8 ttc 797 b3 2638 b45 263 coll 0 | flow +0.2[-0.3,+0.6] delay -1.7[-11.5,+9.0] ttc +2.8[-34.5,+81.8] brake +2.9[-9.2,+22.3] fuel -0.3[-0.8,+1.3]
+=== r2m3 X1 4600: opponent p333
+  nc: flow 1898 delay 84.3 fuel 81.6 ttc 658 b3 2030 b45 240 coll 0
+  p333: flow 1910 delay 61.7 fuel 81.1 ttc 518 b3 1956 b45 204 coll 0
+  lr: flow 1912 delay 63.8 fuel 80.9 ttc 562 b3 2036 b45 262 coll 0
+  d0: flow 1912 delay 61.4 fuel 80.9 ttc 325 b3 1836 b45 178 coll 0 | flow -0.1[-0.3,+0.1] delay +0.2[-4.5,+2.2] ttc +12.4[-12.4,+45.8] brake +4.2[-5.0,+11.0] fuel +0.1[-0.7,+0.8]
+  d1: flow 1910 delay 62.7 fuel 81.1 ttc 422 b3 1956 b45 182 coll 0 | flow +0.0[-0.2,+0.1] delay -1.1[-4.9,+1.6] ttc +14.2[+0.4,+38.9] brake +3.5[-5.1,+8.3] fuel -0.0[-0.5,+0.4]
+  d2: flow 1908 delay 61.2 fuel 81.2 ttc 333 b3 1898 b45 170 coll 0 | flow +0.0[-0.2,+0.1] delay +1.1[-3.3,+3.8] ttc +9.1[-4.6,+49.9] brake +3.6[-7.3,+7.8] fuel +0.2[-0.4,+0.4]
+=== r2m3 X1 5300: opponent p333
+  nc: flow 2022 delay 145.2 fuel 86.1 ttc 1354 b3 2622 b45 329 coll 0
+  p333: flow 2110 delay 112.8 fuel 87.0 ttc 3560 b3 4088 b45 619 coll 0
+  lr: flow 2121 delay 114.0 fuel 86.6 ttc 2913 b3 3769 b45 546 coll 0
+  d0: flow 2130 delay 105.7 fuel 85.4 ttc 2294 b3 3512 b45 485 coll 0 | flow +1.2[-0.4,+2.3] delay +5.3[-4.0,+11.0] ttc +34.5[+23.4,+46.4] brake +15.0[+9.3,+20.8] fuel +1.8[+0.3,+2.8] SAFETY-WIN
+  d1: flow 2124 delay 108.7 fuel 86.1 ttc 1942 b3 3200 b45 399 coll 0 | flow +1.0[+0.5,+1.7] delay +0.6[-6.0,+7.6] ttc +45.0[+33.3,+51.5] brake +21.5[+12.6,+26.8] fuel +1.5[+0.8,+2.6] SAFETY-WIN
+  d2: flow 2124 delay 104.5 fuel 85.9 ttc 2306 b3 3562 b45 546 coll 0 | flow +1.0[-0.2,+2.1] delay +4.9[-0.8,+14.0] ttc +31.1[+17.0,+43.1] brake +13.6[+7.7,+20.8] fuel +1.2[+0.3,+2.8] SAFETY-WIN
+=== r2m3 X2 4600: opponent p333
+  nc: flow 1891 delay 88.7 fuel 80.3 ttc 656 b3 2005 b45 248 coll 1
+  p333: flow 1911 delay 61.5 fuel 80.7 ttc 730 b3 2168 b45 264 coll 0
+  lr: flow 1912 delay 64.6 fuel 81.2 ttc 850 b3 2124 b45 282 coll 0
+  d0: flow 1912 delay 60.9 fuel 81.2 ttc 634 b3 1980 b45 258 coll 0 | flow +0.1[-0.1,+0.1] delay -1.3[-5.7,+5.2] ttc +14.1[-12.5,+68.5] brake +4.0[-5.0,+10.5] fuel +0.1[-0.6,+1.0]
+  d1: flow 1910 delay 63.2 fuel 81.0 ttc 551 b3 1972 b45 196 coll 0 | flow +0.0[-0.1,+0.1] delay +1.4[-8.2,+10.1] ttc +38.5[-3.1,+88.5] brake +10.4[-6.3,+22.0] fuel +0.4[-0.6,+2.0]
+  d2: flow 1912 delay 64.6 fuel 81.0 ttc 569 b3 1943 b45 228 coll 0 | flow +0.0[-0.1,+0.1] delay +0.8[-7.0,+5.3] ttc +18.5[-13.6,+56.2] brake +4.9[-9.7,+14.9] fuel +0.2[-1.0,+1.3]
+=== r2m3 X2 5300: opponent lr
+  nc: flow 2045 delay 129.4 fuel 85.1 ttc 1618 b3 3029 b45 396 coll 0
+  p333: flow 2128 delay 106.2 fuel 85.3 ttc 2464 b3 3644 b45 516 coll 1
+  lr: flow 2141 delay 103.8 fuel 85.4 ttc 2522 b3 3601 b45 560 coll 0
+  d0: flow 2162 delay 101.5 fuel 84.3 ttc 1721 b3 3130 b45 480 coll 0 | flow +0.8[-0.8,+1.9] delay +3.1[-5.6,+10.4] ttc +27.5[+16.3,+39.9] brake +9.7[+4.7,+13.6] fuel +1.1[-0.2,+2.0]
+  d1: flow 2136 delay 107.6 fuel 85.0 ttc 1588 b3 3104 b45 375 coll 0 | flow -0.0[-1.8,+1.4] delay +1.0[-12.8,+5.0] ttc +43.1[+14.1,+51.6] brake +13.7[+7.6,+21.0] fuel +0.8[-0.3,+1.7] SAFETY-WIN
+  d2: flow 2158 delay 102.1 fuel 84.1 ttc 1811 b3 3226 b45 492 coll 0 | flow +0.4[-1.2,+2.5] delay +0.5[-5.5,+8.6] ttc +22.0[+13.0,+33.6] brake +9.4[+2.6,+14.1] fuel +0.2[-0.8,+1.7]
+=== r2m3 H1 4600: opponent p333
+  nc: flow 1904 delay 52.2 fuel 77.3 ttc 94 b3 1490 b45 109 coll 0
+  p333: flow 1910 delay 37.5 fuel 77.9 ttc 116 b3 1446 b45 94 coll 0
+  lr: flow 1910 delay 37.5 fuel 77.9 ttc 116 b3 1446 b45 94 coll 0
+  d0: flow 1912 delay 38.0 fuel 77.9 ttc 122 b3 1444 b45 86 coll 0 | flow +0.0[-0.1,+0.2] delay -1.0[-2.8,+1.5] ttc +3.9[-48.3,+40.5] brake -0.3[-11.2,+8.2] fuel +0.2[-0.2,+0.3]
+  d1: flow 1912 delay 37.5 fuel 78.1 ttc 89 b3 1451 b45 96 coll 0 | flow +0.0[-0.2,+0.2] delay -1.2[-3.5,+3.0] ttc +20.7[-23.3,+72.4] brake +0.1[-5.5,+6.0] fuel +0.1[-0.3,+0.4]
+  d2: flow 1911 delay 37.3 fuel 77.8 ttc 106 b3 1414 b45 82 coll 0 | flow +0.0[-0.1,+0.2] delay +0.4[-1.8,+1.7] ttc +33.6[-9.1,+67.2] brake +4.6[-2.3,+10.5] fuel +0.2[-0.0,+0.5]
+=== r2m3 H1 5300: opponent p333
+  nc: flow 2121 delay 87.8 fuel 81.3 ttc 1206 b3 2582 b45 320 coll 0
+  p333: flow 2186 delay 57.6 fuel 80.0 ttc 1074 b3 2536 b45 303 coll 0
+  lr: flow 2186 delay 57.6 fuel 80.0 ttc 1074 b3 2536 b45 303 coll 0
+  d0: flow 2183 delay 58.2 fuel 80.3 ttc 822 b3 2496 b45 294 coll 0 | flow +0.1[-0.5,+0.7] delay -2.0[-9.2,+5.5] ttc +6.1[-35.2,+56.1] brake +3.6[-13.8,+11.7] fuel -0.2[-1.4,+1.0]
+  d1: flow 2184 delay 58.3 fuel 80.5 ttc 616 b3 2302 b45 230 coll 0 | flow +0.2[-0.4,+1.2] delay +1.3[-9.3,+7.1] ttc +18.3[-35.6,+70.1] brake +6.2[-7.7,+19.4] fuel +0.2[-0.7,+1.0]
+  d2: flow 2179 delay 58.6 fuel 80.2 ttc 798 b3 2382 b45 261 coll 0 | flow +0.2[-0.4,+0.9] delay -3.1[-13.2,+6.0] ttc +9.1[-40.3,+51.5] brake +1.4[-10.5,+8.9] fuel -0.2[-1.5,+1.0]
+=== r2m3 H2 4600: opponent p333
+  nc: flow 1872 delay 56.3 fuel 79.0 ttc 124 b3 1578 b45 119 coll 0
+  p333: flow 1880 delay 43.3 fuel 79.9 ttc 120 b3 1518 b45 104 coll 0
+  lr: flow 1880 delay 43.3 fuel 79.9 ttc 120 b3 1518 b45 104 coll 0
+  d0: flow 1875 delay 42.6 fuel 79.8 ttc 108 b3 1514 b45 96 coll 0 | flow -0.1[-0.3,+0.1] delay -0.9[-2.5,+2.7] ttc +19.7[-31.4,+90.4] brake -1.8[-4.8,+5.8] fuel -0.1[-0.2,+0.1]
+  d1: flow 1879 delay 44.2 fuel 79.8 ttc 126 b3 1518 b45 114 coll 0 | flow -0.0[-0.2,+0.1] delay -1.6[-4.7,+0.9] ttc +16.3[-66.1,+51.5] brake -3.0[-11.4,+1.6] fuel -0.1[-0.5,+0.2]
+  d2: flow 1877 delay 43.0 fuel 79.6 ttc 132 b3 1514 b45 109 coll 1 | flow -0.0[-0.1,+0.1] delay -0.2[-1.8,+3.2] ttc +4.6[-33.1,+42.7] brake -1.7[-6.5,+6.1] fuel +0.0[-0.2,+0.2]
+=== r2m3 H2 5300: opponent p333
+  nc: flow 2082 delay 94.5 fuel 82.3 ttc 998 b3 2415 b45 338 coll 0
+  p333: flow 2146 delay 64.1 fuel 81.2 ttc 622 b3 2380 b45 234 coll 0
+  lr: flow 2146 delay 64.1 fuel 81.2 ttc 622 b3 2380 b45 234 coll 0
+  d0: flow 2146 delay 66.5 fuel 81.9 ttc 662 b3 2572 b45 272 coll 0 | flow -0.0[-0.7,+0.7] delay -3.0[-13.6,+3.0] ttc -17.2[-83.8,+52.3] brake -5.6[-15.9,+12.1] fuel -0.5[-1.4,+0.3]
+  d1: flow 2136 delay 64.2 fuel 81.1 ttc 626 b3 2362 b45 239 coll 0 | flow +0.0[-0.5,+0.5] delay -1.4[-14.3,+1.9] ttc +17.5[-44.3,+74.9] brake +3.9[-13.3,+13.0] fuel +0.1[-1.6,+0.7]
+  d2: flow 2150 delay 65.4 fuel 81.3 ttc 556 b3 2272 b45 240 coll 0 | flow -0.0[-0.6,+0.3] delay -3.5[-8.3,+2.0] ttc +4.2[-50.8,+45.2] brake +2.0[-8.2,+9.5] fuel -0.1[-0.8,+0.5]
+DRL cells won: [('r2m3', 'X1', 5300.0, 'safety')]
+--- adaptive rule against p333, safety rule, Bonferroni over 8
+ r1m3|X1 4600: ttc 58 v 128 (54.5, 42.0, 77.0) delay (-1.3, -2.0, 1.5) flow 0.1 brake 2.6 coll 0 v 1 WIN
+ r1m3|X1 5300: ttc 114 v 327 (38.5, 18.3, 153.8) delay (0.2, -0.3, 2.3) flow -0.1 brake 6.2 coll 0 v 0 WIN
+ r1m3|X2 4600: ttc 404 v 235 (-10.6, -76.2, 13.4) delay (-1.3, -3.0, 0.9) flow -0.0 brake -1.5 coll 0 v 0 
+ r1m3|X2 5300: ttc 2860 v 2672 (-11.2, -51.1, 14.0) delay (-2.4, -7.2, 0.2) flow -0.5 brake -11.9 coll 0 v 0 
+ r2m3|X1 4600: ttc 562 v 518 (-6.8, -26.8, 18.1) delay (-1.5, -5.1, 0.8) flow 0.0 brake -2.2 coll 0 v 0 
+ r2m3|X1 5300: ttc 2913 v 3560 (11.8, 6.2, 22.0) delay (-0.5, -4.8, 1.4) flow 0.3 brake 8.0 coll 0 v 0 
+ r2m3|X2 4600: ttc 850 v 730 (-15.6, -46.3, 18.2) delay (-2.9, -9.7, 3.9) flow 0.0 brake 0.5 coll 0 v 0 
+ r2m3|X2 5300: ttc 2522 v 2464 (-0.3, -11.2, 16.7) delay (-0.0, -5.0, 8.8) flow 0.1 brake 2.1 coll 0 v 1 
+adaptive rule cells won: [('r1m3', 'X1', 4600.0), ('r1m3', 'X1', 5300.0)]
