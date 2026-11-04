@@ -1,0 +1,1 @@
+{"hold": 10.0, "w_flow": 0.4, "w_safety": 10.0, "seed0": 7437400, "perturb": {"kind": "random"}, "plant": {"lc": {"lcAssertive": 1.4}, "hdv": {}, "truck": {}, "smooth": true, "alks": {"lcOvertakeRight": 1}, "ref": {"4090.0": [0.179, 0.004, 277.7], "4600.0": [0.198, 0.009, 324.1], "5300.0": [0.273, 0.019, 427.2]}, "geom": "r2m3"}}

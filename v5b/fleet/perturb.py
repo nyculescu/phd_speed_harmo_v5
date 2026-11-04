@@ -10,12 +10,15 @@ event until it ends (V343): the upper bound of what a controller that knows the 
 With `hw_oracle` {d, level, after} every ALKS from d m upstream of edge 4 to its end uses at most that headway level, from
 d / ORACLE_SPEED s before the event until `after` s past its end (V346). `taper` lowers the limit gradually, because vehicles
 already on the edge must obey a new limit at once (V345).
+Kind random: for training (V358), each episode draws no perturbation (one third) or a tapered slowdown on edge 3, 4 or 5, from
+the episode's seed, so the draw repeats. `edge` selects a slowdown's edge, 4 by default.
 """
 from __future__ import annotations
 
 import math
 
 import libsumo as ls
+import numpy as np
 
 BRAKE_EDGE, BRAKE_LANE, BRAKE_POS, BRAKE_RANGE = "4", 1, 500.0, 200.0
 DECEL = 4.0
@@ -28,7 +31,12 @@ ORACLE_SPEED = 25.0
 
 
 class Perturb:
-    def __init__(self, env, spec: dict):
+    def __init__(self, env, spec: dict, seed: int = 0):
+        if spec["kind"] == "random":
+            r = np.random.default_rng(seed + 910_000)
+            spec = {"kind": "none"}
+            if r.random() >= 1.0 / 3.0:
+                spec = {"kind": "slowdown", "edge": str(r.choice(("3", "4", "5"))), "limit_kmh": float(r.uniform(25.0, 60.0)), "dur": float(r.uniform(60.0, 180.0)), "times": [float(r.uniform(400.0, 1200.0))], "taper": 20.0}
         self.env, self.s, self.kind = env, spec, spec["kind"]
         self.next_t = spec.get("first", env.warm)
         self.active = None
@@ -42,7 +50,7 @@ class Perturb:
             return
         d, cycle = self.env.dem, self.s["cycle"]
         for v, r in zip(d.veh, d.route_of):
-            if r == "ramp" and v.depart >= self.env.warm:
+            if r.startswith("ramp") and v.depart >= self.env.warm:
                 v.depart = math.ceil(v.depart / cycle) * cycle
         order = sorted(range(len(d.veh)), key=lambda i: d.veh[i].depart)
         d.veh[:], d.route_of[:] = [d.veh[i] for i in order], [d.route_of[i] for i in order]
@@ -104,7 +112,7 @@ class Perturb:
             if t0 <= t < t0 + self.s["dur"]:
                 v = free + (lim - free) * (t - t0) / taper if t < t0 + taper else lim
         if v != self.slow_v:
-            ls.edge.setMaxSpeed(SLOW_EDGE, v)
+            ls.edge.setMaxSpeed(self.s.get("edge", SLOW_EDGE), v)
             self.slow_v = v
         on = v != free
         if on != self.slow_on:

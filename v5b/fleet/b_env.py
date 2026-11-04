@@ -21,6 +21,7 @@ import numpy as np
 
 from v5b.d1.config import RUNS_ROOT
 from v5b.fleet import b_merge as bm, control as ct, fleet as fl, perturb as pt
+from v5b.fleet.corridor import R2M3
 from v5b.fleet.day import CrashSim
 
 K, R = 6, 4
@@ -142,7 +143,7 @@ class MergeEnv(gym.Env):
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
         self.v2v_down = False
-        self.pert = pt.Perturb(self, self.perturb) if self.perturb else None
+        self.pert = pt.Perturb(self, self.perturb, s) if self.perturb else None
         if self.pert:
             self.pert.demand()
         self.dem.write(self.rou)
@@ -765,10 +766,15 @@ class CavEnv(ZoneEnv):
         e = ls.vehicle.getRoadID(v)
         base = {"1": -self.l1 - self.l2, "2": -self.l2, "3a": 0.0, "3": self.l3a, "r": -RAMP_LEN, "rj": -RAMP_LEN + RAMP_R_LEN}.get(e)
         if base is None:
+            two = self.cfg.geom == R2M3     # the second merge's 4a sits between edges 3 and 4
             if e == "4":
-                base = self.l3a + LEN_3
+                base = self.l3a + LEN_3 + (self.l3a if two else 0.0)
             elif e == "5":
-                base = self.l3a + LEN_3 + LEN_4
+                base = self.l3a + LEN_3 + LEN_4 + (self.l3a if two else 0.0)
+            elif e == "4a":
+                base = self.l3a + LEN_3
+            elif e in ("r2", "rj2"):
+                base = self.l3a + LEN_3 - RAMP_LEN + (RAMP_R_LEN if e == "rj2" else 0.0)
             else:
                 return self.xlast.get(v, 0.0)
         x = base + ls.vehicle.getLanePosition(v)
@@ -786,8 +792,9 @@ class CavEnv(ZoneEnv):
             if v in self.alks_all:
                 ids.append(v)
         vz = [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0 for z in range(N_ZONES)]
-        n3a = ls.lane.getLastStepVehicleNumber("3a_0")
-        ramp = sorted(self._x(v) for v in ls.lane.getLastStepVehicleIDs("3a_0"))
+        accel = ("3a_0", "4a_0") if self.cfg.geom == R2M3 else ("3a_0",)
+        n3a = sum(ls.lane.getLastStepVehicleNumber(x) for x in accel)
+        ramp = sorted(self._x(v) for x in accel for v in ls.lane.getLastStepVehicleIDs(x))
         rows = []
         for v in ids:
             x = self._x(v)
@@ -795,7 +802,7 @@ class CavEnv(ZoneEnv):
             lead = ls.vehicle.getLeader(v, GAP_NORM)
             fol = ls.vehicle.getFollower(v, GAP_NORM)
             has_lead, has_fol = lead and lead[0], fol and fol[0]
-            on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj") or (v in self.ramp and ls.vehicle.getLaneID(v) == "3a_0")
+            on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj", "r2", "rj2") or (v in self.ramp and ls.vehicle.getLaneID(v) in accel)
             near = min(ramp, key=lambda r: abs(r - x)) - x if ramp else GAP_NORM
             rows.append([np.clip(x / 1000.0, -3.5, 3.0), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
                          s / fl.LIMIT,
@@ -861,16 +868,21 @@ class LocalRule:
 
     def __init__(self, env, r: float, th: float, level: int = 1, free: int = 3):
         self.env, self.k, self.th, self.level, self.free = env, int(r // BIN_M), th, level, free
+        self.next = dict(self.NEXT)
+        self.n_bins = dict(self.N_BINS)
+        if env.plant.get("geom") == R2M3:     # the second merge sits between edges 3 and 4
+            self.next |= {"3": "4a", "4a": "4", "r2": "rj2", "rj2": "4a"}
+            self.n_bins |= {"4a": 2, "r2": 2, "rj2": 1}
 
     def _ahead(self, v: str) -> float | None:
         road, i = self.env._bin(v)
-        if road not in self.N_BINS:
+        if road not in self.n_bins:
             return None
         seen = []
         for _ in range(self.k):
             i += 1
-            if i >= self.N_BINS[road]:
-                road, i = self.NEXT[road], 0
+            if i >= self.n_bins[road]:
+                road, i = self.next[road], 0
                 if road is None:
                     break
             s = self.env.bins.get((road, i))
