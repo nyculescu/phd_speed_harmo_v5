@@ -923,3 +923,19 @@ class ZonePattern:
             self.last[v] = self._zone(v)
             out[v] = self.levels[self.last[v]]
         return out
+
+
+class RoadLevels:
+    """V360: a fixed level per road, `default` elsewhere; inside a junction a vehicle keeps its last level."""
+
+    def __init__(self, levels: dict, default: int = 3):
+        self.levels, self.default, self.last = levels, default, {}
+
+    def __call__(self, o: tuple) -> dict:
+        out = {}
+        for v in o[0]:
+            road = ls.vehicle.getRoadID(v)
+            if not road.startswith(":"):
+                self.last[v] = self.levels.get(road, self.default)
+            out[v] = self.last.get(v, self.default)
+        return out
