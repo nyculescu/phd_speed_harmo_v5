@@ -57,8 +57,12 @@ def to_plant(c: dict) -> dict:
 def run_one(a: tuple) -> dict:
     name, c, q, seed, rd = a
     import libsumo as ls
-    from v5b.fleet import b_env as be
-    env = be.make(zones=True, decision=10.0, alks_asl=0.5, w_change=0.1, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c))
+    from v5b.fleet import b_env as be, control as ct, fleet as fl
+    ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
+    kw = {"cav": True, "decision": 5.0} if "cav_rule" in ctrl else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
+    rule = be.CavRule(ctrl["cav_rule"]) if "cav_rule" in ctrl else None
+    meter = bank = None
     S, arr, prev, left = defaultdict(float), {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
     step0, sec0 = env._sim_step, env._second
@@ -71,6 +75,10 @@ def run_one(a: tuple) -> dict:
     def sec():
         p0 = env.ep["passed"]
         r = sec0()
+        if meter is not None:
+            if round(env.sim.t) % 30 == 0:
+                bank.read(env.sim.t)
+            meter.step(env.sim.t)
         m = int(env.sim.t // 60)
         flow_min[m] += env.ep["passed"] - p0
         v20_min[m].append(ls.lane.getLastStepMeanSpeed("2_0"))
@@ -108,10 +116,15 @@ def run_one(a: tuple) -> dict:
         return r
 
     env._sim_step, env._second = step, sec
-    env.reset()
+    o = env.reset()[0]
     trucks = {v.vid for v in env.dem.veh if v.cls == "truck"}
+    if "meter" in ctrl:
+        bank = ct.LoopBank(fl.loop_ids(env.cfg.geom))
+        bank.read(env.sim.t)
+        meter = ct.SumoMeter(ct.Meter(ct.MeterLaw("alinea", ctrl["meter"]["setpoint"])), bank, "alinea")
+    fixed = np.array(ctrl.get("zones", (0, 0, 0)), int)
     while True:
-        *_, tr, inf = env.step(np.zeros(3, int))
+        o, _, _, tr, inf = env.step(rule(o) if rule else fixed)
         if tr:
             break
     length = {r: sum(ls.lane.getLength(f"{e}_0") for e in edges) for r, edges in (("main", ("1", "2", "3a", "3", "4", "5")), ("ramp", ("r", "rj", "3a", "3", "4", "5")))}
@@ -134,6 +147,9 @@ def run_one(a: tuple) -> dict:
     row |= {"ttc_net": ep["E30"] + ep["out_E30"], "brake_net": ep["brake3"] + ep["out_b3"], "b45_net": S["b45"], "b7_net": S["b7"], "fuel_km": S["fuel"] / max(S["dist"], 1.0) * 1000.0,
             "delay": float(np.mean(delay)) if delay else None, "delay_p95": float(np.percentile(delay, 95)) if delay else None, "delay_ramp": float(np.mean(ramp)) if ramp else None,
             "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
+    if meter is not None:
+        ms = meter.summary()
+        row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
     return row
 
 
