@@ -7,6 +7,9 @@ slowdown: edge 4's limit drops to `limit_kmh` for `dur` s at `times`.
 outage: V2V is lost for `dur` s at `times`, so every ALKS reverts to the contract's headway.
 A slowdown with `oracle` {d, cap_kmh} also caps every ALKS within d m upstream of edge 4, from d / ORACLE_SPEED s before the
 event until it ends (V343): the upper bound of what a controller that knows the event in advance can do with a speed cap.
+With `hw_oracle` {d, level, after} every ALKS from d m upstream of edge 4 to its end uses at most that headway level, from
+d / ORACLE_SPEED s before the event until `after` s past its end (V346). `taper` lowers the limit gradually, because vehicles
+already on the edge must obey a new limit at once (V345).
 """
 from __future__ import annotations
 
@@ -18,6 +21,8 @@ BRAKE_EDGE, BRAKE_LANE, BRAKE_POS, BRAKE_RANGE = "4", 1, 500.0, 200.0
 DECEL = 4.0
 TRUCK_ENTRY_M = 600.0
 SLOW_EDGE = "4"
+FREE_LIMIT = 100.0 / 3.6
+EDGE4_LEN = 1000.0
 EDGE4_X = 4989.02
 ORACLE_SPEED = 25.0
 
@@ -29,7 +34,8 @@ class Perturb:
         self.active = None
         self.slow_on = False
         self.log = []
-        self.oracle_now = None
+        self.oracle_now = self.hw_now = None
+        self.slow_v = env.plant.get("limit", FREE_LIMIT)
 
     def demand(self) -> None:
         if self.kind != "burst":
@@ -47,6 +53,11 @@ class Perturb:
             lead = o["d"] / ORACLE_SPEED
             on = any(t0 - lead <= t < t0 + self.s["dur"] for t0 in self.s["times"])
             self.oracle_now = (EDGE4_X - o["d"], o["cap_kmh"] / 3.6) if on else None
+        h = self.s.get("hw_oracle")
+        if h:
+            lead = h["d"] / ORACLE_SPEED
+            on = any(t0 - lead <= t < t0 + self.s["dur"] + h["after"] for t0 in self.s["times"])
+            self.hw_now = (EDGE4_X - h["d"], EDGE4_X + EDGE4_LEN, h["level"]) if on else None
         getattr(self, "_" + self.kind, lambda _: None)(t)
 
     def _brake(self, t: float) -> None:
@@ -87,9 +98,16 @@ class Perturb:
                 return
 
     def _slowdown(self, t: float) -> None:
-        on = any(t0 <= t < t0 + self.s["dur"] for t0 in self.s["times"])
+        free, lim, taper = self.env.plant.get("limit", FREE_LIMIT), self.s["limit_kmh"] / 3.6, self.s.get("taper", 0.0)
+        v = free
+        for t0 in self.s["times"]:
+            if t0 <= t < t0 + self.s["dur"]:
+                v = free + (lim - free) * (t - t0) / taper if t < t0 + taper else lim
+        if v != self.slow_v:
+            ls.edge.setMaxSpeed(SLOW_EDGE, v)
+            self.slow_v = v
+        on = v != free
         if on != self.slow_on:
-            ls.edge.setMaxSpeed(SLOW_EDGE, self.s["limit_kmh"] / 3.6 if on else self.env.plant.get("limit", 100.0 / 3.6))
             self.slow_on = on
             self.log.append((round(t), on))
 

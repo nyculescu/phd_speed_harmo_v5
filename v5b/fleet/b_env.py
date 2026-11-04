@@ -66,7 +66,7 @@ FREE_SPACING = 200.0     # no leader within sensing range
 W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
 LANE_LEFT, LANE_RIGHT = 1, 2
 CONGESTED = 60.0 / 3.6     # SUMO's speed below which passing on the right is allowed
-ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02}
+ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": pt.EDGE4_X}
 SMOOTH_S = 5.0
 SPEED_CAPS = (None, 90.0 / 3.6, 80.0 / 3.6)     # V334 step 3: per-CAV speed action
 SMOOTH_RATIO = 1.1     # IDM brakes at accel x (ratio^4 - 1) above its desired speed: about 1.2 m/s² here, 14 m/s² uncapped at a ratio of 1.6
@@ -638,6 +638,13 @@ class CavEnv(ZoneEnv):
             self.ldir[v] = d
             self.acc[v] -= W_MOVE * self.decision
 
+    def _hw_level(self, v: str, lev: int) -> int:
+        o = self.pert.hw_now if self.pert else None
+        off = ROAD_X.get(ls.vehicle.getRoadID(v)) if o else None
+        if off is None or not o[0] <= off + ls.vehicle.getLanePosition(v) < o[1]:
+            return lev
+        return min(lev, o[2])
+
     def _cap_target(self, v: str) -> float:
         k = self.speed_lvl.get(v, 0)
         if "speed_s" in self.ep:
@@ -677,7 +684,7 @@ class CavEnv(ZoneEnv):
             cur = lead[0] if lead and lead[0] in self.alks_all else None
             on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
-            lev = self.lvl.get(v, 0)
+            lev = self._hw_level(v, self.lvl.get(v, 0))
             want = self.headways[lev] if on else ALKS_TAU0
             (self.on.add if on else self.on.discard)(v)
             if self.v2v_cur.get(v, ALKS_TAU0) != want:
