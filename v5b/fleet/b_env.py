@@ -133,7 +133,7 @@ class MergeEnv(gym.Env):
         d = fl.build_net(self.cfg)
         self.t_end = self.warm + self.episode
         self.dem = fl.FleetDemand(s, [(0.0, self.t_end, q)], self.cfg)
-        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r == "ramp"}
+        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
         self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
@@ -343,7 +343,7 @@ class MergeEnv(gym.Env):
             cap = min(self._cap_target(v), self._oracle_cap(v))
             if cap < FREE_MAX_SPEED:
                 cap = max(cap, s / SMOOTH_RATIO)
-            if s > CONGESTED and ls.vehicle.getLaneID(v) != "3a_0":
+            if s > CONGESTED and ls.vehicle.getLaneID(v) not in ("3a_0", "4a_0"):
                 for nv, gap in ls.vehicle.getNeighbors(v, 2):
                     if gap < SMOOTH_S * s:
                         cap = min(cap, max(ls.vehicle.getSpeed(nv), CONGESTED, s / SMOOTH_RATIO))
@@ -452,7 +452,7 @@ class ZoneEnv(MergeEnv):
             return ZONE_MERGE if ls.vehicle.getLanePosition(v) < bm.MA_EDGE3_HEAD else ZONE_DOWN
         if e in ("3a", ":m", ":ae") or e.startswith((":m_", ":ae_")):
             return ZONE_MERGE
-        if e in ("4", "5") or e.startswith((":d_", ":b_")):
+        if e in ("4", "5", "4a") or e.startswith((":d_", ":b_")):
             return ZONE_DOWN
         return ZONE_UP
 
@@ -883,4 +883,31 @@ class LocalRule:
         for v in o[0]:
             s = self._ahead(v)
             out[v] = self.level if s is not None and s < self.th else self.free
+        return out
+
+
+class ZonePattern:
+    """V354, r2m3: a fixed level per zone along the road: up, merge 1, between, merge 2, down. Ramp vehicles count as their merge."""
+    X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4a": 4989.02, "4": 5283.74, "5": 6283.74}
+    EDGES = (3398.3, 4093.02, 4889.02, 5583.74)
+
+    def __init__(self, levels: tuple):
+        self.levels, self.last = list(levels), {}
+
+    def _zone(self, v: str) -> int:
+        road = ls.vehicle.getRoadID(v)
+        if road in ("r", "rj"):
+            return 1
+        if road in ("r2", "rj2"):
+            return 3
+        if road not in self.X:
+            return self.last.get(v, 0)
+        x = self.X[road] + ls.vehicle.getLanePosition(v)
+        return sum(x >= e for e in self.EDGES)
+
+    def __call__(self, o: tuple) -> dict:
+        out = {}
+        for v in o[0]:
+            self.last[v] = self._zone(v)
+            out[v] = self.levels[self.last[v]]
         return out

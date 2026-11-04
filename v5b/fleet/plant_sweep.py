@@ -61,12 +61,14 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "local_rule" in ctrl:
         rule = be.LocalRule(env, **ctrl["local_rule"])
+    if "pattern" in ctrl:
+        rule = be.ZonePattern(ctrl["pattern"])
     if "pt" in ctrl:
         from v5b.fleet.c_train import Greedy
         rule = Greedy(ctrl["pt"])
@@ -134,12 +136,15 @@ def run_one(a: tuple) -> dict:
         lanes = set(ls.lane.getIDList())
         for x in ("3a_0", "3a_1"):
             S["halt_" + x] += ls.lane.getLastStepHaltingNumber(x)
-        for x in lanes & {"3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2"}:
+        for x in lanes & {"3a_1", "3a_2", "3a_3", "3_0", "3_1", "3_2", "4a_1", "4a_3"}:
             n = ls.lane.getLastStepVehicleNumber(x)
             S["n_" + x] += n
             S["nv_" + x] += n * ls.lane.getLastStepMeanSpeed(x)
         l3a = ls.lane.getLength("3a_0")
         S["end_stop"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l3a - 30.0 for v in ls.lane.getLastStepVehicleIDs("3a_0"))
+        if "4a_0" in lanes:
+            l4a = ls.lane.getLength("4a_0")
+            S["end_stop2"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l4a - 30.0 for v in ls.lane.getLastStepVehicleIDs("4a_0"))
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
         return r
 
@@ -155,8 +160,8 @@ def run_one(a: tuple) -> dict:
         o, _, _, tr, inf = env.step(rule(o) if rule else fixed)
         if tr:
             break
-    length = {r: sum(ls.lane.getLength(f"{e}_0") for e in edges) for r, edges in (("main", ("1", "2", "3a", "3", "4", "5")), ("ramp", ("r", "rj", "3a", "3", "4", "5")))}
-    delay, ramp = [], []
+    length = {r: sum(ls.lane.getLength(f"{e}_0") for e in x[0].split()) for r, x in fl.routes(env.cfg.geom).items()}
+    delay, ramp, ramp2 = [], [], []
     planned = done = 0
     for v, r in zip(env.dem.veh, env.dem.route_of):
         if env.warm <= v.depart < env.t_end:
@@ -168,6 +173,8 @@ def run_one(a: tuple) -> dict:
                 delay.append(d)
                 if r == "ramp":
                     ramp.append(d)
+                elif r == "ramp2":
+                    ramp2.append(d)
     env.close()
     ep = inf["ep"]
     row = {"name": name, "cfg": c, **{k: ep[k] for k in ("q", "seed", "passed", "arrived", "N", "mean_v", "E15", "E30", "out_E30", "brake3", "brake45", "out_b3", "collisions", "contact_steps", "stop_gap", "gap25", "steps")}}
@@ -175,6 +182,8 @@ def run_one(a: tuple) -> dict:
     row |= {"ttc_net": ep["E30"] + ep["out_E30"], "brake_net": ep["brake3"] + ep["out_b3"], "b45_net": S["b45"], "b7_net": S["b7"], "fuel_km": S["fuel"] / max(S["dist"], 1.0) * 1000.0,
             "delay": float(np.mean(delay)) if delay else None, "delay_p95": float(np.percentile(delay, 95)) if delay else None, "delay_ramp": float(np.mean(ramp)) if ramp else None,
             "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
+    if ramp2:
+        row["delay_ramp2"] = float(np.mean(ramp2))
     if attr is not None:
         row["attrib"] = dict(attr)
     if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline

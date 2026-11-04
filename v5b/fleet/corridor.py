@@ -40,12 +40,28 @@ NETS = {NAME: (EDGES, LOOPS), M32: ([(e, a, b, 3 if e in ("4", "5") else k) for 
                                     {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]}),
         R1M2: ([(e, a, b, 1 if e == "r" else 3 if e == "3a" else 2) for e, a, b, _ in EDGES],
                {**LOOPS, "a_end": [("3a", -1.0)], "ma_end": [("3", 300.0)]})}
+# V354: two on-ramps on 3 main lanes; the second accelerating lane 4a sits between edges 3 and 4.
+R2M3 = "r2m3"
+NETS[R2M3] = ([("1", "n1", "n2", 3), ("2", "n2", "m", 3), ("3a", "m", "ae", 4), ("3", "ae", "d", 3), ("4a", "d", "e2", 4), ("4", "e2", "b", 3),
+               ("5", "b", "x", 3), ("r", "r0", "rm", 1), ("r2", "r02", "rm2", 1)], NETS[M32][1])
+R2_NODES = {"e2": (5300.0, 0.0), "b": (6300.0, 0.0), "x": (6800.0, 0.0), "r02": (4580.0, -40.0), "rm2": (4970.0, -4.0)}
+ROUTES2 = {"main": "1 2 3a 3 4a 4 5", "ramp": "r rj 3a 3 4a 4 5", "ramp2": "r2 rj2 4a 4 5"}
+
+
+def routes_of(name: str) -> dict:
+    """route id -> (edges, share of vehicles, entry lanes)."""
+    lanes = dict((x[0], x[3]) for x in NETS[name][0])
+    if name == R2M3:
+        return {"main": (ROUTES2["main"], 1 - 2 * RAMP_SHARE, lanes["1"]), "ramp": (ROUTES2["ramp"], RAMP_SHARE, 1), "ramp2": (ROUTES2["ramp2"], RAMP_SHARE, 1)}
+    return {r: (e, RAMP_SHARE if r == "ramp" else 1 - RAMP_SHARE, lanes["r" if r == "ramp" else "1"]) for r, e in ROUTES.items()}
 
 
 def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
     edges, loops = NETS[name]
     x_ae = dict((n, x) for n, x, _ in NODES)["ae"]
     nodes = [(n, x + (accel_len - 300.0 if x >= x_ae else 0.0), y) for n, x, y in NODES]
+    if name == R2M3:
+        nodes = [(n, *R2_NODES.get(n, (x, y))) for n, x, y in nodes] + [(n, *R2_NODES[n]) for n in ("e2", "r02", "rm2")]
     spec = {"v": 1, "name": name, "nodes": nodes, "edges": edges, "loops": loops, "speed": speed}
     h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
     d = NET_CACHE / f"{name}_{h}"
@@ -57,7 +73,10 @@ def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
                          + (' tlType="static"' if n == "rm" else "") + "/>" for n, x, y in nodes] + ["</nodes>"]
     edg = ["<edges>"] + [f'  <edge id="{e}" from="{a}" to="{b}" numLanes="{k}" speed="{speed}"/>'
                          for e, a, b, k in edges]
-    edg += ['  <edge id="rj" from="rm" to="m" numLanes="1" speed="%s"/>' % speed, "</edges>"]
+    edg += ['  <edge id="rj" from="rm" to="m" numLanes="1" speed="%s"/>' % speed]
+    if name == R2M3:
+        edg += ['  <edge id="rj2" from="rm2" to="d" numLanes="1" speed="%s"/>' % speed]
+    edg += ["</edges>"]
     con = ["<connections>",
            '  <connection from="r" to="rj" fromLane="0" toLane="0"/>',
            '  <connection from="rj" to="3a" fromLane="0" toLane="0"/>']
@@ -65,7 +84,12 @@ def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
     con += [f'  <connection from="2" to="3a" fromLane="{i}" toLane="{i + 1}"/>' for i in range(n_main)]
     con += [f'  <connection from="3a" to="3" fromLane="{i + 1}" toLane="{i}"/>' for i in range(n_main)]
     n45 = dict((x[0], x[3]) for x in edges)["4"]
-    con += [f'  <connection from="3" to="4" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
+    if name == R2M3:
+        con += ['  <connection from="r2" to="rj2" fromLane="0" toLane="0"/>', '  <connection from="rj2" to="4a" fromLane="0" toLane="0"/>']
+        con += [f'  <connection from="3" to="4a" fromLane="{i}" toLane="{i + 1}"/>' for i in range(n45)]
+        con += [f'  <connection from="4a" to="4" fromLane="{i + 1}" toLane="{i}"/>' for i in range(n45)]
+    else:
+        con += [f'  <connection from="3" to="4" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
     con += [f'  <connection from="1" to="2" fromLane="{i}" toLane="{i}"/>' for i in range(n_main)]
     con += [f'  <connection from="4" to="5" fromLane="{i}" toLane="{i}"/>' for i in range(n45)]
     con += ["</connections>"]
