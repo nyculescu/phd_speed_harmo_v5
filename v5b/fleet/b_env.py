@@ -20,7 +20,7 @@ import libsumo as ls
 import numpy as np
 
 from v5b.d1.config import RUNS_ROOT
-from v5b.fleet import b_merge as bm, control as ct, fleet as fl
+from v5b.fleet import b_merge as bm, control as ct, fleet as fl, perturb as pt
 from v5b.fleet.day import CrashSim
 
 K, R = 6, 4
@@ -84,8 +84,9 @@ class MergeEnv(gym.Env):
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
                  n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
-                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None):
+                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None, perturb: dict | None = None):
         self.plant = plant or {}
+        self.perturb, self.pert, self.v2v_down = perturb, None, False
         self.plant_ref = {float(k): tuple(v) for k, v in self.plant.get("ref", {}).items()}
         self.share, self.levels, self.episode, self.warm, self.worker = share, tuple(levels), episode, warm, worker
         self.seed0, self.dt, self.seeds, self.report_net = seed0, step, seeds, report_net
@@ -138,6 +139,10 @@ class MergeEnv(gym.Env):
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
+        self.v2v_down = False
+        self.pert = pt.Perturb(self, self.perturb) if self.perturb else None
+        if self.pert:
+            self.pert.demand()
         self.dem.write(self.rou)
         self.sim = CrashSim(d / "net.xml", self.rou, self.run_dir, self.dem, additional=[d / "add.xml"],
                             step_length=self.dt, seed=s)
@@ -178,7 +183,7 @@ class MergeEnv(gym.Env):
                 continue
             lead = ls.vehicle.getLeader(v, V2V_RANGE)
             cur = lead[0] if lead and lead[0] in self.alks_all else None
-            on = cur is not None and self.v2v_lead.get(v) == cur
+            on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
             if on and v not in self.v2v_on:
                 ls.vehicle.setTau(v, self.v2v_tau)
@@ -354,6 +359,8 @@ class MergeEnv(gym.Env):
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
         self._v2v()
         self._smooth()
+        if self.pert:
+            self.pert.step(self.sim.t)
         e15, e30, b3, b45 = self._merge_stats()
         if self.report_net:
             ne30, nb3 = self._net_stats()
@@ -469,7 +476,7 @@ class ZoneEnv(MergeEnv):
                 continue
             lead = ls.vehicle.getLeader(v, V2V_RANGE)
             cur = lead[0] if lead and lead[0] in self.alks_all else None
-            on = cur is not None and self.v2v_lead.get(v) == cur
+            on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
             want = self.headways[self.target[self._zone(v)]] if on else ALKS_TAU0
             if self.v2v_cur.get(v, ALKS_TAU0) != want:
@@ -660,7 +667,7 @@ class CavEnv(ZoneEnv):
                 continue
             lead = ls.vehicle.getLeader(v, V2V_RANGE)
             cur = lead[0] if lead and lead[0] in self.alks_all else None
-            on = cur is not None and self.v2v_lead.get(v) == cur
+            on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
             lev = self.lvl.get(v, 0)
             want = self.headways[lev] if on else ALKS_TAU0

@@ -28,6 +28,8 @@ N_RANDOM, N_TOP = 100, 5
 METRICS = (("flow", "passed", 1), ("ttt", "N", -1), ("fuel", "fuel_km", -1), ("ttc", "ttc_net", -1), ("brake", "brake_net", -1), ("hard", "b45_net", -1))
 CLIP = 30.0     # no single metric may decide the score
 REF_SPEED = 100.0 / 3.6
+ST_DT, ST_DX, ST_T, ST_X = 10.0, 100.0, 150, 65
+ST_OFFSET = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": 4989.02, "5": 5989.02}
 
 
 def to_plant(c: dict) -> dict:
@@ -69,6 +71,7 @@ def run_one(a: tuple) -> dict:
     meter = bank = None
     S, arr, prev, left = defaultdict(float), {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
+    st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
     step0, sec0 = env._sim_step, env._second
 
     def step():
@@ -97,6 +100,13 @@ def run_one(a: tuple) -> dict:
             S["fuel_truck"] += f * (v in trucks)
             S["b45"] += x <= -4.5
             S["b7"] += x <= -7.0
+            if st is not None:
+                off = ST_OFFSET.get(ls.vehicle.getRoadID(v))
+                if off is not None:
+                    i, j = int((env.sim.t - env.warm) // ST_DT), int((off + ls.vehicle.getLanePosition(v)) // ST_DX)
+                    if i < ST_T and j < ST_X:
+                        st[0, i, j] += s
+                        st[1, i, j] += 1
             if v in env.alks_all:
                 if x <= -3.0:
                     lead = ls.vehicle.getLeader(v, 200.0)
@@ -151,6 +161,10 @@ def run_one(a: tuple) -> dict:
     row |= {"ttc_net": ep["E30"] + ep["out_E30"], "brake_net": ep["brake3"] + ep["out_b3"], "b45_net": S["b45"], "b7_net": S["b7"], "fuel_km": S["fuel"] / max(S["dist"], 1.0) * 1000.0,
             "delay": float(np.mean(delay)) if delay else None, "delay_p95": float(np.percentile(delay, 95)) if delay else None, "delay_ramp": float(np.mean(ramp)) if ramp else None,
             "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
+    if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline
+        row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
+    if env.pert is not None:
+        row["pert_log"] = env.pert.log
     if meter is not None:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
