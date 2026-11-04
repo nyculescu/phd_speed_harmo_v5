@@ -74,6 +74,7 @@ def run_one(a: tuple) -> dict:
     S, arr, prev, left = defaultdict(float), {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
     st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
+    attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
     step0, sec0 = env._sim_step, env._second
 
     def step():
@@ -102,6 +103,17 @@ def run_one(a: tuple) -> dict:
             S["fuel_truck"] += f * (v in trucks)
             S["b45"] += x <= -4.5
             S["b7"] += x <= -7.0
+            if attr is not None:
+                sp = env.dem.by_id[v]
+                lead = ls.vehicle.getLeader(v, 200.0)
+                dv = s - ls.vehicle.getSpeed(lead[0]) if lead and lead[0] else 0.0
+                gap = lead[1] + ls.vehicle.getMinGap(v) if lead and lead[0] else 1e9
+                for key in (sp.cls, f"tau{min(int(sp.tau // 0.4), 3)}" if sp.cls == "hdv_car" else None, f"sigma{min(int(sp.sigma // 0.2), 3)}" if sp.cls == "hdv_car" else None, f"sf{int(sp.sf * 10)}" if sp.cls == "hdv_car" else None):
+                    if key:
+                        c = attr[key]
+                        c[0] += 1
+                        c[1] += dv > 0 and gap / dv < 3.0
+                        c[2] += x <= -3.0
             if st is not None:
                 off = ST_OFFSET.get(ls.vehicle.getRoadID(v))
                 if off is not None:
@@ -163,6 +175,8 @@ def run_one(a: tuple) -> dict:
     row |= {"ttc_net": ep["E30"] + ep["out_E30"], "brake_net": ep["brake3"] + ep["out_b3"], "b45_net": S["b45"], "b7_net": S["b7"], "fuel_km": S["fuel"] / max(S["dist"], 1.0) * 1000.0,
             "delay": float(np.mean(delay)) if delay else None, "delay_p95": float(np.percentile(delay, 95)) if delay else None, "delay_ramp": float(np.mean(ramp)) if ramp else None,
             "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
+    if attr is not None:
+        row["attrib"] = dict(attr)
     if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline
         row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
     if env.pert is not None:

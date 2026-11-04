@@ -68,6 +68,7 @@ LANE_LEFT, LANE_RIGHT = 1, 2
 CONGESTED = 60.0 / 3.6     # SUMO's speed below which passing on the right is allowed
 ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": pt.EDGE4_X}
 SMOOTH_S = 5.0
+TYPE_TAU, TYPE_SIGMA, TYPE_SF, TYPE_RANGE = 0.94, 0.30, 1.05, 60.0     # human medians; speed factor about its upper third
 SPEED_CAPS = (None, 90.0 / 3.6, 80.0 / 3.6)     # V334 step 3: per-CAV speed action
 SMOOTH_RATIO = 1.1     # IDM brakes at accel x (ratio^4 - 1) above its desired speed: about 1.2 m/s² here, 14 m/s² uncapped at a ratio of 1.6
 FREE_MAX_SPEED = 55.56
@@ -585,11 +586,11 @@ class CavEnv(ZoneEnv):
     observation's mask marks the vehicles whose own `hold`-s clock is due: the policy decides only for them (V290)."""
 
     def __init__(self, hold: float = 30.0, w_flow: float = W_CAV_FLOW, w_safety: float = W_CAV_TTC, lane_action: bool = False,
-                 residual: tuple | None = None, speed_action: bool = False, **kw):
+                 residual: tuple | None = None, speed_action: bool = False, hw_type: dict | None = None, **kw):
         kw.setdefault("decision", 5.0)
         super().__init__(**kw)
         self.hold, self.w_flow, self.w_safety, self.lane_action, self.residual = hold, w_flow, w_safety, lane_action, residual
-        self.speed_action = speed_action
+        self.speed_action, self.hw_type = speed_action, hw_type
         if speed_action and not self.plant.get("smooth"):
             raise ValueError("the speed action is applied through the smooth cap")
         self.n_local = cav_sizes(lane_action, residual, speed_action)[0]
@@ -638,7 +639,21 @@ class CavEnv(ZoneEnv):
             self.ldir[v] = d
             self.acc[v] -= W_MOVE * self.decision
 
+    def _risky(self, f: str) -> bool:
+        """V352: the driver behind is of the named type; `tau`, `sigma` and `sf` are hidden, `any` and `truck` can be seen."""
+        s, m = self.dem.by_id[f], self.hw_type["mode"]
+        if m == "truck":
+            return s.cls == "truck"
+        if s.cls != "hdv_car":
+            return m == "any"
+        return (m == "any" or (m in ("tau", "either") and s.tau < TYPE_TAU) or (m in ("sigma", "either") and s.sigma > TYPE_SIGMA)
+                or (m == "sf" and s.sf > TYPE_SF))
+
     def _hw_level(self, v: str, lev: int) -> int:
+        if self.hw_type:
+            f = ls.vehicle.getFollower(v, TYPE_RANGE)[0]
+            if f and f not in self.alks_all and self._risky(f):
+                lev = min(lev, 1)
         o = self.pert.hw_now if self.pert else None
         off = ROAD_X.get(ls.vehicle.getRoadID(v)) if o else None
         if off is None or not o[0] <= off + ls.vehicle.getLanePosition(v) < o[1]:
