@@ -11,6 +11,8 @@ for f in sys.argv[1:3]:
     for line in open(f):
         r = json.loads(line)
         r["fuel_km_step"] = r["fuel_step"] / max(r["dist_step"], 1.0) * 1000.0
+        for k in ("alks_full_events", "pass_straight", "pass_side_by_side", "pass_merging", "pass_lane_change", "b45_step", "b7_step", "free_brake_alks_step"):
+            r.setdefault(k, 0.0)     # counted only when they occur
         T[(r["name"], r["q"])][r["seed"]] = r
 HIGH = {"passed"}
 M = ("passed", "delay", "delay_ramp", "fuel_km_step", "ttc_net", "b3_step", "b45_step", "b7_step", "alks_full_events", "free_brake_alks_step", "pass_straight", "pass_side_by_side", "pass_merging", "pass_lane_change", "undertakes", "end_stop", "jerk_step")

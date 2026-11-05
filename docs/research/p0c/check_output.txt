@@ -1,0 +1,124 @@
+== 4090.0
+ passed: base 1686.5 p0 1702.5 p0c 1713.5 | p0c vs base (0.3, -0.1, 0.8)
+ delay: base 42.4 p0 43.9 p0c 42.7 | p0c vs base (-2.7, -11.8, 6.6)
+ delay_ramp: base 50.9 p0 34.2 p0c 33.3 | p0c vs base (30.6, 4.4, 59.7)
+ fuel_km_step: base 78320.2 p0 75451.3 p0c 74939.4 | p0c vs base (5.1, 3.5, 6.0)
+ ttc_net: base 568.5 p0 3.5 p0c 6.0 | p0c vs base (98.7, 38.3, 184.3)
+ b3_step: base 2986.0 p0 1572.8 p0c 1017.8 | p0c vs base (63.8, 51.4, 80.8)
+ b45_step: base 228.8 p0 525.2 p0c 24.1 | p0c vs base (88.0, 38.4, 154.6)
+ b7_step: base 1.9 p0 411.9 p0c 0.0 | p0c vs base (100.0, 73.0, 189.2)
+ alks_full_events: base 17.5 p0 709.0 p0c 0.0 | p0c vs base (97.1, 71.4, 182.9)
+ free_brake_alks_step: base 1175.5 p0 551.4 p0c 90.4 | p0c vs base (91.5, 82.0, 105.5)
+ pass_straight: base 35.0 p0 29.0 p0c 59.5 | p0c vs base (-82.9, -98.6, -62.9)
+ pass_side_by_side: base 25.0 p0 26.5 p0c 31.0 | p0c vs base (-22.0, -40.0, -8.0)
+ pass_merging: base 20.5 p0 14.0 p0c 12.5 | p0c vs base (43.9, 4.9, 122.0)
+ pass_lane_change: base 2.5 p0 0.5 p0c 2.0 | p0c vs base (60.0, -20.0, 140.0)
+ undertakes: base 86.5 p0 69.0 p0c 105.0 | p0c vs base (-26.6, -37.0, -8.7)
+ end_stop: base 840.0 p0 2.0 p0c 9.5 | p0c vs base (98.9, 46.4, 151.3)
+ jerk_step: base 773585.1 p0 719337.2 p0c 699136.0 | p0c vs base (9.7, 6.0, 13.0)
+ 1-Hz/step braking ratio: base 1.002 p0 0.641 p0c 0.995
+== 4600.0
+ passed: base 1860.5 p0 1902.5 p0c 1906.0 | p0c vs base (2.2, 1.3, 3.4)
+ delay: base 80.8 p0 65.1 p0c 64.9 | p0c vs base (14.9, 5.1, 21.6)
+ delay_ramp: base 109.2 p0 48.3 p0c 47.8 | p0c vs base (55.2, 32.3, 75.8)
+ fuel_km_step: base 82608.5 p0 76356.6 p0c 75604.9 | p0c vs base (9.0, 7.1, 9.6)
+ ttc_net: base 1865.0 p0 4.5 p0c 8.0 | p0c vs base (99.3, 76.6, 107.9)
+ b3_step: base 4519.1 p0 2121.5 p0c 1283.5 | p0c vs base (72.7, 64.0, 75.1)
+ b45_step: base 498.2 p0 776.3 p0c 26.8 | p0c vs base (94.6, 85.4, 100.2)
+ b7_step: base 4.2 p0 577.0 p0c 0.0 | p0c vs base (97.6, 90.5, 117.9)
+ alks_full_events: base 38.0 p0 924.5 p0c 0.0 | p0c vs base (97.4, 89.5, 117.1)
+ free_brake_alks_step: base 1675.3 p0 807.8 p0c 110.0 | p0c vs base (93.6, 83.5, 100.6)
+ pass_straight: base 34.5 p0 29.5 p0c 57.5 | p0c vs base (-65.2, -88.4, -49.3)
+ pass_side_by_side: base 36.0 p0 38.0 p0c 46.0 | p0c vs base (-38.9, -52.8, -2.8)
+ pass_merging: base 63.0 p0 21.5 p0c 20.5 | p0c vs base (62.7, 40.5, 93.7)
+ pass_lane_change: base 1.0 p0 1.0 p0c 1.0 | p0c vs base (50.0, -150.0, 150.0)
+ undertakes: base 133.5 p0 93.5 p0c 128.0 | p0c vs base (1.9, -6.0, 17.2)
+ end_stop: base 2118.0 p0 9.5 p0c 5.5 | p0c vs base (99.7, 77.6, 109.4)
+ jerk_step: base 941829.2 p0 838183.0 p0c 817449.4 | p0c vs base (11.3, 9.4, 14.1)
+ 1-Hz/step braking ratio: base 1.003 p0 0.615 p0c 0.999
+== 5300.0
+ passed: base 1973.5 p0 2089.0 p0c 2073.0 | p0c vs base (5.1, 2.6, 5.7)
+ delay: base 131.9 p0 120.2 p0c 127.5 | p0c vs base (9.3, -7.9, 14.5)
+ delay_ramp: base 145.5 p0 70.6 p0c 81.6 | p0c vs base (55.7, 26.0, 92.2)
+ fuel_km_step: base 86183.7 p0 78312.3 p0c 78246.1 | p0c vs base (9.4, 6.9, 10.2)
+ ttc_net: base 1986.0 p0 79.0 p0c 719.0 | p0c vs base (68.1, 31.7, 91.1)
+ b3_step: base 4909.7 p0 4114.8 p0c 2258.8 | p0c vs base (53.8, 41.9, 69.4)
+ b45_step: base 465.9 p0 1982.2 p0c 203.6 | p0c vs base (64.1, 30.0, 88.4)
+ b7_step: base 3.1 p0 1446.1 p0c 1.4 | p0c vs base (70.5, 19.7, 101.6)
+ alks_full_events: base 29.0 p0 2245.0 p0c 11.5 | p0c vs base (69.0, 17.2, 93.1)
+ free_brake_alks_step: base 1854.9 p0 1844.2 p0c 223.1 | p0c vs base (87.2, 82.6, 96.3)
+ pass_straight: base 11.0 p0 9.0 p0c 26.5 | p0c vs base (-145.5, -163.6, -95.5)
+ pass_side_by_side: base 46.5 p0 37.5 p0c 81.0 | p0c vs base (-66.7, -86.0, -30.1)
+ pass_merging: base 33.0 p0 43.5 p0c 40.5 | p0c vs base (9.1, -110.6, 42.4)
+ pass_lane_change: base 0.0 p0 0.0 p0c 0.0 | p0c vs base (0.0, -100000000000.0, 0.0)
+ undertakes: base 98.5 p0 87.5 p0c 143.5 | p0c vs base (-47.2, -78.2, -18.3)
+ end_stop: base 2094.0 p0 30.5 p0c 361.0 | p0c vs base (87.0, 54.4, 105.2)
+ jerk_step: base 1069190.9 p0 1108610.5 p0c 1098377.2 | p0c vs base (-2.5, -9.2, 2.4)
+ 1-Hz/step braking ratio: base 0.998 p0 0.449 p0c 0.999
+== 6000.0
+ passed: base 2003.5 p0 2138.5 p0c 2138.5 | p0c vs base (6.9, 4.7, 9.0)
+ delay: base 233.3 p0 210.1 p0c 205.5 | p0c vs base (10.3, 9.2, 12.4)
+ delay_ramp: base 274.7 p0 105.9 p0c 108.6 | p0c vs base (68.3, 58.0, 71.9)
+ fuel_km_step: base 88041.9 p0 81240.6 p0c 80206.7 | p0c vs base (9.8, 8.8, 11.2)
+ ttc_net: base 1762.0 p0 1230.0 p0c 1236.5 | p0c vs base (27.4, 18.7, 62.5)
+ b3_step: base 4824.8 p0 5180.3 p0c 2682.9 | p0c vs base (44.0, 40.9, 51.9)
+ b45_step: base 528.9 p0 2590.3 p0c 274.6 | p0c vs base (47.4, 42.0, 62.0)
+ b7_step: base 4.3 p0 1786.1 p0c 1.4 | p0c vs base (77.6, 7.1, 88.2)
+ alks_full_events: base 36.0 p0 2829.5 p0c 13.5 | p0c vs base (77.8, 13.9, 90.3)
+ free_brake_alks_step: base 1905.3 p0 2265.3 p0c 255.3 | p0c vs base (87.0, 83.1, 90.8)
+ pass_straight: base 6.0 p0 1.0 p0c 12.0 | p0c vs base (-100.0, -125.0, -50.0)
+ pass_side_by_side: base 48.0 p0 26.5 p0c 76.5 | p0c vs base (-63.5, -79.2, -25.0)
+ pass_merging: base 6.5 p0 53.5 p0c 44.0 | p0c vs base (-561.5, -815.4, -361.5)
+ pass_lane_change: base 0.0 p0 0.0 p0c 0.0 | p0c vs base (0.0, 0.0, 50000000000.0)
+ undertakes: base 64.0 p0 80.5 p0c 135.0 | p0c vs base (-102.3, -128.1, -84.4)
+ end_stop: base 2217.0 p0 306.0 p0c 540.5 | p0c vs base (76.6, 48.7, 121.0)
+ jerk_step: base 1131462.0 p0 1189436.5 p0c 1219493.1 | p0c vs base (-7.3, -10.1, -3.4)
+ 1-Hz/step braking ratio: base 1.001 p0 0.449 p0c 1.004
+C2 ramp 4090 PASS
+C4 full events 4090 PASS
+C5 blind spot 4090 PASS
+C2 ramp 4600 PASS
+C4 full events 4600 PASS
+C5 blind spot 4600 PASS
+C2 ramp 5300 PASS
+C4 full events 5300 PASS
+C5 blind spot 5300 PASS
+C2 ramp 6000 PASS
+C4 full events 6000 PASS
+C5 blind spot 6000 PASS
+C1 collisions, teleports PASS
+C3 passed 5300 PASS
+C3 delay 5300 FAIL
+C3 fuel_km_step 5300 PASS
+C3 ttc_net 5300 PASS
+C3 b3_step 5300 PASS
+C6 free-road 5300 PASS
+C7 undertakes 5300 FAIL
+collisions p0c by level {4090.0: 0, 4600.0: 0, 5300.0: 0, 6000.0: 0}
+== r2m3, report only
+ 4600 passed: p0 1914.0 p0c 1912.0
+ 4600 delay: p0 45.0 p0c 42.6
+ 4600 delay_ramp: p0 41.6 p0c 42.0
+ 4600 delay_ramp2: p0 32.3 p0c 32.0
+ 4600 ttc_net: p0 26.0 p0c 33.0
+ 4600 b3_step: p0 2076.3 p0c 1360.0
+ 4600 b7_step: p0 495.4 p0c 0.2
+ 4600 alks_full_events: p0 839.0 p0c 2.0
+ 4600 free_brake_alks_step: p0 772.1 p0c 212.9
+ 4600 pass_straight: p0 24.0 p0c 54.0
+ 4600 end_stop: p0 5.0 p0c 3.0
+ 4600 end_stop2: p0 30.5 p0c 22.5
+ ratio p0 0.674 p0c 1.0 collisions p0c 0 p0 0
+ 5300 passed: p0 2134.0 p0c 2132.0
+ 5300 delay: p0 82.5 p0c 87.5
+ 5300 delay_ramp: p0 81.5 p0c 100.3
+ 5300 delay_ramp2: p0 76.1 p0c 74.4
+ 5300 ttc_net: p0 1135.5 p0c 1370.0
+ 5300 b3_step: p0 4209.9 p0c 2786.9
+ 5300 b7_step: p0 1100.1 p0c 2.5
+ 5300 alks_full_events: p0 1806.5 p0c 22.5
+ 5300 free_brake_alks_step: p0 1614.6 p0c 393.3
+ 5300 pass_straight: p0 30.0 p0c 74.0
+ 5300 end_stop: p0 34.0 p0c 24.0
+ 5300 end_stop2: p0 353.0 p0c 442.0
+ ratio p0 0.62 p0c 0.993 collisions p0c 0 p0 0
