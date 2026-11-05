@@ -17,7 +17,14 @@ REF = json.load(open("/home/catalin/work/phd/v5b1_runs/conf3/smoke_env.json"))["
 
 
 def x_road(env, v):
-    return float(env._x(v))
+    """_x writes xlast, which the observation reads inside a junction; restore it so that tracing does not change the run."""
+    had, old = v in env.xlast, env.xlast.get(v)
+    x = float(env._x(v))
+    if had:
+        env.xlast[v] = old
+    else:
+        env.xlast.pop(v, None)
+    return x
 
 
 if __name__ == "__main__":
