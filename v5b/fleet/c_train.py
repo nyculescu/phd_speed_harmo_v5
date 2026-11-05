@@ -217,6 +217,7 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
         kw = {**ENV, **(env_kw or {}), "share": 0.5, "levels": levels, "worker": FIRST_WORKER + learner * n_envs + i, "n_ep0": NEP0 + i, "run_dir": str(out / "rd")}
         p = ctx.Process(target=_worker, args=(b, kw), daemon=True)
         p.start()
+        b.close()     # else a dead worker never gives the parent an EOF
         conns.append(a)
         procs.append(p)
     sizes = be.cav_sizes(**(env_kw or {}))

@@ -12,6 +12,7 @@ if __name__ == "__main__":
     pol = {f"d{i}": {"pt": str(train / f"C{i}_final.pt")} for i in range(LEARNERS)}
     base = {"nc": {}, "p333": o["ctrl"]["p333"], **pol}
     single = {o["single_rule"]: o["ctrl"][o["single_rule"]]}
+    out.mkdir(parents=True, exist_ok=True)
     prim = {f"{c}|{n}": cfg(k, c) for c in PRIMARY for n, k in {**base, **single, **o["ctrl"]}.items()}
     ps.matrix(prim, (Q,), SEEDS_EVAL, out / "eval_primary.jsonl", w, str(out / "rd"))
     ps.matrix({f"{c}|{n}": cfg(k, c) for c in PRIMARY for n, k in {**base, **single}.items()}, (4600.0,), SEEDS_EVAL, out / "eval_map_x.jsonl", w, str(out / "rd"))

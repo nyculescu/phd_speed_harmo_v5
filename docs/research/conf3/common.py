@@ -54,14 +54,27 @@ def load(*files) -> dict:
     return T
 
 
+REQUIRED = ("all_delay", "ttc_net", "passed", "dist_step", "ttc_half")
+
+
+def check_rows(T: dict, n: int) -> None:
+    """Every arm is complete and holds the metrics the reading uses. Only counters may be absent."""
+    for (name, q), A in T.items():
+        assert len(A) == n, (name, q, len(A))
+        for r in A.values():
+            for k in REQUIRED:
+                assert r.get(k) is not None, (name, q, r["seed"], k)
+
+
 def val(row: dict, key: str) -> float:
     """A counter that never fired is absent from the row."""
     v = row.get(key)
     return 0.0 if v is None else float(v)
 
 
-def effect(A: dict, B: dict, key: str, sign: int = -1, pct=(1.25, 98.75)) -> tuple:
-    """Median of paired differences over the reference's median, in %, higher is better; percentile bootstrap, denominator fixed."""
+def raw(A: dict, B: dict, key: str, sign: int = -1, pct=(1.25, 98.75)) -> tuple:
+    """Median of paired differences over the reference's median, in %, higher is better; percentile bootstrap, denominator fixed.
+    Thresholds read these unrounded values."""
     ds = sorted(set(A) & set(B))
     if not ds:
         raise ValueError("no paired seeds")
@@ -69,7 +82,12 @@ def effect(A: dict, B: dict, key: str, sign: int = -1, pct=(1.25, 98.75)) -> tup
     d = np.array([sign * (val(A[k], key) - val(B[k], key)) / ref * 100 for k in ds])
     rng = np.random.default_rng(20261104)
     lo, hi = np.percentile(np.median(d[rng.integers(0, len(d), (20000, len(d)))], axis=1), pct)
-    return round(float(np.median(d)), 1), round(float(lo), 1), round(float(hi), 1)
+    return float(np.median(d)), float(lo), float(hi)
+
+
+def effect(A: dict, B: dict, key: str, sign: int = -1, pct=(1.25, 98.75)) -> tuple:
+    """The same, rounded for tables."""
+    return tuple(round(x, 1) for x in raw(A, B, key, sign, pct))
 
 
 def med(A: dict, key: str) -> float:

@@ -13,6 +13,7 @@ import multiprocessing as mp
 import sys
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from pathlib import Path
 
 import numpy as np
@@ -320,9 +321,21 @@ def matrix(cfgs: dict, levels: tuple, seeds, f: Path, workers: int, rd: str) -> 
     jobs = [(n, c, q, s, rd) for n, c in cfgs.items() for q in levels for s in seeds if (n, q, s) not in done]
     print(f.name, len(jobs), "jobs", flush=True)
     with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex, f.open("a") as w:
-        for fut in as_completed([ex.submit(run_one, j) for j in jobs]):
-            w.write(json.dumps(fut.result()) + "\n")
+        futs = {ex.submit(run_one, j): j for j in jobs}
+        failed = []
+        for fut in as_completed(futs):
+            try:
+                row = fut.result()
+            except BrokenProcessPool:
+                raise
+            except Exception as x:     # keep the batch's other rows; the name is logged at once
+                failed.append(futs[fut][0])
+                print("FAILED", futs[fut][0], futs[fut][2], futs[fut][3], repr(x)[:300], flush=True)
+                continue
+            w.write(json.dumps(row) + "\n")
             w.flush()
+    if failed:
+        raise RuntimeError(f"{len(failed)} of {len(jobs)} jobs failed, first {failed[0]}")
     return [json.loads(x) for x in f.read_text().splitlines()]
 
 

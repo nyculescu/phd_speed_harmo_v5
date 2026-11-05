@@ -3,12 +3,12 @@ import json
 import sys
 from pathlib import Path
 
-from common import PRIMARY, Q, collisions, effect, families, load, med
+from common import PRIMARY, Q, check_rows, collisions, families, load, med, raw
 
 
 def admissible(T: dict, cell: str, rule: str) -> bool:
     A, P = T[(f"{cell}|{rule}", Q)], T[(f"{cell}|p333", Q)]
-    return effect(A, P, "all_delay")[0] >= -2.0 and collisions(A) <= collisions(P) + 1
+    return raw(A, P, "all_delay")[0] >= -2.0 and collisions(A) <= collisions(P) + 1
 
 
 def choose(T: dict, fam: dict) -> dict:
@@ -18,22 +18,25 @@ def choose(T: dict, fam: dict) -> dict:
         ok = {f: [r for r in rules if admissible(T, cell, r)] for f, rules in fam.items()}
         forms = {f: min(rs, key=lambda r: med(T[(f"{cell}|{r}", Q)], "ttc_net")) for f, rs in ok.items() if rs}
         P = T[(f"{cell}|p333", Q)]
-        close = [r for r in every if effect(T[(f"{cell}|{r}", Q)], P, "ttc_net")[0] >= -10.0]
-        wide = [r for r in every if effect(T[(f"{cell}|{r}", Q)], P, "all_delay")[0] >= -10.0]
+        close = [r for r in every if raw(T[(f"{cell}|{r}", Q)], P, "ttc_net")[0] >= -10.0]
+        wide = [r for r in every if raw(T[(f"{cell}|{r}", Q)], P, "all_delay")[0] >= -10.0]
         out["cells"][cell] = {"forms": forms, "admissible": {f: len(rs) for f, rs in ok.items()},
                               "delay_opponent": min(close, key=lambda r: med(T[(f"{cell}|{r}", Q)], "all_delay")),
                               "front_row": min(wide, key=lambda r: med(T[(f"{cell}|{r}", Q)], "ttc_net"))}
     both = [r for r in every if all(admissible(T, c, r) for c in PRIMARY)]
-    gain = {r: sum(effect(T[(f"{c}|{r}", Q)], T[(f"{c}|p333", Q)], "ttc_net")[0] for c in PRIMARY) / 2 for r in both}
+    gain = {r: sum(raw(T[(f"{c}|{r}", Q)], T[(f"{c}|p333", Q)], "ttc_net")[0] for c in PRIMARY) / 2 for r in both}
     out["single_rule"] = max(gain, key=gain.get)
-    out["ctrl"] = {r: every[r] for r in {out["single_rule"], "p333"} | {x for c in out["cells"].values() for x in (*c["forms"].values(), c["delay_opponent"], c["front_row"])}}
+    names = {out["single_rule"], "p333"} | {x for c in out["cells"].values() for x in (*c["forms"].values(), c["delay_opponent"], c["front_row"])}
+    if "copy" in every:     # always on evaluation seeds, so its numbers exist even if the filter drops it
+        names.add("copy")
+    out["ctrl"] = {r: every[r] for r in names}
     return out
 
 
 def early_kill(T: dict, fam: dict) -> list:
     """Rules beating no control on delay by at least 10 %, CI excluding 0, in a primary cell."""
     return [(c, r) for c in PRIMARY for rules in fam.values() for r in rules
-            if (lambda e: e[0] >= 10.0 and e[1] > 0)(effect(T[(f"{c}|{r}", Q)], T[(f"{c}|nc", Q)], "all_delay"))]
+            if (lambda e: e[0] >= 10.0 and e[1] > 0)(raw(T[(f"{c}|{r}", Q)], T[(f"{c}|nc", Q)], "all_delay"))]
 
 
 if __name__ == "__main__":
@@ -44,8 +47,9 @@ if __name__ == "__main__":
         fam["copy"] = {"copy": json.load(open(sys.argv[2]))}
         files.append(d / "tune_copy.jsonl")
     T = load(*files)
-    n = {f"{c}|{r}": len(T[(f"{c}|{r}", Q)]) for c in PRIMARY for rules in fam.values() for r in rules}
-    assert set(n.values()) == {20}, {k: v for k, v in n.items() if v != 20}
+    check_rows(T, 20)
+    want = {f"{c}|{r}" for c in PRIMARY for rules in fam.values() for r in rules} | {f"{c}|nc" for c in PRIMARY}
+    assert want == {k[0] for k in T}, want ^ {k[0] for k in T}
     kill = early_kill(T, fam)
     print("rules beating no control on delay by 10 %:", len(kill), flush=True)
     if not kill:
