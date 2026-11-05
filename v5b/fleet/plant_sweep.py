@@ -51,6 +51,9 @@ def to_plant(c: dict) -> dict:
         p["smooth"] = True
     if c.get("ease"):
         p["ease"] = True
+    for k in ("ease_max", "smooth_s"):
+        if k in c:
+            p[k] = c[k]
     if "geom" in c:
         p["geom"] = c["geom"]
     if c.get("smooth") or c.get("alks_undertake"):

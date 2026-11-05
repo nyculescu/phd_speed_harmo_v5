@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL's safety edge against several rule forms on P0c
 
-Status: draft for the author's approval (V369). Nothing here has run. It starts only if P0c passes its check (V370) and the author accepts it. Exploratory evidence: V359, V361, V368.
+Status: draft for the author's approval (V369). Nothing here has run. It starts only after the author accepts a fixed plant (V371, V372). Exploratory evidence: V359, V361, V368.
 
 ## Question
 
@@ -8,7 +8,7 @@ Under a sustained slowdown on r2m3, does per-CAV DRL keep its safety edge when t
 
 ## Plant
 
-r2m3 with the settings of `docs/research/p0c/plant_p0c.json`, frozen before any result on these seeds. Not tuned for this study.
+r2m3 with the fixed plant the author accepts after V371, frozen before any result on these seeds. Not tuned for this study.
 
 ## Controllers
 
@@ -20,7 +20,7 @@ Rule families, all on the 10-s clock:
 |---|---|---|
 | Uniform headway | 1.6, 1.2, 1.0, 0.8 s | 4 |
 | By zone | all patterns of 1.2 or 0.8 s over the 5 zones (V354) | 32 |
-| On lane-road 4a | 1.6, 1.2, 1.0 s on 4a, 0.8 s elsewhere | 3 |
+| On road 4a | 1.6, 1.2, 1.0 s on 4a, 0.8 s elsewhere | 3 |
 | Local adaptive | 0.8 s, or 1.2 s when mean speed in the next 400 or 1,000 m is below 10, 13 or 16 m/s | 6 |
 | Adaptive on 4a | the local rule, plus 1.2 s on 4a | 6 |
 | Copy of the policies | mean level per road, traced from the trained policies on the tracing seeds | 1 |

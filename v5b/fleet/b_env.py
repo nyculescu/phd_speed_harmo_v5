@@ -80,10 +80,11 @@ def make(zones: bool = False, cav: bool = False, **kw):
     return CavEnv(**kw) if cav else ZoneEnv(**kw) if zones else MergeEnv(**kw)
 
 
-def ease_cap(speed: float, target: float, dt: float) -> float:
+def ease_cap(speed: float, target: float, dt: float, need: float = 0.0) -> float:
     """The cap for the next step. A cap below the current speed is reached within one step and the action step holds that
-    braking (V367), so it stays a small step under the speed until the target is reached."""
-    return target if speed <= target else max(target, speed * (1.0 - (1.0 - 1.0 / SMOOTH_RATIO) * dt))
+    braking (V367), so it stays a small step under the speed until the target is reached. `need` is a harder deceleration
+    in m/s², when the ratio alone would pass a slower left-lane vehicle."""
+    return target if speed <= target else max(target, speed - max(speed * (1.0 - 1.0 / SMOOTH_RATIO), need) * dt)
 
 
 class MergeEnv(gym.Env):
@@ -145,7 +146,7 @@ class MergeEnv(gym.Env):
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
         self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
-        self.smooth_cap, self.smooth_target = {}, {}
+        self.smooth_cap, self.smooth_target, self.smooth_need = {}, {}, {}
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
@@ -346,19 +347,25 @@ class MergeEnv(gym.Env):
         if not self.plant.get("smooth"):
             return
         ease = self.plant.get("ease")
+        window, need_max = self.plant.get("smooth_s", SMOOTH_S), self.plant.get("ease_max", 0.0)
         for v in ls.vehicle.getIDList():
             if v not in self.alks_all:
                 continue
             s = ls.vehicle.getSpeed(v)
             cap = min(self._cap_target(v), self._oracle_cap(v))
+            need = 0.0
             if cap < FREE_MAX_SPEED and not ease:
                 cap = max(cap, s / SMOOTH_RATIO)
             if s > CONGESTED and ls.vehicle.getLaneID(v) not in ("3a_0", "4a_0"):
                 for nv, gap in ls.vehicle.getNeighbors(v, 2):
-                    if gap < SMOOTH_S * s:
-                        cap = min(cap, max(ls.vehicle.getSpeed(nv), CONGESTED, 0.0 if ease else s / SMOOTH_RATIO))
+                    if gap < window * s:
+                        vn = ls.vehicle.getSpeed(nv)
+                        cap = min(cap, max(vn, CONGESTED, 0.0 if ease else s / SMOOTH_RATIO))
+                        if need_max and s > vn:
+                            need = max(need, min((s - vn) ** 2 / (2.0 * max(gap, 1.0)), need_max))
             if ease:
                 self.smooth_target[v] = cap
+                self.smooth_need[v] = need
             elif abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 0.1:
                 ls.vehicle.setMaxSpeed(v, cap)
                 self.smooth_cap[v] = cap
@@ -372,7 +379,7 @@ class MergeEnv(gym.Env):
             if v not in live:
                 del self.smooth_target[v]
                 continue
-            cap = ease_cap(ls.vehicle.getSpeed(v), target, self.dt)
+            cap = ease_cap(ls.vehicle.getSpeed(v), target, self.dt, self.smooth_need.get(v, 0.0))
             if abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 1e-3:
                 ls.vehicle.setMaxSpeed(v, cap)
                 self.smooth_cap[v] = cap
