@@ -87,7 +87,8 @@ class MergeEnv(gym.Env):
                  worker: int = 0, seed0: int = SEED0, step: float = 0.1, seeds: list | None = None,
                  run_dir: str | None = None, report_net: bool = False, shared: bool = False, decision: float = 1.0,
                  n_ep0: int = 0, reward: str = "safety", tau: float | None = None,
-                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None, perturb: dict | None = None):
+                 v2v_tau: float | None = None, alks_asl: float | None = None, ref_delay: bool = False, plant: dict | None = None, perturb: dict | None = None, seeds_per_worker: int = SEEDS_PER_WORKER):
+        self.seeds_per_worker = seeds_per_worker
         self.plant = plant or {}
         self.perturb, self.pert, self.v2v_down = perturb, None, False
         self.plant_ref = {float(k): tuple(v) for k, v in self.plant.get("ref", {}).items()}
@@ -119,9 +120,9 @@ class MergeEnv(gym.Env):
         if self.seeds is not None:
             s = self.seeds[self.n_ep % len(self.seeds)]
         else:
-            if self.n_ep >= SEEDS_PER_WORKER:
+            if self.n_ep >= self.seeds_per_worker:
                 raise ValueError("worker out of training seeds")
-            s = self.seed0 + self.worker * SEEDS_PER_WORKER + self.n_ep
+            s = self.seed0 + self.worker * self.seeds_per_worker + self.n_ep
         q = opt.get("q", self.levels[self.n_ep % len(self.levels)])
         self.n_ep += 1
         self.cfg = bm.setup(self.share, self.dt)
