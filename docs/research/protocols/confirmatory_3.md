@@ -1,6 +1,6 @@
-# Confirmatory 3: DRL's safety edge against several rule forms on P0c
+# Confirmatory 3: DRL's safety edge against several rule forms on P0d
 
-Status: draft for the author's approval (V369). Nothing here has run. It starts only after the author accepts a fixed plant (V371, V372). Exploratory evidence: V359, V361, V368.
+Status: draft for the author's approval (V369). Nothing here has run. It starts only after the author accepts P0d (V375). Exploratory evidence: V359, V361, V368.
 
 ## Question
 
@@ -8,7 +8,7 @@ Under a sustained slowdown on r2m3, does per-CAV DRL keep its safety edge when t
 
 ## Plant
 
-r2m3 with the fixed plant the author accepts after V371, frozen before any result on these seeds. Not tuned for this study.
+r2m3 with the settings of `docs/research/p0c/plant_p0d.json`, frozen before any result on these seeds. Not tuned for this study.
 
 ## Controllers
 
@@ -31,9 +31,9 @@ DRL: per-CAV, as in V334, without the speed action: gamma 0.933, lambda 0.967, s
 
 The opponent is chosen for each cell separately on tuning seeds, so a rule knows the condition and the level in advance, which DRL does not. This favours the rules and is deliberate.
 
-In each cell, the opponent is the rule with the lowest network TTC among those with delay at most 2 % worse than p333 and 0 collisions on the tuning seeds. If none qualifies, the opponent is p333.
+In each primary cell, the opponent is the rule with the lowest network TTC among those with delay at most 2 % worse than p333 and 0 collisions on the tuning seeds. If none qualifies, the opponent is p333.
 
-One single rule chosen across all cells is reported too.
+One single rule chosen across both primary cells is reported too.
 
 ## Conditions and levels
 
@@ -96,14 +96,16 @@ No "first" or "novel" wording. All controllers are reported per cell as an opera
 
 ## Compute
 
-Rule tuning: about 52 rules x 10 cells x 20 seeds, about 10,400 runs. At about 1 minute per run on 24 workers, about 7 hours. If that is too long, tuning runs only X1 and X2 at 5,300 first, about 2,100 runs and 1.5 hours, and the other cells use the same rule; this is the plan unless the author asks for all cells.
+Measured on the P0d check: 240 runs in about 21 minutes on 24 workers.
 
-Training: about 4 hours at 15 environments. Evaluation: about 7 controllers x 10 cells x 20 seeds = 1,400 runs, about 1 hour. About 7 hours in all, CPU guard at the author's limit.
+Rule tuning on all 10 cells would be about 10,400 runs and 15 hours. So tuning runs X1 and X2 at 5,300 only, about 2,100 runs and 3 hours, and each map cell uses the rule chosen for the nearest primary cell, or p333 for S, H1 and H2.
+
+Training: about 4 hours at 15 environments. Evaluation: about 7 controllers x 10 cells x 20 seeds = 1,400 runs, about 2 hours. About 9 hours in all, CPU guard at the author's limit.
 
 ## Disclosures
 
 - This run is chosen after V359, V361 and V368, on the cell where DRL already looked best.
-- P0c's fix was found by this project's review and its check is exploratory in tone, on 10 seeds. P0c keeps `lcAssertive` 1.4 and the smooth rule, chosen before the fix and not validated against real traffic.
+- P0d's fix came from this project's review. Its look-ahead and braking limit were chosen after an earlier check failed on undertakes, and its own check on 20 seeds failed that item narrowly (V375). P0d keeps `lcAssertive` 1.4 and the smooth rule, chosen before the fix and not validated against real traffic.
 - The reward and action design were shaped by exploratory runs that knew p333.
 - r2m3's merges are 1.2 km apart; other spacings are untested.
 - No capacity drop is established on these plants.
