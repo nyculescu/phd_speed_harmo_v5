@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL against several rule forms on the fixed plant
 
-Status: revision 3. V378 approved revision 2, with the defaults at [A1] to [A6]. This revision adds what the code review found the text left open (V381) and awaits the author's approval (V382). The run commit is `fae4620`; the pre-run checks passed there. No tuning row has run.
+Status: revision 3, approved by the author in V383; approved text at commit `a500806`. V378 approved revision 2, with the defaults at [A1] to [A6]; this revision adds what the code review found the text left open (V381). The run commit is `fae4620`; the pre-run checks passed there (V382).
 
 ## Question
 
