@@ -334,7 +334,7 @@ def test_collapse_statistic_and_saved_settings():
     a, b = cl.stat(rows)
     assert a == pytest.approx(0.0) and b == pytest.approx(0.1)
     env = {"hold": 10.0}
-    good_cfg = {"learner": 2, "updates": 500, "n_envs": 3, "gamma": 0.933, "lam": 0.967, "levels": list(cm.LEVELS), "seed": 20261207, "workers": [15, 16, 17], "env": {**cl.ct.ENV, **env}}
+    good_cfg = {"learner": 2, "updates": 500, "n_envs": 3, "gamma": 0.933, "lam": 0.967, "levels": list(cm.LEVELS), "seed": 20261207, "workers": [15, 16, 17], "env": {**cl.ct.ENV, **env}, "inputs": cl.ct.INPUT_NORM}
     assert cl.settings_differ(good_cfg, 2, env) == []
     assert cl.settings_differ({**good_cfg, "seed": 20261105}, 2, env) == ["seed"] and cl.settings_differ({**good_cfg, "env": {}}, 2, env) == ["env"]
 

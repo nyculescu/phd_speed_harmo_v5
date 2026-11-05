@@ -18,7 +18,7 @@ say "code $(cat "$C/COMMIT")"
 watchdog & WD=$!
 trap 'kill $WD 2>/dev/null' EXIT
 
-step "tests" $PY -m pytest "$C/tests/test_conf3.py" -q -p no:cacheprovider
+step "tests" $PY -m pytest "$C/tests/test_conf3.py" "$C/tests/test_input_norm.py" -q -p no:cacheprovider
 step "rule tuning" $PY $R/tune.py "$D" $W
 step "first selection, early kill" $PY $R/select_opp.py "$D"
 step "training config" $PY $R/make_env.py "$D/tune_nc.jsonl" "$D/env.json"

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     env = be.make(**kw)
     ck = torch.load(POL, map_location="cpu")
     net = ct.Net(ck["n_local"], ck["n_act"])
-    net.load_state_dict(ck["net"])
+    getattr(net, "restore", net.load_state_dict)(ck["net"])     # restore exists from V388 on
     scale = ck["scale"]
     params = {"actor": sum(p.numel() for p in net.actor.parameters()), "critic": sum(p.numel() for p in net.critic.parameters()), "scale": scale}
     o, _ = env.reset()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             tl = torch.from_numpy(lo[due])
             tg = torch.from_numpy(np.repeat(gl[None], int(due.sum()), 0))
             with torch.no_grad():
-                p = torch.softmax(net.actor(tl), 1).numpy()
+                p = torch.softmax(getattr(net, "logits", net.actor)(tl), 1).numpy()
                 val = net.value(tl, tg).numpy() * scale
             a = p.argmax(1)
             for v, row, pr, ai, va in zip((x for x, d in zip(ids, due) if d), lo[due], p, a, val):

@@ -21,7 +21,7 @@ def collapsed(rows: list) -> bool:
 
 
 def settings_differ(cfg: dict, i: int, env: dict) -> list:
-    want = {"learner": i, "updates": UPDATES, "n_envs": ENVS, "gamma": 0.933, "lam": 0.967, "levels": list(LEVELS), "seed": NET_SEED + i, "workers": [FIRST_WORKER + i * ENVS + k for k in range(ENVS)], "env": {**ct.ENV, **env}}
+    want = {"learner": i, "updates": UPDATES, "n_envs": ENVS, "gamma": 0.933, "lam": 0.967, "levels": list(LEVELS), "seed": NET_SEED + i, "workers": [FIRST_WORKER + i * ENVS + k for k in range(ENVS)], "env": {**ct.ENV, **env}, "inputs": ct.INPUT_NORM}
     return [k for k, v in want.items() if cfg.get(k) != v]
 
 

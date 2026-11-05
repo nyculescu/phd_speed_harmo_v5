@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL against several rule forms on the fixed plant
 
-Status: revision 3, approved by the author in V383; approved text at commit `a500806`. V378 approved revision 2, with the defaults at [A1] to [A6]; this revision adds what the code review found the text left open (V381). The run commit is `fae4620`; the pre-run checks passed there (V382).
+Status: revision 4, awaiting the author's approval. It changes only the policy inputs, decided by the author in V388 before any policy data; see [A7] and V388-V389. Revision 3, approved by the author in V383; approved text at commit `a500806`. V378 approved revision 2, with the defaults at [A1] to [A6]; this revision adds what the code review found the text left open (V381). The run commit is `fae4620`; the pre-run checks passed there (V382).
 
 ## Question
 
@@ -40,6 +40,8 @@ Rules answer on the 5-s decision grid and policies every 10 s; both move at most
 No MPC or forecast controller is an opponent; this arm is dropped. No oracle runs on r2m3; this is disclosed.
 
 DRL: per-CAV, as in V334, without the speed action. PPO, gamma 0.933, lambda 0.967, safety weight 10, flow weight 0.4. 5 learners x 3 environments, 500 updates, final policies only, no selection. Evaluation takes the greedy action. Training draws perturbations as in V358, at levels 4,090, 4,600, 5,300.
+
+[A7] **Inputs, revision 4.** Actor and critic inputs are scaled by a running mean and SD, updated only between updates and clipped at 5, and saved with the weights, so evaluation uses what training used. A pilot collection before update 0 sets the first statistics; nothing is learned from it. An input that never varied is set to 0: `hold left`, dead since V290 (V387). The nearest accelerating-lane vehicle no longer counts the vehicle itself, which made it 0 for a third of merging decisions (V389). Rule tuning rows from revision 3 are kept: rules read no changed input, and 8 rows rerun at the new commit match every number.
 
 Training settings come from a committed script, not by hand: `hold` 10, `seed0` 7,451,320, `seeds_per_worker` 520, workers 9-23, plant from `plant_p0d.json` with geom r2m3 and references from P0d no-control rows at all 3 levels. A check asserts all of this against the config saved with each learner. PPO network seeds are new, not those of earlier runs.
 
@@ -159,6 +161,9 @@ Rule tuning: 70 rules x 2 cells x 20 seeds and no-control rows, about 2,900 runs
 
 ## Disclosures
 
+- Revision 4 stopped training after 3 updates with hand-scaled inputs; they are set aside in `train_aborted_hand_scaled` and not used. The smoke run of [A7] ran as learner 0, so learner 0's first training seeds were also used there; training seeds enter no comparison.
+- The collapse threshold's null (0.027) was measured on hand-scaled learners; its false-fail rate with normalised inputs is unknown. A failure stops the chain and goes to the author, as before.
+- The replication reading now differs from V359 in the inputs too, not only in the plant.
 - All evidence before this run (V359, V361, V368) ran on P0, with its hidden braking, the instant tau rise and the 1-s taper. Only those best cells are repeated on the fixed plant; every other phase 1-3 result stays on P0.
 - This run is chosen after those results, on the cell where DRL already looked best. V361's rule did not hold on fresh seeds (V368).
 - P0d's look-ahead and braking limit were chosen after an earlier check failed on undertakes, and P0d's own check failed that item narrowly at 5,300 (V375); the author counted it as met (V376). `lcAssertive` 1.4 and the smooth rule were chosen before the fix and are not validated against real traffic.

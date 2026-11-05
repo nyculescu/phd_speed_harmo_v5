@@ -29,6 +29,9 @@ NEP0 = 0
 GAMMA, LAM = 0.8, 0.9     # per 30-s decision: a horizon of about 150 s, the time to cross the merge area and feel the result
 EPOCHS, BATCH = 10, 4096
 LR, CLIP, ENT, VF, GRAD = 3e-4, 0.2, 0.01, 0.5, 0.5
+CLIP_INPUT = 5.0
+INPUT_NORM = "running mean and SD, updated between updates, clip 5"
+NORM_KEYS = {"lo_mean", "lo_var", "gl_mean", "gl_var", "n_seen"}
 
 
 def _mlp(n_in: int, n_out: int) -> nn.Sequential:
@@ -40,12 +43,45 @@ class Net(nn.Module):
         super().__init__()
         self.actor = _mlp(n_local, n_act)
         self.critic = _mlp(n_local + be.CAV_GLOBAL, 1)
+        # V388: saved with the weights, so that use cannot differ from training. Fixed during a collect and its update, or the probability ratio breaks.
+        self.register_buffer("lo_mean", torch.zeros(n_local, dtype=torch.float64))
+        self.register_buffer("lo_var", torch.ones(n_local, dtype=torch.float64))
+        self.register_buffer("gl_mean", torch.zeros(be.CAV_GLOBAL, dtype=torch.float64))
+        self.register_buffer("gl_var", torch.ones(be.CAV_GLOBAL, dtype=torch.float64))
+        self.register_buffer("n_seen", torch.zeros(1, dtype=torch.float64))
+
+    def _scaled(self, x: torch.Tensor, mean: torch.Tensor, var: torch.Tensor) -> torch.Tensor:
+        if not self.n_seen:     # a policy from before V388 keeps its inputs exactly as it was trained on them
+            return x
+        z = ((x - mean.float()) / (var.float() + 1e-8).sqrt()).clamp(-CLIP_INPUT, CLIP_INPUT)
+        return torch.where(var.float() > 1e-12, z, torch.zeros_like(z))     # never varied in the data, so its weights never trained (V389)
+
+    def logits(self, lo: torch.Tensor) -> torch.Tensor:
+        return self.actor(self._scaled(lo, self.lo_mean, self.lo_var))
 
     def dist(self, lo: torch.Tensor) -> torch.distributions.Categorical:
-        return torch.distributions.Categorical(logits=self.actor(lo))
+        return torch.distributions.Categorical(logits=self.logits(lo))
 
     def value(self, lo: torch.Tensor, gl: torch.Tensor) -> torch.Tensor:
-        return self.critic(torch.cat([lo, gl], 1)).squeeze(1)
+        return self.critic(torch.cat([self._scaled(lo, self.lo_mean, self.lo_var), self._scaled(gl, self.gl_mean, self.gl_var)], 1)).squeeze(1)
+
+    def observe(self, lo: np.ndarray, gl: np.ndarray) -> None:
+        """Adds a batch to the input statistics, as if all batches so far were one."""
+        n0, n1 = float(self.n_seen), float(len(lo))
+        for x, m, v in ((lo, self.lo_mean, self.lo_var), (gl, self.gl_mean, self.gl_var)):
+            t = torch.from_numpy(x).double()
+            bm, bv = t.mean(0), t.var(0, unbiased=False)
+            d = bm - m
+            v.copy_((v * n0 + bv * n1 + d * d * n0 * n1 / (n0 + n1)) / (n0 + n1))
+            m.copy_(m + d * n1 / (n0 + n1))
+        self.n_seen += n1
+
+    def restore(self, sd: dict) -> None:
+        own = self.state_dict()
+        missing = set(own) - set(sd)
+        if missing - NORM_KEYS:
+            raise KeyError(f"checkpoint lacks {sorted(missing - NORM_KEYS)}")
+        self.load_state_dict({**own, **sd})
 
 
 class Greedy:
@@ -55,14 +91,14 @@ class Greedy:
         torch.set_num_threads(1)
         ck = torch.load(path, map_location="cpu")
         self.net = Net(ck.get("n_local", be.CAV_LOCAL), ck.get("n_act", len(be.HEADWAYS_S)))
-        self.net.load_state_dict(ck["net"])
+        self.net.restore(ck["net"])
 
     def __call__(self, o: tuple) -> dict:
         ids, lo, _, due = o
         if not due.any():
             return {}
         with torch.no_grad():
-            a = self.net.actor(torch.from_numpy(lo[due])).argmax(1).numpy()
+            a = self.net.logits(torch.from_numpy(lo[due])).argmax(1).numpy()
         return dict(zip((v for v, d in zip(ids, due) if d), a.tolist()))
 
 
@@ -178,8 +214,10 @@ def update(net: Net, opt, batch: tuple, scale: float, rng: np.random.Generator) 
     lo, gl, a, lp, adv, ret = (torch.from_numpy(x) for x in batch[:6])
     ret = ret / scale
     n = len(a)
-    ent = vl = 0.0
+    ent = vl = kl = cf = 0.0
     k = 0
+    with torch.no_grad():
+        ev = 1.0 - float((net.value(lo, gl) - ret).var() / ret.var().clamp_min(1e-8))
     for _ in range(EPOCHS):
         perm = torch.from_numpy(rng.permutation(n))
         for i in range(0, n - BATCH + 1, BATCH):
@@ -198,8 +236,11 @@ def update(net: Net, opt, batch: tuple, scale: float, rng: np.random.Generator) 
             opt.step()
             ent += float(h.detach())
             vl += float(v.detach())
+            with torch.no_grad():
+                kl += float((lp[b] - d.log_prob(a[b])).mean())
+                cf += float(((ratio - 1.0).abs() > CLIP).float().mean())
             k += 1
-    return {"entropy": ent / max(k, 1), "value_loss": vl / max(k, 1), "n": n}
+    return {"entropy": ent / max(k, 1), "value_loss": vl / max(k, 1), "n": n, "kl": kl / max(k, 1), "clipfrac": cf / max(k, 1), "ev": ev}
 
 
 def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None, resume: str | None = None,
@@ -226,15 +267,21 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
     scale = 1.0
     if resume:
         ck = torch.load(resume, map_location="cpu")
-        net.load_state_dict(ck["net"])
+        net.restore(ck["net"])
         scale = ck["scale"]
     t0 = time.time()
     with (out / f"{name}_episodes.jsonl").open("a") as lg, (out / f"{name}_updates.jsonl").open("a") as lu:
+        if not resume:     # statistics only: nothing is learned from these episodes
+            pilot = collect(net, scale, conns, gamma, lam)
+            net.observe(pilot[0], pilot[1])
+            (out / f"{name}_pilot.json").write_text(json.dumps({"n": len(pilot[0]), "lo_mean": net.lo_mean.tolist(), "lo_var": net.lo_var.tolist(), "gl_mean": net.gl_mean.tolist(), "gl_var": net.gl_var.tolist(), "seeds": [ep["seed"] for ep in pilot[7]]}))
         for u in range(updates):
             batch = collect(net, scale, conns, gamma, lam)
             if u == 0 and not resume:     # the critic's unit is fixed once, from the first returns
                 scale = max(float(batch[5].std()), 1e-3)
             st = update(net, opt, batch, scale, rng)
+            if net.n_seen:
+                net.observe(batch[0], batch[1])
             for ep in batch[7]:
                 lg.write(json.dumps({**ep, "u": u, "wall": round(time.time() - t0, 1)}) + "\n")
             lg.flush()
@@ -244,7 +291,7 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
                 torch.save({"net": net.state_dict(), "scale": scale, "u": u + 1, "n_local": sizes[0], "n_act": sizes[1]}, out / f"{name}_u{u + 1}.pt")
     f = out / f"{name}_final.pt"
     torch.save({"net": net.state_dict(), "scale": scale, "u": updates, "n_local": sizes[0], "n_act": sizes[1]}, f)
-    (out / f"{name}_config.json").write_text(json.dumps({"learner": learner, "updates": updates, "n_envs": n_envs, "env": {**ENV, **(env_kw or {})}, "gamma": gamma, "lam": lam, "levels": levels, "seed": seed,
+    (out / f"{name}_config.json").write_text(json.dumps({"learner": learner, "updates": updates, "n_envs": n_envs, "env": {**ENV, **(env_kw or {})}, "gamma": gamma, "lam": lam, "levels": levels, "seed": seed, "inputs": INPUT_NORM,
                                                          "workers": [FIRST_WORKER + learner * n_envs + i for i in range(n_envs)]}))
     for c in conns:
         c.send(("close", None))

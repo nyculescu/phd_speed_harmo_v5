@@ -850,7 +850,7 @@ class CavEnv(ZoneEnv):
         vz = [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0 for z in range(N_ZONES)]
         accel = ("3a_0", "4a_0") if self.cfg.geom == R2M3 else ("3a_0",)
         n3a = sum(ls.lane.getLastStepVehicleNumber(x) for x in accel)
-        ramp = sorted(self._x(v) for x in accel for v in ls.lane.getLastStepVehicleIDs(x))
+        ramp = sorted((self._x(v), v) for x in accel for v in ls.lane.getLastStepVehicleIDs(x))
         rows = []
         for v in ids:
             x = self._x(v)
@@ -859,7 +859,8 @@ class CavEnv(ZoneEnv):
             fol = ls.vehicle.getFollower(v, GAP_NORM)
             has_lead, has_fol = lead and lead[0], fol and fol[0]
             on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj", "r2", "rj2") or (v in self.ramp and ls.vehicle.getLaneID(v) in accel)
-            near = min(ramp, key=lambda r: abs(r - x)) - x if ramp else GAP_NORM
+            others = [r for r, w in ramp if w != v]     # V389: a merging vehicle was its own nearest, so it always read 0
+            near = min(others, key=lambda r: abs(r - x)) - x if others else GAP_NORM
             rows.append([np.clip(x / 1000.0, -3.5, x_top), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
                          s / fl.LIMIT,
                          min(max(lead[1], 0.0) / GAP_NORM, 1.0) if has_lead else 1.0,
