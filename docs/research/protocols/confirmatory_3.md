@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL against several rule forms on the fixed plant
 
-Status: revision 2, after the review of V377. V376 approved revision 1. This text is not yet approved: items marked [A1] to [A6] wait for the author's answer, and each default below is Claude's recommendation. The approved text will be named by commit in the ledger, and the first tuning row comes from a later code commit, also named there. Nothing here has run.
+Status: revision 2, approved by the author in V378 with the defaults at [A1] to [A6]; approved text at commit `170f84a`. The first tuning row comes from a later code commit, named in the ledger. Nothing here has run.
 
 ## Question
 
