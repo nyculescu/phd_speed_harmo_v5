@@ -78,6 +78,7 @@ def run_one(a: tuple) -> dict:
         rule = Greedy(ctrl["pt"])
     meter = bank = None
     S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
+    road_lane, lane_t, accel_t = {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
     st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
@@ -119,6 +120,14 @@ def run_one(a: tuple) -> dict:
                     dv = s - ls.vehicle.getSpeed(lead[0])
                     S["ttc_half"] += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < 3.0
 
+    def pass_kind(v, n, s, t):
+        """V369: most counted passes are cars side by side (48-89 per run); only straight driving while closing is an undertake."""
+        if t - accel_t.get(v, -99.0) <= 5.0 or t - accel_t.get(n, -99.0) <= 5.0:
+            return "pass_merging"
+        if t - lane_t.get(v, -99.0) <= 5.0 or t - lane_t.get(n, -99.0) <= 5.0:
+            return "pass_lane_change"
+        return "pass_straight" if s - ls.vehicle.getSpeed(n) > 1.0 else "pass_side_by_side"
+
     def sec():
         p0 = env.ep["passed"]
         r = sec0()
@@ -129,6 +138,16 @@ def run_one(a: tuple) -> dict:
         m = int(env.sim.t // 60)
         flow_min[m] += env.ep["passed"] - p0
         v20_min[m].append(ls.lane.getLastStepMeanSpeed("2_0"))
+        for v in ls.vehicle.getIDList():
+            ln = ls.vehicle.getLaneID(v)
+            if not ln.startswith(":"):
+                e, i = ln.rsplit("_", 1)
+                rl = int(i) - 1 if e in ("3a", "4a") else int(i)
+                if road_lane.get(v, rl) != rl:
+                    lane_t[v] = env.sim.t
+                road_lane[v] = rl
+                if ln in ("3a_0", "4a_0"):
+                    accel_t[v] = env.sim.t
         for v in ls.vehicle.getIDList():
             x, s, f = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v), ls.vehicle.getFuelConsumption(v)
             S["vs"] += 1
@@ -164,7 +183,10 @@ def run_one(a: tuple) -> dict:
                     if not (lead and lead[0]) or lead[1] / max(s, 1.0) > 3.0:
                         S["free_brake_alks"] += 1
                 if s > 60.0 / 3.6:     # a left-lane leader one second ago is now a left-lane follower: passed on the right
-                    S["undertakes"] += sum(n in left.get(v, ()) for n, _ in ls.vehicle.getNeighbors(v, 0))
+                    for n, _ in ls.vehicle.getNeighbors(v, 0):
+                        if n in left.get(v, ()):
+                            S["undertakes"] += 1
+                            S[pass_kind(v, n, s, env.sim.t)] += 1
                     left[v] = {n for n, _ in ls.vehicle.getNeighbors(v, 2)}
                 else:
                     left.pop(v, None)
