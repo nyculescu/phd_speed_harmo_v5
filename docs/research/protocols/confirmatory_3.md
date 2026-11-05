@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL against several rule forms on the fixed plant
 
-Status: revision 4, awaiting the author's approval. It changes only the policy inputs, decided by the author in V388 before any policy data; see [A7] and V388-V389. Revision 3, approved by the author in V383; approved text at commit `a500806`. V378 approved revision 2, with the defaults at [A1] to [A6]; this revision adds what the code review found the text left open (V381). The run commit is `fae4620`; the pre-run checks passed there (V382).
+Status: revision 4, approved by the author in V390; run code `d2b2ecc`. It changes only the policy inputs, decided by the author in V388 before any policy data; see [A7] and V388-V389. Revision 3, approved by the author in V383; approved text at commit `a500806`. V378 approved revision 2, with the defaults at [A1] to [A6]; this revision adds what the code review found the text left open (V381). The run commit is `fae4620`; the pre-run checks passed there (V382).
 
 ## Question
 
