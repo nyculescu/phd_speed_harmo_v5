@@ -49,6 +49,8 @@ def to_plant(c: dict) -> dict:
         p["hdv"]["lcOvertakeRight"] = p["truck"]["lcOvertakeRight"] = c["human_undertake"]
     if c.get("smooth"):
         p["smooth"] = True
+    if c.get("ease"):
+        p["ease"] = True
     if "geom" in c:
         p["geom"] = c["geom"]
     if c.get("smooth") or c.get("alks_undertake"):
@@ -75,7 +77,7 @@ def run_one(a: tuple) -> dict:
         from v5b.fleet.c_train import Greedy
         rule = Greedy(ctrl["pt"])
     meter = bank = None
-    S, arr, prev, left = defaultdict(float), {}, {}, {}
+    S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
     flow_min, v20_min = defaultdict(int), defaultdict(list)
     st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
@@ -85,6 +87,37 @@ def run_one(a: tuple) -> dict:
         step0()
         for v in ls.simulation.getArrivedIDList():
             arr[v] = env.sim.t
+        if env.sim.t > env.warm + 1e-9:
+            at_step(env.sim.t)
+
+    def at_step(t):
+        """V369: the 1-Hz samples below can miss what a 1-Hz actuator causes (V367), so braking and fuel are also read every step."""
+        half = abs(t % 1.0 - 0.5) < 1e-6
+        dt = env.dt
+        for v in ls.vehicle.getIDList():
+            a, s = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v)
+            alks = v in env.alks_all
+            S["dist_step"] += s * dt
+            S["fuel_step"] += ls.vehicle.getFuelConsumption(v) * dt
+            S["jerk_step"] += abs(a - prev_a.get(v, a))
+            if a <= -3.0:
+                S["b3_step"] += dt
+                S["b45_step"] += dt * (a <= -4.5)
+                S["b7_step"] += dt * (a <= -7.0)
+                if alks:
+                    S["alks_b45_step"] += dt * (a <= -4.5)
+                    S["alks_b7_step"] += dt * (a <= -7.0)
+                    if a <= -8.99 and prev_a.get(v, 0.0) > -8.99:
+                        S["alks_full_events"] += 1
+                    lead = ls.vehicle.getLeader(v, 200.0)
+                    if not (lead and lead[0]) or lead[1] / max(s, 1.0) > 3.0:
+                        S["free_brake_alks_step"] += dt
+            prev_a[v] = a
+            if half:
+                lead = ls.vehicle.getLeader(v, 200.0)
+                if lead and lead[0]:
+                    dv = s - ls.vehicle.getSpeed(lead[0])
+                    S["ttc_half"] += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < 3.0
 
     def sec():
         p0 = env.ep["passed"]

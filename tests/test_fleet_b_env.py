@@ -251,3 +251,14 @@ def test_speed_action_sizes_and_rule_encoding():
     assert a == {"a": 3 + 2 * len(be.HEADWAYS_S)}
     with pytest.raises(ValueError):
         be.CavEnv(run_dir="/tmp", speed_action=True)
+
+
+def test_ease_cap_keeps_the_ratio():
+    dt = 0.1
+    s = 27.78
+    assert be.ease_cap(s, 40.0, dt) == 40.0
+    assert be.ease_cap(15.0, 16.67, dt) == 16.67
+    cap = be.ease_cap(s, 20.0, dt)
+    assert 20.0 < cap < s
+    assert abs((s - cap) / dt - s * (1.0 - 1.0 / be.SMOOTH_RATIO)) < 1e-9
+    assert be.ease_cap(20.01, 20.0, dt) == 20.0

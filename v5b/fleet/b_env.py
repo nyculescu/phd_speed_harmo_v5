@@ -71,13 +71,19 @@ ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": pt.EDGE4_X}
 SMOOTH_S = 5.0
 TYPE_TAU, TYPE_SIGMA, TYPE_SF, TYPE_RANGE = 0.94, 0.30, 1.05, 60.0     # human medians; speed factor about its upper third
 SPEED_CAPS = (None, 90.0 / 3.6, 80.0 / 3.6)     # V334 step 3: per-CAV speed action
-SMOOTH_RATIO = 1.1     # IDM brakes at accel x (ratio^4 - 1) above its desired speed: about 1.2 m/s² here, 14 m/s² uncapped at a ratio of 1.6
+SMOOTH_RATIO = 1.1     # at most this ratio per second; only the ease flag holds to it (V367)
 FREE_MAX_SPEED = 55.56
 LANE_RULE_M = 1500.0
 
 
 def make(zones: bool = False, cav: bool = False, **kw):
     return CavEnv(**kw) if cav else ZoneEnv(**kw) if zones else MergeEnv(**kw)
+
+
+def ease_cap(speed: float, target: float, dt: float) -> float:
+    """The cap for the next step. A cap below the current speed is reached within one step and the action step holds that
+    braking (V367), so it stays a small step under the speed until the target is reached."""
+    return target if speed <= target else max(target, speed * (1.0 - (1.0 - 1.0 / SMOOTH_RATIO) * dt))
 
 
 class MergeEnv(gym.Env):
@@ -139,7 +145,7 @@ class MergeEnv(gym.Env):
         self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
         self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
-        self.smooth_cap = {}
+        self.smooth_cap, self.smooth_target = {}, {}
         self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
@@ -165,6 +171,7 @@ class MergeEnv(gym.Env):
         k = 0
         while self.sim.t < self.warm - 1e-9:
             self._sim_step()
+            self._ease()
             k += 1
             if k % per_s == 0:
                 self._v2v()
@@ -338,18 +345,35 @@ class MergeEnv(gym.Env):
         ahead in the left lane within SMOOTH_S, so it eases down; SUMO's abrupt version of this rule is off for ALKS."""
         if not self.plant.get("smooth"):
             return
+        ease = self.plant.get("ease")
         for v in ls.vehicle.getIDList():
             if v not in self.alks_all:
                 continue
             s = ls.vehicle.getSpeed(v)
             cap = min(self._cap_target(v), self._oracle_cap(v))
-            if cap < FREE_MAX_SPEED:
+            if cap < FREE_MAX_SPEED and not ease:
                 cap = max(cap, s / SMOOTH_RATIO)
             if s > CONGESTED and ls.vehicle.getLaneID(v) not in ("3a_0", "4a_0"):
                 for nv, gap in ls.vehicle.getNeighbors(v, 2):
                     if gap < SMOOTH_S * s:
-                        cap = min(cap, max(ls.vehicle.getSpeed(nv), CONGESTED, s / SMOOTH_RATIO))
-            if abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 0.1:
+                        cap = min(cap, max(ls.vehicle.getSpeed(nv), CONGESTED, 0.0 if ease else s / SMOOTH_RATIO))
+            if ease:
+                self.smooth_target[v] = cap
+            elif abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 0.1:
+                ls.vehicle.setMaxSpeed(v, cap)
+                self.smooth_cap[v] = cap
+
+    def _ease(self) -> None:
+        """V369: every step, moves each ALKS's cap toward the target `_smooth` set on the last whole second."""
+        if not self.smooth_target:
+            return
+        live = set(ls.vehicle.getIDList())
+        for v, target in list(self.smooth_target.items()):
+            if v not in live:
+                del self.smooth_target[v]
+                continue
+            cap = ease_cap(ls.vehicle.getSpeed(v), target, self.dt)
+            if abs(self.smooth_cap.get(v, FREE_MAX_SPEED) - cap) > 1e-3:
                 ls.vehicle.setMaxSpeed(v, cap)
                 self.smooth_cap[v] = cap
 
@@ -367,6 +391,7 @@ class MergeEnv(gym.Env):
         for _ in range(int(round(1.0 / self.dt))):
             self._taper()
             self._sim_step()
+            self._ease()
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
         self._v2v()
         self._smooth()
