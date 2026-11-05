@@ -262,3 +262,24 @@ def test_ease_cap_keeps_the_ratio():
     assert 20.0 < cap < s
     assert abs((s - cap) / dt - s * (1.0 - 1.0 / be.SMOOTH_RATIO)) < 1e-9
     assert be.ease_cap(20.01, 20.0, dt) == 20.0
+
+
+def test_own_state_rule_reads_the_observation():
+    lo = np.zeros((3, be.CAV_LOCAL), dtype=np.float32)
+    lo[:, 0] = [0.6, 0.6, 0.2]     # x / 1000
+    lo[:, 4] = [5.0 / 27.78, 20.0 / 27.78, 5.0 / 27.78]     # speed / limit
+    lo[:, 15] = 12.0 / 40.0
+    out = be.OwnState(level=1, th=10.0)((["a", "b", "c"], lo))
+    assert out == {"a": 1, "b": 3, "c": 3}
+    assert be.OwnState(level=0, th=10.0, crowd=20)((["a", "b", "c"], lo))["a"] == 3
+
+
+def test_ease_cap_need():
+    assert be.ease_cap(20.0, 10.0, 0.1, 4.4) == pytest.approx(20.0 - 0.44)
+    assert be.ease_cap(20.0, 10.0, 0.1, 0.0) == pytest.approx(20.0 - 20.0 * (1.0 - 1.0 / be.SMOOTH_RATIO) * 0.1)
+
+
+def test_zone_pattern_real_lengths_on_r2m3():
+    z = be.ZonePattern([1, 2, 3, 0, 1], fix=True)
+    assert z.X["5"] - z.X["4"] == pytest.approx(996.0) and z.X["4"] - z.X["4a"] == pytest.approx(294.72)
+    assert z.EDGES[2] == pytest.approx(z.X["4a"] - 100.0) and z.EDGES[3] == pytest.approx(z.X["4"] + 300.0)

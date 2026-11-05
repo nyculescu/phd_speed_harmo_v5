@@ -68,6 +68,11 @@ class Perturb:
             self.hw_now = (EDGE4_X - h["d"], EDGE4_X + EDGE4_LEN, h["level"]) if on else None
         getattr(self, "_" + self.kind, lambda _: None)(t)
 
+    def tick(self, t: float) -> None:
+        """V378: a slowdown's limit moves every step, so that the taper has no 1-s stairs."""
+        if self.kind == "slowdown":
+            self._slowdown(t)
+
     def _brake(self, t: float) -> None:
         if self.active:
             v, target, t_hold, t_end, phase = self.active

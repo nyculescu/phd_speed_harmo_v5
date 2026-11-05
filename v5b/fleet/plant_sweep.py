@@ -51,7 +51,7 @@ def to_plant(c: dict) -> dict:
         p["smooth"] = True
     if c.get("ease"):
         p["ease"] = True
-    for k in ("ease_max", "smooth_s"):
+    for k in ("ease_max", "smooth_s", "tau_rise", "taper_fast", "fix_x"):
         if k in c:
             p[k] = c[k]
     if "geom" in c:
@@ -66,14 +66,18 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "local_rule" in ctrl:
         rule = be.LocalRule(env, **ctrl["local_rule"])
     if "pattern" in ctrl:
-        rule = be.ZonePattern(ctrl["pattern"])
+        rule = be.ZonePattern(ctrl["pattern"], fix=bool(c.get("fix_x")))
+    if "adaptive_4a" in ctrl:
+        rule = be.AdaptiveOn4a(env, **ctrl["adaptive_4a"])
+    if "own_state" in ctrl:
+        rule = be.OwnState(**ctrl["own_state"])
     if "road_levels" in ctrl:
         rule = be.RoadLevels(ctrl["road_levels"])
     if "pt" in ctrl:
@@ -109,10 +113,12 @@ def run_one(a: tuple) -> dict:
                 S["b45_step"] += dt * (a <= -4.5)
                 S["b7_step"] += dt * (a <= -7.0)
                 if alks:
+                    S["alks_b3_step"] += dt
                     S["alks_b45_step"] += dt * (a <= -4.5)
                     S["alks_b7_step"] += dt * (a <= -7.0)
                     if a <= -8.99 and prev_a.get(v, 0.0) > -8.99:
                         S["alks_full_events"] += 1
+                        S["alks_full_moving" if s >= 2.0 else "alks_full_creep"] += 1     # a lane-end crawl reads -9 m/s² at 0.4 m/s (V377)
                     lead = ls.vehicle.getLeader(v, 200.0)
                     if not (lead and lead[0]) or lead[1] / max(s, 1.0) > 3.0:
                         S["free_brake_alks_step"] += dt
@@ -122,6 +128,44 @@ def run_one(a: tuple) -> dict:
                 if lead and lead[0]:
                     dv = s - ls.vehicle.getSpeed(lead[0])
                     S["ttc_half"] += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < 3.0
+
+    def period(t):
+        spec = env.pert.s if env.pert is not None and env.pert.kind == "slowdown" else None
+        if spec is None:
+            return "rest"
+        if t < spec["times"][0]:
+            return "before"
+        for t0 in spec["times"]:
+            if t0 <= t < t0 + spec.get("taper", 0.0):
+                return "taper"
+            if t0 <= t < t0 + spec["dur"]:
+                return "hold"
+            if t0 + spec["dur"] <= t < t0 + spec["dur"] + 120.0:
+                return "after"
+        return "rest"
+
+    def conflicts(t):
+        """V378: the 1-Hz TTC count by road, follower speed and period, with two shorter thresholds and a severity count: what the deciding count is made of."""
+        per = period(t)
+        for v in ls.vehicle.getIDList():
+            lead = ls.vehicle.getLeader(v, 200.0)
+            if not lead or not lead[0]:
+                continue
+            s = ls.vehicle.getSpeed(v)
+            dv = s - ls.vehicle.getSpeed(lead[0])
+            if dv <= 0:
+                continue
+            gap = lead[1] + ls.vehicle.getMinGap(v)
+            road = ls.vehicle.getRoadID(v)
+            road = road if road in ("3", "4a") else "ramp2" if road in ("r2", "rj2") else "rest"
+            band = "lo" if s < 5.0 else "mid" if s < 10.0 else "hi"
+            ttc = gap / dv
+            for m, hit in (("ttc3", ttc < 3.0), ("ttc2", ttc < 2.0), ("ttc15", ttc < 1.5), ("sev3", dv * dv / (2.0 * max(gap, 0.1)) >= 3.0)):
+                if hit:
+                    S[m] += 1
+                    S[f"{m}_r_{road}"] += 1
+                    S[f"{m}_s_{band}"] += 1
+                    S[f"{m}_p_{per}"] += 1
 
     def pass_kind(v, n, s, t):
         """V369: most counted passes are cars side by side (48-89 per run); only straight driving while closing is an undertake."""
@@ -138,6 +182,18 @@ def run_one(a: tuple) -> dict:
             if round(env.sim.t) % 30 == 0:
                 bank.read(env.sim.t)
             meter.step(env.sim.t)
+        conflicts(env.sim.t)
+        if hasattr(env, "lvl"):
+            for v in env.alks_all & set(ls.vehicle.getIDList()):
+                road = ls.vehicle.getRoadID(v)
+                if not road.startswith(":"):
+                    S[f"lv_sum_{road}"] += env.lvl.get(v, 0)
+                    S[f"lv_n_{road}"] += 1
+                tau = ls.vehicle.getTau(v)
+                S["tau_mismatch"] += abs(tau - env.v2v_cur.get(v, be.ALKS_TAU0)) > 1e-6
+                if v in env.on:
+                    S["tau_on_n"] += 1
+                    S["tau_on_match"] += abs(tau - env.headways[env.lvl.get(v, 0)]) < 1e-6
         m = int(env.sim.t // 60)
         flow_min[m] += env.ep["passed"] - p0
         v20_min[m].append(ls.lane.getLastStepMeanSpeed("2_0"))
@@ -244,6 +300,9 @@ def run_one(a: tuple) -> dict:
             "finished_pct": 100.0 * done / max(planned, 1), "flow_min": [flow_min[m] for m in sorted(flow_min)], "v20_min": [round(float(np.mean(v20_min[m])), 2) for m in sorted(v20_min)]}
     if ramp2:
         row["delay_ramp2"] = float(np.mean(ramp2))
+    row["all_delay"] = ep["N"] - S["dist_step"] / REF_SPEED     # vehicle-seconds; unfinished vehicles and the insertion queue included
+    if "lv" in ep:
+        row["lv"] = ep["lv"]
     if attr is not None:
         row["attrib"] = dict(attr)
     if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline

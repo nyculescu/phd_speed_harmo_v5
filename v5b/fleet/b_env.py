@@ -399,6 +399,8 @@ class MergeEnv(gym.Env):
             self._taper()
             self._sim_step()
             self._ease()
+            if self.pert and self.plant.get("taper_fast"):
+                self.pert.tick(self.sim.t)
             self.ep["arrived"] += ls.simulation.getArrivedNumber()
         self._v2v()
         self._smooth()
@@ -632,6 +634,7 @@ class CavEnv(ZoneEnv):
         self._clear_cav()
 
     def _clear_cav(self) -> None:
+        self.x_base = {}
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
         self.ids, self.on, self.stats, self.asked, self.lane_dir = [], set(), {}, {}, {}
         self.speed_lvl = {}
@@ -726,6 +729,7 @@ class CavEnv(ZoneEnv):
 
     def _v2v(self) -> None:
         lv = self.ep.get("lv")
+        rise = self.plant.get("tau_rise")
         for v in ls.vehicle.getIDList():
             if v not in self.alks_all:
                 continue
@@ -736,6 +740,8 @@ class CavEnv(ZoneEnv):
             lev = self._hw_level(v, self.lvl.get(v, 0))
             want = self.headways[lev] if on else ALKS_TAU0
             (self.on.add if on else self.on.discard)(v)
+            if rise:     # an instant rise brakes hard and ends before the next 1-Hz sample (V377)
+                want = min(want, round(self.v2v_cur.get(v, ALKS_TAU0) + rise, 6))
             if self.v2v_cur.get(v, ALKS_TAU0) != want:
                 ls.vehicle.setTau(v, want)
                 self.v2v_cur[v] = want
@@ -797,6 +803,13 @@ class CavEnv(ZoneEnv):
     def _x(self, v: str) -> float:
         """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value."""
         e = ls.vehicle.getRoadID(v)
+        if self.plant.get("fix_x") and self.cfg.geom == R2M3:
+            base = self._x_base().get(e)
+            if base is None:
+                return self.xlast.get(v, 0.0)
+            x = base + ls.vehicle.getLanePosition(v)
+            self.xlast[v] = x
+            return x
         base = {"1": -self.l1 - self.l2, "2": -self.l2, "3a": 0.0, "3": self.l3a, "r": -RAMP_LEN, "rj": -RAMP_LEN + RAMP_R_LEN}.get(e)
         if base is None:
             two = self.cfg.geom == R2M3     # the second merge's 4a sits between edges 3 and 4
@@ -814,8 +827,18 @@ class CavEnv(ZoneEnv):
         self.xlast[v] = x
         return x
 
+    def _x_base(self) -> dict:
+        """V378: each r2m3 road's start from the 3a start, from the real lane lengths."""
+        if not self.x_base:
+            n = lambda e: ls.lane.getLength(e + "_0")
+            m2 = n("3a") + n("3")
+            self.x_base = {"1": -n("1") - n("2"), "2": -n("2"), "3a": 0.0, "3": n("3a"), "4a": m2, "4": m2 + n("4a"), "5": m2 + n("4a") + n("4"),
+                           "r": -n("r") - n("rj"), "rj": -n("rj"), "r2": m2 - n("r2") - n("rj2"), "rj2": m2 - n("rj2")}
+        return self.x_base
+
     def _obs(self) -> tuple:
         self.l3a = ls.lane.getLength("3a_0")
+        x_top = 3.3 if self.plant.get("fix_x") else 3.0
         sp, cnt = [0.0] * N_ZONES, [0] * N_ZONES
         ids = []
         for v in ls.vehicle.getIDList():
@@ -837,7 +860,7 @@ class CavEnv(ZoneEnv):
             has_lead, has_fol = lead and lead[0], fol and fol[0]
             on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj", "r2", "rj2") or (v in self.ramp and ls.vehicle.getLaneID(v) in accel)
             near = min(ramp, key=lambda r: abs(r - x)) - x if ramp else GAP_NORM
-            rows.append([np.clip(x / 1000.0, -3.5, 3.0), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
+            rows.append([np.clip(x / 1000.0, -3.5, x_top), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
                          s / fl.LIMIT,
                          min(max(lead[1], 0.0) / GAP_NORM, 1.0) if has_lead else 1.0,
                          np.clip((s - ls.vehicle.getSpeed(lead[0])) / 10.0, -1.0, 1.0) if has_lead else 0.0,
@@ -935,9 +958,13 @@ class ZonePattern:
     """V354, r2m3: a fixed level per zone along the road: up, merge 1, between, merge 2, down. Ramp vehicles count as their merge."""
     X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4a": 4989.02, "4": 5283.74, "5": 6283.74}
     EDGES = (3398.3, 4093.02, 4889.02, 5583.74)
+    X_FIX = {**X, "4a": 4987.32, "4": 5282.04, "5": 6278.04}     # V378: r2m3's real lengths
+    EDGES_FIX = (3398.3, 4093.02, 4887.32, 5582.04)
 
-    def __init__(self, levels: tuple):
+    def __init__(self, levels: tuple, fix: bool = False):
         self.levels, self.last = list(levels), {}
+        if fix:
+            self.X, self.EDGES = self.X_FIX, self.EDGES_FIX
 
     def _zone(self, v: str) -> int:
         road = ls.vehicle.getRoadID(v)
@@ -956,6 +983,37 @@ class ZonePattern:
             self.last[v] = self._zone(v)
             out[v] = self.levels[self.last[v]]
         return out
+
+
+class AdaptiveOn4a(LocalRule):
+    """V378: the local rule, plus a fixed longer headway on road 4a; inside a junction a vehicle keeps its last road's choice."""
+
+    def __init__(self, env, r: float, th: float, level: int, road_level: int):
+        super().__init__(env, r, th, level)
+        self.road_level, self.on_4a = road_level, {}
+
+    def __call__(self, o: tuple) -> dict:
+        out = super().__call__(o)
+        for v in o[0]:
+            road = ls.vehicle.getRoadID(v)
+            if not road.startswith(":"):
+                self.on_4a[v] = road == "4a"
+            if self.on_4a.get(v):
+                out[v] = self.road_level
+        return out
+
+
+class OwnState:
+    """V378: 0.8 s, or a longer headway when past x_min and below th m/s, optionally only with a crowded accelerating lane. It
+    reads the policy's own observation: position, own speed, accelerating-lane count."""
+
+    def __init__(self, level: int, th: float, x_min: float = 500.0, crowd: int = 0, free: int = 3):
+        self.level, self.th, self.x_min, self.crowd, self.free = level, th, x_min, crowd, free
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo = o[:2]
+        hit = (lo[:, 0] * 1000.0 >= self.x_min) & (lo[:, 4] * fl.LIMIT < self.th) & (lo[:, 15] * 40.0 >= self.crowd)
+        return dict(zip(ids, np.where(hit, self.level, self.free).tolist()))
 
 
 class RoadLevels:

@@ -203,9 +203,9 @@ def update(net: Net, opt, batch: tuple, scale: float, rng: np.random.Generator) 
 
 
 def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | None = None, resume: str | None = None,
-          gamma: float = GAMMA, lam: float = LAM, levels: tuple = LEVELS) -> Path:
+          gamma: float = GAMMA, lam: float = LAM, levels: tuple = LEVELS, net_seed: int = 20261103) -> Path:
     torch.set_num_threads(1)
-    seed = 20261103 + learner
+    seed = net_seed + learner
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
     out.mkdir(parents=True, exist_ok=True)
@@ -340,6 +340,7 @@ def main(argv: list) -> int:
     ap.add_argument("--gamma", type=float, default=GAMMA)
     ap.add_argument("--lam", type=float, default=LAM)
     ap.add_argument("--levels", default=json.dumps(LEVELS))
+    ap.add_argument("--net-seed", type=int, default=20261103, help="network seed of learner 0")
     a = ap.parse_args(argv)
     out = Path(a.out)
     if a.phase == "smoke":
@@ -347,7 +348,7 @@ def main(argv: list) -> int:
         bad = smoke(out)
         print("smoke:", "ok" if not bad else bad, flush=True)
         return 1 if bad else 0
-    print("model:", train(out, a.learner, a.updates, a.n_envs, json.loads(a.env), a.resume, a.gamma, a.lam, tuple(json.loads(a.levels))), flush=True)
+    print("model:", train(out, a.learner, a.updates, a.n_envs, json.loads(a.env), a.resume, a.gamma, a.lam, tuple(json.loads(a.levels)), a.net_seed), flush=True)
     return 0
 
 
