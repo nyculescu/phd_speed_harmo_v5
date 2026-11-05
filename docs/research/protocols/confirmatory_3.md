@@ -1,6 +1,6 @@
 # Confirmatory 3: DRL against several rule forms on the fixed plant
 
-Status: revision 2, approved by the author in V378 with the defaults at [A1] to [A6]; approved text at commit `170f84a`. The first tuning row comes from a later code commit, named in the ledger. Nothing here has run.
+Status: revision 3. V378 approved revision 2, with the defaults at [A1] to [A6]. This revision adds what the code review found the text left open (V381) and awaits the author's approval (V382). The run commit is `fae4620`; the pre-run checks passed there. No tuning row has run.
 
 ## Question
 
@@ -33,6 +33,8 @@ Rule families, all on the 10-s clock:
 | Own state | 0.8 s, or 1.2 or 1.6 s when past x = 500 m and own speed is below 10 or 15 m/s, with or without at least 10 vehicles on the accelerating lanes | 8 |
 | Copy of the policies | mean level per road, traced from the trained policies on the tracing seeds, rounded to the nearest level | 1 |
 
+Rules answer on the 5-s decision grid and policies every 10 s; both move at most one level per 10 s. This favours the rules, matches the earlier runs, and is disclosed.
+
 70 rules. A rule tree distilled from each policy is not included: it needs new code, and it may be added only before the code freeze.
 
 No MPC or forecast controller is an opponent; this arm is dropped. No oracle runs on r2m3; this is disclosed.
@@ -51,10 +53,12 @@ Each primary cell separately, on tuning seeds. A rule knows the condition and le
 
 If only p333 is admissible in a cell, the sentence says so.
 
+The copy rule always runs on the evaluation seeds. It decides the claim only if it meets the delay filter; otherwise its numbers are reported with the sentence "the copy rule did not meet the delay filter: [TTC, delay]".
+
 Also on evaluation seeds, not deciding the claim:
 
 - **Delay opponent:** the rule with the lowest median delay among those with TTC at most 10 % worse than p333.
-- **Single rule:** the rule admissible in both cells with the highest mean TTC gain over them, run in all 10 cells. It is the comparison with equal information, and its row reports the adaptation gain: per-condition rule against single rule, and the share DRL closes, with paired CIs.
+- **Single rule:** the rule admissible in both cells with the highest mean TTC gain over them, run in all 10 cells. It is the comparison with equal information, and its row reports the adaptation gain: the counting rule with the lowest TTC against the single rule, with its paired CI, and the share DRL closes (the median policy's gain over the single rule, divided by that gain), only if that CI excludes 0.
 - **Front row:** the rule with the lowest TTC among those with delay at most 10 % worse than p333.
 
 ## Conditions and levels
@@ -97,11 +101,11 @@ Effect = sign x median(P - O) / median(O) x 100 over paired seeds. CI: percentil
 
 **Tuned reading, which decides the claim.** A primary cell is won on TTC if at least 4 of 5 policies have, against every opponent that counts in that cell: TTC at least 10 % better (V363's number), CI excluding 0, and at least 20 per run lower; delay at most 2 % worse; flow at most 0.5 % worse; braking at 3 m/s² at most 5 % worse; moving full-emergency events at most 5 % or 5 per run more; collisions at most the opponent's plus 1. Also against p333: delay at most 5 % worse and flow at most 1 % worse.
 
-**Replication reading, reported beside it.** At least 4 of 5 policies meet V359's safety rule against p333 on P0d: TTC at least 30 % better, with the same limits. It says whether the earlier result survives the plant fix.
+**Replication reading, reported beside it.** At least 4 of 5 policies have, against p333: TTC at least 30 % better, as in V359, with this protocol's limits and counters above, not V359's finishers' delay and 1-Hz braking. It says whether the earlier result survives the plant fix.
 
 **Delay win:** at least 4 of 5 policies have, against the lower-delay of the delay opponent and p333: delay at least 5 % better, CI excluding 0; flow at most 0.5 % worse; TTC and braking at most 10 % worse; collisions at most the opponent's plus 1.
 
-**The word "safety"** may be used only if at least 4 of 5 policies are also no worse than the opponent on samples needing at least 3 m/s². Otherwise the sentence says "fewer seconds at TTC below 3 s; severe conflicts not shown to differ".
+**The word "safety"** may be used only if at least 4 of 5 policies both win the cell and are no worse than every opponent that counts on samples needing at least 3 m/s²: a paired median at or below 0. Otherwise the sentence says "fewer seconds at TTC below 3 s; severe conflicts not shown to differ".
 
 ## Sentences allowed
 
@@ -109,7 +113,7 @@ Every sentence names the model: an uncalibrated SUMO model of a three-lane freew
 
 | Outcome | Sentence |
 |---|---|
-| Cell won on TTC | Under [slowdown], at least 4 of 5 per-CAV PPO headway policies had [x] % [CI] fewer seconds at TTC below 3 s than each of [n] rule forms tuned on separate seeds, with delay and flow within the stated limits. This is a surrogate. [Where the gain is] |
+| Cell won on TTC | Under [slowdown], at least 4 of 5 per-CAV PPO headway policies had fewer seconds at TTC below 3 s than each of [n] counting rules tuned on separate seeds, [x-y] % over the 5 policies against the counting rule with the lowest TTC, with delay and flow within the stated limits. This is a surrogate. [Where the gain is] |
 | Only p333 counted | The same, against the fixed 0.8 s rule; no other form met the delay filter |
 | Replication yes, tuned no | The edge over the fixed 0.8 s rule held on the fixed plant, but the policies did not clear the margins against [rule]: [TTC, delay] |
 | Copy rule not cleared | The policies did not clear the margins against a fixed per-road rule copied from them: [TTC, delay] |
@@ -123,7 +127,7 @@ No "first" or "novel" wording. All controllers are reported per cell as an opera
 
 ## Closing the line
 
-[A3] If no primary cell is won, this DRL line closes on these slowdowns: no further training, tuning, plant change or seed round, and the negative result is reported. If one cell is won, the other closes the same way. A re-run under the bug rule below is not a new round.
+[A3] A cell counts as won by the tuned reading or by a delay win. If no primary cell is won, this DRL line closes on these slowdowns: no further training, tuning, plant change or seed round, and the negative result is reported. If one cell is won, the other closes the same way. A re-run under the bug rule below is not a new round.
 
 ## Stop rules
 
@@ -132,7 +136,7 @@ No "first" or "novel" wording. All controllers are reported per cell as an opera
 - **Early kill,** after rule tuning: if no rule beats no control on delay by at least 10 %, CI excluding 0, in X1 or X2 at 5,300, the chain stops and goes to the author.
 - A learner that crashes restarts with the same seeds and is logged. A learner failing the collapse check stays in with a disclosure; it keeps its vote and is not replaced. If more than one fails, the chain stops before evaluation.
 - A bug found after results: fix, re-run everything affected, log both.
-- Every primary cell, won or not, is traced on 2 evaluation seeds. A trace can add an explanation; it cannot change the outcome of a claim rule. The sentence names where the gain is.
+- Every primary cell, won or not, is traced by the counters by road, speed and period on all 20 evaluation seeds, not a separate 2-seed trace. A trace can add an explanation; it cannot change the outcome of a claim rule. The sentence names where the gain is.
 
 **Collapse check:** mean reward over updates 401-500 within 0.03 of updates 301-400, and at least the mean of updates 1-50. Null from the shot's learners: at most 0.027. It detects collapse, not convergence, so level shares over training and the u250 policy against the final one, on 5 tuning seeds in X1 and X2, are also reported.
 
@@ -142,16 +146,16 @@ No "first" or "novel" wording. All controllers are reported per cell as an opera
 2. **Code review:** [A4] adversarial, as `CLAUDE.md` requires before long runs, of that commit.
 3. **T3, determinism:** at the run commit, r2m3 no-control rows of baseline v2 reproduce every numeric key (`r2_p0d`, seed 7,440,045, 4,600 and 5,300); r1m3 P0d rows too. `decide3.py` reproduces `shot_table.csv`.
 4. **Bench:** one vehicle, a tau rise of 0.8 to 1.6 s as built and rate-limited.
-5. **T0, under controllers, on seeds 7,440,065-074, gates fixed now:** r2m3 at 5,300, S, X1, X2; no control, p333, `r4a1`, `lr1000_10`, each rule form once, and one stored policy as a trace-only arm. Per controller: 1-Hz braking within 5 % of step braking; TTC at whole and half second within 5 %; moving full-emergency events at most no control's plus 5; tau of eligible ALKS equals the commanded level; duplicate rules give identical rows.
+5. **T0, under controllers, on seeds 7,440,065-074, gates fixed now:** r2m3 at 5,300, S, X1, X2; no control, p333, `r4a1`, `lr1000_10`, each rule form once, and one stored policy as a trace-only arm. Per controller: 1-Hz braking within 5 % of step braking; TTC at whole and half second within 5 %; moving full-emergency events at most no control's plus 5; tau of eligible ALKS on the commanded level at least 98 % of the time, since equality cannot hold under the rate limit; duplicate rules give identical rows. The two ratios are not gated below 50 counts.
 6. **T1, T2:** report, on those rows, that control changes flow and delay against no control. No capacity drop is established on these plants, and the rule's value does not rest on one.
 7. **Smoke in training mode:** the eased cap, tau limit, 0.1-s taper and random perturbations reach SUMO; per-vehicle reward varies; references are P0d's.
 8. **Run:** rule tuning, early kill, training, collapse check, tracing and the copy rule, evaluation, reading.
 
 ## Compute
 
-Measured on the P0d check: 240 runs in about 21 minutes on 24 workers, with no controller.
+Measured on the pre-run checks: 320 runs under controllers in about 14 minutes on 24 workers.
 
-Rule tuning: 70 rules x 2 cells x 20 seeds = 2,800 runs, about 4-5 hours. Training: about 4 hours at 15 environments. Evaluation: about 15 controllers x 2 primary cells x 20 seeds and 8 x 8 x 20, about 1,900 runs, about 3 hours. Pre-run checks: under 1 hour. About 12 hours of compute. [A5] CPU guard: 90 %, the default, unless the author sets another limit.
+Rule tuning: 70 rules x 2 cells x 20 seeds and no-control rows, about 2,900 runs, about 2 hours. Training: about 4 hours at 15 environments. Tracing, copy rule, u250: about 240 runs, 10 minutes. Evaluation: about 1,850 runs, about 80 minutes. About 8 hours of compute. [A5] CPU guard: 90 %.
 
 ## Disclosures
 
@@ -162,6 +166,7 @@ Rule tuning: 70 rules x 2 cells x 20 seeds = 2,800 runs, about 4-5 hours. Traini
 - The own-state family was derived from policies trained on P0. The reward and action design were shaped by exploratory runs that knew p333.
 - V2V and roadside speeds are ideal, with no latency or loss. Humans do not adapt to ALKS. 50 % ALKS. Fleet placeholders: the human tau shape, the ALKS gap above 60 km/h, the speed-factor bounds.
 - Undertakes are not zero.
+- Rules react on a 5-s grid and policies on a 10-s clock. Headway rises are limited to 0.2 s per second, and the 0.1-s taper replaces the 1-s one; on 2 used seeds these cost p333 about 10-13 % delay under the slowdowns (V380).
 - No capacity drop is established. r2m3's merges are 1.2 km apart; other spacings are untested.
 - This protocol had an independent review with skeptics (V377); its findings, accepted and declined, are in `confirmatory_3_review.md`. All exploratory runs are in `docs/decisions.md`, including failed ones.
 

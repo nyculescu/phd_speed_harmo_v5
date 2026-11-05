@@ -1,0 +1,68 @@
+code fae4620
+== tests
+...........................................                              [100%]
+43 passed in 11.45s
+rc=0
+== T3
+t3.jsonl 2 jobs
+t3.jsonl 1 jobs
+r2_p0d 4600.0 same 71 keys
+r2_p0d 5300.0 same 72 keys
+p0d 5300.0 same 66 keys
+rc=0
+== T0
+prerun.jsonl 300 jobs
+
+
+
+prerun_nc.jsonl 20 jobs
+== S
+ nc: delay 88.8, flow 2136, TTC 1206, 1-Hz/step 0.991, TTC whole/half 0.985, moving events 0.0, creep 18.5, b7 step 2.0, tau written 0, on-level share 0.000, collisions 0
+ p333: delay 58.2, flow 2196, TTC 1315, 1-Hz/step 0.984, TTC whole/half 0.997, moving events 0.0, creep 25.0, b7 step 3.5, tau written 0, on-level share 1.000, collisions 0
+ dup333: delay 58.2, flow 2196, TTC 1315, 1-Hz/step 0.984, TTC whole/half 0.997, moving events 0.0, creep 25.0, b7 step 3.5, tau written 0, on-level share 1.000, collisions 0
+ r4a1: delay 56.9, flow 2204, TTC 984, 1-Hz/step 0.983, TTC whole/half 1.033, moving events 0.0, creep 15.5, b7 step 2.5, tau written 0, on-level share 1.000, collisions 0
+ lr1000_10: delay 58.2, flow 2198, TTC 1315, 1-Hz/step 0.984, TTC whole/half 0.997, moving events 0.0, creep 25.0, b7 step 3.5, tau written 0, on-level share 1.000, collisions 0
+ z31333: delay 50.6, flow 2205, TTC 382, 1-Hz/step 0.975, TTC whole/half 1.007, moving events 0.0, creep 10.5, b7 step 1.6, tau written 0, on-level share 1.000, collisions 0
+ a4: delay 56.9, flow 2204, TTC 984, 1-Hz/step 0.983, TTC whole/half 1.033, moving events 0.0, creep 15.5, b7 step 2.5, tau written 0, on-level share 1.000, collisions 0
+ os: delay 55.5, flow 2194, TTC 1084, 1-Hz/step 0.973, TTC whole/half 0.996, moving events 0.0, creep 18.0, b7 step 3.5, tau written 0, on-level share 1.000, collisions 0
+ os_crowd: delay 54.6, flow 2188, TTC 788, 1-Hz/step 0.977, TTC whole/half 1.017, moving events 0.0, creep 19.5, b7 step 3.0, tau written 0, on-level share 1.000, collisions 0
+ policy: delay 51.3, flow 2208, TTC 263, 1-Hz/step 0.979, TTC whole/half 0.976, moving events 0.0, creep 6.5, b7 step 1.4, tau written 0, on-level share 1.000, collisions 0
+ own state with the crowd condition differs from p333 on 7 of 10 seeds
+ T1, T2 report, p333 against no control: delay (29.6, 24.8, 48.7), flow (3.5, 1.6, 4.6)
+== X1
+ nc: delay 147.3, flow 2034, TTC 1389, 1-Hz/step 0.980, TTC whole/half 0.985, moving events 0.0, creep 28.5, b7 step 3.2, tau written 0, on-level share 0.000, collisions 0
+ p333: delay 118.2, flow 2128, TTC 3526, 1-Hz/step 0.969, TTC whole/half 0.998, moving events 0.0, creep 30.5, b7 step 4.2, tau written 0, on-level share 1.000, collisions 0
+ dup333: delay 118.2, flow 2128, TTC 3526, 1-Hz/step 0.969, TTC whole/half 0.998, moving events 0.0, creep 30.5, b7 step 4.2, tau written 0, on-level share 1.000, collisions 0
+ r4a1: delay 112.3, flow 2106, TTC 2810, 1-Hz/step 0.968, TTC whole/half 1.008, moving events 0.0, creep 29.0, b7 step 4.2, tau written 0, on-level share 1.000, collisions 0
+ lr1000_10: delay 116.6, flow 2100, TTC 3313, 1-Hz/step 0.978, TTC whole/half 1.002, moving events 0.0, creep 39.0, b7 step 5.1, tau written 0, on-level share 1.000, collisions 0
+ z31333: delay 116.0, flow 2108, TTC 3742, 1-Hz/step 0.977, TTC whole/half 0.999, moving events 0.0, creep 36.0, b7 step 4.8, tau written 0, on-level share 1.000, collisions 0
+ a4: delay 115.1, flow 2104, TTC 2542, 1-Hz/step 0.973, TTC whole/half 0.991, moving events 0.0, creep 32.5, b7 step 4.1, tau written 0, on-level share 1.000, collisions 0
+ os: delay 117.6, flow 2100, TTC 2770, 1-Hz/step 0.985, TTC whole/half 1.003, moving events 0.0, creep 31.0, b7 step 3.9, tau written 0, on-level share 1.000, collisions 0
+ os_crowd: delay 125.7, flow 2078, TTC 2752, 1-Hz/step 0.965, TTC whole/half 0.988, moving events 0.0, creep 38.0, b7 step 5.3, tau written 0, on-level share 1.000, collisions 0
+ policy: delay 111.8, flow 2120, TTC 2012, 1-Hz/step 0.966, TTC whole/half 1.010, moving events 0.0, creep 28.0, b7 step 3.9, tau written 0, on-level share 0.997, collisions 0
+ own state with the crowd condition differs from p333 on 10 of 10 seeds
+ T1, T2 report, p333 against no control: delay (19.9, 15.8, 22.1), flow (4.4, 3.0, 5.8)
+== X2
+ nc: delay 129.6, flow 2051, TTC 1664, 1-Hz/step 0.986, TTC whole/half 0.995, moving events 0.0, creep 37.0, b7 step 4.3, tau written 0, on-level share 0.000, collisions 0
+ p333: delay 108.8, flow 2108, TTC 2792, 1-Hz/step 0.965, TTC whole/half 0.993, moving events 0.0, creep 38.5, b7 step 5.4, tau written 0, on-level share 1.000, collisions 0
+ dup333: delay 108.8, flow 2108, TTC 2792, 1-Hz/step 0.965, TTC whole/half 0.993, moving events 0.0, creep 38.5, b7 step 5.4, tau written 0, on-level share 1.000, collisions 0
+ r4a1: delay 112.9, flow 2088, TTC 2266, 1-Hz/step 0.968, TTC whole/half 1.010, moving events 0.0, creep 29.5, b7 step 3.8, tau written 0, on-level share 1.000, collisions 0
+ lr1000_10: delay 109.9, flow 2115, TTC 2453, 1-Hz/step 0.971, TTC whole/half 0.999, moving events 0.0, creep 38.5, b7 step 5.1, tau written 0, on-level share 1.000, collisions 0
+ z31333: delay 105.7, flow 2130, TTC 2632, 1-Hz/step 0.974, TTC whole/half 0.997, moving events 0.0, creep 40.5, b7 step 5.0, tau written 0, on-level share 1.000, collisions 0
+ a4: delay 109.3, flow 2127, TTC 1826, 1-Hz/step 0.973, TTC whole/half 0.980, moving events 0.0, creep 23.0, b7 step 3.3, tau written 0, on-level share 1.000, collisions 0
+ os: delay 110.7, flow 2132, TTC 2304, 1-Hz/step 0.974, TTC whole/half 0.992, moving events 0.0, creep 38.0, b7 step 4.5, tau written 0, on-level share 1.000, collisions 0
+ os_crowd: delay 106.8, flow 2124, TTC 2066, 1-Hz/step 0.978, TTC whole/half 0.987, moving events 0.0, creep 31.0, b7 step 4.3, tau written 0, on-level share 1.000, collisions 0
+ policy: delay 107.9, flow 2165, TTC 1507, 1-Hz/step 0.972, TTC whole/half 1.006, moving events 0.0, creep 22.0, b7 step 2.7, tau written 0, on-level share 0.998, collisions 0
+ own state with the crowd condition differs from p333 on 10 of 10 seeds
+ T1, T2 report, p333 against no control: delay (12.8, 9.0, 24.8), flow (3.0, 2.3, 4.8)
+gates pass []
+rc=0
+== smoke config
+env ok {'4090.0': [0.149, 0.005, 276.3], '4600.0': [0.203, 0.007, 324.3], '5300.0': [0.283, 0.011, 432.9]}
+rc=0
+== smoke
+fixed slowdown {'reward_sd': 0.581, 'targets': 19554, 'capped': 19566, 'tau_rises': 1427, 'tau_over': 0, 'largest_limit_step': 0.106, 'lowest_limit': 6.94}
+random draw {'reward_sd': 0.448, 'targets': 29748, 'capped': 29745, 'tau_rises': 1946, 'tau_over': 0, 'largest_limit_step': 0.081, 'lowest_limit': 11.59}
+smoke ok
+rc=0
+ALL PASS
