@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from common1 import LEARNERS, OPPONENTS, RULE, TRAINING_SLOWDOWNS, check_rows, incumbent, load, med, pt_cfg, raw, rule_cfg, val
+from common1 import LEARNERS, OPPONENTS, RULE, TRAINING_SLOWDOWNS, check_rows, incumbent, load, med, paired_median, pt_cfg, raw, rule_cfg, val
 from v5b.fleet import plant_sweep as ps
 
 LEVELS = tuple(float(x) for x in range(2500, 7501, 250))
@@ -43,7 +43,32 @@ def read(T: dict, names: list) -> dict:
     lo = min(controllable) if controllable else None
     hi = max(clean) if clean else None
     rng = [lo, hi] if lo is not None and hi is not None and lo <= hi else None
-    return {"levels": per, "L": lo, "U": hi, "range": rng, "note": None if rng else "no range: goes to the author"}
+    return {"levels": per, "L": lo, "U": hi, "range": rng, "note": None if rng else "no range: goes to the author", **band(T, names, per)}
+
+
+def benefit(A: dict, nc: dict) -> bool:
+    """At least 10 % less delay, or at least 10 % and 20 per run fewer TTC seconds, than no control, 95 % CI clear of 0 (V418)."""
+    d, t = raw(A, nc, "all_delay", pct=P95), raw(A, nc, "ttc_net", pct=P95)
+    return (d[0] >= 10.0 and d[1] > 0) or (t[0] >= 10.0 and t[1] > 0 and paired_median(nc, A, "ttc_net") >= 20.0)
+
+
+def band(T: dict, names: list, per: dict) -> dict:
+    """V418: the impact band (levels where p333, os1_15_10 or at least 4 of 5 policies benefit over no control), among clean levels,
+    plus two grid levels on each side as edges where the impact should fade; the training range is the band with its edges."""
+    pol = [n for n in names if n.startswith("d")]
+    imp = {}
+    for q in LEVELS:
+        A = {n: T[(f"T|{n}", q)] for n in names}
+        who = {n: benefit(A[n], A["nc"]) for n in names if n != "nc"}
+        imp[str(q)] = {"rules": [n for n in ("p333", RULE) if who[n]], "policies": sum(who[n] for n in pol),
+                       "impact": who["p333"] or who[RULE] or (len(pol) == LEARNERS and sum(who[n] for n in pol) >= 4)}
+    ok = [q for q in LEVELS if imp[str(q)]["impact"] and per[str(q)]["clean"]]
+    if not ok:
+        return {"impact": imp, "band": None, "edges": None, "training_range": None}
+    b = [min(ok), max(ok)]
+    gaps = [q for q in LEVELS if b[0] <= q <= b[1] and q not in ok]
+    edges = [q for q in (b[0] - 500, b[0] - 250, b[1] + 250, b[1] + 500) if q in LEVELS and per[str(q)]["clean"]]
+    return {"impact": imp, "band": b, "gaps_in_band": gaps, "edges": edges, "training_range": [min([b[0], *edges]), max([b[1], *edges])]}
 
 
 if __name__ == "__main__":
@@ -60,4 +85,5 @@ if __name__ == "__main__":
     (out / "sweep1.json").write_text(json.dumps(r, indent=1))
     print("controllable:", [q for q, x in r["levels"].items() if x["controllable"]], flush=True)
     print("clean:", [q for q, x in r["levels"].items() if x["clean"]], flush=True)
-    print("training range:", r["range"] or r["note"], flush=True)
+    print("range rule (L, U):", r["range"] or r["note"], flush=True)
+    print("impact band (V418):", r["band"], "gaps", r.get("gaps_in_band"), "edges", r["edges"], "training range", r["training_range"], flush=True)

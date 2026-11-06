@@ -56,3 +56,13 @@ HTML in `docs/reports/<timestamp>/`, with three parts:
 - L and U with the rule's reasons.
 
 Numbers are in words ("fewer" and "less" mean the controller is better). All of it is exploratory, except the range rule, which is fixed here.
+
+## Addendum, 2026-11-05 (V418): the impact band and its edges, fixed while the sweep ran and before any row was read
+
+The author: "The idea is to demonstrate when the DRL can have an impact on the plant with some edges to prove the band chosen." The sweep's runs are unchanged. This reading is added beside the range rule above, which is still reported.
+
+- **Benefit at a level:** against no control, at least 10 % less delay, or at least 10 % and at least 20 per run fewer close-following seconds (confirmatory 3's floor), with the 95 % CI clear of 0.
+- **Impact at a level:** p333 or os1_15_10 benefits, or at least 4 of 5 baseline-v3 policies benefit. Each is reported separately.
+- **Band:** from the lowest to the highest clean level with impact. Levels inside without impact are listed as gaps.
+- **Edges:** the two grid levels below and the two above the band (250 and 500 veh/h away), where clean. The impact should fade there; training and evaluation include them, so the band's ends can be shown.
+- **Proposed training range:** the band with its edges. The author decides it with this and the range rule in hand.

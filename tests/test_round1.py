@@ -218,3 +218,18 @@ def test_sweep_range_rule():
     r = sw.read(T, list(sw.RULES))
     assert (r["L"], r["U"], r["range"]) == (4000.0, 6500.0, [4000.0, 6500.0])
     assert len(sw.arms()) == 8 and len(sw.arms(False)) == 3 and len(sw.LEVELS) == 21
+    assert r["band"] == [4000.0, 6500.0] and r["edges"] == [3500.0, 3750.0] and r["training_range"] == [3500.0, 6500.0]     # no clean level above the band
+
+
+def test_sweep_impact_band_with_edges():
+    import sweep1 as sw
+    rng = np.random.default_rng(12)
+    T = {}
+    for q in sw.LEVELS:
+        hit = 4500 <= q <= 5500     # impact only inside 4,500-5,500, everything clean
+        for n in [*sw.RULES, *(f"d{i}" for i in range(5))]:
+            T[(f"T|{n}", q)] = {s: {"seed": s, "q": q, "steps": 1500, "all_delay": 1e5 * (1 + rng.normal(0, 0.005)) * (0.8 if hit and n != "nc" else 1.0), "ttc_net": 1e3,
+                                    "passed": 0.97 * q * 1500 / 3600, "teleports": 0, "collisions": 0} for s in sw.SEEDS}
+    r = sw.read(T, [*sw.RULES, *(f"d{i}" for i in range(5))])
+    assert r["band"] == [4500.0, 5500.0] and r["edges"] == [4000.0, 4250.0, 5750.0, 6000.0] and r["training_range"] == [4000.0, 6000.0]
+    assert r["impact"]["5000.0"]["policies"] == 5 and r["impact"]["3000.0"]["impact"] is False
