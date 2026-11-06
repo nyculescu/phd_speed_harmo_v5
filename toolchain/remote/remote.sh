@@ -31,6 +31,7 @@ else
 fi
 U=${U:-${RUSER:-root}}
 P=/home/catalin/work/phd
+DATA=($P/v5b1_runs/baseline_v3/conf3/train)
 REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 SSH=(ssh -p "$PT" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 "$U@$H")
 
@@ -39,6 +40,8 @@ deploy() {
   sha=$(git -C "$REPO" rev-parse --short HEAD)
   [ -z "$(git -C "$REPO" status --porcelain)" ] || echo "note: uncommitted changes stay here; only HEAD $sha is shipped" >&2
   git -C "$REPO" archive --format=tar HEAD | "${SSH[@]}" "mkdir -p $P/code/$sha && tar -x -C $P/code/$sha && ln -sfn $P/code/$sha $P/code/current"
+  # Run data outside the repo that the checks and the incumbent read, mirrored at the laptop's paths.
+  tar -C / -cf - "${DATA[@]#/}" | "${SSH[@]}" "tar -x -C /"
   "${SSH[@]}" "bash $P/code/$sha/toolchain/remote/bootstrap.sh $P/code/$sha"
 }
 
