@@ -143,7 +143,7 @@ def controllers():
 
 def scoreboard():
     lines_ = [("No control", T, "nc"), ("0.8 s rule", T, "p333"), ("Best tuned rule (os1_15_10), original seeds", T, "os1_15_10"), ("Best tuned rule (os1_15_10), fresh seeds", F, "os1_15_10")]
-    verdict = ["DRL wins on delay", "DRL wins on close-following", "Won: 4 of 5 policies within every limit", "Not confirmed: 1 of 5; delay over the 2 % limit"]
+    verdict = ["Trade-off: much faster, not safer (in X1 less safe)", "Safer at about the same delay; pre-registered check passed 5 of 5 (original), 3 of 5 (fresh)", "Won: 4 of 5 policies within every limit", "Not confirmed: 1 of 5; delay over the 2 % limit"]
     out = []
     for (name, Tb, ref), v in zip(lines_, verdict):
         cells = []
@@ -172,7 +172,7 @@ def verdict_cards():
 body = "<h1>DRL against rules: where, who wins, by how much</h1>"
 body += '<p class="path">Confirmatory 3, revision 4 (V395-V398), and its fresh-seed replication, confirmatory 3b (V401). r2m3, plant_c3, 50 % ALKS. 5 per-CAV PPO policies (d0-d4) against no control, the fixed 0.8 s rule (p333) and tuned rules. 20 paired seeds per cell. Companion pages: <a href="../../extracts/2026-11-05_09-18/2026-11-05_09-18_extract.html">handoff</a>, <a href="../../extracts/2026-11-05_09-18/2026-11-05_09-18_drl_extract.html">DRL course</a>.</p>'
 body += "<h2 id='s0'>0. In one picture</h2>" + P("**The four controllers.** All of them act only on the automated cars (half of the traffic); human drivers drive on their own.") + controllers()
-body += P("**The scoreboard in X2**, the deciding scenario. The policies beat each simple baseline on that baseline's weak side and match it on the other. The real test was the best tuned rule: always safer, but on fresh seeds a few per cent slower than the 2 % the protocol allowed.") + scoreboard()
+body += P("**The scoreboard in X2**, the deciding scenario. Against each simple baseline the policies win on one measure only: against no control on delay, against the 0.8 s rule on close-following. Neither is a win on both. The real test was the best tuned rule: always safer, but on fresh seeds a few per cent slower than the 2 % the protocol allowed.") + scoreboard()
 body += "<h2 id='s1'>1. The verdicts</h2>" + verdict_cards()
 body += P("**How to read every number here.** For both measures, less is better. **'fewer'** close-following seconds and **'less'** delay mean the policy is better; **'more'** means it is worse. Blue marks the policy better, orange marks it worse. **Close-following (TTC)** counts vehicle-seconds where a vehicle would hit the one ahead within 3 s at current speeds. It is a safety surrogate and is also in the policies' reward. **Delay** counts all vehicles' lost time. Percentages are the protocol's statistic: the median over the 20 seeds of the paired difference, relative to the other controller. 'Clearly' means the 97.5 % interval lies entirely on that side.")
 body += "<h2 id='s2'>2. Where: every scenario</h2>" + grid()
