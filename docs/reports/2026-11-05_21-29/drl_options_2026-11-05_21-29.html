@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRL Options Memo</title>
+<style>
+:root { --bg:#FFF8E7; --ink:#30302C; --panel:#F7F0DF; --hit:#F3EBD8; --sel:#DDE7F5; --line:#D6D0C2; --dim:#66645D; --accent:#1F5FAF; --good:#0B7C8C; --bad:#AD4500; --rec:#E3F0E8; --recline:#0E7F55; color-scheme:light dark; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#1B1A17; --ink:#EDE8DA; --panel:#25231F; --hit:#2E2B26; --sel:#24344A; --line:#45413A; --dim:#A8A394; --accent:#5E97E0; --good:#2FA3B4; --bad:#CF7535; --rec:#1F2E26; --recline:#3FA578; } }
+:root[data-theme="dark"] { --bg:#1B1A17; --ink:#EDE8DA; --panel:#25231F; --hit:#2E2B26; --sel:#24344A; --line:#45413A; --dim:#A8A394; --accent:#5E97E0; --good:#2FA3B4; --bad:#CF7535; --rec:#1F2E26; --recline:#3FA578; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; font:15px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--ink); display:grid; grid-template-columns:250px minmax(0,1fr); min-height:100vh; }
+aside { border-right:1px solid var(--line); background:var(--panel); padding:12px; position:sticky; top:0; height:100vh; overflow:auto; }
+aside a { display:block; padding:3px 6px; color:var(--ink); text-decoration:none; font-size:13.5px; border-radius:4px; }
+aside a:hover { background:var(--hit); }
+aside .sub { padding-left:18px; font-size:12.5px; color:var(--dim); }
+aside .meta { margin-top:12px; font-size:12px; color:var(--dim); }
+main { padding:18px 28px 60px; max-width:1000px; }
+h1 { font-size:24px; margin:0 0 4px; }
+h2 { font-size:20px; margin:34px 0 8px; padding-top:8px; border-top:1px solid var(--line); }
+h3 { font-size:16px; margin:20px 0 6px; }
+p, li { max-width:78ch; }
+.lead { color:var(--dim); margin:0 0 14px; }
+code { font:13px ui-monospace,monospace; background:var(--hit); padding:0 3px; border-radius:3px; }
+pre { font:12.5px/1.4 ui-monospace,monospace; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 12px; overflow-x:auto; }
+.box { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:12px 0; }
+.opt { border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:12px 0; background:var(--bg); }
+.opt.rec { background:var(--rec); border-color:var(--recline); }
+.opt h3 { margin:0 0 6px; }
+.tag { display:inline-block; font-size:11.5px; padding:1px 7px; border-radius:10px; border:1px solid var(--recline); color:var(--recline); margin-left:6px; vertical-align:middle; }
+.tag.step { border-color:var(--accent); color:var(--accent); }
+.tag.later { border-color:var(--dim); color:var(--dim); }
+dl { display:grid; grid-template-columns:120px minmax(0,1fr); gap:4px 12px; margin:0; }
+dt { color:var(--dim); font-size:13px; padding-top:1px; }
+dd { margin:0; }
+dd ul { margin:0; padding-left:18px; }
+.wrap { overflow-x:auto; }
+table { border-collapse:collapse; margin:8px 0; font-size:14px; }
+th, td { border:1px solid var(--line); padding:4px 8px; text-align:left; vertical-align:top; }
+th { background:var(--panel); }
+.good { color:var(--good); }
+.bad { color:var(--bad); }
+.small { font-size:13px; color:var(--dim); }
+.decide { border-left:4px solid var(--accent); }
+@media (max-width: 800px) {
+  body { display:block; }
+  aside { position:static; height:auto; border-right:0; border-bottom:1px solid var(--line); }
+  main { padding:14px 16px 40px; }
+  dl { grid-template-columns:1fr; }
+  dt { padding-top:6px; }
+}
+</style>
+</head>
+<body>
+<aside>
+  <a href="#short"><b>In short</b></a>
+  <a href="#facts">What the agents measured</a>
+  <a href="#p1">Path 1: state, action, reward</a>
+  <a class="sub" href="#p1rec">Recommendation</a>
+  <a href="#p2">Path 2: the DRL algorithm</a>
+  <a class="sub" href="#p2rec">Recommendation</a>
+  <a href="#p3">Path 3: search for a better algorithm</a>
+  <a class="sub" href="#p3rec">Recommendation</a>
+  <a href="#decide">Decisions for the author</a>
+  <a href="#method">Method and caveats</a>
+  <div class="meta">2026-11-05 21:29 · baseline-v3 at <code>c6ab487</code> · 9 read-only agents (V412) · nothing trained, simulated or seeded</div>
+</aside>
+<main>
+<h1>Options memo: improving the SAR, the DRL algorithm, and the search</h1>
+<p class="lead">"Fewer" and "less" mean DRL is better; "more" means worse. "Close-following" means TTC below 3 s, read once a second. "The rule" means the best tuned rule os1_15_10. Literature not read in full is marked [VERIFY].</p>
+
+<h2 id="short">In short</h2>
+<p><b>The biggest finding is about how the results are judged, not about the controller.</b> Delay is the side of the bar that fails. The 2 % delay limit is judged on the point estimate, and it sits inside the 20-seed noise. On fresh seeds, each policy's delay interval against the rule is 7 to 12 points wide. Pooled over both 20-seed blocks (40 seeds, exploratory, so confirmatory 3b's verdict stands), all 5 policies have 15-25 % fewer close-following seconds, every interval clear of zero. Their delay ranges from 2.5 % less to 3.5 % more, and every interval includes zero. So any candidate judged on 20 seeds gets a near coin-flip verdict on delay.</p>
+<p><b>Next, the agents found three measured weaknesses that a change can target:</b></p>
+<ul>
+  <li><b>Delay is priced right in total but not per vehicle.</b> The reward's total weights match the bar's rate. But one vehicle sees other vehicles' delay at about 1/200 of that rate, through a shared term it can hardly move.</li>
+  <li><b>Late training slides toward close-following.</b> After about update 100, the training reward is flat and the weights wander. Between update 250 and update 500 the policies traded delay for fewer close-following seconds (5 seeds, too few to settle).</li>
+  <li><b>About half of the decisions cannot act, and they still train the policy.</b> The V2V gate is closed, and the PPO loss has no mask.</li>
+</ul>
+<p><b>Recommendation for all three paths together:</b> one cheap check with no training, then one paired round of up to 4 candidates, one from each path plus the gate mask, judged on 40 seeds.</p>
+<pre>
+ Stage 0   no training, about 1.4 h, 20 validation seeds
+           checkpoints u50..u500 of d0-d4, plus os1_15_10, p333, no control
+             - does a checkpoint chosen on validation already pass?  (path 2)
+             - do early checkpoints rank learners like u500?         (path 3)
+             - does a delay constraint bind under training demand?   (2C stop)
+              |
+ Round 1   up to 4 candidates, 5 learners each, the same training seeds
+             1A delay in the reward      1B gate mask
+             2C PPO-Lagrangian           3B residual on the rule
+           one candidate per 3.3-h slot, about 13 h of training
+              |
+ Validate  40 seeds, X1 and X2 at 5,300; at most 2 advance        about 2.6 h
+              |
+ Test      40 fresh seeds, used once; tuned reading, Bonferroni   about 1 h
+</pre>
+<p>Total: about 19 compute hours, about one day run serially. Build time comes on top: about 2-3 days for the four candidates. Nothing starts before your pick, a protocol written before data and your seed approval (V310).</p>
+
+<h2 id="facts">What the agents measured, across paths</h2>
+<p class="small">Each fact names the agent files (in <code>source/</code>) that measured it. I re-checked F1 and the loss mask in F3 myself; the other numbers are the agents', and I read their reasoning but did not re-run it.</p>
+
+<h3>F1. Delay is the binding side, and the 2 % limit sits inside the 20-seed noise</h3>
+<p>Each policy against os1_15_10 in X2 at 5,300: median of paired differences, 95 % bootstrap, from <code>source/main_noise.py</code> (my check; the protocol uses 97.5 %).</p>
+<div class="wrap"><table>
+<tr><th>Policy</th><th>Close-following, fresh seeds</th><th>Delay, fresh seeds</th><th>Close-following, 40 seeds pooled</th><th>Delay, 40 seeds pooled</th></tr>
+<tr><td>d0</td><td>14 % fewer (7-26 fewer)</td><td class="bad">10.2 % more (0.8-13.2 more)</td><td>21 % fewer (11-27 fewer)</td><td>3.5 % more (2.4 less to 6.8 more)</td></tr>
+<tr><td>d1</td><td>19 % fewer (12-25 fewer)</td><td>2.7 % more (2.7 less to 8.2 more)</td><td>23 % fewer (18-29 fewer)</td><td>2.5 % less (7.4 less to 2.5 more)</td></tr>
+<tr><td>d2</td><td>17 % fewer (3-22 fewer)</td><td>1.6 % more (5.2 less to 6.4 more)</td><td>15 % fewer (3-21 fewer)</td><td>1.2 % less (5.3 less to 3.9 more)</td></tr>
+<tr><td>d3</td><td>26 % fewer (22-33 fewer)</td><td>4.5 % more (1.1 less to 9.9 more)</td><td>25 % fewer (23-33 fewer)</td><td>0.6 % more (1.8 less to 3.5 more)</td></tr>
+<tr><td>d4</td><td>14 % fewer (11-28 fewer)</td><td>2.8 % more (1.9 less to 10.2 more)</td><td>22 % fewer (15-30 fewer)</td><td>1.5 % less (3.6 less to 1.4 more)</td></tr>
+</table></div>
+<ul>
+  <li>The rule's own median delay is 13 % less on the fresh block than on the original block (238,397 and 206,897 vehicle-seconds; p1a).</li>
+  <li>Rule against rule swings just as much: os1_10_0 goes from 3.9 % less delay to 7.0 % more between the blocks (p3b).</li>
+  <li>An agent estimate: a policy whose true delay equals the rule's fails the 2 % point limit about one time in four at 20 seeds (p2b, a normal approximation).</li>
+  <li>At 40 seeds the delay half-width is still about 3-6 points (p3c).</li>
+</ul>
+
+<h3>F2. Training stops improving early, then slides toward close-following</h3>
+<ul>
+  <li><b>The reward is flat:</b> flat after about update 100, with every slope over updates 100-499 within noise (p2a, p3c).</li>
+  <li><b>The weights wander:</b> from u50 to u500, the straight-line distance over the path length is 0.37 in all 5 learners. A random walk gives about 0.33 and a directed path 1.0 (p2a).</li>
+  <li><b>The final policy differs from u250</b> (5 tuning seeds): fewer close-following seconds in 9-10 of 10 learner-cells, and more delay in 7-8 of 10 (p2a, p2b, p3c). Five seeds cannot settle whether early checkpoints mislead (p3c).</li>
+  <li><b>The training reward cannot rank learners.</b> Its last window ranks them opposite to their 40-seed evaluation, with a rank correlation of minus 0.7 over 5 learners (p3c).</li>
+  <li><b>The trust region never binds:</b> KL is 0.0018-0.0026 and the clip fraction 1.2-1.5 %. The learning rate (3e-4) and the entropy weight (0.01) are constant (p2a).</li>
+</ul>
+
+<h3>F3. About half the decisions cannot act, and they still train the policy</h3>
+<ul>
+  <li><b>The gate is often closed.</b> It is open in 48-52 % of ALKS-seconds in training (p3a) and 56-57 % in evaluation (p1c).</li>
+  <li><b>Closed decisions still enter the loss.</b> They go into the PPO loss without a mask: <code>collect</code> adds every due vehicle and <code>update</code> has no mask (<code>c_train.py:155-243</code>, checked). That is about 33,000 rows per update with no immediate effect (p1b).</li>
+  <li><b>They still carry advantage.</b> Gated decisions have about 70 % of the advantage size of decisions that act (p3a). When gated, the policies stay near random: entropy 1.09-1.24 against 0.64-0.75 when open, where uniform is 1.39 (p3a).</li>
+  <li><b>Chatter:</b> 51-58 % of level changes reverse the previous one (p1c, p2c, p3a).</li>
+  <li><b>Action aliasing.</b> With the one-step rate limit, the 4 levels give at most 3 distinct moves. The greedy evaluation picks a different move than the most probable one in 9.5-24 % of decisions (p1c).</li>
+</ul>
+
+<h3>F4. The reward prices delay right in total, but not per vehicle</h3>
+<ul>
+  <li><b>Own delay.</b> The own-speed term is exactly the vehicle's own share of the judged delay. One own close-following flag weighs as much as 20 own vehicle-seconds of delay. The bar's own rate is 19-23 vehicle-seconds per close-following second, so the two match (p1a).</li>
+  <li><b>Others' delay</b> reaches a vehicle only through the shared count term, at 1/419 per vehicle-second. For that vehicle, one close-following second weighs as much as about 4,200 vehicle-seconds of others' delay, about 200 times the bar's rate (p1a).</li>
+  <li><b>Where the variance goes.</b> The shared terms carry 11 % or less of the per-decision reward variance, but 27-51 % of the advantage variance (p1b, p3a).</li>
+  <li><b>The safety flag is sparse.</b> It is set in 6.5-9 % of decisions, yet carries 76 % of the per-vehicle variance (p1b, p3a).</li>
+  <li><b>Shorter gaps do not buy delay.</b> p333 (0.8 s everywhere) has about the same delay as the rule. On fresh seeds, ramp-1 delay is 2.8-10.7 % more than the rule's for all 5 policies (p1a).</li>
+</ul>
+
+<h3>F5. The policies leave the rule mostly at merge 2, which no input describes</h3>
+<ul>
+  <li><b>Where they differ.</b> At least 3 of 5 learners choose a different level from the rule in 87-89 % of decisions on road 3 and 4a. Upstream and at merge 1 it is 25-30 % (p1c, on trace states from an older policy).</li>
+  <li><b>Inputs that do not describe merge 2:</b>
+    <ul>
+      <li>input [1] is at its limit in 93 % of decisions;</li>
+      <li>[13] is a merge-1 zone speed only;</li>
+      <li>[11] is dead, and its weights never trained (p1c).</li>
+    </ul>
+  </li>
+  <li><b>Effects there, on fresh seeds:</b> 124-232 fewer close-following seconds on road 3. Merge-2 lane-end stops range from 454 fewer to 106 more (p1c).</li>
+</ul>
+
+<h3>F6. Compute</h3>
+<ul>
+  <li><b>Where training time goes:</b> about 95 % to environment collection; the PPO update takes about 4 % (p2c, micro-benchmark).</li>
+  <li><b>The idle CPU is not free.</b> CPU sits at 38 % because 20 processes run on 32 threads, and extra workers slowed training before (V392).</li>
+  <li><b>Unit costs:</b> one candidate (5 learners) fills one 3.3-h slot. Evaluation runs about 1,500 runs per hour (p3c).</li>
+</ul>
+
+<h2 id="p1">Path 1: improve the state, action and reward (PPO unchanged)</h2>
+
+<div class="opt rec"><h3>1A. Attributed delay replaces the spacing payment <span class="tag">recommended</span></h3>
+<dl>
+<dt>Problem</dt><dd>F1, F4: delay fails, and others' delay is priced about 200 times too low per vehicle. The flow term pays for short spacing, which buys no delay (p333).</dd>
+<dt>Change</dt><dd>Reward only, in <code>_net_stats</code> (<code>b_env.py:754-791</code>):
+<ul>
+<li>each vehicle's lost time, 1 − min(v/limit, 1), is charged to its ALKS leader, the way follower TTC already is;</li>
+<li>an accelerating-lane vehicle's lost time is charged to the nearest mainline ALKS within 50 m;</li>
+<li>the reward becomes −0.5 × (own + followers' + merging vehicles' lost time) − 10 × safety, and the flow weight goes to 0.</li>
+</ul>
+The weight 0.5 equals the own-speed weight, the bar's rate, and is fixed before data. State, action and PPO are unchanged.</dd>
+<dt>Compute</dt><dd>About 4.5 h: smoke check in training mode 0.3, training 3.3, evaluation about 1. Build about half a day.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>The attribution is not causal: a bottleneck queue is charged to whichever ALKS leads it.</li>
+<li>Pricing slow followers may shorten gaps and spend the close-following margin.</li>
+<li>It partly double-counts the speed-around term.</li>
+</ul></dd>
+<dt>Test</dt><dd>Arms n0-n4, d0-d4, os1_15_10, p333 and no control, in X2 and X1 at 5,300, on fresh seeds. <b>KILL</b> if fewer than 4 of 5 pass the bar in X2, or if the median delay against the rule is not at least 2 points less than baseline-v3's on the same seeds (p1a).</dd>
+</dl></div>
+
+<div class="opt"><h3>1B. Gate mask: hold the level, train only on decisions that can act</h3>
+<dl>
+<dt>Problem</dt><dd>F3: about 43 % of policy-gradient rows have no immediate effect. With the gate closed, the flow term changes by only 0.001-0.003 whatever the move (p1b).</dd>
+<dt>Change</dt><dd>
+<ul>
+<li><code>_apply</code> (<code>b_env.py:652</code>) holds a vehicle's level while its gate is closed.</li>
+<li>The gate flag travels with each row through <code>_obs</code>, <code>_act</code> and <code>collect</code>.</li>
+<li><code>update</code> (<code>c_train.py:213-243</code>) averages the policy and entropy terms over gate-open rows only. The value loss and GAE keep every row.</li>
+</ul>
+The reward is unchanged.</dd>
+<dt>Compute</dt><dd>About 4 h. Build 2-3 h.</dd>
+<dt>Risk</dt><dd>It loses the deferred setting: a closed decision now sets the level that acts once the gate opens. It may not touch delay.</dd>
+<dt>Test</dt><dd>e0-e4 against d0-d4. The reward is identical, so the training curves compare directly too. <b>KILL</b> if neither close-following nor delay improves against d0-d4, or if delay is more with the interval clear of zero.</dd>
+</dl></div>
+
+<div class="opt"><h3>1C. Merge-2 inputs and a three-move action</h3>
+<dl>
+<dt>Problem</dt><dd>F5: the information gap at merge 2. F3: aliased actions.</dd>
+<dt>Change</dt><dd>
+<ul>
+<li>The dead input [11] becomes the position relative to merge 2.</li>
+<li>Two inputs are added: the merge-2 zone speed and the 4a_0 count, taking the input count from 16 to 18. The inputs the rules read are unchanged.</li>
+<li>The action becomes {longer, keep, shorter}, which the rate limit already implies.</li>
+</ul></dd>
+<dt>Compute</dt><dd>About 3.6 h. Build about 40 lines.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>The policy may already infer merge 2 from inputs [0] and [14].</li>
+<li>It may sharpen close-following at 4a while delay still fails.</li>
+<li>It makes two changes in one arm.</li>
+</ul></dd>
+<dt>Test</dt><dd><b>KILL</b> if no more learners pass than baseline-v3's on the same seeds, or if the new inputs show about zero permutation importance.</dd>
+</dl></div>
+
+<div class="opt"><h3>1D. Safety signal at step resolution, so the judged sample leaves the reward <span class="tag later">next round</span></h3>
+<dl>
+<dt>Problem</dt><dd>Teaching to the test. On fresh seeds, ALKS hard braking counted every 0.1 s is up to 23 % more than under no control, and only 5-15 % fewer than under the rule (p1a).</dd>
+<dt>Change</dt><dd>In <code>_second</code> (<code>b_env.py:397-404</code>), accumulate dt × [braking ≥ 3 m/s²] and dt × max(0, 1/TTC − 1/3 s) every step, for each ALKS and its follower. These replace the 1-Hz flags.</dd>
+<dt>Compute</dt><dd>About 5-6 h. Training may run 1.2-1.5 times slower; this is not measured.</dd>
+<dt>Risk</dt><dd>It punishes close gaps harder, so gaps get longer and delay grows: the side that already fails.</dd>
+</dl></div>
+
+<div class="box" id="p1rec"><h3>Path 1 recommendation: 1A</h3>
+<p><b>Pros:</b></p>
+<ul>
+<li>It aims at the side of the bar that fails.</li>
+<li>It uses the bar's own quantity at the bar's own rate, with no tuned weight.</li>
+<li>It is one reward change, and costs about 4.5 compute hours.</li>
+</ul>
+<p><b>Cons:</b></p>
+<ul>
+<li>The attribution is a heuristic.</li>
+<li>The judged 1-Hz close-following flag stays in the reward.</li>
+<li>It may spend some of the close-following margin.</li>
+</ul>
+<p><b>Inferior alternatives:</b></p>
+<ul>
+<li><b>1B</b> isolates credit cleanly but does not aim at delay. It is a strong round candidate, not the path-1 pick.</li>
+<li><b>1C</b> aims where close-following is won, and its link to delay is indirect. It also makes two changes in one arm.</li>
+<li><b>1D</b> is right for credibility but pushes delay the wrong way. It fits after delay has margin.</li>
+<li><b>A local follower-speed term in place of the shared terms</b> removes the only system-delay signal, including the insertion queues (p1b).</li>
+<li><b>The follower charge only for human followers</b> targets a smaller, unmeasured component.</li>
+<li><b>400-m or 1-km look-ahead:</b> the only evidence for it is a rule that bought road-3 safety with more delay (p1c).</li>
+<li><b>A lower TTC weight</b> spends the margin on shorter gaps, and p333 shows short gaps carry no delay edge.</li>
+<li><b>A higher weight on the shared terms</b> keeps per-vehicle credit at about 1/250 and adds noise.</li>
+<li><b>Changing the start level or the rate limit:</b> neither is shown to bind (p1c).</li>
+<li><b>Speed or lane actions</b> were already declined or had no headroom (V309, V339, V344).</li>
+</ul>
+</div>
+
+<h2 id="p2">Path 2: improve the DRL algorithm, including adjusting the SAR</h2>
+
+<div class="opt"><h3>2A. Choose checkpoints on validation seeds, from existing checkpoints <span class="tag step">step 0, no training</span></h3>
+<dl>
+<dt>Problem</dt><dd>F2: the final policy is not chosen, and the drift went toward more delay.</dd>
+<dt>Change</dt><dd>None to the SAR or PPO. Evaluate u50 to u500 of all 5 learners greedily, with os1_15_10, p333 and no control, on 20 validation seeds in X2 and X1 at 5,300. Pick with a rule fixed before data: the fewest close-following seconds with delay at most 2 % above the rule's.</dd>
+<dt>Compute</dt><dd>About 1.4 h (about 2,100 runs). A small selection script.</dd>
+<dt>Risk</dt><dd>A winner's curse on near-ties, and overfitting to X2. It spends validation seeds.</dd>
+<dt>Test</dt><dd>Selected s0-s4 against final d0-d4 on fresh test seeds. <b>KILL</b> if they pass in no more policy-cells, or if they are not less delayed with close-following no worse. The same runs also answer path 3's ranking question and 2C's step-0 stop.</dd>
+</dl></div>
+
+<div class="opt"><h3>2B. Anneal, and give every learner the same critic scale</h3>
+<dl>
+<dt>Problem</dt><dd>F2: a constant learning rate and entropy weight. The return scale was fixed at update 0, between 2.84 and 4.00, so the value weight differs about 1.7-fold between learners. C2 has the largest scale and is the weakest learner (n = 5, suggestive only; p2a).</dd>
+<dt>Change</dt><dd>
+<ul>
+<li>Learning rate linear to 0.</li>
+<li>Entropy weight from 0.01 to 0 over the second half.</li>
+<li>One critic scale for all learners.</li>
+<li>TensorBoard scalars for the policy loss, gradient norms and per-term reward means.</li>
+</ul></dd>
+<dt>Compute</dt><dd>About 3.6 h. Build half a day.</dd>
+<dt>Risk</dt><dd>It freezes the wandering wherever it stands, so delay may not move. With entropy at 0, the flow term may push every car to 0.8 s.</dd>
+<dt>Test</dt><dd><b>KILL</b> if no more policy-cells pass than d0-d4's and the learner spread is not smaller.</dd>
+</dl></div>
+
+<div class="opt rec"><h3>2C. PPO-Lagrangian: safety in the reward, delay as a constraint <span class="tag">recommended</span></h3>
+<dl>
+<dt>Problem</dt><dd>F1, F2, F4: fixed weights put the trade-off in the wrong place, and late training drifts further toward close-following.</dd>
+<dt>Change</dt><dd>
+<ul>
+<li>Reward: the safety terms, collisions and the move charge. The speed and flow terms leave the reward.</li>
+<li>A cost channel: the delay rate of the vehicle itself, of its 200-m bin and of the network. Training also computes the judged delay.</li>
+<li>A cost critic head on the same 26 inputs, and its own GAE. The two advantages are combined as (A_r − λ·A_c)/(1 + λ).</li>
+<li>The dual variable λ is updated every update from the last 20 updates' delay relative to a reference. The target is 3 % less than the reference, as a margin for noise.</li>
+<li>The reference is the lower-delay of os1_15_10 and p333, under training demand, on reference seeds. It never comes from X1, X2 or evaluation seeds.</li>
+</ul>
+Family: PPO-Lagrangian [VERIFY].</dd>
+<dt>Compute</dt><dd>About 4.5 h, including step 0 (about 0.5 h). Build about 1 day.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>The per-vehicle cost is only a proxy for episode delay.</li>
+<li>λ may hit its cap, or oscillate on the 6 % episode-to-episode noise.</li>
+<li>A constraint met under training demand may not hold in X2.</li>
+<li>Falling back to 0.8 s everywhere meets the constraint but loses the edge.</li>
+</ul></dd>
+<dt>Step-0 stop</dt><dd>If 4 of 5 baseline-v3 policies already meet the target under training demand, the constraint would not bind: do not train. The fresh-seed result would then be a transfer or noise problem.</dd>
+<dt>Test</dt><dd><b>KILL</b> if any of these holds:
+<ul>
+<li>fewer than 4 of 5 policies pass in X2;</li>
+<li>the paired delay is not less than baseline-v3's;</li>
+<li>λ sits at its cap for the last 100 updates in 3 of 5 learners.</li>
+</ul></dd>
+</dl></div>
+
+<div class="opt"><h3>2D. Diagnose the critic offline, then a richer critic only if the data justify one</h3>
+<dl>
+<dt>Problem</dt><dd>Explained variance stays at about 0.6. Nobody can yet tell whether the critic lacks capacity, lacks information, or faces irreducible noise (p2c).</dd>
+<dt>Change</dt><dd>
+<ul>
+<li>Dump 30 training-mode episodes on throw-away seeds.</li>
+<li>Fit 4 critics offline and compare them with a shuffled null: the current one; a 256-256 one; one with the previous decision added; one with the 6 nearest vehicles added.</li>
+</ul></dd>
+<dt>Compute</dt><dd>Under 0.3 h, plus 3.3-3.8 h only if a richer critic is then trained.</dd>
+<dt>Risk</dt><dd>A better fit of the returns need not give a better policy. The dump is an exception to TensorBoard-only logging (V394).</dd>
+</dl></div>
+
+<div class="box" id="p2rec"><h3>Path 2 recommendation: 2A as step 0, then 2C</h3>
+<p><b>Pros:</b></p>
+<ul>
+<li>2A costs about 1.4 h with no trainer build, tests F2 directly, and is the same run as path 3's stage 0.</li>
+<li>2C has the bar's form: the most safety subject to a delay limit. One adaptive number replaces a weight search, and its step 0 can stop it within about half an hour.</li>
+</ul>
+<p><b>Cons:</b></p>
+<ul>
+<li>2C is the largest build in this memo, about a day.</li>
+<li>The per-vehicle cost is only a proxy for episode delay.</li>
+<li>It overlaps 1A, since both put delay into the objective. In the same round, that makes them a fair pair: a fixed weight against an adaptive one.</li>
+</ul>
+<p><b>Inferior alternatives:</b></p>
+<ul>
+<li><b>2B</b> is hygiene. It freezes the drift instead of steering it, and is better added later to whichever candidate wins.</li>
+<li><b>2D</b> is useful diagnosis, but no measured gap points at the critic, and the update takes only about 4 % of the time.</li>
+<li><b>The reverse constraint</b> (delay in the reward, close-following as the constraint) constrains the surrogate itself, so it caps the claim and comes closer to teaching to the test.</li>
+<li><b>Fixed safety weights of 5 and 2.5</b> cost twice the compute for an end point that drifts; 2C automates that search.</li>
+<li><b>A larger batch or more environments per update:</b> Adam's step barely depends on batch size, and contention slowed training before (V392).</li>
+<li><b>More updates, a larger learning rate, more epochs:</b> the clip is idle and the curve flat, so these add wandering, not progress.</li>
+<li><b>An attention or graph policy:</b> 1.5-2 days of build, with no direct measured gap, and not before 2D.</li>
+<li><b>A recurrent policy:</b> no measured memory failure (V410, V411).</li>
+<li><b>A wider actor or a GPU:</b> no measured gap, and the update is about 4 % of the time.</li>
+</ul>
+</div>
+
+<h2 id="p3">Path 3: search for a better DRL algorithm, including framing a SAR</h2>
+
+<div class="opt rec"><h3>3A. The search procedure: one calibration stage, then a fixed-budget paired round <span class="tag">recommended</span></h3>
+<dl>
+<dt>Problem</dt><dd>
+<ul>
+<li>F1: noise decides at 20 seeds.</li>
+<li>F2: the training reward cannot rank or stop runs.</li>
+<li>Learner spread is as large as the effects sought. At 40 seeds the learners range from 15 to 25 % fewer close-following seconds, and from 2.5 % less delay to 3.5 % more (p3c).</li>
+</ul></dd>
+<dt>Procedure</dt><dd>
+<ul>
+<li><b>Stage 0</b> = 2A. It also decides whether early stopping is worth building. If the best learner at u500 is not in the top 2 at u250, or the rank correlation is below 0.8 in a cell, early-stopping rungs are dropped.</li>
+<li><b>Round:</b> at most 4 candidates. Each trains 5 learners for 500 updates in one 3.3-h slot, on the same 5 training seed streams, so comparisons are paired. Only the existing collapse check stops a run.</li>
+<li><b>Validation:</b> 40 seeds, X1 and X2 at 5,300, each candidate at u250 and u500, with the incumbent and the rules. At most 2 candidates advance. To advance, a candidate needs less delay than the incumbent (interval clear of zero) and at least 10 % fewer close-following seconds than the rule.</li>
+<li><b>Test:</b> 40 fresh seeds, used once, read with confirmatory 3's tuned reading. Bonferroni over finalists × cells: 98.75 % intervals for 2 × 2.</li>
+</ul></dd>
+<dt>Compute</dt><dd>About 17 h for 4 candidates (training 13.2, validation 2.6, test 1), plus 1.4 h for stage 0.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>Even 40 test seeds leave about 3-6 points of noise on delay against a 2 % limit.</li>
+<li>Shared seeds share their quirks.</li>
+<li>4 candidates is a cap, not a search of the whole space.</li>
+</ul></dd>
+<dt>Round KILL</dt><dd>No candidate beats the incumbent on delay on validation: baseline-v3 stays, and path 3 stops for this round.</dd>
+</dl></div>
+
+<div class="opt rec"><h3>3B. Residual PPO on the tuned rule <span class="tag">path 3's candidate</span></h3>
+<dl>
+<dt>Problem</dt><dd>
+<ul>
+<li>DRL wins close-following, but its delay spreads by about 10 % from seed to seed, while the rule already holds the delay (F1).</li>
+<li>The rule needs no new inputs: <code>OwnState</code> reads inputs [0], [4] and [15] (p3b).</li>
+</ul></dd>
+<dt>Change</dt><dd>
+<ul>
+<li><b>Action:</b> an offset around the rule's level for that vehicle. The hook exists at <code>b_env.py:656-657</code> as a static per-zone residual.</li>
+<li><b>State:</b> the 16 inputs plus the rule's level.</li>
+<li><b>Network:</b> the output layer starts with offset 0 at about 0.9 probability, so training starts as the rule.</li>
+<li><b>Reward:</b> unchanged.</li>
+</ul></dd>
+<dt>Compute</dt><dd>About 4.2 h; small build. Smoke check: with the offset forced to 0, the run must reproduce the stored os1_15_10 row exactly.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>The same reward may teach the same deviations.</li>
+<li>From 0.8 s, an offset of ±1 cannot reach 1.2 or 1.6 s; ±2 can (a protocol detail).</li>
+<li>A win is only as strong as os1_15_10.</li>
+<li>An earlier residual around a static base on r1m3 was mixed (V317).</li>
+</ul></dd>
+<dt>Test</dt><dd><b>KILL</b> if fewer than 4 of 5 pass in X2, or if the residual's delay is not less than baseline-v3's.</dd>
+</dl></div>
+
+<div class="opt"><h3>3C. COMA-style counterfactual advantage in the current PPO</h3>
+<dl>
+<dt>Problem</dt><dd>F3: gated decisions carry advantage although their action does nothing.</dd>
+<dt>Change</dt><dd>A Q critic with 4 outputs; the advantage becomes Q(a) minus the policy-weighted mean of Q [VERIFY: Foerster et al.].</dd>
+<dt>Compute</dt><dd>About 3.8 h. Build half a day.</dd>
+<dt>Risk</dt><dd>The Q differences may sit below the critic's error. Benchmark reports put COMA below MAPPO [VERIFY]. And 1B attacks the same problem more cheaply.</dd>
+</dl></div>
+
+<div class="opt"><h3>3D. Shared Double-Dueling DQN with n-step returns</h3>
+<dl>
+<dt>Problem</dt><dd>
+<ul>
+<li>The evaluation is greedy anyway.</li>
+<li>The safety events are sparse, and replay can reuse them.</li>
+<li>When the gate is closed, a dueling advantage head can learn that no action matters.</li>
+</ul></dd>
+<dt>Compute</dt><dd>About 5.5-7 h, including a disclosed 1.4-h tuning pilot. Build 1-1.5 days.</dd>
+<dt>Risk</dt><dd>
+<ul>
+<li>The replay data keep shifting as 150-270 neighbours change policy.</li>
+<li>The −10 safety spikes can cause overestimation.</li>
+<li>It needs more tuning than PPO [VERIFY].</li>
+</ul></dd>
+</dl></div>
+
+<div class="opt"><h3>3E. CMA-ES over a per-zone own-state rule <span class="tag later">opponent upgrade, before any claim</span></h3>
+<dl>
+<dt>Problem</dt><dd>The 70-rule grid is coarse: its front reaches 15-17 % fewer close-following seconds at 2-3 % more delay than os1_15_10 (p3b). Part of DRL's edge may come from a weak grid.</dd>
+<dt>Compute</dt><dd>About 4-8 h.</dd>
+<dt>Risk</dt><dd>It overfits the tuning seeds. The result is a tuned non-learning controller: a stronger opponent, not a candidate.</dd>
+</dl></div>
+
+<div class="box" id="p3rec"><h3>Path 3 recommendation: 3A, with 3B in path 3's slot; 3E before any thesis claim</h3>
+<p><b>Pros:</b></p>
+<ul>
+<li>The procedure answers measured problems: noise, a reward that cannot rank, and learner spread.</li>
+<li>Selection happens on validation, so a multiplicity correction is needed only at the test.</li>
+<li>The incumbent needs no retraining.</li>
+<li>3B starts at the rule's delay with a readable deviation, at the same compute as baseline-v3.</li>
+</ul>
+<p><b>Cons:</b></p>
+<ul>
+<li>It needs 40 + 40 new evaluation seeds and about a day per round.</li>
+<li>4 candidates is a cap.</li>
+<li>3B is only as strong as os1_15_10.</li>
+</ul>
+<p><b>Inferior alternatives:</b></p>
+<ul>
+<li><b>Successive halving as the main procedure:</b> rank preservation is not shown, it needs an exact resume, and it saves at most about 1.6 h per candidate, since 5 learners already share one slot.</li>
+<li><b>One learner per candidate:</b> the learner spread is as large as the effects sought.</li>
+<li><b>Screening on the training reward:</b> its rank correlation with the evaluation is minus 0.7.</li>
+<li><b>20 test seeds:</b> about 5-8 points of noise on delay.</li>
+<li><b>3C:</b> 1B tests the same problem more cheaply.</li>
+<li><b>3D:</b> the largest build, and a tuning confound.</li>
+<li><b>Imitation of the rule, then fine-tuning:</b> the policy may drift back under the same reward. It is a diagnostic, not a candidate.</li>
+<li><b>A supervisory zone agent:</b> it failed twice here (V279, V285), and it leaves per-CAV control.</li>
+<li><b>VDN or QMIX:</b> the shared part is 11 % or less of the variance, and QMIX needs a fixed set of agents.</li>
+<li><b>SAC-discrete:</b> like 3D, plus a temperature to tune.</li>
+<li><b>Independent learners or mean-field methods:</b> they address no measured problem, or only the smallest measured term.</li>
+<li><b>ES over network weights:</b> the fitness is too noisy.</li>
+<li><b>Model-based RL:</b> a vehicle's own headway barely changes its own speed (V289), so the model must resolve tiny effects.</li>
+</ul>
+</div>
+
+<h2 id="decide">Decisions for the author</h2>
+<div class="box decide">
+<ol>
+<li><b>Round-1 candidates (at most 4).</b> I recommend 1A, 1B, 2C and 3B: one reward change, one credit change, one algorithm change and one prior-knowledge family.
+  <ul>
+    <li><b>Pros:</b> each aims at a different measured weakness, and all share seeds and the incumbent.</li>
+    <li><b>Cons:</b> about 13 h of training and about 2-3 days of build.</li>
+    <li><b>Inferior:</b> 1C instead of 1B puts two changes in one arm. Fewer candidates save 3.3 h each, but lose the side-by-side reading.</li>
+  </ul>
+</li>
+<li><b>Evaluation size.</b> I recommend 40 seeds per cell for validation and for the test, with the 2 % delay limit unchanged in this round.
+  <ul>
+    <li><b>Pros:</b> this narrows the delay noise from about 5-8 points to about 3-6.</li>
+    <li><b>Cons:</b> twice the evaluation runs, about 1-2 h more.</li>
+    <li><b>Inferior:</b> 20 seeds leave delay near a coin flip (F1). Restating the limit now, after a failure, would look like moving the bar; that belongs to the thesis-bar discussion (V95, V402).</li>
+  </ul>
+</li>
+<li><b>Checkpoint rule.</b> CLAUDE.md says both "final policy only" and "checkpoints chosen on validation seeds only". I recommend that a checkpoint chosen on validation may be the reported policy, under a selection rule fixed before data, with the final policy also reported.</li>
+<li><b>Seeds.</b> Stage 0, round training, validation and test each need fresh, approved ranges. I will propose exact ranges in the protocol after checking the ledger and the run folders. One agent suggested ranges (<code>source/p3c.md</code>); I have not checked them.</li>
+<li><b>2C's safety signal.</b> I recommend keeping the judged 1-Hz flag in round 1, so that 2C differs from baseline-v3 in the algorithm only. The step-resolution signal (1D) comes after.
+  <ul>
+    <li><b>Con:</b> teaching to the test stays for one more round. It is offset by reporting the counters that are not in the reward: TTC below 1.5 s, the severe check, braking counted every 0.1 s.</li>
+  </ul>
+</li>
+</ol>
+<p class="small">After your pick: the protocol for the round, criteria fixed before data. Suggested effort Extra High, ultracode on for its design review, then High for builds and smoke checks.</p>
+</div>
+
+<h2 id="method">Method and caveats</h2>
+<ul>
+<li><b>Agents:</b> 9 headless agents, 3 per path, ran as systemd jobs from the brief in <code>source/agent_brief.md</code>. Their full answers are in <code>source/p1a.md</code> … <code>source/p3c.md</code>, and their scripts in <code>/home/catalin/work/phd/v5b1_runs/sar3c/tmp/</code>. They read data and code only: no SUMO, no training, no seeds, no edits to the repo.</li>
+<li><b>Checks I made:</b> F1 (<code>source/main_noise.py</code>, output beside it) and the missing loss mask (<code>c_train.py:155-243</code> at <code>d2b2ecc</code>). The other numbers are the agents', with their sources named.</li>
+<li><b>Older trace data:</b> per-decision numbers in F3, F4 and F5 come from an older phase-3 policy on one or two used seeds, with the hand-scaled inputs. They are indicative, not measurements of d0-d4.</li>
+<li><b>Small samples:</b> the u250-against-final comparisons use 5 tuning seeds, and rank correlations over 5 learners are suggestive only.</li>
+<li><b>Pooling is exploratory:</b> pooling the two 20-seed blocks in F1 is a post hoc reading. The pre-registered verdicts stand: confirmatory 3 won in X2, and 3b did not confirm it.</li>
+<li><b>Compute figures</b> are this machine's measured unit costs times run counts. Build time is separate.</li>
+</ul>
+</main>
+</body>
+</html>
