@@ -12,7 +12,7 @@ from pathlib import Path
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "docs/research/round1"))
+sys.path[:0] = [str(ROOT), str(ROOT / "docs/research/round1")]
 from checks1 import ENV_V3, GAMMA, LAM, NET_SEED, PY, Q, SHORT  # noqa: E402
 
 
