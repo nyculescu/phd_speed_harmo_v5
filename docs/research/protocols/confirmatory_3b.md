@@ -1,6 +1,6 @@
 # Confirmatory 3b: fresh-seed replication of X2
 
-Status: draft, awaiting the author's approval of this text and of the seeds (V399).
+Status: approved by the author in V400, text as in commit 5df9f3c; seeds 7,440,220-239.
 
 ## Question
 
