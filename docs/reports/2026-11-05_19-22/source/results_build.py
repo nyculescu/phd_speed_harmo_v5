@@ -49,11 +49,14 @@ def say(v, good, bad, d=0):
 def grid():
     cols = [("Close-following (TTC)", "vs the 0.8 s rule", "p333", "ttc_net", "fewer", "more"), ("Delay", "vs the 0.8 s rule", "p333", "all_delay", "less", "more"),
             ("Close-following (TTC)", "vs no control", "nc", "ttc_net", "fewer", "more"), ("Delay", "vs no control", "nc", "all_delay", "less", "more")]
-    cw, ch, lw, top = 165, 38, 220, 50
+    cw, ch, lw, top = 165, 38, 220, 66
     b = ""
+    for g, (gt, colr) in enumerate((("Against the 0.8 s rule", "--ptr"), ("Against no control", "--flt"))):
+        gx = lw + g * 2 * cw
+        b += rect(gx + 2, 2, 2 * cw - 4, 22, fill="--panel", stroke=colr, rx=5, sw=1.5) + text(gx + cw, 17, gt, a="middle", size=12, w=700)
     for j, (t, t2, *_r) in enumerate(cols):
-        b += text(lw + j * cw + cw / 2, 16, t, a="middle", size=11.5, w=600) + text(lw + j * cw + cw / 2, 32, t2, a="middle", size=10, fill="--dim")
-    b += text(lw + 2 * cw, top - 4, "Blue: the policies are better.   Orange: the policies are worse.", a="middle", size=9.5, fill="--dim")
+        b += text(lw + j * cw + cw / 2, 42, t, a="middle", size=11, w=600)
+    b += text(lw + 2 * cw, top - 6, "Blue: the policies are better.   Orange: the policies are worse.", a="middle", size=9.5, fill="--dim")
     for i, (c, q, Tb, tag) in enumerate(CELLS):
         y = top + i * ch
         b += text(lw - 8, y + ch / 2 + 4, lab(c, q, tag), a="end", size=11.5, w=600 if tag else 400)
@@ -74,10 +77,11 @@ def scatter_cell(Tb, c, q, title, rules):
     names = [n for n in ["nc", "p333", O["single_rule"], "copy"] + list(O["ctrl"]) if A(Tb, c, q, n)]
     names = list(dict.fromkeys(names))
     pts = [(n, med(A(Tb, c, q, n), "all_delay") / 1000.0, med(A(Tb, c, q, n), "ttc_net")) for n in names + POL]
-    W, H, ml, mb, mt = 470, 330, 54, 40, 26
+    W, H, ml, mb, mt = 540, 350, 54, 40, 44
     xs, ys = [p[1] for p in pts], [p[2] for p in pts]
     x0, x1, y0, y1 = min(xs) * 0.97, max(xs) * 1.02, 0, max(ys) * 1.08
-    X = lambda v: ml + (v - x0) / (x1 - x0) * (W - ml - 12)
+    pr = 80
+    X = lambda v: ml + (v - x0) / (x1 - x0) * (W - ml - pr)
     Y = lambda v: mt + (y1 - v) / (y1 - y0) * (H - mt - mb)
     b = text(0, 14, title, w=600, size=12)
     for t in nice(y0, y1, 5):
@@ -87,7 +91,7 @@ def scatter_cell(Tb, c, q, title, rules):
         if x0 <= t <= x1:
             b += text(X(t), H - mb + 14, f"{t:,.0f}", a="middle", size=10, fill="--dim")
     b += text(ml + (W - ml) / 2, H - 6, "All-vehicle delay, thousand vehicle-seconds (left is better)", a="middle", size=10, fill="--dim")
-    b += text(4, mt - 8, "TTC below 3 s, vehicle-seconds (lower is better)", size=10, fill="--dim")
+    b += text(4, mt - 12, "Close-following (TTC), vehicle-seconds (lower is better)", size=10, fill="--dim")
     for n, x, y in pts:
         pol, ref = n in POL, n in rules
         colr = "--accent" if pol else "--sem1" if n == "nc" else "--ink" if ref else "--c8"
@@ -129,6 +133,32 @@ def forest(Tb, c, q, rules, title):
     return svg(W, top + len(rows) * lh + 34, b, title, fit=True)
 
 
+def controllers():
+    rows = [("No control", "Every automated car keeps a 1.6 s gap to the car ahead, always."),
+            ("0.8 s rule (p333)", "An automated car following another automated car within 150 m closes to 0.8 s; the same everywhere and always. Behind a human-driven car it stays at 1.6 s."),
+            ("Tuned rules (70)", "Variants of the 0.8 s rule that switch to 1.2 or 1.0 s in certain places or conditions, tuned on separate seeds. Strongest in X2: os1_15_10, which uses 0.8 s, but 1.2 s when past the first merge, slower than 15 m/s, with at least 10 cars waiting to merge."),
+            ("DRL policies (d0-d4)", "A learned network picks 1.6, 1.2, 1.0 or 0.8 s for each automated car every 10 s, from what that car sees.")]
+    return table(["Controller", "What it does (automated cars only; human drivers are never controlled)"], [(f"<b>{e(a)}</b>", e(b)) for a, b in rows])
+
+
+def scoreboard():
+    lines_ = [("No control", T, "nc"), ("0.8 s rule", T, "p333"), ("Best tuned rule (os1_15_10), original seeds", T, "os1_15_10"), ("Best tuned rule (os1_15_10), fresh seeds", F, "os1_15_10")]
+    verdict = ["DRL wins on delay", "DRL wins on close-following", "Won: 4 of 5 policies within every limit", "Not confirmed: 1 of 5; delay over the 2 % limit"]
+    out = []
+    for (name, Tb, ref), v in zip(lines_, verdict):
+        cells = []
+        for key, good, bad in (("ttc_net", "fewer", "more"), ("all_delay", "less", "more")):
+            ee = pe(Tb, "X2", 5300.0, ref, key)
+            vals = sorted(x[0] for x in ee)
+            m = float(np.median(vals))
+            ok = m >= 0.5
+            same = abs(m) < 5 and not any(x[1] > 0 or x[2] < 0 for x in ee)
+            mark = "about the same" if same else ("✔ " if ok else "✘ ") + f"{abs(vals[0]) if ok else abs(vals[-1]):.0f}-{abs(vals[-1]) if ok else abs(vals[0]):.0f} % {good if ok else bad}" if (vals[0] > 0) == (vals[-1] > 0) else say(m, good, bad) + " (median)"
+            cells.append(mark)
+        out.append((f"<b>{e(name)}</b>", e(cells[0]), e(cells[1]), f"<b>{e(v)}</b>"))
+    return table(["X2 at 5,300: the policies against", "Close-following (TTC)", "Delay", "Verdict"], out)
+
+
 def verdict_cards():
     rows = [
         ("X1, slowdown downstream of merge 2", "Not won (V395)", "3 of 5 policies clear. Only the 0.8 s rule counted. 33-46 % fewer TTC seconds than it, but 2 policies had 2.5-3.1 % more delay than allowed.", "--sem1"),
@@ -141,6 +171,8 @@ def verdict_cards():
 
 body = "<h1>DRL against rules: where, who wins, by how much</h1>"
 body += '<p class="path">Confirmatory 3, revision 4 (V395-V398), and its fresh-seed replication, confirmatory 3b (V401). r2m3, plant_c3, 50 % ALKS. 5 per-CAV PPO policies (d0-d4) against no control, the fixed 0.8 s rule (p333) and tuned rules. 20 paired seeds per cell. Companion pages: <a href="../../extracts/2026-11-05_09-18/2026-11-05_09-18_extract.html">handoff</a>, <a href="../../extracts/2026-11-05_09-18/2026-11-05_09-18_drl_extract.html">DRL course</a>.</p>'
+body += "<h2 id='s0'>0. In one picture</h2>" + P("**The four controllers.** All of them act only on the automated cars (half of the traffic); human drivers drive on their own.") + controllers()
+body += P("**The scoreboard in X2**, the deciding scenario. The policies beat each simple baseline on that baseline's weak side and match it on the other. The real test was the best tuned rule: always safer, but on fresh seeds a few per cent slower than the 2 % the protocol allowed.") + scoreboard()
 body += "<h2 id='s1'>1. The verdicts</h2>" + verdict_cards()
 body += P("**How to read every number here.** For both measures, less is better. **'fewer'** close-following seconds and **'less'** delay mean the policy is better; **'more'** means it is worse. Blue marks the policy better, orange marks it worse. **Close-following (TTC)** counts vehicle-seconds where a vehicle would hit the one ahead within 3 s at current speeds. It is a safety surrogate and is also in the policies' reward. **Delay** counts all vehicles' lost time. Percentages are the protocol's statistic: the median over the 20 seeds of the paired difference, relative to the other controller. 'Clearly' means the 97.5 % interval lies entirely on that side.")
 body += "<h2 id='s2'>2. Where: every scenario</h2>" + grid()
@@ -163,7 +195,7 @@ body += cards([
     ("Where it comes from", "The queue left after a slowdown at the near-saturated second merge. Not during the slowdown itself, and not clearly in steady traffic (V396).", "--ptr"),
     ("Honest one-line summary", "Per-CAV PPO headway control traded a little delay for fewer close-following seconds than tuned rules after a slowdown on this uncalibrated two-merge model; the pre-registered win did not replicate.", "--accent"),
 ])
-toc = "".join(f'<a href="#s{i}"><small>{i}</small>{t}</a>' for i, t in enumerate(("Verdicts", "Every scenario", "Delay against TTC", "Each policy, each rule", "What it adds up to"), 1))
+toc = "".join(f'<a href="#s{i}"><small>{i}</small>{t}</a>' for i, t in enumerate(("In one picture", "Verdicts", "Every scenario", "Delay against TTC", "Each policy, each rule", "What it adds up to")))
 html_ = page.shell("DRL Results Map", toc, body, "Self-contained. Computed from conf3 and conf3b evaluation rows with the protocol's statistic.")
 open(OUT, "w").write(html_)
 print(len(html_) / 1e6, "MB")
