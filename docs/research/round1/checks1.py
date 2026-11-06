@@ -6,6 +6,7 @@ usage: checks1.py identity|rows|smoke OUT_DIR [OLD_CODE_DIR]
 import gzip
 import json
 import os
+import shutil
 import subprocess
 import sys
 import multiprocessing as mp
@@ -80,6 +81,7 @@ def identity(out: Path, old: Path) -> list:
     res = {}
     for tag, code in (("old", old), ("new", ROOT)):
         d = out / f"identity_{tag}"
+        shutil.rmtree(d, ignore_errors=True)
         cmd = [PY, "-m", "v5b.fleet.c_train", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1", "--env", env,
                "--levels", json.dumps([Q]), "--gamma", str(GAMMA), "--lam", str(LAM), "--net-seed", str(NET_SEED)]
         subprocess.run(cmd, cwd=code, env={**os.environ, "PYTHONPATH": str(code), "PYTHONDONTWRITEBYTECODE": "1"}, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -105,6 +107,7 @@ def smoke(out: Path) -> list:
     bad = []
     for kind in CANDIDATES:
         d = out / f"smoke_{kind}"
+        shutil.rmtree(d, ignore_errors=True)
         env = {**env_for(kind, {str(q): [0.2, 0.01, 300.0] for q in LEVELS}), **SHORT}     # placeholder references: the smoke checks wiring, not values
         lagr = {"ref": {str(q): 2.0e4 for q in LEVELS}} if kind == "lagr" else None
         f = ct.train(d, 0, 2, 3, env, None, GAMMA, LAM, LEVELS, NET_SEED, lagr)

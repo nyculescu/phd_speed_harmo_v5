@@ -50,9 +50,9 @@ def read(T: dict, v: dict, trained: dict | None = None, TB: dict | None = None) 
         arms_b = tested(trained, v)
         pb = dc.bonferroni(len(arms_b))
         out["band"] = {k: dc.band(TB, [f"{PREFIX[k]}{i}" for i in range(LEARNERS)], pb) for k in arms_b}
-        out["band"]["incumbent"] = dc.band(TB, [f"d{i}" for i in range(LEARNERS)], pb)
-    if "v3w" in (trained or {}) and "v3w" not in fin:     # attribution: each method finalist against the control arm on the new range
-        out["vs_control"] = {k: {c: dc.better(T, c, [f"{PREFIX[k]}{i}" for i in range(LEARNERS)], [f"w{i}" for i in range(LEARNERS)], dc.P95) for c in PRIMARY} for k in fin}
+        out["band"]["incumbent_report_only"] = dc.band(TB, [f"d{i}" for i in range(LEARNERS)], pb)
+    if "v3w" in (trained or {}):     # attribution, report-only: each method finalist against the control arm on the new range
+        out["vs_control"] = {k: {c: dc.better(T, c, [f"{PREFIX[k]}{i}" for i in range(LEARNERS)], [f"w{i}" for i in range(LEARNERS)], dc.P95) for c in PRIMARY} for k in fin if k != "v3w"}
     for k in fin:
         names = [f"{PREFIX[k]}{i}" for i in range(LEARNERS)]
         out["finalists"][k] = {c: {"T1": dc.better(T, c, names, [f"d{i}" for i in range(LEARNERS)], pct), "T2": dc.tuned(T, c, OPPONENTS, names, pct),

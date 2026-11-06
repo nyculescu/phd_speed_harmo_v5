@@ -85,7 +85,7 @@ def test_collapse_rule_agrees_with_confirmatory_3_on_baseline_v3():
     for i in range(5):
         rows = [json.loads(x) for x in open(V3_TRAIN / f"C{i}_updates.jsonl")]
         r = np.array([x["r"] for x in rows])
-        assert tb.collapse(r, "attr")[3] == (not cl.collapsed(rows)), i
+        assert tb.collapse(r, "attr", period=1)[3] == (not cl.collapsed(rows)), i
 
 
 def _fake_log(d: Path, kind: str, updates: int = 25, fault: str | None = None) -> None:
@@ -101,6 +101,8 @@ def _fake_log(d: Path, kind: str, updates: int = 25, fault: str | None = None) -
         if kind == "lagr":
             for t in tb.LAGR_TAGS:
                 put(t, 1.0 if not (fault == "freeze" and t == "lagr/lambda" and u == 5) else 1.2)
+            if u >= ct.LAGR["freeze"] and fault != "nojump":     # as the trainer: J only once lambda moves
+                put("lagr/J", 1.0)
         for e in range(c1.ENVS):
             for k in (*ct.EP_KEYS, "delay_s"):
                 v = tb.expected_seed(0, e, u) if k == "seed" else 1.0
@@ -112,7 +114,7 @@ def _fake_log(d: Path, kind: str, updates: int = 25, fault: str | None = None) -
 
 
 @pytest.mark.parametrize("kind,fault,expect", [("attr", None, None), ("lagr", None, None), ("res", None, None), ("attr", "skip", "once each"), ("attr", "seed", "seed differs"), ("attr", "level", "q differs"),
-                                               ("attr", "scale", "not constant"), ("res", "nan", "non-finite"), ("lagr", "freeze", "freeze")])
+                                               ("attr", "scale", "not constant"), ("res", "nan", "non-finite"), ("lagr", "freeze", "freeze"), ("lagr", "nojump", "missing tag lagr/J")])
 def test_event_file_checks_fire_on_planted_faults(tmp_path, kind, fault, expect):
     _fake_log(tmp_path, kind, fault=fault)
     faults = tb.log_faults(tb.read(tmp_path), kind, 0, updates=25)
@@ -194,7 +196,7 @@ def test_readers_run_end_to_end_on_synthetic_rows():
     q = c1.Q
     A = {(n, q): _rows(rng, 20, 1.0, 0.8 if "|d" in n else 1.0) for n in s0.arms_0a()}
     a = s0.read_0a(A)
-    assert set(a["chosen"]) == {f"d{i}" for i in range(5)} and set(a["rank_vs_u500"]) == set(c1.PRIMARY)
+    assert set(a["chosen"]) == {f"d{i}" for i in range(5)} and set(a["rank_vs_u500"]) == {100, 150, 250}
     B = {(n, lv): _rows(rng, 30, 0.95 if n.startswith("T|d") else (1.0 if "p333" in n else 1.02)) for n in s0.arms_0b() for lv in c1.LEVELS}
     b = s0.read_0b(B)
     assert all(b["lower_rule"][str(lv)] == "p333" for lv in c1.LEVELS) and b["stop_2c"]
@@ -255,3 +257,15 @@ def test_band_reading_on_synthetic_rows():
     TB = {(n, q): _rows(rng, 20, 1.0, 0.7 if (n.split("|")[1][0] == "a" and q in c1.BAND) else 1.0) for n in arms_b for q in c1.BAND_EVAL}
     pb = dc1.bonferroni(2)
     assert dc1.band(TB, [f"a{i}" for i in range(5)], pb)["shown"] and not dc1.band(TB, [f"w{i}" for i in range(5)], pb)["shown"]
+
+
+def test_collapse_takes_out_the_level_cycle():
+    rng = np.random.default_rng(4)
+    u = np.arange(500)
+    noise = rng.normal(0, 0.05, 500)
+    cyc = 0.3 * np.sin(2 * np.pi * u / 7)
+    a0, b0, s0, _ = tb.collapse(noise, "attr", period=1)
+    a1, b1, s1, ok = tb.collapse(noise + cyc, "attr")
+    assert abs(s1 - s0) < 0.01 and ok == tb.collapse(noise, "attr")[3]     # the cycle no longer widens sigma
+    drift = noise + cyc + np.where(u >= 400, 0.1, 0.0)
+    assert not tb.collapse(drift, "attr")[3]     # a late shift of 2 sigma still fails

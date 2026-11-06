@@ -381,7 +381,10 @@ def train(out: Path, learner: int, updates: int, n_envs: int, env_kw: dict | Non
         net.restore(ck["net"])
         scale = ck["scale"]
     t0 = time.time()
-    w = SummaryWriter(str(out / "tb" / name))
+    tbd = out / "tb" / name
+    if tbd.exists() and any(tbd.iterdir()):     # a reader would mix old and new event files (review, V424)
+        raise RuntimeError(f"{tbd} is not empty; move it aside first")
+    w = SummaryWriter(str(tbd))
     if not resume:     # statistics only: nothing is learned from these episodes
         pilot = collect(net, scale, conns, gamma, lam, scale_c)
         net.observe(pilot[0], pilot[1])

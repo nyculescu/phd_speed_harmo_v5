@@ -1,7 +1,7 @@
 """Round 1 training checks, read from the TensorBoard event files (V394): every update once, every tag present and finite, the expected
 seeds with one episode per level, constant critic scales, the dual variable's freeze, the settings as pinned, and the collapse rule.
-usage: tbcheck1.py TRAIN_DIR KIND STAGE0B_JSON. Exit 1 if settings differ, a log check fails, more than one learner collapses, or 2C's
-lambda sits at its cap in at least 3 of 5 learners."""
+usage: tbcheck1.py TRAIN_DIR KIND STAGE0B_JSON. Exit 1, the candidate is out of the round: more than one learner collapses, or 2C's lambda
+sits at its cap in at least 3 of 5 learners. Exit 2, the chain stops for the author: a log or settings fault, or any error (review, V424)."""
 import json
 import sys
 from pathlib import Path
@@ -36,11 +36,11 @@ def expected_level(env: int, u: int, levels: tuple = LEVELS) -> float:
 def log_faults(S: dict, kind: str, learner: int, updates: int = UPDATES, levels: tuple = LEVELS, seed0: int = SEED0) -> list:
     out = []
     need = list(BASE_TAGS) + [f"ep/e{e}/{k}" for e in range(ENVS) for k in (*ct.EP_KEYS, "delay_s", "q")]
-    need += list(LAGR_TAGS) if kind == "lagr" else []
+    need += [*LAGR_TAGS, "lagr/J"] if kind == "lagr" else []
     need += [f"ep/e{e}/offset_moves" for e in range(ENVS)] if kind == "res" else []
     out += [f"missing tag {t}" for t in need if t not in S]
-    steps = list(range(updates))
     for t, xs in S.items():
+        steps = list(range(ct.LAGR["freeze"], updates)) if t == "lagr/J" else list(range(updates))     # J exists once lambda moves
         if [s for s, _ in xs] != steps:
             out.append(f"{t}: updates are not 0-{updates - 1} once each")
         if not all(np.isfinite(v) for _, v in xs):
@@ -64,9 +64,16 @@ def log_faults(S: dict, kind: str, learner: int, updates: int = UPDATES, levels:
     return out
 
 
-def collapse(r: np.ndarray, kind: str) -> tuple:
+def collapse(r: np.ndarray, kind: str, period: int = len(LEVELS)) -> tuple:
     """a = |mean 401-500 - mean 301-400|, b = mean 401-500 - mean 1-50, sigma = SD over 101-500 (1-based). Pass: a <= 0.4 sigma and,
-    except for 2C, b >= 0."""
+    except for 2C, b >= 0. The levels cycle with this period, so each phase's mean over 101-500 is taken out first (V424); with one
+    environment per level (baseline-v3) the period is 1 and nothing is taken out."""
+    r = np.asarray(r, dtype=np.float64).copy()
+    if period > 1:
+        ph = np.arange(len(r)) % period
+        late = np.arange(len(r)) >= 100
+        off = [r[(ph == k) & late].mean() - r[late].mean() for k in range(period)]     # all offsets from the untouched series
+        r -= np.array(off)[ph]
     a = abs(r[400:500].mean() - r[300:400].mean())
     b = r[400:500].mean() - r[:50].mean()
     s = r[100:500].std()
@@ -85,7 +92,7 @@ def settings_differ(cfg: dict, i: int, kind: str, d_ref: dict | None, refs: dict
     return [k for k, v in want.items() if cfg.get(k) != v]
 
 
-if __name__ == "__main__":
+def main() -> int:
     d, kind = Path(sys.argv[1]), sys.argv[2]
     s0 = json.load(open(sys.argv[3]))
     d_ref = s0["d_ref"] if kind == "lagr" else None
@@ -102,6 +109,14 @@ if __name__ == "__main__":
               + (f"; lambda end {S['lagr/lambda'][-1][1]:.3f}{' AT CAP' if cap else ''}" if kind == 'lagr' else ""), flush=True)
         failed += [] if ok else [i]
         wrong += [i] if bad or faults else []
-    out = 1 if wrong or len(failed) > 1 or capped >= 3 else 0
-    print(f"{kind}: {'PASS' if not out else 'OUT OF THE ROUND'}; collapsed {failed}, log or settings faults {wrong}, lambda at cap {capped}", flush=True)
-    sys.exit(out)
+    out = 2 if wrong else 1 if len(failed) > 1 or capped >= 3 else 0
+    print(f"{kind}: {['PASS', 'OUT OF THE ROUND', 'FAULT, STOP FOR THE AUTHOR'][out]}; collapsed {failed}, log or settings faults {wrong}, lambda at cap {capped}", flush=True)
+    return out
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as x:
+        print("tbcheck1 error:", repr(x), flush=True)
+        sys.exit(2)

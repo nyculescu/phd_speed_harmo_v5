@@ -17,7 +17,7 @@ js() { $PY -c "import json, sys; d = json.load(open(sys.argv[1])); $2" "$3"; }
 
 say "code $(cat "$C/COMMIT")"
 watchdog & WD=$!
-trap 'kill $WD 2>/dev/null' EXIT
+trap 'kill $WD $(jobs -p) 2>/dev/null' EXIT
 
 step "tests" $PY -m pytest "$C/tests/test_round1.py" "$C/tests/test_conf3.py" "$C/tests/test_input_norm.py" -q -p no:cacheprovider
 step "identity with baseline-v3's trainer" $PY $R/checks1.py identity "$D/checks" "$OLD"
@@ -26,7 +26,8 @@ step "smoke in training mode" $PY $R/checks1.py smoke "$D/checks"
 step "stage 0" $PY $R/stage0.py run "$D/stage0" $W
 [ -f "$D/trained.json" ] || echo '{}' > "$D/trained.json"
 
-train() {     # kind learner env lagr
+train() {     # kind learner env lagr; event files of an earlier start are moved aside, never mixed in (review, V424)
+  [ -d "$D/train_$1/tb/C$2" ] && mv "$D/train_$1/tb/C$2" "$D/train_$1/tb/C$2.old_$(date +%s)"
   $PY -m v5b.fleet.c_train train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
     --net-seed 20261205 --env "$3" --lagr "$4" 2>&1 | grep -av '^Warning' >> "$D/train_$1_$2.log"; return ${PIPESTATUS[0]}
 }
@@ -48,16 +49,18 @@ for K in v3w res attr lagr; do
     if [ -n "${tried[$L]:-}" ]; then say "$K learner $L failed twice, STOPPED, goes to the author"; exit 3; fi
     tried[$L]=1
     say "$K learner $L crashed, rc=$rc, restarting with the same seeds"
-    mv "$D/train_$K/tb/C$L" "$D/train_$K/tb/C$L.attempt1" 2>/dev/null
     train $K $L "$ENVJ" "$LAGR" & who[$!]=$L
   done
   unset who tried
   say "end training $K"
-  if $PY $R/tbcheck1.py "$D/train_$K" $K "$D/stage0/stage0b.json" 2>&1 | grep -av '^Warning' >> "$D/chain.log"; [ ${PIPESTATUS[0]} -eq 0 ]; then
+  $PY $R/tbcheck1.py "$D/train_$K" $K "$D/stage0/stage0b.json" 2>&1 | grep -av '^Warning' >> "$D/chain.log"; rc=${PIPESTATUS[0]}
+  if [ $rc -eq 0 ]; then
     $PY -c "import json, sys; p = sys.argv[1]; d = json.load(open(p)); d[sys.argv[2]] = sys.argv[3]; json.dump(d, open(p, 'w'))" "$D/trained.json" $K "$D/train_$K"
     say "$K passed its training checks"
+  elif [ $rc -eq 1 ]; then
+    say "$K OUT OF THE ROUND: collapse or lambda at its cap (see chain.log)"
   else
-    say "$K OUT OF THE ROUND: training checks (see chain.log)"
+    say "$K training checks FAULT rc=$rc, STOPPED, goes to the author"; exit 2
   fi
   touch "$D/train_$K/done"
 done

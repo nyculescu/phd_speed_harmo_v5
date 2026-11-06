@@ -50,7 +50,7 @@ The shared term and the collision charge are unchanged. The weight 0.5 equals th
 ### 2C. PPO-Lagrangian: safety in the reward, delay as a constraint
 
 - **Reward:** the per-vehicle safety charge as now (−10 × own TTC flag, own hard braking, half the follower's), the collision charge and the move charge. No speed, flow or shared terms.
-- **Cost, per vehicle per second:** lost(own) + lost(its 200-m bin's mean speed) + the network delay rate, (vehicles in the system or waiting − Σ speeds / 27.78) / n_ref(q), with n_ref from `env.json`.
+- **Cost, per vehicle per second:** lost(own) + lost(its 200-m bin's mean speed) + the network delay rate, (vehicles in the system or waiting − Σ speeds / 27.78) / n_ref(q), with n_ref from stage 0c's references (V424).
 - **The judged 1-Hz close-following flag stays in the reward.** The candidate then differs from baseline-v3 in the algorithm, not in the safety signal. The step-resolution signal (memo 1D) waits for a later round.
 - **Algorithm:**
   - a second critic of the same shape for the cost, with its own scale fixed at update 0 like the reward critic;
@@ -79,12 +79,12 @@ The shared term and the collision charge are unchanged. The weight 0.5 equals th
 - Training logs only to TensorBoard: float32 scalars, one value per tag per update.
 - **Tags:**
   - `ppo/*` as in conf3;
-  - `ep/q<level>/<counter>` for each episode, including its seed and training-mode delay;
-  - for 2C, also `lagr/lambda`, `lagr/J`, `cost/per_decision` and `cost/value_loss`.
+  - `ep/e<slot>/<counter>` per environment slot, with the slot's level `ep/e<slot>/q`, its seed and training-mode delay. Per-level tags could not hold one value per update, with 7 levels cycling through 3 slots (V424);
+  - for 2C, also `lagr/lambda`, `cost/per_decision` and `cost/value_loss`, and `lagr/J` from update 21, once λ moves.
 - **Kept besides:** checkpoints every 50 updates, the pilot statistics and the config, as before.
 - **Checks read the event files back:**
   - every update once, every tag present, no missing or non-finite value;
-  - every seed as expected, one episode per level per update;
+  - every seed and level as expected, per slot;
   - constant critic scales; the settings as pinned.
 - A planted-fault test shows each check firing.
 
@@ -115,7 +115,8 @@ The shared term and the collision charge are unchanged. The weight 0.5 equals th
   - σ = SD of the per-update reward over updates 101-500;
   - **pass:** a ≤ 0.4 σ, and b ≥ 0. For 2C, b is not required, because a rising λ may lower the safety-only reward by design.
   - On baseline-v3's logs, 0.4 σ is about confirmatory 3's fixed 0.03. A test checks that it gives the same verdicts there.
-- **Failing learners:** a failing learner stays in with a disclosure. If more than one learner of a candidate fails, that candidate is out of the round.
+  - Each update covers 3 of the 7 levels, so the reward has a 7-update cycle that baseline-v3 did not have. Each phase's mean over updates 101-500 is taken out before a, b and σ are computed, so σ stays the noise it was calibrated on (review, V424).
+- **Failing learners:** a failing learner stays in with a disclosure. If more than one learner of a candidate fails, that candidate is out of the round. Any other failed training check (a log or settings fault, or an error) stops the chain and goes to the author (V424).
 - **2C mechanism stop:** if λ sits at its cap over the last 100 updates in at least 3 of 5 learners, 2C is out of the round, reported as "constraint not met at the cap".
 
 ## Validation
@@ -160,7 +161,7 @@ Validation selects, so its 95 % CIs carry no multiplicity correction.
 
 **Reading B, decides "band shown" (V418, V420).**
 - **Runs:** under the training slowdowns at 4,500, 5,000, 5,250, 5,500 and 6,000 veh/h, on 20 fresh band seeds: the tested candidates (finalists and v3w), baseline-v3 at its chosen checkpoints, no control, p333 and os1_15_10.
-- **Shown, per arm:** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. All three must hold, so there is no correction within an arm; Bonferroni applies over the arms read.
+- **Shown, per arm:** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. All three must hold, so there is no correction within an arm; Bonferroni applies over the arms read. Baseline-v3's band is reported at the same level, report-only.
 - **Edges (4,500 and 6,000):** reported, not required either way. A policy trained over the range may extend the band; the profile across the five levels shows where the impact fades.
 
 **Reading A, attribution (report-only):** each method finalist's arm against the control arm v3w at 5,300, delay and close-following, 95 % CIs. It says whether a gain comes from the method or from the wider range.
@@ -244,7 +245,8 @@ Measured rates: about 1,500 evaluation runs per hour on 28-32 workers (V409, V41
 - **Noise floor:** the 2 % delay limit is judged on the point estimate. Even at 40 seeds, the delay CI half-width is about 3-6 points (V413, F1), so a true tie can still fail T2.
 - **Checkpoint selection** between u250 and u500 is a departure from "final policy only". It is applied to every learner alike, the incumbent included, and baseline-v3's final policies are reported beside.
 - **Teaching to the test:** 2C keeps the judged 1-Hz flag in its reward, as baseline-v3 did. The counters outside the reward (TTC below 1.5 and 2 s, the severe check, braking counted every 0.1 s) are reported.
-- **Attribution in 1A is a heuristic, not causal.** A follower's lost time is charged to its ALKS leader, and an ALKS-ALKS pair counts the follower twice.
+- **Attribution in 1A is a heuristic, not causal.** A follower's lost time is charged to its ALKS leader, and an ALKS-ALKS pair counts the follower twice. An accelerating-lane vehicle behind a ramp ALKS is charged both to that leader and to the nearest mainline ALKS.
+- **2C's J is measured on the sampled actions of training,** while d_ref comes from the rules and the 0b stop from greedy policies. Exploration may raise training delay, so λ may rise partly from exploration.
 - **3B's range:** ±1 cannot reach every level the from-scratch policies use.
 - **The band was read after the sweep's data** (V419, post hoc). Reading B tests it on fresh seeds with policies trained for it.
 - **New reward references** at the 7 training levels, from no control on fresh seeds, replace baseline-v3's; the control arm v3w uses them too, so it differs from baseline-v3 in range, seeds and references, not in method.

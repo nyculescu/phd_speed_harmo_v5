@@ -31,23 +31,42 @@ def refs_0c(T: dict) -> dict:
     return {str(q): [round(float(np.median([val(x, k) / x["steps"] for x in T[("S|nc", q)].values()])), d) for k, d in (("brake3", 3), ("E30", 3), ("N", 1))] for q in LEVELS}
 
 
-def spearman(x: list, y: list) -> float:
-    rx, ry = np.argsort(np.argsort(x)), np.argsort(np.argsort(y))
-    return float(np.corrcoef(rx, ry)[0, 1])
+def ranks(xs: list) -> np.ndarray:
+    """Average ranks, ties shared; xs may hold tuples."""
+    order = sorted(range(len(xs)), key=lambda i: xs[i])
+    r = np.empty(len(xs))
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and xs[order[j + 1]] == xs[order[i]]:
+            j += 1
+        r[order[i:j + 1]] = (i + j) / 2.0
+        i = j + 1
+    return r
+
+
+def spearman(x: list, y: list) -> float | None:
+    rx, ry = ranks(x), ranks(y)
+    return None if rx.std() == 0 or ry.std() == 0 else float(np.corrcoef(rx, ry)[0, 1])
+
+
+def score(T: dict, i: int, ck: int) -> tuple:
+    """The validation checkpoint rule's score: cells within 2 % of os1_15_10's delay, then fewer TTC seconds summed over the cells."""
+    n = sum(raw(T[(f"{c}|d{i}u{ck}", Q)], T[(f"{c}|{RULE}", Q)], "all_delay")[0] >= -2.0 for c in PRIMARY)
+    return (n, -sum(med(T[(f"{c}|d{i}u{ck}", Q)], "ttc_net") for c in PRIMARY))
 
 
 def read_0a(T: dict) -> dict:
     """Per cell: each checkpoint against os1_15_10; how early checkpoints rank learners; whether a chosen checkpoint clears where u500 does not."""
     out = {"effects": {}, "rank_vs_u500": {}, "chosen": {}, "clears": {}}
     O = {c: T[(f"{c}|{RULE}", Q)] for c in PRIMARY}
-    bar = lambda c, name: (lambda t, d: d[0] if t[0] >= 10.0 else -100.0)(raw(T[(f"{c}|{name}", Q)], O[c], "ttc_net", pct=dc.P95), raw(T[(f"{c}|{name}", Q)], O[c], "all_delay", pct=dc.P95))
     for c in PRIMARY:
         out["effects"][c] = {f"d{i}u{ck}": {"ttc": raw(T[(f"{c}|d{i}u{ck}", Q)], O[c], "ttc_net", pct=dc.P95), "delay": raw(T[(f"{c}|d{i}u{ck}", Q)], O[c], "all_delay", pct=dc.P95)}
                              for i in range(LEARNERS) for ck in CHECKPOINTS}
-        final = [bar(c, f"d{i}u500") for i in range(LEARNERS)]
-        out["rank_vs_u500"][c] = {ck: spearman([bar(c, f"d{i}u{ck}") for i in range(LEARNERS)], final) for ck in (100, 150, 250)}
+    final = [score(T, i, 500) for i in range(LEARNERS)]
+    out["rank_vs_u500"] = {ck: spearman([score(T, i, ck) for i in range(LEARNERS)], final) for ck in (100, 150, 250)}
     for i in range(LEARNERS):
-        ck = dc.choose(T, "d", i, CHECKPOINTS)
+        ck = dc.choose(T, "d", i, (250, 500))
         out["chosen"][f"d{i}"] = ck
         for c in PRIMARY:
             f500 = dc.fails(T[(f"{c}|d{i}u500", Q)], O[c], 10.0, (1.25, 98.75))
