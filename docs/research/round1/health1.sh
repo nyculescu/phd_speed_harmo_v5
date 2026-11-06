@@ -27,7 +27,7 @@ while true; do
   for p in $(pgrep -f "$PAT"); do s=$(awk '{print $3}' /proc/$p/stat 2>/dev/null); [ "$s" = T ] && paused=$((paused+1)) || run=$((run+1)); done
   [ $paused -gt 0 ] && [ ! -f "$D/THROTTLED" ] && why+=("$paused workers paused without a throttle")
   temp=$(cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | sort -n | tail -1); temp=$((temp / 1000))
-  [ "$temp" -ge 95 ] && why+=("temperature ${temp} °C")
+  [ "$temp" -ge 99 ] && why+=("temperature ${temp} °C")     # near the CPU's throttle point; training alone reaches 93-97 °C (V430)
   mem=$(awk '/MemAvailable/ {print int($2 / 1048576)}' /proc/meminfo)
   [ "$mem" -lt 4 ] && why+=("only ${mem} GB memory available")
   echo "$now stage='$stage' cpu=${c}% workers=${run} paused=${paused} temp=${temp}C mem_free=${mem}GB ${why[*]:+ALERT: ${why[*]}}" >> "$L"
