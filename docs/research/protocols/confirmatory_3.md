@@ -178,3 +178,14 @@ Rule tuning: 70 rules x 2 cells x 20 seeds and no-control rows, about 2,900 runs
 ## What this cannot show
 
 It says nothing about other actions, other networks, other spacings or real traffic. 4 of 5 is a statement about these trained policies, not the method in general. A rule outside these families could still match DRL. TTC below 3 s is a surrogate, and this model is not calibrated, so a win is not a safety result for real traffic. Only 2 conditions decide the claim.
+
+## Addendum, 2026-11-05 (V396): factual corrections, no claim rule changed
+
+- The hand-scaled training stopped for revision 4 ran 5 updates (u 0-4), not 3; it wrote no checkpoint and was never evaluated.
+- The run's plant file is `plant_c3.json`: `plant_p0d.json` plus `tau_rise` 0.2, `taper_fast` and `fix_x`, on r2m3.
+- Rule tuning and the no-control reward references ran at `fae4620`; both opponent selections, training, tracing, the copy rule, evaluation and the reading ran at `d2b2ecc`. Rules read no input that changed between them. T0 and T3 ran at `fae4620` only.
+- Seeds 7,440,065-074 were approved in V378.
+- In "Cell won on TTC", [n] counts p333, which is fixed, not tuned.
+- Two places where `decide3.py` differs from this text, with no effect on this run: it counts the copy rule only if it was also admissible on tuning seeds, and it reports the adaptation share only when the CI's lower bound is above 0.
+- The guard ran at 95 % from 11:57 by the author's decision (V391); it paused nothing.
+- The verification of the reading is in `docs/research/conf3/verification_rev4.md`.
