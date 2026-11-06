@@ -73,8 +73,9 @@ def test_expected_seeds_match_baseline_v3():
     for i in (0, 4):
         for line in open(V3_TRAIN / f"C{i}_episodes.jsonl"):
             e = json.loads(line)
-            li = c1.LEVELS.index(e["q"])
-            assert e["seed"] == tb.expected_seed(i, li, e["u"], seed0=7_451_320), (i, e["u"], e["q"])
+            env = ((4090.0, 4600.0, 5300.0).index(e["q"]) - 1 - e["u"]) % 3
+            assert e["seed"] == tb.expected_seed(i, env, e["u"], seed0=7_451_320), (i, e["u"], e["q"])
+            assert e["q"] == tb.expected_level(env, e["u"], (4090.0, 4600.0, 5300.0))
 
 
 @pytest.mark.skipif(not V3_TRAIN.exists(), reason="baseline-v3 logs not on this machine")
@@ -100,16 +101,17 @@ def _fake_log(d: Path, kind: str, updates: int = 25, fault: str | None = None) -
         if kind == "lagr":
             for t in tb.LAGR_TAGS:
                 put(t, 1.0 if not (fault == "freeze" and t == "lagr/lambda" and u == 5) else 1.2)
-        for li, q in enumerate(c1.LEVELS):
+        for e in range(c1.ENVS):
             for k in (*ct.EP_KEYS, "delay_s"):
-                v = tb.expected_seed(0, li, u) if k == "seed" else 1.0
-                put(f"ep/q{int(q)}/{k}", v + (1 if fault == "seed" and k == "seed" and u == 3 and li == 1 else 0))
+                v = tb.expected_seed(0, e, u) if k == "seed" else 1.0
+                put(f"ep/e{e}/{k}", v + (1 if fault == "seed" and k == "seed" and u == 3 and e == 1 else 0))
+            put(f"ep/e{e}/q", tb.expected_level(e, u) + (250.0 if fault == "level" and u == 4 and e == 2 else 0.0))
             if kind == "res":
-                put(f"ep/q{int(q)}/offset_moves", float("nan") if fault == "nan" and u == 2 else 1.0)
+                put(f"ep/e{e}/offset_moves", float("nan") if fault == "nan" and u == 2 else 1.0)
     w.close()
 
 
-@pytest.mark.parametrize("kind,fault,expect", [("attr", None, None), ("lagr", None, None), ("res", None, None), ("attr", "skip", "once each"), ("attr", "seed", "seeds differ"),
+@pytest.mark.parametrize("kind,fault,expect", [("attr", None, None), ("lagr", None, None), ("res", None, None), ("attr", "skip", "once each"), ("attr", "seed", "seed differs"), ("attr", "level", "q differs"),
                                                ("attr", "scale", "not constant"), ("res", "nan", "non-finite"), ("lagr", "freeze", "freeze")])
 def test_event_file_checks_fire_on_planted_faults(tmp_path, kind, fault, expect):
     _fake_log(tmp_path, kind, fault=fault)
@@ -132,8 +134,9 @@ def test_trainer_scalars_read_back_exactly(tmp_path):
     S = tb.read(tmp_path)
     assert S["ppo/value_loss"] == [(0, np.float32(2.2))] and S["lagr/lambda"] == [(0, np.float32(1.7))] and S["lagr/J"] == [(0, np.float32(0.98))]
     assert S["ppo/reward_per_decision"][0][1] == np.float32(batch[6].mean())
-    for e in eps:
-        q = f"ep/q{int(e['q'])}"
+    for k_, e in enumerate(eps):
+        q = f"ep/e{k_}"
+        assert S[f"{q}/q"] == [(0, np.float32(e["q"]))]
         assert all(S[f"{q}/{k}"] == [(0, np.float32(e[k]))] for k in ct.EP_KEYS)
         assert S[f"{q}/delay_s"] == [(0, np.float32(ct.episode_delay(e)))] and S[f"{q}/lv11"] == [(0, np.float32(e["lv"][11]))]
 
@@ -233,3 +236,22 @@ def test_sweep_impact_band_with_edges():
     r = sw.read(T, [*sw.RULES, *(f"d{i}" for i in range(5))])
     assert r["band"] == [4500.0, 5500.0] and r["edges"] == [4000.0, 4250.0, 5750.0, 6000.0] and r["training_range"] == [4000.0, 6000.0]
     assert r["impact"]["5000.0"]["policies"] == 5 and r["impact"]["3000.0"]["impact"] is False
+
+
+def test_levels_cycle_through_three_environments():
+    assert c1.LEVELS == (4500.0, 4750.0, 5000.0, 5250.0, 5500.0, 5750.0, 6000.0)
+    seen = [tb.expected_level(e, u) for u in range(7) for e in range(3)]
+    assert all(seen.count(q) == 3 for q in c1.LEVELS)     # every level 3 times per 7 updates
+    assert len({tb.expected_level(e, 0) for e in range(3)}) == 3
+
+
+def test_band_reading_on_synthetic_rows():
+    import test1 as t1
+    rng = np.random.default_rng(9)
+    trained = {"v3w": "/x/v3w", "attr": "/x/attr"}
+    v = {"finalists": ["attr"], "incumbent_chosen": {str(i): 500 for i in range(5)}, "chosen": {k: {str(i): 500 for i in range(5)} for k in trained}}
+    arms_b = t1.band_arms(trained, v)
+    assert {k.split("|")[1] for k in arms_b} >= {"nc", "p333", c1.RULE, "a0", "w4", "d2"}
+    TB = {(n, q): _rows(rng, 20, 1.0, 0.7 if (n.split("|")[1][0] == "a" and q in c1.BAND) else 1.0) for n in arms_b for q in c1.BAND_EVAL}
+    pb = dc1.bonferroni(2)
+    assert dc1.band(TB, [f"a{i}" for i in range(5)], pb)["shown"] and not dc1.band(TB, [f"w{i}" for i in range(5)], pb)["shown"]

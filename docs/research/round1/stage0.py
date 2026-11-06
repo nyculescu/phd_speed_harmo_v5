@@ -1,13 +1,14 @@
 """Round 1, stage 0 (no training). 0a: baseline-v3's checkpoints u50-u500 with os1_15_10, p333 and no control, X1 and X2 at 5,300, 20 seeds
-(report-only). 0b: os1_15_10, p333 and baseline-v3's final policies under training conditions at the 3 training levels, 30 seeds: 2C's d_ref
-and its stop rule. usage: stage0.py run|read OUT WORKERS"""
+(report-only). 0b: os1_15_10, p333 and baseline-v3's final policies under training conditions at the 7 training levels, 20 seeds: 2C's d_ref
+and its stop rule. 0c: no control in steady traffic at the 7 training levels, 20 seeds: the reward references (as confirmatory 3's make_env).
+usage: stage0.py run|read OUT WORKERS"""
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
 
-from common1 import CHECKPOINTS, LEARNERS, LEVELS, OPPONENTS, PRIMARY, Q, RULE, SEEDS_STAGE0A, SEEDS_STAGE0B, TRAINING_SLOWDOWNS, check_rows, incumbent, load, med, pt_cfg, raw, rule_cfg
+from common1 import CHECKPOINTS, LEARNERS, LEVELS, OPPONENTS, PRIMARY, Q, RULE, SEEDS_STAGE0A, SEEDS_STAGE0B, SEEDS_STAGE0C, TRAINING_SLOWDOWNS, check_rows, incumbent, load, med, pt_cfg, raw, rule_cfg, val
 import decide1 as dc
 from v5b.fleet import c_train as ct, plant_sweep as ps
 
@@ -23,6 +24,11 @@ def arms_0a() -> dict:
 def arms_0b() -> dict:
     a = {f"T|{n}": rule_cfg(k, "S", TRAINING_SLOWDOWNS) for n, k in RULES0.items()}
     return a | {f"T|d{i}": pt_cfg(incumbent(i, "final"), "S", TRAINING_SLOWDOWNS) for i in range(LEARNERS)}
+
+
+def refs_0c(T: dict) -> dict:
+    """Per training level, the median over seeds of no control's braking, TTC and vehicles in system per second (V334, V358)."""
+    return {str(q): [round(float(np.median([val(x, k) / x["steps"] for x in T[("S|nc", q)].values()])), d) for k, d in (("brake3", 3), ("E30", 3), ("N", 1))] for q in LEVELS}
 
 
 def spearman(x: list, y: list) -> float:
@@ -68,14 +74,18 @@ if __name__ == "__main__":
     if mode == "run":
         ps.matrix(arms_0a(), (Q,), SEEDS_STAGE0A, out / "stage0a.jsonl", w, str(out / "rd"))
         ps.matrix(arms_0b(), LEVELS, SEEDS_STAGE0B, out / "stage0b.jsonl", w, str(out / "rd"))
-    A, B = load(out / "stage0a.jsonl"), load(out / "stage0b.jsonl")
+        ps.matrix({"S|nc": rule_cfg({}, "S")}, LEVELS, SEEDS_STAGE0C, out / "stage0c.jsonl", w, str(out / "rd"))
+    A, B, C = load(out / "stage0a.jsonl"), load(out / "stage0b.jsonl"), load(out / "stage0c.jsonl")
     check_rows(A, len(SEEDS_STAGE0A))
     check_rows(B, len(SEEDS_STAGE0B))
+    check_rows(C, len(SEEDS_STAGE0C))
     assert all(r.get("delay_s") is not None for x in B.values() for r in x.values()), "a stage-0b row lacks delay_s"
-    a, b = read_0a(A), read_0b(B)
+    a, b = read_0a(A), {**read_0b(B), "refs": refs_0c(C)}
+    assert all(np.isfinite(x) and x >= 0 for v in b["refs"].values() for x in v) and all(v[2] > 0 for v in b["refs"].values()), b["refs"]
     (out / "stage0a.json").write_text(json.dumps(a, indent=1))
     (out / "stage0b.json").write_text(json.dumps(b, indent=1))
     print("0a rank against u500:", a["rank_vs_u500"], "chosen:", a["chosen"], flush=True)
     print("0a chosen clears where u500 fails:", {k: v for k, v in a["clears"].items() if v["u500_fails"] and not v["chosen_fails"]}, flush=True)
+    print("0c reward references:", b["refs"], flush=True)
     print("0b d_ref:", b["d_ref"], "lower rule:", b["lower_rule"], "J:", {k: round(v, 4) for k, v in b["J"].items()}, flush=True)
     print("2C", "NOT TRAINED: constraint not binding" if b["stop_2c"] else "trains", f"({b['policies_meeting_target']} of 5 policies at J <= {b['target']})", flush=True)

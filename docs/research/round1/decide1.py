@@ -86,3 +86,16 @@ def better(T: dict, cell: str, names: list, inc: list, pct: tuple, q: float = Q)
     K, I = arm_mean(T, [f"{cell}|{n}" for n in names], q), arm_mean(T, [f"{cell}|{n}" for n in inc], q)
     d, t = raw(K, I, "all_delay", pct=pct), raw(K, I, "ttc_net", pct=pct)
     return {"cell": cell, "delay_vs_incumbent": d, "ttc_vs_incumbent": t, "better": d[1] > 0 and t[0] >= -10.0}
+
+
+def band(T: dict, names: list, pct: tuple, cell: str = "B") -> dict:
+    """V420: the arm against no control under training slowdowns at each band and edge level. The band is shown if close-following is at
+    least 10 % and 20 per run fewer, CI clear of 0, at every band level; all three must hold, so no correction within the arm. Edges are
+    reported, not required either way: a policy trained over the range may extend the band."""
+    from common1 import BAND, BAND_EVAL
+    out = {}
+    for q in BAND_EVAL:
+        K, nc = arm_mean(T, [f"{cell}|{n}" for n in names], q), T[(f"{cell}|nc", q)]
+        t, d = raw(K, nc, "ttc_net", pct=pct), raw(K, nc, "all_delay", pct=pct)
+        out[str(q)] = {"ttc_vs_nc": t, "delay_vs_nc": d, "ttc_benefit": t[0] >= 10.0 and t[1] > 0 and paired_median(nc, K, "ttc_net") >= 20.0}
+    return {"levels": out, "shown": all(out[str(q)]["ttc_benefit"] for q in BAND), "pct": pct}

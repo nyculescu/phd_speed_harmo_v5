@@ -1,6 +1,6 @@
 """Round 1 training checks, read from the TensorBoard event files (V394): every update once, every tag present and finite, the expected
 seeds with one episode per level, constant critic scales, the dual variable's freeze, the settings as pinned, and the collapse rule.
-usage: tbcheck1.py TRAIN_DIR KIND [D_REF_JSON]. Exit 1 if settings differ, a log check fails, more than one learner collapses, or 2C's
+usage: tbcheck1.py TRAIN_DIR KIND STAGE0B_JSON. Exit 1 if settings differ, a log check fails, more than one learner collapses, or 2C's
 lambda sits at its cap in at least 3 of 5 learners."""
 import json
 import sys
@@ -23,17 +23,21 @@ def read(d: Path) -> dict:
     return {t: [(e.step, e.value) for e in acc.Scalars(t)] for t in acc.Tags()["scalars"]}
 
 
-def expected_seed(learner: int, level_idx: int, u: int, seed0: int = SEED0, per: int = PER_WORKER, n_envs: int = ENVS) -> int:
-    """Env i of a learner starts at episode i (pilot), so update u's episode at level L comes from env (L - 1 - u) mod n_envs."""
-    i = (level_idx - 1 - u) % n_envs
-    return seed0 + (FIRST_WORKER + learner * n_envs + i) * per + i + 1 + u
+def expected_seed(learner: int, env: int, u: int, seed0: int = SEED0, per: int = PER_WORKER, n_envs: int = ENVS) -> int:
+    """Env i of a learner runs its pilot as episode i, so update u is its episode i + 1 + u."""
+    return seed0 + (FIRST_WORKER + learner * n_envs + env) * per + env + 1 + u
+
+
+def expected_level(env: int, u: int, levels: tuple = LEVELS) -> float:
+    """The environment picks levels[episode mod number of levels]."""
+    return float(levels[(env + 1 + u) % len(levels)])
 
 
 def log_faults(S: dict, kind: str, learner: int, updates: int = UPDATES, levels: tuple = LEVELS, seed0: int = SEED0) -> list:
     out = []
-    need = list(BASE_TAGS) + [f"ep/q{int(q)}/{k}" for q in levels for k in (*ct.EP_KEYS, "delay_s")]
+    need = list(BASE_TAGS) + [f"ep/e{e}/{k}" for e in range(ENVS) for k in (*ct.EP_KEYS, "delay_s", "q")]
     need += list(LAGR_TAGS) if kind == "lagr" else []
-    need += [f"ep/q{int(q)}/offset_moves" for q in levels] if kind == "res" else []
+    need += [f"ep/e{e}/offset_moves" for e in range(ENVS)] if kind == "res" else []
     out += [f"missing tag {t}" for t in need if t not in S]
     steps = list(range(updates))
     for t, xs in S.items():
@@ -41,12 +45,12 @@ def log_faults(S: dict, kind: str, learner: int, updates: int = UPDATES, levels:
             out.append(f"{t}: updates are not 0-{updates - 1} once each")
         if not all(np.isfinite(v) for _, v in xs):
             out.append(f"{t}: non-finite value")
-    for li, q in enumerate(levels):
-        got = [int(v) for _, v in S.get(f"ep/q{int(q)}/seed", [])]
-        want = [expected_seed(learner, li, u, seed0) for u in range(updates)]
-        if got != want:
-            bad = next((u for u, (a, b) in enumerate(zip(got, want)) if a != b), len(got))
-            out.append(f"level {q}: seeds differ from update {bad}")
+    for e in range(ENVS):
+        for tag, want in (("seed", [expected_seed(learner, e, u, seed0) for u in range(updates)]), ("q", [expected_level(e, u, levels) for u in range(updates)])):
+            got = [v for _, v in S.get(f"ep/e{e}/{tag}", [])]
+            if got != want:
+                bad = next((u for u, (a, b) in enumerate(zip(got, want)) if a != b), len(got))
+                out.append(f"env {e}: {tag} differs from update {bad}")
     for t in ("ppo/scale", "cost/scale"):
         if t in S and len({v for _, v in S[t]}) != 1:
             out.append(f"{t} is not constant")
@@ -74,21 +78,22 @@ def at_cap(S: dict) -> bool:
     return bool(np.all(lam[-100:] >= ct.LAGR["cap"] - 1e-6))
 
 
-def settings_differ(cfg: dict, i: int, kind: str, d_ref: dict | None) -> list:
+def settings_differ(cfg: dict, i: int, kind: str, d_ref: dict | None, refs: dict) -> list:
     want = {"learner": i, "updates": UPDATES, "n_envs": ENVS, "gamma": GAMMA, "lam": LAM, "levels": list(LEVELS), "seed": NET_SEED + i,
-            "workers": [FIRST_WORKER + i * ENVS + k for k in range(ENVS)], "env": {**ct.ENV, **env_for(kind)}, "inputs": ct.INPUT_NORM, "log": "tensorboard",
+            "workers": [FIRST_WORKER + i * ENVS + k for k in range(ENVS)], "env": {**ct.ENV, **env_for(kind, refs)}, "inputs": ct.INPUT_NORM, "log": "tensorboard",
             "lagr": {**ct.LAGR, "ref": d_ref} if kind == "lagr" else None}
     return [k for k, v in want.items() if cfg.get(k) != v]
 
 
 if __name__ == "__main__":
     d, kind = Path(sys.argv[1]), sys.argv[2]
-    d_ref = json.load(open(sys.argv[3]))["d_ref"] if kind == "lagr" else None
+    s0 = json.load(open(sys.argv[3]))
+    d_ref = s0["d_ref"] if kind == "lagr" else None
     failed, wrong, capped = [], [], 0
     for i in range(LEARNERS):
         S = read(d / "tb" / f"C{i}")
         faults = log_faults(S, kind, i)
-        bad = settings_differ(json.load(open(d / f"C{i}_config.json")), i, kind, d_ref)
+        bad = settings_differ(json.load(open(d / f"C{i}_config.json")), i, kind, d_ref, s0["refs"])
         r = np.array([v for _, v in S["ppo/reward_per_decision"]], dtype=np.float64)
         a, b, s, ok = collapse(r, kind)
         cap = kind == "lagr" and at_cap(S)

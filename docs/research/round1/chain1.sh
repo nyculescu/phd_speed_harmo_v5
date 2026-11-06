@@ -3,7 +3,7 @@
 # code_dir is a frozen copy of the run commit with a COMMIT file; old_code_dir is baseline-v3's frozen code (d2b2ecc).
 # Stops at the first failed check; every stop goes to the author. A candidate failing its training checks leaves the round, the chain goes on.
 set -u
-C=$(realpath "$1"); D=$(realpath "$2"); OLD=$(realpath "$3"); W=32
+C=$(realpath "$1"); D=$(realpath "$2"); OLD=$(realpath "$3"); W=64     # V421: the author asked for 64 evaluation workers, to measure throughput
 PY=/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 R=$C/docs/research/round1
 mkdir -p "$D"
@@ -27,14 +27,15 @@ step "stage 0" $PY $R/stage0.py run "$D/stage0" $W
 [ -f "$D/trained.json" ] || echo '{}' > "$D/trained.json"
 
 train() {     # kind learner env lagr
-  $PY -m v5b.fleet.c_train train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels '[4090.0, 4600.0, 5300.0]' \
+  $PY -m v5b.fleet.c_train train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
     --net-seed 20261205 --env "$3" --lagr "$4" 2>&1 | grep -av '^Warning' >> "$D/train_$1_$2.log"; return ${PIPESTATUS[0]}
 }
 
-for K in res attr lagr; do
+LEVELS=$($PY -c "import json, common1; print(json.dumps(list(common1.LEVELS)))")
+for K in v3w res attr lagr; do
   if [ "$K" = lagr ] && js "$D/stage0/stage0b.json" "sys.exit(0 if d['stop_2c'] else 1)"; then say "2C not trained: constraint not binding (stage 0b)"; continue; fi
   if [ -f "$D/train_$K/done" ]; then say "$K already trained and checked"; continue; fi
-  ENVJ=$($PY -c "import json, common1; print(json.dumps(common1.env_for('$K')))")
+  ENVJ=$($PY -c "import json, sys, common1; print(json.dumps(common1.env_for('$K', json.load(open(sys.argv[1]))['refs'])))" "$D/stage0/stage0b.json")
   LAGR=""
   [ "$K" = lagr ] && LAGR=$(js "$D/stage0/stage0b.json" "print(json.dumps({'ref': d['d_ref']}))")
   say "start training $K"

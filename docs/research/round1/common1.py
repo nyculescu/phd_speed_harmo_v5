@@ -7,7 +7,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 sys.path.insert(0, str(ROOT / "docs/research/conf3"))
-from common import COND, LEVELS, PLANT, PRIMARY, Q, H10, check_rows, load, med, paired_median, raw, val, collisions, effect  # noqa: E402,F401
+from common import COND, PLANT, PRIMARY, Q, H10, check_rows, load, med, paired_median, raw, val, collisions, effect  # noqa: E402,F401
 
 BASE = ROOT / "docs/research/baseline_v3"
 OPPONENTS = json.load(open(BASE / "opponents.json"))
@@ -17,27 +17,34 @@ RULE = "os1_15_10"
 
 SEEDS_SMOKE = 7_419_899
 SEEDS_STAGE0A = range(7_440_300, 7_440_320)
-SEEDS_STAGE0B = range(7_440_340, 7_440_370)
+SEEDS_STAGE0B = range(7_440_340, 7_440_360)
+SEEDS_STAGE0C = range(7_440_370, 7_440_390)     # reward references at the training levels, no control, steady traffic
 SEEDS_VAL = range(7_440_400, 7_440_440)
 SEEDS_TEST = range(7_440_500, 7_440_540)
+SEEDS_BAND = range(7_440_540, 7_440_560)     # test of the band, used once
 PER_WORKER, FIRST_WORKER, LEARNERS, ENVS, UPDATES, NET_SEED = 520, 9, 5, 3, 500, 20261205
 SEED0 = 7_464_000 - FIRST_WORKER * PER_WORKER     # worker 9 starts at 7,464,000
 TRAIN_FIRST, TRAIN_LAST = 7_464_000, 7_471_799
 GAMMA, LAM = 0.933, 0.967
+LEVELS = tuple(float(x) for x in range(4500, 6001, 250))     # V420: training range, 3 environments cycle through the 7 levels
+BAND, EDGES = (5000.0, 5250.0, 5500.0), (4500.0, 6000.0)
+BAND_EVAL = (4500.0, 5000.0, 5250.0, 5500.0, 6000.0)
 CHECKPOINTS = tuple(range(50, 501, 50))
 
 # What each candidate changes on top of baseline-v3's env.json; 2C also passes --lagr with d_ref from stage 0b.
-CANDIDATES = {"res": {"base_rule": dict(OPPONENTS["ctrl"][RULE]["own_state"])},
+CANDIDATES = {"v3w": {},     # control arm (V420): baseline-v3's recipe on the new range
+              "res": {"base_rule": dict(OPPONENTS["ctrl"][RULE]["own_state"])},
               "attr": {"reward_mode": "attr", "w_flow": 0.0},
               "lagr": {"reward_mode": "lagr"}}
-ORDER = ("res", "attr", "lagr")
-PREFIX = {"res": "r", "attr": "a", "lagr": "l", "inc": "d"}
+ORDER = ("v3w", "res", "attr", "lagr")
+PREFIX = {"v3w": "w", "res": "r", "attr": "a", "lagr": "l", "inc": "d"}
 
 
-def env_for(kind: str) -> dict:
-    """Training environment of a candidate: baseline-v3's, with this round's seeds and the candidate's options."""
-    e = {**ENV_V3, "seed0": SEED0, "seeds_per_worker": PER_WORKER, **CANDIDATES[kind]}
-    return e
+def env_for(kind: str, refs: dict | None = None) -> dict:
+    """Training environment of a candidate: baseline-v3's, with this round's seeds, the reward references at the training levels
+    (stage 0c) and the candidate's options."""
+    plant = {**ENV_V3["plant"], "ref": refs} if refs is not None else ENV_V3["plant"]
+    return {**ENV_V3, "seed0": SEED0, "seeds_per_worker": PER_WORKER, "plant": plant, **CANDIDATES[kind]}
 
 
 def pt_cfg(path: str, cond: str, perturb: dict | None = None) -> dict:

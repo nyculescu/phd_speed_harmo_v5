@@ -1,10 +1,13 @@
 # Round 1: three candidates against baseline-v3, by the search procedure 3A
 
-Status: draft, revision 1, for the author's approval (V414). **Revision 2 pending (V416):** the training levels change to a bigger range, set by the demand sweep in `round_1_sweep.md`; the sections on training, stage 0 and seeds are rewritten after it. Nothing runs before the author approves this text and the seed ranges below. Built from the options memo `docs/reports/2026-11-05_21-29/` (V413); the author picked 1A, 2C, 3B and 3A (V414).
+Status: draft, revision 2, for the author's approval (V414, V416-V421). Revision 2 sets the training range to 4,500-6,000 veh/h from the demand sweep (V419, V420), adds a control arm and a band reading. Nothing runs before the author approves this text and the seed ranges below.
 
 ## Question
 
-On the baseline-v3 plant, at 5,300 veh/h under the X1 and X2 slowdowns, does any of three changes to per-CAV DRL give **less delay than baseline-v3's policies while keeping their edge in close-following** (TTC below 3 s, read once a second)? And does a winner pass confirmatory 3's tuned reading on fresh seeds?
+On the baseline-v3 plant, with policies trained over 4,500-6,000 veh/h:
+1. At 5,300 veh/h under the X1 and X2 slowdowns, does any of three changes to per-CAV DRL give **less delay than baseline-v3's policies while keeping their edge in close-following** (TTC below 3 s, read once a second)? Does a winner pass confirmatory 3's tuned reading on fresh seeds?
+2. Under the training slowdowns, do the policies have fewer close-following seconds than no control **at every level of the band 5,000-5,500**, and what happens at its edges, 4,500 and 6,000 (V418, V420)?
+3. Is a gain due to the method or to the wider training range? A control arm, baseline-v3's recipe on the new range, answers this.
 
 Why delay: baseline-v3 failed confirmatory 3b on delay, not on close-following (V401). Over 40 seeds pooled, its delay against os1_15_10 is a tie within noise (V413, exploratory).
 
@@ -14,21 +17,23 @@ Why delay: baseline-v3 failed confirmatory 3b on delay, not on close-following (
 - **Opponents:** baseline-v3's `opponents.json`, unchanged. No rule is re-tuned. "Counting" opponents are found per cell on this round's seeds, exactly as confirmatory 3 does: delay within 2 % of p333.
 - **Incumbent:** baseline-v3's learners C0-C4, with their stored checkpoints u50-u500 and final.
 - **Training budget and settings, for every candidate:**
-  - 5 learners × 3 environments (one per demand level: 4,090, 4,600, 5,300), 500 updates;
+  - 5 learners × 3 environments, 500 updates, as baseline-v3; the environments cycle through the 7 training levels 4,500, 4,750, …, 6,000 (each update covers 3 consecutive levels, each level 3 times per 7 updates), where baseline-v3 used one environment per level at 4,090, 4,600 and 5,300 (V420);
   - γ 0.933, λ 0.967, PPO settings of `c_train.py`, input normalisation as V388;
-  - environment config as baseline-v3's `env.json` (hold 10 s, random slowdowns, references), except what the candidate changes;
+  - environment config as baseline-v3's `env.json` (hold 10 s, random slowdowns), except the reward references, computed at the 7 training levels in stage 0c, and what the candidate changes;
   - network seeds 20261205 + learner; the **same training seed streams for all candidates** (common random numbers).
 - **Code:** baseline-v3 code (`d2b2ecc`) plus the round-1 changes. Every change sits behind an option whose default is the old behaviour. The run commit is frozen before stage 0.
 
 ## The candidates
 
-| | 1A attributed delay | 2C PPO-Lagrangian | 3B residual on the rule |
-|---|---|---|---|
-| Option | `reward_mode: "attr"` | `reward_mode: "lagr"` + trainer `--lagr` | `base_rule: os1_15_10` |
-| State | unchanged (16) | unchanged (16) | 16 + the rule's level |
-| Action | unchanged (4 levels) | unchanged (4 levels) | 3 offsets around the rule's level |
-| Reward | changed | safety only | unchanged |
-| Algorithm | unchanged | cost critic + dual variable | unchanged, initialised at the rule |
+| | Control arm (v3w) | 1A attributed delay | 2C PPO-Lagrangian | 3B residual on the rule |
+|---|---|---|---|---|
+| Option | none | `reward_mode: "attr"` | `reward_mode: "lagr"` + trainer `--lagr` | `base_rule: os1_15_10` |
+| State | unchanged (16) | unchanged (16) | unchanged (16) | 16 + the rule's level |
+| Action | unchanged (4 levels) | unchanged (4 levels) | unchanged (4 levels) | 3 offsets around the rule's level |
+| Reward | unchanged | changed | safety only | unchanged |
+| Algorithm | unchanged | unchanged | cost critic + dual variable | unchanged, initialised at the rule |
+
+The control arm is baseline-v3's recipe trained on the new range with this round's seeds and references (V420). It takes part in validation like any candidate, and it is always tested, so each method can be compared with it.
 
 ### 1A. Attributed delay replaces the spacing payment
 
@@ -93,13 +98,15 @@ The shared term and the collision charge are unchanged. The weight 0.5 equals th
   - whether a checkpoint chosen by the rule below clears the bar where the final one does not.
 
 **Stage 0b, 2C reference and its stop.**
-- **Runs:** os1_15_10, p333 and the five baseline-v3 final policies, under training conditions (random slowdowns, levels 4,090, 4,600 and 5,300), on 30 seeds. 630 runs.
+- **Runs:** os1_15_10, p333 and the five baseline-v3 final policies, under training conditions (random slowdowns) at the 7 training levels, on 20 seeds. 980 runs.
 - **d_ref(q)** is computed from the two rules.
-- **Stop for 2C:** if at least 4 of 5 baseline-v3 policies already have J ≤ 0.97 on these runs (J as defined above), the constraint would not bind, and 2C is not trained. It is reported as "constraint not binding". The round goes on with 1A and 3B.
+- **Stop for 2C:** if at least 4 of 5 baseline-v3 policies already have J ≤ 0.97 on these runs (J as defined above), the constraint would not bind, and 2C is not trained. It is reported as "constraint not binding". The round goes on with the other candidates.
+
+**Stage 0c, reward references.** No control in steady traffic at the 7 training levels, on 20 seeds (140 runs): per level, the median per second of braking at 3 m/s², close-following and vehicles in the system, computed as confirmatory 3's `make_env.py` did. They replace `env.json`'s references, which exist only at 4,090, 4,600 and 5,300, for every candidate, the control arm included.
 
 ## Training
 
-- **Order:** one candidate per slot, run serially in the order 3B, 1A, 2C. The 5 learners of a slot run in parallel, and nothing else runs beside training (V392).
+- **Order:** one candidate per slot, run serially in the order v3w, 3B, 1A, 2C. The 5 learners of a slot run in parallel, and nothing else runs beside training (V392).
 - **Isolation:** each slot runs from a frozen copy of the run commit, in its own systemd unit, under the CPU guard.
 - **Crash:** a learner that crashes restarts once with the same seeds and is logged.
 - **Collapse check, per learner, on its own reward series:**
@@ -141,6 +148,7 @@ Validation selects, so its 95 % CIs carry no multiplicity correction.
   - each finalist's 5 learners at their chosen checkpoints;
   - baseline-v3's 5 learners at their chosen checkpoints, and their final policies (report-only);
   - every opponent confirmatory 3 ran in these cells (`opponents.json`), plus p333 and no control.
+  - the control arm v3w at its chosen checkpoints, whether or not it is a finalist.
 - **Multiplicity:** Bonferroni over finalists × cells. With m tests, the CIs are at 1 − 0.05/m, two-sided: 98.75 % for m = 2, 99.375 % for m = 4.
 
 **Reading T1, decides "better than baseline-v3".** Per finalist, per cell: delay less than the incumbent arm's with the corrected CI excluding 0, and close-following not more than 10 % above the incumbent's (point estimate).
@@ -149,6 +157,13 @@ Validation selects, so its 95 % CIs carry no multiplicity correction.
 - at least 4 of 5 policies have, against every opponent that counts in that cell: close-following at least 10 % better (CI excluding 0) and at least 20 per run lower;
 - delay at most 2 % worse; flow at most 0.5 % worse; braking at 3 m/s² at most 5 % worse; moving full-emergency events at most 5 % or 5 per run more; collisions at most the opponent's plus 1;
 - against p333: delay at most 5 % worse and flow at most 1 % worse.
+
+**Reading B, decides "band shown" (V418, V420).**
+- **Runs:** under the training slowdowns at 4,500, 5,000, 5,250, 5,500 and 6,000 veh/h, on 20 fresh band seeds: the tested candidates (finalists and v3w), baseline-v3 at its chosen checkpoints, no control, p333 and os1_15_10.
+- **Shown, per arm:** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. All three must hold, so there is no correction within an arm; Bonferroni applies over the arms read.
+- **Edges (4,500 and 6,000):** reported, not required either way. A policy trained over the range may extend the band; the profile across the five levels shows where the impact fades.
+
+**Reading A, attribution (report-only):** each method finalist's arm against the control arm v3w at 5,300, delay and close-following, 95 % CIs. It says whether a gain comes from the method or from the wider range.
 
 **Reported beside:**
 - confirmatory 3's replication, delay-win, "safety" and severe-conflict readings;
@@ -170,12 +185,14 @@ Arm-level comparisons use the per-seed mean over the 5 learners. One convention 
 |---|---|---|
 | Smoke checks in training mode | 7,419,899, the seed of `c_train.py smoke`, used before | 1 |
 | Stage 0a, checkpoint calibration | 7,440,300-319 | 20 |
-| Stage 0b, 2C reference | 7,440,340-369 | 30 |
+| Stage 0b, 2C reference | 7,440,340-359 | 20 |
+| Stage 0c, reward references | 7,440,370-389 | 20 |
 | Validation | 7,440,400-439 | 40 |
 | Test, used once | 7,440,500-539 | 40 |
+| Band test, used once | 7,440,540-559 | 20 |
 | Training, shared by all candidates | 7,464,000-7,471,799 (worker 9 starts at 7,464,000, 520 per worker) | 7,800 |
 
-The 7,440,xxx ranges lie in the block approved in V354, and are unused: the ledger and the code use up to 7,440,239. The training range follows confirmatory 3's (7,456,000-7,463,999). Determinism and reproduction checks re-run stored rows on their own seeds (7,440,200 and 7,440,045); they create no new data.
+The 7,440,xxx ranges lie in the block approved in V354, and are unused: the ledger and the code use up to 7,440,239, and the sweep used 600-609. The training range follows confirmatory 3's (7,456,000-7,463,999). Determinism and reproduction checks re-run stored rows on their own seeds (7,440,200 and 7,440,045); they create no new data.
 
 ## Order and checks before the run
 
@@ -198,22 +215,23 @@ The 7,440,xxx ranges lie in the block approved in V354, and are unused: the ledg
    - 3B's offsets reaching the levels;
    - TensorBoard events read back.
 7. **Code review:** adversarial, of the build commit, as `CLAUDE.md` requires before long runs (ultracode on).
-8. **Run:** stage 0, then training (3B, 1A, 2C), the collapse checks, validation, the advance decision, the test and the reading. Any failed check stops the chain and goes to the author.
+8. **Run:** stage 0, then training (v3w, 3B, 1A, 2C), the collapse checks, validation, the advance decision, the test and the reading. Any failed check stops the chain and goes to the author.
 
 ## Compute
 
-Measured rates: 1,500 evaluation runs per hour on 32 workers (V409, V401); a 5-learner slot takes 3.3 h (baseline-v3).
+Measured rates: about 1,500 evaluation runs per hour on 28-32 workers (V409, V417); a 5-learner slot takes 3.3 h (baseline-v3). Runs at the higher training levels take longer.
 
 | Step | Runs | Hours |
 |---|---|---|
 | Stage 0a | 2,120 | 1.4 |
-| Stage 0b | 630 | 0.4 |
-| Training, 3 slots | – | 10-11 |
-| Validation | 3,440 | 2.3 |
-| Test | up to 2,240 | 1.5 |
-| **Total** | | **about 16-17** |
+| Stage 0b, 0c | 1,120 | 0.8 |
+| Training, 4 slots | – | 13-14 |
+| Validation | 4,240 | 2.8 |
+| Test at 5,300 | up to 3,040 | 2.0 |
+| Band test | up to 2,300 | 1.5 |
+| **Total** | | **about 22** |
 
-The CPU guard is at 90 %, unless the author sets 95 % as in V357.
+64 workers for evaluation on 32 hardware threads, by the author's choice to measure throughput and total time; the CPU guard's limit at 100 %, so it pauses nothing (author: "Go for 95-100% CPU load", V421). Training is unchanged: 5 learners × 3 environments per slot.
 
 ## Stop rules
 
@@ -228,11 +246,13 @@ The CPU guard is at 90 %, unless the author sets 95 % as in V357.
 - **Teaching to the test:** 2C keeps the judged 1-Hz flag in its reward, as baseline-v3 did. The counters outside the reward (TTC below 1.5 and 2 s, the severe check, braking counted every 0.1 s) are reported.
 - **Attribution in 1A is a heuristic, not causal.** A follower's lost time is charged to its ALKS leader, and an ALKS-ALKS pair counts the follower twice.
 - **3B's range:** ±1 cannot reach every level the from-scratch policies use.
-- **No map cells** are run (S, H1, H2, 4,600). The harm map of confirmatory 3 is not repeated.
+- **The band was read after the sweep's data** (V419, post hoc). Reading B tests it on fresh seeds with policies trained for it.
+- **New reward references** at the 7 training levels, from no control on fresh seeds, replace baseline-v3's; the control arm v3w uses them too, so it differs from baseline-v3 in range, seeds and references, not in method.
+- **No map cells** are run (H1, H2, 4,600 in X1 and X2). The harm map of confirmatory 3 is not repeated.
 - **The opponents are not re-tuned** for this round. A CMA-ES rule search (memo 3E) is not part of the round; it is recommended before any thesis claim.
 - **Literature:** PPO-Lagrangian, residual policy learning and the attribution idea are named families [VERIFY]. None is claimed as new.
 
 ## What this cannot show
 
-- A win holds for this uncalibrated SUMO model, these slowdowns, 5,300 veh/h and ideal V2V.
+- A win holds for this uncalibrated SUMO model, these slowdowns, these demand levels and ideal V2V.
 - With 3 candidates and one round, a null result does not show that no change to the SAR or the algorithm would help.

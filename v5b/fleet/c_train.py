@@ -325,8 +325,9 @@ def tb_scalars(w, u: int, st: dict, batch: tuple, scale: float, wall: float, lam
         put("lagr/lambda", lam_dual)
         if j is not None:
             put("lagr/J", j)
-    for ep in batch[7]:
-        q = f"ep/q{int(ep['q'])}"
+    for e, ep in enumerate(batch[7]):     # per environment slot, so any number of levels can cycle through the environments
+        q = f"ep/e{e}"
+        put(f"{q}/q", ep["q"])
         for k in EP_KEYS:
             put(f"{q}/{k}", ep[k])
         put(f"{q}/delay_s", episode_delay(ep))

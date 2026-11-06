@@ -105,14 +105,14 @@ def smoke(out: Path) -> list:
     bad = []
     for kind in CANDIDATES:
         d = out / f"smoke_{kind}"
-        env = {**env_for(kind), **SHORT}
+        env = {**env_for(kind, {str(q): [0.2, 0.01, 300.0] for q in LEVELS}), **SHORT}     # placeholder references: the smoke checks wiring, not values
         lagr = {"ref": {str(q): 2.0e4 for q in LEVELS}} if kind == "lagr" else None
         f = ct.train(d, 0, 2, 3, env, None, GAMMA, LAM, LEVELS, NET_SEED, lagr)
         ck = torch.load(f, map_location="cpu")
         S = tb_read(d / "tb" / "C0")
-        need = ["ppo/reward_per_decision", "ppo/entropy"] + [f"ep/q{int(q)}/delay_s" for q in LEVELS]
+        need = ["ppo/reward_per_decision", "ppo/entropy"] + [f"ep/e{e}/{k}" for e in range(3) for k in ("delay_s", "q", "seed")]
         need += ["lagr/lambda", "cost/per_decision", "cost/value_loss"] if kind == "lagr" else []
-        need += [f"ep/q{int(q)}/offset_moves" for q in LEVELS] if kind == "res" else []
+        need += [f"ep/e{e}/offset_moves" for e in range(3)] if kind == "res" else []
         miss = [t for t in need if t not in S]
         steps_ok = all([s for s, _ in S[t]] == [0, 1] for t in S)
         finite = all(np.isfinite(v) for t in S for _, v in S[t])
