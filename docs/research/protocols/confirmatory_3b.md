@@ -46,3 +46,7 @@ Every row must be complete, with 20 seeds per arm. Any failure stops the run and
 ## Compute
 
 About 18 arms × 20 seeds = 360 runs, about 15 minutes at 24 workers, with the CPU guard on.
+
+## Outcome (V401)
+
+Does not replicate: 1 of 5 policies clear the tuned reading on seeds 7,440,220-239. All 5 clear the TTC conditions against both counting rules. 4 of 5 fail the 2 % delay limit against os1_15_10, at 1.6-10.2 % more delay. The X2 claim is reported as not confirmed. Report-only, pooled over 40 seeds: 4 of 5.

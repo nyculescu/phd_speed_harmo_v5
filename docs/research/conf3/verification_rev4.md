@@ -68,6 +68,10 @@ Do not write: "at equal delay", "robust", "clear", "consistent", "safer" without
   - a stored P0 policy was compared with p333 on the check seeds before approval, trace only;
   - the normalisation smoke's tolerance was widened after seeing it (V389).
 
+## Fresh-seed replication (V401): not confirmed
+
+On 20 new seeds, only 1 of 5 policies cleared the tuned reading, so the X2 claim is reported as not confirmed. The TTC edge held: all 5 had 14-26 % fewer seconds at TTC below 3 s than os1_15_10, with CIs above 0. The delay limit failed: 4 of 5 had 1.6-10.2 % more delay than os1_15_10. Pooled over 40 seeds, report-only: 4 of 5.
+
 ## Replays done (V398)
 
 All 200 base replays reproduce every stored number, and the long runs match at 1,800 s. Over 300-3,000 s, all 5 policies have lower TTC below 3 s than every counting rule, with CIs excluding 0, at equal or better delay. The gain is not only creep on the accelerating lane: without 4a_0, it is still 16-30 % against os1_15_10. Against r4a1, some conflicts move to the 4a mainline. Human and truck followers have fewer TTC seconds than under every rule and under no control, including human-behind-human pairs, which no reward term charges. ALKS followers have more TTC seconds than under no control. Details: `rerun/analysis.txt` and V398.
