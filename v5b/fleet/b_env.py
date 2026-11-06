@@ -65,6 +65,10 @@ W_CAV_FLOW = 0.4
 Q_REF = 0.6     # veh/s per lane, about 2,200 veh/h
 FREE_SPACING = 200.0     # no leader within sensing range
 W_MOVE = 0.01     # per move; small, the rate limit is what prevents chatter
+REWARD_MODES = ("v3", "attr", "lagr")     # round 1: v3 as baseline-v3; attr = 1A attributed delay; lagr = 2C safety reward plus a delay cost
+W_ATTR = 0.5     # 1A: the own-speed weight, so a TTC flag costs 20 vehicle-seconds of delay, the bar's own rate (V413)
+ATTR_MERGE_M = 50.0     # 1A: an accelerating-lane vehicle's lost time goes to the nearest mainline ALKS within this distance
+ACCEL_LANES = ("3a_0", "4a_0")
 LANE_LEFT, LANE_RIGHT = 1, 2
 CONGESTED = 60.0 / 3.6     # SUMO's speed below which passing on the right is allowed
 ROAD_X = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": pt.EDGE4_X}
@@ -74,6 +78,11 @@ SPEED_CAPS = (None, 90.0 / 3.6, 80.0 / 3.6)     # V334 step 3: per-CAV speed act
 SMOOTH_RATIO = 1.1     # at most this ratio per second; only the ease flag holds to it (V367)
 FREE_MAX_SPEED = 55.56
 LANE_RULE_M = 1500.0
+
+
+def _lost(speed: float) -> float:
+    """Share of the limit not driven this second: one vehicle-second of delay at standstill."""
+    return 1.0 - min(speed / fl.LIMIT, 1.0)
 
 
 def make(zones: bool = False, cav: bool = False, **kw):
@@ -167,7 +176,7 @@ class MergeEnv(gym.Env):
         self.contact = set()
         self.ep = {"E15": 0.0, "E30": 0.0, "brake3": 0.0, "brake45": 0.0, "N": 0.0, "collisions": 0, "contact_steps": 0, "commands": 0, "restore_mismatch": 0, "lock_mismatch": 0,
                    "out_E30": 0.0, "out_b3": 0.0, "arrived": 0, "passed": 0, "mean_v": 0.0, "gap25": 0, "stop_gap": 0, "alks_s": 0, "v2v_s": 0, "changes": 0, "reversals": 0, "ignored": 0,
-                   "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0}
+                   "seed": s, "q": q, "share": self.share, "offset_s": 0.0, "steps": 0, "dist_s": 0.0}
         per_s = int(round(1.0 / self.dt))
         k = 0
         while self.sim.t < self.warm - 1e-9:
@@ -422,9 +431,12 @@ class MergeEnv(gym.Env):
         passed = len(ids4 - self.seen4)
         self.seen4 |= ids4
         live = ls.vehicle.getIDList()
-        vbar = sum(ls.vehicle.getSpeed(v) for v in live) / len(live) if live else fl.LIMIT
+        self.sv = sum(ls.vehicle.getSpeed(v) for v in live)
+        vbar = self.sv / len(live) if live else fl.LIMIT
+        self.n_sys = n
         self.ep["passed"] += passed
         self.ep["mean_v"] += vbar
+        self.ep["dist_s"] += self.sv     # metres per 1-s sample: training-mode delay = N - dist_s / 27.78 (round 1)
         if self.reward == "safety":
             return -W_BRAKE * b3 / REF_BRAKE - W_E3 * e30 / REF_E3 - W_N * (n / REF_N - 1.0) - COLLISION_COST * new_c
         return self._efficiency(passed, vbar, n, b3, e30) - COLLISION_COST * new_c
@@ -609,8 +621,10 @@ class ZoneRule:
         return a
 
 
-def cav_sizes(lane_action: bool = False, residual: tuple | None = None, speed_action: bool = False, **_) -> tuple:
+def cav_sizes(lane_action: bool = False, residual: tuple | None = None, speed_action: bool = False, base_rule: dict | None = None, **_) -> tuple:
     """Local observation size and number of actions of a CavEnv with these settings."""
+    if base_rule:
+        return CAV_LOCAL + 1, 3
     return CAV_LOCAL + (2 if lane_action else 0) + (1 if speed_action else 0), (3 if residual else len(HEADWAYS_S)) * (3 if lane_action or speed_action else 1)
 
 
@@ -622,15 +636,22 @@ class CavEnv(ZoneEnv):
     observation's mask marks the vehicles whose own `hold`-s clock is due: the policy decides only for them (V290)."""
 
     def __init__(self, hold: float = 30.0, w_flow: float = W_CAV_FLOW, w_safety: float = W_CAV_TTC, lane_action: bool = False,
-                 residual: tuple | None = None, speed_action: bool = False, hw_type: dict | None = None, **kw):
+                 residual: tuple | None = None, speed_action: bool = False, hw_type: dict | None = None, reward_mode: str = "v3",
+                 w_attr: float = W_ATTR, base_rule: dict | None = None, **kw):
         kw.setdefault("decision", 5.0)
         super().__init__(**kw)
         self.hold, self.w_flow, self.w_safety, self.lane_action, self.residual = hold, w_flow, w_safety, lane_action, residual
         self.speed_action, self.hw_type = speed_action, hw_type
         if speed_action and not self.plant.get("smooth"):
             raise ValueError("the speed action is applied through the smooth cap")
-        self.n_local = cav_sizes(lane_action, residual, speed_action)[0]
-        self.n_level = 3 if residual else len(self.headways)
+        if reward_mode not in REWARD_MODES:
+            raise ValueError(f"reward_mode {reward_mode!r} not in {REWARD_MODES}")
+        if base_rule and (residual or lane_action or speed_action):
+            raise ValueError("base_rule needs the plain level action")
+        self.reward_mode, self.w_attr, self.base_rule = reward_mode, w_attr, base_rule
+        self.rule = OwnState(**base_rule) if base_rule else None
+        self.n_local = cav_sizes(lane_action, residual, speed_action, base_rule)[0]
+        self.n_level = 3 if residual else len(self.headways)     # base_rule hands _apply absolute levels
         self._clear_cav()
 
     def _clear_cav(self) -> None:
@@ -638,6 +659,7 @@ class CavEnv(ZoneEnv):
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
         self.ids, self.on, self.stats, self.asked, self.lane_dir = [], set(), {}, {}, {}
         self.speed_lvl = {}
+        self.cacc, self.c_net, self.offset, self.base_lvl = defaultdict(float), 0.0, {}, {}
 
     def reset(self, *, seed=None, options=None):
         self._clear_cav()
@@ -646,8 +668,20 @@ class CavEnv(ZoneEnv):
         self.ep["lv"] = [0] * (N_ZONES * len(self.headways))
         self.ep["lane_cmds"] = self.ep["lane_rev"] = self.ep["speed_changes"] = 0
         self.ep["speed_s"] = [0] * len(SPEED_CAPS)
+        if self.base_rule:
+            self.ep["offset_moves"] = 0
         self.acc = defaultdict(float)
         return o, info
+
+    def _residual(self, action: dict) -> dict:
+        """3B: a policy action is an offset of -1, 0 or +1 level, held until the vehicle's next decision; every ALKS gets
+        the rule's level from the last observation plus its offset, so a zero offset everywhere is the rule's own run."""
+        for v, a in action.items():
+            off = int(a) - 1
+            self.ep["offset_moves"] += self.offset.get(v, 0) != off
+            self.offset[v] = off
+        top = len(self.headways) - 1
+        return {v: int(np.clip(self.base_lvl[v] + self.offset.get(v, 0), 0, top)) for v in self.ids}
 
     def _apply(self, action: dict) -> None:
         t = self.sim.t
@@ -757,6 +791,8 @@ class CavEnv(ZoneEnv):
         follower's."""
         e30 = b3 = 0
         bins, st = defaultdict(list), {}
+        attr = self.reward_mode == "attr"
+        merging, beside = [], []
         for v in ls.vehicle.getIDList():
             sp = ls.vehicle.getSpeed(v)
             hard = ls.vehicle.getAcceleration(v) <= -HARD_BRAKE
@@ -773,22 +809,39 @@ class CavEnv(ZoneEnv):
                 e30 += ttc
                 spacing = gap + ls.vehicle.getLength(v)
                 if lead[0] in self.alks_all:
-                    f = st.setdefault(lead[0], [0.0, 0.0, 0.0, 0, 0, 0, 0])
+                    f = st.setdefault(lead[0], [0.0, 0.0, 0.0, 0, 0, 0, 0, 0.0, 0.0])
                     f[4] += ttc
                     f[5] += hard
+                    f[7] += _lost(sp)
             if v in self.alks_all:
-                x = st.setdefault(v, [0.0, 0.0, 0.0, 0, 0, 0, 0])
+                x = st.setdefault(v, [0.0, 0.0, 0.0, 0, 0, 0, 0, 0.0, 0.0])
                 x[0], x[2], x[3], x[6] = sp, sp / spacing, ttc, hard
+            if attr:
+                lane = ls.vehicle.getLaneID(v)
+                if lane in ACCEL_LANES:
+                    merging.append((lane[:-2], ls.vehicle.getLanePosition(v), _lost(sp)))
+                elif v in self.alks_all and lane[:-2] in ("3a", "4a"):
+                    beside.append((lane[:-2], ls.vehicle.getLanePosition(v), v))
             bins[self._bin(v)].append(sp)
+        for edge, pos, lost in merging:     # nearest mainline ALKS on the same edge, ties to the first found
+            near = [(abs(p - pos), w) for e, p, w in beside if e == edge and abs(p - pos) <= ATTR_MERGE_M]
+            if near:
+                st[min(near, key=lambda t: t[0])[1]][8] += lost
         self.bins = {b: sum(x) / len(x) for b, x in bins.items()}
         live = set(ls.vehicle.getIDList())
         for v, x in st.items():
             if v in live:
                 x[1] = self.bins[self._bin(v)]
         self.stats = st
-        for v, (sp, near, q, ttc, ft, fh, hard) in st.items():
-            self.acc[v] += (W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(near / fl.LIMIT, 1.0) - 1.0) + self.w_flow * min(q / Q_REF, 1.5)
-                            - self.w_safety * (ttc + hard + 0.5 * (ft + fh)))
+        for v, (sp, near, q, ttc, ft, fh, hard, fdel, mdel) in st.items():
+            if self.reward_mode == "v3":
+                self.acc[v] += (W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) + W_CAV_NEAR * (min(near / fl.LIMIT, 1.0) - 1.0) + self.w_flow * min(q / Q_REF, 1.5)
+                                - self.w_safety * (ttc + hard + 0.5 * (ft + fh)))
+            elif attr:
+                self.acc[v] += W_CAV_OWN * (min(sp / fl.LIMIT, 1.0) - 1.0) - self.w_attr * (fdel + mdel) - self.w_safety * (ttc + hard + 0.5 * (ft + fh))
+            else:
+                self.acc[v] -= self.w_safety * (ttc + hard + 0.5 * (ft + fh))
+                self.cacc[v] += _lost(sp) + _lost(near)
         return e30, b3
 
     def _bin(self, v: str) -> tuple:
@@ -798,7 +851,11 @@ class CavEnv(ZoneEnv):
         """Flow, speed and vehicles in system, shared by all; flow smoothed, no excess-exposure term. V286: that term's noise
         outweighed everything else, and one vehicle barely moves it. Safety is charged per vehicle in _net_stats."""
         self._net_stats_gap()     # per-vehicle costs come from this pass; in training nothing else runs it (V294)
-        return self._shared(passed, vbar, n)
+        shared = self._shared(passed, vbar, n)     # also smooths the flow the critic reads
+        if self.reward_mode == "lagr":     # 2C: delay leaves the reward; the network's delay rate per second becomes a shared cost
+            self.c_net += (self.n_sys - self.sv / fl.LIMIT) / self._ref()[2]
+            return 0.0
+        return shared
 
     def _x(self, v: str) -> float:
         """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value."""
@@ -886,13 +943,23 @@ class CavEnv(ZoneEnv):
                                                               min(len(ls.simulation.getPendingVehicles()) / 500.0, 1.0),
                                                               min(self.sim.t / self.t_end, 1.0),
                                                               getattr(self, "flow_ema", 0.0) / (self.q / 3600.0) / 1.5]
-        return ids, np.array(rows, dtype=np.float32).reshape(-1, self.n_local), np.array(glob, dtype=np.float32), due
+        if not self.base_rule:
+            return ids, np.array(rows, dtype=np.float32).reshape(-1, self.n_local), np.array(glob, dtype=np.float32), due
+        lo = np.array(rows, dtype=np.float32).reshape(-1, CAV_LOCAL)     # the rule reads exactly what its own arm reads
+        self.base_lvl = self.rule((ids, lo))
+        top = len(self.headways) - 1
+        lo = np.hstack([lo, np.array([[self.base_lvl[v] / top] for v in ids], dtype=np.float32).reshape(-1, 1)])
+        return ids, lo, np.array(glob, dtype=np.float32), due
 
     def step(self, action: dict):
         before = self.ids
-        self.acc = defaultdict(float)
+        if self.base_rule:
+            action = self._residual(action)
+        self.acc, self.cacc, self.c_net = defaultdict(float), defaultdict(float), 0.0
         o, g, term, trunc, info = super().step(action)
         secs = self.decision
+        if self.reward_mode == "lagr":
+            info["cost"] = {v: (self.c_net + self.cacc[v]) / secs for v in before}
         return o, {v: g + self.acc[v] / secs for v in before}, term, trunc, info
 
 
