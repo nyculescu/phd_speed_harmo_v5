@@ -1,0 +1,44 @@
+2026-11-05 09:20:09 code fae4620
+2026-11-05 09:20:09 start tests
+2026-11-05 09:20:21 end rc=0
+2026-11-05 09:20:21 start rule tuning
+2026-11-05 11:31:26 end rc=0
+2026-11-05 11:31:26 start first selection, early kill
+2026-11-05 11:31:30 end rc=0
+2026-11-05 11:31:30 start training config
+2026-11-05 11:31:30 end rc=0
+2026-11-05 11:31:30 start training
+2026-11-05 11:34:02 STOPPED by the author's decision: inputs get fitted normalization; tuning kept; 3 updates of training set aside in train_aborted_hand_scaled
+2026-11-05 11:52:35 RESTART revision 4 (V390), code d2b2ecc
+2026-11-05 11:52:35 code d2b2ecc
+2026-11-05 11:52:35 start tests
+2026-11-05 11:52:48 end rc=0
+2026-11-05 11:52:48 start rule tuning
+2026-11-05 11:52:48 end rc=0
+2026-11-05 11:52:48 start first selection, early kill
+2026-11-05 11:52:53 end rc=0
+2026-11-05 11:52:53 start training config
+2026-11-05 11:52:53 end rc=0
+2026-11-05 11:52:53 start training
+2026-11-05 11:57:56 precompute of policy-independent evaluation rows started (V391), 16 workers; guard 95 %
+2026-11-05 12:06:09 precompute stopped (V392): it slowed training from 23.5 to about 40 s per update; its rows moved aside, unused
+2026-11-05 15:09:01 learner 2 done
+2026-11-05 15:09:49 learner 0 done
+2026-11-05 15:10:00 learner 1 done
+2026-11-05 15:10:01 learner 3 done
+2026-11-05 15:10:08 learner 4 done
+2026-11-05 15:10:08 end training
+2026-11-05 15:10:08 start collapse check, saved settings
+2026-11-05 15:10:09 end rc=0
+2026-11-05 15:10:09 start tracing, copy rule
+2026-11-05 15:14:47 end rc=0
+2026-11-05 15:14:47 start copy rule tuning
+2026-11-05 15:16:45 end rc=0
+2026-11-05 15:16:45 start final selection
+2026-11-05 15:16:49 end rc=0
+2026-11-05 15:16:49 start evaluation
+2026-11-05 16:31:48 end rc=0
+2026-11-05 16:31:48 start reading
+2026-11-05 16:31:53 end rc=0
+2026-11-05 16:31:53 start u250 report
+2026-11-05 16:36:43 DONE
