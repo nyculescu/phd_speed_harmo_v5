@@ -26,11 +26,14 @@ while true; do
   paused=0; run=0
   for p in $(pgrep -f "$PAT"); do s=$(awk '{print $3}' /proc/$p/stat 2>/dev/null); [ "$s" = T ] && paused=$((paused+1)) || run=$((run+1)); done
   [ $paused -gt 0 ] && [ ! -f "$D/THROTTLED" ] && why+=("$paused workers paused without a throttle")
-  temp=$(cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | sort -n | tail -1); temp=$((temp / 1000))
-  [ "$temp" -ge 99 ] && why+=("temperature ${temp} °C")     # near the CPU's throttle point; training alone reaches 93-97 °C (V430)
+  hw=$(grep -l coretemp /sys/class/hwmon/hwmon*/name | head -1 | xargs dirname)     # the sensors btop reads (V431)
+  temp=0; csum=0; cn=0
+  for t in $hw/temp*_input; do l=$(cat ${t%_input}_label); v=$(( $(cat $t) / 1000 )); case "$l" in Package*) temp=$v ;; Core*) csum=$((csum+v)); cn=$((cn+1)) ;; esac; done
+  cmean=$(( cn ? csum / cn : 0 ))
+  [ "$temp" -ge 99 ] && why+=("package ${temp} °C")     # near the CPU's throttle point
   mem=$(awk '/MemAvailable/ {print int($2 / 1048576)}' /proc/meminfo)
   [ "$mem" -lt 4 ] && why+=("only ${mem} GB memory available")
-  echo "$now stage='$stage' cpu=${c}% workers=${run} paused=${paused} temp=${temp}C mem_free=${mem}GB ${why[*]:+ALERT: ${why[*]}}" >> "$L"
+  echo "$now stage='$stage' cpu=${c}% workers=${run} paused=${paused} pkg=${temp}C cores_mean=${cmean}C mem_free=${mem}GB ${why[*]:+ALERT: ${why[*]}}" >> "$L"
   [ ${#why[@]} -gt 0 ] && echo "$now ${why[*]}" >> "$A"
   sleep 290
 done
