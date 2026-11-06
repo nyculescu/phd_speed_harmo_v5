@@ -3,7 +3,7 @@
 # code_dir is a frozen copy of the run commit with a COMMIT file; old_code_dir is baseline-v3's frozen code (d2b2ecc).
 # Stops at the first failed check; every stop goes to the author. A candidate failing its training checks leaves the round, the chain goes on.
 set -u
-C=$(realpath "$1"); D=$(realpath "$2"); OLD=$(realpath "$3"); W=64     # V421: the author asked for 64 evaluation workers, to measure throughput
+C=$(realpath "$1"); D=$(realpath "$2"); OLD=$(realpath "$3"); W=31     # V425-V427: 31 measured faster than 64 on 32 hardware threads
 PY=/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 R=$C/docs/research/round1
 mkdir -p "$D"
