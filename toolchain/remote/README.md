@@ -67,6 +67,15 @@ Once per laptop:
 - `vastai set api-key KEY`;
 - the laptop's public SSH key added to the vast.ai account.
 
+Template settings:
+- base it on "NVIDIA CUDA" (`vastai/base-image`), a container. The "Ubuntu 22.04 VM" template (`vastai/kvm`) only runs on hosts with `vms_enabled=true`, which leaves far fewer offers;
+- launch mode: interactive shell server, SSH, with direct SSH on;
+- no ports and no Docker options;
+- disk 40 GB;
+- Private;
+- extra filters `cpu_arch in ['amd64'] cpu_cores_effective>=24 cpu_ram>=32 reliability>0.99`;
+- On-start Script: the whole of `onstart.sh`. It builds the venv in the background during boot, then runs the stock `entrypoint.sh`. `bootstrap.sh` waits for the build and reuses what it built.
+
 The machine's image comes from a saved console template. Make it from "NVIDIA CUDA" (`vastai/base-image`): launch type SSH, 40 GB disk, no on-start script. Put its hash in `toolchain/remote/vast_template`, or in `VAST_TEMPLATE`. Without a template, the launch uses `VAST_IMAGE`, which defaults to `ubuntu:22.04`; whether that image has SSH ready is untested.
 
 ## Acceptance checks

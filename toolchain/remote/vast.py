@@ -17,7 +17,7 @@ from pathlib import Path
 VAST = str(Path(sys.executable).with_name("vastai"))
 # One training: 20 processes, 6.5 GB peak; evaluation wants more threads, so RAM has headroom.
 SPEC = "cpu_arch=amd64 cpu_cores_effective>=24 cpu_ram>=32 disk_space>=40 reliability>0.99 duration>=2 inet_down>=100"
-SLOW = re.compile(r"E5-|E7-")  # 2014-2016 Xeons, about half the laptop's speed per core
+SLOW = re.compile(r"E5-|E7-|Xeon Phi|EPYC 7\d\d1")  # 2014-2017 Xeons, Xeon Phi and first-generation EPYC: far slower per core than the laptop
 IMAGE = os.environ.get("VAST_IMAGE", "ubuntu:22.04")
 # A saved console template (SSH launch, from vast.ai's base image) takes precedence over IMAGE.
 TEMPLATE = os.environ.get("VAST_TEMPLATE") or (Path(__file__).with_name("vast_template").read_text().strip() if Path(__file__).with_name("vast_template").exists() else "")

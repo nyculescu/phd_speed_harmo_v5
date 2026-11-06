@@ -7,6 +7,9 @@ P=/home/catalin/work/phd
 T=$P/phd_speed_harmo_v5b1_toolchain
 export DEBIAN_FRONTEND=noninteractive
 SUDO=; [ "$(id -u)" = 0 ] || SUDO=sudo
+export PATH=$HOME/.local/bin:$PATH
+# A template's on-start build (onstart.sh) may still be running; what it finished is reused below.
+for i in $(seq 120); do [ -e $P/.onstart_running ] && kill -0 "$(cat $P/.onstart_running)" 2>/dev/null || break; [ "$i" = 1 ] && echo "waiting for the on-start build"; sleep 10; done
 
 $SUDO apt-get update -qq
 $SUDO apt-get install -y -qq --no-install-recommends ca-certificates curl tmux rsync procps >/dev/null
@@ -19,7 +22,6 @@ if $SUDO apt-get install -y -qq python3.14 python3.14-venv >/dev/null 2>&1; then
 else
   # Ubuntu before 26.04 has no python3.14 package; uv fetches a standalone CPython build.
   command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
-  export PATH=$HOME/.local/bin:$PATH
   uv python install 3.14.4 || uv python install 3.14
   PYB=$(uv python find 3.14)
 fi
