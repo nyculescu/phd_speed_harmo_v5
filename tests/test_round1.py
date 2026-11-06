@@ -203,3 +203,18 @@ def test_readers_run_end_to_end_on_synthetic_rows():
     r = t1.read(Tt, v)
     assert r["pct"] == pytest.approx((1.25, 98.75)) and set(r["finalists"]["attr"]) == set(c1.PRIMARY)
     assert all(r["finalists"]["attr"][c]["T1"]["better"] for c in c1.PRIMARY)
+
+
+def test_sweep_range_rule():
+    import sweep1 as sw
+    rng = np.random.default_rng(11)
+    T = {}
+    for q in sw.LEVELS:
+        effect = 0.85 if q >= 4000 else 0.99     # control matters from 4,000
+        served = 0.97 if q <= 6500 else 0.85     # best arm saturates above 6,500
+        for n in sw.RULES:
+            T[(f"T|{n}", q)] = {s: {"seed": s, "q": q, "steps": 1500, "all_delay": 1e5 * (1 + rng.normal(0, 0.005)) * (1.0 if n == "nc" else effect), "ttc_net": 1e3,
+                                    "passed": served * q * 1500 / 3600, "teleports": 0, "collisions": 0} for s in sw.SEEDS}
+    r = sw.read(T, list(sw.RULES))
+    assert (r["L"], r["U"], r["range"]) == (4000.0, 6500.0, [4000.0, 6500.0])
+    assert len(sw.arms()) == 8 and len(sw.arms(False)) == 3 and len(sw.LEVELS) == 21

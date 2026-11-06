@@ -1,6 +1,6 @@
 # Round 1: three candidates against baseline-v3, by the search procedure 3A
 
-Status: draft, revision 1, for the author's approval (V414). Nothing runs before the author approves this text and the seed ranges below. Built from the options memo `docs/reports/2026-11-05_21-29/` (V413); the author picked 1A, 2C, 3B and 3A (V414).
+Status: draft, revision 1, for the author's approval (V414). **Revision 2 pending (V416):** the training levels change to a bigger range, set by the demand sweep in `round_1_sweep.md`; the sections on training, stage 0 and seeds are rewritten after it. Nothing runs before the author approves this text and the seed ranges below. Built from the options memo `docs/reports/2026-11-05_21-29/` (V413); the author picked 1A, 2C, 3B and 3A (V414).
 
 ## Question
 
