@@ -43,4 +43,6 @@ $T/venv/bin/python -m pytest -q tests/test_round1.py
 # Rows stored on the laptop must reproduce on every key; a difference means this CPU or build gives other numbers.
 $T/venv/bin/python docs/research/round1/checks1.py rows "$P/v5b1_runs/accept_$(hostname)"
 $T/venv/bin/python toolchain/remote/fingerprint.py "$P/v5b1_runs/accept_$(hostname)" --check toolchain/remote/fingerprint.ref
-echo "ACCEPT PASS: $(nproc) threads, code $(basename "$C")"
+# Containers often see every host thread but may use only their cgroup quota; worker counts must follow the quota.
+q=$(awk '$1 != "max" {printf "%.1f", $1 / $2}' /sys/fs/cgroup/cpu.max 2>/dev/null || true)
+echo "ACCEPT PASS: ${q:-all} CPUs allocated of $(getconf _NPROCESSORS_ONLN) visible, code $(basename "$C")"

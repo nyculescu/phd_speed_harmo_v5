@@ -117,7 +117,7 @@ If checks 3 and 4 pass on every machine, the hardware cannot change the results.
 ## Rules that change on a remote
 
 - **Paths.** The remote mirrors the laptop's paths under `/home/catalin/work/phd`. Scripts with hard-coded paths, such as `chain1.sh` and `common1.py`, therefore run unchanged.
-- **Workers.** `chain1.sh` fixes `W=31`. Future scripts should take the worker count from the machine: threads − 1.
+- **Workers.** `chain1.sh` fixes `W=31`. A vast.ai container sees every host thread but is limited to its cgroup quota (`/sys/fs/cgroup/cpu.max`; e.g. 24.6 of 128 on the first test machine). Future scripts take the worker count from that quota, minus one.
 - **CPU and fans.** The CPU guard, the night cap (V432) and the health monitor's coretemp reading serve the laptop's fans and heat. They are not deployed here. Containers usually have no systemd and no coretemp. Whether the 90 % rule applies on a rented machine is the author's call.
 - **Numbers across machines.** A different CPU or build can change results in the last digits, and trajectories can then diverge. The `rows` check shows whether that happens. Every arm of one comparison is trained and evaluated on one platform. A move in the middle of a round is a protocol deviation and goes in the ledger.
 - **Seeds.** Seeds follow the same approval rule as on the laptop.
