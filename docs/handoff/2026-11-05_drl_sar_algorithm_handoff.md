@@ -189,7 +189,7 @@ These are measured facts and Claude's readings, not decisions. Test them; do not
   - Mark literature not read in full [VERIFY]; never invent sources; no "first" or "novel".
   - Comments simple, no forced alignment; Markdown tables as `| a | b |`.
 - **Ledger and git:**
-  - Every author decision or result becomes a V row in `docs/decisions.md`. **This session (3c) owns the ledger from V412**; the earlier session stops writing to it.
+  - Every author decision or result becomes a V row in `docs/decisions.md`. **This session (3c) owns the ledger from V413** (V412 records this handoff); the earlier session stops writing to it.
   - Commits: one imperative line of at most 50 characters, no body, no Co-Authored-By, no AI mention. Never push unless asked.
 - **Claims and terms:**
   - The thesis claim bar is the author's and Claude's, with no supervisor (V95, V402).
