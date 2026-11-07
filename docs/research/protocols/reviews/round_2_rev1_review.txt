@@ -1,0 +1,584 @@
+
+## stats:S1 [blocker] CONFIRMED
+Q: **Counting** follows confirmatory 3: an opponent counts in a cell if it is one of the cell's forms or p333, and its delay is at most 2 % above p333's (point estimate). The 3E rules join both cells' forms.
+P: The 3E opponent the search picked (g032i20) sits right at its objective's delay hinge, which is +2 % against os1_15_10. os1_15_10 itself sits at or beyond the counting edge against p333 in X1 and X2. So 3E will probably fail the counting filter in both cells, and then it never enters T2. The draft does not say how Q2 is read when 3E does not count. D4 makes it worse: 3E-X1 and 3E-X2 are 'the same family and search', so they inherit the same os1-referenced +2 % hinge and would probably also be excluded. Those two searches are about 16,000 runs, more than half of the round's compute.
+FIX: Replace line 35 with:
+"- If D4 is approved: **3E-X1** and **3E-X2**. They use the same family and CMA settings, tuned at 5,300 in each cell on fresh tuning seeds before validation. Their reference is p333 in that cell, not os1_15_10. The delay hinge is +1 % against p333, so the winner can stay inside the 2 % filter on fresh seeds. The final pick is the lowest-loss rule of the final 5 that is admissible by confirmatory 3's rule 1 on its tuning seeds: median paired delay against p333 at most 2 % worse, and collisions at most p333's plus 1. If none is admissible, the cell has no 3E-X rule, and the table says so. 3E-X1 joins X1's forms only, and 3E-X2 joins X2's only."
+
+Replace line 36 with:
+"- **Counting** follows confirmatory 3: an opponent counts in a cell if it is one of the cell's forms or p333, and its delay is at most 2 % above p333's (point estimate). 3E joins both cells' forms.
+- **3E may not count.** Its search capped delay at +2 % against os1_15_10, not against p333. On its tuning seeds (condition T) it has +2.1, +3.2 and +3.9 % delay against os1_15_10 at 5,000, 5,250 and 5,500. On round 1's validation seeds, os1_15_10 itself had 2.1 % (X1) and 2.2 % (X2) more delay than p333. On its test seeds it had 4.8 % (X1) and 1.2 % (X2) more. 3E was never checked against p333 in X1 or X2.
+- **If a 3E rule does not count in a cell,** it is reported as confirmatory 3 reports the cop
+
+## stats:S2 [major] REFUTED
+Q: (a) delay less than v3w's, CI excluding 0, and close-following at most 10 % more than v3w's (point);
+  - (b) close-following at least 10 % less than v3w's, CI excluding 0, and delay at most 2 % more than v3w's (point).
+P: The 10 % / 2 % pair is the T2 bar's exchange rate against the rules, which have 30-60 % more close-following than v3w. Measured against v3w's lower close-following, 10 % is worth less than 2 % delay at the project's own rate (20 vehicle-seconds per close-following second). So both paths, at their boundaries, call 'better' a trade that is worse at that rate. Path (a) also has no minimum delay gain: any gain whose CI clears 0 is enough, even with 10 % more close-following.
+WHY: The finding is overstated. Its arithmetic is right, but its premise is not one the project uses. My scripts: /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/c4867d1d-43c1-49b3-9d3d-2670d22d8fc3/scratchpad/review_r2/verify_stats_S2/v_s2.py and v_s2b.py, with outputs v_s2_out.txt and v_s2b_out.txt. Each reads only round 1's stored row
+
+## stats:S3 [major] CONFIRMED
+Q: **Harm,** in either cell, means the candidate is out:
+  - delay worse than v3w's by more than 2 %, CI excluding 0; or
+  - close-following worse by more than 10 %, CI excluding 0.
+P: The text can be read two ways: (i) point below −2 and CI upper bound below 0, as in decide3.harm; or (ii) CI upper bound below −2. The two behave very differently. Both also relax round 1's harm rule, which put out any candidate whose delay was clearly worse, and the draft does not disclose this. Under either reading, a candidate whose delay is clearly worse (CI excluding 0) by less than 2 % is not harmed. Path (b) then lets it advance, which contradicts D2's 'a 10 % cut at equal delay'.
+FIX: Replace lines 76-78 with:
+
+- **Harm,** in either cell, means the candidate is out:
+  - delay more than v3w's, CI excluding 0, of any size (round 1's rule); or
+  - close-following more than 10 % above v3w's (point), CI excluding 0.
+
+Add to Disclosures:
+
+- **Harm on close-following** is new in this round. Round 1's harm was on delay only.
+
+If the author keeps the 2 % margin, use instead:
+
+- **Harm,** in either cell, means the candidate is out:
+  - delay more than 2 % above v3w's (point), CI excluding 0; or
+  - close-following more than 10 % above v3w's (point), CI excluding 0.
+
+and add to Disclosures:
+
+- **Harm is looser than round 1's.** Round 1 put out any candidate whose delay was more than the incumbent's with the CI excluding 0. Here a clear delay loss under 2 % is allowed, so a candidate can advance by path (b) while its delay CI shows it worse than v3w's. On round 1's validation rows, res in X2 had delay -1.4 % [-3.0, -0.0] against v3w. It would be out under round 1's rule but not under this one.
+- **Harm on close-following** is new in this round. Round 1's harm was on delay only.
+
+and in D2's "Why", replace "a 10 % cut at equal delay is a gain" with "a 10 % cut at a delay within 2 % (point) is a gain".
+
+## stats:S4 [major] CONFIRMED
+Q: **Ranking:** at most 2 finalists (D3). Candidates are ranked by the number of learners that pass the tuned reading (below, at 95 %) against the counting opponents, 3E included, summed over the two cells. Ties go to the larger delay effect against v3w
+P: At validation the tuned count hits a ceiling: candidates near v3w all score 10 of 10, so the tie-break decides. The tie-break does not say which cell counts, or whether the max or the sum is used. A path-(b) candidate's delay effect is at most about 0 by construction, so it always ranks below a path-(a) candidate with the same count, which contradicts D2. The counting set at validation can also differ from the test's.
+FIX: Replace line 80 with:
+"- **Ranking:** at most 2 finalists (D3). Candidates that advance are ranked by the number of learners that pass the tuned reading (below, at 95 %) against the counting opponents, 3E included, summed over the two cells. Ties go to the larger score against v3w. The score is the largest value, over the cells where the candidate is better by (a) or (b), of its delay effect divided by 2 and its close-following effect divided by 10 (point estimates). This weighs the two paths at the bar's own 2 : 10 rate, so a 10 % close-following gain ranks with a 2 % delay gain. Remaining ties follow the order of the Arms table.
+  - The count is expected to tie. On round 1's validation rows only p333 counted in either cell, and v3w and res both scored 10 of 10, although res had 21-32 % more close-following than v3w. Each v3w learner had 41-50 % less close-following than p333, against a 10 % bar.
+  - A tie-break on delay alone would favour path (a). A candidate better only by (b) has a delay CI that includes 0, so its delay effect is below its CI half-width. A path-(a) candidate's delay effect is above its own."
+
+Replace line 167 with:
+"- **Ranking at validation:** the tuned count uses the test's reading, but it is expected to tie at 10 of 10, as in round 1, so the 2 : 10 score usually picks the finalists. The counting set is read on each seed set's own rows, so it can differ 
+
+## stats:S5 [major] CONFIRMED
+Q: **Floor KILL,** as round 1's: in either cell, the arm has less than 10 % fewer close-following seconds than p333, or more delay than no control with the CI excluding 0.
+P: 'The arm' is undefined. Round 1 read the u500 arm, not the chosen-checkpoint arm. tail has no u500, and sw has both. The text also does not say that the p333 part is a point estimate. If decide2 reuses decide1.advance, it builds a u500 arm, which does not exist for tail.
+FIX: Severity: minor. Replace round_2.md line 79 with:
+"- **Floor KILL,** as round 1's, on the candidate's u500 arm (every learner at u500; tail: its only arm). The candidate is out if, in either cell, that arm has less than 10 % fewer close-following seconds than p333 (point), or more delay than no control with the 95 % CI excluding 0."
+
+## stats:S6 [major] CONFIRMED
+Q: **Shown, per arm read (round 1's rule):** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. Bonferroni applies over the arms read. Edges are rep
+P: Q3 asks 'where', but the reading gives one joint verdict over 3 levels, and per-level statements would be uncorrected over 5 levels. D5's rationale, that 40 seeds will rescue the 36-38 % point effects, is wrong. At 5,000 the paired distribution is bimodal: in 45 % of seeds v3w has more close-following than no control. The median of differences jumps across the gap, and the CI's lower bound stays near −10 at 40 seeds. m (the number of arms read) is not stated.
+FIX: Replace line 113 with:
+"- **Shown, per arm read (round 1's rule):** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. All three must hold, so there is no correction within an arm. The arms read are the finalists and v3w: m = finalists + 1 (1 to 3), and the CIs are at 1 − 0.05/m. Baseline-v3 is report-only.
+- **Where (Q3), per level:** a level counts as a benefit for an arm only if that level's CI clears 0 at 1 − 0.05/(5m), over the 5 levels and the arms read. Other per-level results are descriptive and are written as such.
+- **Also reported per level:** the share of seeds on which the arm has fewer close-following seconds than no control, with its 95 % CI.
+- **Power, stated before data:** in round 1's band rows at 5,000, 9 of 20 seeds had more close-following under v3w than under no control (−76 % to −2 %) and 11 had fewer (+24 % to +127 %). The median falls between the two groups, so its CI clears 0 only if clearly more than half the seeds gain. If round 1's rows are the truth and are resampled at 40 seeds, the band is shown about 7-13 % of the time for one arm and 3-7 % for three. Most misses come from 5,000. Per level at 1 − 0.05/(5m), 5,250 is shown about 40-55 % of the time and 5,500 about 60-75 %. 'Not shown' is therefore expected and is not evidence that the band is 
+
+## stats:S7 [major] CONFIRMED
+Q: **Reading T1 (Q1), per finalist and cell:** better than v3w by path (a) or (b) above, at T1's corrected level.
+P: T1 has no harm clause. A finalist can be 'better' in one cell and clearly worse in the other. The protocol also does not say what follows from T1 and T2: whether a finalist replaces v3w, what happens when T1 says better but T2 is lost, or which of two winners is chosen. Round 1 left exactly this open (round_1_result.md §7), and its readings are reused.
+FIX: Replace round_2.md line 92 with:
+
+**Reading T1 (Q1), per finalist and cell:** better than v3w by path (a) or (b) above, at T1's corrected level.
+- **Harm at test:** validation's harm rule, at 95 % as at validation, because a corrected CI would hide harm. A finalist harmed in either cell is better in neither.
+
+**What follows (D10), fixed before data:**
+- A finalist replaces v3w as the incumbent only if it is better than v3w in at least one cell, harmed in neither, and wins T2 in at least as many cells as v3w on the same seeds.
+- If two finalists qualify, the one with more T2 cells is chosen; then the one with more learners passing T2, summed over the two cells; then the larger delay effect against v3w at test.
+- Otherwise v3w stays the incumbent.
+
+Add to the Decisions table:
+
+| D10 | What follows from T1 and T2 | the rule under Reading T1 | Round 1 left it open (round_1_result.md §7); a choice made after the data is a hidden variant | the author decides after the test: chosen on the data |
+
+## stats:S8 [major] CONFIRMED
+Q: | ahead | two look-ahead speed inputs | `train_ahead` | `r2/ahead-lookahead` 66fa146 |
+P: The pre-registration fixed a KILL for ahead, 'about 0 importance for both inputs', but the draft neither defines nor reads it. A pre-registered reading that is left out is either dropped without notice or applied ad hoc after the data.
+FIX: Insert after line 79 (Floor KILL), before the ranking:
+
+"- **ahead, pre-registered KILL (round_2_prereg.md, V444):** ahead is out if both look-ahead inputs show about 0 importance. The KILL's second clause needs no extra rule: a candidate whose delay CI includes 0 and whose close-following is no better passes neither path (a) nor path (b).
+  - Importance is permutation importance, as in the memo (p1c): the share of greedy decisions that change when one input is shuffled across the recorded decisions and the other inputs are kept.
+  - Decisions: each ahead learner at its chosen checkpoint, on the first 4 validation seeds of each cell (40 runs), run from ahead's snapshot with its decision inputs logged. The logged runs must reproduce the untraced validation rows (V386).
+  - Inputs [16] and [17] are each shuffled 20 times per learner. A learner's value is the mean share of changed decisions.
+  - About 0 means the median over the 5 learners is below 2 % for [16] and below 2 % for [17]. For scale: a dead input changes 0 % of decisions, and baseline-v3's least-used live inputs change 5-12 % (p1c).
+  - Both inputs' importance is reported, whatever the outcome."
+
+Also add to Build (line 45): "`docs/research/round2/importance2.py` (decision logging and shuffling for ahead)". Add to Compute: "ahead importance: 40 runs".
+
+## stats:S9 [major] CONFIRMED
+Q: - **Noise floor:** the 2 % delay limit is judged on the point estimate. E2 (V435): the paired delay SD against os1_15_10 is 7-11 % at 40 seeds, so a true tie can fail.
+P: The disclosure omits V435's main conclusion: the point rule passes a policy that is truly 2 % worse about half the time, so it does not bound harm. It also omits the cell-level rates that 4-of-5 and several counting opponents produce. The counting filter is a point rule too, and opponents near 2 % flip between validation and test.
+FIX: - **Noise floor:** the delay limits and the counting filter are judged on point estimates. E2 (V435): the paired delay SD against os1_15_10 is 7-11 % at 40 seeds. Per policy and opponent, the 2 % limit passes a true tie about 86 % of the time, a policy at the limit about half the time, and one truly 3 % worse about 20-25 %, so it does not bound harm for a single policy. The 4-of-5 rule narrows this. With round 1's counting opponents and test rows, at least 4 of 5 policies pass the delay limit about 75 % (X1) and 86 % (X2) of the time at a true tie. They pass about 32 % and 12-14 % when all are at the limit, and about 10 % and under 1 % when all are truly 3 % worse. The counting filter can flip near 2 %: os1_15_10 counted in X2 at round 1's test (1.2 % more delay than p333) but in neither cell at round 1's validation (2.1 % and 2.2 %). 3E had 2.0 % more delay than os1_15_10 on its own tuning seeds, so whether it counts may also turn on noise.
+
+## stats:S10 [minor] CONFIRMED
+Q: - **Multiplicity:** Bonferroni. T1 uses m = finalists × 2 cells. T2 uses m = (finalists + v3w) × 2 cells. Each m gives two-sided CIs at 1 − 0.05/m.
+P: T1 is now a union of two paths per cell. Each path uses one tail of the two-sided interval, so the bound on a false 'better' is 0.05 overall, twice round 1's 0.025 for one path. The draft does not state this. Q2's level for v3w also depends on how many candidates advance (97.5 % with none, 99.17 % with two), and the draft does not state that either.
+FIX: Replace line 90: "**Multiplicity:** Bonferroni. T1 uses m = finalists × 2 cells. T2 uses m = (finalists + v3w) × 2 cells, so v3w's Q2 level depends on how many finalists advance: 97.5 % with none, 98.75 % with one, 99.17 % with two. Each m gives two-sided CIs at 1 − 0.05/m, bootstrap percentiles (2.5/m, 100 − 2.5/m). T1's two paths each use one tail, so the bound on a false 'better' is 0.05 over the family, against 0.025 for round 1's single path. Path (b) also needs a 10 % point estimate, so it almost never passes by chance (0 of 1,000 null resamples of round 1's rows), and in practice the rate stays near round 1's."
+
+## stats:S11 [minor] REFUTED
+Q: | D3 | Finalists | at most 2 | It keeps the test's CIs usable (T2 m = 6, 99.17 %) | 3: m = 8 (99.375 %), wider CIs at n = 40 |
+P: Levels are labelled inconsistently across documents. Round 1's protocol, its result and V449 called the (1.25, 98.75) interval '98.75 %', which is the upper percentile of a 97.5 % interval. The draft labels by 1 − 0.05/m. So '99.375 %' means m = 8 here but m = 4 in round_1.md:153. The levels of the readings reported beside are not stated.
+WHY: The draft's labels are right, and the inconsistency S11 describes has already been corrected. D3's '99.17 %' (m = 6) and '99.375 %' (m = 8) equal 1 − 0.05/m, which is what decide1.bonferroni implements and what line 90 states. S11 says round_1_result.md uses 'used once, 98.75 % CIs', but that text is not in the current file. Commit 419611d (V452) c
+
+## stats:S12 [minor] CONFIRMED
+Q: - **Ranking on the tuned reading at validation** aligns selection with the test's reading. The winner's curse is limited to validation; the test seeds are fresh.
+P: There is no disclosure of how often a candidate with no real difference advances at validation (7 candidates × 2 cells at uncorrected 95 %). There is also an asymmetry: v3w and every trained candidate choose checkpoints on the same validation seeds they are compared on, but tail does not.
+FIX: Replace line 167: "**Selection at validation:** 7 candidates × 2 cells at 95 %, without correction. If no candidate differs from v3w, path (a) passes by chance about 2.5 % per candidate and cell (1.8-3.3 % in null resamples of round 1's rows). Path (b) almost never passes by chance (0 of 1,000), because it needs a 10 % point estimate. So at least one of the 14 tests passes at most about 30 % of the time (the independence figure; all are compared with the same v3w arm). Advancing is not a finding; only the test is. v3w, sw and the trained candidates pick checkpoints on the same validation seeds they are compared on. tail has no pick, so validation is slightly biased against it: in round 1 the pick moved v3w's delay effect by about 1 point at most. Ranking on the tuned reading aligns selection with the test's reading, though the opponents that count can differ between the two seed sets. The winner's curse is limited to validation; the test seeds are fresh."
+
+## stats:S13 [minor] CONFIRMED
+Q: - **3E against os1_15_10 at each level on these fresh seeds.** This is 3E's overfitting check: its search found −14.3 % close-following at +2.0 % delay on its own tuning seeds.
+P: It is called a 'check' but sits under report-only and has no criterion. Any result can therefore be read as 'overfitted' or 'not overfitted' after the data.
+FIX: Replace line 116: "**3E against os1_15_10 at each level on these fresh seeds,** report-only, with no verdict on overfitting. On its own tuning seeds (7,440,700-739, `final.json`), close-following pooled over the five levels was −14.3 % at +2.0 % mean delay. Per level, close-following was +24.9 % at 4,500, −7.9 % at 5,000, −7.4 % at 5,250, −12.2 % at 5,500 and −20.0 % at 6,000; delay was +1.5, +2.1, +3.2, +3.9 and −0.5 % (median paired difference over os1_15_10's median, negative = fewer). The fresh-seed values are listed beside them in the same convention, per level and pooled, with 95 % CIs."
+
+## fairness:F1-3E-admissibility [blocker] CONFIRMED
+Q: - **Counting** follows confirmatory 3: an opponent counts in a cell if it is one of the cell's forms or p333, and its delay is at most 2 % above p333's (point estimate). The 3E rules join both cells' forms.
+P: 3E skipped confirmatory 3's admissibility stage. In confirmatory 3 an opponent had to be within 2 % of p333 on delay, with collisions at most p333's plus 1, on tuning seeds before it went to evaluation. 3E was tuned with its delay cap against os1_15_10, and os1_15_10 itself has more delay than p333 in both cells. Near 5,300, 3E's own tuning delay is +3.2 to +3.9 % over os1_15_10, so 3E-T will probably fail the 2 % filter in both cells. Whether it counts then rests on one point estimate on the test seeds. The draft gives no outcome label for 3E not counting. The prereg promised "round 2's admissibility checks" for 3E's side metrics; the draft defines none and moves them into the tuned reading
+FIX: Replace the D4 bullet, the Counting bullet and the "Side checks on 3E" bullet (lines 35-37) with:
+
+- If D4 is approved: **3E-X1** and **3E-X2**. These are the same family and search, tuned at 5,300 in each cell on fresh tuning seeds before validation, with one change: the delay cap is +1 % against p333 in that cell, not +2 % against os1_15_10. p333 is the counting reference. os1_15_10 was 4.8 % above p333 in X1 on round 1's test, and g032i20 went 1.2-1.9 points over its soft cap at 5,250 and 5,500.
+- **Counting** follows confirmatory 3's two stages: an opponent must first be admissible, then meet the delay filter on the seeds read.
+  - The grid forms were admissible on confirmatory 3's tuning seeds. The 3E rules were not tuned against p333 in X1 or X2, so this round's validation is their admissibility stage.
+  - A 3E rule is admissible in a cell if, on the validation seeds, against p333: delay at most 2 % above (point); collisions at most p333's plus 1; flow at most 1 % below; moving full-emergency events at most 5 % or 5 per run above. V441 left these side checks to this protocol; the limits are set here, before data.
+  - On the validation and the test seeds, an opponent counts in a cell if it is p333, one of the cell's forms or an admissible 3E rule, and its delay is at most 2 % above p333's (point estimate).
+  - A 3E rule that is not admissible, or does not count, is reporte
+
+## fairness:F2-D4-search-as-specified [blocker] CONFIRMED
+Q: - If D4 is approved: **3E-X1** and **3E-X2**. These are the same family and search, tuned at 5,300 in each cell on fresh tuning seeds before validation.
+P: "The same search" means cma2.py as it is, which causes two problems. (1) Its seed check is fixed to 7,440,700-739 and exits on D4's seeds 7,440,740-779. (2) Its delay term and cap are fixed against os1_15_10. In X1, os1_15_10 is not even the cell's own-state form, and it has 2-5 % more delay than p333. A per-cell search capped at +2 % over os1_15_10 settles near or above that cap, as 3E-T did (+3.2 and +3.9 %), which in X1 means roughly 4-7 % above p333: 3E-X1 cannot count. The build list does not include any change to cma2.py. cma2 does accept --cond X1/X2 and --levels 5300, so the condition and level are not the problem.
+FIX: Replace the bullet at round_2.md:35 with:
+"- If D4 is approved: **3E-X1** and **3E-X2**. They use 3E's family, CMA settings and budget, tuned at 5,300 in each cell's condition on seeds 7,440,740-779 before validation. `cma2.py` gets two changes, made and reviewed before the search:
+  - the reference is p333, the counting anchor, for all three terms: TTC, the 2 % delay cap and collisions. On round 1's seeds os1_15_10 sits 2.1-4.8 % above p333 in X1 and 1.2-2.2 % in X2, and 3E-T settled 2.0 % above its own reference, so a cap against os1_15_10 lands outside the counting filter;
+  - the seed check accepts 7,440,740-779.
+- **3E-X pick:** the lowest-loss shortlisted configuration whose delay on the 40 tuning seeds is at most 2 % above p333's (point estimate), with collisions at most p333's plus 1. If none qualifies, that cell's 3E-X is reported as "no configuration within the cap" and does not join the opponents."
+
+Add to Build (after round_2.md:42):
+"- `cma2.py`: a `--ref` option (p333 for 3E-X; os1_15_10 stays the default, so 3E-T's stored search is unchanged), the D4 seed block 7,440,740-779 and the 3E-X pick rule, with unit tests;"
+
+Add to Disclosures:
+"- **3E-X's reference is p333,** 3E-T's is os1_15_10. The start point is the same for both."
+
+## fairness:F3-3E-T-pick-not-for-5300 [major] REFUTED
+Q: Its winner `g032i20` was tuned under condition T at 4,500, 5,000, 5,250, 5,500 and 6,000 on seeds 7,440,700-739 (V441, V443, V448). Its parameters are in `round2_remote/cma3e/final.json`. It is fixed and not re-tuned here (D4).
+P: The pick minimises a loss that pools TTC seconds over 5 levels, and 68 % of g032i20's TTC gain is at 6,000. At 5,250 and 5,500, the levels either side of the deciding 5,300, g032i20 has the largest delay cost of the 5 configurations re-evaluated on all 40 seeds. Under the same objective restricted to those two levels it ranks 4th of 5. From the same tuning rows, g032i03 reaches -14.5 % TTC at +1.5 to +1.7 % delay there. So the fixed opponent for X1/X2 was chosen for a different demand mix. It is less likely to count and may be weaker at 5,300: a weak-baseline risk. The direct paired differences between g032i03 and g032i20 are within noise, so this does not show g032i03 is better. It shows th
+WHY: The numbers are right, but the finding overstates the problem, and the fix it proposes is not supported.
+
+Numbers I reproduced from final.json and final_runs.jsonl:
+- 6,000 gives 626.5 of the 922 pooled TTC seconds (68 %).
+- On the loss restricted to 5,250 and 5,500, g032i20 scores -2.4 and ranks 4th of 5. The others: g032i03 -14.5, g032i14 -10.5, 
+
+## fairness:F4-3E-search-disclosures [major] CONFIRMED
+Q: - **3E is tuned under condition T,** like the policies' training, not per cell (unless D4). Confirmatory 3's grid forms were tuned per cell.
+P: Several facts that bear on how strong the opponent is are not disclosed:
+- the search ran 40 of the 100 planned generations (V443) and had not converged;
+- the 5 configurations re-evaluated on all 40 seeds were shortlisted by raw losses from different seed windows, so all 5 came from the 2 easiest windows;
+- near 5,300 the delay cost is +3.2 to +3.9 %;
+- the tuning rows hold no braking at 3 m/s², moving full-emergency or severe-conflict counts.
+The Band section's "-14.3 % close-following at +2.0 % delay" pools 5 levels and averages their delays, which hides the delay cost near the deciding level.
+FIX: In Disclosures, replace the 3E line with:
+"- **3E is tuned under condition T,** like the policies' training, not per cell (unless D4). Confirmatory 3's grid forms were tuned per cell.
+  - Its search ran 40 of the 100 pre-registered generations (V443). Convergence was not checked. Sigma fell from 0.25 to 0.166. With one 8-seed window per generation, the generation medians are too noisy to show a plateau.
+  - The 5 configurations re-run on all 40 seeds were shortlisted by losses from different seed windows. All 5 came from 2 of the 5 windows (716, 724), whose generation medians were about 18-28 points lower than the others'. The best loss in the other 3 windows (-18.5) was 9 points above the 5th shortlisted one (-27.6), so a configuration scored there was unlikely to be shortlisted.
+  - "-14.3 % at +2.0 %" pools TTC seconds over 5 levels and averages their delays. At 5,250 it is -7.4 % TTC seconds at +3.2 % delay, and at 5,500 -12.2 % at +3.9 %. 68 % of the pooled TTC gain is at 6,000.
+  - Its tuning rows hold flow, collisions, all full-emergency events and 4.5 m/s² braking. They hold no braking at 3 m/s², moving full-emergency or severe-conflict counts, so this round is the first to measure those for 3E."
+
+In the Band section, replace "This is 3E's overfitting check: its search found −14.3 % close-following at +2.0 % delay on its own tuning seeds." with:
+"This is 3E's overfittin
+
+## fairness:F5-D4-search-noise-budget [major] CONFIRMED
+Q: | 3E-X1 and 3E-X2 search (D4): 2 × 24 × 40 generations × 8 seeds, plus the final pick | about 16,000 | 11 | 2.5 |
+P: At a single level, each configuration gets 8 runs per generation, a fifth of 3E-T's 40. In 3E-T's search, single-level delay estimates from 8 seeds spread by 4.7-6.5 points across evaluations, 2-3 times the 2 % cap. That spread is an upper bound on noise, since it also contains real differences between configurations. Even so, the delay hinge reacts largely to noise. The shortlist still ranks raw losses across rotating windows; in 3E-T the window effect was 18-28 points. And 40 generations did not converge 3E-T. The draft also does not say where the X1 search starts: os1_15_10 by default, not X1's own-state form os0_10_10. The result may be a weak opponent whose "strongest tuned rule" status
+FIX: Compute table: replace the D4 row and the total with
+"| 3E-X1 and 3E-X2 search (D4): 2 × 24 × 40 generations × 16 seeds, plus the final pick | about 32,000 | 22 | 5 |
+| **Total** | **about 14,800, or 46,800 with D4** | **about 10.5, or 32.5** | **about 2.4, or 7.5** |"
+
+Opponents: replace the 3E-X bullet with
+"- If D4 is approved: **3E-X1** and **3E-X2**. These are 3E's family and search, tuned at 5,300 in each cell on the tuning seeds before validation, with these changes for a single level:
+  - each generation uses 16 seeds, taken in turn from the 40. 3E used 40 runs per evaluation (8 seeds at 5 levels). At one level, a fixed rule's loss has an SD of about 15 points with 8 seeds and about 8.5 with 16;
+  - the shortlist ranks each configuration by its loss minus its generation's median, because the seed window moves the median by 20-40 points. The final CMA mean joins the shortlist;
+  - X1's search starts from os0_10_10's values, X2's from os1_15_10's;
+  - the search reports convergence: the median loss of its last 10 generations against the 10 before. If the loss is still falling, that is disclosed beside every 3E-X result."
+
+What this cannot show: replace the third bullet with
+"- Beating 3E-T does not show that a rule tuned per cell would be beaten. With D4, it shows this for one search of 40 generations. If that search has not converged, 3E-X is a lower bound on a per-cell 
+
+## fairness:F6-ahead-prereg-kill-missing [major] CONFIRMED
+Q: - **Advance rule, per candidate, against the v3w arm (D2).** A candidate must be **better in at least one cell**, by either path:
+P: ahead's pre-registered KILL has two halves. The first, "about 0 importance for both inputs", is measured nowhere in the draft, and no input-importance method exists in the code: ahead's branch has no way to hold the inputs. The second half (delay not below v3w's, close-following no better) is covered by the advance rule. Dropping the first half silently breaks pre-registration. ahead could advance on a gain that does not come from the look-ahead inputs, for example from training noise, since 5 learners share v3w's seeds.
+FIX: In "Build", add:
+"- `docs/research/round2/imp2.py`: runs ahead's branch snapshot unchanged, records ahead's own decision rows, and computes permutation importance as `p1c_inputs.py` does."
+
+In "Validation", after the Harm bullet, add:
+"- **ahead's pre-registered KILL (round_2_prereg.md:86, V444)** is read before its advance rule. Its first half, \"about 0 importance for both inputs\", uses the measure of the memo it comes from (`docs/reports/2026-11-05_21-29/source/p1c.md`, finding 3): permutation importance, the share of argmax decisions that change when an input is shuffled across decisions.
+  - **States:** ahead's own decision rows, recorded by `imp2.py` on the smoke seed in X1 and X2 at 5,300, for each learner at u250 and u500 (20 runs, no new seeds). A recorded run's counters must equal an untraced run's on the same seed (V386).
+  - **Read** at each learner's chosen checkpoint, with both look-ahead inputs shuffled together by one permutation. Each input alone is reported.
+  - **About 0** means fewer than 2 % of argmax decisions change, pooled over the 5 learners, in both cells. For scale, on baseline-v3 the dead input [11] and the ramp flag [2] changed 0 %, and the other inputs changed 5-35 % (p1c findings 1 and 3).
+  - If so, ahead is out, reported as \"look-ahead inputs not used\", whatever its delay and close-following.
+  - The KILL's second half (delay not below v3w's,
+
+## fairness:F7-Q2-vs-round1-and-D8 [major] CONFIRMED
+Q: - **Q2, incumbent under a stronger opponent:** does v3w still win the tuned reading in X1 and X2 when 3E is added to the opponents? Round 1's T2 win was against the old grid only, and its protocol recommended this search before any thesis claim.
+P: Q2 is a legitimate fresh test, but two things are undefined. (1) The draft does not say how round 1's T2 (won) and round 2's T2 for v3w combine. If either can carry the claim, v3w gets two looks; if round 2 fails, it is unclear whether round 1's win still stands. (2) Under D8, v3w's checkpoints are re-chosen. On round-1 rows the rule's choice for v3w is close to a coin flip between u250 and u500, so Q2 will probably test a different set of 5 policies from the set round 1's T2 tested. Then Q2 is not a replication of round 1's claim. On the T1 side, D8 is fair; see checked.
+FIX: Replace the Q2 bullet (line 8) with:
+"- **Q2, incumbent under a stronger opponent:** does v3w still win the tuned reading in X1 and X2 when 3E is added to the opponents? Round 1's T2 win was against the old grid only, and its protocol recommended this search before any thesis claim.
+  - For any claim against the tuned rules, this round's T2 for v3w replaces round 1's. A cell v3w does not win here is reported as not won, with round 1's win beside it.
+  - Where no 3E rule counts in a cell, Q2 is not answered there. That cell repeats round 1's reading on fresh seeds, and the report says so.
+  - v3w's checkpoints are chosen again (D8), so its test policies may differ from round 1's. On round 1's validation rows, each of C1, C2 and C4 changes its choice in about 4 of 10 bootstrap draws. Round 1's own set is read beside (below)."
+
+Add to "Reported beside:" (after line 100):
+"- v3w at round 1's checkpoints (C0 and C1 at u250, C2-C4 at u500): the tuned reading at T2's level, against every rule that counts on the validation rows, 3E included. The validation rows already hold these policies, so this needs no new runs. Their checkpoints were chosen on round 1's seeds, so these seeds are fresh for them. Report-only."
+
+## fairness:F8-band-second-look [major] CONFIRMED
+Q: - **Shown, per arm read (round 1's rule):** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. Bonferroni applies over the arms read. Edges are r
+P: Round 1 already ran v3w's band reading, a pre-registered test, and it did not show the band. Round 2 tests the same policies again, sized from the failed test's point effects (D5). That is a second look after a negative result. The draft neither discloses it nor adjusts for it, nor says how the two results combine. If "band shown" is claimed from the second look alone, the family-wise error for v3w is roughly doubled.
+FIX: Replace round_2.md:113 with:
+"- **Shown, per arm read (round 1's rule):** at each of 5,000, 5,250 and 5,500, the arm has at least 10 % and at least 20 per run fewer close-following seconds than no control, with the CI clear of 0. Bonferroni applies over the arms read. Edges are reported, not required either way.
+- **v3w, second test:** round 1 read v3w's band once on 20 fresh seeds and did not show it (5,000: +38 [−10, +71]; 5,250: +36 [−1, +76]; V449). D5 sets this test's size from that reading. v3w's band is read at 1 − 0.05/(arms read + 1), and round 1's reading is reported beside it. A pass is written "shown on a second test, after a first test on 20 seeds that did not show it". A miss is written "not shown on two tests". The extra count tightens this test. It does not undo the first one, so the wording rule always applies."
+
+Add to Disclosures, after the rep bullet:
+"- **Band, second look for v3w:** round 1's pre-registered band test did not show v3w's band (V449). This round tests it again on fresh seeds, sized from that reading. Round 1 read v3w at u250 (C0, C1) and u500 (C2-C4). If D8 chooses other checkpoints, the two tests read different policies, and the text says so."
+
+Change D5's "Why" cell to:
+"Round 1's band missed at 5,000 and 5,250 with 20 seeds, at 36-38 % point effects. For v3w this is a second test, read with one extra Bonferroni count and reported beside ro
+
+## fairness:F9-sentences-and-beside-counting [major] CONFIRMED
+Q: - confirmatory 3's replication, delay-win, "safety" and severe-conflict readings;
+P: The draft has no "Sentences allowed" section. Round 2 brings outcomes that confirmatory 3's table does not cover:
+- 3E not counting;
+- a rule tuned under T rather than per cell;
+- sw, a rule-and-PPO hybrid that cannot be called "per-CAV PPO headway policies";
+- tail, a checkpoint average;
+- rep, whose training draw contains X1's structure.
+The draft also does not say that the readings reported beside T2 use the counting set that includes 3E. Those are the severe-conflict check that permits the word "safety", the delay opponent and the strongest counting rule. Round 1's beside() keeps only opponents.json names, so reused code would grant "safety" without checking 3E.
+FIX: Insert after the "Reported beside" list (after round_2.md:105):
+
+## Sentences allowed
+
+Confirmatory 3's model sentence, table and no-control clause apply, filled from T2 with 3E. These additions are fixed now:
+- **Counting set beside T2:** the severe-conflict check that permits the word "safety", the strongest counting rule and the margin in the sentence use T2's counting set, each counting 3E rule included. Replication stays against p333. The delay win stays against `opponents.json`'s delay opponent and p333.
+- **T2 without 3E** is a comparison with round 1 only. No sentence rests on it.
+- **3E did not count in a cell:** "The CMA-ES-tuned rule [name] did not meet the delay filter in [cell]: [delay and TTC against p333]." That cell's sentence names only the rules that counted. Q2's answer for that cell is "3E was not tested by the tuned reading", not a win against it.
+- **Only 3E-T counted among the 3E rules:** it is named "a rule tuned by CMA-ES under the training slowdowns, not for this cell".
+- **sw:** "a hybrid: rule os1_15_10 for ALKS before 594.72 m, the PPO policy from 594.72 m on". It is never called "per-CAV PPO headway policies".
+- **tail:** "the averaged action probabilities of 6 checkpoints of each PPO run".
+- **rep in X1:** "trained with a repeated-slowdown draw that contains X1's two-event structure".
+
+## fairness:F10-harm-relaxed-undisclosed [minor] CONFIRMED
+Q: - delay worse than v3w's by more than 2 %, CI excluding 0; or
+P: Round 1 put a candidate out for any delay loss against the incumbent with the CI excluding 0. Round 2 only does so above 2 %, which lets path (b) trade delay for close-following. That changes the rule in the candidates' favour, and it is not disclosed. The wording is also ambiguous: "CI excluding 0" or excluding -2?
+FIX: Replace round_2.md:77-78 with:
+"- delay worse than v3w's by more than 2 % (point estimate), with the CI's upper bound below 0, as confirmatory 3's harm cells read it; or
+- close-following worse by more than 10 % (point estimate), with the CI's upper bound below 0."
+Add to Disclosures:
+"- **Harm rule relaxed from round 1:** round 1 put a candidate out for any delay loss against the incumbent with the CI excluding 0. Round 2 puts it out only for a loss of more than 2 % (point estimate). A significant loss of up to 2 % in either cell no longer excludes a candidate. This lets path (b) trade up to 2 % delay for close-following, and it lets a path (a) winner carry a small significant loss in the other cell."
+Append to D2's Why cell: "; harm is relaxed to match: more than 2 % with the CI excluding 0, where round 1 used any significant loss".
+
+## fairness:F11-tail-selection-asymmetry [minor] CONFIRMED
+Q: - tail is a fixed function of each run, so it has no checkpoint choice.
+P: tail's comparator, v3w, has its checkpoints chosen on the same validation seeds, so at validation v3w carries the rule's in-sample gain and tail does not. The bias runs against tail. It is small, but it is not disclosed.
+FIX: Append to round_2.md:26: "Its comparator, v3w, and every other learner have their checkpoints chosen on the validation seeds. So at validation they carry the checkpoint rule's in-sample gain and tail does not. On round 1's validation rows (split-half, 30 splits), v3w's choice changed between halves for about 3 of 5 learners, and its in-sample gain was about 0.2-0.3 points of delay and 0.8-1.5 points of close-following. The bias is against tail in paths (a) and (b), the harm rule and the ranking. It is small next to the 10 % close-following threshold, but not next to path (a)'s delay CI, whose half-width between close v3w arms was about 1-2 points. At the test, on fresh seeds, there is no such bias." In Disclosures, line 162, replace "tail is a fixed function without selection." with "tail is a fixed function without selection, so at validation it is compared without the in-sample gain its comparators carry (see Arms)."
+
+## fairness:F12-3E-X-overfitting-report [minor] CONFIRMED
+Q: - 3E against os1_15_10 and p333 in each cell (does the tuned rule beat the grid in the deciding cells?);
+P: The only overfitting check named for 3E is the band's, which covers 3E-T under T. Nothing names 3E-X1/X2's drop from their tuning seeds to fresh seeds. Also, os1_15_10 is not an X1 form, so "beats the grid" in X1 should compare against the cell's counting forms.
+FIX: Replace round_2.md:101 with: "- 3E against os1_15_10 (its search reference), p333 and each of the cell's counting forms, in each cell, on the validation and test seeds (does the tuned rule beat the grid in the deciding cells?). If D4 runs, the same for 3E-X1 in X1 and 3E-X2 in X2, with each one's delay and close-following against os1_15_10 on its own tuning seeds (7,440,740-779, from its final pick) shown beside. The drop to fresh seeds is 3E-X's overfitting check, as the band's is 3E's;"
+
+## fairness:F13-identity-check-wall-s [minor] CONFIRMED
+Q: - ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows on every numeric key (`final_runs.jsonl`, at least 3 seeds and 2 levels);
+P: The rows in final_runs.jsonl carry wall_s, a run timing that cma2's worker adds, and cma2.slim turns absent counters into 0.0. Comparing "every numeric key" the way checks1.compare does (it skips only name and cfg) fails on wall_s and on any absent counter. The chain then stops with a false FAIL.
+FIX: Replace round_2.md:51 with: "- ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows (`final_runs.jsonl`, at least 3 seeds and 2 levels), paired on q and seed, exactly on every metric key they hold. The new rows are read as `cma2.slim` reads them, so a counter absent from a row is 0. The keys are all_delay, ttc_net, collisions, passed, teleports, alks_b45_step, alks_full_events and finished_pct. wall_s is a run timing and is not compared;"
+
+## feasibility:F1-3E-counting [blocker] CONFIRMED
+Q: - **Counting** follows confirmatory 3: an opponent counts in a cell if it is one of the cell's forms or p333, and its delay is at most 2 % above p333's (point estimate). The 3E rules join both cells' forms.
+P: The counting rule and 3E's search use different delay references. The search capped delay at +2 % over os1_15_10, as a penalty pooled over 5 levels (cma2.py:41 CAP_PCT, reference os1_15_10 at :284 and :360). Counting caps delay at +2 % over p333. os1_15_10 already sits at or past the counting edge, and 3E costs more delay than os1_15_10 in the middle of the band. So 3E will probably not count in either cell. D4 ('the same family and search', line 35) keeps os1_15_10 as the reference, so 3E-X1 would probably fail to count in X1 as well. This is a projection from condition T to X1/X2, not a measurement: no 3E run exists in X1/X2.
+FIX: Replace line 35 with:
+"- If D4 is approved: **3E-X1** and **3E-X2**. They use 3E's family, CMA settings and budget, tuned at 5,300 in each cell on fresh tuning seeds before validation. Unlike 3E, their delay reference is p333, the counting reference, with the hinge at +1 % over p333. The final pick is the lowest-loss shortlisted configuration whose delay on all 40 tuning seeds is at most 1 % above p333's (confirmatory 3's admissibility, with 1 point of margin for fresh seeds). If none qualifies, that cell has no 3E-X rule, and the report says so. `cma2.py` takes the reference and the cap as arguments; this change is part of the build."
+
+Replace line 36 with:
+"- **Counting** follows confirmatory 3: an opponent counts in a cell if it is one of the cell's forms or p333, and its delay is at most 2 % above p333's (point estimate, on the seeds being read). The 3E rules join both cells' forms. 3E was tuned against os1_15_10, not p333. On its tuning seeds it had 3.2 % and 3.9 % more delay than os1_15_10 at 5,250 and 5,500, so it may not count. A 3E rule that does not count is listed as excluded, with its delay and close-following against p333 and os1_15_10. Q1 and Q2 in that cell then read 'not answered against 3E: not admissible (delay more than 2 % above p333)', never a win against 3E. If no 3E rule counts in either cell, Q2 is not answered."
+
+In line 80, replace "against the countin
+
+## feasibility:F2-1B-gate-at-eval [major] CONFIRMED
+Q: **Where each arm runs.** Each trained candidate is evaluated from its own branch snapshot, the code that trained it, because ahead's inputs exist only there.
+P: 1B's checkpoints carry act_env {gate_hold: true}, and plant_sweep merges act_env into the environment. With the gate hold, CavEnv._apply drops every decision of a vehicle outside the V2V set. The level then stays where it was (0, which is 1.6 s, for a new vehicle) until a later due decision inside the gate. In v3w's environment the same decision sets lvl and moved, and the level acts once the vehicle enters the gate. 1B therefore differs from v3w at evaluation in its actuator, not only in its training loss, and the draft does not say so. The other three changes act only in training: 1D's step_brake and rep's random_rep do not travel in the checkpoint, and 2B changes only the trainer.
+FIX: 1. Line 18, replace the 1B row with:
+| 1B | gate hold: a decision of a vehicle outside the V2V gate is dropped and its level holds, in training and at evaluation; that decision also leaves the policy loss | `train_1b` | `r2/1b-gate-mask` 5c10e6f |
+
+2. Line 47, replace with:
+"**Where each arm runs.** Each trained candidate is evaluated from its own branch snapshot, the code that trained it. ahead's two inputs and 1B's gate hold (`act_env: {gate_hold: true}` in all its checkpoints) exist only there. Every other arm runs from `r2/eval`. Rows pair by seed, whatever process wrote them."
+
+3. Under Arms, after the tail/sw bullets, add:
+"- **1B changes the actuator, not only the loss.**
+  - In v3w, a decision of a vehicle outside the V2V gate still sets its level and starts the 30-s hold. That level acts once the vehicle is in the gate.
+  - In 1B that decision is dropped, so the level moves only inside the gate. In training this was about 44 % of decisions (`ppo/mask_frac`, last 50 updates, all 5 learners).
+  - A 1B result is the effect of the hold and the mask together."
+
+4. Under Disclosures, add:
+"- **1B** acts through the gate hold at evaluation, as in training. A 1B difference from v3w cannot be split into the hold and the loss mask unless D10 runs."
+
+5. Add to the decisions table:
+| D10 | Split a 1B result | report-only arm **v3w-gate**: v3w's 5 learners at u250 and u500 with `ga
+
+## feasibility:F3-rows-check-scope [major] CONFIRMED
+Q: 2. **Every snapshot reproduces round 1's stored rows:** `r2/eval` and the five candidate branches, on the rule, v3w, residual and no-control rows (`checks1.py rows`).
+P: `checks1.py rows` holds no round-1 row and no v3w row. It re-runs confirmatory 3's X2 os1_15_10 row and baseline-v3's X2 d0 row (C0 final) at seed 7,440,200, a zero-offset residual against that rule row, and baseline v2's r2_p0d no-control row at 7,440,045. The two new evaluation paths, ahead's look-ahead inputs and 1B's hold, are reached by no check: the smoke (item 5) names only tail, sw and 3E.
+FIX: Replace item 2 with:
+"2. **Every snapshot reproduces stored rows on every numeric key:** `r2/eval` and the five candidate branches.
+   - `checks1.py rows`: confirmatory 3's os1_15_10 and baseline-v3 d0 rows (X2, seed 7,440,200), the zero-offset residual against that os1_15_10 row, and baseline v2's no-control row (`r2_p0d`, seed 7,440,045). These are round 1's T3 rows. None is a v3w row.
+   - On `r2/eval` also: round 1's stored v3w rows `X1|w0u500` and `X2|w0u500` (seed 7,440,400, `round1_remote/out/val/validation.jsonl`), re-run from their stored configurations."
+
+Replace item 4 with:
+"4. **T3, determinism:** at the run commit, item 2's rows reproduce again."
+
+Replace item 5 with:
+"5. **Smoke:** one evaluation run per arm kind, at the evaluation settings, on the smoke seed. Outputs must carry the inputs:
+   - tail differs from Greedy(u500);
+   - sw's two zones get different controllers;
+   - 3E's zones apply their own levels;
+   - ahead's policy gets 18 inputs, and both look-ahead inputs vary over the run (SD > 0; in training they were 0.15 and 0.13). The share of decisions reading 1.0 is reported;
+   - 1B's hold acts: some decisions are dropped (the environment's `masked` output is not empty). Their share is reported beside training's 0.44."
+
+## feasibility:F4-multi-snapshot-runner [major] CONFIRMED
+Q: **Build:** one branch, `r2/eval`, from `v5b1`:
+P: Arms must run from up to 3 code trees, but the build list gives no way to do it. Round 1 ran every arm in one `ps.matrix` call inside one code tree, and its spawned workers import v5b.fleet from the parent's path. validate2 and test2 exist only on r2/eval. ahead and 1B arms run there fail: MergeEnv.__init__ takes no **kw, so obs_ahead and gate_hold raise a TypeError. ps.matrix logs and skips a failed arm, and then check_rows stops the chain. There is also no frozen copy per snapshot, and rows carry no code commit, so a merged rows file cannot show which snapshot wrote an arm.
+FIX: In Build, add:
+"- `docs/research/round2/run2.py SNAPSHOT ARMS_JSON LEVELS SEEDS OUT`: runs `plant_sweep.matrix` on the given arms in a new process. The process's working directory and `PYTHONPATH` are a frozen copy of SNAPSHOT. It writes `OUT/rows_<commit>.jsonl`, taking the commit from the copy's `COMMIT` file, and logs that commit in the status file."
+
+Replace the paragraph "Where each arm runs." with:
+"**Where each arm runs.** Each trained candidate is evaluated from a frozen copy of the code that trained it: 2B 5f9f5d3, 1B 5c10e6f, 1D e8107fc, ahead 66fa146 and rep 08786f1. ahead's and 1B's policies need environment options (`obs_ahead`, `gate_hold`) that exist only there. Every other arm runs from a frozen copy of `r2/eval`'s run commit. `validate2.py` and `test2.py` give each snapshot its arms through `run2.py`, one process per snapshot, and read the union of the rows files. Rows pair by seed, whatever process wrote them. The chain stops if a rows file's commit is not its arms' assigned snapshot, or if an arm is missing from the union."
+
+In Checks, item 5 (Smoke), add:
+"Each snapshot runs one of its arms through `run2.py` on the smoke seed, and ahead's and 1B's rows come from 66fa146 and 5c10e6f."
+
+## feasibility:F5-3E-identity-keys [major] CONFIRMED
+Q:    - ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows on every numeric key (`final_runs.jsonl`, at least 3 seeds and 2 levels);
+P: final_runs.jsonl stores reduced rows: name, q, seed, wall_s and 8 metrics, written as float(row.get(k) or 0.0) by cma2.slim. wall_s is wall-clock time, so 'every numeric key' fails by construction. The condition is not named; the stored rows are under T, which cma2.cfg_for builds as rule_cfg(ctrl, 'S', {kind: random}). meta.json and final.json record the commit as None, so the code is identified only by the sha256 of cma2.py.
+FIX:    - ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows in `final_runs.jsonl`. They were written by `cma2.py` at d2d0d04 (sha256 1682fa6b…). meta.json records no commit. The runs use condition T, as the search did: `cma2.cfg_for(ctrl, 'T')`, which means training's random slowdowns and the 10-s command hold. The rows checked are g032i20's and the reference's (`ref`, os1_15_10), at seeds 7,440,700-702 and at 5,000 and 6,000 veh/h. Each new row is reduced by `cma2.slim`. It must equal the stored row exactly on the 8 metrics: all_delay, ttc_net, collisions, passed, teleports, alks_b45_step, alks_full_events and finished_pct. wall_s is run time and is not compared;
+
+## feasibility:F6-cma2-seed-block [major] CONFIRMED
+Q: | 3E-X1 and 3E-X2 tuning, only if D4 is approved | 7,440,740-779 | 40 |
+P: If D4 is approved, the search cannot start as written. cma2.py hard-codes SEED_BLOCK = (7,440,700, 7,440,739), and check_seeds refuses any other seed in both search and final. The build list has no cma2 change. It also does not say which tree the D4 search runs from: r2/3e-cmaes swaps ZoneOwnState in run_cfg, while r2/eval gets ZoneOwnState in b_env. Any edit changes cma2's sha256, which meta.json pins.
+FIX: In Build, after the ZoneOwnState line, add:
+"- only if D4 is approved: `docs/research/round2/cma2.py` and `tests/test_round2_cma.py`, copied from `r2/3e-cmaes` d2d0d04. Two changes. The seed block becomes an argument, `--seed-block`, recorded in meta.json, with 7,440,700-739 as its default. The rule is built through `b_env.ZoneOwnState` and its `plant_sweep` key, not swapped in `run_cfg`. A test shows 7,440,740-779 refused by default and accepted with `--seed-block 7440740-7440779`. `r2/3e-cmaes` stays as it is, so 3E's stored sha256 still matches its code."
+
+Replace the Opponents bullet "If D4 is approved: **3E-X1** and **3E-X2**. ..." with:
+"- If D4 is approved: **3E-X1** and **3E-X2**. These are 3E's search with 3E's settings: reference os1_15_10, the same objective, population 24, 40 generations, 8 seeds per generation, sigma 0.25 and CMA seed 20261106 (V441, V443). Each is tuned at 5,300 in its own cell on the fresh seeds 7,440,740-779. They run from `r2/eval`'s run commit after checks 1, 2 and 6 pass and before validation. Each run uses `--cond X1` or `--cond X2`, `--levels 5300`, `--seeds 7440740-7440779` and `--seed-block 7440740-7440779`, then `--final 5`, each into its own output folder."
+
+## feasibility:F7-sw-upstream-is-0.8s [major] CONFIRMED
+Q: | sw | os1_15_10's level for every ALKS with route position x < 594.72 m (3E's zone edge after merge 1); v3w's greedy level from 594.72 m on | v3w's checkpoints | to build |
+P: os1_15_10 is OwnState(level 1, th 15, crowd 10) with the default x_min of 500 m, and opponents.json gives no x_min. Below 500 m it returns free = 3, which is 0.8 s. So in sw the rule acts only on the 95-m strip from 500 to 594.72 m. Ramp 1, the 3a accelerating lane and the road upstream all run at a fixed 0.8 s. The x reading itself is sound: obs column 0 × 1000 is the route position from the 3a start, clipped to -3,500…3,300 with fix_x. Ramp-1 vehicles sit at -420…0 and ramp-2 vehicles at 1,069…1,489, so they fall on the sides the text implies.
+FIX: Replace the sw row with:
+"| sw | For every ALKS with route position x < 594.72 m (obs column 0 × 1000, from the 3a start; 3E's zone edge after merge 1): os1_15_10's own output. For every due ALKS from 594.72 m on, ramp 2 included: v3w's greedy level | v3w's checkpoints | to build |"
+
+Add under the arm bullets, after "sw's x_from is fixed here and not swept (V408).":
+"  - os1_15_10 acts only from its x_min of 500 m. Below that it sends 0.8 s, as p333 does. So in sw, ramp 1, the 3a lane and the road upstream get 0.8 s, and the rule's own levels act only on 500-594.72 m."
+
+Add to Disclosures, replacing "- **sw's** split point is 3E's zone edge, fixed before data.":
+"- **sw's** split point is 3E's zone edge, fixed before data. Its rule side is p333's 0.8 s below 500 m and os1_15_10 only on 500-594.72 m. A sw result is read as \"0.8 s upstream of 500 m, v3w from 594.72 m\", not as \"the tuned rule through merge 1\"."
+
+## feasibility:F8-smoke-observables [minor] CONFIRMED
+Q: 5. **Smoke:** one evaluation run per arm kind, at the evaluation settings, on the smoke seed. Outputs must carry the inputs: tail differs from Greedy(u500), sw's two zones get different controllers, and 3E's zones apply their own levels.
+P: Rows carry `lv` only by the environment's 3 zones (N_ZONES = 3). They hold nothing on sw's split at 594.72 m, on 3E's 5 zones, or on which controller set a level, so a trace has to be added. V386 showed that a trace calling CavEnv._x changed a run. On one seed, 'tail differs from Greedy(u500)' can fail for correct code if the ensemble's argmax matches u500 at every decision. And identity check 1 uses TailMean of [u500] only, which tests neither the averaging nor the per-member normalisation.
+FIX: 5. **Smoke:** one evaluation run per arm kind, at the evaluation settings, on the smoke seed. Outputs must carry the inputs. Any counter added for this must not call `CavEnv._x`, and a traced row must equal the untraced row on every numeric key (V386). sw: decisions served from each side of 594.72 m are both > 0, and each side's levels come from its own controller. 3E: each zone with decisions gives only its own level or free value. tail: the share of due decisions where its level differs from Greedy(u500) is reported. A unit test on 1,000 observations recorded from the smoke run shows that TailMean equals the argmax of the explicit mean of the six members' softmax, each member with its own input statistics, and that TailMean([u500, u500]) equals Greedy(u500).
+
+## feasibility:F9-compute-rates [minor] CONFIRMED
+Q: - rented 245-CPU machine: round 1's validation, 4,240 runs, took 39 minutes, about 6,500 per hour (V449).
+P: Round 1's validation had 3,440 runs, not 4,240, because lagr was out. 3,440 runs in 38.6 min is about 5,350 per hour, not 6,500. Both round-1 rates were measured while round 2's five trainings, about 100 processes, shared the 245 CPUs, and that instance was destroyed (V450). The D4 search runs one generation after another, 200 runs per generation per cell, so on 244 workers its time is set by the waves of slowest runs, not by throughput. The test can have 36 arms with D4, not 35.
+FIX: Replace the rented-rate line with: "- rented 245-CPU machine, 244 workers: round 1's validation, 3,440 runs in 38.6 minutes, and its test and band, 3,540 runs in 37.6 minutes, are about 5,350-5,650 per hour, measured while round 2's 25 learners (about 100 processes) shared the CPUs (V449, V450). That instance is gone (V450). A new rental measures its rate on the first batch and runs checks 2 and 4 there." Table: | Step | Runs | Laptop hours | Rented hours | |---|---|---|---| | Validation: 89 arms × 2 cells × 40 (91 with D4) | 7,120 (7,280) | 4.7-5.5 | 1.3-1.4 | | Test: 34 arms × 2 × 40 (36 with D4) | 2,720 (2,880) | 1.8-2.2 | 0.5 | | Band: up to 24 arms × 5 levels × 40 | 4,800 | 3.2-3.6 | 0.9 | | 3E-X1 and 3E-X2 search (D4): 2 × 40 generations × 24 configurations × 8 seeds, the reference once per seed, plus the final pick (2 × 6 × 40) | about 16,000 | 10.5-12 | about 3: set by 40 sequential generations of 192 runs each, not by throughput | | **Total** | **about 14,600, or 30,900 with D4** | **about 10-11, or 21-23** | **about 2.7, or 6** | In D6: "rented, about 6 h of runs with D4 | 3.5-4× faster; no night limit".
+
+## feasibility:F10-band-is-3E-home [minor] CONFIRMED
+Q:   - **3E against os1_15_10 at each level on these fresh seeds.** This is 3E's overfitting check: its search found −14.3 % close-following at +2.0 % delay on its own tuning seeds.
+P: The band's 'training slowdowns' are exactly 3E's condition T: the same spec, hold 10 s and per-seed draws, at exactly 3E's 5 tuning levels; only the seeds differ. The -14.3 % is pooled over levels. Per level on its own tuning seeds, 3E already had more close-following than os1_15_10 at 4,500 and more than 2 % extra delay at 5,250 and 5,500. Read against the pooled -14.3 %, the fresh 4,500 and 5,250 results would look like overfitting when they are not. The band also reads rep under kind random, not its training draw. Neither point is disclosed.
+FIX:   - **3E against os1_15_10 at each level on these fresh seeds,** beside the same statistic on its 40 tuning seeds. From `final_runs.jsonl`, as change against os1_15_10, positive = more: close-following +24.9, -7.9, -7.4, -12.2, -20.0 %; delay +1.5, +2.1, +3.2, +3.9, -0.5 % at 4,500, 5,000, 5,250, 5,500 and 6,000. This is 3E's overfitting check, read per level, not against the pooled -14.3 %. The band's slowdowns are 3E's condition T and its levels are 3E's tuning levels, so 3E is read in its own tuning condition on fresh seeds. A finalist rep is read under kind random, not its training draw (random_rep).
+
+## feasibility:F11-replay-and-T3 [minor] CONFIRMED
+Q: 3. **Reading replay:** `decide2.py` without 3E, on round 1's stored test rows, reproduces round 1's T1 and T2 for v3w.
+P: Round 1's T1 compared v3w with baseline-v3 (prefix d), and both its T1 and T2 used the 98.75 % level (m = 2). decide2's T1 compares candidates with v3w, adds path (b), and sets m to (finalists + v3w) × 2. Unless the replay is told round 1's incumbent and level, it cannot reproduce round 1, and it never exercises path (b). Item 4 says 'at the run commit', but there are up to 3 snapshots, its rows are the same as check 2's, and it names no machine.
+FIX: 3. **Reading replay:** `decide2.py` without 3E, given round 1's incumbent (baseline-v3, prefix d) and level (Bonferroni m = 2: percentiles 1.25-98.75, a 97.5 % two-sided interval, V452), on round 1's stored test rows, reproduces round 1's T1 and T2 for v3w in both cells: T1 better, with the stored CIs; T2 5 of 5, with counts [p333] in X1 and [p333, os1_15_10] in X2. Path (b) and the round-2 m rule get unit tests on planted rows. 4. **T3, determinism:** check 2 runs on the machine that runs the round, at each snapshot's frozen run commit (r2/eval and every candidate branch that is evaluated).
+
+## feasibility:F12-floor-ranking-checkpoint [minor] CONFIRMED
+Q: - **Floor KILL,** as round 1's: in either cell, the arm has less than 10 % fewer close-following seconds than p333, or more delay than no control with the CI excluding 0.
+P: Round 1's floor read each candidate's u500 arm (decide1.advance builds K500). Here 'the arm' is undefined for tail, which has no checkpoint, and it differs from the arm values at the chosen checkpoints. The ranking (line 80) does not say at which checkpoints learners are counted, nor which cell's delay effect breaks a tie. decide2 cannot be written from this text without guessing.
+FIX: - **Floor KILL,** as round 1's: in either cell, the arm at u500 has less than 10 % fewer close-following seconds than p333, or more delay than no control with the CI excluding 0. tail is read as it is; sw is read with v3w at u500. In Ranking add: "Learners are counted at their chosen checkpoints; tail as it is. Ties go to the largest point delay effect against v3w among the cells where the candidate is better (round 1's rank key)."
+
+## completeness:F1 [blocker] CONFIRMED
+Q: If D4 is approved: **3E-X1** and **3E-X2**. These are the same family and search, tuned at 5,300 in each cell on fresh tuning seeds before validation.
+P: The 'same search' measures delay against os1_15_10, but a rule only counts if its delay is within 2 % of p333's. In cma2.py the reference is hard-coded to os1_15_10, and the +2 % cap is set against it. In X1, os1_15_10 is 2-5 % slower than p333 and is not even one of X1's forms. A search that uses up its +2 % budget against os1_15_10 therefore lands about 4-7 % above p333 in X1 and cannot count. 3E-T already shows this: at the levels nearest 5,300 it has 3.2-3.9 % more delay than os1_15_10.
+FIX: Replace line 35 with:
+"- If D4 is approved: **3E-X1** and **3E-X2**. They keep 3E's family, CMA settings, population, 40 generations and 8 seeds per generation (V441, V443), with four changes:
+  - condition X1 or X2, at 5,300 only;
+  - seeds 7,440,740-779 (`cma2.py` accepts only 700-739 today);
+  - the objective's reference is p333, the counting filter's reference, so the TTC term, the +2 % delay cap and the collision term read against p333. This needs a `--ref` option in `cma2.py`, default os1_15_10. With the default, the objective on 3E's stored final rows must reproduce `final.json`;
+  - the pick is the lowest-loss configuration of the final 5 that is admissible as in confirmatory 3 on all 40 tuning seeds: delay at most 2 % above p333's and collisions at most p333's plus 1. If none is admissible, that cell has no per-cell 3E rule, and the report says so.
+- Before D4 is decided: 3E, p333 and os1_15_10 run in X1 and X2 at 5,300 on the D4 tuning seeds (240 runs). This shows how far 3E and os1_15_10 sit from p333's delay in the deciding cells. In round 1's test, os1_15_10 had 4.8 % (X1) and 1.3 % (X2) more delay than p333."
+
+Add to the Disclosures, after the 3E line (163):
+"- **3E's delay cap** was read against os1_15_10, not p333. In round 1, os1_15_10 had 2-5 % more delay than p333 in X1 and 1-2 % in X2. 3E-T may therefore not count in either cell."
+
+Replace line 175 with:
+"- 
+
+## completeness:F2 [major] CONFIRMED
+Q: **Q2, incumbent under a stronger opponent:** does v3w still win the tuned reading in X1 and X2 when 3E is added to the opponents?
+P: Nothing says what Q2's answer is when 3E does not count in a cell, and on round 1's numbers that is the likely case (F1). If 3E drops out under the delay filter, T2 is the same reading as round 1's. A 'yes' would then be read as a win over the stronger opponent. Confirmatory 3 handles this case with a fixed sentence (e.g. for the copy rule); this draft has none.
+FIX: Under **Reading T2**, add:
+"- **Q2 needs a counting 3E rule.** The 3E rules are 3E, plus 3E-X1 and 3E-X2 if D4 runs. Q2 is answered in a cell only if at least one 3E rule counts there. If none counts, Q2 is not tested in that cell. T2 there is the old-grid reading, and a win is not written as a win with 3E added. The result says: "the tuned rule 3E did not meet the delay filter: [its close-following and delay against p333]".
+- Each 3E rule's counting status, and its delay against p333 with the CI, are reported per cell, at validation and at test. `decide2.py` writes the excluded opponents per cell, as `decide3.py` does."
+In **Validation, Ranking**, replace "against the counting opponents, 3E included" with "against the counting opponents (a 3E rule only where it counts)".
+Under **Reported beside**, replace the first item with: "T2 without the 3E rules (the old grid only), to compare with round 1. Where no 3E rule counts, it is the same as T2, and the table says so."
+
+## completeness:F3 [major] CONFIRMED
+Q: | D1 | Incumbent | v3w | It beat baseline-v3 on T1 in both cells, and every candidate is one change against it | baseline-v3: already beaten |
+P: The draft never says what follows from each outcome. It leaves out three things: which arm becomes the incumbent, and whether it is stored as baseline v4 (the pattern of V411's baseline-v3); what a T2 result means for the thesis claim, which V95 says is pre-registered per study; and whether a cell closes if nothing wins it (confirmatory 3 [A3]). Round 1's result names exactly this gap: 'The protocol fixes T1's test but not what follows from it.' D1 merges 'comparator for round 2' with the open baseline-v4 question.
+FIX: Line 3: replace "The decisions D1-D9" with "The decisions D1-D10".
+
+Replace row D1 with:
+"| D1 | Incumbent for round 2, and baseline v4 | v3w as round 2's comparator. Store it as baseline-v4 before validation: a tag, checkpoints u250-u500 and final with configs and input statistics, and round 1's rows | It beat baseline-v3 on T1 in both cells, and every candidate is one change against it. v3w now exists only as run copies (`round1/out/train_v3w`, `round1_remote/out/train_v3w`) | baseline-v3: already beaten. No store: the comparator can change or be lost between rounds |"
+
+In "Reading T2", replace "**Reading T2 (Q1, Q2), per finalist, for v3w, and per cell:**" with "**Reading T2 (Q1, Q2), decides the claim against the rules, per finalist, for v3w, and per cell:**".
+
+Add before "## Stop rules":
+"## What follows from each outcome
+
+- **Claim:** this round's T2 replaces round 1's for any thesis sentence. Round 1's T2 is reported beside it.
+- **Sentences:** confirmatory 3's table, filled from this run's T2.
+  - Won with 3E among the counting rules: \"Cell won on TTC\", naming 3E.
+  - 3E fails the delay filter in a cell: the sentence says so. The cell is won against the old grid only.
+  - Won against the old grid (the T2 reported beside) but not with 3E counting: \"Won against confirmatory 3's grid, not against the CMA-ES rule 3E: [the limits missed]\". No sentence says the cell was w
+
+## completeness:F4 [major] CONFIRMED
+Q: | D5 | Band seeds | 40 | Round 1's band missed at 5,000 and 5,250 with 20 seeds, at 36-38 % point effects | 20: underpowered; drop the band: Q3 unanswered |
+P: The rationale assumes the band was missed for lack of seeds. Round 1's band rows say otherwise. At 5,000, only 11 of 20 seeds have v3w below no control, so the median paired difference is unstable whatever the number of seeds. Resampling round 1's seeds (exploratory, plug-in) shows the reading would very probably fail again at 40 seeds, at a cost of 4,800 runs, a third of the round without D4. It would also be v3w's second test of a band that already failed, and the draft does not disclose that. V408 asks for the simplest test that answers the question.
+FIX: Replace the band heading and its "Arms" and "Shown" bullets (keep the two "Report-only" bullets) with:
+"## Band (Q3, report-only; 20 fresh seeds, training slowdowns, 4,500, 5,000, 5,250, 5,500 and 6,000 veh/h)
+- **Arms:**
+  - the finalists and v3w;
+  - baseline-v3;
+  - no control, p333, os1_15_10 and 3E.
+- **Reported, per arm and level:** close-following and delay against no control, with 95 % CIs, and the share of seeds where the arm has fewer close-following seconds. There is no 'shown' verdict. Round 1's reading B stands for v3w: not shown."
+
+Replace D5 with:
+"| D5 | Band | report-only profile on 20 fresh seeds | At 5,000 only 11 of round 1's 20 seeds favour v3w. Its 38 % point effect sits on a gap: if one seed flipped, it would be about 11 %. Resampling round 1's rows (exploratory, plug-in) gives v3w about a 3-8 % chance of 'shown' at 40 seeds and 8-16 % at 80. A pass would also be v3w's second test of the band | 40 seeds as a reading: 2,400 more runs for a likely miss. If chosen, state this power and disclose the second test. Drop the band: Q3 unanswered |"
+
+In the seed table, replace the band row with:
+"| Band test, used once | 7,440,880-899 | 20 |"
+
+In the compute table, replace the band and total rows with:
+"| Band: up to 24 arms × 5 levels × 20 | 2,400 | 1.8 | 0.4 |"
+"| **Total** | **about 12,400, or 28,400 with D4** | **about 9, or 20** | **about 2, or 4.5** |"
+
+In D6
+
+## completeness:F5 [major] REFUTED
+Q: | sw | os1_15_10's level for every ALKS with route position x < 594.72 m (3E's zone edge after merge 1); v3w's greedy level from 594.72 m on | v3w's checkpoints | to build |
+P: The author never picked tail or sw. They came from Claude's 16-idea search while the author was away (V444), and V444 left them to this protocol. V310 says 'no new build or launch without the author's pick'. Yet the draft builds both, with no D row. Each needs a new class, identity checks and a review, and together they add 15 validation arms. Going from 5 to 7 candidates also raises the chance that a null candidate passes the validation advance rule and uses up the test. sw's text also misleads: os1_15_10 returns its free level (0.8 s) for x < 500 m. So sw is really 0.8 s before 500 m, os1_15_10 on a 95-m strip and v3w after it. The ramp-vehicle zone is not defined, and the source of the de
+WHY: Overstated. Most of F5 does not hold. One small disclosure point survives, and it is minor, not major.
+
+1. "The author never picked them; V310 is breached." Not supported.
+   - In V442 the author was away and said: "no need to ask for my permission. Deploy them directly". V444 records the 16-idea search's top 5 as round-2 candidates under that stan
+
+## completeness:F6 [major] CONFIRMED
+Q: | ahead | two look-ahead speed inputs | `train_ahead` | `r2/ahead-lookahead` 66fa146 |
+P: The pre-registration fixed a KILL for ahead that the draft leaves out: 'about 0 importance for both inputs, or delay not below v3w's on validation (CI including 0) with close-following no better'. The advance rule roughly covers the second clause. The importance clause, and how to measure it, are missing.
+FIX: 1) Under Validation, after the Floor KILL bullet (round_2.md:79), add:
+"- **ahead's importance KILL (pre-registered, V444):** ahead is out if its policies ignore both look-ahead inputs, [16] and [17].
+  - Importance is the share of decisions whose argmax level changes when one input is shuffled across the decisions of one run (the memo's measure, p1c). It is the mean of 10 shuffles with a fixed seed.
+  - It is read for each learner at its chosen checkpoint, on 2 validation seeds per cell (7,440,800 and 7,440,801), from traced re-runs of those seeds. The traced rows must equal the untraced rows on every numeric key (V386).
+  - "About 0" means below 1 % for both inputs. ahead is out if this holds in at least 3 of 5 learners, as round 1's 2C stop.
+  - The KILL's other clause, delay not below v3w's with close-following no better, is covered by the advance rule."
+
+2) Under Build (round_2.md:41-45), add:
+"- `docs/research/round2/importance2.py`: the decision trace and shuffle for ahead, run from ahead's snapshot;"
+
+3) Replace the stop rule at round_2.md:157 with:
+"- A trace can add an explanation; it cannot change the outcome of a reading. The one exception is ahead's pre-registered importance KILL."
+
+## completeness:F7 [major] CONFIRMED
+Q: - **Side checks on 3E:** full-emergency events, flow, braking and collisions were not constrained in its search. They enter through the tuned reading's limits, applied to the policies against each counting opponent, and they are reported per arm.
+P: The pre-registration promised that 'round 2's admissibility checks apply them' to 3E's side metrics. The draft defines no admissibility check and does not say it drops that promise. It also skips confirmatory 3's step 1 (admissible on tuning seeds) for 3E without saying why: 3E has no X1 or X2 tuning rows.
+FIX: Replace round_2.md:37 with:
+
+"- **3E's admissibility (V439, V441).** The pre-registration left 3E's side metrics to "round 2's admissibility checks". This protocol adds no separate gate on them (D10):
+  - a gate could only remove 3E from the opponents, which makes the tuned reading easier to win;
+  - on its own tuning rows (condition T, 40 seeds, 5 levels), 3E against os1_15_10 had flow within 0.3 %, ALKS braking at 4.5 m/s² at most 1.2 % higher, ALKS full-emergency events no higher (medians), and no collisions in 200 runs.
+- **No step 1 for 3E.** Confirmatory 3's step 1 (admissible against p333 on tuning seeds) needs p333 rows in the cell. No 3E search runs p333, so every 3E rule, 3E-X1 and 3E-X2 included, goes straight to the counting filter on each phase's seeds. The search's collision charge stands in for step 1's collision limit.
+- **3E's side metrics in the reading's terms** (braking at 3 m/s², moving full-emergency events) are not in its stored rows, so they are first read on validation seeds. They enter the claim only through the tuned reading's limits, applied to the policies against each counting opponent. 3E's delay, flow, braking at 3 and 7 m/s², moving full-emergency events and collisions against p333 and os1_15_10 are reported per cell."
+
+Add a row to the decisions table:
+
+"| D10 | 3E's side metrics | no admissibility gate; reported per cell and applied through th
+
+## completeness:F8 [major] CONFIRMED
+Q: Between 23:00 and 09:00 the laptop holds 40 % CPU (V432), so its hours stretch overnight. Runs at 6,000 take longer.
+P: The draft has no run order and no operating rules. It does not say what runs after what (D4 search, then validation, advance, test, band), whether the chain moves on without the author, or what stops it. It also leaves out the V436 platform rule ('all arms are evaluated on one platform; this goes into the next round's protocol'), the worker count (V426), the CPU guard, the night timers, the health unit (V428), the frozen run copy, unit tests for the new classes and decide2, and where rows go.
+FIX: At round_2.md:47, replace "Rows pair by seed, whatever process wrote them." with "Rows pair by seed, whatever process wrote them. All arms of one phase run on one machine (V436)."
+
+At the end of the checks list, after check 6, add:
+"7. **Unit tests** (`tests/test_round2.py`), on planted rows: TailMean on two members with known probabilities; ZoneSwitch at a middle x_from; decide2's checkpoint rule, path (a), path (b), harm, floor KILL, ranking and its tie-break, and the corrected levels (T1 m = finalists × 2, T2 m = (finalists + v3w) × 2)."
+
+After the checks section, add:
+"## Order of the run
+1. The author approves this text, D1-D9 and the seeds, logged.
+2. Build on `r2/eval`, then checks 1-7. The run commit is frozen, and the chain runs from a detached copy of it.
+3. If D4: the 3E-X1 and 3E-X2 searches and picks. Check 1's identity also passes on each pick's stored final rows.
+4. Validation, checkpoints, advance and ranking, test, band, readings, in this order. The chain goes on without the author between steps. Any failed check stops it and goes to the author.
+- **One platform (V436):** all arms of a phase run on one machine. Check 2 passes on that machine, for `r2/eval` and each candidate snapshot, before the phase starts.
+- **Operation:** the standing rules hold. Laptop: 31 workers (V426), the guard, 40 % from 23:00 to 09:00 (V432), the 5-minute health unit (V428). Rented: 
+
+## completeness:F9 [major] CONFIRMED
+Q: ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows on every numeric key (`final_runs.jsonl`, at least 3 seeds and 2 levels);
+P: The stored final rows include `wall_s`, a wall-clock time, so a check on 'every numeric key' fails by design. Apart from that they hold only 8 metric keys, a much narrower check than the 146-148-key row checks used elsewhere.
+FIX: ZoneOwnState with g032i20's parameters reproduces 3E's stored final rows (`final_runs.jsonl`) on 3 seeds at 2 levels, one of them 4,500. Each new row is first reduced by `cma2.slim`, so a counter that never fired reads 0 as in the stored row. The comparison covers q, seed and the 8 metric keys. `wall_s` is a wall-clock time and is excluded. At X2 and 5,300 on one seed, the `plant_sweep` key also reproduces a full row from `cma2.py`'s worker route (OwnState swapped in, the row not slimmed) on every key but name and cfg;
+
+## completeness:F10 [minor] CONFIRMED
+Q: on the rule, v3w, residual and no-control rows (`checks1.py rows`).
+P: `checks1.py rows` does not check a v3w row. It checks os1_15_10, baseline-v3's d0 final, the zero-offset residual and baseline v2's no control. Nothing re-checks the incumbent's own evaluation path at `r2/eval`.
+FIX: Replace with: "on the rule (os1_15_10), baseline-v3 d0, zero-residual and no-control (`r2_p0d`) rows (`checks1.py rows`). At `r2/eval`, v3w C0 at its round-1 checkpoint (u250) also reproduces its stored round-1 test rows (`X1|w0`, `X2|w0`, `round1_remote/out/test/test.jsonl`) on every numeric key, on one seed per cell."
+
+## completeness:F11 [minor] CONFIRMED
+Q: rented 245-CPU machine: round 1's validation, 4,240 runs, took 39 minutes, about 6,500 per hour (V449).
+P: Round 1's validation was 3,440 runs, not 4,240; 4,240 was the protocol's plan with lagr included. The real rate was about 5,300-5,650 per hour, so the rented hours are about 20 % too low. The machine had a CPU quota of about 246 and ran 244 workers, not 245. The laptop's 1,500 per hour comes from V409/V417, not V425/V426. The test row also misses one arm with D4 (up to 36).
+FIX: Replace the rented-machine line with: "rented machine (2 × EPYC 7B13, CPU quota 245, 244 workers; status.txt): round 1's validation, 3,440 runs, took 39 minutes, about 5,300 per hour; its test and band, 3,540 runs, took 38 minutes, about 5,650 per hour." Laptop line: "laptop, 31 workers: about 1,330 runs per hour (V425, V426); 28 workers gave about 1,500 (V409, V419)." Table: "Validation: 89 arms (91 with D4) × 2 cells × 40 | 7,120 (7,280) | 5.4 | 1.35"; "Test: 34 arms (36 with D4) × 2 × 40 | 2,720 (2,880) | 2.1 | 0.55"; Band unchanged in runs, rented 0.9; D4 search rented 3.0; Total "about 14,640, or 30,960 with D4 | about 11, or 23 | about 2.8, or 5.8". D6: "about 6 h of runs with D4".
+
+## completeness:F12 [major] CONFIRMED
+Q: Round 1's T2 win was against the old grid only, and its protocol recommended this search before any thesis claim.
+P: The disclosures leave out the cells' test history. On plant_c3, X1 closed under confirmatory 3 [A3] (V395). X2 won there and then failed to replicate on fresh seeds (V401). Round 1 reopened both with retrained policies. Q2 is X2's fourth test on this plant and X1's third, and Q2 and Q3 were framed after round 1's test and band were read. CLAUDE.md's 'no lie with statistics' rule requires this to be visible.
+FIX: Add under Disclosures:
+"- **The cells' history on plant_c3:** confirmatory 3 won X2 by the tuned reading and closed X1 by its rule [A3] (V395). X2 did not replicate on 20 fresh seeds: 1 of 5 policies cleared (V401). The author then continued the DRL line (V411-V414). Round 1 tested both cells again with retrained policies, and v3w won T2 in both (V449). Round 1's protocol did not state that [A3] had closed X1. T2 counts in these cells have moved between seed sets (round_1_result.md, §6). Q2 is X2's fourth test on this plant and X1's third, each on fresh seeds. Before plant_c3, both cells were also tested on earlier r2m3 plants (confirmatory 2, V359; the shot, V368).
+- **Q2 and Q3 follow round 1's readings.** 3E was planned before round 1 (V413), but Q2 asks about v3w because it won T2 (V449). The band was chosen after the sweep's data (V419, post hoc). Round 1 did not show it at 5,000 and 5,250 with 20 seeds (V449). Q3 tests it again with 40."
+
+## completeness:F13 [minor] CONFIRMED
+Q: T1 uses m = finalists × 2 cells.
+P: T1 now passes a cell by path (a) or path (b), which is two tests per finalist and cell. The family-wise error claimed by 'Bonferroni ... at 1 − 0.05/m' assumes one test per cell, as in round 1.
+FIX: Replace with: "T1 uses m = finalists × 2 cells × 2 paths, because either path can pass a cell (1 finalist: m = 4, 98.75 %; 2 finalists: m = 8, 99.375 %). T2 uses m = (finalists + v3w) × 2 cells. Each m gives two-sided CIs at 1 − 0.05/m." In D3's Why: "T1 m = 8 (99.375 %), T2 m = 6 (99.17 %)"; in its alternative: "3: T1 m = 12, T2 m = 8".
+
+## completeness:F14 [minor] CONFIRMED
+Q: delay worse than v3w's by more than 2 %, CI excluding 0; or
+P: Several validation rules are ambiguous or quietly changed from round 1. Harm can be read as 'point more than 2 % worse and CI excludes 0' or as a non-inferiority bound. It is also looser than round 1's harm, which had no 2 % margin. The floor KILL says 'the arm' where round 1 said 'its u500 arm'. The ranking's tie-break does not say which cell. The draft does not say on which seeds counting is decided, or which cells 3E-X1 and 3E-X2 join.
+FIX: Harm bullets: "- delay: the point estimate is more than 2 % worse than v3w's and the 95 % CI excludes 0; or
+- close-following: the point estimate is more than 10 % worse and the 95 % CI excludes 0.
+Round 1's harm had no margin; the 2 % margin matches path (b)'s delay allowance." Floor: "Floor KILL: in either cell, the arm at its chosen checkpoints (tail as it is) has less than 10 % fewer close-following seconds than p333 (point), or more delay than no control with the CI excluding 0. Round 1 read the u500 arm." Ranking: "Ties go to the larger of its two cells' delay effects against v3w (point)." Counting: "Counting is decided on each phase's own rows: validation rows for the ranking, test rows for T2. 3E, 3E-X1 and 3E-X2 each join both cells' forms." Band: "Bonferroni applies over the arms read, v3w and the finalists (m = 1 + finalists); the other arms are report-only."
+
+## completeness:F15 [minor] CONFIRMED
+Q: Status: **draft, revision 1, 2026-11-07.** It is written before any round-2 candidate has been evaluated: only training curves and the training checks exist (V450). The decisions D1-D9 and the seeds await the author. An adversarial design review (ult
+P: The status line has no ledger entry (round 1 cited V414 and V416-V421). It does not say that nothing is built or run before approval, or the order of the approval path. Round 1 went V415 draft and build, V422 revision 2, V423 approval, V424 review. It also does not say how the training-check results enter: all 5 passed and no learner failed, so every learner votes.
+FIX: Replace with: "Status: **draft, revision 1, 2026-11-07 (ledger entry with its commit).** Written before any round-2 candidate has been evaluated. Only the training curves, the training checks and 3E's search exist. All 5 candidates passed their checks with no collapsed learner and no fault, so every learner enters (V450). Path: design review (ultracode), revision 2, the author's approval of the text, D1-D9 and the seeds, then the build's code review and the run. Nothing runs and no seed in the table below is used before that approval."
+
+## completeness:F16 [minor] CONFIRMED
+Q: Its parameters are in `round2_remote/cma3e/final.json`.
+P: The opponent is defined only by a file outside the repo, whose `commit` field is null; only cma2.py's sha256 identifies the code. The draft does not describe the rule family correctly. The pre-registration calls the fourth parameter an 'on/off switch', but in the code it is the free level used when the condition does not hold. g032i20 holds 1.2 s by default in the between zone.
+FIX: Replace with: "Its definition (`final.json`, `meta.json`; their commit field is empty, and the code is `r2/3e-cmaes` d2d0d04, whose cma2.py has sha256 1682fa6b…) is copied into `docs/research/round2/3e/`. Per zone it has a speed threshold, a crowd threshold, the level used when both hold, and the free level used otherwise. The pre-registration's 'on/off switch' is this free level. g032i20 holds 1.2 s in the between-merges zone whether or not its condition holds (level 1, free 1), and 0.8 s by default in the other zones."
+
+## completeness:F17 [major] CONFIRMED
+Q: - **Noise floor:** the 2 % delay limit is judged on the point estimate. E2 (V435): the paired delay SD against os1_15_10 is 7-11 % at 40 seeds, so a true tie can fail.
+P: The author picked E1 and E2 'for later rounds' (V434), and this is the first later round. The draft only discloses E2 and is silent on E1. E2's main finding is that the point rule passes a truly 2 %-worse policy 52 % of the time, so it does not bound harm. That calls for a decision, not just a disclosure. E1's run was waiting for 'round 1's end and the author's seeds'.
+FIX: 1. Replace the "Noise floor" disclosure with:
+"- **Noise floor:** the 2 % delay limits (checkpoint rule, path (b), T2) are judged on the point estimate. E2 (V435): the paired delay SD against os1_15_10 is 7-11 %. At 40 seeds the point rule fails a true tie 14 % of the time and passes a policy truly 2 % worse 52 % of the time, so it does not bound harm. The bound beside T2 (D10) shows where harm is not excluded."
+
+2. Under "Reported beside", add:
+"- per policy and counting opponent, the upper end of T2's corrected delay CI against a 5 % margin (non-inferiority, report-only, D10). At n = 40 and T2's level it passes a true tie only 44-58 % of the time, so a miss is not harm."
+
+3. In "Decisions for the author", add the rows:
+"| D10 | Delay limit in the readings | keep the point rule (at most 2 % worse), as confirmatory 3 and round 1, and report beside T2 the upper end of its corrected delay CI against a 5 % margin | Comparable with round 1. E2: the point rule passes a policy truly 2 % worse 52 % of the time at 40 seeds | non-inferiority as the rule: 80 % power at a true tie needs about 60 seeds per cell at a 95 % CI (V435) and about 90 at T2's level with m = 6, so the test grows from 2,800 to about 6,300 runs; a 3 % margin needs about 160 seeds |"
+"| D11 | E1, the 0.1-s safety meter (V434, V435) | run it after this round's test, report-only, on the test's arms, with its own seeds p
+
+## completeness:F18 [minor] REFUTED
+Q: - **Report-only:** baseline-v3's 5 learners at u500, which are its chosen checkpoints and final policies.
+P: baseline-v3 answers no round-2 question. v3w already beat it on T1 in both cells, and its rows are in round 1's report. Running it costs 400 test runs and 1,000 band runs (V408: no unrequested variants).
+WHY: Refuted. This is a design preference, not a defect. Report-only arms are allowed and feed no reading. D1, whether v3w replaces baseline-v3, is still an open author decision (round_2.md:181 and the assistant's pending question). If it is not approved, baseline-v3 is the incumbent and must be run. Round 1's T1 margin was small (delay −3.4/−3.5 %, one
