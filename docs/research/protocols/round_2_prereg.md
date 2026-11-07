@@ -78,6 +78,14 @@ Before round 2 evaluates the opponent:
 - The zone rule moves into `b_env.py` with a `plant_sweep` key, because today only the search's own worker can run it.
 - Whether to tune at round 1's deciding cells (X1/X2 at 5,300) instead of condition T is round 2's protocol decision.
 
+**Extra candidates (V444, from the 16-idea search; the author, away: "deploy them directly"; one at a time)**
+- **ahead** (branch `r2/ahead-lookahead`, 66fa146): v3w's recipe plus two inputs. Each is min(mean speed / limit, 1) of the roadside 200-m bins over the next 400 m and 1,000 m along the route (LocalRule._ahead, the look-ahead rules' own code).
+  - It reads 1.0 when no occupied bin lies ahead, inside junction lanes (about 0.5 % of due rows), and at each episode's first observation (empty bins, like v3w's input 12).
+  - Training seeds: round 1's (option A).
+  - Tags: ppo/ahead400_sd and ppo/ahead1000_sd.
+  - Pre-registered KILL: about 0 importance for both inputs, or delay not below v3w's on validation (CI including 0) with close-following no better.
+- B-LOO and rep-slow follow, each recorded here before its launch. sw and B-TAIL (evaluation only) wait for round 2's protocol.
+
 ## Seeds (for approval)
 
 - **DRL training, option A (recommended):** the same training seeds as round 1, 7,464,000–7,471,799. These are the seeds v3w trained on, so each candidate differs from the control only by its change. They are training seeds, not evaluation seeds.
