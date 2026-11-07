@@ -1,6 +1,6 @@
-# Thesis outline v1 and claim (DRAFT, 2026-11-07)
+# Thesis outline v1 and claim (approved V459, 2026-11-07)
 
-Replaces `docs/roadmap/thesis_roadmap_v0.md` (V129) once approved. Binding inputs: V95, V96, V245, V256, V402, V456, V457, V458. Title (fixed): "Adaptive driving algorithms for intelligent road traffic systems". Submission about September 2027.
+Replaces `docs/roadmap/thesis_roadmap_v0.md` (V129). The claim review (ultracode) runs after round 2 (V459). Binding inputs: V95, V96, V245, V256, V402, V456, V457, V458. Title (fixed): "Adaptive driving algorithms for intelligent road traffic systems". Submission about September 2027.
 
 The claim sentences in §3 are fixed **before round 2's data** (expected 2026-11-08). Rounds 1, confirmatory 2, 3 and 3b and the demand sweep are already known, so the bar in §3 is set after those results; this is disclosed.
 
@@ -46,7 +46,7 @@ No "first" or "novel" in any of these. Literature in chapter 2 marked [VERIFY] u
 | G | wins only against the grid, no counting 3E rule beaten | "Won against confirmatory 3's grid, not against the CMA-ES rule [name]: [limits missed]." No sentence says DRL beats tuned rules. |
 | N | no T2 win where a 3E rule counts | "On this plant, per-CAV DRL did not beat the strongest tuned rules; the DRL claim against tuned rules closes in [cells]." Accepted as a result (V456). |
 
-**Bar against no control (proposed, new):** delay at least 10 % lower with the CI excluding 0 (the method's early-KILL bar) **and** close-following not harmed under round 2's harm rule. Without the second part, a delay gain bought with more close-following would count as a win (V405: in X1 the confirmatory-3 policies had 31 % more close-following than no control; V449: in round 1's X1 every v3w policy had more close-following than no control, which had 39 % more delay).
+**Bar against no control (V459):** delay at least 10 % lower with the CI excluding 0 (the method's early-KILL bar) **and** close-following not harmed under round 2's harm rule. Without the second part, a delay gain bought with more close-following would count as a win (V405: in X1 the confirmatory-3 policies had 31 % more close-following than no control; V449: in round 1's X1 every v3w policy had more close-following than no control, which had 39 % more delay).
 
 **What the claim never says:** "proven", "safe" without the severe-conflict check, results on calibrated or field traffic, or any win on a measure that was not pre-registered.
 
@@ -72,7 +72,7 @@ No "first" or "novel" in any of these. Literature in chapter 2 marked [VERIFY] u
 
 ## 6. Order of work (author time is the bottleneck; compute is not)
 
-1. This outline and the claim (approve, then the claim review).
+1. Claim review (ultracode) after round 2 (V459).
 2. Plant V&V: requirements list mapped to evidence and gaps (V&V target: r2m3 `plant_c3`).
 3. Article 1 skeleton: sections, figure and table list, each tied to a stored result.
 4. Round 2 result (session 3c) fills §3 and chapter 5.

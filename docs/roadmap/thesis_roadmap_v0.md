@@ -1,5 +1,7 @@
 # Roadmap v0: paper 1 → paper 2 → PhD thesis (DRAFT, 2026-10-20)
 
+**Superseded by `docs/thesis/outline_v1.md` (V459, 2026-11-07).** Kept as a record.
+
 **Thesis title (fixed):** "Adaptive driving algorithms for intelligent road traffic systems". Submission ≈ September 2027. The author and Claude act as supervisors (V95).
 
 **Thesis story (V96):** *When does adaptation pay in road traffic, and how do we measure it honestly?*
