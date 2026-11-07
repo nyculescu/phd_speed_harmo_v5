@@ -84,7 +84,14 @@ Before round 2 evaluates the opponent:
   - Training seeds: round 1's (option A).
   - Tags: ppo/ahead400_sd and ppo/ahead1000_sd.
   - Pre-registered KILL: about 0 importance for both inputs, or delay not below v3w's on validation (CI including 0) with close-following no better.
-- B-LOO and rep-slow follow, each recorded here before its launch. sw and B-TAIL (evaluation only) wait for round 2's protocol.
+- **B-LOO** (branch `r2/loo-centre`, e137bee): built, then dropped before launch (V445). The same-env leave-one-out baseline cancels the shared network reward from the policy gradient.
+- **rep** (branch `r2/rep-slow`, 08786f1): v3w's recipe with the training draw `random_rep`.
+  - The first draw is exactly kind random's.
+  - With probability 0.5, a second slowdown follows on the same edge, at the same limit and duration, starting 300–800 s after the first (start to start). It is kept only if it ends by 1,800 s. Two events occur in 29 % of training episodes.
+  - Training seeds: round 1's (option A).
+  - Tag: ep/e*/slow_n.
+  - It is read against v3w in X1 and X2 at 5,300, paired on the same seeds. X1's structure enters the training draw, as X2's already did, so it is judged only on fresh seeds.
+- sw and B-TAIL (evaluation only) wait for round 2's protocol.
 
 ## Seeds (for approval)
 
