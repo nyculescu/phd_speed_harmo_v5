@@ -15,7 +15,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-from common2e import (GIT, E3T, OPPONENTS, PY, Q, R1, RULE, RUNS, SEEDS_SMOKE, TRAINED, AHEAD_INPUTS, cand_cfg, freeze, policy, pt_cfg, rule_cfg,
+from common2e import (GIT, R1_SUMS, E3T, OPPONENTS, PY, Q, R1, RULE, RUNS, SEEDS_SMOKE, TRAINED, AHEAD_INPUTS, cand_cfg, freeze, policy, pt_cfg, rule_cfg,
                       sw_cfg, tail_cfg, zone_cfg)
 import decide2 as dc
 
@@ -64,6 +64,10 @@ def identity(out: Path, w: int) -> int:
     out.mkdir(parents=True, exist_ok=True)
     rd = str(out / "rd")
     res = []
+    import hashlib
+    want = dict(reversed(x.split()) for x in R1_SUMS.read_text().splitlines())
+    got = {n: hashlib.sha256((R1 / n).read_bytes()).hexdigest() for n in want}
+    res.append(("baseline-v4 store matches its SHA256SUMS", got == want and len(want) == 45, f"{len(want)} files"))
     old_src = subprocess.run(["git", "-C", GIT, "show", "d2d0d04:docs/research/round2/cma2.py"], capture_output=True,
                              text=True, check=True).stdout
     from v5b.fleet import b_env as be
@@ -116,7 +120,7 @@ def rows(out: Path, run_commit: str) -> int:
         env.pop("SUMO_HOME", None)
         o = out / f"rows_{code.name}"
         p = subprocess.run([PY, "docs/research/round1/checks1.py", "rows", str(o)], cwd=str(code), env=env, capture_output=True, text=True)
-        res.append((f"checks1 rows at {code.name}", p.returncode == 0 and "FAIL" not in p.stdout and p.stdout.count("PASS") == 4, p.stdout.strip()[-400:]))
+        res.append((f"checks1 rows at {code.name}", p.returncode == 0 and "ALL PASS" in p.stdout and sum(x.startswith("PASS ") and "against the stored row" in x for x in p.stdout.splitlines()) == 4, p.stdout.strip()[-400:]))
     return report(res)
 
 
@@ -147,22 +151,26 @@ def replay() -> int:
 def smoke(out: Path, run_commit: str, w: int) -> int:
     out.mkdir(parents=True, exist_ok=True)
     q = Q
-    jobs = {"eval": [{"kind": "sw", "name": "X2|s0u250", "cfg": sw_cfg(0, 250, "X2"), "q": q, "seed": SEEDS_SMOKE},
-                     {"kind": "3e", "name": "X2|3e", "cfg": zone_cfg(E3T, "X2"), "q": q, "seed": SEEDS_SMOKE},
+    jobs = {"eval": [{"kind": "sw", "name": "X2|s0u250", "cfg": sw_cfg(0, 250, "X2"), "q": q, "seed": SEEDS_SMOKE,
+                      "extra": {"own_state": dict(OPPONENTS["ctrl"][RULE]["own_state"]), "pt": str(R1 / "C0_u250.pt")}},
+                     {"kind": "3e", "name": "X2|3e", "cfg": zone_cfg(E3T, "X2"), "q": q, "seed": SEEDS_SMOKE, "extra": {"zones": E3T}},
                      {"kind": "tail", "name": "X2|t0", "cfg": tail_cfg(0, "X2"), "q": q, "seed": SEEDS_SMOKE,
                       "extra": {"u500": str(R1 / "C0_u500.pt"), "obs_out": str(out / "tail_obs.npy")}}],
             TRAINED["ahead"][1]: [{"kind": "ahead", "name": "X2|h0u500", "cfg": cand_cfg("ahead", 0, 500, "X2"), "q": q, "seed": SEEDS_SMOKE,
                                    "extra": {"cols": list(AHEAD_INPUTS)}}],
-            TRAINED["1b"][1]: [{"kind": "1b", "name": "X2|g0u500", "cfg": cand_cfg("1b", 0, 500, "X2"), "q": q, "seed": SEEDS_SMOKE}]}
+            TRAINED["1b"][1]: [{"kind": "1b", "name": "X2|g0u500", "cfg": cand_cfg("1b", 0, 500, "X2"), "q": q, "seed": SEEDS_SMOKE}],
+            **{TRAINED[k][1]: [{"kind": k, "name": f"X2|{TRAINED[k][0]}0u500", "cfg": cand_cfg(k, 0, 500, "X2"), "q": q, "seed": SEEDS_SMOKE}]
+               for k in ("2b", "1d", "rep")}}
     res, summ = [], {}
     for snap, runs in jobs.items():
         code = freeze(snap, run_commit)
         jf, of = out / f"smoke_{code.name}.json", out / f"smoke_{code.name}_out.json"
         jf.write_text(json.dumps({"runs": runs, "rd": str(out / "rd")}))
+        of.unlink(missing_ok=True)
         env = {**os.environ, "PYTHONPATH": str(code), "OMP_NUM_THREADS": "1"}
         env.pop("SUMO_HOME", None)
         p = subprocess.run([PY, str(HERE / "smoke2.py"), str(jf), str(of), str(w)], cwd=str(code), env=env, capture_output=True, text=True)
-        if p.returncode not in (0, 1) or not of.exists():
+        if p.returncode not in (0, 2) or not of.exists():
             res.append((f"smoke at {code.name}", False, p.stderr[-400:]))
             continue
         summ |= json.load(open(of))
@@ -181,6 +189,26 @@ def smoke(out: Path, run_commit: str, w: int) -> int:
     b = t("X2|g0u500")
     res.append(("1B: the gate hold drops decisions", b.get("masked", {}).get("n", 0) > 0,
                 f"masked {b.get('masked')}, decisions {b.get('decisions')}"))
+    return report(res)
+
+
+def tailobs(out: Path) -> int:
+    """TailMean against the explicit mean of the six members' softmax, each with its own input statistics, on up to 1,000 recorded
+    observations of the smoke run; and TailMean([u500, u500]) against Greedy(u500)."""
+    import numpy as np
+    import torch
+    from v5b.fleet.c_train import Greedy, TailMean
+    from common2e import TAIL_CKS
+    X = np.load(out / "tail_obs.npy")
+    ids = [f"v{i}" for i in range(len(X))]
+    o = (ids, X, None, np.ones(len(X), bool))
+    paths = [str(R1 / f"C0_u{c}.pt") for c in TAIL_CKS]
+    with torch.no_grad():
+        p = np.mean([torch.softmax(Greedy(f).net.logits(torch.from_numpy(X)), 1).numpy() for f in paths], axis=0)
+    t = TailMean(paths)(o)
+    g, t2 = Greedy(paths[-1])(o), TailMean([paths[-1]] * 2)(o)
+    res = [("TailMean = argmax of the explicit mean softmax", [t[v] for v in ids] == p.argmax(1).tolist(), f"{len(X)} observations"),
+           ("TailMean([u500, u500]) = Greedy(u500)", t2 == g, f"{len(X)} observations")]
     return report(res)
 
 
@@ -211,4 +239,4 @@ def picks(out: Path, w: int) -> int:
 if __name__ == "__main__":
     mode, out, rc = sys.argv[1], Path(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else None
     w = int(sys.argv[4]) if len(sys.argv) > 4 else 8
-    sys.exit({"identity": lambda: identity(out, w), "rows": lambda: rows(out, rc), "replay": replay, "smoke": lambda: smoke(out, rc, w), "picks": lambda: picks(out, w)}[mode]())
+    sys.exit({"identity": lambda: identity(out, w), "rows": lambda: rows(out, rc), "replay": replay, "smoke": lambda: smoke(out, rc, w), "picks": lambda: picks(out, w), "tailobs": lambda: tailobs(out)}[mode]())

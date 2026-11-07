@@ -154,3 +154,40 @@ def test_follows():
 def test_share_ci():
     s = dc.share_ci(np.array([1.0] * 11 + [0.0] * 9))
     assert s[0] == pytest.approx(0.55) and s[1] < 0.55 < s[2]
+
+
+def test_checkpoint_rule():
+    # u250 within 2 % of os1_15_10 in both cells, u500 in one: u250; equal counts: fewer TTC seconds; full tie: u500
+    T = table({("X1", "os1_15_10"): (1.0, 1.0), ("X2", "os1_15_10"): (1.0, 1.0),
+               ("X1", "w0u250"): (1.01, 0.8), ("X2", "w0u250"): (1.01, 0.8), ("X1", "w0u500"): (1.01, 0.7), ("X2", "w0u500"): (1.05, 0.7),
+               ("X1", "w1u250"): (1.0, 0.8), ("X2", "w1u250"): (1.0, 0.8), ("X1", "w1u500"): (1.0, 0.7), ("X2", "w1u500"): (1.0, 0.7),
+               ("X1", "w2u250"): (1.0, 0.7), ("X2", "w2u250"): (1.0, 0.7), ("X1", "w2u500"): (1.0, 0.7), ("X2", "w2u500"): (1.0, 0.7)})
+    assert [dc.d1.choose(T, "w", i) for i in range(3)] == [250, 500, 500]
+
+
+def test_floor_kill_on_u500_and_e3_counting(monkeypatch):
+    spec = {}
+    for c in ("X1", "X2"):
+        spec |= {(c, "p333"): (1.0, 1.0), (c, "nc"): (1.3, 0.6), (c, "os1_15_10"): (1.02, 0.8), (c, "3e"): (1.03, 0.7)}
+        for i in range(5):
+            spec |= {(c, f"w{i}u250"): (1.0, 0.6), (c, f"w{i}u500"): (1.0, 0.6), (c, f"b{i}u250"): (0.97, 0.6), (c, f"b{i}u500"): (0.97, 0.95)}
+    T = table(spec)
+    for k in list(T):
+        for s in T[k]:
+            T[k][s].update({"sev3": 1.0, "alks_full_moving": 0.0})
+    monkeypatch.setattr(dc, "e3_rules", lambda cell: {"3e": []})
+    st = dc.e3_status(T, "X1")
+    assert not st["3e"]["counts"]     # 3 % more delay than p333: outside the 2 % filter
+    o2 = {"cells": {c: {"forms": {"uniform": "p333", "own": "os1_15_10", "3e": "3e"}} for c in ("X1", "X2")}, "ctrl": {}}
+    r = dc.advance(T, "2b", {i: 250 for i in range(5)}, {i: 250 for i in range(5)}, o2)
+    assert r["better"] == ["X1", "X2"] and r["floor_kill"] == ["X1", "X2"] and not r["advances"]     # u500: only 5 % fewer TTC than p333
+
+
+def test_cma2_admit_pick(tmp_path):
+    rows = lambda name, d, c: [{"name": name, "q": 5300.0, "seed": s, "all_delay": 100.0 * d, "ttc_net": 100.0, "collisions": c if s == 0 else 0.0,
+                                "passed": 1.0, "teleports": 0.0, "alks_b45_step": 0.0, "alks_full_events": 0.0, "finished_pct": 100.0} for s in range(3)]
+    ref = rows("ref", 1.0, 0.0)
+    a = cma2.objective(rows("a", 1.03, 0.0), ref, cap=1.0)
+    b = cma2.objective(rows("b", 1.015, 0.0), ref, cap=1.0)
+    assert a["per_level"]["5300.0"]["delay_pct"] == pytest.approx(3.0) and b["per_level"]["5300.0"]["delay_pct"] == pytest.approx(1.5)
+    assert a["delay_over"] == pytest.approx(2.0) and b["delay_over"] == pytest.approx(0.5)     # the +1 % hinge

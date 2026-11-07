@@ -22,11 +22,12 @@ def run(a: tuple):
     obs = []
     if trace and kind == "sw":
         call = ct.ZoneSwitch.__call__
+        ind_rule, ind_pol = be.OwnState(**extra["own_state"]), ct.Greedy(extra["pt"])
 
         def sw_call(self, o):
             ids, lo, g, due = o
             up = lo[:, 0] * 1000.0 < self.x_from
-            r_rule, r_pol = self.rule(o), self.policy((ids, lo, g, due & ~up))
+            r_rule, r_pol = ind_rule(o), ind_pol((ids, lo, g, due & ~up))     # built independently of the arm's own objects
             out = call(self, o)
             for v, u in zip(ids, up):
                 if v in out:
@@ -41,9 +42,12 @@ def run(a: tuple):
         def z_call(self, o):
             out = call3(self, o)
             z = be.zone_of_3e(o[1][:, 0] * 1000.0, o[1][:, 2])
-            for v, zi in zip(o[0], z):
+            lo, P = o[1], extra["zones"]     # the rule written out by hand from 3E's definition
+            for k, (v, zi) in enumerate(zip(o[0], z)):
+                p = P[int(zi)]
+                want = p["level"] if (lo[k, 4] * (100.0 / 3.6) < p["th"] and lo[k, 15] * 40.0 >= p["crowd"]) else p["free"]
                 info["zone"][int(zi)] += 1
-                info["own_value"][int(out[v] in (int(self.level[zi]), int(self.free[zi])))] += 1
+                info["own_value"][int(out[v] == want)] += 1
             return out
         be.ZoneOwnState.__call__ = z_call
     if trace and kind == "tail":
@@ -103,7 +107,7 @@ def main(job_f: str, out_f: str, workers: int) -> int:
         ok &= not diff
     json.dump(out, open(out_f, "w"), indent=1)
     print(json.dumps(out)[:2000], flush=True)
-    return 0 if ok else 1
+    return 0 if ok else 2
 
 
 if __name__ == "__main__":

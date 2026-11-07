@@ -17,7 +17,8 @@ PY = "/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python"
 GIT = "/srv/shared/Workspace/phd/phd_speed_harmo_v5"     # the repository; frozen copies hold no .git
 RUNS = Path("/home/catalin/work/phd/v5b1_runs")
 OUT = RUNS / "round2"
-R1 = RUNS / "round1/out/train_v3w"     # v3w, round 1's control arm and this round's incumbent (D1)
+R1 = RUNS / "baseline_v4/policies"     # v3w, round 1's control arm and this round's incumbent, stored read-only as baseline-v4 (D1)
+R1_SUMS = ROOT / "docs/research/baseline_v4/SHA256SUMS"
 R2 = RUNS / "round2_remote"
 
 SEEDS_SMOKE = 7_419_899
@@ -131,9 +132,16 @@ def run_arms(groups: dict, levels, seeds, out: Path, workers: int, run_commit: s
         code = freeze(snap, run_commit)
         sha = (code / "COMMIT").read_text().strip()[:7]
         f = out / f"rows_{sha}.jsonl"
+        if f.exists():     # a hard crash can leave a partial last line, which the runner's resume cannot read
+            b = f.read_bytes()
+            if b and not b.endswith(b"\n"):
+                f.write_bytes(b[:b.rfind(b"\n") + 1])
+                log(f"dropped a partial last line of {f.name}")
         job = out / f"job_{sha}.json"
         job.write_text(json.dumps({"arms": arms, "levels": list(levels), "seeds": list(seeds), "out": str(f), "workers": workers, "rd": str(out / "rd")}))
         log(f"snapshot {sha}: {len(arms)} arms")
+        with open(out / "snapshots.txt", "a") as h:
+            h.write(f"{sha} {len(arms)} arms {f.name}\n")
         env = {**os.environ, "PYTHONPATH": str(code), "OMP_NUM_THREADS": "1"}
         env.pop("SUMO_HOME", None)
         subprocess.run([PY, "-c", RUN_SNIPPET, str(job)], cwd=str(code), env=env, check=True)

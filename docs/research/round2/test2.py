@@ -46,9 +46,14 @@ def per_level_vs(TB: dict, a: str, b: str) -> dict:
         diff = lambda k: float(np.median([A[s][k] - B[s][k] for s in ds]))
         base = lambda k: max(float(np.median([B[s][k] for s in ds])), 1.0)
         out[str(q)] = {"ttc_pct": 100 * diff("ttc_net") / base("ttc_net"), "delay_pct": 100 * diff("all_delay") / base("all_delay"),
-                       "ttc_ci_95": dc.raw(A, B, "ttc_net", pct=dc.P95), "delay_ci_95": dc.raw(A, B, "all_delay", pct=dc.P95)}
+                       "ttc_ci_95_more": [-x for x in dc.raw(A, B, "ttc_net", pct=dc.P95)][::-1], "delay_ci_95_more": [-x for x in dc.raw(A, B, "all_delay", pct=dc.P95)][::-1]}
         dsum, bsum = dsum + diff("ttc_net"), bsum + base("ttc_net")
-    return {"per_level": out, "pooled_ttc_pct": 100 * dsum / bsum}
+    tune = json.load(open(Path(__file__).parent / "3e/final.json"))["pick"]["name"]
+    fin = json.load(open(Path(__file__).parent / "3e/final.json"))
+    tuning = next(c for c in fin["candidates"] if c["name"] == tune)
+    return {"per_level": out, "pooled_ttc_pct": 100 * dsum / bsum,
+            "tuning_seeds": {"per_level": {q: {"ttc_pct": v["ttc_pct"], "delay_pct": v["delay_pct"]} for q, v in tuning["per_level"].items()},
+                             "pooled_ttc_pct": tuning["ttc_pct"]}}
 
 
 def read(T: dict, TB: dict, v: dict, TV: dict) -> dict:
@@ -61,18 +66,26 @@ def read(T: dict, TB: dict, v: dict, TV: dict) -> dict:
     for kind, ch in tested:
         nm = dc.names(kind, ch)
         r = {"T2": {c: dc.d1.tuned(T, c, o2, nm, p2) for c in PRIMARY}, "T2_old_grid": {c: dc.d1.tuned(T, c, OPPONENTS, nm, p2) for c in PRIMARY},
-             "beside": {c: dc.beside(T, c, nm, o2) for c in PRIMARY}}
+             "beside": {c: dc.beside(T, c, nm, o2) for c in PRIMARY}, "severe_at_T2_level": {c: dc.severe_ok(T, c, nm, o2, p2) for c in PRIMARY}}
         r["noninferiority"] = {c: dc.noninferiority(T, c, nm, r["T2"][c]["counts"], p2) for c in PRIMARY}
         r["t2_cells"] = sum(x["won"] for x in r["T2"].values())
         r["t2_learners"] = sum(x["tuned"] for x in r["T2"].values())
         r["q2_answered"] = {c: any(n in r["T2"][c]["counts"] for n in out["e3_status"][c]) for c in PRIMARY}
         if kind != "v3w":
             r["T1"] = {c: dc.t1(T, c, nm, w_nm, p1) for c in PRIMARY}
+            h = any(x["harm"] for x in r["T1"].values())     # harmed in either cell: better in neither
+            for x in r["T1"].values():
+                x["t1_better"] = x["better"] and not h
             r["score"] = max((x["score"] for x in r["T1"].values() if x["t1_better"]), default=-1e9)
         out["arms"][kind] = r
     inc_nm = dc.names("inc", inc[1])
     out["incumbent_report_only"] = {c: dc.d1.tuned(T, c, o2, inc_nm, p2) for c in PRIMARY}
     out["v3w_round1_checkpoints"] = {c: dc.d1.tuned(TV, c, o2, ["w0u250", "w1u250", "w2u500", "w3u500", "w4u500"], p2) for c in PRIMARY}
+    out["closing"] = {c: {"counting_3e": any(n in out["arms"]["v3w"]["T2"][c]["counts"] for n in out["e3_status"][c]),
+                          "won": any(r["T2"][c]["won"] for r in out["arms"].values())} for c in PRIMARY}
+    for c, x in out["closing"].items():     # D10: a cell with a counting 3E rule that no tested arm wins closes
+        x["closes"] = x["counting_3e"] and not x["won"]
+    out["e3x_convergence"] = {c: dc.e3x_convergence(c) for c in PRIMARY}
     out["follows"] = dc.follows({k: r for k, r in out["arms"].items() if k != "v3w"}, out["arms"]["v3w"]["t2_cells"])
     out["no_control"] = {c: {m: dc.med(T[(f"{c}|nc", Q)], m) for m in ("ttc_net", "all_delay", "b3_step")} for c in PRIMARY}
     out["band"] = {k: dc.band_profile(TB, dc.names(k, ch)) for k, ch in [*tested, inc]}

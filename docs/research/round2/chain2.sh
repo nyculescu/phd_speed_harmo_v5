@@ -6,6 +6,7 @@ C=$(realpath "$1"); D=$(realpath "$2"); W=31     # V426
 PY=/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 R=$C/docs/research/round2
 RC=$(cat "$C/COMMIT")
+[ "$D" = "$(realpath /home/catalin/work/phd/v5b1_runs/round2)" ] || { echo "out dir must be common2e.OUT" >&2; exit 2; }
 mkdir -p "$D"
 cd "$C"
 unset SUMO_HOME
@@ -19,13 +20,14 @@ say "code $RC"
 watchdog & WD=$!
 trap 'kill $WD $(jobs -p) 2>/dev/null' EXIT
 
-[ -f "$D/checks/PASSED" ] || {
+[ "$(cat "$D/checks/PASSED" 2>/dev/null)" = "$RC" ] || {
   step "tests" $PY -m pytest "$C/tests/test_round2.py" -q -p no:cacheprovider
   step "check 1, identity" $PY $R/check2.py identity "$D/checks" "$RC" 8
   step "checks 2 and 4, stored rows in every snapshot" $PY $R/check2.py rows "$D/checks" "$RC"
   step "check 3, reading replay" $PY $R/check2.py replay "$D/checks" "$RC"
   step "check 5, smoke" $PY $R/check2.py smoke "$D/checks" "$RC" 8
-  touch "$D/checks/PASSED"
+  step "TailMean on the smoke run's observations" $PY $R/check2.py tailobs "$D/checks" "$RC"
+  echo "$RC" > "$D/checks/PASSED"
 }
 
 search() {     # cell, start rule, workers: 3E-X (D4), then its pick

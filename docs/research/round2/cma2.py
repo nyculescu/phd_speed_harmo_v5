@@ -187,7 +187,10 @@ def git_commit():
         r = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, timeout=20)
     except (OSError, subprocess.SubprocessError):
         return None
-    return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
+    c = ROOT / "COMMIT"     # a frozen copy holds no .git
+    return c.read_text().strip() if c.exists() else None
 
 
 def code_id() -> dict:

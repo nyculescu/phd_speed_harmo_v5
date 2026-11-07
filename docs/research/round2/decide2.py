@@ -75,8 +75,31 @@ def e3_status(T: dict, cell: str, q: float = Q, pct: tuple = P95) -> dict:
         out[n] = {"counts": d[0] >= -2.0, "delay_vs_p333": d, "ttc_vs_p333": raw(A, p333, "ttc_net", pct=pct),
                   "delay_vs_os1": raw(A, os1, "all_delay", pct=pct), "ttc_vs_os1": raw(A, os1, "ttc_net", pct=pct),
                   "flow_vs_p333": raw(A, p333, "passed", 1, pct), "b3_vs_p333": raw(A, p333, "b3_step", pct=pct),
-                  "collisions": collisions(A), "collisions_p333": collisions(p333)}
+                  "collisions": collisions(A), "collisions_p333": collisions(p333),
+                  "b7_vs_p333": raw(A, p333, "b7_step", pct=pct), "full_moving_vs_p333": paired_median(A, p333, "alks_full_moving"),
+                  "vs_forms": {f: {"delay": raw(A, T[(f"{cell}|{f}", q)], "all_delay", pct=pct), "ttc": raw(A, T[(f"{cell}|{f}", q)], "ttc_net", pct=pct)}
+                               for f in OPPONENTS["cells"][cell]["forms"].values() if (f"{cell}|{f}", q) in T}}
     return out
+
+
+def severe_ok(T: dict, cell: str, nm: list, o2: dict, pct: tuple, q: float = Q) -> dict:
+    """Confirmatory 3's "safety" gate at T2's own level: at least 4 of 5 policies pass T2 and have a paired severe-sample median at or
+    below 0 against every counting opponent."""
+    t = d1.tuned(T, cell, o2, nm, pct, q)
+    ok = 0
+    for n, b in zip(nm, t["blocked"]):
+        P = T[(f"{cell}|{n}", q)]
+        anchored = d3.anchored(P, T[(f"{cell}|p333", q)])
+        if not b and anchored and all(paired_median(P, T[(f"{cell}|{r}", q)], "sev3") <= 0.0 for r in t["counts"]):
+            ok += 1
+    return {"n": ok, "met": ok >= 4}
+
+
+def e3x_convergence(cell: str):
+    import json
+    from common2e import OUT
+    f = OUT / f"cma3e_{cell.lower()}" / "final.json"
+    return json.load(open(f)).get("convergence") if f.exists() else None
 
 
 def beside(T: dict, cell: str, nm: list, o2: dict, q: float = Q) -> dict:
