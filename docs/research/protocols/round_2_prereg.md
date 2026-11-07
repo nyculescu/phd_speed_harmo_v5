@@ -51,8 +51,32 @@ These are the open values from the implementation and the ultracode review (no b
 - It also requires each candidate's own TensorBoard tags at every update: 2B `ppo/lr` and `ppo/ent_coef`; 1B `ppo/mask_frac`; 1D `brake_hz` and `brake_step`.
 - Launch: `docs/research/round2/chain2r.sh KIND CODE_DIR OUT_ROOT`. It runs from the candidate branch's snapshot, with round 1's stage-0 references.
 
-**3E** (branch `r2/3e-cmaes`)
-- Its values follow its review; see V440 and the branch.
+**3E** (branch `r2/3e-cmaes`, settings fixed before the search, V441)
+
+The rule family:
+- **Zones:** 5 (up, merge 1, between, merge 2, down). The edges are −100, 594.72, 1389.02 and 2083.74 m from the start of edge 3a, and ramp vehicles count in their merge zone.
+- **Parameters:** 4 per zone, 20 in all: th 0–25 m/s, crowd 0–30, level 0–3, and an on/off switch. They are encoded on the unit cube.
+- **CMA:** diagonal, sigma 0.25, CMA seed 20261106.
+- **Start point:** os1_15_10's values in zones 1–4, with the upstream zone off. The family cannot copy os1_15_10 exactly, because its x_min of 500 m falls inside merge 1. The reference stays os1_15_10 itself.
+
+The objective, minimised, follows memo §3E: least close-following at a bounded delay cost. It adds three terms:
+- the pooled change in TTC seconds against os1_15_10 on the same seeds: per level, the median of paired differences; summed over levels; divided by the summed reference medians; in %;
+- 5 per % of all_delay above +2 % at each level;
+- 5 per collision beyond the reference.
+
+The search:
+- **Condition:** T, the training slowdowns.
+- **Levels:** 4,500, 5,000, 5,250, 5,500, 6,000.
+- **Budget:** population 24, 100 generations. Each generation takes 8 seeds rotating through the 40 approved tuning seeds, shared by every candidate and the reference.
+
+The final pick:
+- The 5 best distinct configurations are re-evaluated with the reference on all 40 tuning seeds at the 5 levels. The lowest pooled loss is the opponent.
+- Overfitting to the tuning seeds is judged in round 2 on fresh seeds.
+- Side metrics, such as full-emergency events and flow, are not constrained here; round 2's admissibility checks apply them.
+
+Before round 2 evaluates the opponent:
+- The zone rule moves into `b_env.py` with a `plant_sweep` key, because today only the search's own worker can run it.
+- Whether to tune at round 1's deciding cells (X1/X2 at 5,300) instead of condition T is round 2's protocol decision.
 
 ## Seeds (for approval)
 
