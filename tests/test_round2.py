@@ -191,3 +191,17 @@ def test_cma2_admit_pick(tmp_path):
     b = cma2.objective(rows("b", 1.015, 0.0), ref, cap=1.0)
     assert a["per_level"]["5300.0"]["delay_pct"] == pytest.approx(3.0) and b["per_level"]["5300.0"]["delay_pct"] == pytest.approx(1.5)
     assert a["delay_over"] == pytest.approx(2.0) and b["delay_over"] == pytest.approx(0.5)     # the +1 % hinge
+
+
+def test_thesis_reading_v459():
+    import thesis2
+    spec = {}
+    for c in ("X1", "X2"):
+        spec |= {(c, "nc"): (1.0, 1.0), (c, "p333"): (0.95, 1.0), (c, "a0"): (0.85, 1.05), (c, "a1"): (0.85, 1.12), (c, "a2"): (0.8, 1.2)}
+    T = table(spec)
+    r = thesis2.reading(T, {"arm": ["a0", "a1", "a2"]}, ["p333"], dc.bonferroni(4))
+    x, p = r["cells"]["X1"]["arm"], r["cells"]["X1"]["p333"]
+    assert x["delay_ok"] and x["ttc_harmed"] and not x["met"]      # arm mean: 16.7 % less delay but 12.3 % more TTC, CI clear: harmed
+    assert x["policies_met"] == 1                                   # a0 meets; a1 (12 % more TTC) and a2 (20 %) are harmed
+    assert not p["delay_ok"] and not p["met"]                       # 5 % less delay is below the 10 % bar
+    assert r["label"] == thesis2.LABEL
