@@ -1,0 +1,25 @@
+% Generic book class: no university template exists (V458).
+\documentclass[11pt,a4paper,twoside,openright]{book}
+
+\input{preamble}
+\addbibresource{references.bib}
+
+\title{Adaptive driving algorithms for intelligent road traffic systems}
+\author{Catalin Niculescu}
+\date{Draft, \today}
+
+\begin{document}
+
+\frontmatter
+\maketitle
+\include{frontmatter/abstract}
+\tableofcontents
+
+\mainmatter
+% Chapters follow thesis outline v1 once the author approves it.
+\include{chapters/ch01_introduction}
+
+\backmatter
+\printbibliography[heading=bibintoc]
+
+\end{document}
