@@ -7,6 +7,7 @@
 #   remote.sh status TARGET            load, memory, jobs, last log lines
 #   remote.sh fetch TARGET RUN         copy v5b1_runs/RUN back to the laptop as v5b1_runs/RUN_remote
 # The login user comes from the SSH command, else RUSER, else root.
+# REF=<branch or commit> deploys that ref instead of HEAD; CODE=<short sha> runs a job in that deployed snapshot instead of the latest.
 #   remote.sh launch NAME CMD          rent the cheapest fitting vast.ai offer (asks first), then up: the one command from nothing to running
 set -euo pipefail
 cmd=${1:?usage: remote.sh launch|up|deploy|run|status|fetch ...}; shift
@@ -36,10 +37,11 @@ REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 SSH=(ssh -p "$PT" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 "$U@$H")
 
 deploy() {
-  local sha
-  sha=$(git -C "$REPO" rev-parse --short HEAD)
-  [ -z "$(git -C "$REPO" status --porcelain)" ] || echo "note: uncommitted changes stay here; only HEAD $sha is shipped" >&2
-  git -C "$REPO" archive --format=tar HEAD | "${SSH[@]}" "mkdir -p $P/code/$sha && tar -x -C $P/code/$sha && ln -sfn $P/code/$sha $P/code/current"
+  local ref=${REF:-HEAD} sha
+  sha=$(git -C "$REPO" rev-parse --short "$ref")
+  [ "$ref" != HEAD ] || [ -z "$(git -C "$REPO" status --porcelain)" ] || echo "note: uncommitted changes stay here; only HEAD $sha is shipped" >&2
+  echo "deploying $ref as code/$sha" >&2
+  git -C "$REPO" archive --format=tar "$ref" | "${SSH[@]}" "mkdir -p $P/code/$sha && tar -x -C $P/code/$sha && ln -sfn $P/code/$sha $P/code/current"
   # Run data outside the repo that the checks and the incumbent read, mirrored at the laptop's paths.
   tar -C / -cf - "${DATA[@]#/}" | "${SSH[@]}" "tar -x -C /"
   "${SSH[@]}" "bash $P/code/$sha/toolchain/remote/bootstrap.sh $P/code/$sha"
@@ -49,7 +51,7 @@ run_job() {
   local name=${1:?NAME}; shift
   [ $# -gt 0 ] || { echo "no CMD given for job $name" >&2; exit 1; }
   # cd -P pins the job to the snapshot it started from, so a later deploy does not change its code.
-  printf '%s\n' "cd -P $P/code/current" ". $P/phd_speed_harmo_v5b1_toolchain/env.sh" 'export PYTHONPATH=$PWD' "$*" |
+  printf '%s\n' "cd -P $P/code/${CODE:-current}" ". $P/phd_speed_harmo_v5b1_toolchain/env.sh" 'export PYTHONPATH=$PWD' "$*" |
     "${SSH[@]}" "cat > $P/v5b1_runs/jobs/$name.sh && tmux new -d -s $name 'bash $P/v5b1_runs/jobs/$name.sh > $P/v5b1_runs/jobs/$name.log 2>&1'"
   echo "started $name on $H; log at $P/v5b1_runs/jobs/$name.log"
 }
