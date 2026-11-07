@@ -20,12 +20,39 @@ Each candidate compares one-to-one against v3w.
 
 | Candidate | Change | Memo finding | Design |
 |---|---|---|---|
-| 2B | learning rate and entropy coefficient decay linearly over the 500 updates; one critic scale for all learners: the median of v3w's five learner scales | F2: training stops improving early, then drifts toward close-following | `source/p2b.md` |
-| 1B | gate mask: where the action cannot change anything, the level is held and the decision leaves the policy loss | F3: about half the decisions cannot act yet train the policy | `source/p1b.md` |
-| 1D | the safety charge reads hard braking at every 0.1-s SUMO step instead of the 1-Hz sample | V367: 1-Hz metrics miss 9 m/s² ALKS braking | `source/p1d.md` |
-| 3E | CMA-ES tunes a per-zone own-state rule (not DRL): the strongest non-learning opponent | memo: "before any thesis claim" | `source/p3e.md` |
+| 2B | learning rate and entropy coefficient decay linearly over the 500 updates; one critic scale for all learners: the median of v3w's five learner scales | F2: training stops improving early, then drifts toward close-following | memo §2B |
+| 1B | gate mask: where the action cannot change anything, the level is held and the decision leaves the policy loss | F3: about half the decisions cannot act yet train the policy | memo §1B |
+| 1D | the safety charge reads hard braking at every 0.1-s SUMO step instead of the 1-Hz sample | V367: 1-Hz metrics miss 9 m/s² ALKS braking | memo §1D |
+| 3E | CMA-ES tunes a per-zone own-state rule (not DRL): the strongest non-learning opponent | memo: "before any thesis claim" | memo §3E |
 
-Exact settings follow the design files. Where a design leaves a value open, the implementation states it, and it is fixed here before training starts.
+"Memo §" means the option's section in `docs/reports/2026-11-05_21-29/drl_options_2026-11-05_21-29.html`. The `source/p*.md` files are the nine agents' raw reports, not option designs; this table first named them by mistake (corrected 2026-11-06, V440). Exact settings follow the memo sections. Where a design leaves a value open, the implementation states it, and it is fixed here before training starts.
+
+## Values fixed before training (V440)
+
+These are the open values from the implementation and the ultracode review (no blockers), set before any round-2 training starts.
+
+**2B** (branch `r2/2b-anneal`)
+- The learning rate and the entropy coefficient decay as v0·(1 − u/500), over the whole run, so the last update still learns. The memo puts the entropy decay in the second half only; this protocol keeps the whole run, as its table row says.
+- The critic scale is fixed at 2.1246540546417236, the median of v3w's five scales (learner C1's own).
+- The memo's gradient-norm and per-term diagnostics are not logged.
+
+**1B** (branch `r2/1b-gate-mask`)
+- A decision is masked when its vehicle is not in the V2V gate set at decision time, the memo's gate. Decisions inside a hold window are not masked; the level is still held there.
+- GAE and the value loss keep every row. The policy loss, the entropy bonus and the advantage normalisation use the open rows of each minibatch.
+- 1B's `ppo/entropy`, `kl` and `clipfrac` cover open rows only, so they are not comparable with v3w's all-row values.
+
+**1D** (branch `r2/1d-brake-10hz`)
+- Hard braking (≤ −3.0 m/s², the ALKS vehicle and its follower) is read at every 0.1-s step. The charge is the share of each second spent hard-braking, with the safety weight and the follower weight unchanged.
+- The TTC term stays the 1-Hz flag. The memo's 1D also moves TTC to step resolution; that part is left for a later round.
+- `ep/e*/brake_step` counts 0.1-s readings, about 10× `brake_hz`'s 1-Hz flags.
+
+**All three**
+- `tbcheck1.py` checks each new candidate's settings against `common2.env_for` and its trainer extras.
+- It also requires each candidate's own TensorBoard tags at every update: 2B `ppo/lr` and `ppo/ent_coef`; 1B `ppo/mask_frac`; 1D `brake_hz` and `brake_step`.
+- Launch: `docs/research/round2/chain2r.sh KIND CODE_DIR OUT_ROOT`. It runs from the candidate branch's snapshot, with round 1's stage-0 references.
+
+**3E** (branch `r2/3e-cmaes`)
+- Its values follow its review; see V440 and the branch.
 
 ## Seeds (for approval)
 
