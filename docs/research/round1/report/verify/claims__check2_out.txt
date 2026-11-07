@@ -1,0 +1,20 @@
+== delay of each v3w learner vs p333 and the delay opponent (CI 1.25-98.75)
+X1 delay opponent lr1000_10_1 median delay 234899 p333 229735
+X1 0 vs p333 (1.65, -1.93, 5.74) vs dop (4.18, 1.09, 7.61)
+X1 1 vs p333 (0.16, -8.55, 4.19) vs dop (0.34, -2.77, 4.61)
+X1 2 vs p333 (3.84, -3.53, 9.61) vs dop (6.29, 2.24, 8.77)
+X1 3 vs p333 (1.82, -3.37, 7.02) vs dop (5.16, -1.47, 8.38)
+X1 4 vs p333 (0.77, -1.95, 6.3) vs dop (4.07, 0.88, 7.59)
+X1 arm vs p333 95 % (2.55, -1.81, 5.35) arm vs dop 95 % (4.31, 2.42, 6.3)
+X2 delay opponent os1_10_0 median delay 228843 p333 223716
+X2 0 vs p333 (2.97, -0.63, 6.99) vs dop (7.14, 3.13, 9.81)
+X2 1 vs p333 (1.94, -0.33, 4.24) vs dop (3.9, 1.75, 7.08)
+X2 2 vs p333 (4.26, 1.2, 7.12) vs dop (5.77, 2.81, 10.94)
+X2 3 vs p333 (3.7, 1.48, 6.13) vs dop (4.91, 2.97, 9.5)
+X2 4 vs p333 (3.98, -1.0, 8.2) vs dop (7.19, 0.45, 10.88)
+X2 arm vs p333 95 % (3.71, 1.69, 5.01) arm vs dop 95 % (6.6, 3.42, 9.45)
+== split totals per row: rows where road, speed or period sums differ from ttc3, and ttc3 != ttc_net
+rows 2240 {'road': 0, 'speed': 0, 'period': 0, 'ttc3_vs_net': 0}
+== X2 v3w vs os1_15_10: median paired split differences (arm minus rule)
+X1 p333 {'r_3': -466.9, 'r_4a': -684.7, 'r_ramp2': -67.2, 'r_rest': -13.5, 's_lo': -592.8, 's_mid': -308.1, 's_hi': -356.9, 'p_before': 3.8, 'p_taper': -19.5, 'p_hold': -136.2, 'p_after': -286.3, 'p_rest': -817.5}
+X2 os1_15_10 {'r_3': -219.1, 'r_4a': -131.4, 'r_ramp2': -60.4, 'r_rest': -23.5, 's_lo': -135.4, 's_mid': -144.8, 's_hi': -229.6, 'p_before': 7.3, 'p_taper': 0.8, 'p_hold': -12.2, 'p_after': -0.8, 'p_rest': -456.5}

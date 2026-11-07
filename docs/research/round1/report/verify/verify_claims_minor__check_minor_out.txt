@@ -1,0 +1,41 @@
+F13: X2 v3w arm minus os1_15_10, TTC split counters
+  r_3: med A 312.7 med R 522.0 diff-of-medians -209.3 paired-median -219.1
+  r_4a: med A 713.5 med R 869.5 diff-of-medians -156.0 paired-median -131.4
+  r_ramp2: med A 281.7 med R 331.0 diff-of-medians -49.3 paired-median -60.4
+  r_rest: med A 107.2 med R 155.0 diff-of-medians -47.8 paired-median -23.5
+  s_lo: med A 616.0 med R 713.0 diff-of-medians -97.0 paired-median -135.4
+  s_mid: med A 503.8 med R 616.0 diff-of-medians -112.2 paired-median -144.8
+  s_hi: med A 381.0 med R 586.0 diff-of-medians -205.0 paired-median -229.6
+  p_before: med A 47.0 med R 43.0 diff-of-medians 4.0 paired-median 7.3
+  p_taper: med A 5.1 med R 0.0 diff-of-medians 5.1 paired-median 0.8
+  p_hold: med A 32.5 med R 46.0 diff-of-medians -13.5 paired-median -12.2
+  p_after: med A 92.6 med R 103.0 diff-of-medians -10.4 paired-median -0.8
+  p_rest: med A 1286.4 med R 1706.0 diff-of-medians -419.6 paired-median -456.5
+  total ttc3 paired -517.7 ttc_net paired -517.7
+  shares diff-of-medians {'r_3': 45.3, 'r_4a': 33.7, 'r_ramp2': 10.7, 'r_rest': 10.3} | paired {'r_3': 50.4, 'r_4a': 30.2, 'r_ramp2': 13.9, 'r_rest': 5.4}
+  shares diff-of-medians {'s_lo': 23.4, 's_mid': 27.1, 's_hi': 49.5} | paired {'s_lo': 26.6, 's_mid': 28.4, 's_hi': 45.0}
+  shares diff-of-medians {'p_before': -0.9, 'p_taper': -1.2, 'p_hold': 3.1, 'p_after': 2.4, 'p_rest': 96.6} | paired {'p_before': -1.6, 'p_taper': -0.2, 'p_hold': 2.6, 'p_after': 0.2, 'p_rest': 98.9}
+  mean diffs {'r_3': -211.7, 'r_4a': -155.6, 'r_ramp2': -31.8, 'r_rest': -83.2} shares {'r_3': 43.9, 'r_4a': 32.3, 'r_ramp2': 6.6, 'r_rest': 17.3}
+  mean diffs {'s_lo': -127.7, 's_mid': -133.2, 's_hi': -221.4} shares {'s_lo': 26.5, 's_mid': 27.6, 's_hi': 45.9}
+  mean diffs {'p_before': -26.4, 'p_taper': -0.8, 'p_hold': -15.4, 'p_after': -15.5, 'p_rest': -424.2} shares {'p_before': 5.5, 'p_taper': 0.2, 'p_hold': 3.2, 'p_after': 3.2, 'p_rest': 88.0}
+
+F12: T1 X2 TTC vs baseline-v3 at 98.75 %
+   [0.84, -5.03, 5.88]
+
+F15: counting candidates, paired all_delay vs p333 (point), and TTC medians
+  X1 p333: delay vs p333 0.00 counts True ttc med 3067.5
+  X1 z33133: delay vs p333 -5.17 counts False ttc med 2968.5
+  X1 lr400_13_2: delay vs p333 -4.81 counts False ttc med 2782.0
+  X1 os0_10_10: delay vs p333 -5.14 counts False ttc med 2561.5
+  X2 p333: delay vs p333 0.00 counts True ttc med 2449.0
+  X2 r4a1: delay vs p333 -3.08 counts False ttc med 2040.0
+  X2 lr1000_16_2: delay vs p333 -2.91 counts False ttc med 2121.5
+  X2 a4400_10_1: delay vs p333 -4.89 counts False ttc med 1846.5
+  X2 os1_15_10: delay vs p333 -1.25 counts True ttc med 1902.0
+
+F11: X2 v3w arm vs nc (95 %)
+  ttc [-1.9, -7.1, 9.2] delay [23.2, 20.5, 25.6]
+
+F18: validation arms, TTC vs os1_15_10 (95 %)
+  validation.json keys ['incumbent_chosen', 'chosen', 'results', 'finalists']
+  arm names sample ['X1|a0u250', 'X1|a0u500', 'X1|a1u250', 'X1|a1u500', 'X1|a2u250', 'X1|a2u500', 'X1|a3u250', 'X1|a3u500', 'X1|a4u250', 'X1|a4u500', 'X1|d0u250', 'X1|d0u500'] ... n 86

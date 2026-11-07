@@ -1,0 +1,26 @@
+val {'n': 3440, 'ttc3!=ttc_net': 0, 'ttc3_road_sum_mismatch': 0, 'ttc3_speed_sum_mismatch': 0, 'ttc3_period_sum_mismatch': 0, 'sev3_road_sum_mismatch': 0, 'sev3_speed_sum_mismatch': 0, 'sev3_period_sum_mismatch': 0, 'steps=1500': 3440, 'sev3_gt_ttc3': 0, 'brake_net==brake3+out_b3': 3440}
+test {'n': 2240, 'ttc3!=ttc_net': 0, 'ttc3_road_sum_mismatch': 0, 'ttc3_speed_sum_mismatch': 0, 'ttc3_period_sum_mismatch': 0, 'sev3_road_sum_mismatch': 0, 'sev3_speed_sum_mismatch': 0, 'sev3_period_sum_mismatch': 0, 'steps=1500': 2240, 'sev3_gt_ttc3': 0, 'brake_net==brake3+out_b3': 2240}
+band {'n': 1300, 'ttc3!=ttc_net': 0, 'ttc3_road_sum_mismatch': 0, 'ttc3_speed_sum_mismatch': 0, 'ttc3_period_sum_mismatch': 0, 'sev3_road_sum_mismatch': 0, 'sev3_speed_sum_mismatch': 0, 'sev3_period_sum_mismatch': 0, 'steps=1500': 1300, 'sev3_gt_ttc3': 0, 'brake_net==brake3+out_b3': 1300}
+pert_log X1 distinct logs: 1 most common: [[600, true], [720, false], [1200, true], [1320, false]] 1120
+pert_log X2 distinct logs: 1 most common: [[700, true], [880, false]] 1120
+perturb spec X1 {'{"kind": "slowdown", "edge": "4", "limit_kmh": 25, "dur": 120.0, "times": [600.0, 1200.0], "taper": 20.0}': 1120}
+perturb spec X2 {'{"kind": "slowdown", "edge": "3", "limit_kmh": 30, "dur": 180.0, "times": [700.0], "taper": 20.0}': 1120}
+flow X1 nc passed median 2023.0 -> veh/h 4855 finished_pct median 73.7
+flow X2 nc passed median 2062.5 -> veh/h 4950 finished_pct median 75.7
+band seeds 20 draws {'4': 2, '5': 6, 'none': 6, '3': 6}
+band seeds with a slowdown in pert_log: 14 without: 6 mixed: 0
+B|w1 4500 medians: ttc_net 72.5 ttc_half 81.5 brake_net 1434.0 b3_step 1461.799999999766
+v3w arm 4500 medians: ttc_net 73.5 ttc_half 71.1
+nc 4500 ttc_net median 39.5
+split gain X1 vs p333 (diff of medians, median paired diff): {'r_3': (413.2, 466.9), 'r_4a': (689.5, 684.7), 'r_ramp2': (62.1, 67.2), 'r_rest': (19.9, 13.5), 's_lo': (594.0, 592.8), 's_mid': (304.3, 308.1), 's_hi': (354.2, 356.9), 'p_before': (-1.6, -3.8), 'p_taper': (20.4, 19.5), 'p_hold': (147.3, 136.2), 'p_after': (294.7, 286.3), 'p_rest': (809.1, 817.5)}
+  total paired median 1247.9
+split gain X2 vs os1_15_10 (diff of medians, median paired diff): {'r_3': (209.3, 219.1), 'r_4a': (156.0, 131.4), 'r_ramp2': (49.3, 60.4), 'r_rest': (47.8, 23.5), 's_lo': (97.0, 135.4), 's_mid': (112.2, 144.8), 's_hi': (205.0, 229.6), 'p_before': (-4.0, -7.3), 'p_taper': (-5.1, -0.8), 'p_hold': (13.5, 12.2), 'p_after': (10.4, 0.8), 'p_rest': (419.6, 456.5)}
+  total paired median 517.7
+coll X1 nc 1.0 alks_full_moving sum 0.0 alks_full_creep sum 1127.0
+coll X1 p333 0.0 alks_full_moving sum 3.0 alks_full_creep sum 1327.0
+coll X1 os1_15_10 1.0 alks_full_moving sum 4.0 alks_full_creep sum 1328.0
+coll X1 w0-4 total 1.0 runs 200
+coll X2 nc 0.0 alks_full_moving sum 0.0 alks_full_creep sum 1232.0
+coll X2 p333 0.0 alks_full_moving sum 6.0 alks_full_creep sum 1278.0
+coll X2 os1_15_10 0.0 alks_full_moving sum 6.0 alks_full_creep sum 1158.0
+coll X2 w0-4 total 1.0 runs 200

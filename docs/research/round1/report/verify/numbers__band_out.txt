@@ -1,0 +1,26 @@
+arms 65 seeds {20} 7440540 7440559
+4500.0 nc ttc median 39.5 | v3w ttc -17.22 [-111.65, +642.28] delay +23.28 [+20.96, +29.61] perrun -6.8 benefit False | inc ttc -53.42 [-98.73, +250.13] delay +23.12 [+20.86, +28.28] perrun -21.1 benefit False | p333 ttc -10.13 | os1_15_10 ttc +30.38
+5000.0 nc ttc median 667.0 | v3w ttc +38.16 [-10.30, +71.03] delay +26.29 [+21.11, +31.26] perrun 254.5 benefit False | inc ttc +19.73 [-5.95, +51.33] delay +26.23 [+21.10, +31.17] perrun 131.6 benefit False | p333 ttc -13.27 | os1_15_10 ttc -5.25
+5250.0 nc ttc median 1103.0 | v3w ttc +36.07 [-0.85, +75.89] delay +32.42 [+26.53, +37.91] perrun 397.9 benefit False | inc ttc +24.92 [+0.66, +75.62] delay +32.06 [+24.39, +37.96] perrun 274.9 benefit True | p333 ttc +27.65 | os1_15_10 ttc -29.60
+5500.0 nc ttc median 1408.5 | v3w ttc +29.33 [+5.20, +50.47] delay +28.72 [+24.61, +38.03] perrun 413.1 benefit True | inc ttc +22.91 [-7.18, +45.72] delay +29.49 [+25.56, +35.27] perrun 322.7 benefit False | p333 ttc -64.64 | os1_15_10 ttc -25.63
+6000.0 nc ttc median 2326.0 | v3w ttc +7.57 [+2.41, +13.79] delay +27.05 [+22.21, +30.17] perrun 176.1 benefit False | inc ttc -4.87 [-12.82, +1.83] delay +24.38 [+19.94, +27.82] perrun -113.3 benefit False | p333 ttc -64.81 | os1_15_10 ttc -18.25
+shown v3w False [False, False, True] inc False [False, True, False]
+
+blind spots in the band (single arms and the two policy arms)
+('B|d arm', 5000.0, 0.9481, 1.0058, 'brake', '', 'ttc_half med', 242.4, 'ttc_net med', 243.8)
+('B|d arm', 5250.0, 0.94, 1.0134, 'brake', '', 'ttc_half med', 536.0999999999999, 'ttc_net med', 543.3)
+('B|d0', 5000.0, 0.9447, 1.0038, 'brake', '', 'ttc_half med', 263.0, 'ttc_net med', 264.0)
+('B|d1', 6000.0, 0.9434, 0.9985, 'brake', '', 'ttc_half med', 2283.0, 'ttc_net med', 2279.5)
+('B|d2', 5250.0, 0.9483, 0.9803, 'brake', '', 'ttc_half med', 660.0, 'ttc_net med', 647.0)
+('B|d2', 5500.0, 0.9451, 1.0065, 'brake', '', 'ttc_half med', 1383.0, 'ttc_net med', 1392.0)
+('B|d4', 5000.0, 0.9497, 1.0087, 'brake', '', 'ttc_half med', 287.5, 'ttc_net med', 290.0)
+('B|v3w arm', 5250.0, 0.947, 0.9987, 'brake', '', 'ttc_half med', 474.4, 'ttc_net med', 473.8)
+('B|w0', 5000.0, 0.9494, 1.0145, 'brake', '', 'ttc_half med', 172.0, 'ttc_net med', 174.5)
+('B|w1', 4500.0, 0.981, 0.8896, '', 'ttc', 'ttc_half med', 81.5, 'ttc_net med', 72.5)
+('B|w1', 5000.0, 0.9308, 1.0161, 'brake', '', 'ttc_half med', 155.0, 'ttc_net med', 157.5)
+('B|w1', 5250.0, 0.946, 1.0096, 'brake', '', 'ttc_half med', 626.0, 'ttc_net med', 632.0)
+('B|w2', 5250.0, 0.9451, 1.0015, 'brake', '', 'ttc_half med', 335.0, 'ttc_net med', 335.5)
+('B|w3', 5500.0, 0.9421, 0.9938, 'brake', '', 'ttc_half med', 973.5, 'ttc_net med', 967.5)
+braking-flagged: 13 ttc-flagged: 1
+braking ratios of flagged: [0.9308, 0.94, 0.9421, 0.9434, 0.9447, 0.9451, 0.9451, 0.946, 0.947, 0.9481, 0.9483, 0.9494, 0.9497]
+v3w arm at 4500 ttc_net median 73.5 w1 4500 ttc_net/ttc_half medians 72.5 81.5
