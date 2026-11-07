@@ -14,6 +14,7 @@ from common1 import (BAND_EVAL, H10, LEARNERS, OPPONENTS, PLANT, PRIMARY, Q, RUL
                      pt_cfg, rule_cfg)
 
 PY = "/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python"
+GIT = "/srv/shared/Workspace/phd/phd_speed_harmo_v5"     # the repository; frozen copies hold no .git
 RUNS = Path("/home/catalin/work/phd/v5b1_runs")
 OUT = RUNS / "round2"
 R1 = RUNS / "round1/out/train_v3w"     # v3w, round 1's control arm and this round's incumbent (D1)
@@ -101,11 +102,11 @@ def snapshot_of(kind: str) -> str:
 def freeze(commit: str, run_commit: str) -> Path:
     """A frozen copy of a commit under OUT/code_<sha>, with its sha in COMMIT. "eval" means r2/eval's run commit."""
     sha = run_commit if commit == "eval" else commit
-    full = subprocess.run(["git", "-C", str(ROOT), "rev-parse", sha], capture_output=True, text=True, check=True).stdout.strip()
+    full = subprocess.run(["git", "-C", GIT, "rev-parse", sha], capture_output=True, text=True, check=True).stdout.strip()
     d = OUT / f"code_{full[:7]}"
     if not (d / "COMMIT").exists():
         d.mkdir(parents=True, exist_ok=True)
-        tar = subprocess.run(["git", "-C", str(ROOT), "archive", full], capture_output=True, check=True).stdout
+        tar = subprocess.run(["git", "-C", GIT, "archive", full], capture_output=True, check=True).stdout
         subprocess.run(["tar", "-x", "-C", str(d)], input=tar, check=True)
         (d / "COMMIT").write_text(full + "\n")
     return d

@@ -15,7 +15,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-from common2e import (E3T, OPPONENTS, PY, Q, R1, RULE, RUNS, SEEDS_SMOKE, TRAINED, AHEAD_INPUTS, cand_cfg, freeze, policy, pt_cfg, rule_cfg,
+from common2e import (GIT, E3T, OPPONENTS, PY, Q, R1, RULE, RUNS, SEEDS_SMOKE, TRAINED, AHEAD_INPUTS, cand_cfg, freeze, policy, pt_cfg, rule_cfg,
                       sw_cfg, tail_cfg, zone_cfg)
 import decide2 as dc
 
@@ -64,7 +64,7 @@ def identity(out: Path, w: int) -> int:
     out.mkdir(parents=True, exist_ok=True)
     rd = str(out / "rd")
     res = []
-    old_src = subprocess.run(["git", "-C", str(HERE.parent.parent.parent), "show", "d2d0d04:docs/research/round2/cma2.py"], capture_output=True,
+    old_src = subprocess.run(["git", "-C", GIT, "show", "d2d0d04:docs/research/round2/cma2.py"], capture_output=True,
                              text=True, check=True).stdout
     from v5b.fleet import b_env as be
     body = lambda s: s[s.index("    def __init__(self, zones: list):"):].split("\n\n\n")[0]
