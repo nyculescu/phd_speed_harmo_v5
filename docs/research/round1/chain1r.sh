@@ -12,12 +12,12 @@ PY=/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 R=$C/docs/research/round1
 cd "$C"
 unset SUMO_HOME
-export OMP_NUM_THREADS=1 PYTHONPATH=$C:$R TMPDIR=/home/catalin/work/phd/v5b1_runs/phase3/scratch/tmp
+export OMP_NUM_THREADS=1 PYTHONPATH=$C:$R TMPDIR=/home/catalin/work/phd/v5b1_runs/phase3/scratch/tmp TZ=America/Vancouver
 mkdir -p "$TMPDIR"
 say() { echo "$(date '+%F %T') $1" >> "$D/status.txt"; }
 step() { say "start $1"; shift; "$@" 2>&1 | grep -av '^Warning' >> "$D/chain.log"; rc=${PIPESTATUS[0]}; say "end rc=$rc"; [ $rc -eq 0 ] || { say "STOPPED, goes to the author"; exit $rc; }; }
 watchdog() { while sleep 300; do [ -n "$(find "$D" -type f -mmin -30 -print -quit)" ] || say "STALLED: no file changed for 30 minutes"; done; }
-js() { $PY -c "import json, sys; d = json.load(open(sys.argv[1])); $2" "$3"; }
+js() { $PY -c "import json, sys; d = json.load(open(sys.argv[1])); $2" "$1"; }
 
 say "remote: code $(cat "$C/COMMIT"), CPU quota $q, W=$W"
 watchdog & WD=$!
