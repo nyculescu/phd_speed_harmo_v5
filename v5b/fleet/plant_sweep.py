@@ -67,11 +67,14 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     if "pt" in ctrl:     # round 1: a policy brings the environment options it acts through, e.g. 3B's base rule
         from v5b.fleet.c_train import act_env
         kw |= act_env(ctrl["pt"])
+    if "pts" in ctrl or "switch" in ctrl:     # round 2: tail takes the options of its members, sw those of its policy
+        from v5b.fleet.c_train import act_env
+        kw |= act_env(ctrl["pts"][-1] if "pts" in ctrl else ctrl["switch"]["pt"])
     env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "local_rule" in ctrl:
@@ -87,6 +90,15 @@ def run_one(a: tuple) -> dict:
     if "pt" in ctrl:
         from v5b.fleet.c_train import Greedy
         rule = Greedy(ctrl["pt"])
+    if "zone_own_state" in ctrl:
+        rule = be.ZoneOwnState(ctrl["zone_own_state"]["zones"])
+    if "pts" in ctrl:
+        from v5b.fleet.c_train import TailMean
+        rule = TailMean(ctrl["pts"])
+    if "switch" in ctrl:
+        from v5b.fleet.c_train import Greedy, ZoneSwitch
+        sw = ctrl["switch"]
+        rule = ZoneSwitch(be.OwnState(**sw["own_state"]), Greedy(sw["pt"]), sw["x_from"])
     meter = bank = None
     S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
     road_lane, lane_t, accel_t = {}, {}, {}

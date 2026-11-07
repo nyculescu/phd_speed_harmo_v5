@@ -134,6 +134,44 @@ class Greedy:
         return dict(zip((v for v, d in zip(ids, due) if d), a.tolist()))
 
 
+class TailMean:
+    """B-TAIL (round 2): the level with the highest mean probability over several checkpoints of one run, each member with its own
+    input statistics (they live in its Net)."""
+
+    def __init__(self, paths: list):
+        if not paths:
+            raise ValueError("TailMean needs at least one checkpoint")
+        cks = [torch.load(p, map_location="cpu") for p in paths]
+        keys = {(ck.get("n_local", be.CAV_LOCAL), ck.get("n_act", len(be.HEADWAYS_S)), json.dumps(ck.get("act_env") or {}, sort_keys=True)) for ck in cks}
+        if len(keys) > 1:
+            raise ValueError(f"TailMean members differ in inputs, actions or environment options: {sorted(keys)}")
+        self.members = [Greedy(p) for p in paths]
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo, _, due = o
+        if not due.any():
+            return {}
+        with torch.no_grad():
+            x = torch.from_numpy(lo[due])
+            p = sum(torch.softmax(m.net.logits(x), 1) for m in self.members) / len(self.members)
+        return dict(zip((v for v, d in zip(ids, due) if d), p.argmax(1).numpy().tolist()))
+
+
+class ZoneSwitch:
+    """sw (round 2): the rule's own output for every vehicle with route position below x_from (observation column 0, km from the start
+    of 3a), the policy's greedy level for every due vehicle from x_from on. It reads only the observation it is given."""
+
+    def __init__(self, rule, policy, x_from: float):
+        self.rule, self.policy, self.x_from = rule, policy, float(x_from)
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo, g, due = o
+        up = lo[:, 0] * 1000.0 < self.x_from
+        r = self.rule(o)
+        out = {v: r[v] for v, u in zip(ids, up) if u and v in r}
+        return out | self.policy((ids, lo, g, due & ~up))
+
+
 def gae(r: np.ndarray, v: np.ndarray, boot: float, gamma: float = GAMMA, lam: float = LAM) -> np.ndarray:
     adv = np.zeros(len(r), dtype=np.float32)
     last = 0.0

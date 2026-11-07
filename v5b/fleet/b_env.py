@@ -1098,3 +1098,28 @@ class RoadLevels:
                 self.last[v] = self.levels.get(road, self.default)
             out[v] = self.last.get(v, self.default)
         return out
+
+
+ZONE_EDGES_3E = (-100.0, 594.72, 1389.02, 2083.74)     # metres from the start of 3a: up, merge 1, between, merge 2, down (3E, V441)
+
+
+def zone_of_3e(x, on_ramp) -> np.ndarray:
+    """3E's zone index from the observation's position (m) and ramp flag. A ramp vehicle belongs to its merge, as in ZonePattern."""
+    x, ramp = np.asarray(x, float), np.asarray(on_ramp) > 0.5
+    z = np.searchsorted(ZONE_EDGES_3E, x, side="right")
+    return np.where(ramp & (x < ZONE_EDGES_3E[1]), 1, np.where(ramp & (x < ZONE_EDGES_3E[2]), 3, z))
+
+
+class ZoneOwnState:
+    """3E (round 2): OwnState with one (th, crowd, level, free) set per zone, moved unchanged from cma2.py at d2d0d04. It reads the same
+    observation columns as OwnState."""
+
+    def __init__(self, zones: list):
+        self.th, self.crowd = (np.array([z[k] for z in zones], float) for k in ("th", "crowd"))
+        self.level, self.free = (np.array([z[k] for z in zones], int) for k in ("level", "free"))
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo = o[:2]
+        z = zone_of_3e(lo[:, 0] * 1000.0, lo[:, 2])
+        hit = (lo[:, 4] * (100.0 / 3.6) < self.th[z]) & (lo[:, 15] * 40.0 >= self.crowd[z])
+        return dict(zip(ids, np.where(hit, self.level[z], self.free[z]).tolist()))
