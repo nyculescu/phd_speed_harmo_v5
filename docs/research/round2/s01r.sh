@@ -1,10 +1,9 @@
 #!/bin/bash
-# Laptop side of S0 + S1 (V470, V471): rent, deploy, start, then a health and job check every 5 minutes; at the end fetch, verify by
+# Laptop side of S0 + S1 (V470-V473): rent, deploy, start, then a health and job check every 5 minutes; at the end fetch, verify by
 # SHA-256 and destroy. Hard cap $5. Any failure (check, step, stall, lost SSH, cap) fetches what exists, verifies it, destroys the
 # instance and writes S01_ALERT; the author reads it in the morning. usage: s01r.sh REF
 set -u
 REF=${1:?REF}
-OFFERS="51326867 43426114"
 CAP=5
 RUNS=/home/catalin/work/phd/v5b1_runs; WK=$RUNS/measure_s01; F=$RUNS/measure_s01_remote
 L=$RUNS/s01_status.txt
@@ -17,7 +16,24 @@ d = json.load(sys.stdin); d = d if isinstance(d, list) else d['instances']
 for i in d:
     if i.get('label') == 'v5b1':
         print(i['id'], i.get('start_date') or 0, i.get('dph_total') or 0)"; }
-spent() { $VPY -c "import time; print(round(max(0, time.time() - $START) / 3600 * $DPH, 2))"; }
+spent() { $VPY -c "import time; print(round($SPENT0 + max(0, time.time() - $START) / 3600 * $DPH, 2))"; }
+bank() { SPENT0=$(spent); START=$(date +%s); }     # a failed attempt's cost stays counted against the cap
+# The cheapest offer per effective CPU that fits: no RTX A2000 host (they stalled at "Preparing GPUs", author 2026-11-08), no
+# 2014-2017 Xeon or first-generation EPYC, and a projected cost (273 CPU-h on W = effective - 2 workers, plus 0.5 h) under 60 % of the cap.
+pick() { $VAST search offers "cpu_arch=amd64 cpu_cores_effective>=48 cpu_ram>=64 disk_space>=40 reliability>0.99 duration>=2 inet_down>=100 rentable=true" -o dph_total --raw 2>/dev/null | $VPY -c "
+import json, re, sys
+d = json.load(sys.stdin); tried = set(sys.argv[1].split()); slow = re.compile(r'E5-|E7-|Xeon Phi|EPYC 7\\d\\d1')
+ok = []
+for o in d:
+    eff = o.get('cpu_cores_effective') or 0
+    if str(o['id']) in tried or 'A2000' in (o.get('gpu_name') or '') or slow.search(o.get('cpu_name') or '') or eff < 48:
+        continue
+    cost = (273 / (eff - 2) + 0.5) * o['dph_total']
+    if cost < 0.6 * $CAP:
+        ok.append((o['dph_total'] / eff, o))
+if ok:
+    o = min(ok, key=lambda x: x[0])[1]
+    print(o['id'], f\"{o['id']} {o.get('cpu_name')} {o['cpu_cores_effective']:.0f} CPUs {o.get('gpu_name')} \${o['dph_total']:.3f}/h {o.get('geolocation')}\")" "$1"; }
 sums() { find . -path '*/rd' -prune -o -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum; }
 
 destroy_all() {
@@ -47,23 +63,24 @@ finish() {     # finish OK|reason
   exit 0
 }
 
-say "start: ref $REF, offers $OFFERS, cap \$$CAP"
-START=$(date +%s); DPH=0.5; H=
-T=
-for o in $OFFERS; do
-  T=$($VPY "$TR/vast.py" rent "$o" --yes 2>>"$L" | tail -n 1)
-  [[ $T == ssh\ * ]] && break
-  say "offer $o not rented"; destroy_all; T=
+say "start: ref $REF, offer picked at rent time (no RTX A2000, no slow CPU, projected cost under \$$CAP), cap \$$CAP"
+START=$(date +%s); DPH=0.5; H=; SPENT0=0; tried=; acc=
+for attempt in 1 2 3; do
+  o=$(pick "$tried"); [ -n "$o" ] || { say "no fitting offer left"; break; }
+  read -r OID ODESC <<< "$o"; tried="$tried $OID"
+  say "attempt $attempt: offer $ODESC"
+  T=$($VPY "$TR/vast.py" rent "$OID" --yes 2>>"$L" | tail -n 1)
+  if [[ $T != ssh\ * ]]; then say "offer $OID did not boot or answer SSH"; bank; destroy_all; T=; continue; fi
+  read -r ID START DPH <<< "$(inst | head -1)"
+  START=${START%.*}; [ "${START:-0}" -gt 0 ] 2>/dev/null || START=$(date +%s)
+  read -r -a a <<< "$T"; PT=${a[2]}; U=${a[3]%@*}; H=${a[3]#*@}
+  say "rented instance $ID at \$$DPH/h: $T"
+  REF=$REF bash "$TR/remote.sh" deploy "$T" > "$RUNS/s01_deploy_$attempt.log" 2>&1
+  acc=$(grep -a "ACCEPT PASS" "$RUNS/s01_deploy_$attempt.log" | tail -1)
+  [ -n "$acc" ] && break
+  say "deploy on $ID did not pass acceptance (s01_deploy_$attempt.log)"; bank; destroy_all; H=; T=
 done
-[ -n "$T" ] || finish "no offer rented"
-read -r ID START DPH <<< "$(inst | head -1)"
-START=${START%.*}; [ "${START:-0}" -gt 0 ] 2>/dev/null || START=$(date +%s)
-read -r -a a <<< "$T"; PT=${a[2]}; U=${a[3]%@*}; H=${a[3]#*@}
-say "rented instance $ID at \$$DPH/h: $T"
-
-REF=$REF bash "$TR/remote.sh" deploy "$T" > "$RUNS/s01_deploy.log" 2>&1
-acc=$(grep -a "ACCEPT PASS" "$RUNS/s01_deploy.log" | tail -1)
-[ -n "$acc" ] || finish "deploy did not pass acceptance (s01_deploy.log)"
+[ -n "$acc" ] || finish "no machine booted and deployed in 3 attempts"
 q=$(sed -E 's/ACCEPT PASS: ([0-9.]+) CPUs.*/\1/' <<< "$acc"); [[ $q =~ ^[0-9.]+$ ]] || q=$(ssh -p "$PT" -o BatchMode=yes "$U@$H" getconf _NPROCESSORS_ONLN)
 W=$(( ${q%.*} - 2 )); [ $W -ge 8 ] || W=8
 th=$(ssh -p "$PT" -o BatchMode=yes "$U@$H" getconf _NPROCESSORS_ONLN 2>/dev/null); [[ $th =~ ^[0-9]+$ ]] || th=$W
