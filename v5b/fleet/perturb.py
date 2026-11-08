@@ -79,10 +79,10 @@ class Perturb:
 
     def demand(self) -> None:
         if self.kind == "surge":
-            self._surge()
+            self._demand_surge()
             return
         if self.kind == "truck_fixed":
-            self._truck_fixed()
+            self._demand_truck_fixed()
             return
         if self.kind != "burst":
             return
@@ -93,14 +93,14 @@ class Perturb:
         order = sorted(range(len(d.veh)), key=lambda i: d.veh[i].depart)
         d.veh[:], d.route_of[:] = [d.veh[i] for i in order], [d.route_of[i] for i in order]
 
-    def _surge(self) -> None:
+    def _demand_surge(self) -> None:     # not _surge: step() dispatches to _<kind>
         prof = [tuple(float(x) for x in seg) for seg in self.s["profile"]]
         if prof[0][0] != 0.0 or abs(prof[-1][1] - self.env.t_end) > 1e-9 or any(a[1] != b[0] for a, b in zip(prof, prof[1:])):
             raise ValueError(f"surge profile must cover 0 to {self.env.t_end} s without gaps: {prof}")
         self.env.dem = fl.FleetDemand(self.seed, prof, self.env.cfg)
         self.log.append(("profile", [list(x) for x in prof]))
 
-    def _truck_fixed(self) -> None:
+    def _demand_truck_fixed(self) -> None:
         d, s = self.env.dem, self.s
         route, lane, cap = s.get("route", "main"), s.get("lane", 0), s["cap_kmh"] / 3.6
         chosen = set()

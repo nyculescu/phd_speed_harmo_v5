@@ -357,6 +357,8 @@ def run_one(a: tuple) -> dict:
         row["pert_log"] = env.pert.log
     if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):
         row["ctrl_log"] = rule.log
+        if hasattr(rule, "diag"):
+            row["ctrl_diag"] = rule.diag
     if meter is not None:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}

@@ -223,3 +223,13 @@ def test_congestion_run_and_capped_field():
     w.now = {"cap": ("1", 0, 100.0, 11.1, "", 0.0), "c": ("1", 1, 100.0, 30.0, "", 0.0)}
     m.second(w, 301.0)
     assert m.st[1].sum() == 2 and m.st_nc[1].sum() == 1 and m.capped == {"cap"}
+
+
+def test_step_is_a_no_op_for_demand_kinds():
+    for spec in (SURGE, TRUCK):
+        e = env_for(7_480_000)
+        p = pt.Perturb(e, spec, 7_480_000)
+        p.demand()
+        n = len(p.log)
+        p.step(700.0)     # step() dispatches to _<kind>; the demand kinds have no per-second action
+        assert len(p.log) == n

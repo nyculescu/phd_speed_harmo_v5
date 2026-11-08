@@ -53,9 +53,14 @@ class Asch:
         self.env, self.rules = env, (steady, dist)
         self.theta, self.tau, self.h = theta_kmh / 3.6, tau_s, h_kmh / 3.6
         self.mode, self.since, self.log = 0, None, []
+        self.diag = {"decisions": 0, "empty_bins": 0, "zmin_kmh": [None] * len(ZONES)}     # proves the inputs were read
 
     def _cond(self) -> bool:
-        z = zone_speeds(getattr(self.env, "bins", {}) or {})
+        bins = getattr(self.env, "bins", {}) or {}
+        z = zone_speeds(bins)
+        self.diag["decisions"] += 1
+        self.diag["empty_bins"] += not bins
+        self.diag["zmin_kmh"] = [x if s is None else round(s * 3.6, 1) if x is None else min(x, round(s * 3.6, 1)) for x, s in zip(self.diag["zmin_kmh"], z)]
         if self.mode == 0:
             return any(s is not None and s < self.theta for s in z)
         return all(s is None or s >= self.theta + self.h for s in z)
