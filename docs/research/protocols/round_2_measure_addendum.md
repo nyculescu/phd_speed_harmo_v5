@@ -20,7 +20,7 @@ This addendum fixes how each one is measured and summarised.
   - Band: 24 arms × 5 levels × 20 seeds = 2,400 runs.
 - **No new seed.** The runs are deterministic, so a measured run is the same trajectory as the stored one.
 - **The pack only reads the simulation** (libsumo getters).
-- **Gate before the batch (smoke, `measure2.py smoke`).** Seven sample runs must match their stored rows on every key, after the same JSON round trip. The sample covers no control, a v3w policy, tail, sw, 3E-X2, a band rule and a band policy. The pack's own sums must also match the plant's counters:
+- **Gate before the batch (smoke, `measure2.py smoke`; last pass `round2_measure_smoke_2354` with the DRL metrics, PASS; the level mix equals `lv` in every per-CAV run).** Seven sample runs must match their stored rows on every key, after the same JSON round trip. The sample covers no control, a v3w policy, tail, sw, 3E-X2, a band rule and a band policy. The pack's own sums must also match the plant's counters:
   - speed and acceleration bins = vehicle-steps;
   - distance and fuel = `dist_step` and `fuel_step`;
   - braking-event time = `b3_step`;
@@ -56,6 +56,39 @@ Cars and ALKS use SUMO 1.27.1's default class, HBEFA4 PC_petrol_Euro-4. Trucks u
 | Waves | jam clusters | 8-connected groups of cells below 30 km/h, at least 3 cells; per cluster, duration, extent and front speed (linear fit of the upstream front over time; negative = moving upstream) |
 | Waves | oscillation | the temporal standard deviation of cell speed at each station occupied in at least 80 % of the time bins, averaged over stations |
 | Waves | congested length | cells below 60 km/h × 50 m per time bin; its mean and maximum |
+
+## DRL metrics (V469, added before any measured batch)
+
+**Per decision.** Every per-CAV arm (policies and rules) is counted. Recorded:
+- what the vehicle was told (the wanted level);
+- whether its level moved: env.lvl before and after the step;
+- where it was: its road, mapped to up, merge 1, between, merge 2, down, ramp 1 and ramp 2.
+
+| Metric | Definition |
+|---|---|
+| asked, applied, ignored, kept | decisions per run; applied = the level moved; ignored = a different level was wanted but the 10-s hold kept it; kept = the wanted level was already set |
+| changes per ALKS | histogram over vehicles (0, 1, 2, 3, 4-5, 6-9, 10+) |
+| excess changes | changes beyond the climb from the entry level 0 to the vehicle's last level (each change moves one level), so a fixed rule scores 0; per vehicle and the share of vehicles with any |
+| reversals per change | a change opposite to the vehicle's previous one |
+| level mix | ALKS-seconds at each level with V2V on (the level acts), and the share with V2V off (it does not); equal to the environment's own `lv` count, checked |
+| policy confidence | for the learned rules (v3w, tail, the policy side of sw), the probability of the chosen level and the entropy of the level distribution, from the stored network on the same observation (a pure function: no action changes) |
+
+The per-vehicle arrays go to the side file.
+
+**Training status (`docs/research/round2/trainreport2.py`).** This reads stored logs only:
+- the TensorBoard event files for v3w, res, attr, lagr and the five round-2 candidates;
+- the JSON lines for baseline-v3.
+
+Per learner, it reports:
+- reward per decision over the first 50 and last 100 updates;
+- round 1's collapse rule;
+- the trend of the last 100 updates in SDs;
+- entropy against its maximum (ln 4; ln 3 for res);
+- KL, clip fraction and explained variance over the last 50 updates;
+- what the policy did in training, first 50 against last 50 updates: changes per 1,000 ALKS-seconds, reversals per change and the level mix;
+- ASCII curves, with the checkpoints validation chose marked.
+
+Output: `docs/research/round2/report/train_status.txt` and `.json`. It reproduces round 1's recorded checks (49 of 50 learners pass; attr C2 fails, as V448 records).
 
 ## Statistics and reading
 
