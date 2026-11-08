@@ -240,7 +240,7 @@ v3w stays at w0u250, w1u500, w2u250, w3u500, w4u500 (V478). Disclosed: these che
 Disclosed: picking the minimum of noisy check losses biases the incumbent's check loss downwards.
 
 **Code (a tuning-harness change; each item with a planted-row unit test, §7.1):**
-- `--cond` (cma2.py:405) and `common.COND` gain the new cells;
+- (V481: built as `docs/research/planb/cmab.py`, which imports cma2's functions and fixes every setting of this section in code; cma2.py is unchanged) `common.COND` gains the new cells;
 - `--objective {ttc, delay}`, with a delay objective beside the pooled-TTC `objective()` (cma2.py:117-139);
 - `alks_full_moving` added to `KEYS` (cma2.py:45), which 3E-D's admission needs;
 - `--start-params` taking an encoded zone list, because `start()` reads only own-state rules from the opponents file (cma2.py:68-73): p333 = th 0 and free 3 in every zone; an own-state re-pick encoded from its dict;
@@ -285,7 +285,7 @@ Geometry (corridor.py:24, :45-48; `R2_NODES`): edge 1 0-3,000 m, 2 to 3,500, 3a 
 | TRUCK | Slow heavy vehicles (loaded or special transports) that others must overtake | 10 trucks: for k = 0-9, the first main-route truck with sampled departure lane 0, not already selected, departing at or after 360 + 80k s; each capped at 40 km/h for its whole trip, set before the route file is written. Event window 360-1,800 s | kind (no truck caps in training) | kind | new kind `truck_fixed`: sets the selected trucks' `max_speed` in `Perturb.demand()` (fleet.py:146, :164) |
 | WORKZONE (only if the author keeps three cells) | A speed restriction at an incident scene with no lane closed | Existing `slowdown` kind: edge 2, **20 km/h** (not X2's 30), from 600 s for 600 s, 20-s taper, instant return | edge and duration; limit below the draw's 25 km/h | edge set, limit and duration | none (perturb.py:113-125); plus the braking exclusion (§5) and the merge-1 location items |
 
-- TRUCK timing: the last grid time is 1,080 s. At 40 km/h the route takes about 612 s and merge 2 (5,300 m) is reached after about 477 s, so a truck departing before 1,200 s passes merge 2 by about 1,680 s and nearly always exits by 1,800 s. Spec test: exactly 10 distinct trucks per seed, all departing before 1,200 s. Lane-0 main-route trucks arrive at about 93 per hour (5,300 × 0.7 × 0.075 / 3; fleet.py:94-95, :194; corridor.py:55), one per 39 s on average, so the 80-s grid rarely runs out of trucks (my arithmetic).
+- TRUCK timing: the last grid time is 1,080 s. At 40 km/h the route takes about 612 s and merge 2 (5,300 m) is reached after about 477 s, so a truck departing before 1,200 s passes merge 2 by about 1,680 s and nearly always exits by 1,800 s. Spec test (amended by V481): exactly 10 distinct trucks per seed, each departing at or after its slot and before 1,800 s; the last truck's departure is reported per seed. Measured over the whole seed block before any run: the 10th truck departs at or after 1,200 s on 9.4 % of seeds (median 1,115 s, 99th percentile 1,306 s, max 1,427 s), so on those seeds the last truck may not reach merge 2 inside the window; the rule is the same for every arm on a seed. (v1 said "all departing before 1,200 s" and "the 80-s grid rarely runs out of trucks"; that was wrong.)
 - WORKZONE, if kept, also needs: the braking-event location keys (§5) and the pre-registered exclusion of events peaking on edge 1 within 300 m of edge 2 while edge 2's limit is below 100 km/h; a merge-1 split (3a close-following, ramp-1 `end_stop`, `delay_ramp`); a report-only G4 row for ramp-1 `end_stop` against S; its G1b exclusion (§7.3).
 
 ### 4.3 What each cell does to the measures
@@ -340,7 +340,7 @@ Priors that disfavour DRL, seen in the same material: V410's ramped peak (above)
   - `veh_s_road_<road>` and `dist_road_<road>`, giving delay by road as veh-s − dist / 27.78, each also split by the cell's period;
   - for each braking event, the road, lane position and time of its peak (measure.py:141-157 stores none);
   - TRUCK: the share of TTC < 3 s samples within 5 s after a lane change by the follower or the leader (lane_t exists, plant_sweep.py:219-226);
-  - `stuck_n`: vehicles below 0.1 m/s for 300 s or more while their leader within 50 m moves (a per-row deadlock count);
+  - `stuck_n` (amended by V481): vehicles below 0.1 m/s for 300 consecutive seconds and not behind a stopped leader (below 0.1 m/s) within 50 m; a moving leader or no leader within 50 m both count, so a lane-end deadlock is caught (a per-row deadlock count);
   - TRUCK: a speed field without the capped trucks' own samples (for G1b).
 - **Location report, required for every cell (PR-28):** close-following, delay and braking by road and by period, and ramp-2 lane-end stops (`end_stop2`). `plant_sweep.period()` bins only the slowdown kind (plant_sweep.py:152-165); it is extended to each cell's event window (SURGE 600-1,200 s, TRUCK 360-1,800 s) as new labels.
 
