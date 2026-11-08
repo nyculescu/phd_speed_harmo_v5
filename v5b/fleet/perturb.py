@@ -12,6 +12,11 @@ d / ORACLE_SPEED s before the event until `after` s past its end (V346). `taper`
 already on the edge must obey a new limit at once (V345).
 Kind random: for training (V358), each episode draws no perturbation (one third) or a tapered slowdown on edge 3, 4 or 5, from
 the episode's seed, so the draw repeats. `edge` selects a slowdown's edge, 4 by default.
+Plan B (planb.md §4.2) adds two kinds that act only on the demand list, before the route file is written:
+surge: the demand follows `profile` [[t0, t1, veh/h], ...] instead of the constant level; the run equals the constant one until
+the first segment ends, because the arrival stream restarts at each segment edge and vehicles are drawn by index.
+truck_fixed: for k = 0 .. n-1, the first main-route truck on departure lane `lane`, not already chosen, departing at or after
+first + k * spacing, gets its maximum speed capped at `cap_kmh` for the whole trip; every arm meets the same trucks.
 """
 from __future__ import annotations
 
@@ -19,6 +24,8 @@ import math
 
 import libsumo as ls
 import numpy as np
+
+from v5b.fleet import fleet as fl
 
 BRAKE_EDGE, BRAKE_LANE, BRAKE_POS, BRAKE_RANGE = "4", 1, 500.0, 200.0
 DECEL = 4.0
@@ -37,7 +44,7 @@ class Perturb:
             spec = {"kind": "none"}
             if r.random() >= 1.0 / 3.0:
                 spec = {"kind": "slowdown", "edge": str(r.choice(("3", "4", "5"))), "limit_kmh": float(r.uniform(25.0, 60.0)), "dur": float(r.uniform(60.0, 180.0)), "times": [float(r.uniform(400.0, 1200.0))], "taper": 20.0}
-        self.env, self.s, self.kind = env, spec, spec["kind"]
+        self.env, self.s, self.kind, self.seed = env, spec, spec["kind"], seed
         self.next_t = spec.get("first", env.warm)
         self.active = None
         self.slow_on = False
@@ -46,6 +53,12 @@ class Perturb:
         self.slow_v = env.plant.get("limit", FREE_LIMIT)
 
     def demand(self) -> None:
+        if self.kind == "surge":
+            self._surge()
+            return
+        if self.kind == "truck_fixed":
+            self._truck_fixed()
+            return
         if self.kind != "burst":
             return
         d, cycle = self.env.dem, self.s["cycle"]
@@ -54,6 +67,27 @@ class Perturb:
                 v.depart = math.ceil(v.depart / cycle) * cycle
         order = sorted(range(len(d.veh)), key=lambda i: d.veh[i].depart)
         d.veh[:], d.route_of[:] = [d.veh[i] for i in order], [d.route_of[i] for i in order]
+
+    def _surge(self) -> None:
+        prof = [tuple(float(x) for x in seg) for seg in self.s["profile"]]
+        if prof[0][0] != 0.0 or abs(prof[-1][1] - self.env.t_end) > 1e-9 or any(a[1] != b[0] for a, b in zip(prof, prof[1:])):
+            raise ValueError(f"surge profile must cover 0 to {self.env.t_end} s without gaps: {prof}")
+        self.env.dem = fl.FleetDemand(self.seed, prof, self.env.cfg)
+        self.log.append(("profile", [list(x) for x in prof]))
+
+    def _truck_fixed(self) -> None:
+        d, s = self.env.dem, self.s
+        route, lane, cap = s.get("route", "main"), s.get("lane", 0), s["cap_kmh"] / 3.6
+        chosen = set()
+        for k in range(s["n"]):
+            t_k = s["first"] + k * s["spacing"]
+            v = next((v for v, r in zip(d.veh, d.route_of) if v.cls == "truck" and r == route and v.lane == lane
+                      and v.depart >= t_k and v.vid not in chosen), None)
+            if v is None:
+                raise ValueError(f"truck_fixed: no truck left for slot {k} (seed {self.seed})")
+            v.max_speed = cap
+            chosen.add(v.vid)
+            self.log.append((k, v.vid, v.depart))
 
     def step(self, t: float) -> None:
         o = self.s.get("oracle")

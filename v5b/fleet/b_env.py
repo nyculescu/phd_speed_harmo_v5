@@ -151,18 +151,19 @@ class MergeEnv(gym.Env):
         d = fl.build_net(self.cfg)
         self.t_end = self.warm + self.episode
         self.dem = fl.FleetDemand(s, [(0.0, self.t_end, q)], self.cfg)
-        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
-        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
-        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
         self.smooth_cap, self.smooth_target, self.smooth_need = {}, {}, {}
-        self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
         self.v2v_down = False
         self.pert = pt.Perturb(self, self.perturb, s) if self.perturb else None
         if self.pert:
             self.pert.demand()
+        # After demand(): a surge replaces the demand list, and its own vehicles must be the commanded ones (planb.md §4.3).
+        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
+        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
+        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
+        self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.dem.write(self.rou)
         self.sim = CrashSim(d / "net.xml", self.rou, self.run_dir, self.dem, additional=[d / "add.xml"],
                             step_length=self.dt, seed=s)
