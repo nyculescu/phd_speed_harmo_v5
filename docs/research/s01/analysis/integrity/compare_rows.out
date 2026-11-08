@@ -1,0 +1,16 @@
+test rows new/old 2800 2800 dups 0 0 matched 2800 only new/old 0 0
+  rows with every shared field exact: 2800 of 2800
+  field comparisons exact / within 1e-9 / beyond: 425053 0 0
+  distinct fields compared: 159  cfg mismatches: 0  NaN fields: {}
+  bad fields: {}
+  close fields: {}
+  mismatch arms: {}
+  pack-only keys: 53 min rows having one: 2720
+band rows new/old 2400 2400 dups 0 0 matched 2400 only new/old 0 0
+  rows with every shared field exact: 2400 of 2400
+  field comparisons exact / within 1e-9 / beyond: 336589 0 0
+  distinct fields compared: 159  cfg mismatches: 0  NaN fields: {}
+  bad fields: {}
+  close fields: {}
+  mismatch arms: {}
+  pack-only keys: 53 min rows having one: 2300

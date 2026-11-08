@@ -1,0 +1,10 @@
+D10 v3w        X1: low-V2V ALKS 0.224 of ALKS; 0.250 of changes; 0.283 of reversals
+D10 v3w        X2: low-V2V ALKS 0.227 of ALKS; 0.266 of changes; 0.304 of reversals
+D10 3e         X1: low-V2V ALKS 0.230 of ALKS; 0.206 of changes; 0.194 of reversals
+D10 3e         X2: low-V2V ALKS 0.233 of ALKS; 0.207 of changes; 0.195 of reversals
+D10 os1_15_10  X1: low-V2V ALKS 0.229 of ALKS; 0.199 of changes; 0.171 of reversals
+D10 os1_15_10  X2: low-V2V ALKS 0.230 of ALKS; 0.190 of changes; 0.141 of reversals
+D11 matched 5200 rows of 5200; rows with any difference on ['all_delay', 'ttc_net', 'passed', 'lv', 'lv_sum_4', 'lv_n_4', 'tau_on_match', 'N']: 0 {}; round2 rows available 5200
+place applied share v3w between: X1 0.391 X1-X2 +0.074 [+0.052, +0.089]; m2: X1 0.425 X1-X2 +0.012 [+0.005, +0.017]; down: X1 0.260 X1-X2 +0.046 [+0.038, +0.052]; ramp2: X1 0.233 X1-X2 -0.022 [-0.036, -0.001]
+place applied share os1_15_10 between: X1 0.078 X1-X2 -0.010 [-0.015, +0.002]; m2: X1 0.125 X1-X2 +0.009 [+0.001, +0.023]; down: X1 0.068 X1-X2 +0.040 [+0.033, +0.047]; ramp2: X1 0.290 X1-X2 -0.080 [-0.116, -0.021]
+place applied share 3e between: X1 0.180 X1-X2 +0.034 [+0.022, +0.048]; m2: X1 0.242 X1-X2 -0.008 [-0.022, +0.001]; down: X1 0.065 X1-X2 +0.029 [+0.026, +0.031]; ramp2: X1 0.316 X1-X2 -0.091 [-0.170, -0.010]

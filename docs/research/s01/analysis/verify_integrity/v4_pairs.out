@@ -1,0 +1,11 @@
+[test] pert_log groups 80, groups with differing pert_log across arms 0
+[test] p333 m_dec_level_s shape (80, 4); first row [1069.0, 6069.0, 5914.0, 176389.0]
+[band] pert_log groups 100, groups with differing pert_log across arms 0
+   identical ('B', 4500.0, ('os1_15_10', 'p333')): 17/20 seeds
+   identical ('B', 5000.0, ('os1_15_10', 'p333')): 10/20 seeds
+   identical ('B', 5250.0, ('os1_15_10', 'p333')): 6/20 seeds
+   identical ('B', 5500.0, ('os1_15_10', 'p333')): 1/20 seeds
+[band] p333 m_dec_level_s shape (100, 4); first row [920.0, 5196.0, 4979.0, 117724.0]
+[s1] pert_log groups 40, groups with differing pert_log across arms 0
+   identical ('B', 3500.0, ('os1_15_10', 'p333')): 20/20 seeds
+[s1] p333 m_dec_level_s shape (40, 4); first row [697.0, 3957.0, 3780.0, 84344.0]

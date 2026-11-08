@@ -1,0 +1,41 @@
+== (5) job configs ==
+test arms new 70 old 70 only new [] only old [] cfg diffs 0 levels equal True seeds equal True seed range 7440840 7440879 40 measure values {'"/home/catalin/work/phd/v5b1_runs/measure_s01/st"': 70} measure in old 0
+   top-level keys new ['arms', 'levels', 'seeds'] old ['arms', 'levels', 'out', 'rd', 'seeds', 'workers']
+   rows whose cfg != job cfg: 0 of 2800
+band arms new 24 old 24 only new [] only old [] cfg diffs 0 levels equal True seeds equal True seed range 7440880 7440899 20 measure values {'"/home/catalin/work/phd/v5b1_runs/measure_s01/st"': 24} measure in old 0
+   top-level keys new ['arms', 'levels', 'seeds'] old ['arms', 'levels', 'out', 'rd', 'seeds', 'workers']
+   rows whose cfg != job cfg: 0 of 2400
+== (2) S1 ==
+rows 360 distinct keys 360 dups 0
+names ['B|3e', 'B|nc', 'B|os1_15_10', 'B|p333', 'B|w0u250', 'B|w1u500', 'B|w2u250', 'B|w3u500', 'B|w4u500']
+levels [3500.0, 7000.0] seeds 7440900 7440919 20 contiguous True
+missing grid cells 0 extra 0
+job_s1 arms ['B|3e', 'B|nc', 'B|os1_15_10', 'B|p333', 'B|w0u250', 'B|w1u500', 'B|w2u250', 'B|w3u500', 'B|w4u500'] levels [3500.0, 7000.0] seeds 7440900 7440919 20
+rows cfg == job cfg: 360 / 360
+S1 arm cfg == round2 band cfg (measure stripped): {'B|w0u250': True, 'B|w1u500': True, 'B|w2u250': True, 'B|w3u500': True, 'B|w4u500': True, 'B|os1_15_10': True, 'B|p333': True, 'B|nc': True, 'B|3e': True}
+test seeds 7440840 7440879 40 | band seeds 7440880 7440899 20
+S1 seeds in test 0 in band 0
+health per (name,q): n, collisions, teleports, contact_steps, steps set, finished_pct min/med/max, passed med, all_delay med
+  B|3e             3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=84.0/84.7/86.1 passed_med=1462 delay_med=40355 arrived_med=1454
+  B|nc             3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.7/84.2/85.7 passed_med=1458 delay_med=47181 arrived_med=1449
+  B|os1_15_10      3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.6/85.9 passed_med=1462 delay_med=39650 arrived_med=1458
+  B|p333           3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.6/85.9 passed_med=1462 delay_med=39650 arrived_med=1458
+  B|w0u250         3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.5/86.0 passed_med=1464 delay_med=39629 arrived_med=1457
+  B|w1u500         3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.6/86.1 passed_med=1462 delay_med=40212 arrived_med=1454
+  B|w2u250         3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.6/86.0 passed_med=1464 delay_med=39731 arrived_med=1456
+  B|w3u500         3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.9/84.6/86.0 passed_med=1464 delay_med=39976 arrived_med=1456
+  B|w4u500         3500 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=83.8/84.6/86.0 passed_med=1464 delay_med=40389 arrived_med=1456
+  B|3e             7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=59.2/62.0/65.2 passed_med=2332 delay_med=720257 arrived_med=2286
+  B|nc             7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=54.3/58.2/61.2 passed_med=2204 delay_med=807714 arrived_med=2151
+  B|os1_15_10      7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=57.3/60.9/67.1 passed_med=2300 delay_med=719889 arrived_med=2249
+  B|p333           7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=58.4/61.8/66.9 passed_med=2314 delay_med=708020 arrived_med=2264
+  B|w0u250         7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=57.3/63.0/67.8 passed_med=2356 delay_med=703972 arrived_med=2300
+  B|w1u500         7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=57.5/63.0/69.0 passed_med=2366 delay_med=693472 arrived_med=2311
+  B|w2u250         7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=58.0/63.1/67.8 passed_med=2358 delay_med=670547 arrived_med=2305
+  B|w3u500         7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=59.7/63.5/69.7 passed_med=2374 delay_med=677948 arrived_med=2323
+  B|w4u500         7000 n=20 coll=0 tele=0.0 contact=0 steps=[1500] fin=59.4/63.7/68.2 passed_med=2384 delay_med=660587 arrived_med=2324
+test collisions 4 [('X1|s2u500', 5300.0, 7440853, 1), ('X2|w3u500', 5300.0, 7440865, 1), ('X1|d0u500', 5300.0, 7440868, 1), ('X2|lr400_13_2', 5300.0, 7440860, 1)] teleports 0.0 contact_steps 384 finished_pct min 68.30955469087765 steps [1500]
+band collisions 1 [('B|t0', 5000.0, 7440890, 1)] teleports 0.0 contact_steps 169 finished_pct min 66.51126651126651 steps [1500]
+test non-finite scalar row fields {}
+band non-finite scalar row fields {}
+s1 non-finite scalar row fields {}

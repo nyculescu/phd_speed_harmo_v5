@@ -1,0 +1,60 @@
+X1 v3w-nc f1.5 total P 1483 O 1155 d +328 [+286, +433]  (+28.4% [+24.8, +37.4])
+X1 v3w-3e f1.5 total P 1483 O 1517 d -6 [-95, +82]  (-0.4% [-6.3, +5.4])
+  road up  v3w       6 nc       6 d     +1 [    -0,     +2]
+  road 3a  v3w     256 nc     249 d     +4 [   -67,    +56]
+  road 3   v3w     841 nc     704 d   +176 [   +41,   +303]
+  road 4a  v3w     334 nc     168 d   +190 [  +128,   +289]
+  road 4   v3w       0 nc       0 d     +0 [    +0,     +0]
+  road 5   v3w       0 nc       0 d     +0 [    +0,     +1]
+  period pre  v3w     127 nc     121 d    +11 [   -14,    +43]
+  period w1   v3w     117 nc      82 d    +28 [   +10,    +49]
+  period a1   v3w     116 nc      47 d    +45 [   +19,    +70]
+  period mid  v3w     442 nc     312 d   +109 [   +81,   +171]
+  period w2   v3w     158 nc     117 d    +52 [   +30,    +66]
+  period a2   v3w     116 nc      99 d    +19 [   -21,    +40]
+  period late v3w     426 nc     342 d    +77 [   +25,   +122]
+  road x period median(v3w-nc):
+    up pre:    +0 w1:    +0 a1:    +0 mid:    +0 w2:    +0 a2:    +0 late:    +0
+    3a pre:   +10 w1:    +5 a1:    +6 mid:   +22 w2:   +11 a2:    +7 late:   -18
+    3 pre:    +0 w1:    +0 a1:    +9 mid:   +40 w2:    -2 a2:    +8 late:  +170
+    4a pre:    +4 w1:   +33 a1:   +14 mid:   +44 w2:   +34 a2:    +0 late:    +4
+    4 pre:    +0 w1:    +0 a1:    +0 mid:    +0 w2:    +0 a2:    +0 late:    +0
+    5 pre:    +0 w1:    +0 a1:    +0 mid:    +0 w2:    +0 a2:    +0 late:    +0
+  Spearman seeds: d f1.5 vs d ev45_all: +0.55 (p 0.000)
+  Spearman seeds: d f1.5 vs d ev4_all: +0.31 (p 0.050)
+  Spearman seeds: d f1.5 vs d ev5_alks: +0.38 (p 0.016)
+  Spearman seeds: d f1.5 vs d ev45_car: +0.40 (p 0.011)
+  Spearman seeds: d f1.5 vs d ev4_car: +0.28 (p 0.081)
+  jam veh-s road up: v3w 1271 nc 1372 d -90 [-170, -16]
+  jam veh-s road 3: v3w 24294 nc 84530 d -61828 [-68333, -53607]
+  jam veh-s road 4a: v3w 42658 nc 45317 d -5118 [-8517, -1778]
+  jam veh-s road 4: v3w 25563 nc 25725 d -289 [-621, +171]
+X2 v3w-nc f1.5 total P 1412 O 1257 d +144 [+88, +214]  (+11.5% [+7.0, +17.1])
+X2 v3w-3e f1.5 total P 1412 O 1459 d -44 [-157, +60]  (-3.0% [-10.8, +4.1])
+  road up  v3w       9 nc     117 d   -106 [  -187,     -9]
+  road 3a  v3w     488 nc     521 d    +12 [  -101,    +48]
+  road 3   v3w     701 nc     380 d   +340 [  +221,   +426]
+  road 4a  v3w     200 nc     142 d    +28 [    +3,    +63]
+  road 4   v3w       2 nc       0 d     +1 [    +0,     +2]
+  road 5   v3w       0 nc       0 d     +0 [    +0,     +1]
+  period pre  v3w     185 nc     207 d     +2 [   -35,    +39]
+  period w    v3w     160 nc      93 d    +51 [   +38,    +70]
+  period a    v3w      88 nc     100 d     -7 [   -21,    +34]
+  period late v3w     964 nc     858 d   +139 [   +39,   +171]
+  road x period median(v3w-nc):
+    up pre:    +0 w:    +0 a:    +0 late:   -98
+    3a pre:   +11 w:   +62 a:    +5 late:   -74
+    3 pre:    +0 w:    +0 a:    +0 late:  +372
+    4a pre:    -3 w:    +3 a:    +0 late:   +36
+    4 pre:    +0 w:    +1 a:    +0 late:    +0
+    5 pre:    +0 w:    +0 a:    +0 late:    +0
+  Spearman seeds: d f1.5 vs d ev45_all: +0.47 (p 0.002)
+  Spearman seeds: d f1.5 vs d ev4_all: +0.18 (p 0.279)
+  Spearman seeds: d f1.5 vs d ev5_alks: +0.31 (p 0.052)
+  Spearman seeds: d f1.5 vs d ev45_car: +0.39 (p 0.013)
+  Spearman seeds: d f1.5 vs d ev4_car: +0.05 (p 0.782)
+  jam veh-s road up: v3w 1275 nc 1672 d -255 [-504, -139]
+  jam veh-s road 3: v3w 51894 nc 83308 d -28825 [-37554, -21803]
+  jam veh-s road 4a: v3w 18997 nc 20856 d -2532 [-5244, -858]
+  jam veh-s road 4: v3w 0 nc 0 d +0 [+0, +0]
+comparisons 35

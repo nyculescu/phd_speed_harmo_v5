@@ -1,0 +1,32 @@
+{
+ "v3w|X1": {
+  "share_alks_on_lt_20pct": 0.22411154168208283,
+  "share_changes_from_them": 0.2500841344136693,
+  "share_reversals_from_them": 0.28304403519845545
+ },
+ "v3w|X2": {
+  "share_alks_on_lt_20pct": 0.22699085780976463,
+  "share_changes_from_them": 0.2664349150389729,
+  "share_reversals_from_them": 0.30442669498509234
+ },
+ "3E-T|X1": {
+  "share_alks_on_lt_20pct": 0.22987230397882114,
+  "share_changes_from_them": 0.20558450070258924,
+  "share_reversals_from_them": 0.1939862364698966
+ },
+ "3E-T|X2": {
+  "share_alks_on_lt_20pct": 0.23306486128944398,
+  "share_changes_from_them": 0.20729706582430538,
+  "share_reversals_from_them": 0.19451658345391995
+ },
+ "os1_15_10|X1": {
+  "share_alks_on_lt_20pct": 0.22953698464420205,
+  "share_changes_from_them": 0.1992628426629809,
+  "share_reversals_from_them": 0.17091315489427994
+ },
+ "os1_15_10|X2": {
+  "share_alks_on_lt_20pct": 0.23038156947444205,
+  "share_changes_from_them": 0.18981630064340624,
+  "share_reversals_from_them": 0.1408609035930274
+ }
+}

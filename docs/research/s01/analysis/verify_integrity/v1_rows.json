@@ -1,0 +1,24 @@
+{
+ "test": {
+  "field_cmp": 425053,
+  "exact": 425053,
+  "tol": 0,
+  "mism": 0,
+  "rows_exact": 2800,
+  "fields": 159,
+  "keyonly": 0,
+  "keyonly_nonzero": 0,
+  "cfg_diff": 0
+ },
+ "band": {
+  "field_cmp": 336589,
+  "exact": 336589,
+  "tol": 0,
+  "mism": 0,
+  "rows_exact": 2400,
+  "fields": 159,
+  "keyonly": 0,
+  "keyonly_nonzero": 0,
+  "cfg_diff": 0
+ }
+}

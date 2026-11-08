@@ -1,0 +1,6 @@
+X1 ALKS 1305 asked=changed+ignored+kept: True | changes p50/p90/max [8.0, 15.0] 30 | reversals p50/p90/max [4.0, 9.0] 23 | share of ALKS with >=4 reversals 0.543 | last level counts [45, 124, 222, 914]
+   most reversals: main.1297 asked 49 changed 29 kept 20 reversals 23 last 1 on-seconds per level 1.6/1.2/1.0/0.8 s [47, 20, 18, 0] off 404
+   reversals <= changes-1 where changes>0: True | excess = changes - last >= 0: True
+X2 ALKS 1305 asked=changed+ignored+kept: True | changes p50/p90/max [5.0, 14.0] 34 | reversals p50/p90/max [2.0, 8.0] 24 | share of ALKS with >=4 reversals 0.415 | last level counts [20, 64, 171, 1050]
+   most reversals: main.1235 asked 53 changed 30 kept 23 reversals 24 last 2 on-seconds per level 1.6/1.2/1.0/0.8 s [0, 0, 0, 0] off 528
+   reversals <= changes-1 where changes>0: True | excess = changes - last >= 0: True

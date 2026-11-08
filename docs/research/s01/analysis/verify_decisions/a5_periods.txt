@@ -1,0 +1,75 @@
+v3w
+  before diff +3 [-4, +15] TTC-s/run; nc med 34; diff/s +0.009; effect vs nc -8.1 [-42.6, +13.0] %
+  taper  diff -0 [-7, +6] TTC-s/run; nc med 28; diff/s -0.013; effect vs nc +1.8 [-20.4, +23.5] %
+  hold   diff +40 [-10, +51] TTC-s/run; nc med 201; diff/s +0.201; effect vs nc -20.0 [-25.4, +4.8] %
+  after  diff +61 [+32, +85] TTC-s/run; nc med 336; diff/s +0.253; effect vs nc -18.1 [-25.3, -9.6] %
+  rest   diff +195 [+96, +260] TTC-s/run; nc med 835; diff/s +0.271; effect vs nc -23.4 [-31.1, -11.4] %
+  road 3      diff +152 [+68, +221]; nc med 254; effect -59.7 [-86.7, -26.8] %
+  road 4a     diff +310 [+249, +355]; nc med 681; effect -45.5 [-52.1, -36.5] %
+  road ramp2  diff -100 [-169, -37]; nc med 450; effect +22.3 [+8.2, +37.6] %
+  road rest   diff +13 [-9, +22]; nc med 59; effect -21.9 [-38.1, +15.1] %
+tail
+  before diff +4 [-4, +23] TTC-s/run; nc med 34; diff/s +0.013; effect vs nc -11.6 [-66.1, +12.2] %
+  taper  diff -3 [-10, +6] TTC-s/run; nc med 28; diff/s -0.070; effect vs nc +9.8 [-19.3, +36.1] %
+  hold   diff +34 [-21, +49] TTC-s/run; nc med 201; diff/s +0.169; effect vs nc -16.9 [-24.4, +10.6] %
+  after  diff +68 [+37, +89] TTC-s/run; nc med 336; diff/s +0.284; effect vs nc -20.3 [-26.5, -11.1] %
+  rest   diff +142 [+88, +270] TTC-s/run; nc med 835; diff/s +0.198; effect vs nc -17.0 [-32.4, -10.6] %
+  road 3      diff +120 [+60, +210]; nc med 254; effect -47.3 [-82.4, -23.5] %
+  road 4a     diff +298 [+234, +345]; nc med 681; effect -43.8 [-50.6, -34.4] %
+  road ramp2  diff -135 [-162, -46]; nc med 450; effect +30.1 [+10.2, +36.0] %
+  road rest   diff +7 [-2, +17]; nc med 59; effect -11.5 [-29.5, +3.6] %
+sw
+  before diff +6 [-8, +23] TTC-s/run; nc med 34; diff/s +0.021; effect vs nc -18.3 [-65.5, +22.6] %
+  taper  diff +2 [-4, +9] TTC-s/run; nc med 28; diff/s +0.058; effect vs nc -8.1 [-29.8, +14.4] %
+  hold   diff +29 [+2, +51] TTC-s/run; nc med 201; diff/s +0.145; effect vs nc -14.5 [-25.6, -0.7] %
+  after  diff +58 [+39, +84] TTC-s/run; nc med 336; diff/s +0.240; effect vs nc -17.2 [-25.2, -11.7] %
+  rest   diff +213 [+108, +261] TTC-s/run; nc med 835; diff/s +0.296; effect vs nc -25.5 [-31.2, -13.0] %
+  road 3      diff +151 [+89, +264]; nc med 254; effect -59.3 [-103.9, -35.0] %
+  road 4a     diff +242 [+214, +300]; nc med 681; effect -35.6 [-44.1, -31.4] %
+  road ramp2  diff -111 [-170, -20]; nc med 450; effect +24.7 [+4.4, +37.9] %
+  road rest   diff +8 [-21, +32]; nc med 59; effect -14.2 [-53.9, +34.9] %
+bv3
+  before diff +13 [-2, +32] TTC-s/run; nc med 34; diff/s +0.044; effect vs nc -38.6 [-93.3, +4.9] %
+  taper  diff +4 [-4, +7] TTC-s/run; nc med 28; diff/s +0.100; effect vs nc -14.0 [-24.2, +15.8] %
+  hold   diff +50 [+8, +67] TTC-s/run; nc med 201; diff/s +0.251; effect vs nc -25.0 [-33.5, -4.0] %
+  after  diff +85 [+62, +107] TTC-s/run; nc med 336; diff/s +0.354; effect vs nc -25.3 [-32.0, -18.6] %
+  rest   diff +229 [+171, +341] TTC-s/run; nc med 835; diff/s +0.318; effect vs nc -27.4 [-40.8, -20.5] %
+  road 3      diff +204 [+138, +285]; nc med 254; effect -80.3 [-112.1, -54.2] %
+  road 4a     diff +337 [+260, +368]; nc med 681; effect -49.5 [-54.0, -38.2] %
+  road ramp2  diff -84 [-145, -25]; nc med 450; effect +18.7 [+5.5, +32.1] %
+  road rest   diff +1 [-16, +16]; nc med 59; effect -1.9 [-27.1, +27.3] %
+os1_15_10
+  before diff +4 [-10, +20] TTC-s/run; nc med 34; diff/s +0.012; effect vs nc -10.1 [-56.5, +29.0] %
+  taper  diff +23 [+8, +30] TTC-s/run; nc med 28; diff/s +0.575; effect vs nc -80.7 [-107.0, -26.3] %
+  hold   diff +138 [+110, +161] TTC-s/run; nc med 201; diff/s +0.690; effect vs nc -68.7 [-80.1, -54.7] %
+  after  diff +240 [+220, +286] TTC-s/run; nc med 336; diff/s +0.998; effect vs nc -71.4 [-85.1, -65.7] %
+  rest   diff +686 [+612, +825] TTC-s/run; nc med 835; diff/s +0.953; effect vs nc -82.2 [-98.8, -73.4] %
+  road 3      diff +686 [+620, +727]; nc med 254; effect -269.5 [-285.7, -243.4] %
+  road 4a     diff +574 [+480, +632]; nc med 681; effect -84.2 [-92.8, -70.6] %
+  road ramp2  diff -21 [-140, +58]; nc med 450; effect +4.7 [-12.9, +31.1] %
+  road rest   diff +2 [-12, +26]; nc med 59; effect -2.5 [-44.1, +19.5] %
+p333
+  before diff +6 [-6, +23] TTC-s/run; nc med 34; diff/s +0.018; effect vs nc -15.9 [-66.7, +17.4] %
+  taper  diff +36 [+26, +44] TTC-s/run; nc med 28; diff/s +0.912; effect vs nc -128.1 [-156.1, -93.0] %
+  hold   diff +214 [+148, +285] TTC-s/run; nc med 201; diff/s +1.073; effect vs nc -106.7 [-141.8, -73.9] %
+  after  diff +374 [+336, +414] TTC-s/run; nc med 336; diff/s +1.560; effect vs nc -111.6 [-123.4, -100.0] %
+  rest   diff +1227 [+1010, +1418] TTC-s/run; nc med 835; diff/s +1.704; effect vs nc -146.9 [-169.8, -121.0] %
+  road 3      diff +660 [+562, +835]; nc med 254; effect -259.3 [-328.1, -220.8] %
+  road 4a     diff +1238 [+1053, +1314]; nc med 681; effect -181.8 [-192.9, -154.6] %
+  road ramp2  diff -27 [-75, +82]; nc med 450; effect +6.0 [-18.1, +16.7] %
+  road rest   diff +24 [-0, +61]; nc med 59; effect -39.8 [-103.4, +0.8] %
+3e
+  before diff +6 [-5, +30] TTC-s/run; nc med 34; diff/s +0.020; effect vs nc -17.4 [-87.0, +14.5] %
+  taper  diff +8 [-0, +17] TTC-s/run; nc med 28; diff/s +0.188; effect vs nc -26.3 [-59.6, +1.8] %
+  hold   diff +125 [+94, +159] TTC-s/run; nc med 201; diff/s +0.625; effect vs nc -62.2 [-79.1, -46.5] %
+  after  diff +202 [+172, +218] TTC-s/run; nc med 336; diff/s +0.842; effect vs nc -60.2 [-64.8, -51.1] %
+  rest   diff +370 [+256, +448] TTC-s/run; nc med 835; diff/s +0.514; effect vs nc -44.3 [-53.7, -30.7] %
+  road 3      diff +378 [+318, +402]; nc med 254; effect -148.5 [-157.8, -125.1] %
+  road 4a     diff +399 [+290, +433]; nc med 681; effect -58.6 [-63.6, -42.5] %
+  road ramp2  diff +2 [-80, +117]; nc med 450; effect -0.4 [-26.0, +17.9] %
+  road rest   diff +2 [-10, +14]; nc med 59; effect -2.5 [-24.6, +16.9] %
+max |sum of periods - ttc3| in X1: 0
+v3w r2 X1 0.35 (X1-X2 +0.026 [-0.007, +0.085]); rj2 X1 0.33 (X1-X2 -0.037 [-0.080, -0.006]); 4a X1 1.64 (X1-X2 -0.090 [-0.126, -0.079]); 4 X1 2.42 (X1-X2 -0.080 [-0.099, -0.062]); 3 X1 2.17 (X1-X2 -0.156 [-0.173, -0.105])
+os1_15_10 r2 X1 1.60 (X1-X2 +0.157 [+0.002, +0.218]); rj2 X1 1.90 (X1-X2 -0.056 [-0.266, +0.232]); 4a X1 1.90 (X1-X2 -0.183 [-0.277, +0.017]); 4 X1 2.61 (X1-X2 -0.320 [-0.356, -0.263]); 3 X1 2.55 (X1-X2 +0.100 [+0.027, +0.200])
+p333 r2 X1 2.25 (X1-X2 +0.138 [-0.049, +0.397]); rj2 X1 2.82 (X1-X2 +0.040 [+0.017, +0.127]); 4a X1 2.98 (X1-X2 +0.007 [+0.005, +0.009]); 4 X1 2.99 (X1-X2 +0.002 [+0.002, +0.003]); 3 X1 2.99 (X1-X2 -0.003 [-0.004, -0.003])
+3e r2 X1 0.54 (X1-X2 -0.125 [-0.297, -0.010]); rj2 X1 0.56 (X1-X2 -0.191 [-0.286, -0.090]); 4a X1 1.10 (X1-X2 -0.293 [-0.346, -0.229]); 4 X1 2.65 (X1-X2 -0.237 [-0.257, -0.225]); 3 X1 1.45 (X1-X2 -0.017 [-0.038, +0.027])

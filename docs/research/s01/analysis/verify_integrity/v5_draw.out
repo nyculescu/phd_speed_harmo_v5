@@ -1,0 +1,6 @@
+band pert_log example structure: list 2 ['list', 'list'] [[851, True], [961, False]]
+band seeds 20 draw matches log start (<=1 s) or both none: 20 {'edge3': 6, 'edge5': 4, 'edge4': 5, 'none': 5}
+s1 pert_log example structure: list 2 ['list', 'list'] [[1191, True], [1258, False]]
+s1 seeds 20 draw matches log start (<=1 s) or both none: 20 {'none': 6, 'edge3': 6, 'edge5': 4, 'edge4': 4}
+X1 {'{"dur": 120.0, "edge": "4", "kind": "slowdown", "limit_kmh": 25, "taper": 20.0, "times": [600.0, 1200.0]}': 35}
+X2 {'{"dur": 180.0, "edge": "3", "kind": "slowdown", "limit_kmh": 30, "taper": 20.0, "times": [700.0]}': 35}

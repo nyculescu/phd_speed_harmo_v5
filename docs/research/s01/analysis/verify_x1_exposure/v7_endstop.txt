@@ -1,0 +1,18 @@
+X1 within nc rho(ttc3_r_4a, end_stop2) +0.33; rho(ttc3_s_lo, end_stop2) +0.38
+X1 across 35 arms (medians) rho(ttc3_r_4a, end_stop2) +0.85
+  v3w: d end_stop2 +461 [+357, +558] (nc med 728); d ttc3_r_4a +272 [+229, +312]; rho(d,d) +0.13 null med +0.36 [+0.12, +0.55]; within-arm rho +0.37
+  tail: d end_stop2 +472 [+341, +589] (nc med 728); d ttc3_r_4a +284 [+239, +329]; rho(d,d) +0.43 null med +0.37 [+0.16, +0.56]; within-arm rho +0.37
+  sw: d end_stop2 +489 [+376, +595] (nc med 728); d ttc3_r_4a +254 [+212, +294]; rho(d,d) +0.18 null med +0.35 [+0.12, +0.55]; within-arm rho +0.39
+  inc: d end_stop2 +499 [+385, +601] (nc med 728); d ttc3_r_4a +303 [+260, +345]; rho(d,d) +0.43 null med +0.38 [+0.15, +0.58]; within-arm rho +0.36
+  3e: d end_stop2 +246 [+127, +359] (nc med 728); d ttc3_r_4a +366 [+303, +426]; rho(d,d) +0.47 null med +0.35 [+0.13, +0.54]; within-arm rho +0.36
+  p333: d end_stop2 +1752 [+1562, +1932] (nc med 728); d ttc3_r_4a +1186 [+1088, +1282]; rho(d,d) +0.51 null med +0.55 [+0.40, +0.68]; within-arm rho +0.61
+  os1_15_10: d end_stop2 +959 [+742, +1179] (nc med 728); d ttc3_r_4a +561 [+495, +627]; rho(d,d) +0.41 null med +0.48 [+0.31, +0.63]; within-arm rho +0.48
+X2 within nc rho(ttc3_r_4a, end_stop2) +0.59; rho(ttc3_s_lo, end_stop2) +0.45
+X2 across 35 arms (medians) rho(ttc3_r_4a, end_stop2) +0.77
+  v3w: d end_stop2 +229 [+128, +329] (nc med 592); d ttc3_r_4a +95 [+56, +135]; rho(d,d) +0.42 null med +0.57 [+0.40, +0.71]; within-arm rho +0.52
+  tail: d end_stop2 +320 [+224, +412] (nc med 592); d ttc3_r_4a +106 [+68, +145]; rho(d,d) +0.37 null med +0.55 [+0.36, +0.70]; within-arm rho +0.51
+  sw: d end_stop2 +271 [+174, +368] (nc med 592); d ttc3_r_4a +95 [+54, +138]; rho(d,d) +0.31 null med +0.58 [+0.39, +0.72]; within-arm rho +0.54
+  inc: d end_stop2 +240 [+154, +326] (nc med 592); d ttc3_r_4a +124 [+79, +166]; rho(d,d) +0.37 null med +0.65 [+0.48, +0.78]; within-arm rho +0.72
+  3e: d end_stop2 +163 [+30, +294] (nc med 592); d ttc3_r_4a +122 [+57, +193]; rho(d,d) +0.20 null med +0.47 [+0.24, +0.66]; within-arm rho +0.37
+  p333: d end_stop2 +1329 [+1086, +1564] (nc med 592); d ttc3_r_4a +744 [+650, +838]; rho(d,d) +0.44 null med +0.52 [+0.35, +0.66]; within-arm rho +0.52
+  os1_15_10: d end_stop2 +849 [+677, +1022] (nc med 592); d ttc3_r_4a +312 [+250, +376]; rho(d,d) +0.57 null med +0.48 [+0.30, +0.65]; within-arm rho +0.44

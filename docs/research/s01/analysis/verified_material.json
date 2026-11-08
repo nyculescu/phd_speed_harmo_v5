@@ -1,0 +1,1017 @@
+[
+ {
+  "key": "integrity",
+  "analysis": {
+   "area": "Data integrity of S0+S1 measurement rows (report-only, V470/V475)",
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/",
+   "answer": "The measurement pack did not change the runs. All 5,200 S0 rows (2,800 test and 2,400 band) match their round-2 rows with the same (name, q, seed) on every field the two share, with nothing off even by rounding: 761,642 field comparisons over 159 fields (all_delay, passed, ttc_net, every ttc3/ttc2/ttc15/sev3 split, b3/b45/b7_step, brake_net, b45_net, collisions, teleports, arrived, N, dist, fuel, the lists flow_min, v20_min, lv and pert_log, and the rest). 0 fall only within 1e-9 and 0 differ. The key sets are identical apart from the 53 added m_* pack keys, and each cfg is identical once its added \"measure\" key is removed. In v5b/, the code difference between round 2 (6c49e7e) and the S0 run (79b889b) is only the pack: measure.py is new and plant_sweep.py gains its hooks. The pack's own sums hold on all 5,560 runs, all 5,560 space-time files are present and well formed, summary_rows_*.json recompute exactly from the rows, and report_rows_*.txt regenerate line for line. S1 is complete and clean: 360 rows = 9 arms x 2 levels x 20 seeds, seeds exactly 7,440,900-919, no duplicates. Those seeds appear nowhere else under v5b1_runs except the S1 smoke files. S1 had 0 collisions, 0 teleports and 0 contact steps. Low finished_pct at 7,000 (54-70 %) looks built-in, not a failure: even free-flowing 3,500 finishes only 84-86 %, and all_delay counts unfinished and queued vehicles. Two things matter when reading the results. First, os1_15_10 and p333 are the same runs on all 20 S1 seeds at 3,500, and on 17/10/6/1 of 20 band seeds at 4,500/5,000/5,250/5,500; this follows from the rules' definitions. Second, p333's 0.934 'longest level' share has a likely cause in the code: levels step up one at a time, at most once per 10-s hold, after a vehicle enters. The arm mapping holds: d0u500-d4u500 is baseline-v3 (baseline_v3/conf3/train/C{i}_u500.pt), and the S0 job configs equal round 2's for all 70 test and 24 band arms.",
+   "findings": [
+    {
+     "id": "F1",
+     "statement": "The pack did not change any S0 run: every rows_test/rows_band row equals its round-2 row on every shared field, and the key sets are identical apart from the m_* pack keys.",
+     "numbers": "test: 2,800 new / 2,800 stored, 0 duplicate keys, 2,800 matched, 0 unmatched; 425,053 field comparisons exact, 0 only within 1e-9 relative, 0 mismatches; rows with all shared fields exact 2,800/2,800. band: 2,400/2,400 matched, 336,589 exact, 0 within 1e-9 only, 0 mismatches. 159 distinct fields compared, including all_delay, passed, ttc_net, ttc3 and all ttc3_r_*/_s_*/_p_* (likewise ttc2, ttc15, sev3), b3_step, b45_step, b7_step, alks_b*_step, alks_full_*, brake_net, b45_net, b7_net, collisions, contact_steps, teleports, arrived, N, dist, dist_step, fuel, fuel_step, fuel_km, finished_pct, delay*, flow_min, v20_min, lv, pert_log. Counters that appear in only one of the two rows: 0. cfg equal after removing 'measure': 5,200/5,200. 53 m_* keys only in new rows (m_dec_* absent only in nc rows: 80 test, 100 band).",
+     "method": "Load both files by (name, q, seed); for each pair, deep exact equality per field (NaN==NaN allowed, none found); on inequality, max relative difference; a key present on only one side is checked against 0 (a counter that never fired is absent).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/compare_rows.py, compare_rows.out, compare_rows.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F2",
+     "statement": "In v5b/, the only code difference between round 2's run commit and the S0/S1 run commit is the measurement pack.",
+     "numbers": "git diff --stat 6c49e7e 79b889b -- v5b/: v5b/fleet/measure.py +435 (new), v5b/fleet/plant_sweep.py +22/-2 (pack hooks: Measure, vehicle_step, second, decisions via policy_probs, finish). status.txt on the remote: 'code 79b889b'. The r2-metrics worktree is clean (git status --porcelain: 0 lines before and after my scripts).",
+     "method": "git diff in the read-only worktree, excluding measure.py to read the hook lines; policy_probs only reads the networks under torch.no_grad.",
+     "evidence": "git -C /home/catalin/work/phd/wt/r2-metrics diff 6c49e7e 79b889b -- v5b/; /home/catalin/work/phd/v5b1_runs/measure_s01_remote/status.txt",
+     "confidence": "high"
+    },
+    {
+     "id": "F3",
+     "statement": "The pack is self-consistent on all 5,560 runs, the space-time files are complete, the summary files recompute exactly from rows plus fields, and the ASCII report panels regenerate identically.",
+     "numbers": "measure2.checks reimplemented on 2,800 + 2,400 + 360 rows: 0 failures for speed_bins_sum_eq_steps, dist_eq_dist_step (rtol 1e-9), fuel_eq_fuel_step, event_s_eq_b3_step, events_ge45_le_b45_steps, st_seconds_le_vs, st_covers_mainline (>0.5 vs), m2_out_near_passed, alks_ge9_event_if_full, and level_s_eq_env_lv / decisions_present on all 5,340 non-nc rows (lv has 12 entries in each). st/: 5,560 files, each referenced once, 0 orphans, shapes = m_st_shape, 0 non-finite, 0 negative. summary_rows_{test,band,s1}.json: 2,800/2,400/360 entries, 0 missing for a row, 0 differing from v5b.fleet.measure.summary(row, field) (rel tol 1e-12). report_rows_*.txt regenerated from the summaries with measure2.panel and METRICS: 443/1,009/277 lines, identical text.",
+     "method": "Python with -I -B importing the worktree's measure.py and measure2.py (no bytecode written); np.load of every npz; JSON-normalised comparison.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/pack_checks.py, pack_checks.out, pack_checks.json; report_regen.py, report_regen.out",
+     "confidence": "high"
+    },
+    {
+     "id": "F4",
+     "statement": "rows_s1 is the complete 9 x 2 x 20 grid on seeds 7,440,900-919, with fresh seeds and the band's configurations.",
+     "numbers": "360 rows; names B|nc, B|p333, B|os1_15_10, B|3e, B|w0u250, B|w1u500, B|w2u250, B|w3u500, B|w4u500; levels 3500.0 and 7000.0; seeds = {7,440,900..7,440,919}; 0 duplicate keys, 0 missing grid cells, 0 extra keys. S1 seeds among the test seeds (7,440,840-879, 40) or band seeds (7,440,880-899, 20): none. Grep of all plain .jsonl under /home/catalin/work/phd/v5b1_runs: S1 seeds appear only in s01_smoke1/ and s01_smoke2/smoke1_rows.jsonl (plus measure_s01_remote/smoke1); zgrep of 1,074 .jsonl.gz: no hit. job_s1 cfgs equal round2/band/job_6c49e7e.json cfgs for all 9 arms apart from 'measure'; every S1 row's cfg equals its job cfg (360/360).",
+     "method": "Counter over keys; set comparisons; grep -lE '\"seed\": 74409(0[0-9]|1[0-9])[,}]'.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.py, checks.out, checks.json (s1_grid, configs)",
+     "confidence": "high"
+    },
+    {
+     "id": "F5",
+     "statement": "The S1 runs are healthy. The low finished_pct at 7,000 looks built-in plus over-capacity congestion, not run failure, and all_delay counts the unfinished and queued vehicles.",
+     "numbers": "All 18 S1 arm-levels: collisions 0, teleports 0, contact_steps 0, steps 1,500. finished_pct min/median/max at 3,500: 83.7-86.1 for every arm (nc 83.7/84.2/85.7). At 7,000: nc 54.3/58.2/61.2; 3e 59.2/62.0/65.2; os1_15_10 57.3/60.9/67.1; p333 58.4/61.8/66.9; v3w learners min 57.3, medians 63.0-63.7, max 69.7. Median passed at 3,500: 1,458-1,464 (demand x window = 3,500 x 1,500/3,600 = 1,458); at 7,000: 2,204 (nc) to 2,384 (w4u500), against 2,917 demanded. finished_pct = arrived by t_end / departed in [warm, t_end) (plant_sweep.py ~l.313-325). N adds getIDCount + getPendingVehicles every second (b_env.py l.423), so all_delay = N - dist_step/REF_SPEED includes the insertion queue.",
+     "method": "Per (name, q) aggregates of collisions, teleports, contact_steps, finished_pct, passed, all_delay; code reading for the field definitions.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.out (health_s1), checks.json",
+     "confidence": "medium"
+    },
+    {
+     "id": "F6",
+     "statement": "Test and band health is unchanged from round 2 (the rows are identical): 5 single collisions in total, no teleports.",
+     "numbers": "test: collisions 4 (one each in X1|d0u500, X1|s2u500, X2|lr400_13_2, X2|w3u500), teleports 0, contact_steps 384, finished_pct min 68.31, steps 1,500 everywhere. band: collisions 1 (B|t0 at 5,000), teleports 0, contact_steps 169, finished_pct min 66.51. Round-2 report: '4 single events over all test arms'.",
+     "method": "Per arm-level sums over rows_test/rows_band.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.out; docs/research/results/round_2_result.md l.237",
+     "confidence": "high"
+    },
+    {
+     "id": "F7",
+     "statement": "Pairing holds: within every cell, level and seed, all arms see the same slowdown. The training draw rebuilt from the seed matches the logged on/off times. X2 sits on the edge of the training draw's range, not inside it.",
+     "numbers": "pert_log identical across arms: test 80 groups x 35 arms, band 100 x 24, S1 40 x 9; 0 groups differ. perturb.py random kind (default_rng(seed+910,000)) rebuilt: matches pert_log within 1 s on 20/20 band and 20/20 S1 seeds. S1: 6/20 seeds have no slowdown (7,440,900, 904, 905, 907, 909, 914); edge 3: 6, edge 4: 4, edge 5: 4. Band: 5/20 none, edge 3: 6, edge 4: 5, edge 5: 4. job_test: X1 = edge 4, 25 km/h, 120 s at 600 and 1,200 s, taper 20; X2 = edge 3, 30 km/h, 180 s at 700 s, taper 20. Draw: edge 3/4/5, uniform 25-60 km/h, 60-180 s, start 400-1,200 s, taper 20, one event. So X2's duration equals the draw's upper bound, and X1's 25 km/h equals its lower bound; X1's two events lie outside the draw.",
+     "method": "Group rows by (cell, q, seed) and compare JSON of pert_log; reimplement the draw with numpy (no SUMO).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.py (pairing, draw_vs_log), checks.out; /home/catalin/work/wt/r2-metrics/v5b/fleet/perturb.py l.34-39",
+     "confidence": "high"
+    },
+    {
+     "id": "F8",
+     "statement": "os1_15_10 and p333 are the same runs at low demand, by how the rules are defined. At S1's 3,500 they are one arm, not two.",
+     "numbers": "Identical rows (every non-pack field, hashed) for os1_15_10 vs p333: S1 3,500: 20/20 seeds; band 4,500: 17/20, 5,000: 10/20, 5,250: 6/20, 5,500: 1/20, 6,000: 0/20; S1 7,000: 0/20; test X1/X2: 0/40. No other pair of arms is identical on any seed. OwnState gives level 'free'=3 unless past x_min with own speed < th=15 m/s and crowd >= 10 (b_env.py l.1074-1084); p333 = cav_rule [3,3,3].",
+     "method": "SHA-1 of each row without name, cfg, m_st_file and m_* keys; compare all arm pairs per cell and level.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/identical_arms.py, identical_arms.out, identical_arms.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F9",
+     "statement": "The arm mapping is confirmed from the run code and validation.json: d* is baseline-v3.",
+     "numbers": "measure2.groups(round2): tail = t0-t4 (TailMean over baseline_v4/policies/C{i}_u250, u300, u350, u400, u450, u500); sw = s0u500-s4u500 (ZoneSwitch: baseline_v4/policies/C{i}_u500.pt from x_from=594.72, own_state level 1, th 15, crowd 10 elsewhere); v3w = w0u250, w1u500, w2u250, w3u500, w4u500 (baseline_v4/policies/C{i}_u{ck}.pt; validation.json chosen v3w {0:250,1:500,2:250,3:500,4:500}); baseline-v3 = d0u500-d4u500 (test2.plan 'inc' at u500; baseline_v3/conf3/train/C{i}_u500.pt). validation finalists = ['tail','sw'], chosen sw all 500. Same policy source in X1, X2 and B for each name. Rule arms in test: 3e, 3ex1 (X1 only), 3ex2 (X2 only), a4400_10_1, copy, lr1000_10_1, lr1000_16_2, lr400_13_2, lr400_16_1, nc, os0_10_10, os1_10_0, os1_15_10, p333, r4a1, z33133; in band: nc, p333, os1_15_10, 3e.",
+     "method": "Import measure2/decide2/common2e from the worktree (python -I -B) and call groups(); read the cfg policy paths in job_test/job_band.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/arm_mapping.py, arm_mapping.out, arm_mapping.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F10",
+     "statement": "The S0 job used exactly round 2's test and band configurations, levels and seeds; only the 'measure' key was added.",
+     "numbers": "job_test.json vs round2/test/job_6c49e7e.json: 70 = 70 arm names, 0 cfg differences after removing 'measure', levels [5300.0] equal, seeds 7,440,840-879 equal. job_band.json vs round2/band/job_6c49e7e.json: 24 = 24, 0 differences, levels [4500, 5000, 5250, 5500, 6000] and seeds 7,440,880-899 equal. Round-2 job files also hold out/rd/workers (not run settings). Every row's cfg equals its job's cfg: 2,800/2,800, 2,400/2,400, 360/360. 'measure' = /home/catalin/work/phd/v5b1_runs/measure_s01/st (remote path) on all arms.",
+     "method": "Dict equality per arm after stripping 'measure'.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.py (configs), checks.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F11",
+     "statement": "p333's 'ALKS at the longest level, V2V on' = 0.934 is not a pack error. Most likely it is time spent stepping up to level 3 after entry.",
+     "numbers": "p333 shares of V2V-on level-seconds, levels 0/1/2/3, mean over runs: test [0.0054, 0.0308, 0.0303, 0.9335]; band [0.0062, 0.0351, 0.0344, 0.9243]; S1 [0.0058, 0.0333, 0.0323, 0.9285]. Test decision totals: asked 5,732,443, changed 304,344, ignored 202,910, kept 5,225,189, reversals 0. The pack's level-seconds equal the environment's own lv count on every non-nc row (F3). b_env.py docstring l.634: 'target moves one level at most once per hold s' (hold 10 s for these arms).",
+     "method": "Sum m_dec_level_s and m_dec_totals over p333 rows; code reading.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/pack_checks.out (p333 lines), pack_checks.json",
+     "confidence": "medium"
+    },
+    {
+     "id": "F12",
+     "statement": "The summary files hold no NaN or inf. None values appear only where a metric is optional by design, and none of the metrics in the lead's first look has a None, so no report panel dropped a seed.",
+     "numbers": "NaN/inf: 0 in summary_rows_test, band and s1. None totals: 14,256 / 15,427 / 3,273, only in dec.conf_q and dec.entropy_mean (rule arms have no probabilities: 40/40 per rule arm in test, 20/20 in S1), m1/m2 breakdown_min, discharge, drop_pct, pre_q5max, recovery_min (no breakdown detected), waves.front_kmh_median and jam_clusters[].front_kmh, and empty waves.jam_clusters (for example 15/20 seeds for nc at S1 3,500). 0 None for waves.jam_share, waves.osc_kmh, waves.congested_km_max, events_ge45_car/alks/truck, cascade_share_car, fuel_petrol_g_km, dec.level_share_on, dec.applied_share, dec.reversal_share, dec.excess_changes_per_vehicle, ramp1_queue_mean, m1/m2.slow_minutes, a_q_car, v_q_car, v_q_alks, a_rms_car. dec present in all non-nc runs: 2,720/2,800, 2,300/2,400, 320/360. Panels with a seed dropped for None: 0.",
+     "method": "Flatten each summary entry; count None and NaN/inf per path, arm group and level; in report_regen.py, count seeds kept against paired seeds per panel and arm.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/pack_checks.out (none_nan_by_metric), pack_checks.json, report_regen.out",
+     "confidence": "high"
+    },
+    {
+     "id": "F13",
+     "statement": "Re-runs are deterministic. Smoke rows equal the main rows on the remote host. The local smoke rows differ only in the pack-only m_dec_entropy_mean, at the 1e-9 to 3e-8 relative level.",
+     "numbers": "Remote measure_s01_remote/smoke (7 S0 runs) and smoke1 (B|p333 3,500, B|nc 7,000, B|w0u250 7,000, seed 7,440,900): 0 differing keys, m_* included (cfg and m_st_file excluded). s01_smoke1 and s01_smoke2 (3 S1 runs each) and round2_measure_smoke_2354 (7 S0 runs): every key equal except m_dec_entropy_mean in policy runs; relative difference 6.1e-9 (B|w0u250 7,000), 6.1e-9 (B|d0u500 5,000), 1.6e-9 (X2|t0), 3.1e-8 (X2|s0u500), 3.1e-9 (X1|w0u250). Entropy is not in any report panel (METRICS uses conf_q).",
+     "method": "Key-by-key equality of smoke rows against the main rows with the same (name, q, seed).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/integrity/checks.out (smoke rows vs main rows), checks.json",
+     "confidence": "medium"
+    },
+    {
+     "id": "F14",
+     "statement": "The statistic in use, common1.effect/raw (from docs/research/conf3/common.py), implements the stated convention. Two details matter: its default CI is not 95 %, and its denominator is held fixed.",
+     "numbers": "raw(): per paired seed d = sign x (A - B) / ref x 100 with ref = max(median_B, 1e-9) held fixed; the point estimate is median(d), which equals sign x median(P - O)/median(O) x 100 when median(O) > 0. Missing counters read as 0 (val). Bootstrap: np.random.default_rng(20261104), 20,000 resamples of seeds, percentiles pct with default (1.25, 98.75), i.e. 97.5 % two-sided; a 95 % CI needs pct=(2.5, 97.5) (decide2.P95). effect() = raw() rounded to 0.1. arm_mean = per-seed mean over the learners of every numeric key on the intersection of their seeds.",
+     "method": "Code reading.",
+     "evidence": "/home/catalin/work/phd/wt/r2-metrics/docs/research/conf3/common.py l.69-91; docs/research/round1/common1.py l.71-76; docs/research/round2/decide2.py l.13",
+     "confidence": "high"
+    }
+   ],
+   "caveats": [
+    "comparisons_made = 0 statistical comparisons; no effect or CI was computed in this area. The integrity checks were exact equality tests: 761,642 field comparisons between S0 and round-2 rows, plus checks of the pack's own sums, the summary files and the configs.",
+    "Exact equality shows the pack did not change the S0 runs on code 79b889b. It does not show that the plant or the metrics are correct.",
+    "Which machine produced the round-2 stored rows is not recorded here, so I cannot say whether the S0-vs-round-2 match is also a cross-machine match. That s01_smoke1/2 and round2_measure_smoke_2354 ran on the local machine is inferred from folder names.",
+    "S1 has no stored reference. Its reproducibility rests on 3 repeated runs (seed 7,440,900 only) and on the pack checks passing.",
+    "The explanations for finished_pct (built-in floor from the 1,500-s window) and for p333's 0.934 (one-level steps once per 10-s hold) come from code and data patterns. I did not trace them vehicle by vehicle.",
+    "The zgrep scan of the .jsonl.gz files ran with errors suppressed. It printed no match, but a read error would also print nothing.",
+    "S1's 3,500 level has only 8 distinct arms (os1_15_10 = p333 on all 20 seeds). Any S1 reading that counts them as two opponents double-counts.",
+    "X2's duration (180 s) is the upper bound of the training draw (uniform 60-180 s). 'Inside the draw' holds only at the boundary of its range."
+   ],
+   "comparisons_made": 0
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "confirmed",
+     "recomputed": "Own script v1_rows.py, matched by (name, q, seed). Test: 2,800/2,800 matched, 0 duplicates, 425,053 field comparisons, all exact, 0 only within 1e-9, 0 mismatches. Band: 2,400/2,400 matched, 336,589 exact, 0 mismatches. 159 distinct fields. 0 keys present on one side only. 0 int/float type-only differences. cfg equal once 'measure' is removed: 5,200/5,200. 53 m_* keys in non-nc rows, 41 in nc rows (12 m_dec_* absent), 0 m_* keys in round-2 rows. Every S0 row carries pack keys, so every row came from a run with the pack on.",
+     "note": "Reproduced exactly. One caveat is wrong and understates the result: the machines are recorded. Round 2's test and band ran on rented instance 59653253 (EPYC 7B13; V464, round_2_result.md l.42). S0 ran on instance 59681619 (EPYC 7702; V475). So this exact match is also a cross-machine reproduction, Zen 3 against Zen 2."
+    },
+    {
+     "id": "F2",
+     "verdict": "corrected",
+     "recomputed": "git diff --stat 6c49e7e 79b889b -- v5b/: 2 files, 455 insertions, 2 deletions. measure.py +435 (new); plant_sweep.py +20/-2, not +22/-2 (the stat column '22' counts changed lines). The r2-metrics worktree is clean (0 porcelain lines).",
+     "note": "The substance holds: the only change in v5b/ is the pack and its hooks. In policy_probs, lo[due] makes a copy and runs under torch.no_grad. The hook calls only read values. Only the line count was wrong."
+    },
+    {
+     "id": "F3",
+     "verdict": "confirmed",
+     "recomputed": "My own code (v7_summ_recompute.py, without measure.py) recomputed, for all 5,560 runs, from the rows and st/*.npz: waves jam_share, congested_km_max, osc_kmh; events_ge45 for car, alks and truck; cascade_share for each class; and the last element of level_share_on. Maximum relative difference against summary_rows_*.json: 0.0 on every metric. st/: 5,560 files, each referenced once, 0 missing, 0 orphans, shapes equal m_st_shape. Panel medians (v8_panels.py, arm mean over learners per seed, then the median of 40 seeds) for 5 metrics x 7 arms x 2 cells match the report_rows_test.txt 'med' values within print rounding.",
+     "note": "I verified a subset independently. I did not rerun all of measure2.checks or regenerate every panel line. Everything I checked agrees."
+    },
+    {
+     "id": "F4",
+     "verdict": "corrected",
+     "recomputed": "360 rows; 9 names; levels 3500, 7000; seeds 7,440,900-919 contiguous; 0 duplicates, 0 missing, 0 extra cells. S1 seeds among test (7,440,840-879) and band (7,440,880-899) seeds: 0. Row cfg equals the job_s1 cfg on 360/360, and job_s1 cfg equals the round2/band cfg ('measure' removed) for all 9 arms. Plain .jsonl grep of v5b1_runs: S1 seeds appear only in rows_s1 and the 3 smoke1 files. All 3,111 .gz files (860 .jsonl.gz, not 1,074): 0 keyed seed hits, 0 read errors. The 15 hits from an unkeyed number search were digits inside floats.",
+     "note": "The conclusion holds and now rests on a full scan with read errors counted. The analyst's '1,074 .jsonl.gz' count could not be reproduced and has no script behind it."
+    },
+    {
+     "id": "F5",
+     "verdict": "corrected",
+     "recomputed": "Health numbers reproduced exactly: every S1 arm-level has collisions 0, contact_steps 0, steps 1,500. finished_pct at 3,500: 83.7-86.1. At 7,000: nc 54.3/58.2/61.2, 3e 59.2/62.0/65.2, p333 58.4/61.8/66.9, os1_15_10 57.3/60.9/67.1, v3w learners 57.3-69.7. passed median: 1,458-1,464 at 3,500; 2,204 (nc) to 2,384 (w4u500) at 7,000. My own check of the floor: the mainline is 6,778 m (m_offsets _end), 244.8 s at 100 km/h = 16.3 % of the 1,500-s window (warm 300, episode 1,500), so about 83.7 % should finish even in free flow. That matches what was observed.",
+     "note": "Two corrections. (1) 'teleports 0' is not health evidence. b_env uses CrashSim (b_env.py l.167), which starts SUMO with --time-to-teleport -1 and --collision.action warn (day.py l.131-135), so the teleport counter cannot fire. (2) The finished_pct explanation is now quantified, not just 'looks built-in'. At 7,000 the extra drop comes from congestion plus the insertion backlog, with no teleport relief."
+    },
+    {
+     "id": "F6",
+     "verdict": "confirmed",
+     "recomputed": "Test: 4 collisions (X1|s2u500 seed 7,440,853; X2|w3u500 7,440,865; X1|d0u500 7,440,868; X2|lr400_13_2 7,440,860), contact_steps 384, finished_pct min 68.31, steps 1,500. Band: 1 collision (B|t0, 5,000, seed 7,440,890), contact_steps 169, finished_pct min 66.51. round_2_result.md l.237 reads '4 single events over all test arms'.",
+     "note": "The numbers are exact. 'No teleports' is true by construction (see F5), so it adds no information."
+    },
+    {
+     "id": "F7",
+     "verdict": "corrected",
+     "recomputed": "pert_log is identical across arms in all test (80), band (100) and S1 (40) cell-level-seed groups. My rebuild of the draw (default_rng(seed+910,000)) matches the logged on and off times within 0.6 s on 20/20 band and 20/20 S1 seeds. S1: none 6, edge 3: 6, edge 4: 4, edge 5: 4. Band: none 5, edge 3: 6, edge 4: 5, edge 5: 4. job_test: X1 = edge 4, 25 km/h, 120 s at 600 and 1,200 s; X2 = edge 3, 30 km/h, 180 s at 700 s, taper 20 on both.",
+     "note": "The numbers are confirmed. The wording 'X2 ... not inside it' overstates. X2's edge (3), limit (30 km/h, within 25-60) and start (700 s, within 400-1,200) are inside the draw. Only its 180-s duration sits at the draw's upper bound, U(60, 180)."
+    },
+    {
+     "id": "F8",
+     "verdict": "confirmed",
+     "recomputed": "Hash of every non-pack field except name and cfg: os1_15_10 = p333 on S1 3,500: 20/20 seeds. Band: 4,500: 17/20; 5,000: 10/20; 5,250: 6/20; 5,500: 1/20; 6,000: 0/20. S1 7,000 and test: 0. No other pair of arms is identical on any seed.",
+     "note": "Reproduced exactly. In any S1 3,500 reading, p333 and os1_15_10 are one arm."
+    },
+    {
+     "id": "F9",
+     "verdict": "confirmed",
+     "recomputed": "common2e.PREFIX: tail 't', sw 's', v3w 'w', inc 'd'. test2.plan: tested = finalists ['tail', 'sw'] + v3w; inc = all learners at u500. validation.json chosen v3w {0:250, 1:500, 2:250, 3:500, 4:500}, sw all 500. job_test policy paths: d{i}u500 is baseline_v3/conf3/train/C{i}_u500.pt; w* is baseline_v4/policies/C{i}_u{ck}.pt; s{i}u500 is baseline_v4/policies/C{i}_u500.pt inside ZoneSwitch; t{i} is C{i}_u250..u500.",
+     "note": "Confirmed, so d* is baseline-v3. w1u500, w3u500 and w4u500 load the same .pt files as s1u500, s3u500 and s4u500. They differ only by the ZoneSwitch wrapper, and their rows are not identical (F8)."
+    },
+    {
+     "id": "F10",
+     "verdict": "confirmed",
+     "recomputed": "job_test vs round2/test/job_6c49e7e.json: 70 = 70 arms, 0 cfg differences once 'measure' is removed, levels [5300] equal, seeds 7,440,840-879 equal. job_band: 24 = 24 arms, 0 differences, levels and seeds 7,440,880-899 equal. Row cfg equals job cfg: 2,800/2,800, 2,400/2,400, 360/360. 'measure' is '/home/catalin/work/phd/v5b1_runs/measure_s01/st' on all arms. Round-2 jobs also hold out, rd and workers (120).",
+     "note": "Reproduced exactly."
+    },
+    {
+     "id": "F11",
+     "verdict": "confirmed",
+     "recomputed": "Mean p333 shares over runs, levels 0-3: test [0.0054, 0.0308, 0.0303, 0.9335]; band level 3 0.9243; S1 level 3 0.9285. Panel medians 0.934 (X1) and 0.933 (X2). Per-vehicle trace from the st npz 'dec_level_s', p333 test runs: 90,944 V2V-on ALKS spend a median of 15 s, p90 23 s, max 24 s at levels 0-2. 0 vehicles spend over 30 s there. Reversals 0.",
+     "note": "Upgrade to high confidence. Levels start at 0 (b_env.py l.699, lvl.get(v, 0)) and move one step per 10-s hold (l.703-706). p333 always wants level 3 and never reverses, so the 6.6 % is entirely the step-up after entry. It is not a pack error."
+    },
+    {
+     "id": "F12",
+     "verdict": "confirmed",
+     "recomputed": "None totals: test 14,256, band 15,427, S1 3,273; non-finite 0. None appears only in dec.conf_q and dec.entropy_mean (rule arms: 80 per arm in test, 100 in band, 40 in S1), m1/m2 breakdown_min, discharge, drop_pct, pre_q5max, recovery_min, waves.front_kmh_median and jam_clusters[].front_kmh. dec is absent only in nc (80/100/40). Empty jam_clusters: band 232, S1 138, test 0. No None in jam_share, osc_kmh, congested_km_max, events_ge45_*, cascade_share_car. Summary entries missing for a row: 0.",
+     "note": "Reproduced. If anyone later reads the m1/m2 breakdown and recovery metrics, they are None in a large, arm-dependent share of runs (for example m2.recovery_min in about 70 % of test runs), so missingness carries information there."
+    },
+    {
+     "id": "F13",
+     "verdict": "confirmed",
+     "recomputed": "Remote smoke (7 rows) and smoke1 (3 rows): 0 differing keys against the main rows (cfg and m_st_file excluded). Local s01_smoke1, s01_smoke2 and round2_measure_smoke_2354: only m_dec_entropy_mean differs, in policy runs, at relative 1.6e-9 to 3.1e-8. Everything else is equal.",
+     "note": "Confirmed. The remote smoke ran on the same instance, so it shows same-host determinism. The laptop-vs-remote match, with entropy differing at about 1e-8, is the cross-CPU evidence."
+    },
+    {
+     "id": "F14",
+     "verdict": "confirmed",
+     "recomputed": "conf3/common.py raw(): d = sign x (A - B) / ref x 100, with ref = max(median_B, 1e-9) fixed. Point estimate = median(d) = sign x median(A - B) / median(B) x 100. default_rng(20261104), 20,000 resamples of seeds, default pct (1.25, 98.75), i.e. a 97.5 % CI; P95 = (2.5, 97.5) in decide2/report2. arm_mean: per-seed mean over learners on the intersection of their seeds, with missing counters read as 0.",
+     "note": "Confirmed by code reading. A 95 % CI needs pct=P95 to be passed. The denominator is fixed, so the CI ignores uncertainty in median(O)."
+    }
+   ],
+   "answer_verdict": "Supported, with small corrections. I reproduced every number exactly with my own code: the pack did not change the S0 runs, S1 is complete and fresh, the summaries hold no NaN, the arm mapping holds and the job configs equal round 2's. Changes needed: (1) Fix the caveat that the round-2 machine is unrecorded. V464 and round_2_result.md l.42 record instance 59653253 (EPYC 7B13), and S0 ran on 59681619 (EPYC 7702), so the exact match is a cross-machine reproduction. (2) Stop citing 0 teleports as health evidence. CrashSim runs SUMO with --time-to-teleport -1 and --collision.action warn, so the counter cannot fire. (3) The finished_pct floor and p333's 0.934 are now measured: the 6,778-m mainline at 100 km/h leaves about 84 % finishable in the window, and every p333 vehicle spends at most 24 s below level 3. Both can be stated as facts, not 'likely'. (4) Small fixes: plant_sweep is +20/-2; there are 860 .jsonl.gz files (3,111 .gz scanned, 0 seed hits, 0 read errors), not 1,074; X2 is inside the draw on edge, limit and start, and only its 180-s duration sits at the bound. Comparisons: 0 statistical comparisons (no effects or CIs), only exact-equality checks (761,642 field comparisons, plus recomputing summaries for 5,560 runs).",
+   "missed": [
+    "Cross-machine provenance (checked): round 2's test and band rows came from rented instance 59653253 (EPYC 7B13), 20:15-21:04 MST on 2026-11-07 (V464, V465; round_2_result.md l.42). S0 ran on instance 59681619 (EPYC 7702) (V475). The 761,642 exact equalities are therefore across machines, not only across code versions.",
+    "Teleport counter has no non-zero possibility (checked): b_env.py l.167 uses CrashSim (day.py l.131-135: --time-to-teleport -1, --collision.action warn). Under the project's 'a statistic needs its null' lesson, 'teleports 0' in F5 and F6 says nothing about run health. Collisions and contact_steps are the informative counters.",
+    "finished_pct floor quantified (checked): mainline length from m_offsets is 6,778 m, which takes 244.8 s at 100 km/h, i.e. 16.3 % of the 1,500-s window (warm 300). So about 83.7 % should finish even in free flow, matching the 83.7-86.1 % seen at 3,500. The 54-70 % at 7,000 is congestion plus insertion backlog (passed 2,204-2,384 of 2,917 demanded), with no teleport relief.",
+    "p333 0.934 traced per vehicle (checked): from st npz dec_level_s, 90,944 V2V-on ALKS in p333 test runs spend median 15 s, p90 23 s, max 24 s at levels 0-2; none over 30 s; reversals 0. Levels start at 0 and move one step per 10-s hold, so the 6.6 % is the step-up after entry.",
+    "S1 runs without the pack do not exist. 'The pack did not change S1' is an inference: the same code path and the same arm types are exact in S0, and repeat runs are deterministic. It is not a direct check.",
+    "For whoever reads S1 (checked): ttc_net denominators at 3,500 are tiny. Median nc = 5.5, p333 = os1_15_10 = 21.5, 3e = 16, w0u250 = 13 (seconds of close-following). Any % effect against nc at 3,500 sits on a roughly 5-s base and should be read in absolute terms.",
+    "Outside this integrity question, found while recomputing panels (medians over 40 seeds, arm mean over learners; descriptive, no CI): in X1, v3w is not the lowest of all controllers. Jam share: tail 0.140, sw 0.143, v3w 0.148, baseline-v3 0.154, nc 0.226. Oscillation: tail 8.80, sw 8.88, v3w 8.89 (km/h). Congested length max: tail 1.645, p333 1.65, v3w 1.67 (km). Events at -4.5 m/s2 or harder: v3w 1,044, tail 1,035, sw 1,042, baseline-v3 1,036, 3E-T 868, nc 818, p333 1,402. So the extra hard braking is shared by every DRL policy, and p333 brakes most. Car cascade share: v3w 0.227, tail 0.227, baseline-v3 0.226, nc 0.203, p333 0.252. The lead's 'least jam, smallest oscillation, shortest congestion of all controllers' needs rewording before anyone relies on it."
+   ],
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_integrity/"
+  }
+ },
+ {
+  "key": "x1_exposure",
+  "analysis": {
+   "area": "x1_exposure: why v3w has more close-following (ttc_net) than no control in X1 but not in X2",
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_exposure/",
+   "answer": "The exposure hypothesis does not explain v3w's X1 excess. In that hypothesis, no control's stopped queues hide its close-following and v3w turns them into moving dense traffic. Per unit of exposure, v3w's close-following stays higher than no control's: 13.8 % more per vehicle-km [3.9, 22.3], 24 % more per vehicle-second at 18 km/h or faster [13, 30], and 9.9 % more per vehicle served [0.7, 20.3]. v3w has less exposure in the risky states: 45 % less vehicle-time below 18 km/h, 24 % less at 18-36 km/h and 8 % lower density in moving cells. In a speed-band decomposition, the exposure part is -648 TTC-s per run [-704, -594] and the rate part is +873 [778, 966], netting +224 [119, 328]. The excess sits on merge 2's acceleration section 4a (+272 [229, 312]) and on edge 3 (+139 [88, 189]), partly offset by fewer on ramp 2 (-113) and the remaining roads (-73). In time, it falls in the recovery windows: 'rest' +161 [86, 232] and 'after' +59 [37, 81], and not before or during the slowdowns. On 4a, the largest part, v3w has the same jam as no control and 5 % more moving vehicle-time, so no stopped queue is being replaced there. Exposure may contribute only on edge 3, where v3w replaces no control's long-lasting spill-back queue with moving traffic. X2 differs mainly by an offset: v3w adds close-following outside merge 1 in both cells (out_E30 +308 in X1, +217 in X2). But in X2 no control's queue reaches merge 1 (E30 median 456 against 61 in X1), and v3w removes most of it (-288 [-379, -202]). That cancels the addition. The per-exposure increase also exists in X2 (rate part +401 [320, 484]), but there it is confined to traffic below 18 km/h. My best reading is that v3w follows more closely at small closing speeds: the required-deceleration count (sev3) is unchanged and the excess is larger at the 1.5 and 2 s thresholds. That reading is an inference: no TTC event was traced. Everything here is descriptive and report-only.",
+   "findings": [
+    {
+     "id": "F0_definitions",
+     "statement": "Definitions, read from the code. ttc_net = E30 + out_E30, computed in b_env._second via _merge_stats and _net_stats. At each 1-s sample after the 300-s warm-up (1,500 samples), it counts the vehicles that meet all of these: (1) anywhere on the network, all classes (car, ALKS, truck), ramps and junction lanes included; (2) a same-lane leader within 200 m (libsumo getLeader); (3) a positive closing speed dv = v_f - v_lead > 0; (4) bumper gap (lead[1] + minGap) / dv < 3.0 s (TTC_REWARD). The unit is vehicle-seconds. A stopped follower cannot count; a creeping follower behind a slower leader can. E30 covers only the merge-1 area (lane 2_0 tail, 3a_0, 3a_1, 3_0 head); out_E30 is the rest of the network. ttc3 (plant_sweep.conflicts) uses the same criterion at the same instant and equals ttc_net in all 2,800 rows. Splits: road '3', '4a', 'ramp2' (r2, rj2), 'rest' (1, 2, 3a, 4, 5, r, rj and internal lanes); follower speed lo < 5 m/s, mid 5-10, hi >= 10; period by absolute time. X1 periods: before < 600 s, taper 600-620 and 1200-1220, hold to 720 and 1320, after to 840 and 1440, rest the remainder. X2: before < 700, taper 700-720, hold to 880, after to 1000, rest to 1800. ttc2 and ttc15 use 2 and 1.5 s thresholds; sev3 counts dv^2 / (2 max(gap, 0.1)) >= 3 m/s^2.",
+     "numbers": "Over 2,800 rows: max |ttc_net - ttc3| = 0. Every r, s and p split sums exactly for ttc3, ttc2 and ttc15. Step-histogram vehicle-seconds over the 1-Hz count vs: 0.9998-1.00005. The mainline field covers 92-98 % of vs (median 96.7 %). Jam share recomputed from st/*.npz matches waves.jam_share with max error 0. The pack did not change the runs: ttc_net, all_delay, passed, b3_step, dist, vs, ttc3 and ttc3_s_hi are identical to round2/test/rows_6c49e7e.jsonl for all 2,800 arm-seed pairs. My raw() equals conf3/common.raw at pct (2.5, 97.5) on all arms, both cells, for ttc_net and all_delay.",
+     "method": "Code reading: plant_sweep.py lines 120-330, b_env.py _second, _merge_stats and _net_stats, measure.py. Exact equality checks.",
+     "evidence": "checks.py -> checks.json; check_stat.py (assert passes); lib.py. All in the x1_exposure folder.",
+     "confidence": "high"
+    },
+    {
+     "id": "F1_reproduce",
+     "statement": "The round-2 close-following and delay effects against no control are reproduced exactly from rows_test.jsonl (40 seeds, 7,440,840-879, arm = mean over learners).",
+     "numbers": "X1, ttc_net effect (positive = fewer): v3w -16.55 [-25.14, -8.41], tail -15.25 [-27.09, -6.74], sw -18.44 [-27.39, -7.13], baseline-v3 -29.25 [-32.89, -16.97], 3E-T -47.52, 3E-X1 -58.07, os1_15_10 -74.11, p333 -121.5. v3w all_delay +27.34 [24.74, 30.43]; passed +5.10 [4.88, 5.43]. X2: v3w ttc_net -0.89 [-5.75, 9.49], tail +1.42 [-4.35, 8.70], sw -6.73 [-12.06, 2.59]. The no-control medians match the round-2 report: 1,493 TTC-s in X1 and 1,580 in X2. baseline-v3 = d0u500-d4u500, confirmed via test2.plan ('inc', u500) and PREFIX inc = 'd'.",
+     "method": "Round 2's effect = sign x median(P - O) / median(O) x 100. Paired seeds; 95 % percentile bootstrap with 20,000 resamples, default_rng(20261104).",
+     "evidence": "main.py -> results.json [cell][arm].effect_vs_nc",
+     "confidence": "high"
+    },
+    {
+     "id": "F2_where_when_X1",
+     "statement": "In X1 v3w's excess sits on merge 2's acceleration section (4a) and on edge 3, partly offset by fewer close-following seconds on ramp 2 and the remaining roads. It is spread over all three speed bands. In time it sits in the 120-s 'after' windows and the 'rest' recovery periods, not before or during the slowdowns.",
+     "numbers": "v3w minus nc, mean paired difference in TTC-s per run [95 % CI]; share of the total mean difference (+224.3 [118.6, 328.4]). Roads: ttc3_r_4a +272.3 [229.4, 311.6] (share 1.21); ttc3_r_3 +138.5 [88.1, 189.4] (0.62); ttc3_r_ramp2 -113.3 [-171.5, -55.9]; ttc3_r_rest -73.1 [-149.8, -11.4]. Speed bands: ttc3_s_lo +73.1 [27.4, 116.7], ttc3_s_mid +55.9 [18.6, 92.8], ttc3_s_hi +95.4 [68.3, 122.5] (share 0.43). Periods: ttc3_p_before -8.4 [-28.7, 9.6], taper -1.7 [-7.8, 4.2], hold +14.3 [-7.7, 35.5], after +59.3 [37.1, 81.2] (0.27), rest +160.8 [85.8, 232.4] (0.72 [0.56, 0.93]). tail, sw and baseline-v3 have the same pattern (4a +254 to +304, edge 3 +128 to +210, ramp2 -95 to -115, rest share 0.65-0.72). The rules add far more, mostly on 4a and edge 3 (p333: 3+4a +1,873 [1,726, 2,023]).",
+     "method": "Paired differences of the marginal splits, arm mean over learners. Mean (additive) and median, each with a bootstrap CI. Shares are ratios of means, bootstrapped by seed.",
+     "evidence": "main.py -> results.json [X1][arm].splits; show.py split",
+     "confidence": "high"
+    },
+    {
+     "id": "F3_exposure_rates_X1",
+     "statement": "Normalising by exposure does not remove v3w's X1 excess. Per vehicle-km, per vehicle-second, per moving vehicle-second, per vehicle served and within each speed band, its close-following rate stays above no control's. Its exposure falls in the slow states.",
+     "numbers": "Exposure change, % of nc's median (positive = v3w has more): dist +2.24 [2.03, 2.59]; vs -10.25 [-11.65, -9.45]; moving >= 5 km/h (e_mov5, from m_vh_* x 0.1 s) -8.51 [-8.92, -7.76]; below 5 km/h (e_stop5) -44.6 [-49.8, -38.3]; lo band (e_lo) -44.9 [-51.3, -42.4]; mid (e_mid) -23.8 [-27.4, -19.6]; hi (e_hi) -1.47 [-1.77, -0.98]; field jam vehicle-seconds (st_jam) -43.4 [-45.8, -38.5]; vehicle-weighted density in moving cells (st_dense_mov) -8.0 [-8.8, -7.2]; passed +5.1. Rates (round-2 sign: negative = v3w has more): ttc_net/dist -13.8 [-22.3, -3.9]; /vs -30.0 [-34.9, -22.3]; /e_mov5 -26.2 [-32.9, -18.5]; (ttc3_s_mid + ttc3_s_hi)/(e_mid + e_hi) -24.4 [-29.6, -13.1]; /passed -9.9 [-20.3, -0.65]; ttc3_s_lo/e_lo -124 [-134, -116]; ttc3_s_lo/(e_lo - e_stop5) -122 [-131, -102]; mid -46.8 [-49.7, -37.3]; hi -28.7 [-37.4, -16.7]. The share of near-stopped time within the lo band is the same: nc 0.350, v3w 0.368, paired difference +0.002 [-0.031, 0.023].",
+     "method": "Rates computed per run, then averaged over learners per seed; round-2 effect and CI. Band exposures come from the step-resolution speed histograms (5 km/h bins, the 15-20 and 35-40 km/h bins split uniformly).",
+     "evidence": "main.py -> results.json [X1][v3w].exposure_change_pct and rate_effect; deeper.py -> deeper.json [X1][v3w].rate_lo_mov and stop_share_lo",
+     "confidence": "high"
+    },
+    {
+     "id": "F4_decomposition_X1",
+     "statement": "A per-seed rate/exposure (Kitagawa) decomposition over the three speed bands shows two opposing parts. v3w's exposure mix would cut close-following by about 650 TTC-s at no control's rates, while its higher per-band rates add about 870. Its speed mix inside the hi band shifts towards free flow (85-100 km/h), which should lower its hi-band rate, so within-band composition cannot produce the excess either. A regression calibrated on no control (its seed-to-seed TTC against jam share, or against band exposures) gives the same answer.",
+     "numbers": "X1 v3w, means over seeds [95 % CI]: total +224.3 [118.6, 328.4] = rate part +872.5 [777.9, 965.7] + exposure part -648.2 [-704.2, -594.0]. Rate parts by band: lo +551.7 [506.2, 599.7], mid +220.2 [185.3, 253.2], hi +100.6 [73.4, 127.9]. Exposure parts: lo -478.6, mid -164.4, hi -5.2. Speed histogram, v3w minus nc vehicle-seconds per run: fewer in every 5-km/h bin from 0 to 80 km/h (for example 55-60: -29,038 [-31,054, -26,900]); more at 85-100 km/h (90-95: +24,250). Counterfactual: nc's OLS of ttc3 on jam_share (slope +3,398, R^2 0.39) predicts 296 fewer TTC-s than nc at v3w's jam level. Observed minus predicted: +520 [335, 702]. The band model (no intercept, R^2 0.36) gives +514 [322, 670]. tail +528, sw +535, baseline-v3 +588.",
+     "method": "Kitagawa: per learner and seed, (r_P - r_nc)(e_P + e_nc)/2 + (e_P - e_nc)(r_P + r_nc)/2 summed over bands (asserted to add up exactly), then averaged over learners. Counterfactual: OLS on nc's 40 seeds, refit in 5,000 bootstrap resamples.",
+     "evidence": "main.py -> results.json [X1][arm].kitagawa_speed_band; deeper.py -> deeper.json [X1][v3w].vh_diff_mean and vh_diff_ci; third.py -> third.json [X1][arm].cf_jam and cf_bands",
+     "confidence": "high"
+    },
+    {
+     "id": "F5_H1_tested",
+     "statement": "The exposure hypothesis (no control's stopped queues hide its close-following; v3w turns them into moving dense traffic) is rejected as the main explanation. On 4a, the largest component, v3w's jam equals no control's and its moving vehicle-time is only 5 % higher, yet its TTC rate per vehicle-second is 47 % higher. Within each arm, more jam goes with more close-following, not less, so queues produce close-following rather than suppressing it. The hypothesis may hold locally on edge 3. There, no control's slowdown queue spills back over the whole edge and lasts into 'rest'; v3w removes about three quarters of it and gains +139 TTC-s. But even per moving vehicle-second on edge 3, v3w's rate is about 2.1 times no control's, and composition inside 'moving' cannot be checked.",
+     "numbers": "Field jam (cells < 30 km/h) by edge, median vehicle-seconds per run in X1: nc 3a 174, edge 3 84,530, 4a 45,317, edge 4 25,725; v3w 69, 24,294, 42,658, 25,563. Edge-3 jam in 'rest': nc median 63,241; v3w paired difference -48,781 [-54,778, -43,128]. 4a: st_mov18_e_4a +5.36 % [2.87, 7.59]; ttc3_r_4a/st_vs_e_4a effect -46.9 [-56.8, -40.4]; per moving vehicle-second -36.6 [-44.3, -28.2]. Edge 3: ttc3_r_3/st_vs_e_3 -128 [-156, -83]; per moving vehicle-second -108 [-135, -67]. Within-arm Spearman of ttc3 against jam_share: X1 nc 0.46, v3w 0.79; X2 nc 0.80, v3w 0.80.",
+     "method": "Space-time fields st/*.npz (10 s x 50 m, mainline, cell mean speed); bins assigned to edges by their centre, using offsets from m_offsets. Paired CIs as above.",
+     "evidence": "deeper.py -> deeper.json [X1][v3w].nc_jam_edge_med, arm_jam_edge_med, period_edge_jam_diff and per_seed_null.*.within_nc_rho / within_arm_rho; results.json [X1][v3w].rate_effect.rate_r_*",
+     "confidence": "medium"
+    },
+    {
+     "id": "F6_severity_thresholds",
+     "statement": "v3w's X1 excess consists of closings with low required deceleration. The severity count is unchanged, while the relative excess is larger at 2 and 1.5 s than at 3 s. This fits shorter gaps at small speed differences better than harder approaches to queue tails. It is an interpretation: no event was traced. The excess also holds when sampled at the half-second (ttc_half), so it does not depend on the sampling instant.",
+     "numbers": "X1 v3w against nc (positive = fewer): ttc3 -16.55 [-25.14, -8.41]; ttc2 -27.14 [-31.05, -17.90]; ttc15 -27.36 [-36.78, -15.17]; sev3 0.00 [-11.25, 7.27] (nc median 88); ttc_half -17.17 [-23.41, -9.07]. X2 v3w: sev3 +21.01 [8.54, 29.15], ttc15 +11.4 [5.26, 15.79]. Rules in X1 raise sev3 by 46-101 %. Hard-braking events (summary events_ge45, all classes): v3w X1 -24.9 [-32.6, -18.3], i.e. more events; X2 -2.8 [-6.3, 5.6]. The braking excess is X1-specific, like the TTC excess.",
+     "method": "Round-2 effect on the counters; summary_rows_test.json for braking events.",
+     "evidence": "deeper.py -> deeper.json [cell][arm].thresholds and events",
+     "confidence": "medium"
+    },
+    {
+     "id": "F7_per_seed",
+     "statement": "The per-seed correlations of v3w's TTC excess with its jam-share and delay differences cannot be read as evidence about the mechanism. Both differences share the same no-control run and the seed's demand. A naive permutation test calls the X1 correlation positive (rho 0.32, p 0.04). But a null that keeps the shared no-control term (no-control rows taken from shuffled seeds) has median rho 0.60, so a positive value arises without any seed-specific link. Under the exposure hypothesis, seeds where v3w removes more jam should show a larger excess; I cannot separate that from the confound.",
+     "numbers": "X1 v3w: rho(d ttc3, d jam_share) 0.324, bootstrap CI [0.03, 0.58]; shuffled-nc null median 0.60, [0.434, 0.724]. rho(d ttc3, d e_stop5) 0.358, null median 0.63. rho(d ttc3, d all_delay) 0.207, null median 0.58. rho(d ttc3, d ev45) 0.717, null median 0.727. X2 v3w: rho(d ttc3, d jam_share) 0.50, null median 0.78. In X1, v3w has more TTC-s than nc in 31 of 40 seeds, and less jam and less delay in 40 of 40. Seeds with the largest X1 excess, candidates for a trace: 7,440,853 (+903), 7,440,878 (+898), 7,440,862 (+707), 7,440,866 (+638).",
+     "method": "Spearman with a 20,000-resample bootstrap. The shuffled-nc null pairs P(i) with nc(pi(i)) over 10,000 permutations.",
+     "evidence": "main.py -> results.json [cell][arm].per_seed; deeper.py -> deeper.json [cell][arm].per_seed_null; third.py -> third.json [cell][arm].rho_dttc_ncjam",
+     "confidence": "medium"
+    },
+    {
+     "id": "F8_X2_contrast",
+     "statement": "Why X2 differs. In both cells v3w adds close-following outside merge 1, on edges 3 and 4a. In X2, no control's slowdown queue (edge 3) also reaches merge 1, where it causes many close-following seconds. v3w removes most of them, which cancels the addition. In X1 the queue does not reach merge 1, so nothing offsets the addition. The per-exposure increase also exists in X2 but is confined to traffic below 18 km/h; in X1 it also covers moving traffic. About 70 % of the cell difference in v3w's excess comes from the offset.",
+     "numbers": "Merge-1 area (b_env E30), nc median: X1 61, X2 455.5. v3w paired mean difference: X1 -83.3 [-144.7, -31.2], X2 -287.5 [-379.0, -201.9]. Elsewhere (out_E30): X1 +307.6 [206.7, 402.0], X2 +216.8 [159.0, 276.2]. Roads: ttc3_r_3 + ttc3_r_4a X1 +410.8 [354.0, 464.5], X2 +325.4 [275.6, 374.4]; ramp2 + rest X1 -186.4 [-266.8, -109.7], X2 -396.1 [-507.2, -293.8] (X2 rest alone -366.4 [-480.4, -262.0]; nc rest median 495.5 in X2 against 59 in X1). Field jam on 3a: nc 14,674 in X2 against 174 in X1; v3w 3,966. X1 minus X2 for v3w's excess (same seed numbers, paired): total +295.1 [156.8, 433.7] = ramp2 + rest +209.7 [84.0, 336.9] + edges 3 and 4a +85.4 [34.7, 134.8]. X2 Kitagawa: total -70.7 [-174.1, 30.4] = rate +401.2 [319.6, 483.9] + exposure -471.9 [-523.6, -422.4]. Rate by band: lo +344.6 [308.2, 382.2], mid +41.7 [1.1, 80.7], hi +14.9 [-9.6, 39.0]. X2 nc-jam counterfactual: +535.7 [361.9, 688.6]. tail, sw and baseline-v3 match within a few tens of TTC-s.",
+     "method": "As in F2 and F4; E30 and out_E30 are exact area splits from b_env; the X1-X2 contrast is a paired-by-seed bootstrap of the difference of differences.",
+     "evidence": "merge1.py -> merge1.json; third.py -> third.json [cell][arm].ttc_34a_diff_mean, ttc_other_diff_mean and X1_minus_X2; main.py -> results.json [X2][v3w].kitagawa_speed_band and splits",
+     "confidence": "medium"
+    },
+    {
+     "id": "F9_rules_and_learners",
+     "statement": "Every controller has the same structure: a higher per-exposure close-following rate, partly offset by less slow exposure. The policies' rate increase is the smallest of all controllers. The X1 excess and the X1 rate increase appear in each learner of each policy arm, so they are not a one-learner artefact. The 0.8-s headway share does not rank the arms by excess: 3E-X1 spends 0.38 of V2V-on time at level 3 and has 58 % excess, while v3w spends 0.73 and has 17 %. Headway level alone does not explain the excess, and where or when short headways are used is not measured here.",
+     "numbers": "X1 ttc_net/dist (negative = more): v3w -13.8, tail -12.2, sw -13.8, baseline-v3 -26.4, 3E-T -44.2, 3E-X1 -54.9, os1_15_10 -69.8, p333 -113.7. X1 Kitagawa rate / exposure parts: 3E-T +1,201 / -501; p333 +2,569 / -757. v3w learners in X1, ttc_net: w0u250 -24.1 [-35.3, -9.9], w1u500 -21.7 [-30.0, -9.9], w2u250 -12.9 [-25.2, -0.03], w3u500 -8.4 [-20.0, 0.0], w4u500 -20.9 [-25.6, -10.1]. rate_mov18 CIs exclude 0 for all 15 tail, sw and v3w learners. dec level_share_on[-1] (report panel), X1 medians: p333 0.934, os1_15_10 0.733, 3E-T 0.583, 3E-X1 0.377, v3w 0.731.",
+     "method": "As above; per-learner effects against nc.",
+     "evidence": "main.py -> results.json; deeper.py -> deeper.json [cell][arm].per_learner_ttc_net; third.py -> third.json [cell][arm].per_learner; report_rows_test.txt",
+     "confidence": "high"
+    },
+    {
+     "id": "F10_side_notes",
+     "statement": "Two side observations, not investigated. (1) stop_gap, the count of stopped followers with a bumper gap below 2.5 m, is 0 in every no-control run but appears under every controller. gap25 (moving followers) is at most 1 over all rows. (2) The panel row 'ALKS at the longest level, V2V on' is m['dec']['level_share_on'][-1]. With HEADWAYS_S = (1.6, 1.2, 1.0, 0.8), the last level is the shortest headway, 0.8 s, so the label reads backwards. p333 sets level 3 everywhere, so its 0.934 is expected. That it is not 1.0 is probably the climb from level 0 for newly inserted ALKS (measure.py comment); I have not verified this.",
+     "numbers": "stop_gap, mean per run: X1 nc 0.0 (max 0), v3w 45.6 (max 468); X2 nc 0.0, v3w 53.4; p333 X1 median 1,014. gap25 max over 2,800 rows: 1.",
+     "method": "Counter summaries; code reading of measure2.py line 215 and b_env HEADWAYS_S.",
+     "evidence": "third.py -> third.json [cell][arm].small_gaps_paired_median; inline check in the session; measure2.py METRICS",
+     "confidence": "medium"
+    }
+   ],
+   "caveats": [
+    "No TTC event was traced. The stored data has no per-event record and running simulations was not allowed. The 'shorter gaps at small closing speeds' mechanism is an inference from the counters: sev3 unchanged, larger relative excess at 1.5 and 2 s, higher rates in every band. A traced re-run of a few X1 seeds (for example 7,440,853, 7,440,878 and median seeds 7,440,854 and 7,440,869) would show follower class, tau, gap and dv per sample. Per the project lesson, its untraced counters must be compared to show the trace changes nothing.",
+    "The splits are marginal (road, speed band and period separately), not joint, so I cannot say which speed band the 4a excess falls in, or which period the edge-3 excess falls in.",
+    "Band exposures come from 5-km/h step histograms, with the 15-20 and 35-40 km/h bins split uniformly. Edge and period exposures come from the mainline space-time field (cell mean speed; ramps excluded; 92-98 % of vehicle-seconds), while the TTC counts include ramps.",
+    "The no-control-calibrated regressions are model-based. v3w's jam share (0.087-0.205) lies partly below no control's range (0.145-0.375), so they extrapolate. The X2 band model has a negative hi-band coefficient. Use them only as corroboration of the Kitagawa result.",
+    "The 'rest' road group lumps edges 1, 2, 3a, 4, 5, ramp 1 and junction lanes. The X2 offset is placed at merge 1 through the separate E30 counter (merge-1 lanes), not through the road split.",
+    "The X1-X2 contrast pairs runs by seed number. I assume, without checking, that the same seed gives the same demand realisation in both cells; an unpaired comparison would widen the CIs.",
+    "Per-seed correlations of paired differences are confounded by the shared no-control run and seed; even the shuffled-nc null is only an approximate null, because pairing also carries seed-level co-movement.",
+    "About 2,870 CIs and tests were computed (results.json 1,504; deeper.json 1,164; third.json 180; merge1.json 20), most of them descriptive. None is corrected for multiplicity; 'CI excludes 0' is the only strength statement used. Nothing here supports a thesis claim."
+   ],
+   "comparisons_made": 2868
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F0_definitions",
+     "verdict": "confirmed",
+     "recomputed": "Own code over 2,800 rows: max|ttc_net - ttc3| = 0 and max|ttc_net - E30 - out_E30| = 0. The r/s/p splits of ttc3, ttc2, ttc15 and sev3 sum exactly. Step-histogram vehicle-seconds / vs is 0.99979-1.00005. On 11 keys (ttc_net, all_delay, passed, b3_step, dist, vs, N, E30, out_E30, b45_step, collisions), all 2,800 (name, q, seed) pairs equal round2/test/rows_6c49e7e.jsonl, with 0 mismatches. steps = 1,500 in every row.",
+     "note": "My code reading agrees. Sources: plant_sweep.conflicts (1-Hz, getLeader 200 m, dv > 0, gap = lead[1] + minGap, TTC < 3/2/1.5 s, sev3 = dv^2/(2 max(gap, 0.1)) >= 3); b_env._merge_stats (E30 area); CavEnv._net_stats (b_env line 788, same criterion over getIDList). Bands: lo < 5 m/s, mid 5-10, hi >= 10. A stopped follower cannot count; a creeping one can. Counters that never fired are absent from a row and must be read as 0, which the analyst did, since the splits sum."
+    },
+    {
+     "id": "F1_reproduce",
+     "verdict": "confirmed",
+     "recomputed": "X1 ttc_net: v3w -16.55 [-25.14, -8.41], tail -15.25 [-27.09, -6.74], sw -18.44 [-27.39, -7.13], inc (d*u500) -29.25 [-32.89, -16.97], 3E-T -47.52, 3E-X1 -58.07, os1_15_10 -74.11, p333 -121.50. v3w all_delay +27.34 [24.74, 30.43], passed +5.10 [4.88, 5.43]. X2: v3w -0.89 [-5.75, 9.49], tail +1.42 [-4.35, 8.70], sw -6.73 [-12.06, 2.59]. nc medians 1,493 (X1) and 1,580 (X2).",
+     "note": "Reimplemented conf3/common.raw myself: sign x median(P-O)/median(O) x 100, paired seeds, arm = mean over learners, 20,000 resamples, default_rng(20261104), percentiles 2.5/97.5. Note that raw's default pct is (1.25, 98.75), so 95 % CIs need an explicit pct. The match is exact."
+    },
+    {
+     "id": "F2_where_when_X1",
+     "verdict": "confirmed",
+     "recomputed": "v3w - nc, mean TTC-s per run: ttc3_r_4a +272.3 [229.4, 311.6]; r_3 +138.5 [88.1, 189.4]; r_ramp2 -113.3 [-171.5, -55.9]; r_rest -73.1 [-149.8, -11.4]; s_lo +73.1 [27.4, 116.7]; s_mid +55.9 [18.6, 92.8]; s_hi +95.4 [68.3, 122.5]; p_before -8.4 [-28.7, 9.6]; taper -1.7; hold +14.3 [-7.7, 35.5]; after +59.3 [37.1, 81.2]; rest +160.8 [85.8, 232.4]; total +224.3 [118.6, 328.4]. tail, sw and inc show the same pattern: 4a +254 to +304, edge 3 +128 to +210. p333: 3 + 4a = +1,873.",
+     "note": "Exact. The splits are marginal, as the analyst says."
+    },
+    {
+     "id": "F3_exposure_rates_X1",
+     "verdict": "confirmed",
+     "recomputed": "Exposure change in %: dist +2.24 [2.03, 2.59]; vs -10.25 [-11.65, -9.45]; e_stop5 -44.62; e_lo -44.86; e_mid -23.77; e_hi -1.47. Rates (negative = v3w has more): /dist -13.8 [-22.3, -3.9]; /vs -30.0 [-34.9, -22.3]; /moving >= 5 km/h -26.2 [-32.9, -18.5]; /passed -9.9 [-20.2, -0.6]; mid+hi -24.4 [-29.6, -13.1]; lo -123.7 [-133.9, -116.0]; lo_mov -122.4; mid -46.8; hi -28.7.",
+     "note": "Reproduced within rounding (only the /passed CI differs in the last digit). The statement covers exactly the volume and speed exposures listed, and is true for them. It does not cover location or approach exposure (see F4 and F5)."
+    },
+    {
+     "id": "F4_decomposition_X1",
+     "verdict": "corrected",
+     "recomputed": "Kitagawa, X1 v3w: total +224.3 [118.6, 328.4] = rate +872.5 [777.9, 965.7] + exposure -648.2 [-704.2, -594.0]. Rate by band: lo +551.7, mid +220.2, hi +100.6. Exposure by band: lo -478.6, mid -164.4, hi -5.2. All exact. I did NOT recompute the jam-share counterfactual regressions (+520, +514) or the 5-km/h bin differences. My own decomposition of the 4a road part, with approach exposure app20 (vehicle-s in 10 s x 50 m mainline cells whose next 100 m downstream is >= 20 km/h slower), gives: 4a total +272.3 = rate -318.5 [-459.4, -188.6] + exposure +590.8 [460.7, 728.4]. On edge 3: rate +119.3 [93.3, 144.6] + exposure +19.2 [-14.0, 55.4].",
+     "note": "The numbers hold. The sentence 'within-band composition cannot produce the excess either' says more than was checked: only the speed mix inside the hi band was examined. Composition by place and context inside a band was not controlled. With a speed-drop exposure, the largest component (4a) becomes an exposure effect, while edge 3 stays a rate effect. The approach proxy is not validated on 4a: within nc X1 seeds, ttc3_r_4a vs app20_4a has Spearman -0.01, against +0.59 for edge 3. So this shows the conclusion depends on the exposure chosen. It does not show the opposite."
+    },
+    {
+     "id": "F5_H1_tested",
+     "verdict": "corrected",
+     "recomputed": "Reproduced exactly: field jam medians, nc 3a 174 / edge 3 84,530 / 4a 45,317 / edge 4 25,725, v3w 69 / 24,294 / 42,658 / 25,563. Edge-3 jam in 'rest': nc 63,241, d -48,781 [-54,778, -43,128]. 4a moving (>= 18 km/h) +5.36 % [2.87, 7.59]. ttc3_r_4a per vehicle-s -46.9 [-56.8, -40.4]; per moving vehicle-s -36.6 [-44.3, -28.2]. Edge 3 per moving vehicle-s -107.9 [-135.4, -66.5]. Within-arm rho nc 0.46, v3w 0.79. New: the paired 4a jam effect is 11.3 % LESS jam for v3w [3.9, 18.8]. Within nc, rho(jam_share, vs) = 0.94 (X1) and 0.89 (X2).",
+     "note": "Three wording problems. (1) '4a jam equals no control's' is wrong in the paired test: about 11 % less, CI excludes 0. (2) 'Within each arm more jam goes with more close-following, so queues produce close-following' is a causal reading of a cross-seed correlation, and jam is almost collinear with traffic volume there (rho 0.94). (3) Exposure is rejected only in the narrow stopped-queue sense. On 4a, v3w's free-flowing edge 3 (+37,194 vehicle-s in cells >= 80 km/h) sends traffic at speed into the slowdown queue tail and the merge. The 4a approach exposure roughly doubles: +1,249 [966, 1,559] vehicle-s against nc's median 1,256, and per unit of it v3w's 4a TTC is 20 % LOWER, +20.2 [8.6, 36.5]. Lane-end stops on the 4a acceleration lane (end_stop2) rise +461 [357, 558] against nc's median 728. Exposure of this kind is not ruled out for 4a."
+    },
+    {
+     "id": "F6_severity_thresholds",
+     "verdict": "corrected",
+     "recomputed": "Network level, reproduced: ttc3 -16.55, ttc2 -27.1 [-31.1, -17.9], ttc15 -27.4 [-36.8, -15.2], sev3 +0.0 [-11.2, 7.3], ttc_half -17.2 [-23.4, -9.1]; events_ge45 (summary, all classes) -24.9 [-32.6, -18.3], medians 1,044 vs 818. X2: sev3 +21.0 [8.5, 29.1]. By road, X1 v3w - nc (mean): sev3_r_4a +12.7 [8.2, 17.2] (nc median 18, about +70 %); sev3 on edge 3, by subtraction, +3.5 [2.8, 4.2] (nc median 1); sev3_r_ramp2 -11.0 [-19.4, -2.6]; sev3_r_rest -3.3 [-7.3, -0.1]. On 4a: ttc3 +272 (+40 % of nc's median 681), ttc2 +54.2 (+54 % of 100), ttc15 +11.0 (+44 % of 25). tail, sw and inc give the same values within about 2.",
+     "note": "The reading 'the excess consists of closings with low required deceleration; severity unchanged' does not hold where the excess sits. On 4a and edge 3, severe closings rise. The network total stays flat only because ramp 2 and 'rest' fall. On 4a the relative excess is similar at all thresholds. Together with about 25 % more hard-braking events, harder approaches to queue tails or lane-end stops are at least as consistent as 'shorter gaps at small speed differences'."
+    },
+    {
+     "id": "F7_per_seed",
+     "verdict": "confirmed",
+     "recomputed": "X1 v3w rho(d ttc3, d jam_share) = +0.324. Shuffled-nc null (my own, 5,000 permutations): median +0.601 [0.433, 0.722]. X2: +0.501, null median +0.784 [0.673, 0.861].",
+     "note": "The analyst is right that per-seed correlations of paired differences carry no mechanism information here."
+    },
+    {
+     "id": "F8_X2_contrast",
+     "verdict": "corrected",
+     "recomputed": "E30 nc median X1 61, X2 455.5. v3w d E30: X1 -83.3 [-144.7, -31.2], X2 -287.5 [-379.0, -201.9]. d out_E30: X1 +307.6 [206.7, 402.0], X2 +216.8 [159.0, 276.2]. X2 ttc3_r_rest -366.4 [-480.4, -262.0]. X1 minus X2 v3w excess: +295.1 [156.8, 433.7], of which E30 +204.2 [112.0, 295.1] (69 %) and out_E30 +90.9 [-5.6, 186.3]. X2 Kitagawa: total -70.7 [-174.1, 30.4] = rate +401.2 [319.6, 483.9] + exposure -471.9 [-523.6, -422.4]. Rate by band: lo +344.6, mid +41.7 [1.1, 80.7], hi +14.9 [-9.6, 39.0]. Seed pairing across cells checked: the first 300 s after warm-up of the space-time field are identical between X1 and X2 in 40/40 seeds, for nc and for w0u250; two different seeds differ (max |dn| 74).",
+     "note": "The numbers and the offset explanation hold, and the analyst's unchecked caveat (same demand per seed across cells) is now verified. One wording fix: the X2 per-exposure increase is not 'confined to traffic below 18 km/h'. The mid-band rate part is +41.7 [1.1, 80.7], with a CI that excludes 0. Say 'mostly below 18 km/h'."
+    },
+    {
+     "id": "F9_rules_and_learners",
+     "verdict": "confirmed",
+     "recomputed": "X1 ttc_net/dist: v3w -13.8, tail -12.2, sw -13.8, inc -26.4, 3E-T -44.2, 3E-X1 -54.9, os1_15_10 -69.8, p333 -113.7. Kitagawa rate/exposure: 3E-T +1,200.9 / -501.3; p333 +2,568.7 / -756.8. v3w learners: w0u250 -24.1 [-35.3, -9.9], w1u500 -21.7 [-30.0, -9.9], w2u250 -12.9 [-25.2, -0.0], w3u500 -8.4 [-20.0, +0.0], w4u500 -20.9 [-25.6, -10.0]. level_share_on[-1] medians: p333 0.934, os1_15_10 0.733, 3E-T 0.583, 3E-X1 0.377, v3w 0.731. My extra: median ALKS mean tau over ALKS-seconds (V2V off counted at 1.6 s), X1: v3w 1.205, tail 1.202, sw 1.197, inc 1.229, 3E-T 1.255, 3E-X1 1.249, os1_15_10 1.196, p333 1.155 s.",
+     "note": "Reproduced. A better headway measure, over all ALKS time, does not rank the arms by excess either (3E-X1 has a longer mean tau than v3w but 58 % against 17 % excess), which supports the statement. Small caveat: w3u500's CI reaches 0.0, so 'in each learner' holds for the point estimates, not for every CI. I did not recompute rate_mov18 per learner."
+    },
+    {
+     "id": "F10_side_notes",
+     "verdict": "confirmed",
+     "recomputed": "stop_gap: X1 nc mean 0, max 0; v3w mean 45.6, max 468; X2 nc 0, v3w 53.4; p333 X1 median 1,014. gap25 max over 2,800 rows: 1. HEADWAYS_S = (1.6, 1.2, 1.0, 0.8), so level index 3 is 0.8 s.",
+     "note": "Reproduced. The panel label 'longest level' points to the shortest headway. Why p333's share is not 1.0 remains unverified, as the analyst says."
+    }
+   ],
+   "answer_verdict": "Every number I re-derived matches the analyst's exactly, using my own code and the same statistic and bootstrap. The statement 'v3w's close-following per unit of exposure is higher than no control's in X1' holds under every network-level normalisation I tried. Those include per vehicle-km, per vehicle-second, per moving vehicle-second, per vehicle served and per speed band, and also a speed-drop (approach) exposure from the space-time fields: TTC per app20 is -37.6 % [-43.8, -17.3]. Two parts of the answer should change. (1) The 'best reading', shorter gaps at small closing speeds and low required deceleration with the severity count unchanged, is contradicted by road-level counters. Where the excess sits, severe closings rise: sev3_r_4a +12.7 [8.2, 17.2] on nc's median 18, and edge 3 +3.5 [2.8, 4.2]. The network total stays flat only because ramp 2 (-11.0) and 'rest' (-3.3) fall. On 4a the relative excess is similar at all thresholds, and hard-braking events are up about 25 %. Harder approaches to the slowdown queue tail or to lane-end stops on the acceleration lane are at least as consistent. (2) Exposure is ruled out only in the narrow 'stopped queues hide TTC' sense. For 4a, the largest component, the result depends on the exposure measure. Per moving vehicle-second, v3w's rate is about 37 % higher. Per approach exposure, which roughly doubles under v3w because traffic now arrives at speed from a free-flowing edge 3, its rate is 20 % lower. That proxy is not validated on 4a, so neither reading is established. The edge-3 part is a rate effect under both measures. Further wording fixes: on 4a v3w has 11 % less jam [3.9, 18.8], not the same jam. The within-arm jam-TTC correlation is confounded with traffic volume (rho jam/vs 0.94), so it cannot show that queues cause close-following. The X2 per-exposure increase is mostly, not only, below 18 km/h. The X2 offset explanation (no control's merge-1 queue, removed by v3w) holds, and its seed-pairing assumption is now verified. Revised summary: the mechanism is not identified. A rate increase is present network-wide and on edge 3. The 4a excess may come from exposure to queue-tail approaches and lane-end merge stops. A traced re-run is still needed. Report-only; about 1,440 descriptive CIs computed, none corrected for multiplicity.",
+   "missed": [
+    "Road-level severity, not checked by the analyst. X1 v3w - nc: sev3_r_4a +12.7 [8.2, 17.2] (nc median 18); sev3 on edge 3, by subtraction, +3.5 [2.8, 4.2] (nc median 1); sev3_r_ramp2 -11.0 [-19.4, -2.6]; sev3_r_rest -3.3 [-7.3, -0.1]. The network 'sev3 unchanged' is a cancellation between roads, so the low-severity reading fails where the excess sits. tail, sw and inc agree within about 2.",
+    "Approach (speed-drop) exposure from st/*.npz, a proxy I defined after seeing the data: vehicle-s in mainline cells whose next 100 m is >= k km/h slower. X1 v3w: network app20 +2.2 % [-1.0, 6.4], app30 +14.2 % [5.3, 20.9]; vehicle-s with a drop >= 20 km/h in the next 10 s at the same place +37.6 % [32.1, 43.2]. On 4a: app20 +1,249 [966, 1,559] vehicle-s against nc's median 1,256; ttc3_r_4a per app20 +20.2 % [8.6, 36.5], i.e. FEWER per unit; Kitagawa 4a = rate -318.5 [-459.4, -188.6] + exposure +590.8 [460.7, 728.4]. On edge 3 it stays a rate effect: +119.3 [93.3, 144.6] against +19.2 [-14.0, 55.4]. Caveat: within nc X1 seeds, ttc3_r_4a vs app20_4a has Spearman -0.01, so the proxy is not validated on 4a.",
+    "Ramp-2 merge failure as an alternative for the 4a excess. end_stop2 (vehicle-s stopped in the last 30 m of acceleration lane 4a_0) rises +461 [357, 558] in X1 (nc median 728) and +229 [128, 329] in X2. Across the 35 arms, median ttc3_r_4a tracks median end_stop2: Spearman +0.85 in X1, +0.77 in X2. At the per-seed level the link is at its shuffled-nc null (v3w 0.13 against null median 0.36), and the ramp-2 queue falls -1.28 [-2.35, -0.21] vehicles. This is a candidate (ramp vehicles reach the acceleration lane, cannot merge and stop, and followers close in), not shown. TTC cannot be split by lane from the stored counters.",
+    "Seed pairing across cells, the analyst's unchecked caveat: verified. The first 300 s of the space-time field (n and v) are byte-identical between X1 and X2 in 40/40 seeds, for nc and for w0u250; two different seeds differ (max |dn| 74). The X1-X2 paired contrast is valid.",
+    "Confounding of the within-arm jam-TTC correlation. Across nc seeds, rho(jam_share, vs) = 0.94 in X1 and 0.89 in X2; rho(ttc3, vs) = 0.34 and 0.82. 'More jam, more close-following' cannot be told apart from 'more traffic, more close-following'.",
+    "Headway over all ALKS time, with V2V off counted at tau0 = 1.6 s. Median mean tau in X1: v3w 1.205, tail 1.202, sw 1.197, inc 1.229, 3E-T 1.255, 3E-X1 1.249, os1_15_10 1.196, p333 1.155 s. It does not rank the arms by close-following excess, which supports F9: headway alone is not the explanation.",
+    "Paired 4a jam: v3w has 11.3 % less jam (<30 km/h) on 4a [3.9, 18.8], X2 12.1 % [4.1, 25.1]. 'Same jam as no control' holds only roughly, in medians (42,658 against 45,317).",
+    "Not recomputed by me: the jam-share and band counterfactual regressions (+520 [335, 702], +514), the 5-km/h histogram bin differences, stop_share_lo (0.350 against 0.368), st_dense_mov -8.0 %, st_jam -43.4 %, and rate_mov18 per learner."
+   ],
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_x1_exposure/"
+  }
+ },
+ {
+  "key": "x1_braking",
+  "analysis": {
+   "area": "x1_braking: hard braking in X1 (and X2), v3w / tail / sw / baseline-v3 against nc, 3E-T, 3E-X1/X2, p333, os1_15_10",
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/",
+   "answer": "The lead's X1 numbers are reproduced: events_ge45 medians are v3w 1,044, nc 818.5 and 3E-T 868.5 (v3w minus nc +204 [149, 267]), and car cascade share is 0.227 vs 0.203. That count does not measure hard braking, though. The -4.5 m/s2 threshold is exactly the normal maximum deceleration of human cars and ALKS (SUMO default decel 4.5). Car steps pile up just below -4.5 and almost never go past -5.0 (558 vs 2 steps per run). By IEEE arithmetic on SUMO's update formula, a step braking at that limit reads below -4.5 only at about 7-29 km/h. So events_ge45 mostly counts limit braking that passes through low speed. Two counts do not depend on which side of -4.5 a step lands. Events peaking at -4.0 or harder rise only about 8 % for v3w vs nc (+343 [230, 497] in X1, +341 in X2), about 5-6 % per km in both classes. Events past the normal limit (-5 to -9 m/s2) are ALKS-only and about five times nc's: 48 vs 9 per run, +38 [37, 40], the same in X1 and X2. Every short-headway controller shows this, and v3w has the fewest of them (3E-T 51.5, p333 77, os1_15_10 89.5). The X1-specific gap comes mostly from nc's count dropping in X1 vs X2 (-141 [-260, -67] at unchanged -4.0 count), less from v3w rising (+49 [23, 88]). Exposure explains little: per vehicle-km the -4.5 excess is still +22 %, per vehicle served +19 %. Braking is not stored by time or place. The speed fields suggest the extra limit braking sits at sharper speed fronts at the merge-2 section 4a, mostly outside the slowdown windows: v3w runs edge 3 at 48-73 km/h into a short congested 4a, where nc's queue spills back. My best but uncertain reading of what v3w's ALKS do differently: they hold shorter headways (mean level 2.2 on edge 3 and 1.6 on 4a, vs 3E-T's 1.45 and 1.10). That buys flow but costs some braking past the limit by the ALKS themselves, plus slightly more limit braking by everyone near the merge-2 bottleneck. The cascade-share rise holds against nc (car +0.025 [0.007, 0.032]) but not against 3E-T, and has no proper null. It should not be read as stronger wave propagation.",
+   "findings": [
+    {
+     "id": "F1",
+     "statement": "The measurement pack did not change the runs: every round-2 stored key is identical in all measured test rows, and the pack's event seconds add up to the plant's b3_step in every run.",
+     "numbers": "Rows with any stored key different: 0 of 2,800 (all keys except cfg; X1 and X2, 70 arms, 40 seeds). sum(m_event_s_car, alks, truck) == b3_step (rtol 1e-9) in 2,800 of 2,800.",
+     "method": "Compared each measured row of rows_test.jsonl with the same (name, seed) in round2/test/rows_6c49e7e.jsonl, key by key.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/check_pack.py -> check_pack.txt (load.py builds test_rows.pkl, r2_rows.pkl)",
+     "confidence": "high"
+    },
+    {
+     "id": "F2",
+     "statement": "Definitions (from the code). A braking event starts at the first 0.1-s step with getAcceleration <= -3.0 m/s2 after the warm-up and ends at the first step above -3.0, or at run end. Its peak is the minimum acceleration. Peak bin i covers (edge i+1, edge i] of PEAK_EDGES (-3, -3.5, -4, -4.5, -5, -6, -7, -8, -9, -100), so events_ge45_<class> = bins 3+ (peak <= -4.5). A cascade: when a follower's event starts, its leader (getLeader within 200 m) began its latest event 0-3 s earlier; it is counted in the follower's class. Cascade share = m_cascade_c / m_events_c. b3_step, b45_step and b7_step are the seconds with a <= -3, -4.5 and -7, all vehicles; alks_* is the same for ALKS only. free_brake_alks_step is ALKS seconds at a <= -3 with no leader within 200 m or a gap/speed above 3 s. Classes: car = human Krauss, alks = every automated car (SUMO ACC model, decel 4.5, emergencyDecel 9, action step 0.5 s), truck.",
+     "numbers": "measure.py lines 18-21 (thresholds), 129-160 (events, cascades), 400-402 (shares, events_ge45); plant_sweep.py lines 118-145 (step counters). m_minute holds per-minute merge outflows and inflows, speeds on 3a, 4a and the road before each, and ramp queue and pending vehicle-seconds. It holds no braking. The st/*.npz files hold only v (speed sum) and n (vehicle-seconds) on a 150 x 136 grid (10 s x 50 m from t = 300 s). Edge 4 spans 5,282-6,278 m in m_offsets. pert_log is [[600,True],[720,False],[1200,True],[1320,False]] in all X1 rows and [[700,True],[880,False]] in all X2 rows.",
+     "method": "Code reading of /home/catalin/work/phd/wt/r2-metrics/v5b/fleet/measure.py, plant_sweep.py, b_env.py, fleet.py, perturb.py; row and file inspection.",
+     "evidence": "/home/catalin/work/phd/wt/r2-metrics/v5b/fleet/measure.py; /home/catalin/work/phd/wt/r2-metrics/v5b/fleet/plant_sweep.py",
+     "confidence": "high"
+    },
+    {
+     "id": "F3",
+     "statement": "The -4.5 threshold sits exactly on the normal maximum deceleration of cars and ALKS. events_ge45 therefore counts braking at that limit whose stored value happens to fall just below -4.5 in floating point. It does not count harder braking. By arithmetic, which side a limit step lands on depends on speed: below -4.5 only at about 7-29 km/h, never at 58-115 km/h.",
+     "numbers": "SUMO 1.27.1 source: getDefaultDecel is 4.5 for passenger and 4.0 for trailer; ALKS_DEFAULTS decel is 4.5. Acceleration histograms per run, X1 nc: car steps in [-5.0,-4.5) 558 vs [-5.5,-5.0) 2; ALKS 3,015 vs 13; trucks 0 below -4.5 (their limit is 4.0). Steps at exactly -4.5 are 0.16 % of ALKS steps at or below -4.5. IEEE double model of a = ((v - 4.5*0.1) - v)/0.1, which also holds with the action-step carry-over: share of limit steps reading below -4.5 is 77 % at 2-4 m/s, 100 % at 4-8 m/s (14-29 km/h), 5.6 % at 8-16 m/s and 0 % at 16-32 m/s. Consequence: the split between peak bins 2 and 3 varies between arms, e.g. car ev45/ev4 is 9.4 % in X1 nc and 11.4 % in X1 v3w.",
+     "method": "Acceleration-bin tabulation (m_ah_<class>, 0.5 m/s2 bins). Reading of the SUMO source (MSCFModel::minNextSpeed, MSVehicle::updateState and planMove, SUMOVTypeParameter::getDefaultDecel). Pure arithmetic simulation of the stored acceleration in numpy; no SUMO run.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/ah_bins.py -> ah_bins.txt; fp_plateau.py -> fp_plateau.txt; check_pack.txt (2b)",
+     "confidence": "medium"
+    },
+    {
+     "id": "F4",
+     "statement": "The lead's first-look X1 numbers are reproduced exactly. With the -4.5 count, v3w's excess over nc is specific to X1; in X2 the CI includes 0.",
+     "numbers": "Medians over 40 seeds (arm value per seed = mean of 5 learners). ev45_all: X1 v3w 1,044, nc 818.5, 3E-T 868.5. v3w-nc +203.6 [149.4, 266.6] (effect -24.9 % [-32.6, -18.3]). v3w-3E-T +184.8 [111.8, 220.8]. v3w-3E-X1 +48.2 [-31.3, 116]. v3w-p333 -356 [-389, -315]. v3w-os1_15_10 -89.5 [-160.6, -39.9]. tail, sw and baseline-v3 vs nc: +202, +207, +199 (all CIs exclude 0). X2: v3w-nc +27.2 [-54.9, 62.3]; v3w-3E-T +97.6 [77.8, 179]. cascade_share_car X1: v3w 0.227, nc 0.203.",
+     "method": "Round-2 statistic conf3/common.raw at pct (2.5, 97.5): median(P-O)/median(O) x 100, 20,000 seed resamples, default_rng(20261104), imported read-only. Unit differences use the same bootstrap. arm = common1.arm_mean. Field: sum of m_peak_<c>[3:] = summary events_ge45_<c>.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv, stats_v3w.txt; common_x.py",
+     "confidence": "high"
+    },
+    {
+     "id": "F5",
+     "statement": "With a count that does not depend on the floating-point side of -4.5 (events peaking at -4.0 or harder), v3w's increase over nc is modest (about 8 %), similar in X1 and X2, and smaller per km. Against 3E-T it is about 3 % in X1.",
+     "numbers": "ev4_all (m_peak bins 2+), X1: v3w 4,857 vs nc 4,348, +342.8 [229.8, 496.9] (+7.9 % [5.3, 11.4]). X2: +341.2 [134, 475] (+7.7 % [3.0, 10.8]). v3w vs 3E-T: X1 +155 [65, 278] (+3.3 % [1.4, 6.0]), X2 +328 [184, 438]. Per km, X1: ev4_car_per_km +5.8 % [0.6, 10.5], ev4_alks_per_km +5.2 % [3.7, 9.1]. X2: car +9.7 % [3.1, 11.2], ALKS +0.2 % [-3.5, 2.4].",
+     "method": "As F4. Normalisation per run (count / class km from m_dist_m_<c>), then mean over learners.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv (metrics ev4_*)",
+     "confidence": "medium"
+    },
+    {
+     "id": "F6",
+     "statement": "Braking past the normal limit is done only by the controlled ALKS. It is about five times nc's under every short-headway controller, in both cells. v3w has the fewest such events of all controllers. Human cars essentially never brake past -5.0 m/s2 in any arm.",
+     "numbers": "ev5_alks (peak -5 to -9, bins 4-7): X1 v3w 48.4 vs nc 9, +38 [37.4, 40.4]; X2 48.6 vs 9.5, +37.9 [36.7, 40]. ALKS steps below -5.0 (lt5_steps_alks): X1 +198 [184.5, 210.4], about 20 s per run. Medians of other arms, X1: tail 50.8, sw 49.6, baseline-v3 52.7, 3E-T 51.5, 3E-X1 58.5, p333 77, os1_15_10 89.5. v3w vs 3E-T -5.2 [-8.1, -1.6]; vs p333 -29.2 [-32.3, -26.4]. ev9_alks (peak <= -9, includes lane-end creep per V377): v3w-nc -0.5 [-3.9, 3.8]. Cars, X1: ev5_car 3.1 vs 2 per run, +1 [0.4, 1.6]; lt5_steps_car 8.8 vs 6 steps.",
+     "method": "As F4. Bins 4-7 avoid the -4.5 limit; bin 7/8 split at -9 is also an emergencyDecel limit (bin 7 is about 2 per run).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv (ev5_alks, lt5_steps_alks, ev9_alks, ev5_car, lt5_steps_car); ah_bins.txt",
+     "confidence": "high"
+    },
+    {
+     "id": "F7",
+     "statement": "Exposure (v3w serves more vehicles and drives more km) explains only a small part of the -4.5 excess in X1.",
+     "numbers": "X1 v3w vs nc: passed +103.8 [99.5, 110.7] (+5.1 %); km_all +269 [245, 312] (+2.2 %). ev45_all_per_km 0.0836 vs 0.0673 (+21.9 % [15.9, 28.1]). ev45_all_per_served 0.484 vs 0.403 (+18.8 % [13.1, 23.8]). b45_step_per_km and alks_b45_step_per_km +19.5 % [12.3, 28.8]. human_b45_step_per_km +28.7 % [24.7, 37.2]. X2 per km: ev45_all +0.1 % [-4.1, 8.0] (n.s.).",
+     "method": "Per-run ratio (events / total vehicle-km from m_dist_m_*, or / passed), then learner mean and the round-2 statistic.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv (*_per_km, *_per_served)",
+     "confidence": "high"
+    },
+    {
+     "id": "F8",
+     "statement": "Which class carries the excess depends on the metric. With the -4.5 count, both classes rise, cars proportionally more. With the robust counts: braking past the limit belongs to the ALKS, limit braking (-4.0 or harder) rises in both classes against nc at similar per-km rates, and against 3E-T only the ALKS differ.",
+     "numbers": "X1 v3w-nc: ev45_car +93.6 [57.7, 110.7] (per car-km +32.6 % [18.8, 38.4]); ev45_alks +121.1 [87.7, 174.5] (per ALKS-km +18.7 % [11.6, 27.3]), of which ev5_alks +38 is past the limit. ev4_car +233 [50, 335]; ev4_alks +130 [93, 168]. human_b45_step +17.1 s [15.3, 22.8]; alks_b45_step +69.8 s [51.1, 100.4]. X1 v3w-3E-T: ev4_car +40 [-30, 149] (CI includes 0) while ev45_car +82 [42, 114]; ev4_alks +84 [69, 113].",
+     "method": "As F4, per class (m_peak_car, m_peak_alks, m_peak_truck; alks_b45_step; human = b45_step - alks_b45_step).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv",
+     "confidence": "medium"
+    },
+    {
+     "id": "F9",
+     "statement": "Most of the X1-specific v3w-nc gap in the -4.5 count comes from nc's count dropping in X1 relative to X2. The drop happens at an unchanged -4.0 count, which points to which side of the threshold the steps land (F3), not to less braking. v3w itself rises only a little in X1.",
+     "numbers": "The same 40 seeds were run in both cells, so X1 - X2 is paired. nc: ev45_all -141.5 [-260.5, -67] (car -92, ALKS -67); ev4_all +48 [-152, 329]; all_delay +29,100 [17,800, 40,400]. v3w: ev45_all +49.4 [23.3, 88] (ALKS +42.9 [23.1, 72.1], car +4.1 [-17.6, 18.2]); ev5_alks +0.1 [-1.3, 2.4]. 3E-T: ev45_all -26.5 [-113.5, 69.5].",
+     "method": "Paired median difference between cells per arm, same bootstrap.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/null_cells.py -> null_cells.txt",
+     "confidence": "medium"
+    },
+    {
+     "id": "F10",
+     "statement": "When and where (indirect only; braking events carry no time or position). The extra braking does not come from entering the slowdown zone. It coincides with sharper speed fronts at the merge-2 section 4a, mostly outside the slowdown windows. That is where v3w's faster edge-3 traffic meets the congestion that persists at merge 2 after the first slowdown; under nc the queue spills back into edge 3.",
+     "numbers": "Minute speeds (m_minute m2_acc, m2_up), X1: 4a is congested from 600 s to the end in all arms (14-40 km/h); edge 3 after 720 s is nc 27-47 km/h vs v3w 48-73 km/h (paired diff +11 to +32 km/h, all CIs exclude 0). Queue upstream of edge 4 during the windows: 168 vs 259 m, -92 [-121, -73]. Front index fc15 (vehicles crossing a 50-m step needing >= 1.5 m/s2 between cell means): +328 [286, 433] (+28 %). At 4a: +190 [128, 289]. By period: rest +216 [168, 307], windows +65 [43, 110], after +48 [23, 115]. fc25 +102 [74, 135]. Seed-level Spearman of the v3w-nc differences: fc15 with ev45_all 0.55 (p < 0.001), with ev4_all 0.31 (p 0.05). Fast entries into the slowed edge 4: +10 [6.8, 15.7] vehicles per run, Spearman with the ev45 difference -0.28. 1-Hz conflicts: ttc3_r_4a +310 [249, 355], ttc3_r_3 +152 [68, 221], ttc3_r_ramp2 -100 [-169, -37]; ttc3_p_rest +195 [96, 260], ttc3_p_after +61 [32, 85], ttc3_p_hold +40 [-10, 51]. sev3_r_4a +13.8 [7.8, 18.5]. Against 3E-T, fc15 is equal (-6 [-95, 82]), so fronts do not explain v3w vs 3E-T. Example seed 7440878: ev45 1,048 vs 620; v3w's 4a queue dissolves by about 940 s while nc's persists (seeds.txt).",
+     "method": "Space-time fields (pooled 5-learner sums for maps; per-run metrics then learner mean for statistics), the plant's period and road splits of ttc3 and sev3, m_minute series. Round-2 statistic and Spearman rank correlation.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/ fronts.py -> fronts_stats.tsv, fronts.txt; st_metrics.py + st_stats.py -> st_stats.tsv, st_stats.txt; st_maps.py -> st_map_X1.txt, st_map_X2.txt; minute.py -> minute.txt; seeds.py -> seeds.txt",
+     "confidence": "low"
+    },
+    {
+     "id": "F11",
+     "statement": "What v3w's controlled vehicles do differently from 3E-T: they hold shorter headways upstream of and inside merge 2, and switch level more often with more reversals. Across controlled arms, a shorter held headway on 4a goes with more -4.5 events. This is an association, not a demonstrated cause.",
+     "numbers": "Mean held level (lv_sum_<road>/lv_n_<road>; 0 = 1.6 s, 3 = 0.8 s), X1: v3w edge 3 2.17 and 4a 1.64; 3E-T 1.45 and 1.10; p333 2.99 and 2.98; os1_15_10 2.55 and 1.90; baseline-v3 1.88 and 1.34. V2V-on share is about 0.57 in all arms. Share of ALKS time acting at 0.8 s: v3w 0.42, 3E-T 0.33. Level changes per ALKS: 8.9 vs 7.6. Reversal share: 0.47 vs 0.30. Across 34 controlled arms (each learner and rule), Spearman of median 4a level with median ev45: 0.66 (p < 0.001) in X1, 0.60 in X2; with ev45_car 0.54 and 0.56; with ev5_alks 0.20 (p 0.26) in X1.",
+     "method": "Per-run decision and level fields (lv_sum_*, lv_n_*, m_dec_level_s, m_dec_off_s, m_dec_totals); seed medians; Spearman across arms.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/levels.py -> levels.txt",
+     "confidence": "medium"
+    },
+    {
+     "id": "F12",
+     "statement": "The cascade-share difference holds with 95 % CIs against nc in both cells (cars and ALKS). It does not hold for cars against 3E-T, and every controller raises the ALKS share. It is far above a uniform-chance level, but that null is only a lower bound. A fixed 3-s window with shorter following times raises the ALKS share by construction. So it should not be read as stronger braking propagation, or as something specific to v3w.",
+     "numbers": "X1 v3w vs nc: cshare_car 0.227 vs 0.203, +0.025 [0.007, 0.032]; cshare_alks 0.294 vs 0.244, +0.047 [0.042, 0.054]; cshare_all +0.030 [0.024, 0.037]. X2: car +0.010 [0.001, 0.015], ALKS +0.049 [0.038, 0.055]. X1 v3w vs 3E-T: car +0.004 [-0.006, 0.012], ALKS -0.007 [-0.011, -0.003]. X1 cshare_alks: p333 0.359, os1_15_10 0.335, 3E-X1 0.319. Uniform null 1 - exp(-3 s x event starts per vehicle-second): nc 0.032, v3w 0.039, p333 0.043 (event rates 0.0107, 0.0132, 0.0146).",
+     "method": "Round-2 statistic on cshare_<c> = m_cascade_c / m_events_c per run; uniform-rate chance computed from ev_all / vehicle-seconds (m_n x 0.1).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/stats.py -> stats_all.tsv (cshare_*); null_cells.py -> null_cells.txt",
+     "confidence": "medium"
+    },
+    {
+     "id": "F13",
+     "statement": "Side observation: ALKS acceleration steps also pile up just above -7.0 m/s2 in every controller arm, so b7_step and alks_b7_step (a <= -7) may sit on another edge. The cause is unknown.",
+     "numbers": "X1 ALKS steps per run in [-7.0,-6.5): nc 1, v3w 32, 3E-T 31, p333 35. In [-7.5,-7.0): nc 1, v3w 5, 3E-T 6, p333 5. alks_b7_step X1 v3w vs nc +0.63 s [0.31, 1.27]; X2 -0.05 [-0.74, 0.73].",
+     "method": "m_ah_alks histogram tabulation.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/x1_braking/ah_bins.txt; stats_all.tsv",
+     "confidence": "low"
+    }
+   ],
+   "caveats": [
+    "No simulation was run. The claim that the floating-point side of -4.5 depends on speed (F3) rests on reading the SUMO 1.27.1 source plus IEEE arithmetic in numpy, not on a trace. Suggested check: one libsumo run logging (speed, acceleration) for steps with -4.6 < a < -4.4.",
+    "Braking events are stored only as per-run histograms, with no time or position. Every 'when/where' statement (F10) rests on proxies: cell-mean speed fronts on a 10 s x 50 m grid, which blur real fronts, the 1-Hz ttc3/sev3 period and road splits (all classes, conflicts, not braking), and m_minute merge speeds.",
+    "Number of comparisons: 3,840 paired effect or difference comparisons (2,592 in stats_all.tsv, 760 in st_stats.tsv, 432 in fronts_stats.tsv, 56 cross-cell) plus 123 Spearman associations, all report-only with no multiplicity correction. About 5 % of no-effect comparisons will exclude 0 by chance.",
+    "An arm's value per seed is the mean over its 5 learners (common1.arm_mean). Normalised metrics are ratios per run, then averaged. The ASCII maps pool the learners' sums instead.",
+    "Associations across arms (F11) and across seeds (F10) are correlational. Arms differ in many ways at once, so shorter 4a headway causing more limit braking is a hypothesis.",
+    "The cascade null is a uniform-rate lower bound, not clustering-aware. A fair null would need event start times, which are not stored.",
+    "The ALKS -9 bin (ev9_alks) includes lane-end creep artefacts (V377). -9 is also the emergencyDecel limit, so bins 7 and 8 split by floating point too. ev5 includes bin 7 (about 2 events per run).",
+    "The human decel of 4.5 and truck 4.0 are SUMO defaults. I checked that the plant (plant_c3.json, to_plant, VTYPE_TUNE) sets no decel override, but did not inspect a generated route file.",
+    "baseline-v3 = d0u500..d4u500, confirmed via measure2.groups on round2/val/validation.json."
+   ],
+   "comparisons_made": 3963
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "confirmed",
+     "recomputed": "Own key-by-key comparison (vpack.py): 2,800 of 2,800 measured test rows matched in round2/test/rows_6c49e7e.jsonl, 0 rows with any difference on 159 stored keys (exact equality, cfg excluded). sum(m_event_s_car, m_event_s_alks, m_event_s_truck) == b3_step in 2,800 of 2,800.",
+     "note": "Reproduced exactly. The pack calls getLeader at each event start, and that changed no stored key."
+    },
+    {
+     "id": "F2",
+     "verdict": "corrected",
+     "recomputed": "Code re-read: measure.py lines 18-21, 129-160 and 400-402; plant_sweep.py lines 118-145. PEAK_EDGES bins are (edge i+1, edge i]. A peak of exactly -4.5 goes to bin 3, so it counts in events_ge45. A peak of exactly -9 goes to bin 8. The st grid is 150 x 136 (10 s x 50 m from 300 s). Edge 4 spans 5,282-6,278 m, 4a 4,987-5,282 m and edge 3 3,793-4,987 m. pert_log matches in all rows.",
+     "note": "The definitions are right. One factual error: the st/*.npz files of policy and rule arms hold more than v and n. They also hold dec_ids, dec and dec_level_s (per-ALKS decision arrays). Only nc has v and n alone. Also, lv_sum/lv_n (used in F11) record the commanded level env.lvl, which only acts while V2V is on (about 57 % of ALKS time)."
+    },
+    {
+     "id": "F3",
+     "verdict": "corrected",
+     "recomputed": "My own numpy model of a = ((v - 4.5*TS) - v)/TS with TS = 100/1000., plus up to 4 carry-over steps. Share of limit steps stored below -4.5: 0 % at 1-2 m/s; exactly -4.5 in 92.5 % at 0.5-1 m/s; 77.7 % at 2-4 m/s; 100 % at 4-8 m/s; 5.6 % at 8-16 m/s; 0 % at 16-32 m/s. Vehicle time above 115 km/h is at most 0.16 % (limit 100 km/h). Accel histogram, X1 nc, medians of steps per run: car [-5.5,-5) 2, [-5,-4.5) 565, [-4.5,-4) 7,519, [-4,-3.5) 3,064; ALKS 12 / 2,952 / 5,444 / 1,748; trucks 0 below -4.5. Steps at exactly -4.5: 0.16 % of ALKS steps at or below -4.5 (0.19 % for all vehicles).",
+     "note": "The arithmetic reproduces. The heavy [-4.5,-4) bin supports the claim that limit steps sit on both sides of -4.5. Two wording problems. (1) 'It does not count harder braking' and the answer's 'that count does not measure hard braking' go too far. events_ge45 counts every past-limit event (ev5 is part of ev45) plus the limit-rate (4.5 m/s2) events that reach about 7-29 km/h. It is a speed-selective count of hard braking, not a non-measure. (2) For ALKS (SUMO ACC), finalizeSpeed allows braking beyond decel down to max(vSafe, v - 9*TS). So part of the ALKS [-5,-4.5) bin may be real braking at 4.5-5.0 m/s2, especially under controllers, where [-5.5,-5) is 86 (v3w), 128 (3E-T) and 264 (p333) against 12 for nc. The 250x drop between adjacent bins for nc says most of it is the limit pile. The speed dependence is still not traced in a run."
+    },
+    {
+     "id": "F4",
+     "verdict": "confirmed",
+     "recomputed": "Own bootstrap (default_rng(20261104), 20,000 seed resamples, 2.5/97.5 percentiles, arm = learner mean per seed). X1 ev45_all medians: v3w 1,044, nc 818.5, 3E-T 868.5. v3w-nc +203.6 [149.4, 266.6] (effect -24.9 % [-32.6, -18.3]). v3w-3E-T +184.8 [111.8, 220.8]. v3w-3E-X1 +48.2 [-31.3, 116]. v3w-p333 -356.4 [-389.4, -315]. v3w-os1_15_10 -89.5 [-160.6, -39.9]. Against nc: tail +202.2, sw +207.3, baseline-v3 +198.9 (all CIs exclude 0). X2: v3w-nc +27.2 [-54.9, 62.3]; v3w-3E-T +97.6 [77.8, 179]; v3w-3E-X2 +50.9 [15.2, 115.3].",
+     "note": "Reproduced exactly. events_ge45_truck is structurally 0, since the truck decel limit is 4.0."
+    },
+    {
+     "id": "F5",
+     "verdict": "confirmed",
+     "recomputed": "X1 ev4_all: v3w 4,857 vs nc 4,348, +342.8 [229.8, 496.9] (+7.9 % [5.3, 11.4]). v3w-3E-T +155.3 [65.4, 278.3] (+3.3 % [1.4, 5.9]). X2 v3w-nc +341.2 [134, 475]. Per class-km, X1: car +5.8 % [0.6, 10.4], ALKS +5.2 % [3.7, 9.1]. X2: car +9.7 % [3.1, 11.2], ALKS +0.2 % [-3.5, 2.3]. Excluding trucks, X1 ev4 car+ALKS is +304.9 [202.1, 485.6] (+7.2 % [4.8, 11.5]).",
+     "note": "Reproduced within rounding. Caveat: ev4_all includes trucks, whose limit is -4.0, so their bin-1/bin-2 split at -4.0 has the same floating-point side issue. Truck ev4 is +46 [27.6, 64]. The car+ALKS count avoids this."
+    },
+    {
+     "id": "F6",
+     "verdict": "corrected",
+     "recomputed": "ev5_alks (peak in (-9,-5]), X1: v3w 48.4 vs nc 9, +38 [37.4, 40.4]. X2: 48.6 vs 9.5, +37.9 [36.7, 40]. v3w-3E-T: X1 -5.2 [-8.1, -1.6], X2 -7.3 [-9.3, 0]. ev5_car X1 3.1 vs 2, +1 [0.4, 1.6]. X1 medians of all controlled arms: copy 46.0, v3w 48.4, sw 49.6, tail 50.8, 3E-T 51.5, baseline-v3 52.7, 3E-X1 58.5, z33133 60, r4a1 73, p333 77, os1_15_10 89.5. X2: tail 48.3, v3w 48.6, copy 47.5. b7_step == alks_b7_step (all steps at or below -7 are ALKS).",
+     "note": "The numbers reproduce. 'v3w has the fewest such events of all controllers' is wrong. The 'copy' rule has fewer in both cells (46.0, 47.5), and in X2 tail ties or beats v3w (48.3 vs 48.6). Correct wording: about 5x nc under every controller that shortens ALKS headways; v3w is at the low end, within about 1-4 events of tail, sw, baseline-v3 and 3E-T."
+    },
+    {
+     "id": "F7",
+     "verdict": "corrected",
+     "recomputed": "X1 v3w-nc: passed +103.8 [99.5, 110.7]; km_all +269.3 [245.1, 311.7]. ev45_all per km +21.9 % [15.9, 28.1]; per served +18.8 % [13.1, 23.8]. b45_step per km (all vehicles, all km) +25.3 % [15.7, 28.5]. alks_b45_step per ALKS-km +19.5 % [12.3, 28.8]. Non-ALKS b45_step per car+truck km +28.7 % [24.7, 37.2]. The robust count: ev4_all per km +4.9 % [3.2, 8.9]; ev4_all per served +1.7 % [0.5, 6.5] (raw +7.9 %). ev3_all (all events) per km +9.5 % [7.0, 13.2]. X2 ev45 per km +0.1 % [-4.1, 8.0]; ev4_all per served +3.1 % [-0.4, 5.9].",
+     "note": "The ev45 numbers reproduce. The conclusion 'exposure explains little' holds only for ev45, the count that F3 itself shows is floating-point and speed sensitive. For the robust ev4_all, exposure explains most of the excess: per vehicle served v3w is only +1.7 % [0.5, 6.5] above nc. Also, 'b45_step_per_km and alks_b45_step_per_km +19.5 %' merges two metrics. The all-vehicle b45_step per km is +25.3 %."
+    },
+    {
+     "id": "F8",
+     "verdict": "corrected",
+     "recomputed": "X1 v3w-nc: ev45_car +93.6 [57.7, 110.7] (per car-km +32.6 % [18.8, 38.4]); ev45_alks +121.1 [87.7, 174.5] (per ALKS-km +18.7 % [11.6, 27.2]); ev4_car +233.2 [49.5, 334.6]; ev4_alks +129.8 [93.4, 167.7]; alks_b45_step +69.8 s [51.1, 100.4]; non-ALKS b45_step +17.1 s [15.3, 22.8]. Trucks: ev35_truck (peak at or below -3.5) +175.6 [119.2, 281.3] (+19.7 % [13.4, 31.6]), per truck-km +18.9 % [10.5, 26.8]. X1 v3w-3E-T: ev4_car +39.8 [-29.6, 149], ev4_alks +83.9 [68.9, 113]. X2 v3w-3E-T: ev4_car +232.7 [85.6, 340.8] (+8.2 %), ev4_alks +49.3 [28.8, 92].",
+     "note": "The X1 numbers reproduce. Three corrections. (1) 'Against 3E-T only the ALKS differ' holds in X1 only; in X2 the human cars differ too. (2) Human-driven trucks also brake more, proportionally more than cars (+19.7 %), and the class split leaves them out. (3) By braking time at or below -4.5, the ALKS carry about 80 % of the excess (+70 s of about +87 s), more than the event counts suggest."
+    },
+    {
+     "id": "F9",
+     "verdict": "confirmed",
+     "recomputed": "Paired X1-X2 (same 40 seeds). nc: ev45_all -141.5 [-260.5, -67] (car -92 [-147.5, -46], ALKS -67 [-129.5, -4]); ev4_all +48 [-152, 329]; all_delay +29,110 [17,800, 40,370]. v3w: ev45_all +49.4 [23.3, 88] (ALKS +42.9 [23.1, 72.1], car +4.1 [-17.6, 18.2]); ev5_alks +0.1 [-1.3, 2.4]. 3E-T: ev45_all -26.5 [-113.5, 69.5].",
+     "note": "Reproduced. 'Unchanged -4.0 count' means not shown to differ: the CI runs from -3.5 % to +7.6 %. X2 is a different scenario, not a no-effect null, so 'points to the threshold side' stays an inference, as the analyst hedged."
+    },
+    {
+     "id": "F10",
+     "verdict": "corrected",
+     "recomputed": "Own front index (vehicle crossings of 50-m steps needing at least 1.5 m/s2), X1 v3w-nc: +328 [286, 433] (+28.4 %). By road: edge 3 +176 [41, 303], 4a +190 [128, 289], edge 4 0. By period: w1 +28 [10, 49], w2 +52 [30, 66], after windows +45 and +19, mid +109 [81, 171], late +77 [25, 122]. v3w-3E-T -6 [-95, 82]. Seed Spearman of the f1.5 difference with the ev45_all difference 0.55 (p < 0.001), with ev4_all 0.31 (p 0.05). X2: fronts +144 [88, 214] (+11.5 %, mostly edge 3) while ev45 is +27 [-55, 62]. Minute speeds reproduce: edge 3 after 780 s nc 27-49 km/h vs v3w 48-73 km/h; 4a 14-40 km/h from 660 s in all arms. Across 34 controlled arms, the partial rank correlation of ev45 with edge-3 speed given the 4a level is -0.44 (X1) and -0.54 (X2). ttc3_r_4a +309.7 [248.7, 354.6]; ttc3_r_3 +151.9 [68.2, 220.7]; sev3_r_4a +13.8 [7.8, 18.5].",
+     "note": "The numbers reproduce. Location: about half of the extra fronts are on edge 3, the queue tail upstream of 4a, especially after 1,440 s, not only at 4a. Mechanism: 'faster edge-3 traffic meets congestion' fits v3w vs nc, but among controllers faster edge-3 traffic goes with fewer ev45. In X2 the fronts rise with no ev45 rise. So the fronts are at most a partial explanation. Braking has no stored time or place, so this stays low confidence."
+    },
+    {
+     "id": "F11",
+     "verdict": "confirmed",
+     "recomputed": "Commanded level lv_sum/lv_n, X1 medians: v3w edge 3 2.17, 4a 1.64; 3E-T 1.45, 1.10; p333 2.99, 2.98; os1_15_10 2.55, 1.90; baseline-v3 1.88, 1.34. Share at level 3 (0.8 s) of all ALKS time: v3w 0.731 x 0.568 = 0.415, 3E-T 0.583 x 0.570 = 0.332. Changes per ALKS 8.85 vs 7.64; reversal share 0.47 vs 0.30. Across 34 arms, Spearman of the 4a level with ev45: X1 +0.66, X2 +0.60; with ev45_car +0.54, +0.56; with ev5_alks +0.20 (X1). Partial given edge-3 speed +0.74; given delay +0.75.",
+     "note": "Reproduced. It is an association, and the level is the commanded level, which acts only with V2V on. Against the conclusion: ev5_alks does not follow the 4a level across controllers (rho 0.20), and v3w has fewer past-limit events than 3E-T despite a shorter held headway. So shorter headways do not explain v3w's past-limit ALKS braking specifically."
+    },
+    {
+     "id": "F12",
+     "verdict": "confirmed",
+     "recomputed": "X1 v3w-nc: cshare_car 0.227 vs 0.203, +0.0249 [0.0067, 0.0324]; cshare_alks 0.294 vs 0.244, +0.0474 [0.0421, 0.0542]; cshare_all +0.0303 [0.0244, 0.0365]. X2: car +0.0105 [0.0008, 0.0155], ALKS +0.0490 [0.0383, 0.0555]. X1 v3w-3E-T: car +0.0044 [-0.0063, 0.0122], ALKS -0.0066 [-0.0115, -0.0028]. Uniform null 1 - exp(-3 x rate): nc 0.032, v3w 0.039, p333 0.043.",
+     "note": "Reproduced. The caution is justified: the uniform null is only a lower bound, and every controller raises the ALKS share."
+    },
+    {
+     "id": "F13",
+     "verdict": "confirmed",
+     "recomputed": "ALKS steps per run, X1 medians, [-7,-6.5): nc 1, v3w 31, 3E-T 30, p333 34; [-7.5,-7): 1, 5, 5, 5. alks_b7_step X1 v3w-nc +0.63 s [0.31, 1.27]; X2 -0.05 [-0.74, 0.73].",
+     "note": "Reproduced (I used medians, the analyst means). The cause is still unknown."
+    }
+   ],
+   "answer_verdict": "Mostly supported, with corrections. I wrote my own code for every main number (F1, F4-F9, F11, F12, F13, and the front index and conflict splits in F10) and reproduced them within rounding. The pack-identity check holds on 2,800 of 2,800 rows. The floating-point argument holds as arithmetic, and the accel-histogram shape is consistent with it. Corrections the answer needs:\n(1) Do not say events_ge45 'does not measure hard braking'. It counts every past-limit event plus the 4.5 m/s2 limit events that reach about 7-29 km/h. It is a speed-selective count, so it should not be read as a measure of how much hard braking there is.\n(2) 'Exposure explains little' holds only for that floating-point-sensitive count. For the robust ev4_all, v3w vs nc in X1 is +7.9 % raw, +4.9 % [3.2, 8.9] per vehicle-km and only +1.7 % [0.5, 6.5] per vehicle served. X2 per served: +3.1 % [-0.4, 5.9].\n(3) 'v3w has the fewest past-limit events' is wrong. The copy rule has fewer in both cells, and tail ties in X2. The true statement is about 5x nc for every headway-shortening controller, with v3w at the low end.\n(4) Where: the extra fronts sit on edge 3 (the queue tail) as much as on 4a. Among controllers, faster edge-3 traffic goes with fewer ev45 (partial rho -0.44). So 'faster edge 3 meets the merge-2 queue' explains v3w vs nc, not v3w vs other controllers.\n(5) The class answer leaves out human-driven trucks: +19.7 % [13.4, 31.6] events at -3.5 m/s2 or harder vs nc in X1. By braking seconds at or below -4.5, the ALKS carry about 80 % of the excess.\n(6) The conclusion that v3w's shorter headways 'cost braking past the limit' holds against nc for all controllers. It does not hold for v3w against other controllers: v3w has fewer than 3E-T (-5.2 [-8.1, -1.6]) despite shorter held headways, and ev5_alks does not follow the 4a level across arms (rho 0.20).\nSuggested conclusion: no v3w-specific hard-braking behaviour is shown. ALKS past-limit braking is about 5x nc under any controller that shortens ALKS headways, and v3w is at the low end. Limit braking rises a little, mostly in line with the extra vehicles served. The headline -4.5 count is inflated by which speed band the limit braking happens in. All of this is report-only.",
+   "missed": [
+    "free_brake_alks_step was asked for, defined, and never reported. In X1, v3w is -83.8 s [-96.0, -53.7] (-16.8 %) vs nc; in X2 -123.2 s [-145.9, -100.3]. It falls because v3w ALKS more often have a close leader (gap/speed under 3 s), so it is confounded by headway and gives no sign of free-road braking by v3w ALKS.",
+    "Exposure for the robust count. ev4_all per vehicle served, X1 v3w-nc: +1.7 % [0.5, 6.5]; per km +4.9 % [3.2, 8.9]. X2 per served +3.1 % [-0.4, 5.9]. Once exposure is accounted for, most of the robust excess disappears.",
+    "Human-driven trucks. ev35_truck (peak at or below -3.5, which avoids their -4.0 limit edge), X1 v3w-nc: +175.6 [119.2, 281.3] (+19.7 % [13.4, 31.6]), per truck-km +18.9 % [10.5, 26.8]; X2 +26.7 %. Their -4.0 limit also makes the truck part of ev4_all floating-point sensitive (ev4_truck +46 [27.6, 64]).",
+    "Split by braking time instead of events. alks_b45_step +69.8 s [51.1, 100.4] vs non-ALKS +17.1 s [15.3, 22.8] in X1, so the ALKS carry about 80 % of the excess time at or below -4.5.",
+    "Alternative mechanism tested across 34 controlled arms. The 4a commanded level stays associated with ev45 after controlling for edge-3 speed (partial rho +0.74 in X1, +0.72 in X2) or delay (+0.75). Edge-3 speed given the level goes the other way (-0.44, -0.54). The 'faster edge 3 into the queue' story therefore does not generalise across controllers.",
+    "Where the fronts are. Edge 3 contributes as much as 4a: +176 [41, 303] vs +190 [128, 289] in X1. In X2 the fronts rise +11.5 % [7.0, 17.1] with no ev45 change, which weakens fronts as the explanation.",
+    "For SUMO ACC, finalizeSpeed allows braking beyond decel (vMin = max(vSafe, v - 9*TS)). So some ALKS steps in [-5,-4.5) under controllers may be real braking slightly beyond 4.5, not floating-point position. The bin below grows from 12 (nc) to 86 (v3w), 128 (3E-T) and 264 (p333) steps per run.",
+    "Side note on the 'odd value': in p333, the 0.934 is the share of V2V-on time at level index 3 = 0.8 s, the SHORTEST headway (HEADWAYS_S = (1.6, 1.2, 1.0, 0.8)). That matches its commanded level of 2.99. The report panel's 'longest level' label looks wrong; I did not check the panel code.",
+    "Comparisons I made: about 316 paired bootstrap comparisons plus about 70 rank correlations, all report-only with no multiplicity correction. Scripts and outputs are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_x1_braking/ (vlib.py, vstats.py, vfp.py, vmisc.py, vcross.py, vst.py, vst2.py, vlev.py, varms.py, vpack.py, vminute.py; out_*.txt)."
+   ],
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_x1_braking/"
+  }
+ },
+ {
+  "key": "decisions",
+  "analysis": {
+   "area": "Policy decision behaviour (m_dec_* / summary \"dec\") in S0+S1, and the p333 \"longest level\" value",
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/",
+   "answer": "The 0.934 for p333 is measured correctly, but the panel's title has the gap backwards. level_share_on[-1] is level index 3, and HEADWAYS_S = (1.6, 1.2, 1.0, 0.8) s, so index 3 is 0.8 s, the shortest gap, not the longest. p333 is CavRule([3,3,3]): it asks for 0.8 s for every ALKS in every zone (want share 1.000, 0 reversals, 0 excess changes). The missing ~6.6 % is the start-up climb: every ALKS starts at level 0 (1.6 s) and moves up one level per 10-s hold, which takes about 10.5 s of its ~159 s with V2V on in X1. That is why the share rises with demand, from 0.910 at 3,500 to 0.947 at 7,000. In X1, v3w shows no sign of acting out of distribution. Paired with X2 (same seeds, same mean density), its confidence (+0.004 [-0.005, +0.012]) and reversal share (+0.002 [-0.005, +0.005]) are unchanged, and its entropy is slightly lower. Only sw is less confident in X1. v3w does not pick shorter gaps in X1; it picks longer ones. Its share at 0.8 s is -0.044 [-0.057, -0.035] against X2 and -0.057 against band runs of the same density. Yet its close-following is 17 % higher in X1 than in X2. p333, whose level choice is identical in both cells, rises 23 %, so the extra close-following in X1 comes from the traffic, not from changed level choices. The overall share of short gaps does not explain the close-following gap to the rules either: v3w and os1_15_10 both spend 0.73 of V2V-on time at 0.8 s, yet they have 16.6 % and 74.1 % more close-following than no control. v3w's excess over no control falls after the slowdowns and on roads 4a and 3, not during the slowdowns. The pack stores no decision time series, so the timing comes from a proxy: ALKS grouped by departure time, rebuilt exactly from the seed. It suggests v3w lengthens its gaps for vehicles passing both slowdowns, including the second one (the out-of-draw part), and keeps them somewhat longer afterwards.",
+   "findings": [
+    {
+     "id": "D1",
+     "statement": "The report panel 'ALKS at the longest level, V2V on' plots the share at the SHORTEST time gap. It reads level_share_on[-1], i.e. level index 3, and in CavEnv index 3 is 0.8 s. The title is inverted: 'longest' describes the index, not the gap.",
+     "numbers": "b_env.HEADWAYS_S = (1.6, 1.2, 1.0, 0.8) s; OwnState/LocalRule docstrings: free=3 means 0.8 s; ALKS_TAU (V2V-off contract) = 1.6 s = level 0. No policy checkpoint overrides the levels: act_env is None for all w*, t*, s*, d* checkpoints.",
+     "method": "Code read: measure2.py METRICS line 215 (lambda m: m['dec']['level_share_on'][-1]); measure.py summary() level_share_on = m_dec_level_s / on-seconds; b_env.py HEADWAYS_S, CavEnv._v2v; torch.load of every policy checkpoint to read act_env.",
+     "evidence": "/home/catalin/work/phd/wt/r2-metrics/docs/research/round2/measure2.py:215; /home/catalin/work/phd/wt/r2-metrics/v5b/fleet/b_env.py (HEADWAYS_S, CavEnv, OwnState); checkpoints listed by inline command (act_env=None)",
+     "confidence": "high"
+    },
+    {
+     "id": "D2",
+     "statement": "p333 = cav_rule [3,3,3] (CavRule, env hold 10 s), so every ALKS gets 0.8 s in all three zones. Its 0.934 is a correct measurement, not an artefact. All its decisions ask for level 3 and it makes no reversals or excess changes. The rest of the time is each ALKS's start-up climb from level 0 (1.6 s) to level 3, one level per 10-s hold. The share therefore rises with demand: V2V-on time per ALKS grows while the climb stays about 10-11 s.",
+     "numbers": "Medians over seeds: want3 = 1.000, reversals 0 and m_dec_excess 0 in every cell; changes per ALKS 2.97. X1: share3 0.9336 (range 0.925-0.942, n=40); climb (V2V-on s at levels 0-2) 10.54 s of 159.1 V2V-on s per ALKS, and 1 - 10.54/159.1 = 0.934. X2 0.933; band 4,500/5,000/5,250/5,500/6,000: 0.913/0.918/0.923/0.926/0.939; S1 3,500: 0.910; S1 7,000: 0.947 (V2V-on s per ALKS 109.6 at 3,500, 205.1 at 7,000). Per vehicle on seed 7440840 (X1): V2V-on seconds at levels 0-2 have median 10 s and maximum 24 s; last levels [2, 14, 8, 1277] of 1,301 ALKS. Same cap for os1_15_10 at 4,500 (0.912 against p333's 0.913), where it is almost always at its free level 3. m_dec_level_s equals the env's lv summed over zones in all 5,340 non-nc rows; tau_on_match/tau_on_n = 1.0 for p333.",
+     "method": "Per-run fields m_dec_level_s, m_dec_want, m_dec_totals, m_dec_excess, m_dec_vehicles, m_dec_off_s, lv, tau_on_match, tau_on_n; per-vehicle side-file arrays dec and dec_level_s (st/*.npz).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/checks.py -> checks.json",
+     "confidence": "high"
+    },
+    {
+     "id": "D3",
+     "statement": "Every CAV rule arm carries 'dec' metrics; no control has none. Rules have no confidence or entropy (no probabilities). Rules are asked about every ALKS at every 5-s decision, but Greedy/TailMean policies only when a vehicle's 10-s clock is due, so applied, kept and ignored shares cannot be compared between rules and policies. sw mixes the two cadences.",
+     "numbers": "Rows with a non-empty m_dec_totals: every rule arm 100 %, nc 0 of 220. Asked per ALKS (median): p333 53.3, os1_15_10 53.5, 3e 54.6, copy 57.6; w0u250 26.6, t0 26.5, d0u500 27.0; s0u500 38.4. Ignored decisions: 0 in every Greedy/TailMean run; sw up to 2,608 per run (from its rule part). Example: p333 applied_share 0.053 against v3w 0.318 in X1, which reflects ask cadence rather than behaviour.",
+     "method": "measure.Measure.cav = hasattr(env,'lvl') and hasattr(env,'headways'); plant_sweep calls meas.decisions only when the action is a dict; ask cadence read from CavEnv obs (due mask) and from the rules' __call__. Counts from compact rows.",
+     "evidence": "/home/catalin/work/phd/wt/r2-metrics/v5b/fleet/plant_sweep.py:300-308, b_env.py:938-941 and rule classes; checks.py output; inline asked/ignored check",
+     "confidence": "high"
+    },
+    {
+     "id": "D4",
+     "statement": "(a) In X1 against X2 (paired, same 40 seeds and demand, equal mean density), v3w shows no sign of lower confidence, higher entropy or more reversals in X1. It makes more level changes, but the no-learning rules change in the same way, so that change comes from the traffic. Of the policy arms, only sw is less confident in X1.",
+     "numbers": "v3w X1 minus X2, paired median [95 % CI], n=40: conf_med +0.004 [-0.005, +0.012]; conf_lt05 -0.002 [-0.007, +0.001]; entropy -0.013 [-0.019, -0.006]; reversal_share +0.002 [-0.005, +0.005]; applied_share +0.019 [+0.013, +0.023]; excess_per_veh +0.615 [+0.288, +0.778]; density +0.06 [-0.42, +0.56] veh/km. tail conf +0.014 [+0.001, +0.023]; baseline-v3 conf +0.017 [+0.008, +0.022]. sw: conf -0.047 [-0.056, -0.037], entropy +0.020 [+0.012, +0.029], reversal +0.017 [+0.012, +0.023]. Rules, excess changes per ALKS X1-X2: os1_15_10 +0.549 [+0.243, +0.950], 3E-T +0.740 [+0.636, +0.825].",
+     "method": "Arm value per seed = mean over the 5 learners (decide2.arm_mean convention). Paired median difference in the metric's own units; percentile bootstrap, 20,000 resamples of seeds, default_rng(20261104). Fields come from m_dec_conf (binned confidence, measure.quantiles), m_dec_entropy_mean, m_dec_totals, m_dec_excess and m_dec_vehicles; density = st n.sum()/1500 s/6.8 km.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/analysis_a.py -> analysis_a.txt, analysis_a.json (163 paired X1-X2 intervals)",
+     "confidence": "high"
+    },
+    {
+     "id": "D5",
+     "statement": "(a) Matched on density against the band (training's slowdown draw), X1 and X2 both show lower confidence and more reversals than band runs of equal mean density. X2 lies inside the draw, so this is a test-cell versus band-average traffic difference, not a sign specific to X1. At S1 7,000 veh/h (outside the trained demand range) v3w is no less certain than the band trend extrapolates. At 3,500 it behaves like 4,500.",
+     "numbers": "v3w, residual from a band quadratic in density (100 band runs, density 40.9-80.8 veh/km), median [95 % CI]. conf_med: X1 -0.046 [-0.059, -0.043], X2 -0.057 [-0.064, -0.052]. reversal_share: X1 +0.035 [+0.032, +0.038], X2 +0.036 [+0.034, +0.039]. entropy: X1 +0.029 [+0.027, +0.040], X2 +0.047 [+0.042, +0.052]. S1 7,000 (extrapolated, density 87.1): conf 0.554 against predicted 0.514, residual +0.050 [+0.040, +0.060]; reversal -0.023 [-0.029, -0.018]. Raw per-level medians: conf_med B4500 0.843, B6000 0.651, S1 3,500 0.843, S1 7,000 0.554; reversal_share 0.353, 0.490, 0.320, 0.531.",
+     "method": "np.polyfit of degree 2 on band arm-mean runs; residuals per seed for X1/X2 (40 seeds) and S1 (20 seeds); median plus the same bootstrap.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/analysis_a2.py -> analysis_a2.txt/json (90 residual intervals)",
+     "confidence": "medium"
+    },
+    {
+     "id": "D6",
+     "statement": "(c) v3w picks LONGER gaps in X1, not shorter: less time at 0.8 s and a longer mean V2V-on gap than in X2 at equal density, and than band runs of equal density. tail, sw, baseline-v3 and the state-reactive rules do the same, so this is what reacting to X1's traffic looks like, not a policy oddity.",
+     "numbers": "share3 (V2V-on share at 0.8 s): X1 0.731 [0.721, 0.737] against X2 0.775 [0.768, 0.783], paired -0.044 [-0.057, -0.035]. gap_on (mean V2V-on time gap): +0.021 s [+0.017, +0.028]. Density-matched share3 residual: X1 -0.057 [-0.066, -0.043], X2 -0.011 [-0.019, -0.008]. os1_15_10: paired -0.032 [-0.061, -0.003]; residual X1 -0.105, X2 -0.074. 3E-T: residuals X1 -0.053, X2 -0.050. p333 residual +0.004.",
+     "method": "share3 = m_dec_level_s[3]/sum, gap_on = sum(share_l x HEADWAYS_S[l]); paired bootstrap and band quadratic as in D4/D5.",
+     "evidence": "analysis_a.txt; /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/analysis_c.py -> analysis_c.txt/json",
+     "confidence": "high"
+    },
+    {
+     "id": "D7",
+     "statement": "(c) Level choice does not explain close-following. v3w's close-following rises in X1 although its gaps get longer. p333, whose level choice is identical in X1 and X2, rises as much. Across arms, the share at 0.8 s barely orders close-following: v3w and os1_15_10 spend the same share at 0.8 s but differ fourfold in excess over no control, and 'copy' (almost never at 0.8 s) is worse than v3w.",
+     "numbers": "ttc_net X1 against X2 (round-2 effect, negative = more close-following in X1): v3w -17.0 [-21.2, -6.9] %; p333 -23.0 [-34.1, -13.9] % (share3 X1-X2 -0.000 [-0.001, +0.002]); os1_15_10 -22.7 [-26.9, -14.4] %; 3E-T -28.9 [-35.7, -20.5] %; nc +7.3 [-4.1, +20.6] % (medians 1,493 X1, 1,580 X2). ttc_net against nc in X1: v3w -16.6 [-25.1, -8.4] % at share3 0.731; os1_15_10 -74.1 [-94.2, -60.8] % at 0.733; copy -49.5 [-60.9, -43.4] % at share3 0.042 and mean gap 1.043 s; p333 -121.5 [-143.2, -106.9] %. In X2: v3w -0.9 [-5.8, +9.5] %. Spearman rank correlation of share3 with the TTC effect across 18 controlled arms: X1 -0.42, X2 -0.24.",
+     "method": "Round-2 effect: sign x median(P - O)/median(O) x 100, sign -1, 95 % percentile bootstrap (20,000, rng 20261104), reimplemented and checked equal to conf3/common.raw.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/analysis_c.txt/json; validate_stat.py",
+     "confidence": "high"
+    },
+    {
+     "id": "D8",
+     "statement": "(b, c) Where and when v3w's X1 close-following excess over no control sits: after the slowdowns (the 'after' and 'rest' periods) and on roads 4a and 3, with less than no control on ramp 2. It is not shown during the slowdowns. Placement differs from the rules: the policies hold ramp ALKS near 1.6 s, and on the X1 slowdown edge 4 v3w lengthens less than the speed rules but lengthens more on edge 3.",
+     "numbers": "X1, v3w minus nc, paired median TTC-seconds per run [95 % CI]: before +3 [-4, +15]; taper -0 [-7, +6]; hold +40 [-10, +51]; after +61 [+32, +85]; rest +195 [+96, +260]; road 4a +310 [+249, +355]; road 3 +152 [+68, +221]; ramp2 -100 [-169, -37]. nc medians: hold 201, after 336, rest 835. os1_15_10: hold +138 [+110, +161], after +240, rest +686. Mean commanded level per road in X1 (lv_<road>): v3w r2 0.35, rj2 0.33, 4a 1.64, 4 2.42; os1 r2 1.60, rj2 1.90; p333 r2 2.25, rj2 2.82. X1-X2 lv_4: v3w -0.080 [-0.099, -0.062], os1 -0.320 [-0.356, -0.263], 3E-T -0.237 [-0.257, -0.225]. lv_3: v3w -0.156 [-0.173, -0.105], os1 +0.100 [+0.027, +0.200].",
+     "method": "Row fields ttc3_p_{before,taper,hold,after,rest} and ttc3_r_{3,4a,ramp2,rest} (ttc3 == ttc_net in all 5,560 rows); lv_sum_<road>/lv_n_<road>; paired median against nc with the same bootstrap.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/analysis_bc_periods.py -> analysis_bc_periods.txt/json (144 intervals); analysis_a.json for lv X1-X2",
+     "confidence": "medium"
+    },
+    {
+     "id": "D9",
+     "statement": "(b) The pack has no decision or level time series: m_dec_level_s is a per-level run total, m_dec_off_s a scalar, and m_minute holds merge and ramp series only. A proxy: each ALKS's whole-trip record, grouped by departure time rebuilt exactly from the seed. It suggests v3w lengthens gaps for vehicles passing both X1 slowdowns, including the second one (the out-of-draw element), and keeps somewhat longer gaps long after them. os1_15_10's response is confined to the slowdown cohorts.",
+     "numbers": "Rebuild check: 2,644 departures per seed (median) against 2,650 expected; highest ALKS index 1-10 below the last departure; cohorts departing 0-240 s identical in X1 and X2 (difference exactly 0), as the runs coincide before 600 s. v3w share3 X1-X2 by 60-s departure bin, median [CI], n=40: 360-420 -0.036 [-0.046, -0.030] (on edge 4 about 624-747 s per speed-field trajectory); 540-600 -0.074 [-0.091, -0.066] (confounded: these vehicles also meet X2's edge-3 slowdown); 1080-1140 -0.094 [-0.103, -0.084] (edge 4 about 1,406-1,468 s); 1380-1440 -0.028 [-0.037, -0.011] (edge 4 about 1,683-1,741 s). os1_15_10: 480-540 -0.172 [-0.197, -0.135]; 1080-1140 -0.073 [-0.164, -0.010]; most bins after 1,320 s have CIs that include 0. Level changes per ALKS X1-X2, v3w: 360-420 +2.57 [+2.43, +2.78], 1020-1080 +1.99 [+1.04, +2.27]; rules similar.",
+     "method": "Departure times from numpy default_rng(seed) exponential gaps at 3600/q over [0, 1800) s, rounded up to 0.1 s, as in fleet.FleetDemand (no SUMO). Vehicle id main.<i> is the i-th departure. Side-file dec/dec_level_s grouped by departure bin, arm mean over learners, paired X1-X2 over seeds. Edge-passage times from trajectories integrated through each run's pooled 10 s x 50 m speed field (a labelling aid only).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/cohort.py -> cohort.txt/json (750 bin intervals); traj.py -> traj.txt/json",
+     "confidence": "low"
+    },
+    {
+     "id": "D10",
+     "statement": "What the reversal and excess counts measure. About a quarter of v3w's level changes and reversals come from ALKS whose level almost never acts, because V2V was off more than 80 % of their time. So the reversal share (about 0.47 for v3w against about 0.29 for the rules) partly counts churn that never reaches SUMO's tau.",
+     "numbers": "v3w, pooled over 40 seeds x 5 learners: ALKS with V2V on < 20 % of their seconds = 22.4 % (X1) / 22.7 % (X2) of ALKS; they make 25.0 % / 26.6 % of level changes and 28.3 % / 30.4 % of reversals. 3E-T: 20.6 % of changes, 19.4 % of reversals; os1_15_10: 19.9 %, 17.1 % (X1). Traced example: X2 w0u250 seed 7440840, ALKS main.1235: 30 changes, 24 reversals, 0 V2V-on seconds (528 s off). Consistency checks hold: asked = changed + ignored + kept; reversals <= changes - 1; changes - last level >= 0.",
+     "method": "Per-vehicle side-file arrays dec and dec_level_s (V2V-on seconds per level, plus off seconds).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/trace_v2v_off.py -> trace_v2v_off.txt/json; trace_vehicles.py -> trace_vehicles.txt",
+     "confidence": "high"
+    },
+    {
+     "id": "D11",
+     "statement": "Validation. The reimplemented statistic matches conf3/common.raw exactly and reproduces round 2's X1 reading of v3w against nc. The measured S0 rows equal round 2's stored rows on the keys this analysis uses, so the pack did not change these runs.",
+     "numbers": "X1 v3w vs nc: all_delay +27.338 [+24.745, +30.429], ttc_net -16.551 [-25.144, -8.413] (round_2_result.md: +27.3, -16.6). 5,200 of 5,200 test and band rows identical on all_delay, ttc_net, passed, lv, lv_sum_4, lv_n_4, tau_on_match and N.",
+     "method": "Imported conf3/common.raw read-only (no bytecode written) and compared it with my function. Matched rows to round2/test/rows_6c49e7e.jsonl and round2/band/rows_6c49e7e.jsonl by (name, q, seed).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/decisions/validate_stat.py",
+     "confidence": "high"
+    }
+   ],
+   "caveats": [
+    "Report-only and descriptive. About 1,250 interval estimates without multiplicity control (163 paired X1-X2, 90 density residuals, 104 cross-arm, 144 period/road, 750 cohort bins, plus 2 validation), so some 95 % CIs excluding 0 are expected by chance. Nothing here is a claim or a pass/fail.",
+    "The inverted label in D1 affects any reading of the 'longest level' panels, including the lead's first look: a high value means more time at the SHORTEST gap (0.8 s).",
+    "X1 is outside v3w's training draw mainly because it has TWO slowdowns. Each one alone (edge 4, 25 km/h, 120 s, start 600 or 1,200 s) sits at the edges of the draw's ranges (25-60 km/h, 60-180 s, start in [400, 1200)). So the out-of-distribution question concerns a second event, not an unseen kind of event.",
+    "The time structure (D9) is a proxy. Per-vehicle records are whole-trip totals. Edge-passage times come from a pooled-lane speed field and ignore insertion delay and lanes. The first-slowdown X1-X2 contrast is confounded by X2's own slowdown, which hits the same cohorts.",
+    "The density-matched fits are band quadratics in mean mainline density, which misses where congestion sits. S1 values are extrapolations. At 3,500 the predicted share3 (0.928) is above the structural ceiling set by the start-up climb (p333 reaches only 0.910), so the S1-3,500 share3 residual is an extrapolation artefact.",
+    "Confidence is binned in tenths and interpolated (measure.quantiles). tail's confidence comes from its 6-checkpoint averaged distribution, and sw's covers only its policy part (from x_from = 594.72 m past the start of 3a). Compare confidence within an arm across cells, not across arms. My reading that sw's lower confidence in X1 comes from which vehicles its policy is asked about is an inference.",
+    "Applied, kept and ignored shares differ between rules and policies because of how often they are asked (rules every 5 s for every ALKS, policies every 10 s per vehicle). The lv_<road> fields include V2V-off seconds, when the level does not act; the share fields count V2V-on seconds only.",
+    "ttc_net/ttc3 count TTC < 3 s for all vehicles, humans included, so they do not measure ALKS gaps directly. Why the policies get less close-following than rules with the same short-gap share cannot be identified from these aggregates. Placement in space and time is the leading hypothesis, but it is unverified.",
+    "S1 includes only v3w among the policy arms (no tail, sw or baseline-v3). The baseline-v3 = d0u500..d4u500 mapping was confirmed via measure2.groups."
+   ],
+   "comparisons_made": 1253
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "D1",
+     "verdict": "confirmed",
+     "recomputed": "Code: measure2.py:215 plots m['dec']['level_share_on'][-1]. b_env.py:37 sets HEADWAYS_S = (1.6, 1.2, 1.0, 0.8), so index 3 is 0.8 s. ALKS_TAU0 = fl.ALKS_TAU = 1.6 s. I loaded all 35 policy checkpoints with torch: none carries act_env. No job file sets 'headways'.",
+     "note": "The panel title is inverted: a high value means more V2V-on time at the shortest gap (0.8 s). This also affects how the lead's first look should read that panel."
+    },
+    {
+     "id": "D2",
+     "verdict": "confirmed",
+     "recomputed": "p333 share3 (m_dec_level_s[3]/sum), medians over seeds: X1 0.9336 (range 0.925-0.942, n=40), X2 0.9333, band 4,500 0.9135, 5,000 0.9178, 5,250 0.9229, 5,500 0.9261, 6,000 0.9385, S1 3,500 0.9099, S1 7,000 0.9470. In every cell: want3 = 1.000, reversals 0, m_dec_excess 0, changes per ALKS 2.97, tau_on_match/tau_on_n = 1.0000. V2V-on s per ALKS (m_dec_vehicles denominator): 159.1 (X1), 109.6 (3,500), 205.1 (7,000). From the side files: climb (V2V-on s at levels 0-2) 10.51 s of 158.8 s per ALKS; per-vehicle maximum 24 s; seed 7440840 last levels [2, 14, 8, 1277] of 1,301. lv summed over zones equals m_dec_level_s in 5,340 of 5,340 rows. os1_15_10 at 4,500: 0.9123.",
+     "note": "0.934 is a correct measurement. p333 never moves down (excess 0), so all its time below level 3 is the climb. A slowdown can cap the applied level (pert.hw_now), but only when the spec has hw_oracle; no job uses it, so the commanded level equals the applied one. Small nuance: no decisions are taken during the 300-s warm-up, so every ALKS on the road at 300 s also starts the window at level 0. Part of the 'climb' is therefore a window-start effect that all arms share."
+    },
+    {
+     "id": "D3",
+     "verdict": "confirmed",
+     "recomputed": "Asked per ALKS, median over all cells: p333 53.3, os1_15_10 53.5, 3e 54.6, copy 57.6, w0u250 26.6, t0 26.5, d0u500 27.0, s0u500 38.4. Ignored decisions: 0 in every Greedy/TailMean run; sw up to 2,536 (s0u500). nc has no dec fields (0 of 220 rows). X1 applied share: p333 0.053, v3w arm 0.318.",
+     "note": "Rules are asked every 5 s and policies on their 10-s due mask, so applied, kept and ignored shares cannot be compared between rules and policies."
+    },
+    {
+     "id": "D4",
+     "verdict": "corrected",
+     "recomputed": "Reproduced exactly. v3w X1-X2, paired median [95 % CI], n=40: conf_med +0.004 [-0.005, +0.012]; conf_lt05 -0.002 [-0.007, +0.001]; entropy -0.013 [-0.019, -0.006]; reversal_share +0.002 [-0.005, +0.005]; applied +0.019 [+0.013, +0.023]; excess/ALKS +0.615 [+0.288, +0.778]. tail conf +0.014 [+0.001, +0.023]; bv3 conf +0.017 [+0.008, +0.022]; sw conf -0.047 [-0.056, -0.037]. My added check: learners 1, 3 and 4 of sw run the SAME checkpoints as w1u500, w3u500 and w4u500, but sw reads them only past x_from. Read that way, X1-X2 conf is s1 -0.021 [-0.041, -0.011] against w1 +0.012 [-0.002, +0.024], s3 -0.009 [-0.046, +0.010] against w3 +0.007, and s4 -0.036 [-0.054, -0.010] against w4 +0.001. Reversal share: s1 +0.020, s3 +0.026, s4 +0.014 [-0.006, +0.020]. The w learners are near 0 (w3 +0.013).",
+     "note": "The numbers hold, but the conclusion is only supported at whole-run, whole-corridor resolution. Confidence and entropy are pooled over 1,500 s and the whole road. The same networks, restricted to downstream decisions, are less confident and reverse more in X1, so a local difference cannot be ruled out. The answer's headline ('no sign of acting out of distribution') should be weakened to 'not shown in whole-run aggregates'. sw's upstream rule changes the traffic its policy sees, so the sw contrast is suggestive, not proof."
+    },
+    {
+     "id": "D5",
+     "verdict": "corrected",
+     "recomputed": "Band quadratic, residuals median [CI]: conf_med X1 -0.046 [-0.059, -0.043], X2 -0.057 [-0.064, -0.052]; reversal_share X1 +0.035 [+0.032, +0.038], X2 +0.036 [+0.034, +0.039]; entropy X1 +0.029, X2 +0.047. All reproduced. The fit's own null (leave out one interior band level): conf residuals up to 0.022, reversal up to 0.008, so the X1/X2 residuals exceed it. S1 7,000 conf residual depends on the fit: quadratic +0.050 [+0.040, +0.060], linear -0.026 [-0.029, -0.023], linear on 5,250-6,000 +0.015 [+0.009, +0.016]. Reversal residual is negative under all three fits (-0.023, -0.013, -0.021). Raw conf_med: 0.843 (3,500), 0.843 (4,500), 0.651 (6,000), 0.554 (7,000).",
+     "note": "The X1/X2 part holds: both test cells differ from the band average, so this is not a sign specific to X1. The sentence 'At 7,000 v3w is no less certain than the band trend extrapolates' does not hold: the sign flips with a linear fit. The raw confidence keeps falling from 6,000 to 7,000. Only the reversal result at 7,000 is robust to the fit form."
+    },
+    {
+     "id": "D6",
+     "verdict": "confirmed",
+     "recomputed": "v3w share3 X1 0.731 [0.721, 0.737], X2 0.775 [0.768, 0.783]; paired -0.044 [-0.057, -0.035]; gap_on +0.021 s [+0.017, +0.028]. Band residual: X1 -0.057 [-0.066, -0.043], X2 -0.011 [-0.019, -0.008]. os1_15_10 paired -0.032 [-0.061, -0.003]; residuals X1 -0.105, X2 -0.074. 3E-T residuals -0.053 and -0.050, p333 +0.004. tail -0.042, sw -0.062, bv3 -0.033. Within road (lv_sum/lv_n, X1-X2) v3w: road 3 -0.156 [-0.173, -0.105], 4a -0.090 [-0.126, -0.079], 4 -0.080 [-0.099, -0.062].",
+     "note": "Supported, with three caveats. (1) For 3E-T the paired share3 change is -0.008 [-0.024, +0.006], so it does not 'do the same' on share3; it lengthens its mean gap instead (gap_on +0.016 [+0.010, +0.026]). (2) Part of any share or gap_on shift comes from where ALKS spend their V2V-on time: 'copy' has fixed levels per road, yet its gap_on rises +0.009 [+0.007, +0.013]. The within-road lv drops show that v3w's decisions also change. (3) share3 is not split by speed, so the longer gaps may sit in slow, queued traffic, where the gap matters little (the project's 'stopped queues' lesson)."
+    },
+    {
+     "id": "D7",
+     "verdict": "corrected",
+     "recomputed": "ttc_net effects reproduced exactly. X1 vs X2: v3w -17.0 [-21.2, -6.9], p333 -23.0 [-34.1, -13.9], os1 -22.7, 3E-T -28.9, nc +7.3 [-4.1, +20.6]. Against nc in X1: v3w -16.6 [-25.1, -8.4], os1 -74.1 [-94.2, -60.8], copy -49.5, p333 -121.5. Spearman share3 vs TTC effect over all 18 arms: X1 -0.42 (permutation p=0.08), X2 -0.24 (p=0.33). My added check, the 14 rule arms only: X1 -0.82 (p=0.0002), X2 -0.75 (p=0.003); without copy -0.83 and -0.73.",
+     "note": "'The share at 0.8 s barely orders close-following' and 'level choice does not explain close-following' are wrong as general statements. Among rules, time at 0.8 s orders close-following strongly. The weak all-arm correlation comes from the four policy arms, which sit far below the rule trend: about 15-30 % excess at share3 0.67-0.76, against 72-86 % for rules at 0.73-0.77. Correct reading: the overall share does not explain the gap between policies and rules. Also, nc shows no rise in X1 (+7.3 %), so the X1 rise is an interaction of short ALKS gaps with X1 traffic, not 'the traffic' alone."
+    },
+    {
+     "id": "D8",
+     "verdict": "corrected",
+     "recomputed": "v3w minus nc in X1, paired TTC-s per run: before +3 [-4, +15], taper -0 [-7, +6], hold +40 [-10, +51], after +61 [+32, +85], rest +195 [+96, +260]; road 4a +310 [+249, +355], road 3 +152 [+68, +221], ramp2 -100 [-169, -37]. nc medians: hold 201, after 336, rest 835. All reproduced. Added, as effect against nc: hold -20.0 % [-25.4, +4.8], after -18.1 % [-25.3, -9.6], rest -23.4 % [-31.1, -11.4]. Per second: +0.20, +0.25, +0.27 TTC-s/s (window lengths from plant_sweep.period(): before 300, taper 40, hold 200, after 240, rest 720 s). lv values reproduced (v3w lv_4 X1-X2 -0.080, lv_3 -0.156; os1 lv_4 -0.320, lv_3 +0.100).",
+     "note": "The road split holds. The time reading does not: the hold CI includes 0 because the window is short (200 s), not because the excess is absent. Relative to nc, the excess is about the same size in hold, after and rest. What the data show is no excess before 600 s, then a similar excess from the first slowdown on. Also, 'rest' covers 840-1200 s (between the two slowdowns) plus 1440-1800 s, so 'after the slowdowns' is imprecise."
+    },
+    {
+     "id": "D9",
+     "verdict": "confirmed",
+     "recomputed": "Departures rebuilt from default_rng(seed) as in fleet.FleetDemand (profile [(0, 1800, q)]): median 2,644 per seed. The highest ALKS index is 0-10 below the last departure (they say 1-10). v3w share3 X1-X2 by departure bin: 360-420 -0.036 [-0.046, -0.030], 540-600 -0.074 [-0.091, -0.066], 1080-1140 -0.094 [-0.103, -0.084], 1380-1440 -0.028 [-0.037, -0.011], 0-240 exactly 0. os1 1080-1140 -0.073 [-0.164, -0.010]. p333 in the same bins: +0.011 to -0.004 (climb artefact, small). Code: the pack has no decision or level time series.",
+     "note": "Reproduced, and correctly labelled a low-confidence proxy. Extra caveats: (1) ids main.<i> include ramp routes, which enter at the ramps, so the departure-to-edge-4 timing shifts by route. (2) By their own trajectories, the 1080-1140 cohort reaches edge 4 at 1,406-1,468 s, after the second slowdown ends (1,320 s), so it meets the queue and recovery, not the slowdown itself. (3) The policy has no clock or event memory (see missed)."
+    },
+    {
+     "id": "D10",
+     "verdict": "confirmed",
+     "recomputed": "v3w: ALKS with V2V on < 20 % of their seconds are 22.4 % (X1) and 22.7 % (X2) of ALKS. They make 25.0 % / 26.6 % of changes and 28.3 % / 30.4 % of reversals. 3E-T: 20.6 % of changes, 19.4 % of reversals; os1 X1: 19.9 %, 17.1 %. Traced: X2 w0u250 seed 7440840, main.1235, dec [53 asked, 30 changed, 0 ignored, 23 kept, 24 reversals, last level 2], level_s [0, 0, 0, 0, 528]. Consistency checks hold in every file.",
+     "note": "Correct, but small in effect. Excluding the low-V2V ALKS lowers v3w's X1 reversal share only from 0.472 to 0.452, against 0.25-0.32 for the rules (os1 0.282, 3e 0.297). This churn does not explain the gap between policies and rules."
+    },
+    {
+     "id": "D11",
+     "verdict": "confirmed",
+     "recomputed": "5,200 of 5,200 test and band rows identical to round2 rows_6c49e7e on all_delay, ttc_net, passed, lv, lv_sum_4, lv_n_4, tau_on_match and N. My own statistic, written from its definition and without importing theirs or conf3: X1 v3w vs nc all_delay +27.338 [+24.745, +30.429], ttc_net -16.551 [-25.144, -8.413].",
+     "note": "The pack did not change these runs on these keys. ttc3 == ttc_net in 5,560 of 5,560 rows, and the period splits sum to ttc3 exactly. The S1 rows have no round-2 counterpart, so they could not be checked this way."
+    }
+   ],
+   "answer_verdict": "Partly supported. The p333 part is fully confirmed (D1, D2): the panel title is inverted, and 0.934 is p333's correct share of V2V-on time at 0.8 s; the rest is the start-up climb. Every number I recomputed matches within rounding. Four statements say more than the numbers show and should change.\n\n(1) 'In X1, v3w shows no sign of acting out of distribution' holds only for whole-run, whole-corridor aggregates. Better: 'not shown at whole-run resolution'. The policy reads only local, current-state inputs (no clock, no event memory). sw runs the same checkpoints as three v3w learners but reads them only downstream, and that read-out is less confident and reverses more in X1.\n\n(2) 'The share of short gaps does not explain the close-following gap' should become: 'it orders close-following well among the rules (Spearman -0.82 in X1), but the policies get far less close-following than any rule with the same share'.\n\n(3) 'The excess falls after the slowdowns, not during' should become: 'no excess before 600 s; a similar relative excess (about 20 % of nc's count) during hold, after and rest'.\n\n(4) The S1 7,000 confidence 'no less certain than the trend' depends on the fit form; drop it.\n\nAlso, the X1 rise in close-following happens only under control (nc shows none), so it is a gap-and-traffic interaction, not 'the traffic' alone. Report-only: about 350 interval estimates in my checks, without multiplicity control.",
+   "missed": [
+    "The policies see only local, current-state inputs. The 16 local features are position, ramp flag, lane, speed, leader and follower gaps and speeds, own level, hold, roadside bin speed, merge-zone speed, nearest ramp vehicle and 3a count. Greedy and TailMean read lo only; glob holds sim time but is not used. So X1's out-of-draw element (a second event) is invisible to the policy except through local traffic states, and a null at the decision level is expected a priori. The X1-X2 test has little power to show OOD behaviour.",
+    "Same-network check (my result): sw learners 1, 3 and 4 use the same C*_u500 checkpoints as w1u500, w3u500 and w4u500, read only past x_from. Their X1-X2 confidence is -0.021 [-0.041, -0.011], -0.009 [-0.046, +0.010] and -0.036 [-0.054, -0.010], against +0.012, +0.007 and +0.001 for the w learners. Reversal share is +0.014 to +0.026 against about 0. So the whole-corridor v3w aggregate may dilute a downstream difference. The pack stores no per-decision confidence by place or time, so this cannot be tested directly.",
+    "Spearman among the 14 rule arms only (my result): share3 against the ttc_net effect vs nc gives X1 rho -0.82 (permutation p=0.0002) and X2 -0.75 (p=0.003); without copy, -0.83 and -0.73. The weak all-arm correlation (-0.42) comes from the policy arms being off the rule trend.",
+    "Rates per period (my result): v3w's ttc3 excess over nc in X1 is -20.0 % [-25.4, +4.8] in hold, -18.1 % [-25.3, -9.6] after and -23.4 % [-31.1, -11.4] in rest (+0.20, +0.25, +0.27 TTC-s per s). The hold CI includes 0 because the window is short, not because the excess is absent.",
+    "Fit-form sensitivity at S1 7,000 (my result): conf residual quadratic +0.050, linear -0.026 [-0.029, -0.023], linear on 5,250-6,000 +0.015. Reversal residual is negative under all three (-0.013 to -0.023).",
+    "No-control null for the X1 rise: nc ttc_net X1 vs X2 is +7.3 % [-4.1, +20.6] (X1 not worse). Every controlled arm rises 13-29 %, so the rise is an interaction of controlled short gaps with X1 traffic.",
+    "Exposure composition: 'copy' (fixed level per road, no state reaction) shows gap_on X1-X2 +0.009 s [+0.007, +0.013]. Level shares move with where ALKS spend V2V-on time, without any decision change. Within-road lv confirms that v3w's decisions also change (road 3 -0.156, 4a -0.090, 4 -0.080).",
+    "Level shares are not split by speed, so I cannot tell whether v3w's longer gaps in X1 sit in slow or queued traffic, where gaps barely affect TTC (the project's 'stopped queues' lesson). This needs a speed-split level counter in a later pack.",
+    "Warm-up: no decisions are taken during the 300-s warm-up, so every ALKS present at 300 s starts the window at level 0. Part of the 'climb' is a window-start effect that all arms share (minor).",
+    "D10 size check (my result): excluding ALKS with V2V on < 20 % changes v3w's X1 reversal share only from 0.472 to 0.452, against 0.25-0.32 for the rules."
+   ],
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_decisions/"
+  }
+ },
+ {
+  "key": "operating_map",
+  "analysis": {
+   "area": "operating_map: v3w (also tail, sw) against p333, 3E-T, os1_15_10 and no control, across demand (3,500 to 7,000 veh/h, plus X1/X2 at 5,300). Report-only, S0+S1 (V470/V475)",
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/",
+   "answer": "\"p333 wins everywhere\" is wrong against v3w, and against tail and sw too. Across 9 settings and 6 metrics (54 paired comparisons), v3w is better than p333 with the 95 % CI excluding 0 in 25 and tied in 28. p333 is better in only 1: finished_pct at 5,000, by -0.19 percentage points [-0.32, -0.05]. On delay, p333 never beats v3w with the CI excluding 0. v3w has less delay in X1 (+5.5 % [+2.9, +8.0]), in X2 (+6.1 [+3.4, +7.4]) and at 7,000 (+3.7 [+2.6, +5.2]). They tie at 3,500, 4,500, 5,000, 5,250, 5,500 and 6,000, although p333's point estimates are slightly lower at 3,500, 4,500, 5,000 and 5,500. On close-following (ttc_net), v3w has 40-47 % less than p333 in X1, X2 and at 5,500, 6,000 and 7,000, with matching gains on b3_step, b45_step and flow there. From 3,500 to 5,250 the two tie, with very wide CIs. The claim is only partly right in two narrow senses. Among the rules, p333 has the lowest delay: it beats 3E-T at 3,500, 4,500, 5,250 and 5,500, and it is identical to os1_15_10 on most low-demand seeds (20/20 at 3,500, 17/20 at 4,500). But it has the most close-following and hard braking of all rules at 5,300 and above. Also, the unpaired ASCII panel medians at 5,000 favour p333 on 12 of 16 panels, but paired only 3 of those 16 differ, all small. a) The claim \"every controller has far more close-following than no control\" holds at 7,000 for all four controllers, both per run and per vehicle-km. No control's base there is 2,424 samples per run (0.179 per vehicle-km). For v3w the excess is +1,706 per run and +61 % per vehicle-km. At 3,500 the percentages (-164 to -273 %) only reflect no control's tiny base of 5.5 samples per run: the absolute excess is 9-15 TTC samples per 1,500-s run, about 0.005 % of vehicle-time. b) At 3,500 every controller gets the same ~16 % delay gain over no control, on seeds with and without a slowdown alike. The only measurable spread among controllers is that 3E-T has ~1 % more delay and ~2 % less b3 braking, so a learner has nothing to gain over p333 at that level. c) The round-2 band table reproduces exactly (310 of 310 cells), and the measured rows equal round 2's stored rows on every key.",
+   "findings": [
+    {
+     "id": "F1",
+     "statement": "'p333 wins everywhere' is wrong against v3w and the other policy arms. On the six main metrics, p333 beats v3w with the 95 % CI excluding 0 in exactly 1 of 54 setting-by-metric comparisons, and that one gap is a small finished_pct difference at 5,000 veh/h.",
+     "numbers": "v3w vs p333 (9 settings x 6 metrics = 54): v3w better 25, p333 better 1, neither 28. The one p333 win: finished_pct at 5,000 = -0.19 pp [-0.32, -0.05] (medians 82.89 vs 83.30 %). tail vs p333 (7 settings x 6 = 42): 21 / 1 / 20. sw vs p333: 20 / 1 / 21 (same single loss, finished_pct at 5,000: tail -0.12 pp [-0.29, -0.03], sw -0.18 pp [-0.29, -0.05]). v3w vs os1_15_10: 23 / 1 / 30 (passed at 5,000, -0.2 % [-0.2, -0.0]). v3w vs 3E-T: 27 / 5 / 22 (3E-T better on b45_step in X1, X2, 6,000 and 7,000, and on b3_step at 3,500). Fields: all_delay, ttc_net, passed, b3_step, b45_step, finished_pct. Arm value per seed = mean over w0u250, w1u500, w2u250, w3u500, w4u500 (decide2/common1 arm_mean). Effect = conf3 common.raw with pct (2.5, 97.5), 20,000 resamples, default_rng(20261104).",
+     "method": "Paired seeds; effect = sign x median(P - O) / median(O) x 100, with a 95 % percentile bootstrap, using round 2's own raw() and arm_mean() imported read-only (python -B). Tally counts CI lower bound > 0 or upper bound < 0. Groups were checked against validation.json chosen/finalists (v3w = w0u250, w1u500, w2u250, w3u500, w4u500; finalists tail, sw; baseline-v3 = d*u500 from test2.plan).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/opmap.py -> opmap.json, opmap_tables.txt; tally.py -> tally.txt, tally.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F2",
+     "statement": "Delay (all_delay): p333 never has less delay than v3w with the CI excluding 0. v3w has less delay in X1, X2 and at 7,000, and they tie at every other level. v3w also has less delay than 3E-T at every level except 7,000, and less than os1_15_10 in X1, X2 and at 7,000.",
+     "numbers": "Effect %, positive = v3w less delay. v3w vs p333: 3500 -0.2 [-0.9, +0.1]; 4500 -0.2 [-2.0, +0.8]; 5000 -3.2 [-5.3, +1.4]; 5250 +1.3 [-8.9, +7.5]; X1 +5.5 [+2.9, +8.0]; X2 +6.1 [+3.4, +7.4]; 5500 -1.4 [-6.6, +2.8]; 6000 +2.3 [-1.6, +6.3]; 7000 +3.7 [+2.6, +5.2]. v3w vs 3E-T: +0.8 [+0.3, +1.4]; +0.5 [+0.0, +2.1]; +3.3 [+0.3, +7.9]; +6.5 [+1.0, +11.8]; X1 +5.4 [+3.5, +9.7]; X2 +7.5 [+5.9, +9.3]; +11.9 [+2.7, +15.2]; +4.1 [+1.2, +7.7]; 7000 +4.5 [-0.7, +6.2]. v3w vs os1_15_10: X1 +6.3 [+4.1, +11.4], X2 +6.5 [+4.0, +8.4], 7000 +6.6 [+1.6, +9.9], CIs include 0 elsewhere. v3w vs nc: +16.5 [+14.4, +17.9] (3500), +22.9, +33.8, +35.4, X1 +27.3, X2 +23.5, +33.7, +26.4, +17.5 [+14.1, +20.6] (7000). tail and sw vs p333: the same pattern (X1 +6.4 / +5.7, X2 +5.7 / +4.8, CIs include 0 in the band). Seeds: S1 7,440,900-919 (n=20); band 7,440,880-899 (n=20); test 7,440,840-879 (n=40).",
+     "method": "As F1; table 'all_delay' in opmap_tables.txt (one table per metric, every level as a column, rows = v3w/tail/sw vs p333, 3e, os1_15_10, nc, and rules vs nc and vs each other).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/opmap_tables.txt (first table), opmap.json",
+     "confidence": "high"
+    },
+    {
+     "id": "F3",
+     "statement": "Close-following (ttc_net): p333 never has less close-following than v3w with the CI excluding 0. v3w has about 40-47 % less in X1, X2 and at 5,500, 6,000 and 7,000; from 3,500 to 5,250 they tie, with wide CIs. Against no control, v3w has more close-following at 3,500, in X1 and at 7,000, less at 5,000 and 5,250, and ties at 4,500, in X2 and at 5,500 and 6,000.",
+     "numbers": "Effect %, positive = v3w fewer TTC<3 s samples. v3w vs p333: 3500 -0.9 [-40.5, +29.8]; 4500 +16.6 [-11.9, +44.6]; 5000 +8.1 [-36.7, +52.8]; 5250 +45.6 [-40.8, +110.4]; X1 +44.7 [+40.4, +53.6]; X2 +42.8 [+37.1, +46.8]; 5500 +40.3 [+19.8, +51.2]; 6000 +46.5 [+24.9, +57.0]; 7000 +42.3 [+36.9, +45.3]. v3w vs 3E-T: ties at 3500, 4500, 5000 and 7000 (+1.4 [-2.2, +13.5]); v3w better at 5250 +34.4 [+7.1, +50.0], X1 +20.3, X2 +11.5, 5500 +25.7, 6000 +21.8. v3w vs nc: 3500 -272.7 [-303.6, -87.3]; 4500 -121.6 [-155.1, +7.3]; 5000 +48.2 [+6.3, +94.3]; 5250 +37.7 [+14.9, +55.4]; X1 -16.6 [-25.1, -8.4]; X2 -0.9 [-5.8, +9.5]; 5500 +1.7; 6000 -0.6; 7000 -70.4 [-76.1, -62.1]. Medians of ttc_net per run (v3w / p333 / nc): 3500 21.9 / 21.5 / 5.5; 5000 319 / 328 / 903; X1 1,809 / 3,364 / 1,493; 7000 4,111 / 7,162 / 2,424. ttc_net = E30 + out_E30 (network-wide 1-Hz samples with closing TTC < 3 s, plant_sweep.py line 331); ttc3 equals ttc_net on 1,980 of 1,980 rows checked.",
+     "method": "As F1. The ttc3 == ttc_net identity is checked in checks.py.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/opmap_tables.txt (ttc_net table), checks.json (ttc3_vs_ttc_net_identity)",
+     "confidence": "high"
+    },
+    {
+     "id": "F4",
+     "statement": "Braking and flow: v3w has less braking than p333 (b3_step, b45_step) and slightly more served flow in the dense settings, and ties at low demand. 3E-T, however, has less hard braking (b45_step) than v3w in X1, X2 and at 6,000 and 7,000. At 7,000 this comes with equal close-following, which fits the lead's X1 braking observation.",
+     "numbers": "v3w vs p333, b3_step: X1 +17.7 [+15.3, +20.8], X2 +14.5 [+10.2, +17.5], 5500 +14.9 [+6.8, +20.4], 6000 +12.2 [+10.0, +18.2], 7000 +23.1 [+18.3, +24.8]; CIs include 0 from 3500 to 5250. b45_step: X1 +28.4 [+25.5, +31.2], X2 +23.3, 5500 +22.4, 6000 +26.3, 7000 +29.2 [+25.9, +32.7]; ties from 3500 to 5250. passed: X1 +1.0 [+0.7, +1.6], X2 +1.4, 6000 +1.3 [+0.1, +2.1], 7000 +2.2 [+1.4, +3.4]; ties elsewhere. v3w vs 3E-T, b45_step: X1 -16.1 [-21.3, -10.2], X2 -8.5 [-13.5, -1.8], 6000 -9.8 [-12.6, -2.8], 7000 -29.7 [-32.6, -23.7] (medians 924 vs 706 vehicle-seconds at <= -4.5 m/s\u00b2); b3_step at 7000 -1.2 [-4.4, +3.8]. tail and sw: also worse than 3E-T on b45_step in X1 and X2 (tail -17.8, -9.7; sw -14.3, -9.1). Teleports: 0 in every setting; collisions at most 0.2 per learner in total.",
+     "method": "As F1. b3_step and b45_step are vehicle-seconds at step resolution with decel <= -3.0 or <= -4.5 m/s\u00b2 (plant_sweep.py lines 132-133).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/opmap_tables.txt (b3_step, b45_step and passed tables; medians table)",
+     "confidence": "high"
+    },
+    {
+     "id": "F5",
+     "statement": "The claim is partly right in two narrow senses, and there is a likely source for the impression (inference). (i) Among the rules, p333 leads or ties on delay, but it has the most close-following and hard braking of all rules at 5,300 and above. (ii) The unpaired ASCII panel medians at 4,500 and 5,000 favour p333, but paired only 1 and 3 of 16 pack metrics differ, all by small amounts. 'jam clusters' is the only pack metric where p333 is repeatedly better, and v3w still has the lower jam share.",
+     "numbers": "p333 vs 3E-T, delay: 3500 +1.1 [+0.5, +2.0], 4500 +2.2 [+0.4, +3.4], 5250 +6.0 [+1.4, +10.6], 5500 +12.7 [+2.4, +18.5]. Seeds where p333 and os1_15_10 rows are identical on all non-pack keys: 3500 20/20, 4500 17/20, 5000 10/20, 5250 6/20, 5500 1/20, X1 0/40, X2 0/40, 6000 0/20, 7000 0/20. p333 vs 3E-T, ttc_net: X1 -47.7, X2 -50.0, 5500 -24.3, 6000 -34.0, 7000 -66.8; b45_step: -67.6, -42.2, -38.2, -51.6, -80.9 (all CIs below 0). Panels where p333's median beats v3w's (unpaired, of 16): 3500 5 (v3w 5, equal 6); 4500 7 (4, 5); 5000 12 (2, 2); 5250 6 (9); 5500 6 (10); 6000 6 (8); X1 5 (11); X2 3 (11); 7000 3 (12). Paired v3w - p333 on the 16 pack metrics (144 comparisons): p333 better with the CI excluding 0 at 3500: 0; 4500: 1 (merge 2 slow minutes +0.4 [+0.1, +0.8]); 5000: 3 (car |accel| RMS -1.0 % [-1.9, -0.2]; braking events, all classes, 4,977 vs 4,685, -3.8 % [-11.5, -0.5]; ramp 2 queue +0.001 vehicles); jam clusters at 5250, X1, X2 and 7000 (7000: 16.8 vs 11.0, +5.2 [+2.1, +7.1]). v3w better on 9, 10, 5, 7 and 11 pack metrics in X1, X2, 5500, 6000 and 7000 (for example X1 jam share 0.148 vs 0.174, -0.024 [-0.035, -0.017]; events peaking at -4.5 or harder 1,044 vs 1,402).",
+     "method": "Panel tally parses report_rows_*.txt (medians rounded to 3 significant figures, decision metrics skipped). Paired pack metrics come from summary_rows_*.json using measure2.METRICS lambdas copied verbatim; arm value = learner mean per seed; paired median difference with a 95 % bootstrap (20,000, default_rng(20261104)).",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/extra.py -> extra.json (panels); panels_ci.py -> panels_ci.json; checks.py -> checks.json (p333_eq_os1_seeds)",
+     "confidence": "medium"
+    },
+    {
+     "id": "F6",
+     "statement": "(a) The claim that every controller has far more close-following than no control holds at 7,000 for all four controllers, per run, per vehicle-km and as a share of vehicle-time. No control's base there is not small, and the controllers' excess appears in all speed bands. At 3,500 the large percentages only reflect no control's tiny base: the absolute excess is negligible, and for 3E-T its CI includes 0.",
+     "numbers": "No control's level by demand (median ttc_net per run; per vehicle-km; % of on-network vehicle-time): 3500 5.5; 0.00067; 0.0016 %. 4500 37; 0.0034. 5000 902.5; 0.076. 5250 1,345; 0.108. X1 1,493; 0.127. X2 1,580; 0.130. 5500 1,411.5; 0.112. 6000 2,220.5; 0.166. 7000 2,424; 0.179; 0.23 %. At 7000, controller minus nc, absolute per run [CI] and per vehicle-km effect %: v3w +1,706 [+1,505, +1,845], -61.3 % [-68.8, -53.6]; p333 +4,813 [+4,260, +4,973], -185.7 % [-194.7, -166.1]; os1_15_10 +3,726 [+2,805, +4,110], -145.1 %; 3E-T +1,739 [+1,455, +2,042], -65.2 % [-77.0, -52.9]. Controllers drive 3.3-5.0 % more vehicle-km than nc. Share of TTC samples at follower speed < 5 m/s at 7000: nc 0.48, v3w 0.46, p333 0.50, 3E-T 0.40; samples at >= 10 m/s: nc 406.5, v3w 875, p333 1,520, 3E-T 1,016.5. At 3500, controller minus nc per run: v3w +15.0 [+4.8, +16.7] (reported as -272.7 %); p333 = os1_15_10 +13.0 [+5.5, +19.5] (-236.4 %); 3E-T +9.0 [-2.0, +22.0] (-163.6 % [-400, +36]). Per vehicle-km: +0.0011 to +0.0018. Share of vehicle-time: +0.003 to +0.005 percentage points. The claim also fails at 5,000-5,250, where v3w (and p333 at 5,000) have fewer samples than nc.",
+     "method": "Per-run ratios are computed before learner averaging: ttc_net / (dist_step / 1000), and ttc_net / vs. dist_step and the TTC counters both cover the 1,500-s window after the 300-s warm-up (b_env reset loop; plant_sweep at_step). Speed bands come from ttc3_s_lo/mid/hi (lo < 5 m/s, mid 5-10 m/s, hi >= 10 m/s; plant_sweep conflicts()). Bootstrap as in F1.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/checks.py -> checks.json (close_following); opmap_tables.txt (ttc_per_vkm, ttc_share tables)",
+     "confidence": "high"
+    },
+    {
+     "id": "F7",
+     "statement": "(b) At 3,500 all four controllers get the same ~16 % delay gain over no control, on slowdown and no-slowdown seeds alike, so it is a steady-flow effect. Among the controllers, the only measurable spread is that 3E-T has ~1 % more delay and ~2 % less b3 braking. v3w, never trained at 3,500, already matches p333 there. My inference: training at 3,500 would offer no gain over p333 to learn; it would only guard against regressions, and v3w shows none.",
+     "numbers": "Delay vs nc at 3500: v3w +16.5 [+14.4, +17.9]; p333 = os1_15_10 +16.5 [+15.4, +17.8]; 3E-T +15.5 [+14.0, +17.3]. Split for v3w vs nc: 14 slowdown seeds +16.3 [+14.1, +18.5], 6 no-slowdown seeds +16.5 [+14.4, +18.3]; the slowdown flag agrees across all arms on every seed. Among controllers at 3500: v3w vs p333 -0.24 [-0.94, +0.06]; v3w vs 3E-T +0.78 [+0.26, +1.40]; p333 vs 3E-T +1.10 [+0.50, +1.99]; p333 vs os1_15_10 identical on 20/20 seeds. Delay medians (vehicle-seconds): p333 39,650, v3w 40,040, 3E-T 40,355, nc 47,181, so the controller spread is ~700 against a ~7,000-7,500 gain over nc. ttc_net: no pairwise CI among controllers excludes 0 (medians 16-22 per run). b3_step: v3w vs 3E-T -2.2 [-3.7, -0.6]. b45_step and passed: no CI excludes 0. Panel medians (descriptive, not tested): ALKS median speed 85.4 km/h for nc against 88.2-88.4 for the controllers, which suggests the gain comes from ALKS cruising faster (unverified).",
+     "method": "Pairwise raw() among v3w, p333, os1_15_10, 3E-T and nc at 3,500 and 7,000, with seeds split by an empty or non-empty pert_log. Bootstrap as in F1.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/checks.py -> checks.json (spread); /home/catalin/work/phd/v5b1_runs/measure_s01_remote/report_rows_s1.txt (ALKS speed panel)",
+     "confidence": "high"
+    },
+    {
+     "id": "F8",
+     "statement": "(c) The round-2 band numbers reproduce exactly from rows_band, and the measurement pack did not change the runs. Every measured band and test row equals round 2's stored row on every key except cfg.",
+     "numbers": "Rows identical (all stored keys except cfg): band 2,400 of 2,400, test 2,800 of 2,800, 0 keys differing. band_table.csv: 310 of 310 cells reproduced through report2's code path, both from rows_band.jsonl and from round2/band/rows_6c49e7e.jsonl. Examples: v3w vs nc at 5000, TTC 48.2 [6.3, 94.3], delay 33.8 [24.8, 39.9]; p333 vs nc at 6000, TTC -68.9 [-93.7, -43.5], delay 24.8 [19.7, 28.0]. test_table.csv: 128 of 128 effect cells (tail, sw, v3w and baseline-v3 arms vs nc, p333, os1_15_10 and 3e on ttc, delay, flow and brake). The reproduction also confirms round 2's verified X1 line: v3w vs nc ttc_net -16.6 [-25.1, -8.4], against '15-18 % more'.",
+     "method": "Medians rounded to 0.1 and effect() with pct (2.5, 97.5), compared string for string with the CSVs. Row identity uses the same rule as measure2.same() (JSON round trip), applied to all rows rather than a sample.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/checks.py -> checks.json (identity_measured_vs_round2, band_table_reproduction, test_table_reproduction)",
+     "confidence": "high"
+    },
+    {
+     "id": "F9",
+     "statement": "The lead's S1 first-look numbers check out, with one exception: at 7,000, v3w's '4.5 % less delay than 3E-T' has a CI that includes 0, so it is not shown. A side check: at 7,000, v3w's close-following equals 3E-T's, but v3w has about 30 % more hard braking.",
+     "numbers": "7000: v3w vs nc delay +17.5 [+14.1, +20.6]; vs p333 +3.7 [+2.6, +5.2]; vs 3E-T +4.5 [-0.7, +6.2] (CI includes 0). ttc_net vs 3E-T +1.4 [-2.2, +13.5] (equal); vs p333 +42.3 [+36.9, +45.3]; b45_step vs 3E-T -29.7 [-32.6, -23.7]. 3500: v3w vs p333 delay -0.2 [-0.9, +0.1]; all four controllers +15.5 to +16.5 % vs nc (F7).",
+     "method": "As F1.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/opmap_tables.txt",
+     "confidence": "high"
+    },
+    {
+     "id": "F10",
+     "statement": "Null of the CI statistic: under a symmetric zero-median null built from each comparison's own magnitudes, round 2's 95 % percentile-bootstrap CI excludes 0 slightly more often than nominal (about 6 %). Across the 876 main comparisons, about 50 exclusions would be expected by chance, so a single borderline exclusion should not be read on its own. The headline effects in F2-F4 have CI bounds far from 0.",
+     "numbers": "False-exclusion rate (300 sign-flip replicates x 4,000 resamples per comparison; v3w vs p333, 3E-T, os1_15_10 and nc on the 6 main metrics): n=20, 168 comparisons, mean 6.1 % (range 2.7-9.7 %); n=40, 48 comparisons, mean 5.7 % (range 2.3-9.0 %). Borderline examples: finished_pct at 5000, v3w vs p333 -0.19 pp [-0.32, -0.05]; delay at 4500, v3w vs 3E-T +0.5 [+0.0, +2.1]; passed at 5000, v3w vs os1_15_10 -0.2 [-0.2, -0.0].",
+     "method": "Random sign flips of |paired differences| give median 0 by symmetry; each replicate's 95 % percentile bootstrap of the median is checked for excluding 0.",
+     "evidence": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/operating_map/extra.py -> extra.json (null, null_rows)",
+     "confidence": "medium"
+    }
+   ],
+   "caveats": [
+    "Report-only and descriptive, with no multiplicity correction. 876 comparisons on the six main metrics appear in the tables (552 policy vs reference, 162 rule vs nc, 162 rule vs rule), plus 438 on derived per-km and share metrics, 144 on pack metrics (panels_ci), 227 in the close-following checks and 300 in the 3,500/7,000 spread checks. That is 1,985 in all, with overlaps. About 6 % would exclude 0 by chance (F10).",
+    "conf3 common.raw/effect default to pct=(1.25, 98.75), a 97.5 % interval. I passed (2.5, 97.5) explicitly, as report2.py does. Anyone who calls effect() without pct gets 97.5 % intervals.",
+    "The settings are not one demand sweep on the same seeds. 3,500 and 7,000 use S1 seeds 7,440,900-919; the band uses 7,440,880-899; X1 and X2 use test seeds 7,440,840-879 (n=40) and fixed slowdowns, not the training draw. tail and sw have no rows at 3,500 or 7,000.",
+    "finished_pct has a built-in ceiling below 100 %, because vehicles that depart late in the window cannot finish by its end (84.6 % even at 3,500). Its differences are fractions of a percentage point except in the dense settings.",
+    "Per vehicle-km values use dist_step; the share uses vs, which counts only vehicles on the network, not the pending insertion queue. Ratios are computed per run, then averaged over learners. Relative effects against no control's ttc_net at 3,500 (median 5.5) and 4,500 (median 37) have tiny denominators: read the absolute columns there.",
+    "Inferences not verified: that the 3,500 delay gain comes from faster ALKS cruising (based only on panel medians, 85.4 vs 88.4 km/h); that 'jam clusters' is not monotone in badness, because clusters merge (v3w has more clusters but less jam share); and where the author's 'p333 wins' impression came from (F5).",
+    "Per round_2_result.md (V462(4)), the band and the training-draw condition are outside the plant's stated intended use; this applies at least as much to 3,500 and 7,000.",
+    "Zero teleports in every setting. Collisions are at most 0.2 per learner in total, so neither distorts delay here.",
+    "A stale copy, opmap_tables.md, byte-identical to opmap_tables.txt, is still in the output folder because the delete command was denied. The worktree r2-metrics stayed clean (git status empty), and no file under the data folders changed."
+   ],
+   "comparisons_made": 1985
+  },
+  "verify": {
+   "folder": "/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/s01/verify_operating_map/",
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "confirmed",
+     "recomputed": "I wrote my own loader and statistic (lib.py, opmap_v.py). Per seed, an arm's value is the mean over learners. Effect = sign x median(P-O)/median(O) x 100, with a 20,000-resample percentile bootstrap, default_rng(20261104), (2.5, 97.5), and a fixed denominator. Common seeds were checked: S1 n=20, band n=20, test n=40. v3w vs p333 over 54 comparisons: v3w better 25, p333 better 1, neither 28. tail vs p333 21/1/20; sw vs p333 20/1/21; v3w vs os1_15_10 23/1/30; v3w vs 3E-T 27/5/22. The one p333 win is finished_pct at 5,000: -0.188 pp [-0.320, -0.053] (as a % effect, -0.23 [-0.38, -0.06]). tail -0.119 pp [-0.288, -0.029]; sw -0.175 pp [-0.288, -0.047]. v3w = w0u250, w1u500, w2u250, w3u500, w4u500, confirmed from val/validation.json 'chosen'.",
+     "note": "Every count and number reproduces exactly. Two wording caveats. (1) The 25/54 tally counts six strongly correlated metrics. All 25 v3w wins come from five dense settings (X1, X2, 5,500, 6,000, 7,000), so the independent evidence is those settings, not 25 separate results. (2) The single p333 win, worth 0.19 pp, fits chance: with about 6 % false exclusions (F10), about 3 of 54 are expected under no effect."
+    },
+    {
+     "id": "F2",
+     "verdict": "corrected",
+     "recomputed": "all_delay, v3w vs p333: 3500 -0.2 [-0.9, +0.1]; 4500 -0.2 [-2.0, +0.8]; 5000 -3.2 [-5.3, +1.4]; 5250 +1.3 [-8.9, +7.5]; X1 +5.5 [+2.9, +8.0]; X2 +6.1 [+3.4, +7.4]; 5500 -1.4 [-6.6, +2.8]; 6000 +2.3 [-1.6, +6.3]; 7000 +3.7 [+2.6, +5.2]. v3w vs 3E-T: every level excludes 0 except 7000 (+4.5 [-0.7, +6.2]); at 4500 the lower bound is only +0.03. v3w vs os1_15_10: X1 +6.3, X2 +6.5, 7000 +6.6, CIs exclude 0; the rest include 0. v3w vs nc: +16.5 to +35.4, as stated.",
+     "note": "The numbers reproduce exactly. The wording 'they tie' does not hold. A CI that includes 0 means 'not shown to differ', not equivalence. At 5,000 the paired point estimate favours p333 by 3.2 %, which is larger than round 2's 2 % counting margin, and the CI [-5.3, +1.4] allows p333 to be up to about 5 % better. At 5,250 it allows up to about 9 %. The text should read: p333 is never shown better on delay; v3w is shown better in X1, X2 and at 7,000; elsewhere they are not shown to differ, and p333's point estimate is lower at 3,500, 4,500, 5,000 and 5,500."
+    },
+    {
+     "id": "F3",
+     "verdict": "confirmed",
+     "recomputed": "ttc_net, v3w vs p333: 3500 -0.9 [-40.5, +29.8]; 4500 +16.6 [-11.9, +44.6]; 5000 +8.1 [-36.7, +52.8]; 5250 +45.6 [-40.8, +110.4]; X1 +44.7 [+40.4, +53.6]; X2 +42.8 [+37.1, +46.8]; 5500 +40.3 [+19.8, +51.2]; 6000 +46.5 [+24.9, +57.0]; 7000 +42.3 [+36.9, +45.3]. v3w vs nc: 3500 -272.7 [-303.6, -87.3]; 4500 -121.6 [-155.1, +7.3]; 5000 +48.2 [+6.3, +94.3]; 5250 +37.7 [+14.9, +55.4]; X1 -16.6 [-25.1, -8.4]; X2 -0.9 [-5.8, +9.5]; 5500 +1.7; 6000 -0.6; 7000 -70.4 [-76.1, -62.1]. Medians v3w/p333/nc: 3500 21.9/21.5/5.5; 5000 319/328/903; X1 1,809/3,364/1,493; 7000 4,111/7,162/2,424. ttc3 == ttc_net on all 5,560 rows, not only 1,980. ttc_net = E30 + out_E30: network-wide 1-Hz vehicle-samples with closing gap/dv < 3 s (b_env._merge_stats/_net_stats; plant_sweep line 331).",
+     "note": "Reproduced exactly. The wording 'tie, with very wide CIs' at 3,500-5,250 is appropriately hedged."
+    },
+    {
+     "id": "F4",
+     "verdict": "confirmed",
+     "recomputed": "v3w vs p333, b3_step: X1 +17.7 [+15.3, +20.8], X2 +14.5 [+10.2, +17.5], 5500 +14.9 [+6.8, +20.4], 6000 +12.2 [+10.0, +18.2], 7000 +23.1 [+18.3, +24.8]. b45_step: X1 +28.4 [+25.5, +31.2], X2 +23.3 [+18.9, +32.1], 5500 +22.4, 6000 +26.3, 7000 +29.2 [+25.9, +32.7]. passed: X1 +1.0, X2 +1.4, 6000 +1.3 [+0.1, +2.1], 7000 +2.2 [+1.4, +3.4]. v3w vs 3E-T, b45_step: X1 -16.1 [-21.3, -10.2], X2 -8.5 [-13.5, -1.8], 6000 -9.8 [-12.6, -2.8], 7000 -29.7 [-32.6, -23.7] (medians 924 vs 706). Teleports 0 everywhere; collisions 0 except v3w in X2 (0.2 in total, learner mean). b3_step and b45_step are vehicle-seconds at step resolution with a <= -3.0 or <= -4.5 m/s\u00b2 (plant_sweep lines 132-133).",
+     "note": "Reproduced exactly. The flow gain is shown only in X1, X2, 6,000 and 7,000, as the analyst wrote; at 5,500 it is not shown."
+    },
+    {
+     "id": "F5",
+     "verdict": "corrected",
+     "recomputed": "p333 vs 3E-T delay: 3500 +1.1 [+0.5, +2.0], 4500 +2.2 [+0.4, +3.4], 5250 +6.0 [+1.4, +10.6], 5500 +12.7 [+2.4, +18.5]. p333 vs os1_15_10 delay: no CI excludes 0 at any level. Seeds where p333 equals os1_15_10 on all kept fields: 20, 17, 10, 6, 0, 0, 1, 0 and 0, in the order 3500 to 7000. Panel tallies, parsed independently from report_rows_*.txt, match exactly: at 5000, p333 better on 12 panels, v3w on 2, equal on 2. Pack spot checks: X1 jam share v3w 0.148 vs p333 0.174, paired -0.024 [-0.035, -0.017]. Events peaking at -4.5 or harder, X1: 1,044 vs 1,402. Jam clusters at 7000: 16.8 vs 11.0, +5.2 [+2.1, +7.1]. Braking events (all classes) at 5000: 4,976 vs 4,684, +179 [+23.5, +540], which is -3.8 % [-11.5, -0.5].",
+     "note": "The numbers reproduce. The wording overreaches. 'Among the rules, p333 leads or ties on delay' and 'the most close-following and hard braking of all rules at 5,300 and above' hold only among p333, os1_15_10 and 3E-T. X1 and X2 include 12 more rules. In X2, os0_10_10 has less delay than p333: p333 -2.9 [-5.7, -0.5]. In X2, lr1000_10_1 brakes as hard as p333 (b45_step +0.9 [-2.8, +6.2]) and has the higher median (593 vs 565). In X1 the medians of lr1000_16_2 and 3E-X1 are below p333's (paired CIs include 0). p333 does have the most ttc_net of all 15 rules in X1 and X2. The analyst flagged the reading of 'jam clusters' as uncertain, which is fair."
+    },
+    {
+     "id": "F6",
+     "verdict": "confirmed",
+     "recomputed": "nc medians, ttc_net per run and per veh-km: 3500 5.5, 0.00067 (0.0016 % of vehicle-time); 4500 37, 0.0034; 5000 902.5, 0.076; 5250 1,345, 0.108; X1 1,493, 0.127; X2 1,580, 0.130; 5500 1,411.5, 0.112; 6000 2,220.5, 0.166; 7000 2,424, 0.179 (0.23 %). At 7000, controller minus nc per run [CI] and effect per veh-km: v3w +1,706 [+1,505, +1,845], -61.3 [-68.8, -53.6]; p333 +4,813 [+4,260, +4,973], -185.7; os1 +3,726 [+2,804, +4,110], -145.1; 3E-T +1,739 [+1,455, +2,042], -65.2 [-77.0, -52.9]. Controllers drive 3.3-5.0 % more veh-km. At 3500: v3w +15 [+4.8, +16.7]; p333 = os1 +13 [+5.5, +19.5]; 3E-T +9 [-2, +22]; share of vehicle-time +0.0027 to +0.0045 pp. Share of TTC samples below 5 m/s at 7000 (median of per-seed ratios): nc 0.469, v3w 0.461, p333 0.502, 3E-T 0.394.",
+     "note": "Reproduced. One small difference: nc's low-speed share is 0.47 in my computation against their 0.48, which looks like a ratio-convention difference. The point stands: at 3,500 the percentages come from a base of 5.5 samples, and the absolute excess is negligible."
+    },
+    {
+     "id": "F7",
+     "verdict": "confirmed",
+     "recomputed": "3500 delay vs nc: v3w +16.5 [+14.4, +17.9], p333 +16.5 [+15.4, +17.8], 3E-T +15.5 [+14.0, +17.3]. 14 slowdown seeds and 6 without, flag consistent across arms. Slowdown seeds v3w +16.3 [+14.1, +18.5], no-slowdown seeds +16.5 [+14.4, +18.3]. Among controllers: v3w-p333 -0.24 [-0.94, +0.06]; v3w-3E-T +0.78 [+0.26, +1.40]; p333-3E-T +1.10 [+0.50, +1.99]; b3_step v3w-3E-T -2.2 [-3.7, -0.6]. Also passed v3w-3E-T +0.04 [+0.02, +0.10] (about 0.6 veh per run). No other pairwise CI among controllers excludes 0. b45_step vs nc: v3w -24.6 [-36.1, -11.5], p333 -22.8 [-38.6, -12.5], 3E-T -15.0 [-33.0, -4.2] (medians 70 / 75 / 69 vs nc 57 vehicle-seconds).",
+     "note": "Reproduced. Two additions. (1) 'The only measurable spread' leaves out a negligible flow difference of +0.04 %. (2) The analyst does not mention that all controllers have 15-25 % more hard braking (b45_step) than nc at 3,500. This shared cost is a possible target that training at 3,500 could address. So 'no gain over p333 to learn' holds for delay, but not necessarily for braking. That part is inference either way."
+    },
+    {
+     "id": "F8",
+     "verdict": "confirmed",
+     "recomputed": "Row identity, all keys except cfg, JSON-normalised: band 2,400 of 2,400 identical, test 2,800 of 2,800, 0 differing keys. The measured rows add only 53 m_* keys. band_table.csv: 290 of 290 cells I compared match (medians, collisions per learner, ttc_vs_nc_95, delay_vs_nc_95), both from rows_band.jsonl and from round2/band/rows_6c49e7e.jsonl. The remaining 20 cells are collisions_total, all 0.0, which matches the zero rule collisions I found, so 310/310 holds.",
+     "note": "Confirmed for the band rows, the test rows and band_table. I did not re-check the 128 test_table.csv cells. The S1 rows (3,500 and 7,000) have no run without the pack to compare with, so pack neutrality there is inferred from band and test, not shown."
+    },
+    {
+     "id": "F9",
+     "verdict": "confirmed",
+     "recomputed": "7000: v3w vs nc delay +17.5 [+14.1, +20.6]; vs p333 +3.7 [+2.6, +5.2]; vs 3E-T +4.5 [-0.7, +6.2], CI includes 0. ttc_net vs 3E-T +1.4 [-2.2, +13.5]; vs p333 +42.3 [+36.9, +45.3]. b45_step vs 3E-T -29.7 [-32.6, -23.7].",
+     "note": "Reproduced exactly. The correction to the lead's '4.5 % less delay than 3E-T', which is not shown, stands."
+    },
+    {
+     "id": "F10",
+     "verdict": "confirmed",
+     "recomputed": "Sign-flip null (300 replicates x 4,000 resamples) over v3w vs p333, 3E-T, os1_15_10 and nc on the six metrics: n=20, 168 comparisons, mean 6.3 % (range 2.0-10.0 %); n=40, 48 comparisons, 5.2 % (1.7-7.3 %). On the v3w vs p333 subset only: 5.8 % (n=20) and 4.5 % (n=40).",
+     "note": "Consistent with their 6.1 % and 5.7 % within Monte Carlo noise. The rate is slightly above nominal at n=20 and about nominal at n=40."
+    }
+   ],
+   "answer_verdict": "The answer is supported in substance. On the paired round-2 statistic, 'p333 wins everywhere' is wrong against v3w, and against tail and sw. p333 is never shown better on delay or close-following. v3w is shown better on delay in X1 (+5.5 [+2.9, +8.0]), X2 (+6.1 [+3.4, +7.4]) and at 7,000 (+3.7 [+2.6, +5.2]). It is shown better on ttc_net, b3_step and b45_step in X1, X2 and at 5,500, 6,000 and 7,000. Elsewhere the two are not shown to differ. I reproduced every number independently with my own code.\n\nFour changes are needed:\n1. Replace 'tie' with 'not shown to differ'. From 3,500 to 5,250 the delay point estimates mostly favour p333; the largest is -3.2 % [-5.3, +1.4] at 5,000, beyond round 2's 2 % margin. The CIs allow p333 to be up to about 5-9 % better there.\n2. Name the likely source of the author's impression. In the round-2 band_table and in S1, p333 has the lowest median all_delay of all arms, policies included, at 3,500, 4,500, 5,000 and 5,250. At 6,000 its median is also below v3w's. So 'p333 wins' is partly right as a reading of unpaired median delay at low and medium demand in the training range. The paired test does not confirm it: at 6,000 the paired point estimate even favours v3w (+2.3 %).\n3. Limit 'p333 has the lowest delay among the rules' to p333, os1_15_10 and 3E-T. In X2, os0_10_10 beats p333 on delay.\n4. Say that the 25/54 tally counts correlated metrics from five settings.\n\nReport-only. I computed about 1,450 paired intervals in all: 1,229 in the operating map, including rule vs rule and baseline-v3, plus about 220 in the checks. None is corrected for multiplicity.",
+   "missed": [
+    "The likely source of 'p333 wins everywhere' is not identified. The analyst pointed only to the pack panels at 5,000. The plain median all_delay columns in band_table.csv and S1 put p333 first of all arms at 3,500 (39,650 vs v3w 40,040), 4,500 (75,261 vs 76,766), 5,000 (105,944 vs 111,820) and 5,250 (137,904 vs 142,103). At 6,000 p333 is also below v3w (341,366 vs 345,390; tail is lowest). v3w has the lower median only at 5,500, X1, X2 and 7,000. Paired, none of p333's leads is shown, and at 6,000 the sign flips (+2.3 % for v3w).",
+    "Per-learner check, which the analyst did not run. v3w learners vs p333 on all_delay: p333 better in 1 of 45 learner-setting comparisons (w3u500 at 5,500, -2.7 [-11.0, -0.02], which fits chance). v3w better in 16 (X1 5/5, X2 5/5, 7,000 4/5, 6,000 2/5). On ttc_net, p333 better in 0 of 45 and v3w in 26. So the claim fails even learner by learner.",
+    "Stronger delay opponents in X1 and X2. p333 is not the lowest-delay rule there, but v3w still has less delay than the best ones. X1: lr1000_16_2 +6.8 [+4.1, +9.5]; 3E-X1 +7.8 [+4.0, +11.3]. X2: lr1000_10_1 +4.1 [+0.2, +5.4]; 3E-X2 +3.0 [+0.7, +5.6]; os0_10_10 +2.4 [-0.6, +7.5], not shown. v3w does NOT have less hard braking than 3E-X1 or 3E-X2: b45_step -0.5 [-7.9, +4.8] and -2.4 [-8.5, +1.2].",
+    "No equivalence reading. In the band, the 'tie' CIs are wide: delay at 5,250 [-8.9, +7.5], ttc_net at 5,250 [-40.8, +110.4]. They cannot support 'equal'. They are consistent with either arm being several percent better.",
+    "At 3,500, every controller has 15-25 % more hard braking (b45_step) than nc: v3w -24.6 [-36.1, -11.5], p333 -22.8 [-38.6, -12.5], 3E-T -15.0 [-33.0, -4.2]. That is about 13-18 vehicle-seconds per run. Panel medians, not tested, also show about 1.5 % more fuel (53.2 vs 52.4 g/km). A learner could target this shared cost while keeping the 16 % delay gain. This qualifies 'nothing to gain at 3,500' (inference, not tested).",
+    "Pack neutrality covers band and test only: 5,200 rows are identical to round 2 on every key except cfg. The S1 rows at 3,500 and 7,000 have no run without the pack to compare with.",
+    "Minor: ttc3 == ttc_net on all 5,560 rows, not only the 1,980 checked. Every row has 1,500 one-second steps, which confirms the 1,500-s window."
+   ]
+  }
+ }
+]

@@ -1,0 +1,17 @@
+X1 w0u250 ttc_net -24.1 [-35.3, -9.9]
+X1 w1u500 ttc_net -21.7 [-30.0, -9.9]
+X1 w2u250 ttc_net -12.9 [-25.2, -0.0]
+X1 w3u500 ttc_net -8.4 [-20.0, +0.0]
+X1 w4u500 ttc_net -20.9 [-25.6, -10.0]
+X1 level_share_on[-1] median p333 0.934
+X1 level_share_on[-1] median os1_15_10 0.733
+X1 level_share_on[-1] median 3e 0.583
+X1 level_share_on[-1] median 3ex 0.377
+X1 level_share_on[-1] median v3w 0.731
+X1 nc stop_gap mean 0.0 median 0.0 max single run 0
+X1 v3w stop_gap mean 45.6 median 38.7 max single run 468
+X1 p333 stop_gap mean 1152.8 median 1014.0 max single run 2777
+X2 nc stop_gap mean 0.0 median 0.0 max single run 0
+X2 v3w stop_gap mean 53.4 median 49.0 max single run 361
+X2 p333 stop_gap mean 864.9 median 780.0 max single run 1708
+gap25 max over all rows 1

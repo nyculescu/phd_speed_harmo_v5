@@ -1,0 +1,2 @@
+n=20: 42 comparisons, false-exclusion rate mean 5.8 % (range 3.3-9.7 %)
+n=40: 12 comparisons, false-exclusion rate mean 4.5 % (range 2.0-6.0 %)

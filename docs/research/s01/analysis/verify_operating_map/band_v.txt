@@ -1,0 +1,4 @@
+band: measured rows 2400, matched in round 2 2400, missing 0, identical 2400, differing 0 {}; keys only in round 2: []; extra keys in measured: 53 (m_* 53): []
+test: measured rows 2800, matched in round 2 2800, missing 0, identical 2800, differing 0 {}; keys only in round 2: []; extra keys in measured: 53 (m_* 53): []
+band_table from rows_band.jsonl (measure_s01_remote): match 290, mismatch 0; first mismatches []
+band_table from rows_6c49e7e.jsonl (band): match 290, mismatch 0; first mismatches []

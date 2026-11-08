@@ -1,0 +1,149 @@
+{
+ "groups": {
+  "tail": [
+   "t0",
+   "t1",
+   "t2",
+   "t3",
+   "t4"
+  ],
+  "sw": [
+   "s0u500",
+   "s1u500",
+   "s2u500",
+   "s3u500",
+   "s4u500"
+  ],
+  "v3w": [
+   "w0u250",
+   "w1u500",
+   "w2u250",
+   "w3u500",
+   "w4u500"
+  ],
+  "baseline-v3": [
+   "d0u500",
+   "d1u500",
+   "d2u500",
+   "d3u500",
+   "d4u500"
+  ]
+ },
+ "finalists": [
+  "tail",
+  "sw"
+ ],
+ "chosen": {
+  "2b": {
+   "0": 500,
+   "1": 500,
+   "2": 500,
+   "3": 500,
+   "4": 500
+  },
+  "1b": {
+   "0": 500,
+   "1": 500,
+   "2": 500,
+   "3": 250,
+   "4": 250
+  },
+  "1d": {
+   "0": 500,
+   "1": 250,
+   "2": 500,
+   "3": 500,
+   "4": 500
+  },
+  "ahead": {
+   "0": 250,
+   "1": 500,
+   "2": 500,
+   "3": 250,
+   "4": 250
+  },
+  "rep": {
+   "0": 250,
+   "1": 250,
+   "2": 500,
+   "3": 250,
+   "4": 500
+  },
+  "v3w": {
+   "0": 250,
+   "1": 500,
+   "2": 250,
+   "3": 500,
+   "4": 500
+  },
+  "sw": {
+   "0": 500,
+   "1": 500,
+   "2": 500,
+   "3": 500,
+   "4": 500
+  }
+ },
+ "paths": {
+  "X1|t0": "pts:policies/C0_u250.pt,policies/C0_u300.pt,policies/C0_u350.pt,policies/C0_u400.pt,policies/C0_u450.pt,policies/C0_u500.pt",
+  "X2|t0": "pts:policies/C0_u250.pt,policies/C0_u300.pt,policies/C0_u350.pt,policies/C0_u400.pt,policies/C0_u450.pt,policies/C0_u500.pt",
+  "B|t0": "pts:policies/C0_u250.pt,policies/C0_u300.pt,policies/C0_u350.pt,policies/C0_u400.pt,policies/C0_u450.pt,policies/C0_u500.pt",
+  "X1|t1": "pts:policies/C1_u250.pt,policies/C1_u300.pt,policies/C1_u350.pt,policies/C1_u400.pt,policies/C1_u450.pt,policies/C1_u500.pt",
+  "X2|t1": "pts:policies/C1_u250.pt,policies/C1_u300.pt,policies/C1_u350.pt,policies/C1_u400.pt,policies/C1_u450.pt,policies/C1_u500.pt",
+  "B|t1": "pts:policies/C1_u250.pt,policies/C1_u300.pt,policies/C1_u350.pt,policies/C1_u400.pt,policies/C1_u450.pt,policies/C1_u500.pt",
+  "X1|t2": "pts:policies/C2_u250.pt,policies/C2_u300.pt,policies/C2_u350.pt,policies/C2_u400.pt,policies/C2_u450.pt,policies/C2_u500.pt",
+  "X2|t2": "pts:policies/C2_u250.pt,policies/C2_u300.pt,policies/C2_u350.pt,policies/C2_u400.pt,policies/C2_u450.pt,policies/C2_u500.pt",
+  "B|t2": "pts:policies/C2_u250.pt,policies/C2_u300.pt,policies/C2_u350.pt,policies/C2_u400.pt,policies/C2_u450.pt,policies/C2_u500.pt",
+  "X1|t3": "pts:policies/C3_u250.pt,policies/C3_u300.pt,policies/C3_u350.pt,policies/C3_u400.pt,policies/C3_u450.pt,policies/C3_u500.pt",
+  "X2|t3": "pts:policies/C3_u250.pt,policies/C3_u300.pt,policies/C3_u350.pt,policies/C3_u400.pt,policies/C3_u450.pt,policies/C3_u500.pt",
+  "B|t3": "pts:policies/C3_u250.pt,policies/C3_u300.pt,policies/C3_u350.pt,policies/C3_u400.pt,policies/C3_u450.pt,policies/C3_u500.pt",
+  "X1|t4": "pts:policies/C4_u250.pt,policies/C4_u300.pt,policies/C4_u350.pt,policies/C4_u400.pt,policies/C4_u450.pt,policies/C4_u500.pt",
+  "X2|t4": "pts:policies/C4_u250.pt,policies/C4_u300.pt,policies/C4_u350.pt,policies/C4_u400.pt,policies/C4_u450.pt,policies/C4_u500.pt",
+  "B|t4": "pts:policies/C4_u250.pt,policies/C4_u300.pt,policies/C4_u350.pt,policies/C4_u400.pt,policies/C4_u450.pt,policies/C4_u500.pt",
+  "X1|s0u500": "switch:baseline_v4/policies/C0_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X2|s0u500": "switch:baseline_v4/policies/C0_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "B|s0u500": "switch:baseline_v4/policies/C0_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X1|s1u500": "switch:baseline_v4/policies/C1_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X2|s1u500": "switch:baseline_v4/policies/C1_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "B|s1u500": "switch:baseline_v4/policies/C1_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X1|s2u500": "switch:baseline_v4/policies/C2_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X2|s2u500": "switch:baseline_v4/policies/C2_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "B|s2u500": "switch:baseline_v4/policies/C2_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X1|s3u500": "switch:baseline_v4/policies/C3_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X2|s3u500": "switch:baseline_v4/policies/C3_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "B|s3u500": "switch:baseline_v4/policies/C3_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X1|s4u500": "switch:baseline_v4/policies/C4_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X2|s4u500": "switch:baseline_v4/policies/C4_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "B|s4u500": "switch:baseline_v4/policies/C4_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}",
+  "X1|w0u250": "pt:baseline_v4/policies/C0_u250.pt",
+  "X2|w0u250": "pt:baseline_v4/policies/C0_u250.pt",
+  "B|w0u250": "pt:baseline_v4/policies/C0_u250.pt",
+  "X1|w1u500": "pt:baseline_v4/policies/C1_u500.pt",
+  "X2|w1u500": "pt:baseline_v4/policies/C1_u500.pt",
+  "B|w1u500": "pt:baseline_v4/policies/C1_u500.pt",
+  "X1|w2u250": "pt:baseline_v4/policies/C2_u250.pt",
+  "X2|w2u250": "pt:baseline_v4/policies/C2_u250.pt",
+  "B|w2u250": "pt:baseline_v4/policies/C2_u250.pt",
+  "X1|w3u500": "pt:baseline_v4/policies/C3_u500.pt",
+  "X2|w3u500": "pt:baseline_v4/policies/C3_u500.pt",
+  "B|w3u500": "pt:baseline_v4/policies/C3_u500.pt",
+  "X1|w4u500": "pt:baseline_v4/policies/C4_u500.pt",
+  "X2|w4u500": "pt:baseline_v4/policies/C4_u500.pt",
+  "B|w4u500": "pt:baseline_v4/policies/C4_u500.pt",
+  "X1|d0u500": "pt:conf3/train/C0_u500.pt",
+  "X2|d0u500": "pt:conf3/train/C0_u500.pt",
+  "B|d0u500": "pt:conf3/train/C0_u500.pt",
+  "X1|d1u500": "pt:conf3/train/C1_u500.pt",
+  "X2|d1u500": "pt:conf3/train/C1_u500.pt",
+  "B|d1u500": "pt:conf3/train/C1_u500.pt",
+  "X1|d2u500": "pt:conf3/train/C2_u500.pt",
+  "X2|d2u500": "pt:conf3/train/C2_u500.pt",
+  "B|d2u500": "pt:conf3/train/C2_u500.pt",
+  "X1|d3u500": "pt:conf3/train/C3_u500.pt",
+  "X2|d3u500": "pt:conf3/train/C3_u500.pt",
+  "B|d3u500": "pt:conf3/train/C3_u500.pt",
+  "X1|d4u500": "pt:conf3/train/C4_u500.pt",
+  "X2|d4u500": "pt:conf3/train/C4_u500.pt",
+  "B|d4u500": "pt:conf3/train/C4_u500.pt"
+ }
+}

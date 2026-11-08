@@ -1,0 +1,195 @@
+comparisons: 432
+X1 v3w  vs nc  fc15           medP     1483 medO     1155 eff  -28.40% [ -37.44, -24.75] diff    328.2 [     286,   432.6]
+X1 v3w  vs nc  fc25           medP    231.3 medO    124.3 eff  -82.08% [-108.36, -59.51] diff      102 [   73.96,   134.7]
+X1 v3w  vs nc  fc15_up        medP     1131 medO    997.6 eff   -8.44% [ -26.54,   3.18] diff    84.18 [  -31.76,   264.7]
+X1 v3w  vs nc  fc15_m2        medP    334.4 medO    167.5 eff -113.60% [-172.31, -76.23] diff    190.3 [   127.7,   288.6]
+X1 v3w  vs nc  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 v3w  vs nc  fc15_down      medP   0.2454 medO        0 eff     nan% [    nan,    nan] diff   0.2361 [       0,  0.9481]
+X1 v3w  vs nc  fc15_p_before  medP    126.5 medO      121 eff   -8.91% [ -35.41,  11.40] diff    10.78 [  -13.79,   42.84]
+X1 v3w  vs nc  fc15_p_win     medP    261.7 medO    204.9 eff  -31.89% [ -53.48, -21.20] diff    65.36 [   43.45,   109.6]
+X1 v3w  vs nc  fc15_p_after   medP    231.4 medO    165.9 eff  -28.70% [ -69.29, -13.75] diff    47.61 [   22.82,     115]
+X1 v3w  vs nc  fc15_p_rest    medP    835.4 medO    636.7 eff  -33.94% [ -48.26, -26.40] diff    216.1 [   168.1,   307.2]
+X1 v3w  vs nc  fc25_up        medP    173.6 medO    116.6 eff  -57.71% [ -85.95, -37.70] diff    67.27 [   43.95,   100.2]
+X1 v3w  vs nc  fc25_m2        medP    41.01 medO        0 eff     nan% [    nan,    nan] diff    31.61 [   19.72,   41.01]
+X1 v3w  vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 v3w  vs nc  fc25_p_before  medP    22.08 medO     5.21 eff -236.21% [-392.51, -59.24] diff    12.31 [   3.086,   20.45]
+X1 v3w  vs nc  fc25_p_win     medP    32.98 medO    16.68 eff  -97.19% [-152.38, -33.34] diff    16.21 [   5.559,   25.41]
+X1 v3w  vs nc  fc25_p_after   medP    24.24 medO    12.09 eff  -46.55% [-121.60, -13.42] diff     5.63 [   1.623,   14.71]
+X1 v3w  vs nc  fc25_p_rest    medP    148.6 medO    70.23 eff -119.21% [-147.00,-101.75] diff    83.72 [   71.47,   103.2]
+X1 v3w  vs nc  appr_kmh       medP    69.19 medO    66.93 eff    3.39% [   2.72,   3.81] diff    2.269 [   1.823,   2.552]
+X1 v3w  vs 3e  fc15           medP     1483 medO     1517 eff    0.42% [  -5.41,   6.28] diff   -6.314 [  -95.27,   82.03]
+X1 v3w  vs 3e  fc25           medP    231.3 medO    258.8 eff   10.18% [  -6.69,  21.50] diff   -26.34 [  -55.63,    17.3]
+X1 v3w  vs 3e  fc15_up        medP     1131 medO     1256 eff   11.54% [   5.54,  15.78] diff     -145 [  -198.2,  -69.57]
+X1 v3w  vs 3e  fc15_m2        medP    334.4 medO      229 eff  -47.01% [ -77.22, -23.20] diff    107.7 [   53.13,   176.8]
+X1 v3w  vs 3e  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 v3w  vs 3e  fc15_down      medP   0.2454 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,  0.5343]
+X1 v3w  vs 3e  fc15_p_before  medP    126.5 medO    111.6 eff    9.51% [ -10.26,  27.88] diff   -10.61 [  -31.11,   11.44]
+X1 v3w  vs 3e  fc15_p_win     medP    261.7 medO    255.1 eff   -3.03% [ -22.04,   3.12] diff    7.736 [  -7.968,   56.22]
+X1 v3w  vs 3e  fc15_p_after   medP    231.4 medO    212.6 eff   -8.56% [ -24.68,  12.39] diff     18.2 [  -26.35,   52.48]
+X1 v3w  vs 3e  fc15_p_rest    medP    835.4 medO    904.5 eff    4.81% [  -2.67,   9.73] diff   -43.52 [  -88.03,   24.15]
+X1 v3w  vs 3e  fc25_up        medP    173.6 medO    205.8 eff   11.26% [   4.69,  23.76] diff   -23.17 [   -48.9,  -9.661]
+X1 v3w  vs 3e  fc25_m2        medP    41.01 medO    19.46 eff  -80.77% [-147.31,  23.03] diff    15.72 [  -4.483,   28.67]
+X1 v3w  vs 3e  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 v3w  vs 3e  fc25_p_before  medP    22.08 medO    11.49 eff    4.45% [ -48.91,  93.97] diff  -0.5114 [  -10.79,   5.618]
+X1 v3w  vs 3e  fc25_p_win     medP    32.98 medO    33.59 eff   -2.21% [ -40.14,  44.20] diff   0.7414 [  -14.85,   13.49]
+X1 v3w  vs 3e  fc25_p_after   medP    24.24 medO    19.98 eff  -35.23% [ -52.15,  22.26] diff     7.04 [  -4.447,   10.42]
+X1 v3w  vs 3e  fc25_p_rest    medP    148.6 medO    145.3 eff    4.14% [  -8.32,  10.19] diff   -6.021 [  -14.81,    12.1]
+X1 v3w  vs 3e  appr_kmh       medP    69.19 medO    68.17 eff    1.32% [   1.13,   1.86] diff   0.8974 [  0.7679,   1.267]
+X1 3e   vs nc  fc15           medP     1517 medO     1155 eff  -27.70% [ -34.57, -24.63] diff    320.1 [   284.6,   399.4]
+X1 3e   vs nc  fc25           medP    258.8 medO    124.3 eff  -88.65% [-139.01, -66.28] diff    110.2 [   82.37,   172.8]
+X1 3e   vs nc  fc15_up        medP     1256 medO    997.6 eff  -25.23% [ -33.57, -12.04] diff    251.7 [   120.1,   334.9]
+X1 3e   vs nc  fc15_m2        medP      229 medO    167.5 eff  -57.23% [-103.91, -30.54] diff    95.86 [   51.16,   174.1]
+X1 3e   vs nc  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 3e   vs nc  fc15_down      medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 3e   vs nc  fc15_p_before  medP    111.6 medO      121 eff  -10.69% [ -58.57,  15.69] diff    12.94 [  -18.97,   70.84]
+X1 3e   vs nc  fc15_p_win     medP    255.1 medO    204.9 eff  -22.81% [ -46.20,  -6.63] diff    46.74 [   13.59,   94.67]
+X1 3e   vs nc  fc15_p_after   medP    212.6 medO    165.9 eff  -20.00% [ -44.23,  -1.25] diff    33.18 [   2.076,   73.39]
+X1 3e   vs nc  fc15_p_rest    medP    904.5 medO    636.7 eff  -39.66% [ -44.66, -27.70] diff    252.5 [   176.4,   284.3]
+X1 3e   vs nc  fc25_up        medP    205.8 medO    116.6 eff  -74.87% [-103.74, -44.57] diff    87.27 [   51.95,   120.9]
+X1 3e   vs nc  fc25_m2        medP    19.46 medO        0 eff     nan% [    nan,    nan] diff    11.41 [       0,   30.03]
+X1 3e   vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 3e   vs nc  fc25_p_before  medP    11.49 medO     5.21 eff    0.00% [-379.17,   0.00] diff        0 [       0,   19.75]
+X1 3e   vs nc  fc25_p_win     medP    33.59 medO    16.68 eff  -82.79% [-202.47,  -2.95] diff    13.81 [  0.4919,   33.76]
+X1 3e   vs nc  fc25_p_after   medP    19.98 medO    12.09 eff  -66.50% [-133.64,  45.57] diff    8.043 [  -5.512,   16.16]
+X1 3e   vs nc  fc25_p_rest    medP    145.3 medO    70.23 eff -120.05% [-154.28, -87.87] diff    84.31 [   61.71,   108.4]
+X1 3e   vs nc  appr_kmh       medP    68.17 medO    66.93 eff    2.08% [   1.21,   2.79] diff    1.395 [  0.8079,   1.869]
+X1 p333 vs nc  fc15           medP     1670 medO     1155 eff  -43.98% [ -52.52, -39.43] diff    508.1 [   455.5,   606.8]
+X1 p333 vs nc  fc25           medP    336.9 medO    124.3 eff -174.72% [-218.65,-142.10] diff    217.2 [   176.6,   271.8]
+X1 p333 vs nc  fc15_up        medP     1297 medO    997.6 eff  -26.85% [ -35.89, -12.43] diff    267.9 [     124,     358]
+X1 p333 vs nc  fc15_m2        medP    374.2 medO    167.5 eff -122.90% [-151.21, -91.94] diff    205.8 [     154,   253.3]
+X1 p333 vs nc  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 p333 vs nc  fc15_down      medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 p333 vs nc  fc15_p_before  medP    128.3 medO      121 eff   -0.42% [ -24.89,  16.40] diff   0.5103 [  -19.83,   30.11]
+X1 p333 vs nc  fc15_p_win     medP    305.3 medO    204.9 eff  -51.96% [ -69.75, -27.59] diff    106.5 [   56.54,   142.9]
+X1 p333 vs nc  fc15_p_after   medP      253 medO    165.9 eff  -29.76% [ -58.89, -13.04] diff    49.38 [   21.64,   97.71]
+X1 p333 vs nc  fc15_p_rest    medP    998.1 medO    636.7 eff  -52.40% [ -66.94, -40.10] diff    333.7 [   255.3,   426.2]
+X1 p333 vs nc  fc25_up        medP    248.6 medO    116.6 eff -112.88% [-157.96, -96.65] diff    131.6 [   112.7,   184.1]
+X1 p333 vs nc  fc25_m2        medP    66.83 medO        0 eff     nan% [    nan,    nan] diff    40.29 [   28.91,   89.11]
+X1 p333 vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X1 p333 vs nc  fc25_p_before  medP    17.62 medO     5.21 eff -182.24% [-347.69,   0.00] diff    9.494 [       0,   18.11]
+X1 p333 vs nc  fc25_p_win     medP    51.72 medO    16.68 eff -208.48% [-253.78, -97.83] diff    34.77 [   16.31,   42.32]
+X1 p333 vs nc  fc25_p_after   medP    31.38 medO    12.09 eff  -92.54% [-213.29,   1.55] diff    11.19 [ -0.1871,    25.8]
+X1 p333 vs nc  fc25_p_rest    medP    225.4 medO    70.23 eff -214.04% [-263.04,-175.20] diff    150.3 [     123,   184.7]
+X1 p333 vs nc  appr_kmh       medP    68.95 medO    66.93 eff    2.82% [   2.34,   3.70] diff    1.885 [   1.568,   2.473]
+X2 v3w  vs nc  fc15           medP     1412 medO     1257 eff  -11.47% [ -17.05,  -6.97] diff    144.2 [   87.59,   214.4]
+X2 v3w  vs nc  fc25           medP    209.6 medO    165.2 eff  -20.19% [ -49.32,   3.69] diff    33.37 [  -6.103,   81.51]
+X2 v3w  vs nc  fc15_up        medP     1229 medO     1096 eff   -9.83% [ -14.93,  -4.72] diff    107.7 [   51.72,   163.6]
+X2 v3w  vs nc  fc15_m2        medP      200 medO    142.3 eff  -19.50% [ -44.14,  -1.91] diff    27.75 [   2.711,    62.8]
+X2 v3w  vs nc  fc15_e4        medP    1.526 medO        0 eff     nan% [    nan,    nan] diff    1.345 [       0,   1.808]
+X2 v3w  vs nc  fc15_down      medP   0.4373 medO        0 eff     nan% [    nan,    nan] diff   0.1185 [       0,  0.7192]
+X2 v3w  vs nc  fc15_p_before  medP    126.5 medO      121 eff   -8.91% [ -35.41,  11.40] diff    10.78 [  -13.79,   42.84]
+X2 v3w  vs nc  fc15_p_win     medP    160.3 medO     92.8 eff  -54.83% [ -75.54, -41.40] diff    50.88 [   38.42,    70.1]
+X2 v3w  vs nc  fc15_p_after   medP     87.8 medO    99.84 eff    6.63% [ -34.10,  20.70] diff   -6.618 [  -20.66,   34.05]
+X2 v3w  vs nc  fc15_p_rest    medP     1027 medO    923.7 eff  -10.04% [ -15.60,  -0.57] diff    92.72 [    5.24,   144.1]
+X2 v3w  vs nc  fc25_up        medP    185.3 medO    156.2 eff  -27.87% [ -42.17,  20.14] diff    43.52 [  -31.46,   65.86]
+X2 v3w  vs nc  fc25_m2        medP     29.5 medO    6.542 eff -283.11% [-354.62,-135.39] diff    18.52 [   8.857,    23.2]
+X2 v3w  vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 v3w  vs nc  fc25_p_before  medP    22.08 medO     5.21 eff -236.21% [-392.51, -59.24] diff    12.31 [   3.086,   20.45]
+X2 v3w  vs nc  fc25_p_win     medP    4.819 medO        0 eff     nan% [    nan,    nan] diff    3.437 [   1.338,   5.244]
+X2 v3w  vs nc  fc25_p_after   medP    8.744 medO    3.227 eff  -63.43% [-231.47,  99.54] diff    2.047 [  -3.212,   7.468]
+X2 v3w  vs nc  fc25_p_rest    medP    177.2 medO    144.9 eff  -31.32% [ -56.38,  10.88] diff    45.39 [  -15.76,    81.7]
+X2 v3w  vs nc  appr_kmh       medP    69.55 medO    67.34 eff    3.21% [   2.83,   3.98] diff    2.159 [   1.908,   2.679]
+X2 v3w  vs 3e  fc15           medP     1412 medO     1459 eff    3.01% [  -4.08,  10.76] diff   -43.95 [  -157.1,   59.59]
+X2 v3w  vs 3e  fc25           medP    209.6 medO    241.9 eff   12.44% [  -4.23,  19.68] diff    -30.1 [   -47.6,   10.22]
+X2 v3w  vs 3e  fc15_up        medP     1229 medO     1295 eff    6.92% [  -2.52,  11.64] diff    -89.6 [  -150.7,   32.64]
+X2 v3w  vs 3e  fc15_m2        medP      200 medO    129.1 eff  -34.46% [ -71.99,   3.64] diff    44.51 [  -4.695,   92.96]
+X2 v3w  vs 3e  fc15_e4        medP    1.526 medO        0 eff     nan% [    nan,    nan] diff    1.127 [       0,   1.616]
+X2 v3w  vs 3e  fc15_down      medP   0.4373 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,  0.6461]
+X2 v3w  vs 3e  fc15_p_before  medP    126.5 medO    111.6 eff    9.51% [ -10.26,  27.88] diff   -10.61 [  -31.11,   11.44]
+X2 v3w  vs 3e  fc15_p_win     medP    160.3 medO    162.5 eff    0.52% [  -5.38,  10.89] diff  -0.8417 [   -17.7,   8.749]
+X2 v3w  vs 3e  fc15_p_after   medP     87.8 medO    95.12 eff    8.20% [  -3.39,  19.71] diff   -7.797 [  -18.75,   3.228]
+X2 v3w  vs 3e  fc15_p_rest    medP     1027 medO     1034 eff    1.08% [  -3.51,   8.25] diff   -11.12 [  -85.31,   36.29]
+X2 v3w  vs 3e  fc25_up        medP    185.3 medO      207 eff    6.16% [  -7.25,  29.66] diff   -12.76 [   -61.4,   15.01]
+X2 v3w  vs 3e  fc25_m2        medP     29.5 medO    17.08 eff  -32.95% [ -91.27,  -1.42] diff     5.63 [   0.243,   15.59]
+X2 v3w  vs 3e  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 v3w  vs 3e  fc25_p_before  medP    22.08 medO    11.49 eff    4.45% [ -48.91,  93.97] diff  -0.5114 [  -10.79,   5.618]
+X2 v3w  vs 3e  fc25_p_win     medP    4.819 medO    4.737 eff  -28.05% [ -79.27,  21.66] diff    1.329 [  -1.026,   3.756]
+X2 v3w  vs 3e  fc25_p_after   medP    8.744 medO    5.924 eff  -10.54% [ -34.55,  29.99] diff   0.6245 [  -1.777,   2.047]
+X2 v3w  vs 3e  fc25_p_rest    medP    177.2 medO    193.7 eff    8.85% [  -8.79,  22.76] diff   -17.14 [  -44.09,   17.04]
+X2 v3w  vs 3e  appr_kmh       medP    69.55 medO    69.27 eff    0.33% [  -0.34,   1.19] diff   0.2256 [ -0.2329,  0.8218]
+X2 3e   vs nc  fc15           medP     1459 medO     1257 eff  -13.60% [ -22.12,  -6.70] diff    170.9 [   84.23,   278.1]
+X2 3e   vs nc  fc25           medP    241.9 medO    165.2 eff  -32.93% [ -57.48, -13.87] diff    54.42 [   22.91,   94.99]
+X2 3e   vs nc  fc15_up        medP     1295 medO     1096 eff  -14.27% [ -21.53,  -6.26] diff    156.4 [    68.6,     236]
+X2 3e   vs nc  fc15_m2        medP    129.1 medO    142.3 eff   -0.03% [ -32.62,  27.25] diff  0.03608 [  -38.77,   46.41]
+X2 3e   vs nc  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 3e   vs nc  fc15_down      medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 3e   vs nc  fc15_p_before  medP    111.6 medO      121 eff  -10.69% [ -58.57,  15.69] diff    12.94 [  -18.97,   70.84]
+X2 3e   vs nc  fc15_p_win     medP    162.5 medO     92.8 eff  -57.80% [ -76.64, -23.44] diff    53.64 [   21.75,   71.12]
+X2 3e   vs nc  fc15_p_after   medP    95.12 medO    99.84 eff  -11.23% [ -28.19,  18.60] diff    11.21 [  -18.57,   28.14]
+X2 3e   vs nc  fc15_p_rest    medP     1034 medO    923.7 eff   -8.47% [ -17.74,  -3.31] diff    78.24 [   30.61,   163.9]
+X2 3e   vs nc  fc25_up        medP      207 medO    156.2 eff  -28.43% [ -52.99, -13.67] diff     44.4 [   21.35,   82.75]
+X2 3e   vs nc  fc25_m2        medP    17.08 medO    6.542 eff  -19.92% [-307.41,   0.00] diff    1.303 [       0,   20.11]
+X2 3e   vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 3e   vs nc  fc25_p_before  medP    11.49 medO     5.21 eff    0.00% [-379.17,   0.00] diff        0 [       0,   19.75]
+X2 3e   vs nc  fc25_p_win     medP    4.737 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,   6.407]
+X2 3e   vs nc  fc25_p_after   medP    5.924 medO    3.227 eff    0.00% [-290.76,   0.00] diff        0 [       0,   9.382]
+X2 3e   vs nc  fc25_p_rest    medP    193.7 medO    144.9 eff  -23.71% [ -53.28, -11.48] diff    34.36 [   16.64,   77.21]
+X2 3e   vs nc  appr_kmh       medP    69.27 medO    67.34 eff    2.89% [   2.15,   3.47] diff    1.945 [    1.45,   2.339]
+X2 p333 vs nc  fc15           medP     1472 medO     1257 eff  -18.51% [ -26.17,  -7.92] diff    232.7 [   99.59,     329]
+X2 p333 vs nc  fc25           medP    271.4 medO    165.2 eff  -64.51% [ -92.59, -32.38] diff    106.6 [    53.5,     153]
+X2 p333 vs nc  fc15_up        medP     1304 medO     1096 eff  -15.82% [ -27.54,  -8.54] diff    173.3 [   93.55,   301.9]
+X2 p333 vs nc  fc15_m2        medP      171 medO    142.3 eff    5.85% [ -56.91,  25.39] diff   -8.319 [  -36.12,   80.96]
+X2 p333 vs nc  fc15_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 p333 vs nc  fc15_down      medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 p333 vs nc  fc15_p_before  medP    128.3 medO      121 eff   -0.42% [ -24.89,  16.40] diff   0.5103 [  -19.83,   30.11]
+X2 p333 vs nc  fc15_p_win     medP    168.6 medO     92.8 eff  -57.35% [ -95.07, -39.19] diff    53.22 [   36.37,   88.23]
+X2 p333 vs nc  fc15_p_after   medP    108.1 medO    99.84 eff    6.11% [ -37.97,  42.61] diff   -6.099 [  -42.54,   37.91]
+X2 p333 vs nc  fc15_p_rest    medP     1079 medO    923.7 eff  -16.45% [ -23.72, -11.81] diff    151.9 [   109.1,   219.1]
+X2 p333 vs nc  fc25_up        medP    246.2 medO    156.2 eff  -52.92% [ -84.12, -15.14] diff    82.64 [   23.64,   131.4]
+X2 p333 vs nc  fc25_m2        medP    24.32 medO    6.542 eff -165.10% [-313.50,   0.00] diff     10.8 [       0,   20.51]
+X2 p333 vs nc  fc25_e4        medP        0 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,       0]
+X2 p333 vs nc  fc25_p_before  medP    17.62 medO     5.21 eff -182.24% [-347.69,   0.00] diff    9.494 [       0,   18.11]
+X2 p333 vs nc  fc25_p_win     medP    4.342 medO        0 eff     nan% [    nan,    nan] diff        0 [       0,   6.369]
+X2 p333 vs nc  fc25_p_after   medP    9.012 medO    3.227 eff    0.00% [-350.70, 130.31] diff        0 [  -4.205,   11.31]
+X2 p333 vs nc  fc25_p_rest    medP      231 medO    144.9 eff  -56.02% [ -92.56, -30.47] diff    81.19 [   44.16,   134.1]
+X2 p333 vs nc  appr_kmh       medP    69.17 medO    67.34 eff    2.94% [   1.98,   4.17] diff    1.983 [   1.331,   2.811]
+X1 across 19 arms: Spearman(median fc15, median ev45_all) = 0.29; with ev4_all = 0.05
+  X1 v3w-nc seed-level Spearman(d fc15, d ev45_all) = 0.55 (p 0.000)
+  X1 v3w-nc seed-level Spearman(d fc15, d ev45_car) = 0.40 (p 0.011)
+  X1 v3w-nc seed-level Spearman(d fc15, d ev45_alks) = 0.59 (p 0.000)
+  X1 v3w-nc seed-level Spearman(d fc15, d ev4_all) = 0.31 (p 0.050)
+  X1 v3w-nc seed-level Spearman(d fc25, d ev45_all) = 0.53 (p 0.000)
+  X1 v3w-nc seed-level Spearman(d fc25, d ev45_car) = 0.40 (p 0.010)
+  X1 v3w-nc seed-level Spearman(d fc25, d ev45_alks) = 0.52 (p 0.001)
+  X1 v3w-nc seed-level Spearman(d fc25, d ev4_all) = 0.36 (p 0.024)
+  X1 3e-nc seed-level Spearman(d fc15, d ev45_all) = 0.62 (p 0.000)
+  X1 3e-nc seed-level Spearman(d fc15, d ev45_car) = 0.47 (p 0.002)
+  X1 3e-nc seed-level Spearman(d fc15, d ev45_alks) = 0.63 (p 0.000)
+  X1 3e-nc seed-level Spearman(d fc15, d ev4_all) = 0.28 (p 0.083)
+  X1 3e-nc seed-level Spearman(d fc25, d ev45_all) = 0.46 (p 0.003)
+  X1 3e-nc seed-level Spearman(d fc25, d ev45_car) = 0.35 (p 0.029)
+  X1 3e-nc seed-level Spearman(d fc25, d ev45_alks) = 0.46 (p 0.003)
+  X1 3e-nc seed-level Spearman(d fc25, d ev4_all) = 0.26 (p 0.099)
+  X1 p333-nc seed-level Spearman(d fc15, d ev45_all) = 0.56 (p 0.000)
+  X1 p333-nc seed-level Spearman(d fc15, d ev45_car) = 0.40 (p 0.011)
+  X1 p333-nc seed-level Spearman(d fc15, d ev45_alks) = 0.56 (p 0.000)
+  X1 p333-nc seed-level Spearman(d fc15, d ev4_all) = 0.38 (p 0.016)
+  X1 p333-nc seed-level Spearman(d fc25, d ev45_all) = 0.51 (p 0.001)
+  X1 p333-nc seed-level Spearman(d fc25, d ev45_car) = 0.53 (p 0.000)
+  X1 p333-nc seed-level Spearman(d fc25, d ev45_alks) = 0.36 (p 0.021)
+  X1 p333-nc seed-level Spearman(d fc25, d ev4_all) = 0.27 (p 0.098)
+X2 across 19 arms: Spearman(median fc15, median ev45_all) = 0.29; with ev4_all = 0.10
+  X2 v3w-nc seed-level Spearman(d fc15, d ev45_all) = 0.47 (p 0.002)
+  X2 v3w-nc seed-level Spearman(d fc15, d ev45_car) = 0.39 (p 0.013)
+  X2 v3w-nc seed-level Spearman(d fc15, d ev45_alks) = 0.52 (p 0.001)
+  X2 v3w-nc seed-level Spearman(d fc15, d ev4_all) = 0.18 (p 0.279)
+  X2 v3w-nc seed-level Spearman(d fc25, d ev45_all) = 0.33 (p 0.038)
+  X2 v3w-nc seed-level Spearman(d fc25, d ev45_car) = 0.20 (p 0.219)
+  X2 v3w-nc seed-level Spearman(d fc25, d ev45_alks) = 0.41 (p 0.008)
+  X2 v3w-nc seed-level Spearman(d fc25, d ev4_all) = -0.02 (p 0.895)
+  X2 3e-nc seed-level Spearman(d fc15, d ev45_all) = 0.37 (p 0.020)
+  X2 3e-nc seed-level Spearman(d fc15, d ev45_car) = 0.28 (p 0.075)
+  X2 3e-nc seed-level Spearman(d fc15, d ev45_alks) = 0.38 (p 0.016)
+  X2 3e-nc seed-level Spearman(d fc15, d ev4_all) = 0.32 (p 0.041)
+  X2 3e-nc seed-level Spearman(d fc25, d ev45_all) = 0.43 (p 0.005)
+  X2 3e-nc seed-level Spearman(d fc25, d ev45_car) = 0.31 (p 0.050)
+  X2 3e-nc seed-level Spearman(d fc25, d ev45_alks) = 0.36 (p 0.024)
+  X2 3e-nc seed-level Spearman(d fc25, d ev4_all) = 0.22 (p 0.178)
+  X2 p333-nc seed-level Spearman(d fc15, d ev45_all) = 0.31 (p 0.049)
+  X2 p333-nc seed-level Spearman(d fc15, d ev45_car) = 0.10 (p 0.521)
+  X2 p333-nc seed-level Spearman(d fc15, d ev45_alks) = 0.52 (p 0.001)
+  X2 p333-nc seed-level Spearman(d fc15, d ev4_all) = 0.05 (p 0.753)
+  X2 p333-nc seed-level Spearman(d fc25, d ev45_all) = 0.39 (p 0.012)
+  X2 p333-nc seed-level Spearman(d fc25, d ev45_car) = 0.16 (p 0.328)
+  X2 p333-nc seed-level Spearman(d fc25, d ev45_alks) = 0.49 (p 0.001)
+  X2 p333-nc seed-level Spearman(d fc25, d ev4_all) = 0.06 (p 0.715)

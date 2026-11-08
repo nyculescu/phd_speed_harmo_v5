@@ -1,0 +1,8 @@
+{'v': ((150, 136), dtype('float32')), 'n': ((150, 136), dtype('float32')), 'dec_ids': ((1301,), dtype('<U9')), 'dec': ((1301, 6), dtype('int32')), 'dec_level_s': ((1301, 5), dtype('int32'))}
+ids sample ['main.100' 'main.1001' 'main.1003'] ['main.997' 'main.998' 'main.999']
+X1 5300: climb s/ALKS med 10.51, on s/ALKS med 158.8, share3 med 0.9336, per-veh climb median-of-medians 10, max 24; first seed last-level counts [2, 14, 8, 1277] of 1301; max excess 0
+X2 5300: climb s/ALKS med 10.49, on s/ALKS med 158.9, share3 med 0.9333, per-veh climb median-of-medians 10, max 24; first seed last-level counts [3, 15, 6, 1281] of 1305; max excess 0
+B 3500: climb s/ALKS med 9.76, on s/ALKS med 109.3, share3 med 0.9099, per-veh climb median-of-medians 8, max 24; first seed last-level counts [3, 7, 11, 840] of 861; max excess 0
+B 4500: climb s/ALKS med 10.09, on s/ALKS med 116.8, share3 med 0.9135, per-veh climb median-of-medians 8, max 24; first seed last-level counts [3, 13, 12, 1088] of 1116; max excess 0
+B 6000: climb s/ALKS med 10.51, on s/ALKS med 170.3, share3 med 0.9385, per-veh climb median-of-medians 10, max 24; first seed last-level counts [3, 14, 14, 1468] of 1499; max excess 0
+B 7000: climb s/ALKS med 10.85, on s/ALKS med 204.5, share3 med 0.9470, per-veh climb median-of-medians 11, max 24; first seed last-level counts [4, 14, 16, 1474] of 1508; max excess 0

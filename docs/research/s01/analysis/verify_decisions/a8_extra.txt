@@ -1,0 +1,18 @@
+X1: rules only n=14 Spearman rho=-0.82 (perm p=0.0002); without copy n=13 rho=-0.83
+X2: rules only n=14 Spearman rho=-0.75 (perm p=0.0029); without copy n=13 rho=-0.73
+w0u250: share of asked decisions on roads 4-5 med 0.272, on 4a 0.117
+os1_15_10: share of asked decisions on roads 4-5 med 0.265, on 4a 0.117
+os1_15_10 rev_share X1 med 0.282
+3e rev_share X1 med 0.297
+copy rev_share X1 med 0.317
+r4a1 rev_share X1 med 0.269
+os0_10_10 rev_share X1 med 0.249
+v3w rev_share X1 med 0.472
+v3w X1 reversal share among ALKS with V2V on >= 20 %: 0.452
+main.1235 dec [53, 30, 0, 23, 24, 2] level_s [0, 0, 0, 0, 528]
+S1 7000 conf_med quadratic all: residual +0.050 [+0.040, +0.060]
+S1 7000 conf_med linear all: residual -0.026 [-0.029, -0.023]
+S1 7000 conf_med linear 5250-6000: residual +0.015 [+0.009, +0.016]
+S1 7000 rev_share quadratic all: residual -0.023 [-0.029, -0.018]
+S1 7000 rev_share linear all: residual -0.013 [-0.019, -0.009]
+S1 7000 rev_share linear 5250-6000: residual -0.021 [-0.027, -0.017]

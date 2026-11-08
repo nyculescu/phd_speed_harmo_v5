@@ -1,0 +1,29 @@
+(1) rows with any stored key different: 0 of 2800 keys: {}
+(2a) runs with sum(m_event_s_*) == b3_step: 2800 of 2800
+(2b) ALKS steps with a == -4.5 exactly (b45 <= minus ah < -4.5): total 17285 of ALKS <= -4.5 steps 10907036 share 0.0016
+     all classes: steps == -4.5: 25395 of 13076420 share 0.0019
+     human+truck steps == -4.5: 8110
+(2c) X1 nc    car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1094.0, 716.4, 2672.6, 281.0, 1.6, 0.8, 0.0, 0.0, 0.0]
+(2c) X1 nc    alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [382.1, 251.7, 777.4, 525.5, 4.2, 1.6, 2.0, 1.5, 29.7]
+(2c) X1 nc    truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [244.0, 766.4, 149.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X1 v3w   car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1286.4, 780.0, 2805.8, 361.3, 2.2, 1.1, 0.0, 0.0, 0.0]
+(2c) X1 v3w   alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [484.4, 339.4, 791.7, 605.2, 27.3, 16.4, 2.9, 1.8, 28.3]
+(2c) X1 v3w   truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [233.2, 914.6, 189.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X1 3e    car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1286.8, 763.4, 2825.9, 289.0, 2.2, 1.1, 0.0, 0.0, 0.0]
+(2c) X1 3e    alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [490.2, 369.0, 780.3, 500.8, 32.8, 15.5, 2.6, 2.2, 31.6]
+(2c) X1 3e    truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [253.8, 855.1, 164.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X1 p333  car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1462.6, 916.6, 3054.5, 468.4, 2.8, 0.9, 0.0, 0.0, 0.0]
+(2c) X1 p333  alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [524.5, 397.0, 874.1, 813.8, 55.8, 16.7, 3.1, 2.2, 36.3]
+(2c) X1 p333  truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [282.1, 988.0, 172.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X2 nc    car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1233.6, 795.0, 2538.0, 363.8, 2.2, 1.1, 0.0, 0.0, 0.0]
+(2c) X2 nc    alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [363.6, 251.4, 698.7, 596.4, 4.6, 1.9, 2.0, 2.0, 33.6]
+(2c) X2 nc    truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [264.8, 650.4, 175.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X2 v3w   car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1223.4, 757.0, 2730.8, 363.8, 2.4, 1.0, 0.0, 0.0, 0.0]
+(2c) X2 v3w   alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [419.8, 297.7, 727.8, 569.8, 29.1, 16.2, 2.5, 1.6, 25.8]
+(2c) X2 v3w   truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [227.4, 848.1, 210.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X2 3e    car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1132.9, 686.6, 2547.9, 323.8, 2.6, 1.0, 0.0, 0.0, 0.0]
+(2c) X2 3e    alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [405.3, 300.6, 731.2, 512.3, 35.8, 15.8, 2.2, 1.9, 29.4]
+(2c) X2 3e    truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [193.2, 775.3, 180.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+(2c) X2 p333  car   mean peak-bin counts per run [-3..-3.5,..,-9..]: [1305.4, 838.1, 2915.3, 462.2, 2.8, 1.2, 0.0, 0.0, 0.0]
+(2c) X2 p333  alks  mean peak-bin counts per run [-3..-3.5,..,-9..]: [459.5, 343.5, 776.7, 747.3, 43.4, 16.6, 3.2, 2.3, 35.8]
+(2c) X2 p333  truck mean peak-bin counts per run [-3..-3.5,..,-9..]: [236.6, 885.3, 183.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

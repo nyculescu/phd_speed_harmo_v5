@@ -1,0 +1,20 @@
+[test] new lines 2800 keys 2800 dup 0; old lines 2800 keys 2800 dup 0
+[test] matched 2800 new-only 0 old-only 0
+[test] field comparisons 425053 exact 425053 within1e-9-only 0 mismatching-fields 0
+[test] distinct fields compared 159; rows fully exact 2800; cfg differ (measure stripped) 0
+[test] key present on one side only: 0 occurrences, distinct 0; nonzero ones 0
+[test] int/float type-only differences: {}
+[test] m_* keys in old rows: 0
+[test] mismatches listed: 0
+[test] non-m_ field names in new not in any old: []; in old not in any new: []
+[test] distinct m_ keys in new: 53
+[band] new lines 2400 keys 2400 dup 0; old lines 2400 keys 2400 dup 0
+[band] matched 2400 new-only 0 old-only 0
+[band] field comparisons 336589 exact 336589 within1e-9-only 0 mismatching-fields 0
+[band] distinct fields compared 159; rows fully exact 2400; cfg differ (measure stripped) 0
+[band] key present on one side only: 0 occurrences, distinct 0; nonzero ones 0
+[band] int/float type-only differences: {}
+[band] m_* keys in old rows: 0
+[band] mismatches listed: 0
+[band] non-m_ field names in new not in any old: []; in old not in any new: []
+[band] distinct m_ keys in new: 53

@@ -1,0 +1,4 @@
+test lines new/old 443 443 differing lines 0 identical text True
+band lines new/old 1009 1009 differing lines 0 identical text True
+s1 lines new/old 277 277 differing lines 0 identical text True
+panels where seeds were dropped for None (panel|arm: kept/paired): 0

@@ -1,0 +1,63 @@
+  out.append({k: np.nanmean([x[k] for x in rs]) if any(k in x for x in rs) else np.nan for k in rs[0]})
+--- X1: seed-medians
+arm              lvl_2       lvl_3a        lvl_3       lvl_4a        lvl_4        lvl_5       lvl_r2       v2v_on share_l0_all share_l3_all chg_per_alks    rev_share ev_s_mean_ca ev_s_mean_al  dur_ge2_car dur_ge2_alks         ev45     ev45_car    ev45_alks     ev5_alks
+v3w               2.74        2.476        2.168         1.64        2.424         2.57       0.3476       0.5675      0.03492       0.4167        8.851       0.4719       0.3206       0.7465      0.01651      0.05481         1044        363.7        676.9         48.4
+tail             2.805        2.558        2.218        1.693        2.452        2.635       0.4851       0.5689      0.02997        0.429        8.579       0.4752       0.3193       0.7447      0.01658      0.05377         1035        361.6          685         50.8
+sw               2.979        2.918        2.419        1.659        2.422        2.526       0.5345       0.5669       0.0286       0.4358        7.698       0.4092       0.3197       0.7503       0.0161      0.05556         1042        348.3        690.7         49.6
+bv3              2.642        2.439        1.884         1.34        2.157         2.36       0.3429         0.57      0.06289       0.3803        9.303       0.4692       0.3294       0.7634      0.01782      0.05906         1036        361.1        688.4         52.7
+nc                 nan          nan          nan          nan          nan          nan          nan          nan          nan          nan          nan          nan       0.3239       0.7301      0.01753      0.04961        818.5          270          545            9
+3e               2.979        2.899        1.453        1.097        2.654        2.988       0.5389       0.5703      0.06395       0.3334        7.644       0.2972       0.3356       0.8364      0.01974       0.0823        868.5        286.5        581.5         51.5
+3ex1              2.06        2.875        2.094        1.557        2.709        2.988        1.298        0.571      0.04658       0.2164        6.815       0.3607       0.3271       0.8504      0.01977      0.09385         1008          326          664         58.5
+p333             2.979        2.918        2.986        2.984        2.988        2.989        2.253       0.5728     0.003123       0.5348        2.974            0       0.3147       0.8473      0.01852      0.09364         1402          473          918           77
+os1_15_10        2.979        2.917        2.551        1.902        2.606        2.958        1.596       0.5704      0.00306       0.4198        5.596       0.2825       0.3381        0.855       0.0202      0.09324         1146          358          790         89.5
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45) = 0.33 (p 0.055)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45_car) = 0.22 (p 0.214)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45_alks) = 0.37 (p 0.030)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev5_alks) = 0.32 (p 0.068)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45) = 0.66 (p 0.000)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45_car) = 0.54 (p 0.001)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45_alks) = 0.68 (p 0.000)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev5_alks) = 0.20 (p 0.260)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45) = 0.22 (p 0.220)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45_car) = 0.15 (p 0.382)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45_alks) = 0.25 (p 0.159)
+  X1 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev5_alks) = 0.25 (p 0.161)
+  X1 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45) = 0.44 (p 0.008)
+  X1 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45_car) = 0.44 (p 0.009)
+  X1 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45_alks) = 0.45 (p 0.007)
+  X1 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev5_alks) = 0.37 (p 0.029)
+  X1 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45) = 0.28 (p 0.110)
+  X1 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45_car) = 0.24 (p 0.177)
+  X1 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45_alks) = 0.30 (p 0.083)
+  X1 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev5_alks) = 0.04 (p 0.814)
+--- X2: seed-medians
+arm              lvl_2       lvl_3a        lvl_3       lvl_4a        lvl_4        lvl_5       lvl_r2       v2v_on share_l0_all share_l3_all chg_per_alks    rev_share ev_s_mean_ca ev_s_mean_al  dur_ge2_car dur_ge2_alks         ev45     ev45_car    ev45_alks     ev5_alks
+v3w              2.686         2.35        2.323        1.747         2.51        2.557       0.3146        0.571      0.02601       0.4442        8.302       0.4714       0.3181       0.7592      0.01696      0.05772        978.9        352.6        621.1         48.6
+tail             2.729        2.384        2.363        1.791        2.505         2.59       0.3868        0.571      0.02469       0.4575        8.246       0.4797       0.3183       0.7555      0.01647      0.05502         1002        356.6        646.5         48.3
+sw               2.979        2.931        2.551         1.74        2.467        2.489       0.3724       0.5696      0.02191       0.4687        6.822       0.3898       0.3208       0.7641      0.01674      0.05956        990.8        360.8        637.4         51.4
+bv3              2.602        2.371        2.005        1.566        2.336        2.386       0.3586       0.5723      0.04459        0.401        8.929       0.4729        0.323       0.7656      0.01742      0.05974        963.4        360.1        650.4         51.3
+nc                 nan          nan          nan          nan          nan          nan          nan          nan          nan          nan          nan          nan        0.343        0.757      0.02033      0.05785          987        363.5          636          9.5
+3e               2.979        2.876        1.483        1.334        2.893        2.988       0.7847       0.5749      0.04485       0.3398        6.964       0.2888       0.3432       0.8203       0.0213      0.07768          893        322.5        586.5           55
+3ex2             2.979        2.931        2.166        1.689        2.894        2.988        1.077       0.5741      0.03262       0.3728         5.55       0.3376       0.3264       0.8129      0.01962      0.07766        945.5          324          605         54.5
+p333             2.979        2.934        2.989        2.976        2.986        2.988        1.997       0.5728     0.003125       0.5361        2.973            0        0.319       0.8171      0.01846      0.08258         1283          469        819.5           64
+os1_15_10        2.979        2.932         2.49        2.065        2.926        2.988        1.406       0.5729     0.003088       0.4349        5.073       0.2577       0.3247       0.8148       0.0191      0.08142         1141          395          726         71.5
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45) = 0.11 (p 0.522)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45_car) = 0.15 (p 0.407)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev45_alks) = 0.07 (p 0.712)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_3, ev5_alks) = 0.14 (p 0.429)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45) = 0.60 (p 0.000)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45_car) = 0.56 (p 0.001)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev45_alks) = 0.64 (p 0.000)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_4a, ev5_alks) = 0.31 (p 0.070)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45) = 0.34 (p 0.049)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45_car) = 0.21 (p 0.243)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev45_alks) = 0.26 (p 0.139)
+  X2 across 34 controlled arms (learners and rules): Spearman(lvl_2, ev5_alks) = 0.66 (p 0.000)
+  X2 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45) = 0.41 (p 0.015)
+  X2 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45_car) = 0.24 (p 0.177)
+  X2 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev45_alks) = 0.39 (p 0.024)
+  X2 across 34 controlled arms (learners and rules): Spearman(v2v_on, ev5_alks) = 0.50 (p 0.003)
+  X2 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45) = 0.05 (p 0.768)
+  X2 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45_car) = 0.06 (p 0.733)
+  X2 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev45_alks) = 0.01 (p 0.940)
+  X2 across 34 controlled arms (learners and rules): Spearman(share_l3_all, ev5_alks) = 0.03 (p 0.857)

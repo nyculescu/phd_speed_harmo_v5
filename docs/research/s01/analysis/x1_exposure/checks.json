@@ -1,0 +1,61 @@
+{
+ "ttc_net_minus_ttc3": {
+  "n": 2800,
+  "max_abs": 0.0
+ },
+ "ttc3_r_sum_err_max": 0.0,
+ "ttc3_s_sum_err_max": 0.0,
+ "ttc3_p_sum_err_max": 0.0,
+ "ttc2_r_sum_err_max": 0.0,
+ "ttc2_s_sum_err_max": 0.0,
+ "ttc2_p_sum_err_max": 0.0,
+ "ttc15_r_sum_err_max": 0.0,
+ "ttc15_s_sum_err_max": 0.0,
+ "ttc15_p_sum_err_max": 0.0,
+ "e_all_over_vs": [
+  0.9997933405310885,
+  1.0000466329549262
+ ],
+ "st_vs_over_vs": [
+  0.9214320193745092,
+  0.9671567120350493,
+  0.9794806486296587
+ ],
+ "jam_share_recomputed_err_max": 0.0,
+ "round2_match": {
+  "missing_pairs": 0,
+  "ttc_net": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "all_delay": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "passed": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "b3_step": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "dist": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "vs": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "ttc3": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  },
+  "ttc3_s_hi": {
+   "n": 2800,
+   "max_abs_diff": 0.0
+  }
+ },
+ "rows_without_ttc3_s_lo": 0
+}

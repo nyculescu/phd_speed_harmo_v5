@@ -1,0 +1,56 @@
+/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/lib/python3.14/site-packages/numpy/_core/fromnumeric.py:3862: RuntimeWarning: Mean of empty slice
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/lib/python3.14/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+rows 5560 groups 208
+[(('B', 3500.0), 9), (('B', 4500.0), 24), (('B', 5000.0), 24), (('B', 5250.0), 24), (('B', 5500.0), 24), (('B', 6000.0), 24), (('B', 7000.0), 9), (('X1', 5300.0), 35), (('X2', 5300.0), 35)]
+arms without full dec: {'nc': [220, 0]}
+summary vs own derived, test rows: 2720 max |conf_med diff| 0 max |share3 diff| 0 max |rev diff| 0
+lv==m_dec_level_s mismatches 0 of 5340 ; ttc3!=ttc_net 0 of 5560
+
+p333 share at index 3 (0.8 s), want share 3, reversals, excess, changes/ALKS, tau_on_match/n
+  B 3500 n=20 share3 med 0.9099 range 0.905-0.916; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.970; on_s/veh med 109.6; tau match 1.0000; asked/ALKS 40.7
+  B 4500 n=20 share3 med 0.9135 range 0.909-0.923; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.970; on_s/veh med 117.1; tau match 1.0000; asked/ALKS 43.1
+  B 5000 n=20 share3 med 0.9178 range 0.911-0.927; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.971; on_s/veh med 125.9; tau match 1.0000; asked/ALKS 45.3
+  B 5250 n=20 share3 med 0.9229 range 0.916-0.935; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.969; on_s/veh med 133.4; tau match 1.0000; asked/ALKS 47.6
+  B 5500 n=20 share3 med 0.9261 range 0.919-0.938; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.973; on_s/veh med 141.4; tau match 1.0000; asked/ALKS 50.5
+  B 6000 n=20 share3 med 0.9385 range 0.932-0.946; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.972; on_s/veh med 170.5; tau match 1.0000; asked/ALKS 59.4
+  B 7000 n=20 share3 med 0.9470 range 0.940-0.950; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.974; on_s/veh med 205.1; tau match 1.0000; asked/ALKS 68.8
+  X1 5300 n=40 share3 med 0.9336 range 0.925-0.942; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.974; on_s/veh med 159.1; tau match 1.0000; asked/ALKS 55.9
+  X2 5300 n=40 share3 med 0.9333 range 0.926-0.939; want3 min 1.0000; rev max 0; excess max 0; chg/ALKS med 2.973; on_s/veh med 159.3; tau match 1.0000; asked/ALKS 55.8
+
+share3 median per arm (X1 5300, X2 5300):
+  3e             X1 0.583  X2 0.587  asked/ALKS X1 56.5
+  3ex1           X1 0.377  X2 nan  asked/ALKS X1 56.7
+  a4400_10_1     X1 0.619  X2 0.582  asked/ALKS X1 57.0
+  copy           X1 0.042  X2 0.043  asked/ALKS X1 58.0
+  d0u500         X1 0.662  X2 0.689  asked/ALKS X1 27.8
+  d1u500         X1 0.702  X2 0.744  asked/ALKS X1 27.6
+  d2u500         X1 0.748  X2 0.740  asked/ALKS X1 28.2
+  d3u500         X1 0.626  X2 0.661  asked/ALKS X1 28.1
+  d4u500         X1 0.624  X2 0.686  asked/ALKS X1 27.8
+  lr1000_10_1    X1 0.844  X2 0.879  asked/ALKS X1 55.7
+  lr1000_16_2    X1 0.669  X2 0.657  asked/ALKS X1 55.5
+  lr400_13_2     X1 0.687  X2 0.685  asked/ALKS X1 56.2
+  lr400_16_1     X1 0.594  X2 0.584  asked/ALKS X1 57.9
+  os0_10_10      X1 0.760  X2 0.798  asked/ALKS X1 56.2
+  os1_10_0       X1 0.665  X2 0.696  asked/ALKS X1 56.0
+  os1_15_10      X1 0.733  X2 0.776  asked/ALKS X1 57.0
+  p333           X1 0.934  X2 0.933  asked/ALKS X1 55.9
+  r4a1           X1 0.770  X2 0.802  asked/ALKS X1 57.1
+  s0u500         X1 0.775  X2 0.834  asked/ALKS X1 39.1
+  s1u500         X1 0.752  X2 0.807  asked/ALKS X1 39.0
+  s2u500         X1 0.748  X2 0.824  asked/ALKS X1 39.6
+  s3u500         X1 0.778  X2 0.821  asked/ALKS X1 39.1
+  s4u500         X1 0.764  X2 0.826  asked/ALKS X1 39.1
+  t0             X1 0.755  X2 0.792  asked/ALKS X1 27.8
+  t1             X1 0.778  X2 0.810  asked/ALKS X1 27.4
+  t2             X1 0.745  X2 0.797  asked/ALKS X1 27.9
+  t3             X1 0.757  X2 0.795  asked/ALKS X1 27.2
+  t4             X1 0.736  X2 0.798  asked/ALKS X1 27.7
+  w0u250         X1 0.698  X2 0.734  asked/ALKS X1 27.7
+  w1u500         X1 0.727  X2 0.764  asked/ALKS X1 27.7
+  w2u250         X1 0.749  X2 0.806  asked/ALKS X1 27.5
+  w3u500         X1 0.749  X2 0.799  asked/ALKS X1 27.6
+  w4u500         X1 0.740  X2 0.788  asked/ALKS X1 27.6
+  z33133         X1 0.765  X2 0.702  asked/ALKS X1 55.7

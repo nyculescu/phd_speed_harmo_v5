@@ -1,0 +1,28 @@
+measure_s01_remote/smoke/smoke_rows.jsonl 7 rows
+   ('B|d0u500', 5000.0, 7440880): differing fields [] max rel 0
+   ('X2|s0u500', 5300.0, 7440840): differing fields [] max rel 0
+   ('X2|3ex2', 5300.0, 7440840): differing fields [] max rel 0
+   ('X1|nc', 5300.0, 7440840): differing fields [] max rel 0
+   ('X2|t0', 5300.0, 7440840): differing fields [] max rel 0
+   ('X1|w0u250', 5300.0, 7440840): differing fields [] max rel 0
+   ('B|p333', 6000.0, 7440880): differing fields [] max rel 0
+measure_s01_remote/smoke1/smoke1_rows.jsonl 3 rows
+   ('B|p333', 3500.0, 7440900): differing fields [] max rel 0
+   ('B|nc', 7000.0, 7440900): differing fields [] max rel 0
+   ('B|w0u250', 7000.0, 7440900): differing fields [] max rel 0
+s01_smoke1/smoke1_rows.jsonl 3 rows
+   ('B|p333', 3500.0, 7440900): differing fields [] max rel 0
+   ('B|nc', 7000.0, 7440900): differing fields [] max rel 0
+   ('B|w0u250', 7000.0, 7440900): differing fields ['m_dec_entropy_mean'] max rel 6.1e-09
+s01_smoke2/smoke1_rows.jsonl 3 rows
+   ('B|p333', 3500.0, 7440900): differing fields [] max rel 0
+   ('B|nc', 7000.0, 7440900): differing fields [] max rel 0
+   ('B|w0u250', 7000.0, 7440900): differing fields ['m_dec_entropy_mean'] max rel 6.1e-09
+round2_measure_smoke_2354/smoke_rows.jsonl 7 rows
+   ('B|d0u500', 5000.0, 7440880): differing fields ['m_dec_entropy_mean'] max rel 6.1e-09
+   ('X2|t0', 5300.0, 7440840): differing fields ['m_dec_entropy_mean'] max rel 1.6e-09
+   ('X2|3ex2', 5300.0, 7440840): differing fields [] max rel 0
+   ('X2|s0u500', 5300.0, 7440840): differing fields ['m_dec_entropy_mean'] max rel 3.1e-08
+   ('X1|nc', 5300.0, 7440840): differing fields [] max rel 0
+   ('X1|w0u250', 5300.0, 7440840): differing fields ['m_dec_entropy_mean'] max rel 3.1e-09
+   ('B|p333', 6000.0, 7440880): differing fields [] max rel 0

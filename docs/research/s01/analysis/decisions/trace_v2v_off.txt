@@ -1,0 +1,6 @@
+v3w X1 {'share_alks_on_lt_20pct': 0.224, 'share_changes_from_them': 0.25, 'share_reversals_from_them': 0.283}
+v3w X2 {'share_alks_on_lt_20pct': 0.227, 'share_changes_from_them': 0.266, 'share_reversals_from_them': 0.304}
+3E-T X1 {'share_alks_on_lt_20pct': 0.23, 'share_changes_from_them': 0.206, 'share_reversals_from_them': 0.194}
+3E-T X2 {'share_alks_on_lt_20pct': 0.233, 'share_changes_from_them': 0.207, 'share_reversals_from_them': 0.195}
+os1_15_10 X1 {'share_alks_on_lt_20pct': 0.23, 'share_changes_from_them': 0.199, 'share_reversals_from_them': 0.171}
+os1_15_10 X2 {'share_alks_on_lt_20pct': 0.23, 'share_changes_from_them': 0.19, 'share_reversals_from_them': 0.141}

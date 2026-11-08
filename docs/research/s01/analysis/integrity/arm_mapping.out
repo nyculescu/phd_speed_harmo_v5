@@ -1,0 +1,56 @@
+measure2.groups: {'tail': ['t0', 't1', 't2', 't3', 't4'], 'sw': ['s0u500', 's1u500', 's2u500', 's3u500', 's4u500'], 'v3w': ['w0u250', 'w1u500', 'w2u250', 'w3u500', 'w4u500'], 'baseline-v3': ['d0u500', 'd1u500', 'd2u500', 'd3u500', 'd4u500']}
+validation finalists: ['tail', 'sw']  chosen v3w: {'0': 250, '1': 500, '2': 250, '3': 500, '4': 500}  chosen sw: {'0': 500, '1': 500, '2': 500, '3': 500, '4': 500}
+PREFIX: {'2b': 'b', '1b': 'g', '1d': 'k', 'ahead': 'h', 'rep': 'p', 'tail': 't', 'sw': 's', 'v3w': 'w', 'inc': 'd'}  R1 (v3w policies): /home/catalin/work/phd/v5b1_runs/baseline_v4/policies
+
+tail:
+  t0: X1 pts:policies/C0_u250.pt,policies/C0_u300.pt,policies/C0_u350.pt,policies/C0_u400.pt,policies/C0_u450.pt,policies/C0_u500.pt
+      X2 same source: True; B same source: True
+  t1: X1 pts:policies/C1_u250.pt,policies/C1_u300.pt,policies/C1_u350.pt,policies/C1_u400.pt,policies/C1_u450.pt,policies/C1_u500.pt
+      X2 same source: True; B same source: True
+  t2: X1 pts:policies/C2_u250.pt,policies/C2_u300.pt,policies/C2_u350.pt,policies/C2_u400.pt,policies/C2_u450.pt,policies/C2_u500.pt
+      X2 same source: True; B same source: True
+  t3: X1 pts:policies/C3_u250.pt,policies/C3_u300.pt,policies/C3_u350.pt,policies/C3_u400.pt,policies/C3_u450.pt,policies/C3_u500.pt
+      X2 same source: True; B same source: True
+  t4: X1 pts:policies/C4_u250.pt,policies/C4_u300.pt,policies/C4_u350.pt,policies/C4_u400.pt,policies/C4_u450.pt,policies/C4_u500.pt
+      X2 same source: True; B same source: True
+
+sw:
+  s0u500: X1 switch:baseline_v4/policies/C0_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}
+      X2 same source: True; B same source: True
+  s1u500: X1 switch:baseline_v4/policies/C1_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}
+      X2 same source: True; B same source: True
+  s2u500: X1 switch:baseline_v4/policies/C2_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}
+      X2 same source: True; B same source: True
+  s3u500: X1 switch:baseline_v4/policies/C3_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}
+      X2 same source: True; B same source: True
+  s4u500: X1 switch:baseline_v4/policies/C4_u500.pt x_from=594.72 own_state={'level': 1, 'th': 15, 'crowd': 10}
+      X2 same source: True; B same source: True
+
+v3w:
+  w0u250: X1 pt:baseline_v4/policies/C0_u250.pt
+      X2 same source: True; B same source: True
+  w1u500: X1 pt:baseline_v4/policies/C1_u500.pt
+      X2 same source: True; B same source: True
+  w2u250: X1 pt:baseline_v4/policies/C2_u250.pt
+      X2 same source: True; B same source: True
+  w3u500: X1 pt:baseline_v4/policies/C3_u500.pt
+      X2 same source: True; B same source: True
+  w4u500: X1 pt:baseline_v4/policies/C4_u500.pt
+      X2 same source: True; B same source: True
+
+baseline-v3:
+  d0u500: X1 pt:conf3/train/C0_u500.pt
+      X2 same source: True; B same source: True
+  d1u500: X1 pt:conf3/train/C1_u500.pt
+      X2 same source: True; B same source: True
+  d2u500: X1 pt:conf3/train/C2_u500.pt
+      X2 same source: True; B same source: True
+  d3u500: X1 pt:conf3/train/C3_u500.pt
+      X2 same source: True; B same source: True
+  d4u500: X1 pt:conf3/train/C4_u500.pt
+      X2 same source: True; B same source: True
+
+rule arms in test: ['3e', '3ex1', '3ex2', 'a4400_10_1', 'copy', 'lr1000_10_1', 'lr1000_16_2', 'lr400_13_2', 'lr400_16_1', 'nc', 'os0_10_10', 'os1_10_0', 'os1_15_10', 'p333', 'r4a1', 'z33133']
+rule arms in band: ['3e', 'nc', 'os1_15_10', 'p333']
+rule sources: {'3e': 'rule:zone_own_state', '3ex1': 'rule:zone_own_state', '3ex2': 'rule:zone_own_state', 'a4400_10_1': 'rule:adaptive_4a', 'copy': 'rule:road_levels', 'lr1000_10_1': 'rule:local_rule', 'lr1000_16_2': 'rule:local_rule', 'lr400_13_2': 'rule:local_rule', 'lr400_16_1': 'rule:local_rule', 'nc': 'rule:', 'os0_10_10': 'rule:own_state', 'os1_10_0': 'rule:own_state', 'os1_15_10': 'rule:own_state', 'p333': 'rule:cav_rule', 'r4a1': 'rule:road_levels', 'z33133': 'rule:pattern'}
+3ex1 in X2: False  3ex2 in X1: False

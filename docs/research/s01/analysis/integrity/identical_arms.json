@@ -1,0 +1,57 @@
+{
+ "test": {
+  "X1|5300": [],
+  "X2|5300": []
+ },
+ "band": {
+  "B|4500": [
+   {
+    "a": "os1_15_10",
+    "b": "p333",
+    "seeds": 20,
+    "identical_rows": 17,
+    "equal_all_delay": 17
+   }
+  ],
+  "B|5000": [
+   {
+    "a": "os1_15_10",
+    "b": "p333",
+    "seeds": 20,
+    "identical_rows": 10,
+    "equal_all_delay": 10
+   }
+  ],
+  "B|5250": [
+   {
+    "a": "os1_15_10",
+    "b": "p333",
+    "seeds": 20,
+    "identical_rows": 6,
+    "equal_all_delay": 6
+   }
+  ],
+  "B|5500": [
+   {
+    "a": "os1_15_10",
+    "b": "p333",
+    "seeds": 20,
+    "identical_rows": 1,
+    "equal_all_delay": 1
+   }
+  ],
+  "B|6000": []
+ },
+ "s1": {
+  "B|3500": [
+   {
+    "a": "os1_15_10",
+    "b": "p333",
+    "seeds": 20,
+    "identical_rows": 20,
+    "equal_all_delay": 20
+   }
+  ],
+  "B|7000": []
+ }
+}

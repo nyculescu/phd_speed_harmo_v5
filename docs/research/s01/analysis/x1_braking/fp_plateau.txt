@@ -1,0 +1,36 @@
+single step at the decel limit, IEEE double:
+  v in [ 0.5, 2.0) m/s (  1.8-  7.2 km/h): a < -4.5 0.000, a == -4.5 0.309, a > -4.5 0.691
+  v in [ 2.0, 4.0) m/s (  7.2- 14.4 km/h): a < -4.5 0.774, a == -4.5 0.000, a > -4.5 0.226
+  v in [ 4.0, 8.0) m/s ( 14.4- 28.8 km/h): a < -4.5 1.000, a == -4.5 0.000, a > -4.5 0.000
+  v in [ 8.0,16.0) m/s ( 28.8- 57.6 km/h): a < -4.5 0.056, a == -4.5 0.000, a > -4.5 0.944
+  v in [16.0,32.0) m/s ( 57.6-115.2 km/h): a < -4.5 0.000, a == -4.5 0.000, a > -4.5 1.000
+  v in [32.0,40.0) m/s (115.2-144.0 km/h): a < -4.5 0.943, a == -4.5 0.000, a > -4.5 0.057
+plateau of k steps from v0 (v_k+1 = v_k - 0.45): share of events whose min a <= -4.5
+  v0 in [4,8) m/s, k  1: share counted >= 4.5 = 1.000 (n 200000)
+  v0 in [4,8) m/s, k  2: share counted >= 4.5 = 1.000 (n 200000)
+  v0 in [4,8) m/s, k  5: share counted >= 4.5 = 1.000 (n 200000)
+  v0 in [4,8) m/s, k 10: share counted >= 4.5 = 1.000 (n 175041)
+  v0 in [4,8) m/s, k 20: share counted >= 4.5 = nan (n 0)
+  v0 in [8,16) m/s, k  1: share counted >= 4.5 = 0.057 (n 200000)
+  v0 in [8,16) m/s, k  2: share counted >= 4.5 = 0.112 (n 200000)
+  v0 in [8,16) m/s, k  5: share counted >= 4.5 = 0.282 (n 200000)
+  v0 in [8,16) m/s, k 10: share counted >= 4.5 = 0.564 (n 200000)
+  v0 in [8,16) m/s, k 20: share counted >= 4.5 = 1.000 (n 175067)
+  v0 in [16,32) m/s, k  1: share counted >= 4.5 = 0.000 (n 200000)
+  v0 in [16,32) m/s, k  2: share counted >= 4.5 = 0.000 (n 200000)
+  v0 in [16,32) m/s, k  5: share counted >= 4.5 = 0.000 (n 200000)
+  v0 in [16,32) m/s, k 10: share counted >= 4.5 = 0.000 (n 200000)
+  v0 in [16,32) m/s, k 20: share counted >= 4.5 = 0.062 (n 200000)
+with an action step of m sim steps (MSVehicle::planMove: between action steps vNext = v + a_prev * TS):
+  m  1, v0 in [2,4) m/s: share of plateau steps reading below -4.5 = 0.777
+  m  1, v0 in [4,8) m/s: share of plateau steps reading below -4.5 = 1.000
+  m  1, v0 in [8,16) m/s: share of plateau steps reading below -4.5 = 0.056
+  m  1, v0 in [16,32) m/s: share of plateau steps reading below -4.5 = 0.000
+  m  5, v0 in [2,4) m/s: share of plateau steps reading below -4.5 = 0.775
+  m  5, v0 in [4,8) m/s: share of plateau steps reading below -4.5 = 1.000
+  m  5, v0 in [8,16) m/s: share of plateau steps reading below -4.5 = 0.056
+  m  5, v0 in [16,32) m/s: share of plateau steps reading below -4.5 = 0.000
+  m 10, v0 in [2,4) m/s: share of plateau steps reading below -4.5 = 0.778
+  m 10, v0 in [4,8) m/s: share of plateau steps reading below -4.5 = 1.000
+  m 10, v0 in [8,16) m/s: share of plateau steps reading below -4.5 = 0.056
+  m 10, v0 in [16,32) m/s: share of plateau steps reading below -4.5 = 0.000

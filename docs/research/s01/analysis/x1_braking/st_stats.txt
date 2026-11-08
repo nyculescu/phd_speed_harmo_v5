@@ -1,0 +1,119 @@
+comparisons: 760
+X1 v3w  vs nc  entries_win            medP     287.2 medO       272 eff    -5.26% [   -7.15,   -4.70] diff     14.31 [    12.77,    19.45]
+X1 v3w  vs nc  fast_entries_win       medP     19.75 medO     12.25 eff   -81.20% [ -128.38,  -55.23] diff     9.946 [    6.766,    15.73]
+X1 v3w  vs nc  appr_kmh_win           medP     28.83 medO     24.18 eff   -18.73% [  -35.31,   -7.66] diff     4.527 [    1.851,    8.536]
+X1 v3w  vs nc  in_kmh_win             medP     22.46 medO     22.27 eff    -1.24% [   -1.82,   -0.35] diff    0.2759 [  0.07806,   0.4062]
+X1 v3w  vs nc  queue_m_win            medP     168.3 medO     259.4 eff    35.50% [   28.03,   46.75] diff    -92.08 [   -121.2,   -72.71]
+X1 v3w  vs nc  entries_after          medP     309.2 medO     282.1 eff    -9.49% [  -10.51,   -8.61] diff     26.79 [    24.28,    29.65]
+X1 v3w  vs nc  fast_entries_after     medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X1 v3w  vs nc  appr_kmh_after         medP     19.26 medO     16.83 eff   -15.21% [  -21.98,  -11.67] diff      2.56 [    1.963,    3.698]
+X1 v3w  vs nc  queue_m_after          medP     303.8 medO     478.1 eff    34.38% [   27.36,   45.49] diff    -164.4 [   -217.5,   -130.8]
+X1 v3w  vs nc  macro_dec_appr_win     medP      1338 medO     508.5 eff  -127.69% [ -178.03, -105.00] diff     649.3 [    533.9,    905.3]
+X1 v3w  vs nc  macro_dec_zone_win     medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X1 v3w  vs nc  macro_dec_up_win       medP     981.7 medO      1138 eff    14.40% [    3.17,   32.52] diff      -164 [   -370.2,    -36.1]
+X1 v3w  vs nc  macro_dec_appr_after   medP     297.7 medO         0 eff      nan% [     nan,     nan] diff     268.9 [    158.2,      385]
+X1 v3w  vs nc  macro_dec_up_after     medP      1795 medO      1690 eff   -21.24% [  -33.94,    2.55] diff     358.9 [    -43.1,    573.4]
+X1 v3w  vs nc  macro_dec_up_other     medP      5498 medO      5495 eff     0.78% [   -8.55,   12.20] diff     -42.9 [   -670.6,    469.6]
+X1 v3w  vs nc  macro_dec_appr_other   medP      1288 medO       976 eff   -54.76% [  -77.92,  -33.52] diff     534.5 [    327.2,    760.5]
+X1 v3w  vs nc  macro_dec_zone_other   medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X1 v3w  vs nc  macro_dec_down_other   medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X1 v3w  vs nc  sev3                   medP      90.1 medO        88 eff     0.00% [  -11.25,    7.27] diff         0 [     -6.4,      9.9]
+X1 v3w  vs nc  sev3_p_before          medP       1.4 medO         0 eff      nan% [     nan,     nan] diff         0 [     -0.4,      0.6]
+X1 v3w  vs nc  sev3_p_taper           medP       1.1 medO         1 eff     0.00% [  -50.00,   10.00] diff         0 [     -0.1,      0.5]
+X1 v3w  vs nc  sev3_p_hold            medP      10.1 medO      11.5 eff    12.17% [   -7.83,   27.83] diff      -1.4 [     -3.2,      0.9]
+X1 v3w  vs nc  sev3_p_after           medP      23.7 medO      21.5 eff    -3.72% [  -18.14,    9.77] diff       0.8 [     -2.1,      3.9]
+X1 v3w  vs nc  sev3_p_rest            medP      52.7 medO      50.5 eff    -5.35% [  -19.41,    6.34] diff       2.7 [     -3.2,      9.8]
+X1 v3w  vs nc  sev3_r_4a              medP      31.2 medO      17.5 eff   -78.86% [ -105.71,  -44.57] diff      13.8 [      7.8,     18.5]
+X1 v3w  vs nc  sev3_r_3               medP         5 medO         1 eff  -390.00% [ -440.00, -310.00] diff       3.9 [      3.1,      4.4]
+X1 v3w  vs nc  sev3_r_ramp2           medP      48.2 medO      61.5 eff    17.40% [   -1.46,   35.77] diff     -10.7 [      -22,      0.9]
+X1 v3w  vs nc  sev3_r_rest            medP       3.7 medO         4 eff   -10.00% [  -42.50,   55.00] diff       0.4 [     -2.2,      1.7]
+X1 v3w  vs nc  ttc3                   medP      1809 medO      1493 eff   -16.55% [  -25.14,   -8.41] diff     247.1 [    125.6,    375.4]
+X1 v3w  vs nc  ttc3_p_before          medP      41.2 medO      34.5 eff    -8.12% [  -42.61,   13.04] diff       2.8 [     -4.5,     14.7]
+X1 v3w  vs nc  ttc3_p_taper           medP      31.1 medO      28.5 eff     1.75% [  -20.35,   23.51] diff      -0.5 [     -6.7,      5.8]
+X1 v3w  vs nc  ttc3_p_hold            medP     217.2 medO       201 eff   -20.00% [  -25.42,    4.78] diff      40.2 [     -9.6,     51.1]
+X1 v3w  vs nc  ttc3_p_after           medP     408.1 medO     335.5 eff   -18.09% [  -25.31,   -9.57] diff      60.7 [     32.1,     84.9]
+X1 v3w  vs nc  ttc3_p_rest            medP      1094 medO       835 eff   -23.38% [  -31.11,  -11.45] diff     195.2 [     95.6,    259.8]
+X1 v3w  vs nc  ttc3_r_4a              medP     972.9 medO       681 eff   -45.48% [  -52.07,  -36.52] diff     309.7 [    248.7,    354.6]
+X1 v3w  vs nc  ttc3_r_3               medP     439.7 medO     254.5 eff   -59.69% [  -86.72,  -26.80] diff     151.9 [     68.2,    220.7]
+X1 v3w  vs nc  ttc3_r_ramp2           medP     340.6 medO       450 eff    22.33% [    8.24,   37.58] diff    -100.5 [   -169.1,    -37.1]
+X1 v3w  vs nc  ttc3_r_rest            medP      70.2 medO        59 eff   -21.86% [  -38.14,   15.08] diff      12.9 [     -8.9,     22.5]
+X1 3e   vs nc  fast_entries_win       medP     22.41 medO     12.25 eff  -100.79% [ -133.63,  -21.12] diff     12.35 [    2.587,    16.37]
+X1 3e   vs nc  appr_kmh_win           medP      25.8 medO     24.18 eff   -10.24% [  -13.60,   -2.89] diff     2.475 [   0.6993,    3.289]
+X1 3e   vs nc  queue_m_win            medP     192.7 medO     259.4 eff    30.92% [   15.26,   41.37] diff    -80.21 [   -107.3,   -39.58]
+X1 p333 vs nc  fast_entries_win       medP     13.45 medO     12.25 eff     0.00% [  -91.24,    0.02] diff         0 [-0.002267,    11.18]
+X1 p333 vs nc  appr_kmh_win           medP     25.07 medO     24.18 eff    -6.44% [  -13.67,    4.17] diff     1.558 [   -1.009,    3.304]
+X1 p333 vs nc  queue_m_win            medP     220.8 medO     259.4 eff    27.31% [   15.26,   41.77] diff    -70.83 [   -108.3,   -39.58]
+X2 v3w  vs nc  entries_win            medP     218.2 medO     205.5 eff    -5.61% [   -7.09,   -4.86] diff     11.52 [    9.991,    14.56]
+X2 v3w  vs nc  fast_entries_win       medP      33.9 medO     22.71 eff   -65.48% [  -89.33,  -31.62] diff     14.87 [    7.184,    20.29]
+X2 v3w  vs nc  appr_kmh_win           medP     54.25 medO      42.1 eff   -24.86% [  -28.52,  -20.67] diff     10.47 [    8.703,    12.01]
+X2 v3w  vs nc  in_kmh_win             medP      24.5 medO     24.25 eff    -2.13% [   -2.88,   -0.90] diff    0.5161 [   0.2176,   0.6972]
+X2 v3w  vs nc  queue_m_win            medP     61.94 medO     93.06 eff    33.43% [   24.78,   38.21] diff    -31.11 [   -35.56,   -23.06]
+X2 v3w  vs nc  entries_after          medP     154.3 medO     143.1 eff    -7.95% [   -9.84,   -5.30] diff     11.37 [    7.583,    14.07]
+X2 v3w  vs nc  fast_entries_after     medP     8.734 medO         0 eff      nan% [     nan,     nan] diff     8.734 [        0,    27.93]
+X2 v3w  vs nc  appr_kmh_after         medP     48.27 medO     24.06 eff   -84.58% [  -97.37,  -70.10] diff     20.35 [    16.87,    23.43]
+X2 v3w  vs nc  queue_m_after          medP     64.58 medO     179.2 eff    56.74% [   47.21,   76.05] diff    -101.7 [   -136.2,   -84.58]
+X2 v3w  vs nc  macro_dec_appr_win     medP      1506 medO      1386 eff   -11.27% [  -16.27,    2.27] diff     156.2 [    -31.4,    225.5]
+X2 v3w  vs nc  macro_dec_zone_win     medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X2 v3w  vs nc  macro_dec_up_win       medP      21.2 medO      30.5 eff     7.87% [  -13.77,   59.34] diff      -2.4 [    -18.1,      4.2]
+X2 v3w  vs nc  macro_dec_appr_after   medP     777.9 medO       692 eff   -10.53% [  -37.23,    7.10] diff      72.9 [    -49.1,    257.6]
+X2 v3w  vs nc  macro_dec_up_after     medP      30.6 medO       108 eff    53.89% [   17.50,  183.89] diff     -58.2 [   -198.6,    -18.9]
+X2 v3w  vs nc  macro_dec_up_other     medP     121.3 medO       567 eff    74.87% [    4.16,  132.13] diff    -424.5 [   -749.2,    -23.6]
+X2 v3w  vs nc  macro_dec_appr_other   medP      1934 medO      2852 eff    29.43% [   19.86,   47.46] diff    -839.6 [    -1354,   -566.6]
+X2 v3w  vs nc  macro_dec_zone_other   medP      4429 medO      3031 eff   -49.12% [  -73.42,  -24.55] diff      1489 [    744.2,     2225]
+X2 v3w  vs nc  macro_dec_down_other   medP      1450 medO      1194 eff   -29.75% [  -52.27,  -13.49] diff     355.2 [    161.1,    624.1]
+X2 v3w  vs nc  sev3                   medP      79.7 medO      99.5 eff    21.01% [    8.54,   29.15] diff     -20.9 [      -29,     -8.5]
+X2 v3w  vs nc  sev3_p_before          medP       2.1 medO         3 eff     6.67% [  -16.67,   73.33] diff      -0.2 [     -2.2,      0.5]
+X2 v3w  vs nc  sev3_p_taper           medP         0 medO         0 eff      nan% [     nan,     nan] diff         0 [        0,        0]
+X2 v3w  vs nc  sev3_p_hold            medP       0.6 medO         2 eff    45.00% [    0.00,   95.00] diff      -0.9 [     -1.9,        0]
+X2 v3w  vs nc  sev3_p_after           medP         5 medO       9.5 eff    32.63% [   12.63,   71.58] diff      -3.1 [     -6.8,     -1.2]
+X2 v3w  vs nc  sev3_p_rest            medP        67 medO      78.5 eff    12.99% [    1.91,   21.91] diff     -10.2 [    -17.2,     -1.5]
+X2 v3w  vs nc  sev3_r_4a              medP      29.3 medO        24 eff    -7.08% [  -29.17,    2.50] diff       1.7 [     -0.6,        7]
+X2 v3w  vs nc  sev3_r_3               medP       3.5 medO         0 eff      nan% [     nan,     nan] diff       3.2 [      2.4,      3.8]
+X2 v3w  vs nc  sev3_r_ramp2           medP      40.1 medO      40.5 eff     5.19% [   -7.65,   26.42] diff      -2.1 [    -10.7,      3.1]
+X2 v3w  vs nc  sev3_r_rest            medP       6.9 medO        30 eff    56.00% [   34.00,   97.67] diff     -16.8 [    -29.3,    -10.2]
+X2 v3w  vs nc  ttc3                   medP      1534 medO      1580 eff    -0.89% [   -5.75,    9.49] diff      14.1 [   -149.9,     90.9]
+X2 v3w  vs nc  ttc3_p_before          medP      63.2 medO        77 eff     9.48% [  -12.73,   44.81] diff      -7.3 [    -34.5,      9.8]
+X2 v3w  vs nc  ttc3_p_taper           medP       2.9 medO        10 eff    44.00% [   -7.00,  111.00] diff      -4.4 [    -11.1,      0.7]
+X2 v3w  vs nc  ttc3_p_hold            medP      41.6 medO        50 eff    11.40% [  -15.20,   40.60] diff      -5.7 [    -20.3,      7.6]
+X2 v3w  vs nc  ttc3_p_after           medP      93.4 medO       209 eff    25.89% [   13.54,   36.65] diff     -54.1 [    -76.6,    -28.3]
+X2 v3w  vs nc  ttc3_p_rest            medP      1284 medO      1181 eff    -5.37% [  -11.63,    0.15] diff      63.4 [     -1.8,    137.3]
+X2 v3w  vs nc  ttc3_r_4a              medP     739.3 medO       646 eff   -12.49% [  -20.50,   -7.94] diff      80.7 [     51.3,    132.4]
+X2 v3w  vs nc  ttc3_r_3               medP     329.4 medO        91 eff  -259.78% [ -309.45, -205.49] diff     236.4 [      187,    281.6]
+X2 v3w  vs nc  ttc3_r_ramp2           medP     265.4 medO     323.5 eff     9.98% [    5.16,   20.96] diff     -32.3 [    -67.8,    -16.7]
+X2 v3w  vs nc  ttc3_r_rest            medP     183.3 medO     495.5 eff    55.72% [   41.37,   76.08] diff    -276.1 [     -377,     -205]
+X1 v3w - nc: Spearman(d fast_entries_win, d ev45_all) = -0.28 (p 0.083, n 40)
+X1 v3w - nc: Spearman(d fast_entries_win, d ev45_car) = -0.23 (p 0.145, n 40)
+X1 v3w - nc: Spearman(d fast_entries_win, d ev45_alks) = -0.25 (p 0.114, n 40)
+X1 v3w - nc: Spearman(d fast_entries_win, d ev5_alks) = 0.00 (p 1.000, n 40)
+X1 v3w - nc: Spearman(d fast_entries_win, d ev4_all) = 0.04 (p 0.807, n 40)
+X1 3e - nc: Spearman(d fast_entries_win, d ev45_all) = -0.45 (p 0.004, n 40)
+X1 3e - nc: Spearman(d fast_entries_win, d ev45_car) = -0.29 (p 0.072, n 40)
+X1 3e - nc: Spearman(d fast_entries_win, d ev45_alks) = -0.43 (p 0.006, n 40)
+X1 3e - nc: Spearman(d fast_entries_win, d ev5_alks) = -0.03 (p 0.844, n 40)
+X1 3e - nc: Spearman(d fast_entries_win, d ev4_all) = -0.14 (p 0.375, n 40)
+X1 p333 - nc: Spearman(d fast_entries_win, d ev45_all) = -0.10 (p 0.521, n 40)
+X1 p333 - nc: Spearman(d fast_entries_win, d ev45_car) = -0.06 (p 0.706, n 40)
+X1 p333 - nc: Spearman(d fast_entries_win, d ev45_alks) = -0.35 (p 0.028, n 40)
+X1 p333 - nc: Spearman(d fast_entries_win, d ev5_alks) = 0.11 (p 0.508, n 40)
+X1 p333 - nc: Spearman(d fast_entries_win, d ev4_all) = 0.07 (p 0.678, n 40)
+X1 nc across seeds: Spearman(fast_entries_win, ev45_all) = -0.31 (p 0.052)
+X1 nc across seeds: Spearman(fast_entries_win, ev45_car) = -0.26 (p 0.106)
+X1 nc across seeds: Spearman(fast_entries_win, ev45_alks) = -0.24 (p 0.142)
+X2 v3w - nc: Spearman(d fast_entries_win, d ev45_all) = 0.10 (p 0.548, n 40)
+X2 v3w - nc: Spearman(d fast_entries_win, d ev45_car) = 0.03 (p 0.853, n 40)
+X2 v3w - nc: Spearman(d fast_entries_win, d ev45_alks) = 0.08 (p 0.604, n 40)
+X2 v3w - nc: Spearman(d fast_entries_win, d ev5_alks) = -0.03 (p 0.858, n 40)
+X2 v3w - nc: Spearman(d fast_entries_win, d ev4_all) = 0.20 (p 0.209, n 40)
+X2 3e - nc: Spearman(d fast_entries_win, d ev45_all) = 0.07 (p 0.652, n 40)
+X2 3e - nc: Spearman(d fast_entries_win, d ev45_car) = 0.10 (p 0.553, n 40)
+X2 3e - nc: Spearman(d fast_entries_win, d ev45_alks) = 0.12 (p 0.470, n 40)
+X2 3e - nc: Spearman(d fast_entries_win, d ev5_alks) = -0.31 (p 0.053, n 40)
+X2 3e - nc: Spearman(d fast_entries_win, d ev4_all) = 0.09 (p 0.573, n 40)
+X2 p333 - nc: Spearman(d fast_entries_win, d ev45_all) = -0.04 (p 0.796, n 40)
+X2 p333 - nc: Spearman(d fast_entries_win, d ev45_car) = -0.16 (p 0.318, n 40)
+X2 p333 - nc: Spearman(d fast_entries_win, d ev45_alks) = 0.07 (p 0.660, n 40)
+X2 p333 - nc: Spearman(d fast_entries_win, d ev5_alks) = -0.10 (p 0.537, n 40)
+X2 p333 - nc: Spearman(d fast_entries_win, d ev4_all) = -0.09 (p 0.592, n 40)
+X2 nc across seeds: Spearman(fast_entries_win, ev45_all) = -0.27 (p 0.095)
+X2 nc across seeds: Spearman(fast_entries_win, ev45_car) = -0.22 (p 0.164)
+X2 nc across seeds: Spearman(fast_entries_win, ev45_alks) = -0.22 (p 0.173)

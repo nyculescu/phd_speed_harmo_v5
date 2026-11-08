@@ -1,0 +1,28 @@
+1. X1 v3w vs nc ttc_net (draft 16.6 more [8.4, 25.1]): (-16.55, -25.14, -8.41, 40)
+   X1 v3w vs nc all_delay (draft 27.3): (27.34, 24.74, 30.43, 40)
+2. X1 ev45 median v3w: 1043.5
+2. X1 ev45 median nc: 818.5
+2. X1 ev45 median 3e: 868.5
+2. X1 ev45 median tail: 1034.9
+2. X1 ev45 median sw: 1042.1
+2. X1 ev45 median bv3: 1036.2
+2. X1 ev45 median p333: 1402.0
+3. X1 ttc3_r_4a mean diff v3w-nc (draft +272.3 [229.4, 311.6]): (272.29, 229.39, 311.6)
+4. X1 sev3_r_4a mean diff (draft +12.7 [8.2, 17.2]): (12.68, 8.17, 17.18)
+5. X1 end_stop2 mean diff (draft +461 [357, 558]); nc median: (461.48, 356.7, 558.12) 728.0
+6. S1 7000.0 v3w vs 3e all_delay (draft +4.5 [-0.7, +6.2]): (4.46, -0.67, 6.18, 20)
+6. S1 7000.0 v3w vs p333 all_delay (draft +3.7 [2.6, 5.2]): (3.69, 2.64, 5.24, 20)
+6. S1 3500.0 v3w vs p333 all_delay (draft -0.2 [-0.9, +0.1]): (-0.24, -0.94, 0.06, 20)
+   S1 3500.0 unpaired median all_delay p333 / v3w / nc: 39650.08347052205 40039.80466357984 47180.97989357822
+   S1 7000.0 unpaired median all_delay p333 / v3w / nc: 708020.0514884491 690083.6215561193 807713.9044749453
+7. band 5000 v3w vs p333 all_delay (draft -3.2 [-5.3, +1.4]): (-3.21, -5.32, 1.43, 20)
+   band 5000 unpaired medians p333 / v3w: 105943.58136223748 111819.52277820982
+8. X1 p333 share3 median (draft 0.934): 0.9335827734774219
+   X1 v3w share3 median (draft 0.731), X2 (0.775): 0.7309640157919906 0.7754146242289919
+9. nc X1 vs X2 ttc_net (draft +7.3 [-4.1, +20.6], positive = X1 fewer): (7.28, -4.15, 20.63, 40)
+10. X1 ev5_alks medians, groups: {'v3w': 48.400000000000006, 'tail': 50.8, 'sw': 49.6, 'bv3': 52.7}
+    rules: [(9.0, 'nc'), (46.0, 'copy'), (49.5, 'lr400_16_1'), (51.5, '3e'), (54.0, 'lr1000_16_2'), (54.0, 'lr400_13_2'), (55.5, 'a4400_10_1'), (58.5, '3ex1'), (60.0, 'z33133'), (64.0, 'lr1000_10_1'), (73.0, 'r4a1'), (77.0, 'p333'), (77.5, 'os1_10_0'), (78.5, 'os0_10_10'), (89.5, 'os1_15_10')]
+11. X1 ev4_all per served v3w vs nc (draft 1.7 % more [0.5, 6.5]): (-1.73, -6.47, -0.54, 40)
+    X1 ev4 cars+ALKS v3w vs nc (draft 7.2 % more [4.8, 11.5]): (-7.23, -11.51, -4.79, 40)
+    X1 ev4_all v3w vs nc raw (verifier 7.9 % more): (-7.88, -11.43, -5.28, 40)
+12. S1 7000 v3w vs nc ttc_net abs mean diff and medians: (1622.59, 1381.53, 1840.24) 2424.0

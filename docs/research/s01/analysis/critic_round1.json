@@ -1,0 +1,165 @@
+{
+ "issues": [
+  {
+   "where": "\u00a77(c) lines 435 and 438-440 (oracle gate)",
+   "problem": "'A perfect gate over v3w, tail and sw still left X1 close-following about 10 % above no control' is in none of the verified material, and I found no source for it: not in round_2_result.md, not in docs/research/round2/report/, not in any scratchpad analysis. The recommendation ('report the oracle result as a measured ceiling') and its cons ('the few percent the oracle shows') rest on it. My own check (critic/oracle.out) shows the result depends on how the gate is defined. An arm-level gate (per seed, the lowest of the v3w, tail and sw arm means) gives 9.6 % more than nc [0.6, 19.3], which matches 'about 10 %'. A per-learner gate (per seed, the lowest of w_i, t_i, s_i, then the mean over i) gives 0.9 % more [-5.9, +11.5], not shown to differ from nc. Both are in-sample upper bounds.",
+   "fix": "Remove the number, or define the gate and have it verified. If kept, report both definitions and their CIs. Reword the recommendation: 'An arm-level oracle stays above no control, but a per-learner oracle does not; this data does not rule switching out for X1 close-following.' Drop 'measured ceiling'.",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a77(a) 'Weaker alternatives', lines 386-391; \u00a77(a) reading 1, line 376",
+   "problem": "The draft suggests X1-like double slowdowns in training 'as a cheap add-on'. It leaves out that round 2 already trained this. Candidate 'rep' 'carries X1's two-event structure in training' (round_2_result.md l.450) and was not shown better than v3w at validation: X1 TTC +0.2 [-3.1, +4.2], X1 delay -0.4 [-1.6, +1.0] (l.115). Four other trained changes were not shown better either: annealing, the gate hold, the 0.1-s braking charge (1D: X1 TTC +4.4 [-0.1, 6.5]) and the look-ahead inputs (\u00a77.1 l.421). The severity-aware term in reading 1 is close to 1D's braking charge.",
+   "fix": "Cite round 2's five trained changes and their validation results. Replace 'reasonable as a cheap add-on' with 'already tried as rep; X1 close-following not shown to differ from v3w'. Before proposing a severity or braking term, say how it differs from 1D's 0.1-s braking charge.",
+   "severity": "major"
+  },
+  {
+   "where": "Author question: were X1/X2 trained together or separately (whole draft)",
+   "problem": "The draft never answers this. \u00a72 only places the cells against the training draw.",
+   "fix": "Add an explicit answer. Neither cell was a training condition: each of v3w's 5 learners was trained on the 'random' single-slowdown draw. X2 lies inside the draw, with its duration at the bound; X1's second event lies outside. rep added X1's two-event structure and was not shown better (round_2_result.md l.115, l.450). Only the rules were tuned per cell: 3E-X1 and 3E-X2 were tuned separately by CMA-ES, and neither search converged (l.9, l.12). 3E-T was tuned under the training draw (l.8).",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a77(d) Plan B recommendation, lines 457-462; \u00a77(b) 'Open', line 422",
+   "problem": "Plan B proposes pre-registering a new comparison on X1/X2 on this plant without disclosing the recorded closures. Under V466 (round_2_result.md \u00a77.3), the DRL claim against tuned rules is closed in X2 on this plant: 'no further DRL training, tuning, plant change or seed round is run in X2 on this plant'. X1 closed under confirmatory 3's [A3] (V395), and round 2 was already its third test on plant_c3. A new X1 test would be the fourth (forking paths). Also, V462(4) and round_2_result.md l.396 label the band and condition T (the random draw) 'outside the plant's stated intended use', and the operating-map analyst noted the same applies at least as much to 3,500 and 7,000. Three of the five 'dense settings' (5,500, 6,000, 7,000) that carry the Plan B evidence are such rows. \u00a77(b) lists V462(4) as 'Open', but the report already answers it.",
+   "fix": "In \u00a77(d), state the X2 closure (V466) and X1's test history (V395, third test), and say that Plan B on plant_c3 needs an explicit author decision with this disclosed. Label every band and S1 number in \u00a76 and \u00a77 'outside the plant's stated intended use (V462(4))', and do not count those rows as evidence for a claim. Replace the 'Open' item in \u00a77(b) with the recorded label.",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a77(d) framing and evidence, lines 449-451 and 457",
+   "problem": "The framing 'less delay and less close-following than the best tuned rules \u2026 at no less served flow' and the line 'the advantage holds across the five dense settings and learner by learner' say more than was shown. Delay against p333 is shown only in X1, X2 and at 7,000; at 5,500 it is -1.4 [-6.6, +2.8] (point favours p333) and at 6,000 +2.3 [-1.6, +6.3]. Against 3E-T at 7,000 it is not shown (+4.5 [-0.7, +6.2]); against os0_10_10 in X2 not shown. Per learner on delay against p333 (operating_map vm2, and my spot3.out): 0 of 5 learners shown better at 5,500 (w3u500 shown worse, -2.75 [-10.95, -0.02]), 2 of 5 at 6,000. Flow against p333 is not shown at 5,500 (+0.05 [-0.42, +0.54]), and flow against the other tuned rules is not in the verified material.",
+   "fix": "Restate: 'less close-following and less step braking than p333 in the five dense settings; less delay than p333, 3E-T and os1_15_10 in X1 and X2 (5 of 5 learners); at 7,000 less delay than p333 and os1_15_10, not shown against 3E-T'. Drop 'at no less served flow', or limit it to p333 in X1, X2, 6,000 and 7,000.",
+   "severity": "major"
+  },
+  {
+   "where": "Tables \u00a73.3 (lines 106-113), \u00a73.4 (lines 143-148), \u00a74.2 (lines 200-209); diagrams \u00a73.2 and \u00a73.5",
+   "problem": "These show v3w against no control only. The binding project rule (CLAUDE.md, Method, Metrics) says: 'never no-control alone in any table or text; tuned controllers always alongside'.",
+   "fix": "Add a 3E-T column (and p333 where verified) from verified figures. Examples: ttc_net/dist in X1: 3E-T 44.2 % more, p333 113.7 % more (x1_exposure F9). Kitagawa rate/exposure: 3E-T +1,201/-501, p333 +2,569/-757 (F9). p333 on edges 3 and 4a: +1,873 (F2). ev45 3E-T 868.5 and v3w-3E-T ev4 +155 [65, 278] (x1_braking F4, F5). Mark a cell 'not verified' where no verified rule value exists.",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a77(a) line 380 ('What the evidence already supports\u2026') and reading 3, line 378",
+   "problem": "'act \u2026 in recovery traffic' and 'gap choice \u2026 during recovery' bring back the D8 reading the verifier corrected. Relative to nc, the excess is similar in hold (20.0 % [-4.8, 25.4]), after (18.1 % [9.6, 25.3]) and rest (23.4 % [11.4, 31.1]). Per second it is +0.20, +0.25 and +0.27 TTC-s/s. 'Rest' leads only because it lasts 720 s. 'Not on a whole-network count' does not follow either: the network count shows the excess (+224 [119, 328]). The cancellation argument holds for sev3, not for ttc_net. A term aimed only at 4a and edge 3 could give back the gains on ramp 2 (-113) and the rest of the network (-73), and at merge 1 in X2.",
+   "fix": "Replace with: 'from the first slowdown on, on 4a and edge 3, while keeping the ramp-2 and merge-1 gains'. Drop 'recovery' from reading 3.",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a77(a) as a whole: author's 'without losing delay or X2'",
+   "problem": "The draft gives no guard for delay or for X2. The verified X2 mechanism is not linked to the recommendation: v3w's parity with nc in X2 rests on removing nc's merge-1 queue (E30 -287.5 [-379.0, -201.9]), which offsets +216.8 [159.0, 276.2] elsewhere. A change that weakens that removal would lose X2. The delay risk in 'cons' cites decisions vm3, but that links short-gap share to close-following among rules, not close-following to delay. Also, X2 is closed (V466), so it can serve only as a report-only guard.",
+   "fix": "Add guards fixed in advance: delay against v3w within the 2 % limit, X2 ttc_net and E30 not worse than v3w's, and X2 read report-only under V466. Mark the delay-cost sentence '(my inference)'.",
+   "severity": "major"
+  },
+  {
+   "where": "\u00a73.3 table, last row (line 113)",
+   "problem": "'per approach vehicle-second \u2026 37.6 % more [17.3, 43.8]' is not ttc_net normalised. The source line (verify_x1_exposure/v3_st_stats.txt l.12) reads 'TTC(no ramp2)/app20 -37.6 [-43.8, -17.3]', so ramp 2 is excluded, where v3w has 113 fewer seconds, and that inflates the figure. Network app20 itself changes only +2.2 % [-1.0, 6.4]. The same file has an unrelated '+37.6 % [32.1, 43.2]' for temporal-drop exposure (l.16), so the two are easy to conflate. The verifier's own verdict text had the same mislabel. The proxy was also defined after the data were seen.",
+   "fix": "Relabel as 'close-following excluding ramp 2, per approach vehicle-second (post-hoc proxy)', or drop the row. Keep the network app20 exposure change (+2.2 %) beside it.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a71 'Decisions' bullet, line 31, against \u00a75.3 line 291",
+   "problem": "'no sign that v3w decides differently in X1 than in X2. It even picks slightly longer gaps' contradicts \u00a75.3 ('So the decisions themselves change'). D4 covered only confidence, entropy and reversals.",
+   "fix": "Write: 'Whole-run aggregates show no lower confidence and no more reversals in X1; its gap choice does change (longer in X1, also within each road).'",
+   "severity": "minor"
+  },
+  {
+   "where": "Wording at lines 27, 94, 124, 170, 181, 241, 257, 275, 277, 292, 393, 431-432",
+   "problem": "Several phrases claim more than a CI that includes 0, or than an untested median, allows, or use causal language. 'explains 69 %' (a decomposition share). 'there is no excess' (+3 [-4, +15]). 'ruled out'. 'No control is not worse' and 'does not rise' (+7.3 % fewer [-4.1, +20.6]). 'the fronts are equal' (-6 [-95, 82]). 'the same -4.5 count' (untested medians). 'so that comes from the traffic'. 'the same networks are less confident' (only 2 of 3 CIs exclude 0). '3E-T does not change' (-0.008 [-0.024, +0.006]). 'Refuted'. 'the same excess' and 'same braking' (never compared pairwise).",
+   "fix": "Use 'accounts for', 'no excess shown', 'does not explain', 'not shown to differ', 'similar medians (untested)', 'the rules show the same rise, so it is not policy-specific', '2 of 3 CIs exclude 0', 'not supported', 'similar point estimates, not compared pairwise'.",
+   "severity": "minor"
+  },
+  {
+   "where": "Missing CIs that the verified material provides: lines 92, 248, 278-279, 282, 291, 292, 360, 450",
+   "problem": "Effects are given without CIs although the verified material has them. Speed bands: lo [27.4, 116.7], mid [18.6, 92.8], hi [68.3, 122.5]. ALKS cascade +0.047 [0.042, 0.054]. Band residuals: conf X1 [-0.059, -0.043], X2 [-0.064, -0.052]. Within-road levels: [-0.173, -0.105], [-0.126, -0.079], [-0.099, -0.062]. 3E-T gap +0.016 [0.010, 0.026]. os1_15_10 and p333 at 7,000 (absolute CIs in operating_map F6). os1_15_10 74.1 [60.8, 94.2] and p333 121.5 [106.9, 143.2] in X1.",
+   "fix": "Add the CIs, or write 'CI in [source]'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a75.4 line 307",
+   "problem": "The populations are mixed. '10.5 s of each ALKS's 159.1 V2V-on seconds' are means over all ALKS, while 'median 15 s, max 24 s' is over ALKS with any V2V-on time. My check (critic/climb.out, X1 p333): over all 51,294 ALKS the median is 10 s and the mean 10.6. Over the 45,501 with V2V on, the median is 15 s, p90 23 and mean 11.9.",
+   "fix": "Write 'on average 10.5 s of 159.1 V2V-on s per ALKS' and 'median 15 s among ALKS with V2V on at some point'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a71 hard-braking bullet, line 29",
+   "problem": "The comparison mixes populations. 7.2 % is cars plus ALKS raw; 1.7 % per vehicle served is all classes, trucks included, and the trucks' 4.0 limit sits on the -4.0 threshold. The matched raw figure is 7.9 % [5.3, 11.4]. My spot.out reproduces 7.23 [4.79, 11.51], 7.88 [5.28, 11.43] and 1.73 [0.54, 6.47].",
+   "fix": "Write 'all classes: 7.9 % more raw, 1.7 % [0.5, 6.5] per vehicle served; cars plus ALKS 7.2 % raw'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a74.2 table title and rows 'ALKS / non-ALKS seconds at \u2264 -4.5'; \u00a74.3 line 226",
+   "problem": "The table is titled 'Robust counts' but includes b45-based rows. The draft's own inference (line 196) says these inherit the speed-selective -4.5 threshold, and 'ALKS carry about 80 %' rests on them.",
+   "fix": "Move these rows under a 'speed-selective' heading, or add the l.196 caveat to them and to the 80 % line.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a74.2 past-limit ranking table, lines 215-217",
+   "problem": "The table lists 12 of the 20 X1 arms but reads as the full ranking. My spot.out (medians of m_peak_alks bins 4-7) adds lr400_16_1 49.5, lr1000_16_2 54, lr400_13_2 54, a4400_10_1 55.5, lr1000_10_1 64, os1_10_0 77.5 and os0_10_10 78.5. v3w (48.4) is still second lowest after copy (46.0), so the conclusion holds.",
+   "fix": "Add the missing arms, or label the table 'subset'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a74.4 line 238",
+   "problem": "The per-seed Spearman of 0.55 (fronts difference against ev45 difference) is cited without its null. Per x1_exposure F7, per-seed correlations of paired differences share the nc term; their shuffled-nc null medians are about 0.6, and 0.727 for d ev45. \u00a73.3 dismisses the same kind of statistic.",
+   "fix": "Drop the 0.55 or report it with a shuffled-nc null. Keep the across-controller and X2 counter-evidence.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a71 'Corrections to the first look', line 34",
+   "problem": "The correction is incomplete. The first look also claimed the 'shortest congested length', but tail (1.645 km) and p333 (1.65 km) are below v3w (1.67) (integrity vm7). The oscillation differences are tiny (8.80 / 8.88 / 8.89 km/h).",
+   "fix": "Add 'tail and p333 have a slightly shorter maximum congested length; all differences are untested medians'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a72 finished_pct bullet, line 59",
+   "problem": "'only about 83.7 % of vehicles can finish' contradicts '83.7-86.1 % do'. The floor is approximate (ramp routes are shorter, and speeds vary).",
+   "fix": "Write 'about 84 % can finish even in free flow'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a76 'Stronger opponents in X1 and X2', lines 350-353",
+   "problem": "In X1 these rules are not stronger on delay in paired terms. v3w's lead over lr1000_16_2 (6.8 %) and over 3E-X1 (7.8 %) is larger than over p333 (5.5 %); only their unpaired medians are lower. 3E-X1 also failed round 2's delay filter. In X2 the heading holds.",
+   "fix": "Retitle 'Other rules checked'. Say that in X2 lr1000_10_1, 3E-X2 and os0_10_10 are closer to v3w on delay than p333 is.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a77(d) opponents and cons, lines 459 and 462",
+   "problem": "The opponent list leaves out V457's parallel-track opponents (an MPC with a model fitted on separate seeds, and/or a non-learning adaptive scheduler) and CLAUDE.md's 'best non-learning' set. The cons name only the per-cell rules as lower bounds, but 3E-T also ran 40 of 100 generations with convergence unchecked (round_2_result.md l.8, l.253). Fresh seeds also need the author's approval.",
+   "fix": "Add the V457 opponents, or disclose their absence. Add 3E-T to the lower-bound caveat. Write 'fresh seeds approved by the author'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a75.2 line 275",
+   "problem": "'more level changes per ALKS (+0.615 [0.288, 0.778])' is D4's excess_per_veh, the excess changes beyond the entry climb, not all level changes.",
+   "fix": "Write 'more excess changes per ALKS'.",
+   "severity": "minor"
+  },
+  {
+   "where": "\u00a77(b) line 410",
+   "problem": "'S1 shows the current policy neither got worse at 3,500 nor broke at 7,000' implies a before/after comparison that does not exist.",
+   "fix": "Write: 'At 3,500 v3w is not shown to differ from p333 on delay (-0.2 [-0.9, +0.1]). At 7,000 it has the lowest delay against nc, p333 and os1_15_10, but more b45_step than 3E-T (29.7 % [23.7, 32.6]), and its raw confidence is lowest there (0.554).'",
+   "severity": "minor"
+  },
+  {
+   "where": "Style: code blocks at lines 117-122 and 158-164",
+   "problem": "These are numeric tables padded with spaces to align columns, which breaks the 'no padding to line things up' rule. The road diagram and the \u00a76 grid are diagrams and are fine.",
+   "fix": "Convert both blocks to '| a | b |' Markdown tables.",
+   "severity": "minor"
+  },
+  {
+   "where": "Line 6 ('Five analyses ran')",
+   "problem": "The scratchpad also holds map_all/ and verify_map_all/ (v3w, tail and sw against every non-learning controller, 790 CIs). That analysis would fill the gap the draft notes at line 449 ('The other rules were not compared on delay one by one'). The draft does not say why it is left out.",
+   "fix": "Either include it once verified, or state that it was excluded and why.",
+   "severity": "minor"
+  },
+  {
+   "where": "Critic spot checks (no action)",
+   "problem": "Not a defect. 26 draft numbers reproduce exactly with my own code (critic/clib.py, spot.py, spot2.py, spot3.py; round-2 statistic, 95 %): X1 ttc_net -16.55 [-25.14, -8.41]; all_delay 27.34; ev45 medians 1,043.5 / 818.5 / 868.5, tail 1,034.9, sw 1,042.1, baseline-v3 1,036.2, p333 1,402; ttc3_r_4a +272.29 [229.39, 311.60]; sev3_r_4a +12.68 [8.17, 17.18]; end_stop2 +461.5 [356.7, 558.1], nc 728; 7,000 vs 3E-T 4.46 [-0.67, 6.18], vs p333 3.69 [2.64, 5.24]; 3,500 vs p333 -0.24 [-0.94, 0.06]; 5,000 vs p333 -3.21 [-5.32, 1.43]; unpaired medians 39,650 / 40,040 / 105,944 / 111,820 / 341,366 / 345,390; p333 share3 0.9336; v3w share3 0.731 / 0.775; nc X1 vs X2 +7.28 [-4.15, 20.63]; v3w X1 vs X2 -17.04 [-21.15, -6.93]; ev5_alks medians 48.4 / 50.8 / 49.6 / 52.7; 7,000 v3w-nc ttc_net +1,705.7 [1,505, 1,845], per vehicle-km -61.29 [-68.8, -53.59]; 3,500 b45_step -24.57 / -22.78 / -15.04; 4,500 vs 3E-T lower bound +0.03. My checks made about 60 interval estimates, none corrected for multiplicity.",
+   "fix": "No change needed.",
+   "severity": "minor"
+  }
+ ],
+ "unanswered": [
+  "Were X1 and X2 trained together or separately? Not answered. The fix should say: v3w was trained once on the random draw, covering neither cell; rep added X1's two-event structure and was not shown better than v3w; only 3E-X1 and 3E-X2 were tuned per cell, separately.",
+  "How to improve X1 close-following without losing delay or X2: only partly answered. There are no non-inferiority guards for delay or X2, no link to the merge-1 queue removal that X2's parity rests on, and no mention that X2 is closed under V466.",
+  "Condition-switched tweaks: answered, but the answer rests on an unverified, unsourced oracle figure ('about 10 % above no control'), and that figure changes with how the gate is defined (critic/oracle.out)."
+ ]
+}
