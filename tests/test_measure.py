@@ -113,3 +113,50 @@ def test_breakdown_capacity_drop():
 def test_breakdown_none():
     b = me.breakdown([30] * 10, [2500.0] * 10, [100] * 10)
     assert b["breakdown_min"] is None and b["drop_pct"] is None and b["flow_mean"] == pytest.approx(1800.0)
+
+
+class _CavEnv(_Env):
+    def __init__(self):
+        super().__init__()
+        self.lvl, self.on, self.headways, self.n_level = {}, set(), (0.8, 1.0, 1.2, 1.6), 4
+
+
+def test_decisions_counts_and_confidence():
+    env = _CavEnv()
+    m = me.Measure(env, set(), {"main": ("1 2", 1.0, 3)}, lambda e: 1000.0, 0.1)
+    assert m.cav
+    steps = [({"a": 2}, {"a": 1}), ({"a": 2}, {"a": 1}), ({"a": 0}, {"a": 1}), ({"a": 1}, {"a": 1}), ({"a": 3}, {"a": 0})]
+    for act, after in steps:     # wanted level, level after the step
+        before = dict(env.lvl)
+        env.lvl.update(after)
+        m.decisions(None, env, act, before, {"a": np.array([0.1, 0.2, 0.6, 0.1])}, {"a": "3"})
+    row = m.finish(400.0, None, "x")
+    assert row["m_dec_totals"] == {"asked": 5, "changed": 2, "ignored": 2, "kept": 1, "reversals": 1}
+    assert row["m_dec_place"]["between"] == [5, 2, 2, 1]
+    assert row["m_dec_want"] == [1, 1, 2, 1]
+    assert row["m_dec_changes_hist"][2] == 1     # one vehicle with 2 changes
+    assert row["m_dec_excess"] == 2     # 2 changes, back at level 0: both are excess
+    assert sum(row["m_dec_conf"]) == 5
+    s = me.summary({**row, **{f"m_{k}_{c}": 0 for k in ("n", "a2", "fuel_mg", "dist_m", "events", "cascade", "event_s") for c in me.CLASSES},
+                    **{f"m_{k}_{c}": [0] for k in ("vh", "ah", "peak", "dur") for c in me.CLASSES}, "m_mergepos_m1": [], "m_mergepos_m2": []} | {"m_minute": {k: [0.0] for k in m.minute}})
+    assert s["dec"]["applied_share"] == pytest.approx(0.4) and s["dec"]["reversal_share"] == pytest.approx(0.5)
+
+
+def test_policy_probs_greedy_and_switch():
+    torch = pytest.importorskip("torch")
+
+    class _Net:
+        def logits(self, x):
+            return torch.stack([x[:, 0], -x[:, 0]], 1)
+
+    class _G:
+        net = _Net()
+
+    class _Sw:
+        policy, x_from = _G(), 500.0
+    ids, lo = ["a", "b", "c"], np.array([[0.1, 0.0], [0.6, 0.0], [0.9, 0.0]], np.float32)
+    due = np.array([True, True, False])
+    p = me.policy_probs(_G(), (ids, lo, None, due))
+    assert set(p) == {"a", "b"} and p["b"][0] == pytest.approx(float(torch.softmax(torch.tensor([0.6, -0.6]), 0)[0]))
+    assert set(me.policy_probs(_Sw(), (ids, lo, None, due))) == {"b"}     # "a" is upstream of 500 m: the rule's side
+    assert me.policy_probs(object(), (ids, lo, None, due)) == {}

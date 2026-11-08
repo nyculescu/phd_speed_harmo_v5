@@ -298,7 +298,14 @@ def run_one(a: tuple) -> dict:
         meter = ct.SumoMeter(ct.Meter(ct.MeterLaw("alinea", ctrl["meter"]["setpoint"])), bank, "alinea")
     fixed = np.array(ctrl.get("zones", (0, 0, 0)), int)
     while True:
-        o, _, _, tr, inf = env.step(rule(o) if rule else fixed)
+        act = rule(o) if rule else fixed
+        if meas is not None and meas.cav and isinstance(act, dict) and act:
+            from v5b.fleet.measure import policy_probs
+            before, probs, roads = dict(env.lvl), policy_probs(rule, o), {v: ls.vehicle.getRoadID(v) for v in act}
+            o, _, _, tr, inf = env.step(act)
+            meas.decisions(ls, env, act, before, probs, roads)
+        else:
+            o, _, _, tr, inf = env.step(act)
         if tr:
             break
     length = {r: sum(ls.lane.getLength(f"{e}_0") for e in x[0].split()) for r, x in fl.routes(env.cfg.geom).items()}

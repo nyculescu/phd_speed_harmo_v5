@@ -24,6 +24,28 @@ MAIN, RAMPS = "main", {"ramp1": ("r", "rj"), "ramp2": ("r2", "rj2")}
 MERGES = {"m1": ("3a", "3"), "m2": ("4a", "4")}     # acceleration section, the road after it
 MERGE_UP = {"m1": "2", "m2": "3"}     # the mainline road before each acceleration section
 QUEUE_V = 1.0     # m/s: a ramp vehicle below this speed is queued
+# Decisions (per-CAV arms): where a decision was taken, by the vehicle's road at the decision.
+DEC_ROAD = {"1": "up", "2": "up", "3a": "m1", "3": "between", "4a": "m2", "4": "down", "5": "down", "r": "ramp1", "rj": "ramp1", "r2": "ramp2", "rj2": "ramp2"}
+DEC_PLACES = ("up", "m1", "between", "m2", "down", "ramp1", "ramp2", "other")
+CHANGE_EDGES = (0, 1, 2, 3, 4, 6, 10, 10**9)     # level changes per ALKS: 0, 1, 2, 3, 4-5, 6-9, 10+
+ASK_EDGES = (0, 1, 5, 10, 20, 40, 80, 10**9)     # decisions asked per ALKS
+CONF_EDGES = tuple(round(0.1 * i, 1) for i in range(11))     # probability of the chosen level, 0.0-1.0 in tenths
+
+
+def policy_probs(rule, o) -> dict:
+    """v -> action probabilities, for the learned rules of round 2 (Greedy, TailMean, the policy side of ZoneSwitch); empty for
+    the others. Net.logits is a pure function of the stored network and the observation, so this changes no action."""
+    import torch
+    ids, lo, g, due = o
+    if hasattr(rule, "policy") and hasattr(rule, "x_from"):
+        return policy_probs(rule.policy, (ids, lo, g, due & ~(lo[:, 0] * 1000.0 < rule.x_from)))
+    nets = [rule.net] if hasattr(rule, "net") else [m.net for m in rule.members] if hasattr(rule, "members") else []
+    if not nets or not due.any():
+        return {}
+    with torch.no_grad():
+        x = torch.from_numpy(lo[due])
+        p = sum(torch.softmax(n.logits(x), 1) for n in nets) / len(nets)
+    return dict(zip((v for v, d in zip(ids, due) if d), p.numpy()))
 
 
 def v_bin(s: float) -> int:
@@ -90,6 +112,16 @@ class Measure:
             self.minute[f"{r}_pending"] = np.zeros(nm)     # vehicle-seconds waiting to be inserted
         self.merge_pos = {m: np.zeros(10, np.int64) for m in MERGES}     # where on the acceleration lane a vehicle left lane 0
         self.route = {v.vid: r for v, r in zip(env.dem.veh, env.dem.route_of)}
+        self.cav = hasattr(env, "lvl") and hasattr(env, "headways")
+        nl = len(env.headways) if self.cav else 0
+        self.dec = defaultdict(lambda: [0, 0, 0, 0, 0, 0, 0])     # vehicle -> asked, changed, ignored, kept, reversals, last direction, last level
+        self.dec_place = {k: np.zeros(4, np.int64) for k in DEC_PLACES}     # asked, changed, ignored, kept
+        self.want = np.zeros(max(nl, 1), np.int64)
+        self.conf = np.zeros(len(CONF_EDGES) - 1, np.int64)
+        self.ent = []     # entropy of each probed decision, nats
+        self.level_s = np.zeros(max(nl, 1), np.int64)     # ALKS-seconds at each level with V2V on (the level acts)
+        self.off_s = 0     # ALKS-seconds with V2V off (the level does not act)
+        self.veh_s = defaultdict(lambda: np.zeros(max(nl, 1) + 1, np.int64))     # vehicle -> seconds at each level with V2V on, then off
 
     def cls(self, v: str) -> str:
         return "truck" if v in self.trucks else "alks" if v in self.alks else "car"
@@ -126,6 +158,37 @@ class Measure:
         self.dur[c][bin_of(d, DUR_EDGES)] += 1
         self.events[c] += 1
         self.event_s[c] += d
+
+    def decisions(self, ls, env, action: dict, before: dict, probs: dict, roads: dict) -> None:
+        """After env.step(action): what each asked vehicle wanted, and whether its level moved (env.lvl before and after)."""
+        n_level = getattr(env, "n_level", len(self.want))
+        for v, a in action.items():
+            d = self.dec[v]
+            want = int(a) % n_level
+            cur, new = before.get(v, 0), env.lvl.get(v, 0)
+            place = DEC_ROAD.get(roads.get(v, ""), "other")
+            pc = self.dec_place[place]
+            d[0] += 1
+            d[6] = new
+            pc[0] += 1
+            self.want[min(want, len(self.want) - 1)] += 1
+            if new != cur:
+                d[1] += 1
+                pc[1] += 1
+                sgn = 1 if new > cur else -1
+                d[4] += d[5] == -sgn
+                d[5] = sgn
+            elif want != cur:
+                d[2] += 1
+                pc[2] += 1
+            else:
+                d[3] += 1
+                pc[3] += 1
+            p = probs.get(v)
+            if p is not None:
+                self.conf[bin_of(float(p[int(a) % len(p)]), CONF_EDGES)] += 1
+                q = np.clip(np.asarray(p, float), 1e-12, 1.0)
+                self.ent.append(float(-(q * np.log(q)).sum()))
 
     def second(self, ls, t: float) -> None:
         """Every simulated second after the warm-up."""
@@ -166,6 +229,15 @@ class Measure:
             for r, edges in RAMPS.items():
                 if road in edges and s < QUEUE_V:
                     self.minute[f"{r}_queue"][m] += 1
+        if self.cav:
+            for v in self.alks & set(ls.vehicle.getIDList()):
+                if v in self.env.on:
+                    lev = min(self.env.lvl.get(v, 0), len(self.level_s) - 1)
+                    self.level_s[lev] += 1
+                    self.veh_s[v][lev] += 1
+                else:
+                    self.off_s += 1
+                    self.veh_s[v][-1] += 1
         for v in ls.simulation.getPendingVehicles():
             r = self.route.get(v)
             if r in ("ramp", "ramp2"):
@@ -190,6 +262,22 @@ class Measure:
             row[f"m_cascade_{c}"] = self.cascade[c]
         for mg in MERGES:
             row[f"m_mergepos_{mg}"] = self.merge_pos[mg].tolist()
+        if self.cav:
+            D = np.array(list(self.dec.values()), np.int64).reshape(-1, 7)
+            row["m_dec_totals"] = dict(zip(("asked", "changed", "ignored", "kept", "reversals"), D[:, :5].sum(axis=0).tolist())) if len(D) else {}
+            row["m_dec_vehicles"] = int(len(D))
+            # Every ALKS starts at level 0 and moves one level per change, so its last level is the climb; the rest are excess changes.
+            ex = D[:, 1] - D[:, 6] if len(D) else np.zeros(0)
+            row["m_dec_excess"] = int(ex.sum())
+            row["m_dec_excess_hist"] = np.histogram(ex, CHANGE_EDGES)[0].tolist() if len(D) else []
+            row["m_dec_changes_hist"] = np.histogram(D[:, 1], CHANGE_EDGES)[0].tolist() if len(D) else []
+            row["m_dec_asked_hist"] = np.histogram(D[:, 0], ASK_EDGES)[0].tolist() if len(D) else []
+            row["m_dec_place"] = {k: x.tolist() for k, x in self.dec_place.items()}
+            row["m_dec_want"] = self.want.tolist()
+            row["m_dec_conf"] = self.conf.tolist()
+            row["m_dec_entropy_mean"] = float(np.mean(self.ent)) if self.ent else None
+            row["m_dec_level_s"] = self.level_s.tolist()
+            row["m_dec_off_s"] = int(self.off_s)
         row["m_minute"] = {k: np.round(x, 3).tolist() for k, x in self.minute.items()}
         row["m_st_shape"] = list(self.st.shape[1:])
         row["m_st_dx"], row["m_st_dt"] = ST_DX, ST_DT
@@ -197,7 +285,13 @@ class Measure:
         if out is not None:
             out.mkdir(parents=True, exist_ok=True)
             f = out / f"{key}.npz"
-            np.savez_compressed(f, v=self.st[0].astype(np.float32), n=self.st[1].astype(np.float32))
+            side = {"v": self.st[0].astype(np.float32), "n": self.st[1].astype(np.float32)}
+            if self.cav and self.dec:
+                ids = sorted(set(self.dec) | set(self.veh_s))
+                side["dec_ids"] = np.array(ids)
+                side["dec"] = np.array([[*self.dec[v][:5], self.dec[v][6]] if v in self.dec else [0] * 6 for v in ids], np.int32)     # asked, changed, ignored, kept, reversals, last level
+                side["dec_level_s"] = np.array([self.veh_s[v] for v in ids], np.int32)     # seconds at each level with V2V on, then off
+            np.savez_compressed(f, **side)
             row["m_st_file"] = f.name
         return row
 
@@ -319,6 +413,23 @@ def summary(row: dict, field: dict | None = None) -> dict:
         out[f"{r}_queue_mean"] = float(np.mean(mm[f"{r}_queue"]) / 60.0)
         out[f"{r}_queue_max_min"] = float(np.max(mm[f"{r}_queue"]) / 60.0)
         out[f"{r}_pending_mean"] = float(np.mean(mm[f"{r}_pending"]) / 60.0)
+    if "m_dec_totals" in row and row["m_dec_totals"]:
+        T = row["m_dec_totals"]
+        on = sum(row["m_dec_level_s"])
+        ch = np.asarray(row["m_dec_changes_hist"])
+        out["dec"] = {"asked": T["asked"], "changed": T["changed"], "applied_share": T["changed"] / T["asked"] if T["asked"] else None,
+                      "ignored_share": T["ignored"] / T["asked"] if T["asked"] else None, "kept_share": T["kept"] / T["asked"] if T["asked"] else None,
+                      "reversal_share": T["reversals"] / T["changed"] if T["changed"] else None,
+                      "share_vehicles_changed": float(ch[1:].sum() / ch.sum()) if ch.sum() else None,
+                      "changes_per_vehicle_mean": T["changed"] / row["m_dec_vehicles"] if row["m_dec_vehicles"] else None,
+                      "excess_changes_per_vehicle": row["m_dec_excess"] / row["m_dec_vehicles"] if row["m_dec_vehicles"] else None,
+                      "share_vehicles_excess": float(np.asarray(row["m_dec_excess_hist"])[1:].sum() / max(sum(row["m_dec_excess_hist"]), 1)),
+                      "v2v_on_share": on / (on + row["m_dec_off_s"]) if on + row["m_dec_off_s"] else None,
+                      "level_share_on": [x / on for x in row["m_dec_level_s"]] if on else None,
+                      "want_share": [x / max(sum(row["m_dec_want"]), 1) for x in row["m_dec_want"]],
+                      "conf_q": quantiles(row["m_dec_conf"], 0.0, 0.1, (0.05, 0.5, 0.95)) if sum(row["m_dec_conf"]) else None,
+                      "entropy_mean": row["m_dec_entropy_mean"],
+                      "changed_by_place": {k: v[1] for k, v in row["m_dec_place"].items()}}
     if field is not None:
         out["waves"] = waves(field["v"], field["n"], row["m_st_dt"], row["m_st_dx"])
     return out

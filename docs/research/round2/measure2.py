@@ -76,6 +76,9 @@ def checks(row: dict, field: dict) -> dict:
         "m2_out_near_passed": abs(sum(row["m_minute"]["m2_out"]) - row["passed"]) <= max(10, 0.01 * row["passed"]),
         "steps": n,
     }
+    if "m_dec_level_s" in row and len(row.get("lv", [])) == 12:     # the pack's level-seconds against the environment's own V2V-on count
+        out["level_s_eq_env_lv"] = row["m_dec_level_s"] == np.asarray(row["lv"]).reshape(3, 4).sum(0).tolist()
+        out["decisions_present"] = row["m_dec_totals"].get("asked", 0) > 0
     # An ALKS event can cross -9 m/s² more than once (the plant counts each crossing), so the two -9 counts are not compared.
     a9 = sum(np.asarray(row["m_peak_alks"])[7:])     # peaks at -8 or harder: the plant counts -8.99
     out["alks_ge9_event_if_full"] = a9 > 0 or row.get("alks_full_events", 0.0) == 0
@@ -135,7 +138,7 @@ def panel(title: str, d: dict, unit: str, width: int = 48) -> str:
     """One ASCII panel: per arm, range (-), middle half (=) and median (|) over seeds."""
     vals = np.concatenate([np.asarray(x, float) for x in d.values() if len(x)])
     lo, hi = float(vals.min()), float(vals.max())
-    pad = 0.05 * (hi - lo) if hi > lo else 0.05 * max(abs(hi), 1e-9)
+    pad = 0.05 * (hi - lo) if hi > lo else (0.05 * abs(hi) if hi else 1.0)
     lo, hi = lo - pad, hi + pad
     lines = [f"{title}, axis {lo:.3g} to {hi:.3g} {unit}"]
     for k, x in d.items():
@@ -170,7 +173,12 @@ METRICS = [("car speed, median", "km/h", lambda m: m["v_q_car"][2]), ("ALKS spee
            ("ramp 1 queue, mean", "veh", lambda m: m["ramp1_queue_mean"] + m["ramp1_pending_mean"]),
            ("ramp 2 queue, mean", "veh", lambda m: m["ramp2_queue_mean"] + m["ramp2_pending_mean"]),
            ("jam share (< 30 km/h)", "share", lambda m: m["waves"]["jam_share"]), ("jam clusters", "per run", lambda m: m["waves"]["jams"]),
-           ("speed oscillation", "km/h", lambda m: m["waves"]["osc_kmh"]), ("congested length, max", "km", lambda m: m["waves"]["congested_km_max"])]
+           ("speed oscillation", "km/h", lambda m: m["waves"]["osc_kmh"]), ("congested length, max", "km", lambda m: m["waves"]["congested_km_max"]),
+           ("decisions applied (level moved)", "share", lambda m: m["dec"]["applied_share"] if "dec" in m else None),
+           ("excess level changes per ALKS", "per vehicle", lambda m: m["dec"]["excess_changes_per_vehicle"] if "dec" in m else None),
+           ("reversals per change", "share", lambda m: m["dec"]["reversal_share"] if "dec" in m else None),
+           ("ALKS at the longest level, V2V on", "share", lambda m: m["dec"]["level_share_on"][-1] if "dec" in m and m["dec"]["level_share_on"] else None),
+           ("policy confidence, median", "probability", lambda m: m["dec"]["conf_q"][1] if "dec" in m and m["dec"]["conf_q"] else None)]
 
 
 def groups(out: Path) -> dict:
