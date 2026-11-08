@@ -212,7 +212,12 @@ The CIs are in §6.
   - **X2 is reported as not won in round 2, with round 1's win beside it.**
   - Per D10, this round's T2 replaces round 1's for any thesis sentence, so round 1's X2 win can no longer support one.
 
-**Reported beside (confirmatory 3's readings at its 97.5 % level; the severe check at T2's level):**
+**Reported beside (confirmatory 3's readings at its 97.5 % level; the severe check at T2's level).**
+
+At T2's 99.17 %, which feeds every sentence (V467), replication is 5 of 5 everywhere. The other changes are:
+- tail's X2 delay win drops to 3 of 5;
+- tail's and sw's policies clearly worse than no control in X1 drop to 4 of 5;
+- everything else is unchanged.
 
 | Reading | X1 v3w / tail / sw | X2 v3w / tail / sw |
 |---|---|---|
@@ -271,10 +276,10 @@ Over the 5 policies the margin was 16.3-24.2 % against the counting rule with th
   - tail (3 of 5): the margin, and its CI;
   - sw (0 of 5): the margin, its CI and the 20-s per-run limit.
 - No sentence says X2 was won. The severe check is not met, so the word "safety" is not used in X2.
-- **Replication yes, tuned no:** "The edge over the fixed 0.8 s rule held on the fixed plant (5 of 5 policies at least 30 % better than p333 in every arm, at confirmatory 3's 97.5 %), but fewer than 4 of 5 policies cleared the margins against 3E-T and 3E-X2 (v3w 2, tail 3, sw 0).
+- **Replication yes, tuned no:** "The edge over the fixed 0.8 s rule held on the fixed plant (5 of 5 policies at least 30 % better than p333 in every arm, at T2's 99.17 %), but fewer than 4 of 5 policies cleared the margins against 3E-T and 3E-X2 (v3w 2, tail 3, sw 0).
   - Close-following margin per policy (point): against 3E-X2, v3w 7.5-14.1 %, tail 8.3-15.7 %, sw 2.0-11.5 %; against 3E-T, v3w 8.1-18.4 %, tail 8.4-16.4 %, sw −0.7-14.3 %.
   - Delay, arm level at T2's 99.17 %: against 3E-X2, v3w +3.0 [−0.1, +6.4], tail +2.7 [−0.7, +7.2], sw +3.1 [−1.4, +7.2] %, not shown to differ; against 3E-T, +7.5 [+5.0, +10.0], +7.2 [+3.7, +12.2], +7.6 [+3.8, +10.7] % less."
-- **Delay-win sentence:** not used. The sentences are filled from T2, and at T2's 99.17 % tail's X2 delay win is 3 of 5. It is 4 of 5 at confirmatory 3's 97.5 %, and the protocol does not fix this level (§8). V466 separately rules that the route does not count toward D10's closing. No delay-win sentence exists for v3w or sw in either cell.
+- **Delay-win sentence:** none. Readings that feed sentences are read at T2's level (V467), and there tail's X2 delay win is 3 of 5 (4 of 5 at confirmatory 3's 97.5 %). V466 separately rules that the route does not count toward D10's closing. No delay-win sentence exists for v3w or sw in either cell.
 - **No control:** medians per run of 1,580 TTC seconds, 287,340 vehicle-seconds of delay and 3,262 vehicle-seconds of braking at 3 m/s². The policies' close-following is not shown to differ from no control's (95 %: v3w −0.9 [−5.8, +9.5], tail +1.4 [−4.4, +8.7], sw −6.7 [−12.1, +2.6]). No control pays 31.4, 31.2 and 29.5 % more delay (median over policies).
 
 - **The copy rule did not meet the delay filter.** It is confirmatory 3's fixed per-road rule, traced from baseline-v3's policies. X1: 2,272.5 TTC seconds per run, delay −7.2 [−12.6, −4.8] against p333. X2: 1,957 TTC seconds, delay −7.6 [−10.3, −4.9] (95 %).
@@ -456,9 +461,9 @@ Close-following seconds and delay against no control (positive = fewer). Share =
 
 - **Decided after the test data were known (V466):** D10's closing reads T2 only, and confirmatory 3's [A3] delay-win route is not read into it.
   - At T2's 99.17 % X2 closes under either reading, because tail's delay win is 3 of 5 there. It is 4 of 5 at confirmatory 3's 97.5 %.
-- **Open:** the CI level for the readings beside T2 that feed sentences. The protocol does not fix it. This report reads them at confirmatory 3's 97.5 %, except where it says T2's level:
-  - the delay-win sentence (tail X2: 4 of 5 at 97.5 %, 3 of 5 at 99.17 %);
-  - v3w's X1 no-control clause (3 of 5 at 97.5 %, 4 of 5 at 95 %).
-
-  Recommendation: T2's level for any sentence.
+- **Decided (V467):** every reading that feeds a claim sentence is read at T2's level (99.17 %).
+  - Effects: no delay-win sentence (tail X2 3 of 5).
+  - The no-control clause still applies to tail and sw in X1 (4 of 5), and not to v3w (3 of 5).
+  - Replication stays at 5 of 5.
+  - The 97.5 % values stay in the beside table for comparison with round 1.
 - The deviations in §1 and §2 are logged as V465 and V455: two platforms at validation; checks 2 and 4 not run on the rented machine; the remote stand-in and job log not kept; the laptop's chain log ending at 17:06; and check 7 as a lean review.
