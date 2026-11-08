@@ -4,7 +4,7 @@
 # instance and writes S01_ALERT; the author reads it in the morning. usage: s01r.sh REF
 set -u
 REF=${1:?REF}
-OFFERS="59617272 51941429"
+OFFERS="51326867 43426114"
 CAP=5
 RUNS=/home/catalin/work/phd/v5b1_runs; WK=$RUNS/measure_s01; F=$RUNS/measure_s01_remote
 L=$RUNS/s01_status.txt
