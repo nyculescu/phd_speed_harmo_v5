@@ -1,6 +1,7 @@
 #!/bin/bash
 # Runs on the rented machine: round 2 from the 3E-X pick check to the test and band, the same commands as chain2.sh with W workers
 # instead of 31 (worker count does not change rows: one simulation per process). Rows resume by (name, level, seed).
+# The machine has no repository: jobs/shim/git answers "rev-parse SHA" from the frozen copies' COMMIT files and refuses the rest.
 # usage: remote2_eval.sh W
 set -u
 W=${1:?W}
@@ -10,7 +11,7 @@ R=$C/docs/research/round2
 RC=$(cat "$C/COMMIT")
 cd "$C"
 unset SUMO_HOME
-export OMP_NUM_THREADS=1 PYTHONPATH=$C:$R:$C/docs/research/round1 TMPDIR=/home/catalin/work/phd/v5b1_runs/phase3/scratch/tmp
+export PATH=/home/catalin/work/phd/v5b1_runs/jobs/shim:$PATH OMP_NUM_THREADS=1 PYTHONPATH=$C:$R:$C/docs/research/round1 TMPDIR=/home/catalin/work/phd/v5b1_runs/phase3/scratch/tmp
 mkdir -p "$TMPDIR"
 say() { echo "$(date '+%F %T') $1" >> "$D/status_remote_eval.txt"; }
 step() { say "start $1"; shift; "$@" 2>&1 | grep -av '^Warning' >> "$D/chain_remote.log"; rc=${PIPESTATUS[0]}; say "end rc=$rc"; [ $rc -eq 0 ] || { say "STOPPED, goes to the author"; exit $rc; }; }
