@@ -12,7 +12,7 @@ export PATH=$HOME/.local/bin:$PATH
 for i in $(seq 120); do [ -e $P/.onstart_running ] && kill -0 "$(cat $P/.onstart_running)" 2>/dev/null || break; [ "$i" = 1 ] && echo "waiting for the on-start build"; sleep 10; done
 
 $SUDO apt-get update -qq
-$SUDO apt-get install -y -qq --no-install-recommends ca-certificates curl tmux rsync procps >/dev/null
+$SUDO apt-get install -y -qq --no-install-recommends ca-certificates curl tmux rsync procps libx11-6 libxext6 libxrender1 libgl1 libexpat1 libatomic1 >/dev/null
 # The code hard-codes the laptop's paths (venv, runs), so the same layout is made here.
 $SUDO mkdir -p $T $P/v5b1_runs/jobs
 [ "$(id -u)" = 0 ] || $SUDO chown -R "$(id -un)" /home/catalin
