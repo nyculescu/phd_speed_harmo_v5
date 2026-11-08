@@ -13,7 +13,7 @@ PY=/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 L=$D/status_remote.txt
 say() { echo "$(date '+%F %T') $1" >> "$L"; }
 halt() { say "STOPPED: $1; instance $ID left running, goes to the author"; echo "$1" > "$D/REMOTE_ALERT"; exit 2; }
-sums() { find . -path '*/rd*' -prune -o -type f -print0 | sort -z | xargs -0 sha256sum; }
+sums() { find . -path '*/rd*' -prune -o -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum; }
 
 say "poller start"
 miss=0
