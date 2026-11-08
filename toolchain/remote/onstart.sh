@@ -5,7 +5,7 @@ P=/home/catalin/work/phd
 T=$P/phd_speed_harmo_v5b1_toolchain
 build() {
   export DEBIAN_FRONTEND=noninteractive PATH=$HOME/.local/bin:$PATH
-  apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates curl tmux rsync procps
+  apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates curl tmux rsync procps libx11-6 libxext6 libxrender1 libgl1 libexpat1 libatomic1
   command -v uv || curl -LsSf https://astral.sh/uv/install.sh | sh
   uv python install 3.14.4
   [ -x $T/venv/bin/python ] || "$(uv python find 3.14.4)" -m venv $T/venv

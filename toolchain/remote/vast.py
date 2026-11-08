@@ -39,6 +39,8 @@ def offers() -> list:
 
 
 def line(r) -> str:
+    if "dph_total" not in r:
+        return f"{r['id']} (picked by the caller)"
     return (f"{r['id']}  ${r['dph_total']:.3f}/h  {int(r['cpu_cores_effective'])} threads  {r['cpu_ram'] / 1024:.0f} GB  "
             f"{(r.get('cpu_name') or '?').strip()} {r.get('cpu_ghz') or 0:.1f} GHz  {r.get('geolocation')}  reliability {r.get('reliability2', 0):.3f}")
 
@@ -55,8 +57,10 @@ def confirm(what: str, yes: bool) -> None:
 def rent(offer_id, yes: bool) -> None:
     o = offers()
     r = o[0] if offer_id is None and o else next((x for x in o if str(x["id"]) == offer_id), None)
+    if r is None and offer_id is not None:     # picked by the caller from its own search, which may sort differently; create fails if it is gone
+        r = {"id": offer_id}
     if r is None:
-        sys.exit("no offer fits the spec" if offer_id is None else f"offer {offer_id} is gone or does not fit the spec")
+        sys.exit("no offer fits the spec")
     how = ["--template_hash", TEMPLATE] if TEMPLATE else ["--image", IMAGE, "--ssh", "--direct"]
     confirm(f"Rent {line(r)}, {'template ' + TEMPLATE if TEMPLATE else 'image ' + IMAGE}, 40 GB disk? Billing runs until destroy.", yes)
     iid = vast("create", "instance", str(r["id"]), *how, "--disk", "40", "--label", "v5b1")["new_contract"]
