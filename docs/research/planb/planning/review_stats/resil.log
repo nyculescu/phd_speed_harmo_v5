@@ -1,0 +1,9 @@
+== X1 (n = 20), nc median loss 132673 veh-s; nc G1a +66.5 %; p333 G1a +83.8 %
+  vs p333        level effect cell  -2.1 %  S  +0.0 %  | R =   -8101 veh-s [-16995, +8333] (-6.1 % of nc loss) | corr(cell,S) of o 0.55, of paired diff 0.45; SD diff cell 19402, SD R 17909 | sign-flip false rate n20 0.009 n120 0.005 (nominal 0.0083) | power n120 0.00
+  vs lr400_13_2  level effect cell  +4.4 %  S  -2.5 %  | R =  +11410 veh-s [-6666, +26596] (+8.6 % of nc loss) | corr(cell,S) of o 0.72, of paired diff 0.37; SD diff cell 24096, SD R 23784 | sign-flip false rate n20 0.013 n120 0.008 (nominal 0.0083) | power n120 0.86
+== X2 (n = 20), nc median loss 87279 veh-s; nc G1a +43.8 %; p333 G1a +89.3 %
+  vs p333        level effect cell  +1.6 %  S  +0.0 %  | R =   -1726 veh-s [-6683, +6457] (-2.0 % of nc loss) | corr(cell,S) of o 0.73, of paired diff 0.25; SD diff cell 15081, SD R 17321 | sign-flip false rate n20 0.006 n120 0.009 (nominal 0.0083) | power n120 0.00
+  vs lr400_13_2  level effect cell  +3.3 %  S  -2.5 %  | R =  +11520 veh-s [-3476, +17112] (+13.2 % of nc loss) | corr(cell,S) of o 0.49, of paired diff 0.26; SD diff cell 18619, SD R 21786 | sign-flip false rate n20 0.010 n120 0.010 (nominal 0.0083) | power n120 0.99
+== H1 (n = 20), nc median loss 12522 veh-s; nc G1a +6.3 %; p333 G1a +4.4 %
+  vs p333        level effect cell  -2.7 %  S  +0.0 %  | R =   -3636 veh-s [-15619, +4519] (-29.0 % of nc loss) | corr(cell,S) of o 0.52, of paired diff 0.06; SD diff cell 11531, SD R 16986 | sign-flip false rate n20 0.011 n120 0.007 (nominal 0.0083) | power n120 0.00
+  vs lr400_13_2  level effect cell  +5.6 %  S  -2.5 %  | R =   +5836 veh-s [-2278, +19759] (+46.6 % of nc loss) | corr(cell,S) of o 0.53, of paired diff 0.07; SD diff cell 16209, SD R 22705 | sign-flip false rate n20 0.013 n120 0.007 (nominal 0.0083) | power n120 0.86

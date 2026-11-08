@@ -1,0 +1,34 @@
+x1 {'g028i09': np.float64(-43.2), 'g038i05': np.float64(-23.6), 'g002i10': np.float64(-29.4), 'g000i06': np.float64(-22.2), 'g003i02': np.float64(-31.2), 'mean': np.float64(-14.0)}
+  g028i09 - g038i05: diff -19.6, SE 15.16, delta 30.3
+  g028i09 - g002i10: diff -13.8, SE 10.92, delta 21.8
+  g028i09 - g000i06: diff -21.0, SE 15.79, delta 31.6
+  g028i09 - g003i02: diff -12.0, SE 10.37, delta 20.7
+  g028i09 - mean: diff -29.2, SE 15.91, delta 31.8
+  g038i05 - g002i10: diff +5.8, SE 14.97, delta 29.9
+  g038i05 - g000i06: diff -1.4, SE 15.46, delta 30.9
+  g038i05 - g003i02: diff +7.6, SE 14.82, delta 29.6
+  g038i05 - mean: diff -9.6, SE 19.32, delta 38.6
+  g002i10 - g000i06: diff -7.3, SE 13.31, delta 26.6
+  g002i10 - g003i02: diff +1.8, SE 2.31, delta 4.6
+  g002i10 - mean: diff -15.5, SE 17.05, delta 34.1
+  g000i06 - g003i02: diff +9.0, SE 13.22, delta 26.4
+  g000i06 - mean: diff -8.2, SE 17.85, delta 35.7
+  g003i02 - mean: diff -17.2, SE 16.80, delta 33.6
+  median SE 15.16 median delta 30.3
+x2 {'g016i21': np.float64(-36.1), 'g000i11': np.float64(-2.9), 'g001i04': np.float64(-27.1), 'g016i13': np.float64(-22.8), 'g012i03': np.float64(-31.9), 'mean': np.float64(-18.1)}
+  g016i21 - g000i11: diff -33.2, SE 15.81, delta 31.6
+  g016i21 - g001i04: diff -8.9, SE 2.93, delta 5.9
+  g016i21 - g016i13: diff -13.3, SE 11.86, delta 23.7
+  g016i21 - g012i03: diff -4.2, SE 5.17, delta 10.3
+  g016i21 - mean: diff -18.0, SE 13.30, delta 26.6
+  g000i11 - g001i04: diff +24.3, SE 15.60, delta 31.2
+  g000i11 - g016i13: diff +19.9, SE 13.05, delta 26.1
+  g000i11 - g012i03: diff +29.0, SE 14.73, delta 29.5
+  g000i11 - mean: diff +15.2, SE 15.38, delta 30.8
+  g001i04 - g016i13: diff -4.4, SE 11.05, delta 22.1
+  g001i04 - g012i03: diff +4.7, SE 4.78, delta 9.6
+  g001i04 - mean: diff -9.1, SE 12.94, delta 25.9
+  g016i13 - g012i03: diff +9.1, SE 11.06, delta 22.1
+  g016i13 - mean: diff -4.7, SE 11.65, delta 23.3
+  g012i03 - mean: diff -13.8, SE 12.66, delta 25.3
+  median SE 12.66 median delta 25.3

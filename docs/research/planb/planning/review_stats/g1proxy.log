@@ -1,0 +1,6 @@
+H1 nc    G1a effect   +6.3 % [+1.5, +8.4]  pass(>=10, lo>0): False
+H1 p333  G1a effect   +4.4 % [-1.0, +8.9]  pass(>=10, lo>0): False
+X1 nc    G1a effect  +66.5 % [+60.3, +68.0]  pass(>=10, lo>0): True
+X1 p333  G1a effect  +83.8 % [+72.4, +94.6]  pass(>=10, lo>0): True
+X2 nc    G1a effect  +43.8 % [+38.0, +52.8]  pass(>=10, lo>0): True
+X2 p333  G1a effect  +89.3 % [+73.7, +98.1]  pass(>=10, lo>0): True
