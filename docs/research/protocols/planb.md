@@ -1,6 +1,6 @@
 # Plan B protocol v1: v3w under perturbations it was not trained on, against the tuned non-learning controllers tested in each cell
 
-**Status: DRAFT, not approved.** Version v1, 2026-11-08. Time estimates in §9 and decision 7 use V475's 59-worker rate; a machine with quota for 100 workers would take about 40-48 h at the same cost (my arithmetic, not measured).
+**Status: APPROVED, binding (V480, 2026-11-08).** The author accepted all 13 recommendations in §0 as written. Version v1, 2026-11-08. Time estimates in §9 and decision 7 use V475's 59-worker rate; a machine with quota for 100 workers would take about 40-48 h at the same cost (my arithmetic, not measured).
 
 v1 revises v0 after three reviews (statistics, plant, record; 47 issues). Every change is listed in `planb_v1_changes.md` (beside this file). The planning files named below are under `docs/research/planb/planning/`; the three drafts and v0 are under `docs/research/planb/design/`. No Plan B seed, code or run exists. Every number marked "planning" comes from stored X1/X2 rows (or confirmatory 3's rows, where named) used only as a proxy for size and cost, never as evidence (V478). Planning files: `synth/rule_v0.py` and `rule_v0.json`, `review_stats/*.py` and `*.log` (the statistics review's re-checks), `revise_v1/pp_power.py` and `.json` (per-policy power and side-constraint pass rates), `revise_v1/count_v1.py` (run counts). Literature not read is marked [VERIFY]. "My estimate" marks figures that are not measured.
 
