@@ -12,6 +12,10 @@ Structure follows the usual systems-engineering pattern: intended use, requireme
 
 **Acceptance:** the plant is valid for this use when every requirement below is met, or its gap is stated as a limit that every claim sentence carries.
 
+**Wording (V462):** "verified and validated" appears in no title, abstract or claim sentence until this record is reviewed and PR-15, PR-24 and PR-28 are closed. Every other partial or gap becomes a numbered limit (L1-Ln, §4) that each claim sentence cites. Rows outside the intended use (the band and 3E-T's condition T under the random training slowdown draw; history cells H1 and H2) are labelled "outside the plant's stated intended use".
+
+**Tally (2026-11-07):** 6 met, 13 partial, 7 gap, 2 limit of 28.
+
 ## 2. Requirements, verification and evidence
 
 Status: **met** (evidence exists and was checked), **partial**, **gap** (work needed), **limit** (stated, not fixed). "Locate" means the evidence probably exists but this record has not yet pointed at it.
@@ -33,7 +37,7 @@ Status: **met** (evidence exists and was checked), **partial**, **gap** (work ne
 | PR-06 | ALKS parameters as configured and applied by SUMO (IDM, tau 1.6 s, accel 2.6, decel 4.5, emergency 9.0 m/s², action step 0.5 s) | T | `ALKS_READBACK` in `b_merge`; locate its test | partial |
 | PR-07 | ALKS tau and deceleration limits are consistent with UN R157 [VERIFY] | A | to write | gap |
 | PR-08 | Lane changing (`lcAssertive` 1.4) gives plausible lane use and few undertakes | D, A | baseline v1 trace of passes on the right (one seed); baseline v2: 14 undertakes per run among about 1,300 ALKS | limit: not validated against real traffic |
-| PR-09 | The smooth no-undertaking rule (our model, disclosed) brakes at most 4.4 m/s² and creates no hidden hard braking | T at 0.1 s | V367 found and V376 fixed it; baseline v2: 1-Hz within 2.2 % of step braking, steady traffic; V451: check passes on every round-1 test arm under slowdowns | met for round-1 arms; rerun for each new plant |
+| PR-09 | The smooth no-undertaking rule (our model, disclosed) brakes at most 4.4 m/s² and creates no hidden hard braking | T at 0.1 s | V367 found and V376 fixed it; baseline v2 (r1m3 P0d): 1-Hz within 2.2 % of step braking, steady traffic; V451 (plant_c3): check passes on every round-1 test arm under slowdowns | met for round-1 arms; rerun for each new plant |
 
 ### Actuator and sensing
 
@@ -51,10 +55,10 @@ Status: **met** (evidence exists and was checked), **partial**, **gap** (work ne
 
 | ID | Requirement | Method | Evidence | Status |
 |---|---|---|---|---|
-| PR-17 | No collisions and no teleports without control; with control, counted and reported | T | baseline v2: 0 and 0 in 80 runs; round reports count collisions and severe events (V452) | met |
-| PR-18 | Same code, plant and seed give identical rows on any machine and worker count (T3) | T | V398; V437 (rows and training fingerprint equal across machines) | met |
+| PR-17 | No teleports; collisions rare, counted and reported for every arm | T | baseline v2 (r1m3 P0d, steady, not the V&V target): 0 and 0 in 80 runs; on plant_c3, round 1: no control 1 collision in 40 X1 runs, 0 in X2 (`round_1_result.md`); round reports count collisions and severe events (V452) | partial: no plant_c3 no-control check |
+| PR-18 | Same code, plant and seed give identical rows on any machine and worker count (T3) | T | V398 (same-code replay at `d2b2ecc`); V437 and V461 (rows and training fingerprint equal across machines) | met |
 | PR-19 | Tracing does not change the run | T | V386 (traced equals untraced) | met; rerun after tracing changes |
-| PR-20 | Every result row ties to frozen code, plant file and seed; stored files hashed | I | baselines v1-v4 `SHA256SUMS`, frozen copies; `toolchain/requirements_lock.txt` | met |
+| PR-20 | Every result row ties to frozen code, plant file and seed; stored files hashed | I | `SHA256SUMS` in git for baselines v0, v1, v4 (v2, v3 only in the read-only copies); frozen copies; `toolchain/requirements_lock.txt`. Exceptions: 3E-X `meta.json` records no commit (V461); round-2 resume matches rows without a config hash (V455) | partial |
 
 ### Measurement
 
