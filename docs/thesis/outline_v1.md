@@ -36,7 +36,7 @@ No "first" or "novel" in any of these. Literature in chapter 2 marked [VERIFY] u
 
 ## 3. The claim
 
-**Thesis claim (template, filled after round 2; wording amended before round 2's data, V462):** "On a synthetic freeway plant documented in a V&V record for comparing controllers that set ALKS time headways (r2m3), within its limits L1-Ln, and under a protocol fixed before data, these per-CAV PPO policies [outcome W, G or N below, one sentence per cell] against the rule controllers, and [outcome below] against no control. A two-cell decision map with report-only band and history panels is reported in full."
+**Thesis claim (template, filled after round 2; wording amended after round 2's validation rows existed and before any test row, V462, V463):** "On a synthetic freeway plant documented in a V&V record for comparing controllers that set ALKS time headways (r2m3), within its limits L1-Ln, and under a protocol fixed before data, these per-CAV PPO policies [outcome W, G or N below, one sentence per cell] against the rule controllers, and [outcome below] against no control. A two-cell decision map with report-only band and history panels is reported in full."
 
 Every outcome sentence carries confirmatory 3's model sentence and its "What this cannot show" items, and round 2's, verbatim (`confirmatory_3.md`, `round_2.md` "Sentences allowed").
 
