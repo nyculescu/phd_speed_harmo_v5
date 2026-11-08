@@ -5,13 +5,17 @@ The runs are deterministic, so they are the same trajectories that produced the 
 usage: measure2.py smoke OUT WORK WORKERS     sample runs, traced against the stored rows, and the pack's consistency checks
        measure2.py plan OUT WORK              writes the job files and prints the run count; runs nothing
        measure2.py run OUT WORK WORKERS --go  the full measurement (not started without --go and a clean, committed tree)
+       measure2.py smoke1 OUT WORK WORKERS    S1's sample runs (new levels, new seeds): they complete and the pack's sums hold
        measure2.py analyse WORK [ROWS]        per-run metrics from measured rows (summary_*.json)
        measure2.py report OUT WORK [ROWS]     ASCII distributions over seeds per arm and cell (policy arms: mean of 5 learners)
-OUT is round 2's run folder (val/validation.json, test/, band/ rows); WORK is where the measured rows and side files go."""
+OUT is round 2's run folder (val/validation.json, test/, band/ rows); WORK is where the measured rows and side files go.
+S1 (V470, report-only) adds v3w at its chosen checkpoints, no control, p333, os1_15_10 and 3E-T at 3,500 and 7,000 veh/h under the
+training slowdowns, with the band's configurations, on seeds 7,440,900-919."""
 import json
 import multiprocessing as mp
 import subprocess
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
@@ -26,6 +30,10 @@ import test2  # noqa: E402
 from v5b.fleet import measure as me  # noqa: E402
 
 SKIP = {"cfg"}     # the only stored key allowed to differ: the measured run's config carries the pack's folder
+S1_LEVELS = (3500.0, 7000.0)
+S1_SEEDS = list(range(7_440_900, 7_440_920))
+S1_RULES = ("B|nc", "B|p333", "B|os1_15_10", "B|3e")
+SMOKE1 = [("B|nc", 7000.0), ("B|w0u250", 7000.0), ("B|p333", 3500.0)]
 SMOKE = [("test", "X1|nc", 5300.0), ("test", "X1|w0u250", 5300.0), ("test", "X2|t0", 5300.0), ("test", "X2|s0u500", 5300.0),
          ("test", "X2|3ex2", 5300.0), ("band", "B|p333", 6000.0), ("band", "B|d0u500", 5000.0)]
 
@@ -43,8 +51,12 @@ def jobs(out: Path, work: Path) -> dict:
         assert tj["arms"][name] == cfg, name
     for name, cfg in gb["eval"].items():
         assert bj["arms"][name] == cfg, name
+    w = {f"B|{n}" for n in __import__("decide2").names("v3w", {int(i): c for i, c in v["chosen"]["v3w"].items()})}
+    s1 = {n: c for n, c in gb["eval"].items() if n in S1_RULES or n in w}
+    assert len(s1) == 9, sorted(s1)
     return {"test": {"arms": {n: {**c, "measure": st} for n, c in g["eval"].items()}, "levels": tj["levels"], "seeds": tj["seeds"]},
-            "band": {"arms": {n: {**c, "measure": st} for n, c in gb["eval"].items()}, "levels": bj["levels"], "seeds": bj["seeds"]}}
+            "band": {"arms": {n: {**c, "measure": st} for n, c in gb["eval"].items()}, "levels": bj["levels"], "seeds": bj["seeds"]},
+            "s1": {"arms": {n: {**c, "measure": st} for n, c in s1.items()}, "levels": list(S1_LEVELS), "seeds": S1_SEEDS}}
 
 
 def _run(a):
@@ -113,6 +125,27 @@ def smoke(out: Path, work: Path, workers: int) -> int:
     return 0 if ok else 1
 
 
+def smoke1(out: Path, work: Path, workers: int) -> int:
+    """S1 has no stored rows to equal, so its sample runs only have to complete and pass the pack's own sums; wall time is printed."""
+    J = jobs(out, work)["s1"]
+    rd = str(work / "rd")
+    todo = [(name, J["arms"][name], q, S1_SEEDS[0], rd) for name, q in SMOKE1]
+    ok, t0 = True, time.time()
+    with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex:
+        futs = {ex.submit(_run, a): a for a in todo}
+        for f in as_completed(futs):
+            row = f.result()
+            field = np.load(work / "st" / row["m_st_file"])
+            c = checks(row, {"v": field["v"], "n": field["n"]})
+            bad = {k: v for k, v in c.items() if k != "steps" and not bool(v)}
+            ok &= not bad
+            (work / "smoke1_rows.jsonl").open("a").write(json.dumps(row) + "\n")
+            print(row["name"], row["q"], row["seed"], "done after s", round(time.time() - t0), "delay", round(row["all_delay"]), "ttc", row["ttc_net"],
+                  "passed", row["passed"], "teleports", row.get("teleports"), "failed checks:", bad, flush=True)
+    print("SMOKE1", "PASS" if ok else "FAIL", flush=True)
+    return 0 if ok else 1
+
+
 def plan(out: Path, work: Path) -> dict:
     J = jobs(out, work)
     work.mkdir(parents=True, exist_ok=True)
@@ -125,13 +158,15 @@ def plan(out: Path, work: Path) -> dict:
 
 
 def run(out: Path, work: Path, workers: int) -> None:
-    dirty = subprocess.run(["git", "-C", str(ROOT), "status", "--porcelain", "--", "v5b", "docs/research/round2"], capture_output=True, text=True).stdout.strip()
+    try:     # a rented machine runs a git archive with no repository: nothing there can be uncommitted
+        dirty = subprocess.run(["git", "-C", str(ROOT), "status", "--porcelain", "--", "v5b", "docs/research/round2"], capture_output=True, text=True).stdout.strip()
+    except FileNotFoundError:
+        dirty = ""
     if dirty:
         raise SystemExit("uncommitted changes in v5b or round2: run from a clean, frozen copy")
     from v5b.fleet.plant_sweep import matrix
     for ph, j in jobs(out, work).items():
-        for q in j["levels"]:
-            matrix(j["arms"], (q,), j["seeds"], work / f"rows_{ph}.jsonl", workers, str(work / "rd"))
+        matrix(j["arms"], tuple(j["levels"]), j["seeds"], work / f"rows_{ph}.jsonl", workers, str(work / "rd"))
 
 
 def panel(title: str, d: dict, unit: str, width: int = 48) -> str:
@@ -215,6 +250,8 @@ def report(out: Path, work: Path, rows_file: str = "rows_test.jsonl") -> str:
 def main(a: list) -> int:
     if a[0] == "smoke":
         return smoke(Path(a[1]), Path(a[2]), int(a[3]))
+    if a[0] == "smoke1":
+        return smoke1(Path(a[1]), Path(a[2]), int(a[3]))
     if a[0] == "plan":
         plan(Path(a[1]), Path(a[2]))
         return 0
