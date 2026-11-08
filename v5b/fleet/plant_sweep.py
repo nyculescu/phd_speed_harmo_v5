@@ -67,7 +67,7 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch", "asch", "mpcf"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     if "pt" in ctrl:     # round 1: a policy brings the environment options it acts through, e.g. 3B's base rule
         from v5b.fleet.c_train import act_env
@@ -99,6 +99,14 @@ def run_one(a: tuple) -> dict:
         from v5b.fleet.c_train import Greedy, ZoneSwitch
         sw = ctrl["switch"]
         rule = ZoneSwitch(be.OwnState(**sw["own_state"]), Greedy(sw["pt"]), sw["x_from"])
+    if "asch" in ctrl:     # Plan B (planb.md §3.4)
+        from v5b.fleet.planb_ctrl import Asch, build_rule
+        sw = ctrl["asch"]
+        rule = Asch(env, build_rule(env, sw["steady"], bool(c.get("fix_x"))), build_rule(env, sw["dist"], bool(c.get("fix_x"))),
+                    sw["theta_kmh"], sw["tau_s"], sw["h_kmh"])
+    if "mpcf" in ctrl:     # Plan B (planb.md §3.5)
+        from v5b.fleet.planb_ctrl import MpcF
+        rule = MpcF(env, ctrl["mpcf"], bool(c.get("fix_x")))
     meter = bank = None
     S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
     road_lane, lane_t, accel_t = {}, {}, {}
@@ -347,6 +355,8 @@ def run_one(a: tuple) -> dict:
         row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
     if env.pert is not None:
         row["pert_log"] = env.pert.log
+    if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):
+        row["ctrl_log"] = rule.log
     if meter is not None:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
