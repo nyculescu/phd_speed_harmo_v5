@@ -172,3 +172,18 @@ def test_mpcf_all_steps(tmp_path, monkeypatch):
     assert res["gate_passed"]     # the fake MPC-F has 50 less delay than any fixed action
     n = len(pb.cma2.load(tmp_path / "data_runs.jsonl")) + len(pb.cma2.load(tmp_path / "fixed_runs.jsonl")) + len(pb.cma2.load(tmp_path / "gate_runs.jsonl"))
     assert n == 2 * 4 * 40 + 2 * 2 * 40 + 2 * 3 * 30
+
+
+@pytest.mark.skipif(not pb.JOB.exists(), reason="round 2's job file is not on this machine")
+def test_stored_arms_rewrap_like_rule_cfg():
+    arms = pb.stored_arms()
+    assert len(arms) == 5 + 15 + 1
+    for n in ("p333", "lr400_13_2", "os1_15_10", "copy"):
+        for cond in ("S", "SURGE", "TRUCK", "X1"):
+            assert pb.with_cond(arms[n], cond) == pb.rule_cfg(pb.ref_ctrl(n), cond), (n, cond)
+    assert pb.with_cond(arms["nc"], "S") == pb.rule_cfg({}, "S")
+    assert pb.with_cond(arms["nc"], "TRUCK") == pb.rule_cfg({}, "TRUCK")
+    x1 = pb.with_cond(arms["w0u250"], "X1")
+    assert x1 == {k: v for k, v in arms["w0u250"].items() if k != "measure"}     # X1 back to X1 is the stored config
+    s = pb.with_cond(arms["w0u250"], "S")
+    assert "perturb" not in s["ctrl"].get("env", {}) and s["ctrl"]["pt"] == arms["w0u250"]["ctrl"]["pt"]

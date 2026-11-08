@@ -95,3 +95,39 @@ def ref_ctrl(name: str) -> dict:
 
 def load_json(p) -> dict:
     return json.loads(Path(p).read_text())
+
+
+JOB = Path("/home/catalin/work/phd/v5b1_runs/round2/test/job_6c49e7e.json")     # round 2's test job (planb.md §3.1)
+V3W = ("w0u250", "w1u500", "w2u250", "w3u500", "w4u500")     # V478
+CARRIED = ("p333", "z33133", "r4a1", "lr400_13_2", "lr1000_16_2", "lr1000_10_1", "lr400_16_1", "a4400_10_1", "os0_10_10", "os1_15_10",
+           "os1_10_0", "copy", "3e", "3ex1", "3ex2")
+PLACEBO = {"kind": "brake", "factor": 0.95, "hold": 1.0, "period": 180.0}     # V341's no-wave perturbation, the null of G1
+
+
+def with_cond(arm_cfg: dict, cond: str, perturb: dict | None = None) -> dict:
+    """A stored arm's config with only its perturbation changed: cond's (None for S), or perturb if given."""
+    import copy
+    from common1 import COND
+    c = copy.deepcopy(arm_cfg)
+    c.pop("measure", None)
+    x = perturb if perturb is not None else COND[cond]
+    env = c.setdefault("ctrl", {}).setdefault("env", {})
+    env.pop("perturb", None)
+    if x:
+        env["perturb"] = x
+    if not env:
+        del c["ctrl"]["env"]
+    if not c["ctrl"]:
+        del c["ctrl"]
+    return c
+
+
+def stored_arms(job: Path = JOB) -> dict:
+    """name -> config for v3w's learners and the 15 carried rules, as round 2's test ran them (X1 copies; 3ex2 from X2)."""
+    arms = json.loads(job.read_text())["arms"]
+    out = {n: arms[f"X1|{n}"] for n in V3W + CARRIED + ("nc",) if f"X1|{n}" in arms}
+    out["3ex2"] = arms["X2|3ex2"]
+    missing = set(V3W + CARRIED + ("nc",)) - set(out)
+    if missing:
+        raise SystemExit(f"arms missing from {job}: {sorted(missing)}")
+    return out
