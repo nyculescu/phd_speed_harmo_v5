@@ -147,6 +147,10 @@ class Measure:
         self.stop_run = defaultdict(int)
         self.stuck = set()
         self.pending_end = 0
+        self.capped_vmax = 0.0     # C3: the fastest 1-Hz speed of any capped truck
+        self.seen = set()     # C3 (PR-03): every vehicle seen in the network after the warm-up
+        self.planned = sorted((v.depart, v.vid) for v in env.dem.veh if self.t0 <= v.depart < self.t_end)
+        self.dropped = 0     # planned vehicles past their departure that are neither seen nor pending, summed over minute checks
 
     def cls(self, v: str) -> str:
         return "truck" if v in self.trucks else "alks" if v in self.alks else "car"
@@ -245,6 +249,9 @@ class Measure:
                 if v not in self.capped:
                     self.st_nc[0, k, j] += s
                     self.st_nc[1, k, j] += 1
+            self.seen.add(v)
+            if v in self.capped:
+                self.capped_vmax = max(self.capped_vmax, s)
             g, per = ROAD_GROUP.get(road, "other"), self.period(self.spec, t)
             self.road_vs[g][per] += 1
             self.road_dist[g][per] += s
@@ -294,6 +301,9 @@ class Measure:
                 self.main_pending[m] += 1
             self.road_vs[f"pending_{r}"][per] += 1
         self.pending_end = len(pend)
+        if abs(t % 60.0) < 1e-6 or t >= self.t_end - 1e-6:
+            ps = set(pend)
+            self.dropped += sum(1 for d, v in self.planned if d <= t - 1.0 and v not in self.seen and v not in ps)
         self._pairs(ls, t, per)
 
     def _pairs(self, ls, t: float, per: str) -> None:
@@ -357,6 +367,7 @@ class Measure:
         row["m_ttc3_all"], row["m_ttc3_lc"] = self.ttc_all, self.ttc_lc
         row["m_stuck_n"], row["m_pending_end"] = len(self.stuck), self.pending_end
         row["m_capped"] = sorted(self.capped)
+        row["m_capped_vmax"], row["m_dropped"], row["m_planned_window"] = self.capped_vmax, self.dropped, len(self.planned)
         row["m_main_pending_min"] = np.round(self.main_pending, 3).tolist()
         for tag, f in (("", self.st), ("_nc", self.st_nc)):
             row[f"m_cong_vs{tag}"], row[f"m_cong_run_s{tag}"] = congestion(f[0], f[1])

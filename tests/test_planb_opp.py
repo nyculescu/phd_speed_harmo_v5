@@ -187,3 +187,27 @@ def test_stored_arms_rewrap_like_rule_cfg():
     assert x1 == {k: v for k, v in arms["w0u250"].items() if k != "measure"}     # X1 back to X1 is the stored config
     s = pb.with_cond(arms["w0u250"], "S")
     assert "perturb" not in s["ctrl"].get("env", {}) and s["ctrl"]["pt"] == arms["w0u250"]["ctrl"]["pt"]
+
+
+@pytest.mark.skipif(not pb.JOB.exists(), reason="round 2's job file is not on this machine")
+def test_plan6_arm_counts_match_the_protocol(tmp_path):
+    import plan6
+    s2 = {"cells": {"SURGE": {"passes": True, "drain_cap": 30.0}, "TRUCK": {"passes": True, "drain_cap": 20.0}}}
+    rules = {f"r{i}": {"own_state": {"level": 1, "th": 10.5 + i, "crowd": 0}} for i in range(9)}
+    repick = {"ctrl": rules, "cell_opponents": {"SURGE": [f"r{i}" for i in range(8)], "TRUCK": [f"r{i}" for i in range(1, 9)]},
+              "steady_pick": "r0", "steady_ctrl": {"own_state": {"level": 0, "th": 99, "crowd": 0}}}
+    for c in ("SURGE", "TRUCK"):
+        for i, obj in enumerate(("ttc", "delay")):
+            d = tmp_path / f"{c}_{obj}"
+            d.mkdir()
+            z = [{"th": 5.0 + i + (c == "TRUCK"), "crowd": 0, "level": 1, "free": 3}] * 5
+            (d / "pick.json").write_text(json.dumps({"incumbent": {"params": z}, "label": "met the plateau criterion", "generations": 100}))
+    asch_res = {"pick": {"ctrl": {"asch": {"steady": {}, "dist": {}, "theta_kmh": 55, "tau_s": 30, "h_kmh": 5}}}}
+    mpcf_res = {"gate_passed": True, "actions": [{"cav_rule": [3, 3, 3]}], "model_sha256": "x", "model": "mpcf_model.pt"}
+    P = plan6.freeze(s2, repick, tmp_path, asch_res, mpcf_res)
+    J, conf = plan6.jobs(P, tmp_path, tmp_path)
+    per = lambda cond: sum(1 for k in J if k.startswith(cond + "|"))
+    assert per("SURGE") == per("TRUCK") == 34
+    assert per("S") == 24 + 10 * 2 - 7     # the two cells share 7 re-picks, which run once in S
+    assert len(conf["opponents"]["SURGE"]) == 34 - 5 - 1
+    assert conf["e3c"] == {"SURGE": "3E-C_SURGE", "TRUCK": "3E-C_TRUCK"}
