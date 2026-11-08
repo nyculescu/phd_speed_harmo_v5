@@ -1,3 +1,163 @@
 \section{The reading: controllers, measures and the protocol fixed before data}\label{sec:the_reading}
 
-\todo{plan.md, section 4; about 1850 words}
+This section defines every arm, measure and reading before any result, so that Section~\ref{sec:results} only fills them in.
+The study ran as a sequence of readings on changing plants and policy sets: phase~1, confirmatory~2, confirmatory~3 and its replication 3b, round~1 and round~2.
+Only round~2 decides; the earlier readings are reported as history and support no claim.
+Round~2's protocol (Appendix~\ref{sec:supplement}) asks three questions:
+Q1, does a new candidate policy beat round~1's winner (v3w) on fresh seeds, and does it then win against the rules;
+Q2, does v3w still win against the rules when a rule tuned by CMA-ES for the cell is among them;
+Q3 (report-only), how does close-following under each policy compare with no control across 4,500--6,000\,veh/h.
+
+\subsection{Controllers}\label{sec:controllers}
+
+Table~\ref{tab:controllers} lists the arms.
+\emph{No control} leaves every ALKS at 1.6\,s.
+\emph{p333} commands 0.8\,s to every ALKS that the V2V gate admits.
+
+\emph{The grid} is confirmatory~3's set of tuned rules: six forms with 69 rules in total (uniform, 4; by zone, 30; on road 4a, 3; local adaptive, 12; adaptive on 4a, 12; own state, 8), tuned per primary cell on seeds 7,440,160--179 \ledger{V376}.
+A seventh form, the copy rule, reproduces the stored baseline-v3 policies' choices, traced on seeds 7,440,180--189, which makes 70 rules.
+On evaluation seeds the grid enters as 12 rule arms, p333 and the copy rule included, so p333 is not counted twice.
+
+\emph{3E} rules are own-state rules (each ALKS's level depends only on what it measures itself) with four parameters in each of five zones, the zone edges lying at $-100$, 594.72, 1,389.02 and 2,083.74\,m from the start of 3a.
+Their 20 parameters were searched with diagonal CMA-ES~\autocite{Hansen2001,Ros2008}\verify\ (initial step 0.25, population 24, generator seed 20261106).
+Two variants enter round~2.
+\emph{3E-T} (stored as \texttt{g032i20}) was tuned under the random training slowdown (condition~T, outside the plant's stated intended use) at 4,500--6,000\,veh/h on seeds 7,440,700--739, against the rule \texttt{os1\_15\_10} with a delay cap of +2\,\% relative to it; it ran 40 of 100 planned generations and its convergence was not checked \ledger{V443}.
+We always name it ``a rule tuned by CMA-ES under the training slowdowns, not for this cell''.
+\emph{3E-X1} (\texttt{g003i02}) and \emph{3E-X2} (\texttt{g016i21}) were each tuned for one decision cell at 5,300\,veh/h on seeds 7,440,740--779, 16 seeds and 40 generations, starting from \texttt{os0\_10\_10} (X1) and \texttt{os1\_15\_10} (X2), with p333 as reference and a hinge penalty on delay above +1\,\%.
+A searched rule was admitted only if its delay was at most 2\,\% above p333's and its collisions at most p333's plus one.
+The search ran on a rented server from a frozen commit \ledger{V461}.
+We name each ``a rule tuned by CMA-ES for this cell on separate seeds''.
+
+\emph{The policies} are per-CAV PPO~\autocite{Schulman2017}\verify\ headway policies: one shared policy decides for each ALKS from its own inputs.
+Each recipe trains 5 learners, each with 3 environments and 500 updates, cycling through seven training levels from 4,500 to 6,000\,veh/h under the random training slowdown, on training seeds 7,464,000--7,471,799 shared by all candidates (common random numbers), with discount 0.933 and GAE parameter 0.967.
+Inputs are normalised by running statistics \ledger{V388}.
+The judged 1-Hz close-following count also enters the reward, and we disclose this because it means the policies were trained on the measure they are judged on.
+For each learner the checkpoint (after 250 or 500 updates) is chosen on validation seeds only.
+The arms are v3w, round~1's winner, stored as baseline-v4 before round~2's validation \ledger{V455}, and at most two round-2 finalists selected on validation (Appendix~\ref{sec:supplement}, Table~T17).
+\todo{locate the training-curve files and cite them}
+
+The comparison is not symmetric, and both directions are stated.
+The rules know the condition and the demand level and act on a 5-s grid; the policies know neither, act every 10\,s, and choose among four levels.
+No model-predictive or non-learning adaptive controller is included; that comparison is left for later work.
+
+\begin{table}[tbp]
+\centering
+\todo{T5: controllers, information, action grid and interval, tuning seeds, counting rule, required naming}
+\caption{Controllers compared.}\label{tab:controllers}
+\end{table}
+
+\subsection{Cells and measures}\label{sec:cells_measures}
+
+The decision cells are X1 and X2 at 5,300\,veh/h.
+The band (4,500, 5,000, 5,250, 5,500 and 6,000\,veh/h under the random training slowdown, 20 seeds per level) is report-only and outside the plant's stated intended use.
+History cells come from confirmatory~3's map for the baseline-v3 policies only; H1 and H2 among them are outside the intended use.
+
+\emph{Close-following} is the number of follower-seconds with a closing rear TTC below 3\,s, sampled at 1\,Hz (L19).
+The 3-s threshold was chosen for training \ledger{V265} and has no literature source.
+TTC below 1.5 and 2\,s and severe samples, those needing at least 3\,m/s$^2$ of deceleration, are reported beside it.
+\emph{All-vehicle delay} is the vehicle-seconds spent in the system minus distance over free-flow speed, counting unfinished vehicles to the window end and vehicles still waiting to enter (L18).
+Finishers' delay, which leaves out both, is labelled separately wherever it appears.
+We also report served flow; braking at 3 and 7\,m/s$^2$, counted every 0.1\,s; moving full-emergency events; and collisions.
+The remaining counters (fuel, jerk, undertakes, lane-end stops, ramp delays, splits by road, speed and period) are in Table~T15 of the supplement.
+
+\subsection{Pre-registration}\label{sec:prereg}
+
+The protocol, seed ranges, readings and the sentences each outcome allows were approved before round~2's evaluation data \ledger{V454}.
+The thesis claim's outcome sentences were fixed at the same stage \ledger{V459}; their wording, and the map-tile rule of Section~\ref{sec:tile_rule}, were amended after round~2's validation rows existed and before any test row \ledger{V462, V463}.
+``Fixed before data'' in this paper means exactly that: before evaluation data for the protocol and the no-control bar, and before any test row for the tile rule and the sentence wording.
+We disclose the following.
+\begin{itemize}
+\item The registry is the git repository and the decision ledger, not an external registry.
+\item The protocol's status line still reads ``draft, revision~2''; its approval was recorded from the author's ``Go on'' \ledger{V454}.
+\item The protocol was written after the candidates were trained and after 3E-T's search results were known.
+\item Q2 and Q3 were chosen after round~1's readings.
+\item The no-control bar was set after confirmatory~3 and round~1 were known, and the review of the bar and of the filled sentences runs after round~2's data \ledger{V459}.
+\item The script that computes the no-control bar was added after the protocol's approval and runs after the test, outside the frozen chain \ledger{V460}.
+\item The intended use of Section~\ref{sec:intended_use} was written after the plant had been used.
+\item Confirmatory~2 had no adversarial review \ledger{V356}; round~1 and the round-2 build had single-reviewer code reviews \ledger{V423, V455}.
+\end{itemize}
+
+\subsection{Seeds and pairing}\label{sec:seeds}
+
+All round-2 seeds come from the approved block 7,440,000--999 \ledger{V354}: 3E-X tuning 740--779, validation 800--839, test 840--879 (used once), band 880--899 (Fig.~\ref{fig:pipeline}).
+Every arm runs on the same seeds, and differences are paired by seed.
+An invalid run counts as that arm's failure on that seed.
+Pairing across machines was checked \ledger{V437, V461}.
+\todo{state with a measurement what paired seeds guarantee in SUMO (L78)}
+
+\begin{figure}[tbp]
+\centering
+\todo{F4: build and checks, 3E-X tuning, validation, tile rule logged, test once, band, readings, the post-test no-control step; seed blocks, CI levels and stop rules}
+\caption{Evaluation pipeline of round~2 with seed blocks, CI levels and stop rules.}\label{fig:pipeline}
+\end{figure}
+
+\subsection{Statistic and sign convention}\label{sec:statistic}
+
+For a policy arm $P$ and an opponent $O$ over paired seeds, the effect is
+\begin{equation}
+E = s \cdot \frac{\operatorname{median}(P - O)}{\operatorname{median}(O)} \times 100,
+\end{equation}
+with $s = -1$ for measures where less is better (delay, close-following, braking) and $s = +1$ for flow, so that a positive $E$ always means the policy arm is better.
+Confidence intervals are percentile bootstraps of the paired differences~\autocite{Efron1993}\verify, 20,000 resamples, with the denominator held fixed and generator seed 20261104.
+A policy arm's value on a seed is the mean over its 5 learners; the intervals therefore cover variation over evaluation seeds, not over training runs.
+Every number in the paper uses this one convention, and every stored value in another convention is converted (Table~T18).
+On an earlier line of this project, the choice of convention alone changed a reported range from 16--41\,\% to 10--35\,\% \ledger{V99}.
+
+\subsection{Multiplicity}\label{sec:multiplicity}
+
+Validation selects candidates and runs at 95\,\% with no correction; across its 14 tests, at least one passes by chance up to about 30\,\% of the time.
+Reading T1 (a finalist against v3w, by either of two paths) uses a Bonferroni correction over $m$ = finalists $\times$ 2 cells.
+Reading T2 uses $m$ = (finalists + v3w) $\times$ 2, which gives 97.5, 98.75 or 99.17\,\% intervals for 0, 1 or 2 finalists.
+Adding 3E opponents does not change $m$, because T2 requires a win against every counting opponent.
+Harm is read at 95\,\%, since a corrected interval would hide it, and map tiles use 95\,\% with no correction, which is why they decide nothing.
+
+\subsection{Readings}\label{sec:readings}
+
+Table~\ref{tab:readings} collects the thresholds.
+
+\emph{Counting.} An opponent counts in a cell only if its delay is at most 2\,\% above p333's, on the point estimate.
+This filter can drop a rule that has less close-following than the rules that count.
+
+\emph{T2, the tuned reading.} A policy set wins a cell if at least 4 of its 5 policies, against every counting opponent, have at least 10\,\% less close-following with the interval excluding 0 and at least 20 fewer close-following seconds per run.
+They must also stay within the side limits: delay at most 2\,\% worse, flow at most 0.5\,\% worse, braking at 3\,m/s$^2$ at most 5\,\% worse, full-emergency events at most 5\,\% or 5 per run worse, collisions at most the opponent's plus one; and, against p333, delay within 5\,\% and flow within 1\,\%.
+A 5\,\% non-inferiority bound on delay is reported beside T2, because the 2\,\% point rule passes a policy that is truly 2\,\% worse about half the time (52\,\% in a resampling check, \ledger{V435}).
+
+\emph{T1 and the advance rule.} A finalist is better than v3w in a cell by path (a), less delay with the interval excluding 0 and close-following at most 10\,\% higher, or by path (b), at least 10\,\% less close-following with the interval excluding 0 and delay at most 2\,\% higher.
+Harm against v3w, more than 2\,\% worse delay or more than 10\,\% more close-following with the interval's upper bound below 0, removes a candidate.
+A candidate is also removed (floor KILL) if, in either cell, its policies have less than 10\,\% fewer close-following seconds than p333, or more delay than no control with the interval excluding 0.
+
+\emph{Against no control.} A policy set passes if its delay is at least 10\,\% lower with the interval excluding 0 and its close-following is not harmed under the harm rule above \ledger{V459}.
+Without the second part, a delay gain bought with more close-following would count as a win.
+Confirmatory~3's no-control clause is reported beside it: no control's close-following, delay and braking, and, where at least 4 of 5 policies are clearly worse on close-following, the sentence ``no control had fewer such seconds, at [y]\,\% more delay''.
+
+\emph{Outcomes.} Each cell receives one of three pre-written sentences:
+W, a T2 win in a cell where a 3E rule counts;
+G, a win against the grid only, with no counting 3E rule beaten;
+N, no T2 win where a 3E rule counts.
+A cell where no 3E rule counts does not close the claim against tuned rules (the protocol's rule D10, \ledger{V454}).
+
+\emph{Stop rules.} Confirmatory~3 carried an early KILL: the chain stopped if no rule beat no control on delay by at least 10\,\% with the interval excluding 0 in X1 or X2 at 5,300\,veh/h. In round~2 the floor KILL above removes single candidates.
+
+\begin{table}[tbp]
+\centering
+\todo{T6: statistic, CI levels by phase, counting, T2 thresholds, harm, non-inferiority, no-control bar, outcomes, band, tile rule, which readings have a no-effect null, sign convention}
+\caption{Readings and thresholds fixed before data.}\label{tab:readings}
+\end{table}
+
+\subsection{Integrity rules}\label{sec:integrity}
+
+Every run uses a frozen copy of its commit, and a replay at that commit must reproduce the stored rows \ledger{V398}.
+Traced runs must equal untraced runs on every numeric key, because a trace once changed a run \ledger{V386}.
+If a bug is found after results, it is fixed, everything affected is re-run, and both outcomes are logged.
+A gate statistic gets a no-effect null before it is used, after a gate was found that could not fail \ledger{V244}; such nulls exist for confirmatory~3's reading, the collapse check and T1's path (b), but not yet for the 10\,\% no-control bar, the 2\,\% counting filter, the side limits or the tile rule.
+What a counter measures is traced on a sample before it enters a claim \ledger{V283}; this is done for two counters only (L20).
+Rewards are smoke-tested in the mode in which training runs \ledger{V294}, the policy inputs were audited \ledger{V387--V389}, and every policy set passes a collapse check.
+Adversarial reviews were run before the decisive runs \ledger{V377, V453}; the lighter reviews are disclosed in Section~\ref{sec:prereg}.
+
+\subsection{The map-tile rule}\label{sec:tile_rule}
+
+The decision map of Section~\ref{sec:results} shows one tile per cell (X1 or X2 at 5,300\,veh/h), measure and opponent, computed on the policy arm (the per-seed mean over 5 policies) with a 95\,\% percentile bootstrap and the sign convention above \ledger{V462}.
+A tile is W if close-following is at least 10\,\% better (delay: at least 5\,\%) with the interval's lower bound above 0; L if close-following is more than 10\,\% worse (delay: more than 2\,\%) by point with the interval's upper bound below 0; and T otherwise.
+Flow, braking at 3\,m/s$^2$, full-emergency events and collisions appear as markers where they breach T2's side limits, and the number of single policies meeting W is shown beside each tile.
+The rule was logged after round~2's validation rows existed and before any test row.
+No tile is a verdict: only T2 and the no-control bar decide.

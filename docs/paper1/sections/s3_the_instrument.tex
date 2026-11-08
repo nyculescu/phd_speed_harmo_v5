@@ -1,3 +1,163 @@
 \section{The instrument: the r2m3 plant, its V\&V record and its numbered limits}\label{sec:the_instrument}
 
-\todo{plan.md, section 3; about 1950 words}
+This section describes the plant as built and as read back from the simulator, and states, requirement by requirement, what supports the comparison in Section~\ref{sec:results} and which limits every result carries.
+The plant is called r2m3 (two on-ramps, three main lanes) and its frozen configuration is \texttt{plant\_c3}.
+The standard we apply is ``valid for its intended use''; we do not call the plant proven.
+Grey bracketed codes such as \ledger{V367} point to entries of the project's decision ledger (Appendix~\ref{sec:supplement}).
+\todo{release form of the ledger and code is an open decision (plan.md, open decision on release)}
+
+\subsection{Intended use}\label{sec:intended_use}
+
+The V\&V record fixes the use before it lists any requirement:
+
+\begin{quote}
+\emph{Use:} compare controllers that set the time headway of automated cars (ALKS; 1.6, 1.2, 1.0 or 0.8\,s) against rule-based controllers and no control, on paired differences in door-to-door delay (with insertion queues), served flow, close-following (TTC below 3\,s), braking at step resolution and severe events, on a synthetic three-lane freeway with two on-ramps, 50\,\% ALKS, demand 4,090--6,000\,veh/h, steady or with tapered slowdowns (X1, X2).
+
+\emph{Not for:} absolute travel times or capacities of a real road; effects on a calibrated or field site; lateral or merge-conflict safety; V2V with latency or loss; human adaptation to automated cars.
+
+\emph{Acceptance:} the plant is valid for this use when every requirement below is met, or its gap is stated as a limit that every claim sentence carries.
+\end{quote}
+
+ALKS denotes the Automated Lane Keeping System of UN Regulation No.~157~\autocite{UNR157}\verify; HDV denotes a human-driven vehicle.
+Some reported rows fall outside this use, and we label them ``outside the plant's stated intended use'' instead of widening it \ledger{V462}.
+They are the demand band and the training condition T of one opponent, both under a random training slowdown (one slowdown on edge 3, 4 or 5 at a limit drawn from 25--60\,km/h), and the two history cells H1 (a slow truck) and H2 (ramp bursts).
+The band's demand, 4,500--6,000\,veh/h, lies inside the stated range; only its slowdown does not.
+History rows from the earlier plant versions P0 and P0d are labelled ``not the V\&V target''.
+The intended use was written on 2026-11-07, after confirmatory~3 and round~1 had already used the plant \ledger{V459}; Section~\ref{sec:verification_changed} returns to this.
+
+\subsection{Network}\label{sec:network}
+
+The network (Fig.~\ref{fig:network}, Table~\ref{tab:plant}) is a 6.8-km freeway with three main lanes and two single-lane on-ramps, flat, with no off-ramp and no lane drop.
+Every lane, ramps included, has a 100-km/h limit and is 3.2\,m wide.
+Each ramp joins through an acceleration lane (3a and 4a), 294.72\,m long against a nominal 300\,m (L1).
+The merges are ``1.2\,km apart'' measured from the end of 3a to the start of 4a (edge~3, 1,194.3\,m); junction to junction they are 1,500\,m apart, and we state both.
+Ramp~1 carries a signal that is held green under every controller in this paper; ramp~2 has neither signal nor detectors.
+The three route lengths, about 6,778, 3,700 and 2,211\,m without junction-internal lanes, are derived from the network file, not read from a specification.
+
+\begin{figure}[tbp]
+\centering
+\todo{F1: r2m3 to scale, edges, lanes, acceleration lanes, ramps, X1 and X2 edges, detectors, both reference distances}
+\caption{The r2m3 network to scale. X2 acts on edge~3 between the merges and X1 on edge~4 downstream of 4a.}\label{fig:network}
+\end{figure}
+
+\begin{table}[tbp]
+\centering
+\todo{T2: geometry, demand, fleet (configured and realised), actuator, slowdowns, simulation settings}
+\caption{The plant at a glance. Route lengths are derived. The SUMO arguments are those stored with the r1m3 baseline.}\label{tab:plant}
+\end{table}
+
+\subsection{Demand, run window and flow}\label{sec:demand}
+
+Vehicles enter as one Poisson stream at $q$\,veh/h, constant within a run, and split over the three routes in shares 70/15/15 (mainline, ramp~1, ramp~2), departing at the highest speed SUMO allows on insertion (\texttt{departSpeed} max).
+A run lasts 1,800\,s: a 300-s warm-up and a 1,500-s measurement window.
+Served flow is the number of vehicles that reach edge~4 inside the window, written as vehicles per 1,500\,s; for scale, 2,132 vehicles correspond to about 5,120\,veh/h.
+No test yet shows that the inserted demand matches the configured level and ramp shares within sampling error (L2).
+
+\subsection{Fleet and drivers}\label{sec:fleet}
+
+Each vehicle's class is drawn on insertion: 7.5\,\% trucks, 50\,\% ALKS cars and 42.5\,\% HDV cars as configured.
+A read-back over 106,128 draws gave 42.76\,\% HDV, 7.68\,\% trucks and 49.56\,\% ALKS; these draws used the routes of the single-ramp plant r1m3, not r2m3 (L4).
+The full parameter table, with a source and status per parameter, is Table~T11 in the supplement.
+
+HDVs and trucks follow SUMO's Krauss model~\autocite{Krauss1998}\verify.
+The HDV time-gap scale (0.8) and action-step scale (0.5) were calibrated earlier on a human-only lane-drop corridor \ledger{V187, V188}, not on this plant.
+As a result the realised mean HDV gap parameter is 0.934\,s, against a mean of 1.15\,s for close following measured on a UK motorway~\autocite{AlObaedi2019}\verify\ (L5).
+HDV acceleration 2.6, deceleration 4.5 and emergency deceleration 9.0\,m/s$^2$ are SUMO defaults and lie above the ranges in the sources we collected (for acceleration, 1.8--2.2\,m/s$^2$~\autocite{Long2000}\verify); the lane-change assertiveness of 1.4 has no source (L5, L8).
+
+ALKS cars follow the Intelligent Driver Model~\autocite{Treiber2000}\verify\ with a default time headway of 1.6\,s.
+That value is the R157 minimum gap at 60\,km/h~\autocite{UNR157}\verify; the regulation's table stops at 60\,km/h, while the plant runs ALKS at up to 100\,km/h and commands gaps down to 0.8\,s.
+Whether these gaps and deceleration limits are consistent with R157 has not been analysed (L7).
+Emission classes are read back (cars Euro-4 petrol, trucks Euro-VI 34--40\,t, HBEFA4) and fuel is reported only with that disclosure.
+Every parameter source carries [VERIFY] until the author has read it in full.
+
+\subsection{Actuator and sensing}\label{sec:actuator}
+
+Fig.~\ref{fig:boundary} draws the boundary between SUMO, our environment layer and the controllers.
+A controller chooses one of four headway levels (1.6, 1.2, 1.0, 0.8\,s) for each ALKS every 10\,s and holds it for 10\,s.
+The command takes effect only when the ALKS follows another ALKS within 150\,m and has had the same leader on two consecutive updates; otherwise the ALKS keeps 1.6\,s.
+A longer commanded gap is approached at no more than 0.2\,s of headway per second (\texttt{tau\_rise}), so that a command cannot force hard braking; the ALKS action step is 0.5\,s.
+V2V messages and roadside speeds are ideal, with no latency or loss (L15).
+
+The environment layer also applies a smooth no-undertaking rule to ALKS, which is our own model and replaces SUMO's abrupt rule for them (L9).
+Above 60\,km/h and outside the acceleration lanes, an ALKS's speed is capped at that of a slower vehicle ahead in the lane to its left within 8\,s of travel; the ALKS eases down to the cap at the larger of a speed ratio of 1.1 per second and the deceleration needed to match that vehicle over the gap, the latter limited to 4.4\,m/s$^2$.
+No inspection yet shows that the policy inputs carry no information a real vehicle could not have, such as the seed, the event timing or a future state (L14).
+
+\begin{figure}[tbp]
+\centering
+\todo{F2: SUMO, the environment layer (V2V gate, tau\_rise, no-undertaking rule) and the controllers; observation, actuation and ground-truth measurement paths}
+\caption{Plant, environment code and controllers as built. Measurement counters read ground truth; the policy inputs are not yet inspected for information a vehicle could not have (L14).}\label{fig:boundary}
+\end{figure}
+
+\subsection{Slowdowns}\label{sec:slowdowns}
+
+Two slowdowns define the decision cells (Fig.~\ref{fig:slowdowns}).
+In X1, edge~4's limit drops to 25\,km/h at 600\,s and again at 1,200\,s; each event lasts 120\,s, including a 20-s linear taper, and the limit is then released at once.
+In X2, edge~3's limit drops to 30\,km/h from 700\,s for 180\,s, including the same taper, and is then released at once.
+The taper is updated on the 0.1-s simulation clock.
+It exists because the untapered events produced artificial hard braking: on one seed at 4,600\,veh/h, 57 of 59 vehicle-seconds of braking at 7\,m/s$^2$ or harder fell in the first 10\,s of the events \ledger{V345}.
+The X1 and X2 values have no field source, and the record that checks them event by event is not written (L12).
+
+\begin{figure}[tbp]
+\centering
+\todo{F3: speed limit against time for X1 and X2 with warm-up and window shaded; inset, the training draw (outside the plant's stated intended use)}
+\caption{Speed-limit profiles of the slowdowns X1 and X2. The inset shows the random training slowdown, which lies outside the plant's stated intended use.}\label{fig:slowdowns}
+\end{figure}
+
+\subsection{Simulation and reproducibility}\label{sec:reproducibility}
+
+The plant runs in SUMO 1.27.1~\autocite{Lopez2018} through libsumo, one simulation per process, with a 0.1-s step, teleporting off, collisions recorded as warnings, and junction collision checks on.
+SUMO uses its ballistic position update because the vehicle types set an action step \ledger{V367}; no \texttt{plant\_c3} log line confirms this yet, and the stored SUMO arguments are those of the r1m3 baseline.
+Replays reproduce stored rows: 200 base replays at a frozen commit matched 28,555 stored keys \ledger{V398}.
+Rows also match across machines: a rented server reproduced the laptop's check rows and training fingerprint \ledger{V437}, and the laptop reproduced the server's tuning rows on three seeds per cell \ledger{V461}.
+Stored result files are hashed and the toolchain is pinned.
+Two deviations are disclosed (L17): the metadata of the CMA-ES tuning run records the hash of its script but no commit \ledger{V461}, and round~2 resumes interrupted work by matching rows on name, demand level and seed, without a configuration hash \ledger{V455}.
+
+\subsection{The V\&V record}\label{sec:vv_record}
+
+The record follows the usual systems-engineering pattern: intended use, requirements, a verification method per requirement (inspection, analysis, demonstration or test), evidence, status, traceability to claim elements, and stated limits.
+Background sources for this structure are IEEE~1012, Sargent's validation framework and the FHWA Traffic Analysis Toolbox volume~III\verify.
+\todo{add the three to references.bib once read}
+Its 28 requirements fall in six groups: road, demand and insertion; drivers and fleet; actuator and sensing; numerics and reproducibility; measurement; and behaviour that makes control meaningful.
+Table~\ref{tab:vv} summarises them and Table~T10 in the supplement lists them in full.
+At the time of writing, 6 are met, 13 partial, 7 open gaps and 2 stated limits.
+\todo{regenerate the tally from the reviewed record}
+
+Two pieces of evidence that do not depend on any learned policy support the requirements that the command binds and that control matters (PR-10, PR-25).
+In a pre-run on 10 seeds at 5,300\,veh/h, the fixed 0.8-s rule had less finishers' delay than no control by 29.6\,\% [24.8, 48.7] in steady traffic, 19.9\,\% [15.8, 22.1] in X1 and 12.8\,\% [9.0, 24.8] in X2, and more flow by 3.5\,\% [1.6, 4.6], 4.4\,\% [3.0, 5.8] and 3.0\,\% [2.3, 4.8] (95\,\% CIs) \ledger{V382}.
+No arm collided, and braking counted at 1\,Hz was 0.965--0.991 of braking counted every 0.1\,s.
+This is 10 seeds at one level, so PR-25 stays partial; the record's earlier citation of policy results for PR-25 was circular and is not used (L21).
+A steady-traffic check on the earlier plant P0d (r1m3, 20 seeds, four levels; not the V\&V target) passed six of seven criteria, with the seventh counted as met with disclosure, and had no collision or teleport in 80 runs \ledger{V376}.
+On \texttt{plant\_c3} itself, no control collided once in 40 X1 runs of round~1 and never in X2, so the collision requirement is partial: collisions are counted and reported for every arm, but are too rare to compare (L16).
+
+\begin{table}[tbp]
+\centering
+\todo{T3: requirements by group and status, traceability to claim elements, pointer to L1--L27, the three gaps that block ``verified and validated''}
+\caption{V\&V summary for r2m3 \texttt{plant\_c3}.}\label{tab:vv}
+\end{table}
+
+\subsection{What verification changed, and when}\label{sec:verification_changed}
+
+The plant changed twice, each time after a check found a measured defect (Table~\ref{tab:lineage}).
+From P0 to P0d \ledger{V367}: on two seeds at 5,300\,veh/h, ALKS braked at 7\,m/s$^2$ or harder for 1,749 and 972 vehicle-seconds, which the stored 1-Hz metric reported as 0 and 0; the smooth rule's look-ahead and braking limit were then set.
+From P0d to \texttt{plant\_c3}: on one seed at 5,300\,veh/h, an instant rise of the commanded gap produced 71.3 and 75.3 vehicle-seconds of braking at 7\,m/s$^2$ in X1 and X2, against 11 and 5 seen at 1\,Hz \ledger{V377}, which led to \texttt{tau\_rise}; the untapered slowdowns described above led to the taper \ledger{V345}.
+On two development seeds, and for the fixed 0.8-s rule only, the fixes removed moving full-emergency events (72, 63 and 78 to 0, 0 and 0 in steady traffic, X1 and X2) at about 10--13\,\% more delay under the slowdowns \ledger{V380}; this is a description, not a check.
+
+The order matters for how far the comparison can be trusted.
+P0d came after phase~1 and confirmatory~2, and its look-ahead and braking limit were chosen after a check failed on undertaking.
+\texttt{plant\_c3} came after confirmatory~2 and a later single test; one rule family was derived from P0 policies, and the reward was shaped by runs that knew the fixed rule.
+The V\&V target and the intended use were fixed after confirmatory~3 and round~1.
+Each change corrected a defect in what the plant did, not a ranking of controllers, and \texttt{plant\_c3} stays frozen for all later work.
+An earlier entry of the ledger asked that controllability properties be fixed before control results \ledger{V245}; for this plant that was not done in that order, and we report it rather than repair it.
+
+\begin{table}[tbp]
+\centering
+\todo{T4: P0, P0d, plant\_c3; trigger, change, measured effect, timeline against the control results}
+\caption{Plant lineage: what verification found, what it changed, and when relative to the control results.}\label{tab:lineage}
+\end{table}
+
+\subsection{Limits carried by every claim}\label{sec:limits}
+
+Every requirement that is partial, an open gap or a stated limit becomes a numbered limit, as do two met requirements whose status carries a condition (the no-undertaking rule and the input normalisation) and three record items with no requirement (an uncalibrated model, a synthetic geometry, and no measure of lateral or merge conflicts).
+This gives L1--L27 (Table~T19 in the supplement), and every claim sentence in this paper reads ``within limits L1--L27''.
+Three of them must close before the words ``verified and validated'' appear anywhere: whether the inputs carry information a vehicle could not have (L14), a traced sample for every reported counter (L20), and the location of gains at merge~2, where 608.5 lane-end stops per run occur against 7 at ramp~1 under no control on P0d, and where 46--61\,\% of an earlier X2 gain sat \ledger{V396} (L24).
+When a limit closes, the numbering is regenerated from the reviewed record.
