@@ -150,6 +150,9 @@ def run_one(a: tuple) -> dict:
                     S["ttc_half"] += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < 3.0
 
     def period(t):
+        if env.pert is not None and env.pert.kind in ("surge", "truck_fixed"):     # Plan B labels; slowdown keeps the code below
+            from v5b.fleet.perturb import event_period
+            return event_period(env.pert.s, t)
         spec = env.pert.s if env.pert is not None and env.pert.kind == "slowdown" else None
         if spec is None:
             return "rest"

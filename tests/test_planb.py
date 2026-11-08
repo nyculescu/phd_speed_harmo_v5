@@ -93,3 +93,133 @@ def test_existing_kinds_leave_the_demand_list_alone():
         a, b = env_for(7_480_001), env_for(7_480_001)
         pt.Perturb(b, spec, 7_480_001).demand()
         assert rows(a.dem) == rows(b.dem)
+
+
+# The pack's Plan B keys on planted traces (planb.md §5, PR-24).
+from v5b.fleet import measure as me
+
+
+class _Pert:
+    def __init__(self, spec, log=()):
+        self.s, self.kind, self.log = spec, spec["kind"], list(log)
+
+
+class _Env:
+    def __init__(self, pert=None):
+        self.alks_all, self.warm, self.t_end, self.pert = {"a"}, 300.0, 1800.0, pert
+
+        class D:
+            veh, route_of = [], []
+        self.dem = D()
+
+
+class _Sim:
+    """A planted world: per second, vehicle -> (road, lane index, position, speed, leader, gap)."""
+    def __init__(self):
+        self.vehicle, self.simulation, self.now, self.pending = self, self, {}, []
+
+    def getIDList(self):
+        return list(self.now)
+
+    def getRoadID(self, v):
+        return self.now[v][0]
+
+    def getLaneID(self, v):
+        return f"{self.now[v][0]}_{self.now[v][1]}"
+
+    def getLanePosition(self, v):
+        return self.now[v][2]
+
+    def getSpeed(self, v):
+        return self.now[v][3]
+
+    def getLeader(self, v, dist):
+        lead, gap = self.now[v][4], self.now[v][5]
+        return (lead, gap) if lead else ("", -1.0)
+
+    def getMinGap(self, v):
+        return 2.5
+
+    def getPendingVehicles(self):
+        return self.pending
+
+
+def _pack(pert=None, trucks=("t",)):
+    return me.Measure(_Env(pert), set(trucks), {"main": ("1 2 3a 3 4a 4 5", 1.0, 3)}, lambda e: 1000.0, 0.1)
+
+
+def test_event_period_labels():
+    s = {"kind": "surge", "profile": [[0, 600, 5300], [600, 1200, 6000], [1200, 1800, 4600]]}
+    assert [pt.event_period(s, t) for t in (599, 600, 1199, 1200)] == ["before", "surge", "surge", "post"]
+    tr = {"kind": "truck_fixed", "first": 360.0}
+    assert [pt.event_period(tr, t) for t in (359, 360, 1799)] == ["before", "trucks", "trucks"]
+    x1 = {"kind": "slowdown", "times": [600.0, 1200.0], "dur": 120.0, "taper": 20.0}
+    assert [pt.event_period(x1, t) for t in (500, 605, 650, 730, 900, 1210)] == ["before", "taper", "hold", "after", "rest", "taper"]
+    assert pt.event_period(None, 700) == "rest" and pt.event_period({"kind": "brake"}, 700) == "rest"
+
+
+def test_close_following_by_road_period_and_lane_change():
+    m = _pack(_Pert({"kind": "truck_fixed", "first": 360.0}))
+    w = _Sim()
+    # f follows l on road 3 at 20 m/s against 10 m/s, gap 10 m: TTC 1.25 s, every second; f changes lane at 400 s
+    for t in range(350, 420):
+        w.now = {"l": ("3", 1, 500.0, 10.0, "", 0.0), "f": ("3", 0 if t < 400 else 1, 480.0, 20.0, "l", 10.0)}
+        m.second(w, float(t))
+    row = m.finish(420.0, None, "x")
+    assert row["m_road_ttc3"] == {"3": {"before": 10, "trucks": 60}}
+    assert row["m_ttc3_all"] == 70
+    assert row["m_ttc3_lc"] == 6     # 400-405 s: within 5 s after f's lane change
+    assert row["m_road_vs"]["3"] == {"before": 20, "trucks": 120}
+    assert row["m_road_dist"]["3"]["trucks"] == pytest.approx(60 * 30.0)
+
+
+def test_stuck_counts_only_outside_a_stopped_queue():
+    m = _pack()
+    w = _Sim()
+    for t in range(301, 301 + 310):
+        w.now = {"q1": ("4a", 0, 100.0, 0.0, "q0", 5.0), "q0": ("4a", 0, 110.0, 0.0, "", 0.0),     # q1 queues behind stopped q0
+                 "d": ("3", 1, 50.0, 0.05, "m", 20.0), "m": ("3", 1, 75.0, 8.0, "", 0.0)}     # d sits still while its leader moves
+    for t in range(301, 301 + 310):
+        m.second(w, float(t))
+    row = m.finish(700.0, None, "x")
+    assert row["m_stuck_n"] == 2     # d, and q0 (no leader within 50 m); q1 is in a queue
+
+
+def test_robust_braking_counted_where_it_peaks():
+    m = _pack(_Pert({"kind": "surge", "profile": [[0, 600, 5300], [600, 1200, 6000], [1200, 1800, 4600]]}))
+
+    class L(_Sim):
+        def getRoadID(self, v):
+            return "4a" if v == "c" else "1"
+
+        def getLanePosition(self, v):
+            return 42.0
+
+        def getLeader(self, v, dist):
+            return ("", -1.0)
+
+    ls = L()
+    for k, a in enumerate((-3.2, -4.1, -3.0, 0.0)):     # car c: one event peaking at -4.1, robust
+        m.vehicle_step(ls, "c", a, 20.0, 0.0, 700.0 + 0.1 * k)
+    for k, a in enumerate((-3.6, 0.0)):     # truck t: -3.6, robust for a truck
+        m.vehicle_step(ls, "t", a, 20.0, 0.0, 500.0 + 0.1 * k)
+    for k, a in enumerate((-3.8, 0.0)):     # ALKS a: -3.8, not robust
+        m.vehicle_step(ls, "a", a, 20.0, 0.0, 1300.0 + 0.1 * k)
+    row = m.finish(1800.0, None, "x")
+    assert row["m_robust_road"] == {"4a": {"surge": 1}, "1": {"before": 1}}
+    assert sum(row["m_peak_car"][2:]) + sum(row["m_peak_alks"][2:]) + sum(row["m_peak_truck"][1:]) == 2
+
+
+def test_congestion_run_and_capped_field():
+    n = np.ones((40, 20))
+    v = np.full((40, 20), 25.0)     # 90 km/h everywhere
+    v[5:40, 0:6] = 10.0     # 36 km/h on 6 cells x 50 m = 0.3 km for 35 bins = 350 s
+    cong_vs, run = me.congestion(v, n)
+    assert cong_vs == 35 * 6 and run == 350.0
+    v[20, 0] = 25.0     # one bin drops to 0.25 km: the run splits
+    assert me.congestion(v, n)[1] == 190.0
+    m = _pack(_Pert({"kind": "truck_fixed", "first": 360.0}, [(0, "cap", 400.0)]), trucks=("cap",))
+    w = _Sim()
+    w.now = {"cap": ("1", 0, 100.0, 11.1, "", 0.0), "c": ("1", 1, 100.0, 30.0, "", 0.0)}
+    m.second(w, 301.0)
+    assert m.st[1].sum() == 2 and m.st_nc[1].sum() == 1 and m.capped == {"cap"}

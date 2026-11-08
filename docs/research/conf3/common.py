@@ -14,7 +14,10 @@ COND = {"S": None,
         "X1": {"kind": "slowdown", "edge": "4", "limit_kmh": 25, "dur": 120.0, "times": [600.0, 1200.0], "taper": 20.0},
         "X2": {"kind": "slowdown", "edge": "3", "limit_kmh": 30, "dur": 180.0, "times": [700.0], "taper": 20.0},
         "H1": {"kind": "truck", "cap_kmh": 50, "period": 300.0, "first": 360.0},
-        "H2": {"kind": "burst", "cycle": 120.0}}
+        "H2": {"kind": "burst", "cycle": 120.0},
+        # Plan B cells (planb.md §4.2, V480)
+        "SURGE": {"kind": "surge", "profile": [[0.0, 600.0, 5300.0], [600.0, 1200.0, 6000.0], [1200.0, 1800.0, 4600.0]]},
+        "TRUCK": {"kind": "truck_fixed", "n": 10, "first": 360.0, "spacing": 80.0, "cap_kmh": 40.0, "route": "main", "lane": 0}}
 PRIMARY = ("X1", "X2")
 Q = 5300.0
 LEVELS = (4090.0, 4600.0, 5300.0)

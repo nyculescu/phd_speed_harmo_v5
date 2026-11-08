@@ -30,6 +30,13 @@ DEC_PLACES = ("up", "m1", "between", "m2", "down", "ramp1", "ramp2", "other")
 CHANGE_EDGES = (0, 1, 2, 3, 4, 6, 10, 10**9)     # level changes per ALKS: 0, 1, 2, 3, 4-5, 6-9, 10+
 ASK_EDGES = (0, 1, 5, 10, 20, 40, 80, 10**9)     # decisions asked per ALKS
 CONF_EDGES = tuple(round(0.1 * i, 1) for i in range(11))     # probability of the chosen level, 0.0-1.0 in tenths
+# Plan B location keys (planb.md §5): every road of r2m3, ramps pooled; "pending" is the insertion queue of each route.
+ROAD_GROUP = {"1": "1", "2": "2", "3a": "3a", "3": "3", "4a": "4a", "4": "4", "5": "5", "r": "ramp1", "rj": "ramp1", "r2": "ramp2", "rj2": "ramp2"}
+REF_SPEED = 100.0 / 3.6
+ROBUST_BIN = {"car": 2, "alks": 2, "truck": 1}     # first PEAK_EDGES bin of a robust event: -4.0 m/s² for cars and ALKS, -3.5 for trucks
+TTC_S, LC_WINDOW = 3.0, 5.0     # s: close-following threshold; a sample within this many seconds after a lane change of either vehicle
+STUCK_V, STUCK_S, STUCK_LEAD_M = 0.1, 300, 50.0     # a vehicle below STUCK_V for STUCK_S s, not behind a stopped leader within STUCK_LEAD_M
+CONG_KM, CONG_RUN_S = 0.3, 300.0     # G1b: a congested length of at least 0.3 km for at least 5 minutes
 
 
 def policy_probs(rule, o) -> dict:
@@ -110,6 +117,7 @@ class Measure:
         for r in RAMPS:
             self.minute[f"{r}_queue"] = np.zeros(nm)     # queued vehicle-seconds on the ramp
             self.minute[f"{r}_pending"] = np.zeros(nm)     # vehicle-seconds waiting to be inserted
+        self.main_pending = np.zeros(nm)     # Plan B drain: main-route insertion queue, kept out of m_minute so that key is unchanged
         self.merge_pos = {m: np.zeros(10, np.int64) for m in MERGES}     # where on the acceleration lane a vehicle left lane 0
         self.route = {v.vid: r for v, r in zip(env.dem.veh, env.dem.route_of)}
         self.cav = hasattr(env, "lvl") and hasattr(env, "headways")
@@ -122,6 +130,23 @@ class Measure:
         self.level_s = np.zeros(max(nl, 1), np.int64)     # ALKS-seconds at each level with V2V on (the level acts)
         self.off_s = 0     # ALKS-seconds with V2V off (the level does not act)
         self.veh_s = defaultdict(lambda: np.zeros(max(nl, 1) + 1, np.int64))     # vehicle -> seconds at each level with V2V on, then off
+        from v5b.fleet.perturb import event_period
+        pert = getattr(env, "pert", None)
+        self.spec = pert.s if pert is not None else None
+        self.period = event_period
+        self.capped = {x[1] for x in pert.log} if pert is not None and pert.kind == "truck_fixed" else set()
+        self.st_nc = np.zeros_like(self.st)     # the same field without the capped trucks' own samples (G1b for TRUCK)
+        self.road_ttc = defaultdict(lambda: defaultdict(int))     # road group -> period -> 1-Hz samples with TTC < 3 s
+        self.road_vs = defaultdict(lambda: defaultdict(float))     # road group -> period -> vehicle-seconds (1 Hz)
+        self.road_dist = defaultdict(lambda: defaultdict(float))     # road group -> period -> metres (1 Hz)
+        self.robust_road = defaultdict(lambda: defaultdict(int))     # road group -> period -> robust braking events, by peak place
+        self.brk = []     # per braking event: class, peak, duration, time, road group, lane position of the peak
+        self.lc_t = {}     # vehicle -> time of its latest lane change on the same road
+        self.rl = {}     # vehicle -> (road, road lane index)
+        self.ttc_all = self.ttc_lc = 0
+        self.stop_run = defaultdict(int)
+        self.stuck = set()
+        self.pending_end = 0
 
     def cls(self, v: str) -> str:
         return "truck" if v in self.trucks else "alks" if v in self.alks else "car"
@@ -137,8 +162,10 @@ class Measure:
         self.n[c] += 1
         e = self.ev.get(v)
         if a <= BRAKE:
+            if e is None or a < e[1]:
+                place = (t, ls.vehicle.getRoadID(v), ls.vehicle.getLanePosition(v))
             if e is None:
-                self.ev[v] = [t, a, t]
+                self.ev[v] = [t, a, t, place]
                 lead = ls.vehicle.getLeader(v, 200.0)
                 if lead and lead[0]:
                     t_l = self.started.get(lead[0])
@@ -146,15 +173,22 @@ class Measure:
                         self.cascade[c] += 1
                 self.started[v] = t
             else:
+                if a < e[1]:
+                    e[3] = place
                 e[1], e[2] = min(e[1], a), t
         elif e is not None:
             self._close(v, c)
 
     def _close(self, v: str, c: str) -> None:
         """Duration = braking steps x dt, so the durations add up to b3_step even when a vehicle leaves mid-event."""
-        t0, pk, t1 = self.ev.pop(v)
+        t0, pk, t1, (tp, road, x) = self.ev.pop(v)
         d = t1 - t0 + self.dt
-        self.peak[c][bin_of(pk, PEAK_EDGES)] += 1
+        b = bin_of(pk, PEAK_EDGES)
+        g = ROAD_GROUP.get(road, "other")
+        if b >= ROBUST_BIN[c]:
+            self.robust_road[g][self.period(self.spec, tp)] += 1
+        self.brk.append((CLASSES.index(c), pk, d, tp, g, x))
+        self.peak[c][b] += 1
         self.dur[c][bin_of(d, DUR_EDGES)] += 1
         self.events[c] += 1
         self.event_s[c] += d
@@ -208,6 +242,18 @@ class Measure:
                 j = min(int((o + x) // ST_DX), self.st.shape[2] - 1)
                 self.st[0, k, j] += s
                 self.st[1, k, j] += 1
+                if v not in self.capped:
+                    self.st_nc[0, k, j] += s
+                    self.st_nc[1, k, j] += 1
+            g, per = ROAD_GROUP.get(road, "other"), self.period(self.spec, t)
+            self.road_vs[g][per] += 1
+            self.road_dist[g][per] += s
+            ei, li = lane.rsplit("_", 1)
+            rl = (road, int(li) - 1 if ei in ("3a", "4a") else int(li))
+            prl = self.rl.get(v)
+            if prl is not None and prl[0] == rl[0] and prl[1] != rl[1]:
+                self.lc_t[v] = t
+            self.rl[v] = rl
             prev = self.road.get(v)
             if prev is not None and prev != road:
                 for mg, (acc, after) in MERGES.items():
@@ -238,10 +284,38 @@ class Measure:
                 else:
                     self.off_s += 1
                     self.veh_s[v][-1] += 1
-        for v in ls.simulation.getPendingVehicles():
+        pend = ls.simulation.getPendingVehicles()
+        per = self.period(self.spec, t)
+        for v in pend:
             r = self.route.get(v)
             if r in ("ramp", "ramp2"):
                 self.minute[f"{'ramp1' if r == 'ramp' else 'ramp2'}_pending"][m] += 1
+            else:
+                self.main_pending[m] += 1
+            self.road_vs[f"pending_{r}"][per] += 1
+        self.pending_end = len(pend)
+        self._pairs(ls, t, per)
+
+    def _pairs(self, ls, t: float, per: str) -> None:
+        """1 Hz: close-following by road and period, the share of it near a lane change, and vehicles stuck outside a queue."""
+        for v in ls.vehicle.getIDList():
+            road = ls.vehicle.getRoadID(v)
+            if road.startswith(":"):
+                continue
+            s = ls.vehicle.getSpeed(v)
+            lead = ls.vehicle.getLeader(v, 200.0)
+            ls_ = ls.vehicle.getSpeed(lead[0]) if lead and lead[0] else None
+            if ls_ is not None and s - ls_ > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / (s - ls_) < TTC_S:
+                self.road_ttc[ROAD_GROUP.get(road, "other")][per] += 1
+                self.ttc_all += 1
+                self.ttc_lc += t - self.lc_t.get(v, -1e9) <= LC_WINDOW or t - self.lc_t.get(lead[0], -1e9) <= LC_WINDOW
+            queued = ls_ is not None and lead[1] <= STUCK_LEAD_M and ls_ < STUCK_V
+            if s < STUCK_V and not queued:
+                self.stop_run[v] += 1
+                if self.stop_run[v] >= STUCK_S:
+                    self.stuck.add(v)
+            else:
+                self.stop_run[v] = 0
 
     def finish(self, t: float, out: Path | None, key: str) -> dict:
         """Scalars and short histograms for the row; the space-time field and minute series go to a side file."""
@@ -278,6 +352,14 @@ class Measure:
             row["m_dec_entropy_mean"] = float(np.mean(self.ent)) if self.ent else None
             row["m_dec_level_s"] = self.level_s.tolist()
             row["m_dec_off_s"] = int(self.off_s)
+        nest = lambda d: {g: dict(x) for g, x in d.items()}
+        row["m_road_ttc3"], row["m_road_vs"], row["m_road_dist"], row["m_robust_road"] = map(nest, (self.road_ttc, self.road_vs, self.road_dist, self.robust_road))
+        row["m_ttc3_all"], row["m_ttc3_lc"] = self.ttc_all, self.ttc_lc
+        row["m_stuck_n"], row["m_pending_end"] = len(self.stuck), self.pending_end
+        row["m_capped"] = sorted(self.capped)
+        row["m_main_pending_min"] = np.round(self.main_pending, 3).tolist()
+        for tag, f in (("", self.st), ("_nc", self.st_nc)):
+            row[f"m_cong_vs{tag}"], row[f"m_cong_run_s{tag}"] = congestion(f[0], f[1])
         row["m_minute"] = {k: np.round(x, 3).tolist() for k, x in self.minute.items()}
         row["m_st_shape"] = list(self.st.shape[1:])
         row["m_st_dx"], row["m_st_dt"] = ST_DX, ST_DT
@@ -286,6 +368,11 @@ class Measure:
             out.mkdir(parents=True, exist_ok=True)
             f = out / f"{key}.npz"
             side = {"v": self.st[0].astype(np.float32), "n": self.st[1].astype(np.float32)}
+            if self.capped:
+                side["v_nc"], side["n_nc"] = self.st_nc[0].astype(np.float32), self.st_nc[1].astype(np.float32)
+            if self.brk:
+                side["brk"] = np.array([(c, pk, d, tp, x) for c, pk, d, tp, _, x in self.brk], np.float32)     # class, peak, duration, time, position
+                side["brk_road"] = np.array([g for *_, g, _ in self.brk])
             if self.cav and self.dec:
                 ids = sorted(set(self.dec) | set(self.veh_s))
                 side["dec_ids"] = np.array(ids)
@@ -302,6 +389,20 @@ MIN_CLUSTER = 3     # cells; smaller jam clusters are noise
 OSC_COVER = 0.8     # a station enters the oscillation metric if it is occupied in at least this share of time bins
 BREAK_MIN = 2     # minutes below CONGESTED_KMH on the acceleration section that make a breakdown, and above it a recovery
 PETROL_G_PER_L, DIESEL_G_PER_L = 745.0, 835.0     # typical fuel densities [VERIFY], used only to print L/100 km
+
+
+def congestion(v_sum, n, dt: float = ST_DT, dx: float = ST_DX) -> tuple:
+    """G1b: vehicle-seconds in cells below 60 km/h, and the longest run (s) of time bins with a congested length of at
+    least CONG_KM km."""
+    V = speed_field(v_sum, n)
+    n = np.asarray(n, float)
+    cong = ~np.isnan(V) & (V < CONGESTED_KMH)
+    ok = cong.sum(axis=1) * dx / 1000.0 >= CONG_KM
+    run = best = 0
+    for x in ok:
+        run = run + 1 if x else 0
+        best = max(best, run)
+    return float(n[cong].sum()), float(best * dt)
 
 
 def quantiles(counts, lo: float, width: float, qs=(0.05, 0.25, 0.5, 0.75, 0.95)) -> list:

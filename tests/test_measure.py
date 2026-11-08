@@ -26,6 +26,12 @@ class _Ls:
         lead = self.leaders.get(v)
         return (lead, 10.0) if lead else ("", -1.0)
 
+    def getRoadID(self, v):     # Plan B: the braking event's place
+        return "4"
+
+    def getLanePosition(self, v):
+        return 100.0
+
 
 def _meas():
     return me.Measure(_Env(), {"t"}, {"main": ("1 2", 1.0, 3)}, lambda e: 1000.0, 0.1)

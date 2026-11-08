@@ -37,6 +37,31 @@ EDGE4_X = 4989.02
 ORACLE_SPEED = 25.0
 
 
+def event_period(spec: dict | None, t: float) -> str:
+    """The period label of time t under a perturbation: slowdown as plant_sweep.period; surge before, during and after the
+    profile's middle segments; truck_fixed before and after the first slot; every other kind "rest"."""
+    if spec is None:
+        return "rest"
+    k = spec["kind"]
+    if k == "slowdown":
+        if t < spec["times"][0]:
+            return "before"
+        for t0 in spec["times"]:
+            if t0 <= t < t0 + spec.get("taper", 0.0):
+                return "taper"
+            if t0 <= t < t0 + spec["dur"]:
+                return "hold"
+            if t0 + spec["dur"] <= t < t0 + spec["dur"] + 120.0:
+                return "after"
+        return "rest"
+    if k == "surge":
+        prof = spec["profile"]
+        return "before" if t < prof[1][0] else "surge" if t < prof[-1][0] else "post"
+    if k == "truck_fixed":
+        return "before" if t < spec["first"] else "trucks"
+    return "rest"
+
+
 class Perturb:
     def __init__(self, env, spec: dict, seed: int = 0):
         if spec["kind"] == "random":
