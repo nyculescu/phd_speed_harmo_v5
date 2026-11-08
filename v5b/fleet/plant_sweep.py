@@ -106,6 +106,7 @@ def run_one(a: tuple) -> dict:
     st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
     step0, sec0 = env._sim_step, env._second
+    meas = None     # V468: report-only measurement pack, created after reset; reads only
 
     def step():
         step0()
@@ -121,8 +122,11 @@ def run_one(a: tuple) -> dict:
         for v in ls.vehicle.getIDList():
             a, s = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v)
             alks = v in env.alks_all
+            f = ls.vehicle.getFuelConsumption(v)
             S["dist_step"] += s * dt
-            S["fuel_step"] += ls.vehicle.getFuelConsumption(v) * dt
+            S["fuel_step"] += f * dt
+            if meas is not None:
+                meas.vehicle_step(ls, v, a, s, f, t)
             S["jerk_step"] += abs(a - prev_a.get(v, a))
             if a <= -3.0:
                 S["b3_step"] += dt
@@ -278,11 +282,16 @@ def run_one(a: tuple) -> dict:
             l4a = ls.lane.getLength("4a_0")
             S["end_stop2"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l4a - 30.0 for v in ls.lane.getLastStepVehicleIDs("4a_0"))
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
+        if meas is not None:
+            meas.second(ls, env.sim.t)
         return r
 
     env._sim_step, env._second = step, sec
     o = env.reset()[0]
     trucks = {v.vid for v in env.dem.veh if v.cls == "truck"}
+    if c.get("measure"):
+        from v5b.fleet.measure import Measure
+        meas = Measure(env, trucks, fl.routes(env.cfg.geom), lambda e: ls.lane.getLength(f"{e}_0"), env.dt)
     if "meter" in ctrl:
         bank = ct.LoopBank(fl.loop_ids(env.cfg.geom))
         bank.read(env.sim.t)
@@ -293,6 +302,7 @@ def run_one(a: tuple) -> dict:
         if tr:
             break
     length = {r: sum(ls.lane.getLength(f"{e}_0") for e in x[0].split()) for r, x in fl.routes(env.cfg.geom).items()}
+    mrow = meas.finish(env.sim.t, Path(c["measure"]) if isinstance(c["measure"], str) else None, f"{name.replace('|', '__')}__{q:.0f}__{seed}") if meas is not None else {}
     delay, ramp, ramp2 = [], [], []
     planned = done = 0
     for v, r in zip(env.dem.veh, env.dem.route_of):
@@ -330,6 +340,7 @@ def run_one(a: tuple) -> dict:
     if meter is not None:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
+    row |= mrow
     return row
 
 
