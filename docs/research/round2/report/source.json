@@ -1,0 +1,12 @@
+{
+ "source": "/home/catalin/work/phd/v5b1_runs/round2",
+ "label_thesis": "thesis reading, V459, not a round-2 verdict",
+ "made_by": {
+  "script": "docs/research/round2/report2.py",
+  "commit": "e97a4f6c26e44676037c6236c7b99189b81ba249",
+  "dirty": false,
+  "sha256": "4f024c5aa8e21d7f6fb4a6b02156aba32905889ad2909439d27560217c9924b2"
+ },
+ "ci_tables": "95 % percentile bootstrap (2.5, 97.5); T2 itself is read at its Bonferroni level in test_result.json",
+ "note": "band_3e_vs_os1 in test_result.json stores its *_ci_95_more fields as [lo, hi, point]"
+}
