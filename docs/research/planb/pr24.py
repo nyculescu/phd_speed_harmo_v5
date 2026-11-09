@@ -143,7 +143,7 @@ def recount(rec: dict) -> dict:
            "m_minute.ramp1_pending": pend_min["ramp1"].tolist(), "m_minute.ramp2_pending": pend_min["ramp2"].tolist(), "m_capped_vmax": vmax}
     for tag, f in (("", field), ("_nc", field_nc)):
         out[f"m_cong_vs{tag}"], out[f"m_cong_run_s{tag}"] = congestion(f)
-    return out
+    return {k: {g: dict(x) for g, x in v.items()} if isinstance(v, dict) else v for k, v in out.items()}     # plain dicts cross the process boundary
 
 
 def congestion(f: np.ndarray) -> tuple:

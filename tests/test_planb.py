@@ -1,6 +1,7 @@
 """Plan B (planb.md §7.1): spec tests for the new perturbation kinds, without SUMO."""
 import dataclasses
 import inspect
+import pickle
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -336,6 +337,7 @@ def test_pack_and_recount_agree_on_a_planted_world():
     finally:
         me.Measure.__init__, me.Measure.second, me.Measure.vehicle_step = saved
     assert pr24.recount_differs(row, rc) == []
+    assert pr24.recount_differs(row, pickle.loads(pickle.dumps(rc))) == []     # a worker process returns it
     assert row["m_stuck_n"] == 5     # j, d300, s60 (its stopped leader is 60 m ahead), x and q0; not d299, the crawler or q1
     assert row["m_robust_road"] == {"2": {"trucks": 1}, "1": {"trucks": 1}}     # c peaks on road 2 after 360 s; cap on road 1
     assert row["m_road_vs"]["junction"] == {"before": 59, "trucks": 341 + 5 + 3}     # j all along, l for 5 s, cap for 3 s
