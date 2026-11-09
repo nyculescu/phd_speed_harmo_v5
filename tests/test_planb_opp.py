@@ -282,7 +282,7 @@ def test_s1_helpers():
 def plan6_world(tmp_path, s2_cells=None, asch_ok=True, mpcf_ok=True, steady_equals=None, commit="c" * 40):
     import plan6
     code = {"commit": commit, "clean": True, "detached": True, "diff_sha256": "d"}
-    s2 = {"null_broken": False, "cells": s2_cells or {"SURGE": {"passes": True, "drain_cap": 30.0}, "TRUCK": {"passes": True, "drain_cap": 20.0}}}
+    s2 = {"null_broken": False, "code": code, "cells": s2_cells or {"SURGE": {"passes": True, "drain_cap": 30.0}, "TRUCK": {"passes": True, "drain_cap": 20.0}}}
     cells = [c for c in pb.CELLS if s2["cells"][c]["passes"]]
     rules = {f"r{i}": {"own_state": {"level": 1, "th": 10.5 + i, "crowd": 0}} for i in range(9)}
     steady = pb.arm_ctrl(steady_equals) if steady_equals else {"own_state": {"level": 0, "th": 99, "crowd": 0}}
@@ -334,6 +334,8 @@ def test_plan6_freeze_refuses_inconsistent_inputs(tmp_path):
         plan6.freeze(s2, repick, tmp_path, asch_res, {**mpcf_res, "actions": mpcf_res["actions"][:3]}, tmp_path)
     with pytest.raises(SystemExit):
         plan6.freeze(s2, {**repick, "code": {**repick["code"], "commit": "e" * 40}}, tmp_path, asch_res, mpcf_res, tmp_path)
+    with pytest.raises(SystemExit):     # S2 at another commit whose plant cannot be shown equal (here: not a commit at all)
+        plan6.freeze({**s2, "code": {**s2["code"], "commit": "e" * 40}}, repick, tmp_path, asch_res, mpcf_res, tmp_path)
     (tmp_path / "TRUCK_ttc" / "pick.json").write_text(json.dumps({"cell": "SURGE", "objective": "ttc", "incumbent": None, "label": "x", "generations": 100}))
     with pytest.raises(SystemExit):
         plan6.freeze(s2, repick, tmp_path, asch_res, mpcf_res, tmp_path)     # a pick from the wrong cell

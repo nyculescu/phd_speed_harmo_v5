@@ -165,11 +165,9 @@ def main(argv: list) -> int:
     ap.add_argument("--conds", required=True)
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
-    conds = a.conds.split(",")
-    if conds[0] != "S" or len(conds) < 2 or len(set(conds)) != len(conds) or not set(conds[1:]) <= set(pb.CELLS):
-        ap.error("--conds is S followed by the cells that passed S2, each once")
+    conds = pb.conds_arg(a.conds)
     pb.reserve(a.workers)
-    res = all_steps(Path(a.out), json.loads(Path(a.actions).read_text()), conds, a.workers)
+    res = all_steps(Path(a.out).resolve(), json.loads(Path(a.actions).read_text()), conds, a.workers)
     print("MPC-F gate", "passed" if res["gate_passed"] else "FAILED (disclosed failed build)", "model", res["model_sha256"][:12])
     return 0
 

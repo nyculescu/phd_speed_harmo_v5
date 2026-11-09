@@ -161,3 +161,36 @@ def test_drain_cap_is_the_largest_no_control_backlog():
     for i, r in enumerate(T["SURGE|nc"]):
         r["m_pending_end"] = float(i % 10)
     assert read(T)["cells"]["SURGE"]["drain_cap"] == 1.5 * 9.0
+
+
+def write_s2(out, T, code="c" * 40, trace_code=None):
+    import json
+    out.mkdir(parents=True, exist_ok=True)
+    with (out / "s2_runs.jsonl").open("w") as w:
+        for n, rs in T.items():
+            for r in rs:
+                w.write(json.dumps({"name": n, "q": 5300.0, **{k: v for k, v in r.items()}, "seed": g2.SEEDS[r["seed"]]}) + "\n")
+    meta = {"inputs": {}, "jobs_sha256": "x", "code": {"commit": code, "clean": True, "detached": True, "diff_sha256": "d"}}
+    (out / "meta.json").write_text(json.dumps(meta))
+    (out / "trace").mkdir(exist_ok=True)
+    (out / "trace" / "meta.json").write_text(json.dumps({**meta, "code": {**meta["code"], "commit": trace_code or code}}))
+    (out / "s2_trace.json").write_text(json.dumps({"runs": {}, "pass": TRACE}))
+
+
+def test_main_read_writes_s2_json_and_exit_codes(tmp_path):
+    import json
+    write_s2(tmp_path / "ok", world())
+    assert g2.main(["read", "--out", str(tmp_path / "ok"), "--cells", "SURGE,TRUCK"]) == 0
+    s2 = json.loads((tmp_path / "ok" / "s2.json").read_text())
+    assert s2["kill"] is False and s2["cells"]["SURGE"]["passes"] is True and s2["code"]["commit"] == "c" * 40
+    write_s2(tmp_path / "null", world(placebo_delay=1.2))
+    assert g2.main(["read", "--out", str(tmp_path / "null"), "--cells", "SURGE,TRUCK"]) == 3
+    assert json.loads((tmp_path / "null" / "s2.json").read_text())["kill"] is None
+    write_s2(tmp_path / "mixed", world(), trace_code="e" * 40)
+    with pytest.raises(SystemExit):     # traces from another commit than the rows
+        g2.main(["read", "--out", str(tmp_path / "mixed"), "--cells", "SURGE,TRUCK"])
+    T = world()
+    T["SURGE|nc"] = T["SURGE|nc"][:-1]
+    write_s2(tmp_path / "gap", T)
+    with pytest.raises(SystemExit):
+        g2.main(["read", "--out", str(tmp_path / "gap"), "--cells", "SURGE,TRUCK"])

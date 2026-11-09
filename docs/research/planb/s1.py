@@ -181,7 +181,7 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=8)
     a = ap.parse_args(argv)
     pb.reserve(a.workers)
-    res = check(Path(a.out), Path(a.base), a.workers)
+    res = check(Path(a.out).resolve(), Path(a.base).resolve(), a.workers)
     print("commit", res["code"]["commit"])
     for k, v in res.items():
         if k not in ("all_pass", "code"):

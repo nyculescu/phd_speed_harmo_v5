@@ -261,6 +261,7 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     a.start = start_from(json.loads(Path(a.repick).read_text()), a.cell, a.objective)
+    a.out = str(Path(a.out).resolve())
     pb.reserve(a.workers)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     search(a)

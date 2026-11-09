@@ -230,3 +230,20 @@ def _release(path: Path) -> None:
 def arm_ctrl(name: str) -> dict:
     """A stored arm's controller dict without its environment options, as plan6 runs it."""
     return {k: v for k, v in stored_arms()[name].get("ctrl", {}).items() if k != "env"}
+
+
+PLANT_PATHS = ("v5b", "docs/research/conf3/common.py", "docs/research/conf3/plant_c3.json", "docs/research/round1/common1.py")
+
+
+def conds_arg(text: str) -> list:
+    """--conds: S, then the cells that passed S2, each once, in the protocol's order (freeze compares ordered lists)."""
+    conds = text.split(",")
+    cells = conds[1:]
+    if conds[0] != "S" or not cells or cells != [c for c in CELLS if c in cells]:
+        raise SystemExit(f"--conds is S followed by the cells that passed S2, each once, in the order {CELLS}")
+    return conds
+
+
+def same_plant(a: str, b: str) -> bool:
+    """Whether two commits hold the same plant and condition code."""
+    return a == b or git("diff", "--quiet", a, b, "--", *PLANT_PATHS)[0] == 0

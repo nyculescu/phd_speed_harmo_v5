@@ -53,8 +53,21 @@ def run(out: Path, cells: list, workers: int, runner=None) -> None:
     pb.batch(J, SEEDS, out / "s2_runs.jsonl", out / "rd", workers, runner or full_runner)
 
 
+def same_code(out: Path) -> dict:
+    """A sub-step (fallback, trace) runs only at the code of the main S2 rows, so the verdict never mixes plants."""
+    mf = out / "meta.json"
+    if not mf.exists():
+        raise SystemExit("run the S2 rows first")
+    code = json.loads(mf.read_text())["code"]
+    if code != pb.code_state():
+        raise SystemExit(f"the S2 rows ran at {code['commit']} (clean={code['clean']}); this tree differs; re-run S2 from scratch")
+    return code
+
+
 def run_fallback(out: Path, cells: list, workers: int, runner=None) -> None:
     J = fallback_jobs(cells, str(out / "st"))
+    if runner is None:
+        same_code(out)
     pb.guard(out / "fallback", {"cells": cells, "seeds": [SEEDS[0], SEEDS[-1]]}, J, strict=runner is None)
     pb.batch(J, SEEDS, out / "fallback" / "s2_fallback_runs.jsonl", out / "rd", workers, runner or full_runner)
 
@@ -78,6 +91,7 @@ def full_row(a: tuple) -> dict:
 def trace(out: Path, cells: list, workers: int) -> dict:
     """G4(iv): traced re-runs of S2 rows (their own measure folder), recounted, and compared with the stored untraced rows."""
     import pr24
+    same_code(out)
     stored = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "s2_runs.jsonl")}
     J = jobs(cells, str(out / "trace" / "st"))
     todo = [[n, J[n], pb.Q, s] for n in J if n.split("|")[1] in ("nc", "p333") and not n.startswith("PLACEBO") for s in TRACE_SEEDS]
@@ -171,13 +185,13 @@ def read(T: dict, cells: list, trace: dict | None = None) -> dict:
             step = np.median(series(C, "b3_step"))
             bl_c, bl_s = np.median([backlog(r) for r in C]), np.median([backlog(r) for r in S])
             rq = {k: (float(np.median([ramp_queue(r, k) for r in C])), float(np.median([ramp_queue(r, k) for r in S]))) for k in ("ramp1_queue", "ramp2_queue")}
-            g4[a] = {"pr09_ratio": float(one_hz / step) if step else None, "pr09_pass": bool(step) and abs(one_hz / step - 1.0) <= 0.05,
-                     "backlog": (float(bl_c), float(bl_s)), "backlog_pass": bl_c <= (bl_s if c == "SURGE" else 1.1 * bl_s),
+            g4[a] = {"pr09_ratio": float(one_hz / step) if step else None, "pr09_pass": bool(step) and bool(abs(one_hz / step - 1.0) <= 0.05),
+                     "backlog": (float(bl_c), float(bl_s)), "backlog_pass": bool(bl_c <= (bl_s if c == "SURGE" else 1.1 * bl_s)),
                      "ramp_queue": rq, "ramp_queue_pass": all(x <= 1.1 * y for x, y in rq.values()),
                      "stuck_rows": int(sum(r["m_stuck_n"] > 0 for r in C)), "stuck_pass": all(r["m_stuck_n"] == 0 for r in C)}
         pc, ps_ = T[f"{c}|p333"], T["S|p333"]
-        g4["collisions_pass"] = (np.median(series(pc, "collisions")) <= np.median(series(ps_, "collisions")) + 1
-                                 and np.median(series(pc, "contact_steps")) <= np.median(series(ps_, "contact_steps")) + 1)
+        g4["collisions_pass"] = bool(np.median(series(pc, "collisions")) <= np.median(series(ps_, "collisions")) + 1
+                                     and np.median(series(pc, "contact_steps")) <= np.median(series(ps_, "contact_steps")) + 1)
         g4["pr24_pass"] = bool(trace.get(c)) and bool(trace.get("S"))
         g4_pass = bool(g4["collisions_pass"]) and g4["pr24_pass"] and all(g4[a][k] for a in ("nc", "p333") for k in ("pr09_pass", "backlog_pass", "ramp_queue_pass", "stuck_pass"))
         g1_pass = all(G1[a]["G1a_pass"] and G1[a]["G1b_pass"] for a in ("nc", "p333"))
@@ -214,7 +228,7 @@ def main(argv: list) -> int:
     cells = a.cells.split(",")
     if sorted(cells) != sorted(pb.CELLS):     # every approved cell is gated, so none can leave S6 unread (review F9)
         ap.error(f"--cells must list every approved cell: {pb.CELLS}")
-    out = Path(a.out)
+    out = Path(a.out).resolve()
     if a.step in ("run", "trace", "fallback"):
         pb.reserve(a.workers)
     if a.step == "run":
@@ -240,8 +254,13 @@ def main(argv: list) -> int:
     tf = out / "s2_trace.json"
     if not tf.exists():
         raise SystemExit("run the G4(iv) trace step first")
+    metas = [out / "meta.json", out / "trace" / "meta.json"] + ([out / "fallback" / "meta.json"] if fb_cells else [])
+    codes = [json.loads(m.read_text())["code"] if m.exists() else None for m in metas]
+    if None in codes or any(c != codes[0] for c in codes):
+        raise SystemExit(f"S2's rows, traces and fallback rows must come from one code: {[c and c['commit'] for c in codes]}")
     res = read(T, cells, json.loads(tf.read_text())["pass"])
-    pb.cma2.write_json(out / "s2.json", res)
+    res["code"] = codes[0]
+    pb.cma2.write_json(out / "s2.json", json.loads(json.dumps(res, default=lambda x: x.item())))
     print("null broken: stage stopped" if res["null_broken"] else "null holds", "| KILL" if res["kill"] else "",
           {c: v["status"] for c, v in res["cells"].items()})
     return 3 if res["null_broken"] else 0

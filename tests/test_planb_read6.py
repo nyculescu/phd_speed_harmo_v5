@@ -244,3 +244,54 @@ def test_report_map_and_flow_clause():
     assert c["closest"]["flow"] in OPP and len(c["comparisons"]["p333"]["flow"]) == 3
     assert c["location"]["v3w"]["delay|3|before"] == pytest.approx(100.0) and c["t2_counting_filter"]["policies"] == 5
     assert set(res["S"]["map"]) == set(OPP) and res["S"]["n_seeds"] == N
+
+
+def test_drain_cap_on_the_end_of_run_backlog():
+    T = world()
+    T[("X", "w1")][3]["pending_end"] = 60.0     # above the cap of 50
+    c = r6.read(T, cfg())["cells"]["X"]
+    assert c["outcome"] == "metric win, gate failure" and c["drain_fail"]
+
+
+def test_counting_filter_is_report_only_and_excludes_slow_opponents():
+    T = world(opp_delay={"lr": 0.03})     # lr 3 % slower than p333: round 2's filter drops it
+    for s in range(N):
+        T[("X", "lr")][s]["ttc_net"] *= 0.85     # and v3w is only about 6 % better than lr on close-following
+    c = r6.read(T, cfg())["cells"]["X"]
+    assert c["outcome"] == "W" and c["t2_policies"] == 0     # the binding T2 has no filter (planb.md §8.3)
+    assert c["t2_counting_filter"]["counted"] == ["3e", "p333"] and c["t2_counting_filter"]["policies"] == 5
+
+
+def test_overfit_rows_point_the_right_way():
+    c = r6.read(world(opp_delay={"lr": -0.03}), cfg())["cells"]["X"]
+    assert c["overfit_vs_p333"]["lr"]["delay"][0] == pytest.approx(3.0, abs=0.5)     # positive: the opponent has less delay than p333
+
+
+def test_flow_closest_opponent_and_interval_levels():
+    T = world()
+    rng = np.random.default_rng(11)
+    for s in range(N):
+        T[("X", "3e")][s]["passed"] *= 1.004 * (1 + rng.normal(0, 0.002))
+    c = r6.read(T, cfg())["cells"]["X"]
+    f, f95 = c["comparisons"]["3e"]["flow"], c["comparisons"]["3e"]["flow95"]
+    assert c["closest"]["flow"] == "3e" and f[1] < f95[1] and f[2] > f95[2]     # the 1 - 0.05/m interval is the wider one
+
+
+def test_markers_flag_a_side_limit_breach():
+    T = world()
+    for n in LEARN:
+        for s in range(N):
+            T[("X", n)][s]["b3_step"] *= 1.10     # 10 % more braking at 3 m/s² than every opponent
+    c = r6.read(T, cfg())["cells"]["X"]
+    assert all("brake" in c["map"][o]["markers"] for o in OPP)
+
+
+def test_t2_turns_on_the_interval_from_the_cells_matrix():
+    narrow = r6.read(world(cf=(-0.12,) * 5), cfg())["cells"]["X"]
+    T = world(cf=(0.0,) * 5)
+    for n in LEARN:
+        for s in range(N):
+            T[("X", n)][s]["ttc_net"] *= 0.8 if s < 31 else 1.2     # point +20 % for every learner, but its interval reaches -20 %
+    wide = r6.read(T, cfg())["cells"]["X"]
+    assert all(wide["map"]["p333"]["per_learner"][n]["cf"] >= 10.0 for n in LEARN)
+    assert narrow["t2_counting_filter"]["policies"] == 5 and wide["t2_counting_filter"]["policies"] == 0

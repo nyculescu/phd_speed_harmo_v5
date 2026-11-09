@@ -85,6 +85,9 @@ def freeze(s2: dict, repick: dict, cmab_dir: Path, asch: dict, mpcf: dict, mpcf_
     commits = {k: v.get("commit") for k, v in codes.items()}
     if strict and (len(set(commits.values())) != 1 or not all(v.get("clean") and v.get("detached") for v in codes.values())):
         raise SystemExit(f"S3a and S4 must run at one clean, detached run commit (planb.md §9): {commits}")
+    s2c = s2.get("code") or {}
+    if strict and not (s2c.get("clean") and s2c.get("detached") and pb.same_plant(s2c.get("commit") or "", next(iter(commits.values())))):
+        raise SystemExit(f"S2 ran at {s2c.get('commit')}, whose plant differs from the run commit's, or from a dirty tree")
     if asch.get("pick"):
         P_asch = asch["pick"]["ctrl"]
     else:
@@ -97,7 +100,7 @@ def freeze(s2: dict, repick: dict, cmab_dir: Path, asch: dict, mpcf: dict, mpcf_
         P_mpcf = {"actions": mpcf["actions"], "model_sha256": mpcf["model_sha256"], "model_b64": base64.b64encode(raw).decode()}
     else:
         omitted["MPC-F"] = "failed its validity gate"
-    return {"cells": cells, "m": M, "run_commit": next(iter(commits.values())), "drain_cap": {c: s2["cells"][c]["drain_cap"] for c in cells},
+    return {"cells": cells, "m": M, "run_commit": next(iter(commits.values())), "s2_commit": s2c.get("commit"), "drain_cap": {c: s2["cells"][c]["drain_cap"] for c in cells},
             "repicks": {c: {r: repick["ctrl"][r] for r in repick["cell_opponents"][c]} for c in cells},
             "steady": {"name": f"steady_{repick['steady_pick']}", "ctrl": repick["steady_ctrl"]}, "tuned": tuned, "asch": P_asch, "mpcf": P_mpcf,
             "omitted": omitted}
@@ -183,9 +186,7 @@ def main(argv: list) -> int:
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     if a.step == "inputs":
-        cells = a.cells.split(",")
-        if len(set(cells)) != len(cells) or not set(cells) <= set(pb.CELLS):
-            ap.error("--cells: the cells that passed S2, each once")
+        cells = pb.conds_arg("S," + a.cells)[1:]
         x = inputs(pb.load_json(a.repick), Path(a.cmab), cells)
         out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
@@ -199,7 +200,7 @@ def main(argv: list) -> int:
         print("frozen:", P["cells"], "run commit", P["run_commit"][:12], "omitted:", P["omitted"])
         return 0
     P = pb.load_json(a.picks)
-    out = Path(a.out)
+    out = Path(a.out).resolve()     # the MPC-F model path in every job must open from any working directory
     out.mkdir(parents=True, exist_ok=True)
     J, conf = jobs(P, out)
     pb.cma2.write_json(out / "s6_jobs.json", {"seed_range": [SEEDS[0], SEEDS[-1]], "q": pb.Q, "arms": J})
