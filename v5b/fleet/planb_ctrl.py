@@ -129,23 +129,30 @@ class MpcF:
             self.a = int(self.rng.integers(0, self.n_act))
             self.next_hold = env.warm + DATA_STEP * int(self.rng.integers(0, int(HORIZON / DATA_STEP)))
             self.open = None
+            self.diag = {"data": int(self.data)}
         else:
+            import hashlib
             import torch
             torch.set_num_threads(1)
+            raw = open(spec["model"], "rb").read()
+            sha = hashlib.sha256(raw).hexdigest()
+            if sha != spec.get("model_sha256"):     # every row must name the model it ran (planb.md §7.4)
+                raise ValueError(f"MPC-F model {spec['model']} has SHA-256 {sha}, the controller dict names {spec.get('model_sha256')}")
             ck = torch.load(spec["model"], map_location="cpu", weights_only=False)
             if ck["n_act"] != self.n_act:
                 raise ValueError("model and action list differ")
             self.mu, self.sd = np.asarray(ck["mu"], np.float32), np.asarray(ck["sd"], np.float32)
-            self.net = Net(len(self.mu)).m
-            self.net.load_state_dict(ck["state"])
-            self.net.eval()
+            self.model = Net(len(self.mu)).m     # not "net": measure.policy_probs reads rule.net as a learned policy
+            self.model.load_state_dict(ck["state"])
+            self.model.eval()
             self.torch = torch
+            self.diag = {"model_sha256": sha}
 
     def _pick(self, t: float) -> None:
         x = features(self.env, self.ls)
         F = np.stack([onehot_features(x, a, self.n_act) for a in range(self.n_act)])
         with self.torch.no_grad():
-            y = self.net(self.torch.from_numpy((F - self.mu) / self.sd)).numpy().reshape(-1)
+            y = self.model(self.torch.from_numpy((F - self.mu) / self.sd)).numpy().reshape(-1)
         a = int(np.argmin(y))
         if a != self.a or not self.log:
             self.log.append((round(t), a))

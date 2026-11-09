@@ -159,11 +159,7 @@ class MergeEnv(gym.Env):
         self.pert = pt.Perturb(self, self.perturb, s) if self.perturb else None
         if self.pert:
             self.pert.demand()
-        # After demand(): a surge replaces the demand list, and its own vehicles must be the commanded ones (planb.md §4.3).
-        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
-        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
-        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
-        self.desired = {v.vid: v.desired for v in self.dem.veh}
+        self._demand_sets()     # after demand(): a surge replaces the demand list (planb.md §4.3)
         self.dem.write(self.rou)
         self.sim = CrashSim(d / "net.xml", self.rou, self.run_dir, self.dem, additional=[d / "add.xml"],
                             step_length=self.dt, seed=s)
@@ -396,6 +392,13 @@ class MergeEnv(gym.Env):
 
     def _cap_target(self, v: str) -> float:
         return FREE_MAX_SPEED
+
+    def _demand_sets(self) -> None:
+        """The vehicle sets the controllers and counters use, from the demand list as it will be written."""
+        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
+        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
+        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
+        self.desired = {v.vid: v.desired for v in self.dem.veh}
 
     def _oracle_cap(self, v: str) -> float:
         o = self.pert.oracle_now if self.pert else None

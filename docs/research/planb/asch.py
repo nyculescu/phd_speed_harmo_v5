@@ -5,7 +5,8 @@ mean over conditions of the median paired delay change against p333 (%). Stage 2
 p333; the best admissible there is ASCH. None admissible: ASCH is a disclosed failed build.
 
 usage: asch.py --out DIR --steady FILE --library FILE --conds S,SURGE,TRUCK [--workers N]
-  --steady: JSON controller dict of the steady pick; --library: JSON {name: controller dict}, 3E-T and each passing cell's 3E-C."""
+  --steady, --library: written by `plan6.py inputs` from repick.json and the 3E-C picks (the steady pick; 3E-T and each passing
+  cell's 3E-C), so plan6 freeze can check them."""
 import argparse
 import itertools
 import json
@@ -47,9 +48,9 @@ def score(rows: dict, names: list, conds: list, seed_list: list) -> list:
 
 
 def tune(out: Path, steady: dict, library: dict, conds: list, workers: int, runner=pb.run_jobs) -> dict:
-    out.mkdir(parents=True, exist_ok=True)
     g = grid(steady, library)
     cfgs = lambda names: {f"{c}|{n}": pb.cfg(g[n] if n != REF else pb.ref_ctrl(REF), c) for c in conds for n in names}
+    meta = pb.guard(out, {"steady": steady, "library": library, "conds": conds}, cfgs(list(g) + [REF]), strict=runner is pb.run_jobs)
     r1 = pb.batch(cfgs(list(g) + [REF]), TUNE, out / "tune_runs.jsonl", out / "rd", workers, runner)
     s1 = score(r1, list(g), conds, TUNE)
     top = [r["name"] for r in s1 if r["admissible"]][:TOP]
@@ -58,7 +59,7 @@ def tune(out: Path, steady: dict, library: dict, conds: list, workers: int, runn
         r2 = pb.batch(cfgs(top + [REF]), CHECK, out / "check_runs.jsonl", out / "rd", workers, runner)
         s2 = score(r2, top, conds, CHECK)
     best = next((r for r in s2 if r["admissible"]), None)
-    res = {"conds": conds, "n_configs": len(g), "stage1": s1, "stage2": s2,
+    res = {"conds": conds, "steady": steady, "library": library, "code": meta["code"], "n_configs": len(g), "stage1": s1, "stage2": s2,
            "pick": {"name": best["name"], "ctrl": g[best["name"]], "score": best["score"]} if best else None,
            "failed_build": best is None}
     pb.cma2.write_json(out / "asch.json", res)
@@ -74,10 +75,9 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     conds = a.conds.split(",")
-    if conds[0] != "S" or not set(conds[1:]) <= set(pb.CELLS):
-        ap.error("--conds is S followed by the cells that passed S2")
-    if a.workers > 100:
-        ap.error("at most 100 workers (planb.md decision 7)")
+    if conds[0] != "S" or len(conds) < 2 or len(set(conds)) != len(conds) or not set(conds[1:]) <= set(pb.CELLS):
+        ap.error("--conds is S followed by the cells that passed S2, each once")
+    pb.reserve(a.workers)
     res = tune(Path(a.out), pb.load_json(a.steady), pb.load_json(a.library), conds, a.workers)
     print("ASCH:", res["pick"]["name"] if res["pick"] else "failed build (none admissible)")
     return 0

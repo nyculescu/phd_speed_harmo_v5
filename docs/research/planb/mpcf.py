@@ -2,7 +2,7 @@
 actions, a 2 x 64 tanh MLP on standardised inputs, receding-horizon choice); the controller is v5b/fleet/planb_ctrl.MpcF.
 
 usage: mpcf.py all --out DIR --actions FILE --conds S,SURGE,TRUCK [--workers N]
-  --actions: JSON list of controller dicts (p333, the steady pick, 3E-T, each passing cell's 3E-C).
+  --actions: written by `plan6.py inputs` (p333, the steady pick, 3E-T, each passing cell's 3E-C), so plan6 freeze can check it.
 Steps, each resumable from its rows: data (4 schedules per seed on 7,480,270-309 per condition), fixed (every action alone on the
 same seeds; the best fixed action = the lowest sum over conditions of per-condition median realised cost), fit (seeds split once:
 8 held out, 4 for early stopping, the rest for training; held-out MSE at 50 % and 100 % of the training seeds), gate (MPC-F and
@@ -117,28 +117,42 @@ def fit(samples: list, n_act: int, train_seeds: list, stop_seeds: set, test_seed
 
 
 def all_steps(out: Path, actions: list, conds: list, workers: int, runner=pb.run_jobs) -> dict:
+    """Fit once: a stored fit record and its model are reused (their SHA-256 checked), never refitted, and gate rows are keyed by
+    the model's SHA, so a resumed gate cannot mix models (review F8)."""
     import torch
-    out.mkdir(parents=True, exist_ok=True)
-    samples = run_data(out, actions, conds, workers, runner)
     names = [f"a{i}" for i in range(len(actions))]
-    fx = pb.batch({f"{c}|{n}": pb.cfg(actions[i], c) for c in conds for i, n in enumerate(names)}, FIT, out / "fixed_runs.jsonl", out / "rd", workers, runner)
+    fixed_cfgs = {f"{c}|{n}": pb.cfg(actions[i], c) for c in conds for i, n in enumerate(names)}
+    meta = pb.guard(out, {"actions": actions, "conds": conds}, fixed_cfgs, strict=runner is pb.run_jobs)
+    samples = run_data(out, actions, conds, workers, runner)
+    fx = pb.batch(fixed_cfgs, FIT, out / "fixed_runs.jsonl", out / "rd", workers, runner)
     fixed = medians(fx, names, conds, FIT)
     best_fixed = min(names, key=lambda n: (fixed[n]["sum"], n))
-    test, stop, train = split(FIT)
-    half = sorted(train)[:len(train) // 2]
-    m_half = fit(samples, len(actions), half, stop, test)
-    m_full = fit(samples, len(actions), train, stop, test)
-    model = out / "mpcf_model.pt"     # predicts standardised cost; the controller's argmin does not depend on the scale
-    torch.save({k: v for k, v in m_full.items() if k != "report"}, model)
-    sha = hashlib.sha256(model.read_bytes()).hexdigest()
-    gate_cfgs = {f"{c}|mpcf": pb.cfg({"mpcf": {"actions": actions, "model": str(model)}}, c) for c in conds}
-    gate_cfgs |= {f"{c}|{n}": pb.cfg(actions[i], c) for c in conds for i, n in enumerate(names)}
+    model, fitf = out / "mpcf_model.pt", out / "fit.json"     # the model predicts standardised cost; the argmin does not depend on the scale
+    if fitf.exists():
+        fr = json.loads(fitf.read_text())
+        if not model.exists() or hashlib.sha256(model.read_bytes()).hexdigest() != fr["model_sha256"]:
+            raise SystemExit(f"{model} differs from {fitf}; use a new folder")
+    else:
+        if model.exists():
+            raise SystemExit(f"{model} has no fit record; use a new folder")
+        test, stop, train = split(FIT)
+        half = sorted(train)[:len(train) // 2]
+        m_half = fit(samples, len(actions), half, stop, test)
+        m_full = fit(samples, len(actions), train, stop, test)
+        torch.save({k: v for k, v in m_full.items() if k != "report"}, model)
+        fr = {"model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(), "split": {"test": sorted(test), "stop": sorted(stop), "train": train},
+              "fit_half": m_half["report"], "fit_full": m_full["report"]}
+        pb.cma2.write_json(fitf, fr)
+    sha = fr["model_sha256"]
+    tag = f"mpcf_{sha[:12]}"
+    gate_cfgs = {f"{c}|{tag}": pb.cfg({"mpcf": {"actions": actions, "model": str(model), "model_sha256": sha}}, c) for c in conds} | fixed_cfgs
     gr = pb.batch(gate_cfgs, GATE, out / "gate_runs.jsonl", out / "rd", workers, runner)
-    gm = medians(gr, ["mpcf"] + names, conds, GATE)
+    gm = medians(gr, [tag] + names, conds, GATE)
+    gm["mpcf"] = gm.pop(tag)
     passed = gm["mpcf"]["sum"] <= gm[best_fixed]["sum"]
-    res = {"conds": conds, "actions": actions, "n_samples": len(samples), "fixed_on_fit_seeds": fixed, "best_fixed": best_fixed,
-           "split": {"test": sorted(test), "stop": sorted(stop), "train": train}, "fit_half": m_half["report"], "fit_full": m_full["report"],
-           "model": model.name, "model_sha256": sha, "gate": gm, "gate_passed": bool(passed)}
+    res = {"conds": conds, "actions": actions, "code": meta["code"], "n_samples": len(samples), "fixed_on_fit_seeds": fixed, "best_fixed": best_fixed,
+           "split": fr["split"], "fit_half": fr["fit_half"], "fit_full": fr["fit_full"], "model": model.name, "model_sha256": sha, "gate": gm,
+           "gate_passed": bool(passed)}
     pb.cma2.write_json(out / "mpcf.json", res)
     return res
 
@@ -152,10 +166,9 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     conds = a.conds.split(",")
-    if conds[0] != "S" or not set(conds[1:]) <= set(pb.CELLS):
-        ap.error("--conds is S followed by the cells that passed S2")
-    if a.workers > 100:
-        ap.error("at most 100 workers (planb.md decision 7)")
+    if conds[0] != "S" or len(conds) < 2 or len(set(conds)) != len(conds) or not set(conds[1:]) <= set(pb.CELLS):
+        ap.error("--conds is S followed by the cells that passed S2, each once")
+    pb.reserve(a.workers)
     res = all_steps(Path(a.out), json.loads(Path(a.actions).read_text()), conds, a.workers)
     print("MPC-F gate", "passed" if res["gate_passed"] else "FAILED (disclosed failed build)", "model", res["model_sha256"][:12])
     return 0

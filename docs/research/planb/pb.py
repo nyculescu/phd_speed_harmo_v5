@@ -1,6 +1,11 @@
 """Plan B shared helpers: conditions, seeds, the run function and resumable batches (planb.md §6)."""
+import atexit
+import fcntl
+import hashlib
 import json
 import multiprocessing as mp
+import os
+import subprocess
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -131,3 +136,97 @@ def stored_arms(job: Path = JOB) -> dict:
     if missing:
         raise SystemExit(f"arms missing from {job}: {sorted(missing)}")
     return out
+
+
+MAX_WORKERS = 100     # planb.md decision 7, for the whole machine
+RESERVE = Path.home() / ".planb_workers.json"
+
+
+def git(*args) -> tuple:
+    r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
+    return r.returncode, r.stdout
+
+
+def code_state() -> dict:
+    """The code a stage runs: HEAD, whether tracked files are clean, whether HEAD is detached, and a hash of the tracked diff."""
+    rc, head = git("rev-parse", "HEAD")
+    _, dirty = git("status", "--porcelain", "--untracked-files=no")
+    det, _ = git("symbolic-ref", "-q", "HEAD")
+    _, diff = git("diff", "HEAD")
+    return {"commit": head.strip() if rc == 0 else None, "clean": rc == 0 and not dirty.strip(), "detached": det != 0,
+            "diff_sha256": hashlib.sha256(diff.encode()).hexdigest()}
+
+
+def sha(obj) -> str:
+    return hashlib.sha256(json.dumps(obj, sort_keys=True).encode()).hexdigest()
+
+
+def guard(out: Path, inputs: dict, cfgs: dict, strict: bool) -> dict:
+    """meta.json beside a stage's rows: its inputs, a hash of every job config and the code. Resuming with other inputs, jobs or code
+    is refused, so stored rows can never stand for another controller or commit (review F6, F7, F24). strict (every real run): the
+    tracked tree must be clean and HEAD detached (planb.md §9, frozen run worktree)."""
+    cs = code_state()
+    if strict and not (cs["clean"] and cs["detached"]):
+        raise SystemExit(f"run from a clean, detached worktree at the run commit (found clean={cs['clean']}, detached={cs['detached']})")
+    meta = {"inputs": json.loads(json.dumps(inputs)), "jobs_sha256": sha(cfgs), "code": cs}
+    out.mkdir(parents=True, exist_ok=True)
+    mf = out / "meta.json"
+    if mf.exists():
+        old = json.loads(mf.read_text())
+        if old != meta:
+            diff = [k for k in ("inputs", "jobs_sha256") if old.get(k) != meta[k]] + [f"code.{k}" for k in cs if old.get("code", {}).get(k) != cs[k]]
+            raise SystemExit(f"{out}: inputs, jobs or code differ from meta.json ({', '.join(diff)}); use a new folder")
+    else:
+        cma2.write_json(mf, meta)
+    return meta
+
+
+def check_workers(n: int) -> int:
+    if not 1 <= n <= MAX_WORKERS:
+        raise SystemExit(f"workers must be 1-{MAX_WORKERS} (planb.md decision 7)")
+    return n
+
+
+def reserve(n: int, path: Path = RESERVE) -> None:
+    """Hold n of the machine's MAX_WORKERS until this process exits; refuse if live holders already use too many."""
+    check_workers(n)
+    path.touch(exist_ok=True)
+    with path.open("r+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            held = json.loads(f.read() or "{}")
+        except json.JSONDecodeError:
+            held = {}
+        held = {p: w for p, w in held.items() if _alive(int(p))}
+        if sum(held.values()) + n > MAX_WORKERS:
+            raise SystemExit(f"{sum(held.values())} workers already held on this machine by {sorted(held)}; {n} more exceed {MAX_WORKERS}")
+        held[str(os.getpid())] = n
+        f.seek(0)
+        f.truncate()
+        f.write(json.dumps(held))
+    atexit.register(_release, path)
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _release(path: Path) -> None:
+    with path.open("r+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        held = json.loads(f.read() or "{}")
+        held.pop(str(os.getpid()), None)
+        f.seek(0)
+        f.truncate()
+        f.write(json.dumps(held))
+
+
+def arm_ctrl(name: str) -> dict:
+    """A stored arm's controller dict without its environment options, as plan6 runs it."""
+    return {k: v for k, v in stored_arms()[name].get("ctrl", {}).items() if k != "env"}

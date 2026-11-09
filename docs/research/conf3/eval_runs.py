@@ -3,7 +3,7 @@ import json
 import sys
 from pathlib import Path
 
-from common import COND, LEARNERS, PRIMARY, Q, SEEDS_EVAL, cfg
+from common import CONF3_CELLS, LEARNERS, PRIMARY, Q, SEEDS_EVAL, cfg
 from v5b.fleet import plant_sweep as ps
 
 if __name__ == "__main__":
@@ -16,5 +16,5 @@ if __name__ == "__main__":
     prim = {f"{c}|{n}": cfg(k, c) for c in PRIMARY for n, k in {**base, **single, **o["ctrl"]}.items()}
     ps.matrix(prim, (Q,), SEEDS_EVAL, out / "eval_primary.jsonl", w, str(out / "rd"))
     ps.matrix({f"{c}|{n}": cfg(k, c) for c in PRIMARY for n, k in {**base, **single}.items()}, (4600.0,), SEEDS_EVAL, out / "eval_map_x.jsonl", w, str(out / "rd"))
-    ps.matrix({f"{c}|{n}": cfg(k, c) for c in COND if c not in PRIMARY for n, k in {**base, **single}.items()}, (4600.0, Q), SEEDS_EVAL, out / "eval_map.jsonl", w, str(out / "rd"))
+    ps.matrix({f"{c}|{n}": cfg(k, c) for c in CONF3_CELLS if c not in PRIMARY for n, k in {**base, **single}.items()}, (4600.0, Q), SEEDS_EVAL, out / "eval_map.jsonl", w, str(out / "rd"))
     print("done", flush=True)

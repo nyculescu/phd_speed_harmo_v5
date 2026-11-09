@@ -41,12 +41,12 @@ def mechanism(T: dict, cell: str, steady: str, pick: str) -> dict:
 
 
 def run(out: Path, conds: list, workers: int, runner=pb.run_jobs) -> dict:
-    out.mkdir(parents=True, exist_ok=True)
     fam = families()
     every = {r: k for rules in fam.values() for r, k in rules.items()}
     if len(every) != 69:
         raise SystemExit(f"expected 69 tunable rules, found {len(every)}")
     cfgs = {f"{c}|{r}": pb.cfg(k, c) for c in conds for r, k in every.items()} | {f"{c}|nc": pb.cfg({}, c) for c in conds}
+    meta = pb.guard(out, {"conds": conds, "seeds": [SEEDS[0], SEEDS[-1]]}, cfgs, strict=runner is pb.run_jobs)
     rows = pb.batch(cfgs, SEEDS, out / "repick_runs.jsonl", out / "rd", workers, runner)
     T = {}
     for (n, s), r in rows.items():
@@ -57,6 +57,7 @@ def run(out: Path, conds: list, workers: int, runner=pb.run_jobs) -> dict:
            "steady_ctrl": every[steady] if steady else None,
            "cell_opponents": {c: sorted(set(p["forms"].values()) | {p["delay_opponent"], p["front_row"]}) for c, p in picks.items() if c != "S"},
            "own_state_repick": {c: every[p["forms"]["own"]]["own_state"] for c, p in picks.items() if c != "S" and "own" in p["forms"]},
+           "code": meta["code"],
            "mechanism_G": {c: {"vs_lowest_cf": mechanism(T, c, steady, picks[c]["lowest_cf"]), "differs": picks[c]["lowest_cf"] != steady}
                            for c in conds if c != "S" and steady and picks[c]["lowest_cf"]},
            "ctrl": every}
@@ -71,10 +72,9 @@ def main(argv: list) -> int:
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     conds = a.conds.split(",")
-    if conds[0] != "S" or not set(conds[1:]) <= set(pb.CELLS):
-        ap.error("--conds is S followed by the cells that passed S2")
-    if a.workers > 100:
-        ap.error("at most 100 workers (planb.md decision 7)")
+    if conds[0] != "S" or len(conds) < 2 or len(set(conds)) != len(conds) or not set(conds[1:]) <= set(pb.CELLS):
+        ap.error("--conds is S followed by the cells that passed S2, each once")
+    pb.reserve(a.workers)
     res = run(Path(a.out), conds, a.workers)
     print("steady pick", res["steady_pick"], {c: v for c, v in res["cell_opponents"].items()})
     return 0

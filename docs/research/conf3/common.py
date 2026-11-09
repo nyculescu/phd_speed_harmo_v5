@@ -18,6 +18,7 @@ COND = {"S": None,
         # Plan B cells (planb.md §4.2, V480)
         "SURGE": {"kind": "surge", "profile": [[0.0, 600.0, 5300.0], [600.0, 1200.0, 6000.0], [1200.0, 1800.0, 4600.0]]},
         "TRUCK": {"kind": "truck_fixed", "n": 10, "first": 360.0, "spacing": 80.0, "cap_kmh": 40.0, "route": "main", "lane": 0}}
+CONF3_CELLS = ("S", "X1", "X2", "H1", "H2")     # confirmatory 3's own conditions; its loops never reach the Plan B cells above
 PRIMARY = ("X1", "X2")
 Q = 5300.0
 LEVELS = (4090.0, 4600.0, 5300.0)

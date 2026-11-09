@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-from common import COND, LEARNERS, PRIMARY, Q, check_rows, collisions, effect, load, med, paired_median, raw, val
+from common import CONF3_CELLS, LEARNERS, PRIMARY, Q, check_rows, collisions, effect, load, med, paired_median, raw, val
 
 P95 = (2.5, 97.5)
 TABLE = ("all_delay", "delay", "passed", "N", "ttc_net", "ttc2", "ttc15", "sev3", "b3_step", "b45_step", "b7_step", "alks_b3_step", "alks_b45_step", "alks_b7_step", "free_brake_alks_step", "alks_full_moving", "alks_full_creep",
@@ -75,7 +75,7 @@ def read_cell(T: dict, cell: str, o: dict, n: int = LEARNERS, q: float = Q) -> d
 def harm(T: dict, o: dict, n: int = LEARNERS) -> list:
     """Map cells where at least 4 of 5 policies are clearly worse than the reference, on delay by over 2 % or TTC by over 10 %."""
     out = []
-    for cell in COND:
+    for cell in CONF3_CELLS:
         for q in (4600.0, Q):
             if cell in PRIMARY and q == Q:
                 continue

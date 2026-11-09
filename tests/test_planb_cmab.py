@@ -103,6 +103,20 @@ def test_label_rule():
 def test_start_vectors():
     assert cma2.decode(cmab.start_vector("p333")) == cmab.P333_ZONES
     z = cma2.decode(cmab.start_vector({"level": 1, "th": 15, "crowd": 10}))
-    assert z == [{"th": 15.0, "crowd": 10, "level": 1, "free": 3}] * 5
+    on = {"th": 15.0, "crowd": 10, "level": 1, "free": 3}
+    assert z == [{**on, "th": 1.0}] + [on] * 4     # the upstream zone off, as round 2's start (review F10)
     with pytest.raises(SystemExit):
         cmab.start_vector({"pattern": [1, 3, 3]})
+
+
+def test_start_equals_round_2_encoding():
+    r = cmab.OPPONENTS["ctrl"]["os1_15_10"]["own_state"]
+    assert np.allclose(cmab.start_vector(dict(r)), cma2.start("os1_15_10"))
+
+
+def test_start_comes_from_the_repick_record():
+    rp = {"own_state_repick": {"SURGE": {"level": 1, "th": 10, "crowd": 0}}}
+    assert cmab.start_from(rp, "SURGE", "delay") == "p333"
+    assert cmab.start_from(rp, "SURGE", "ttc") == {"level": 1, "th": 10, "crowd": 0}
+    with pytest.raises(SystemExit):
+        cmab.start_from(rp, "TRUCK", "ttc")     # no own-state re-pick: stop for a V# (review F23)

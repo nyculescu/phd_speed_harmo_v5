@@ -5,9 +5,10 @@ distinct configurations since the last check (loss minus the generation median) 
 check seeds, and the incumbent is the admissible configuration with the lowest check loss so far. The plateau label compares the
 incumbent's check loss at 60 and at 100. Run with SUMO_HOME unset and OMP_NUM_THREADS=1.
 
-usage: cmab.py --out DIR --cell SURGE|TRUCK --objective ttc|delay --start JSON [--workers N]
-  --start: 3E-C takes the cell's own-state re-pick as {"level": k, "th": v, "crowd": c} (copied into every zone, free 3);
-  3E-D takes p333 ("p333": th 0 and free 3 in every zone).
+usage: cmab.py --out DIR --cell SURGE|TRUCK --objective ttc|delay --repick REPICK.json [--workers N]
+  The start comes from S3a's repick.json, never from the command line: 3E-C starts at the cell's own-state re-pick, encoded as
+  round 2's start (cma2.start): the upstream zone off (th 1 m/s), the other four zones equal to the re-pick (free 3 unless given).
+  Zone merge1 (-100 to 594.72 m) cannot hold OwnState's x_min of 500 m exactly; disclosed. 3E-D starts at p333 (th 0, free 3).
 Files in DIR: meta.json, runs.jsonl, evals.jsonl, best.json (as cma2.py), check_runs.jsonl, checks.jsonl, incumbent.json and,
 at the end, pick.json. A file STOP_CEILING in DIR (the budget ceiling, planb.md §9) ends the search at its next check with the
 label "stopped at the budget ceiling"."""
@@ -30,7 +31,10 @@ for p in (ROOT, ROOT / "docs/research/round1", ROOT / "docs/research/round2"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import cma2  # noqa: E402
-from common1 import OPPONENTS, rule_cfg  # noqa: E402
+from common1 import COND, OPPONENTS, rule_cfg  # noqa: E402
+
+sys.path.insert(0, str(HERE))
+import pb  # noqa: E402
 
 CELLS = ("SURGE", "TRUCK")
 Q = 5300.0
@@ -90,8 +94,18 @@ def start_vector(spec) -> np.ndarray:
         return cma2.encode(P333_ZONES)
     if isinstance(spec, dict) and set(spec) <= {"level", "th", "crowd", "free"}:
         z = {"th": float(spec["th"]), "crowd": int(spec.get("crowd", 0)), "level": int(spec["level"]), "free": int(spec.get("free", 3))}
-        return cma2.encode([z] * cma2.N_ZONES)
-    raise SystemExit(f"--start must be p333 or an own-state dict, not {spec!r}")
+        return cma2.encode([{**z, "th": 1.0}] + [z] * (cma2.N_ZONES - 1))
+    raise SystemExit(f"the start must be p333 or an own-state dict, not {spec!r}")
+
+
+def start_from(repick: dict, cell: str, objective: str):
+    """The protocol's start (planb.md §3.3) from S3a's record."""
+    if objective == "delay":
+        return "p333"
+    st = repick.get("own_state_repick", {}).get(cell)
+    if st is None:
+        raise SystemExit(f"S3a picked no own-state rule in {cell}: 3E-C has no protocol start (review F23); stop for a V#")
+    return st
 
 
 def delay_objective(runs: list, ref: list, w_coll: float) -> dict:
@@ -131,9 +145,15 @@ def label(checks: list) -> str:
     return LABEL_OK if a["check_loss"] - b["check_loss"] < PLATEAU[checks[0]["objective"]] else LABEL_NOT
 
 
-def code_id() -> dict:
+def code_id(strict: bool = False) -> dict:
+    """The search's code: both files' hashes and the tree's state (commit, clean, detached, tracked diff), so an uncommitted plant
+    edit changes meta.json. strict (every real search): a clean, detached tree (planb.md §9)."""
+    cs = pb.code_state()
+    if strict and not (cs["clean"] and cs["detached"]):
+        raise SystemExit(f"run from a clean, detached worktree at the run commit (found clean={cs['clean']}, detached={cs['detached']})")
     return {"cmab_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-            "cma2_sha256": hashlib.sha256(Path(cma2.__file__).read_bytes()).hexdigest(), "commit": cma2.git_commit()}
+            "cma2_sha256": hashlib.sha256(Path(cma2.__file__).read_bytes()).hexdigest(), "commit": cs["commit"], "clean": cs["clean"],
+            "detached": cs["detached"], "diff_sha256": cs["diff_sha256"]}
 
 
 def check(g: int, recs: list, es, last_g: int, cache: dict, out: Path, a, cfg, runner, prior: dict | None, ceiling: bool) -> dict:
@@ -173,7 +193,7 @@ def search(a, runner=run_jobs) -> None:
     meta = {"cell": a.cell, "objective": a.objective, "q": Q, "pool": [POOL[0], POOL[-1]], "check": [CHECK[0], CHECK[-1]], "pop": POP,
             "sigma": SIGMA, "seeds_per_gen": SEEDS_PER_GEN, "gens": GENS, "check_at": list(CHECK_AT), "k_check": K_CHECK,
             "cma_seed": CMA_SEED[a.objective] + k, "loss": LOSS[a.objective], "start": a.start, "x0": [float(v) for v in x0], "ref": REF,
-            "edges": list(cma2.EDGES), **code_id()}
+            "ref_cfg": cfg(OPPONENTS["ctrl"][REF]), "cond": COND[a.cell], "edges": list(cma2.EDGES), **code_id(runner is run_jobs)}
     mf = out / "meta.json"
     if mf.exists():
         old = json.loads(mf.read_text())
@@ -219,7 +239,7 @@ def search(a, runner=run_jobs) -> None:
         print(f"gen {g} best {min(gen):.2f} median {float(np.median(gen)):.2f} sigma {es.sigma:.3f} {time.time() - t0:.0f} s", flush=True)
         n = g + 1
         if n in CHECK_AT:
-            ceiling = (out / "STOP_CEILING").exists() and n not in checked
+            ceiling = n < GENS and (out / "STOP_CEILING").exists() and n not in checked     # a search that reached 100 is not a ceiling stop
             c = checked.get(n) or check(n, recs, es, last_g, ccache, out, a, cfg, runner, inc, ceiling)
             checked[n] = c
             inc, last_g = c["incumbent"], n
@@ -237,12 +257,11 @@ def main(argv: list) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--cell", required=True, choices=CELLS)
     ap.add_argument("--objective", required=True, choices=("ttc", "delay"))
-    ap.add_argument("--start", required=True, help='p333, or a JSON own-state dict such as {"level": 1, "th": 15, "crowd": 10}')
+    ap.add_argument("--repick", required=True, help="S3a's repick.json; the start is read from it")
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
-    a.start = a.start if a.start == "p333" else json.loads(a.start)
-    if a.workers > 100:
-        ap.error("at most 100 workers (planb.md decision 7)")
+    a.start = start_from(json.loads(Path(a.repick).read_text()), a.cell, a.objective)
+    pb.reserve(a.workers)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     search(a)
     return 0

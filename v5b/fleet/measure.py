@@ -47,12 +47,18 @@ def policy_probs(rule, o) -> dict:
     if hasattr(rule, "policy") and hasattr(rule, "x_from"):
         return policy_probs(rule.policy, (ids, lo, g, due & ~(lo[:, 0] * 1000.0 < rule.x_from)))
     nets = [rule.net] if hasattr(rule, "net") else [m.net for m in rule.members] if hasattr(rule, "members") else []
+    nets = [n for n in nets if hasattr(n, "logits")]
     if not nets or not due.any():
         return {}
     with torch.no_grad():
         x = torch.from_numpy(lo[due])
         p = sum(torch.softmax(n.logits(x), 1) for n in nets) / len(nets)
     return dict(zip((v for v, d in zip(ids, due) if d), p.numpy()))
+
+
+def group(road: str) -> str:
+    """Plan B location group of a road id; internal junction lanes form their own group."""
+    return "junction" if road.startswith(":") else ROAD_GROUP.get(road, "other")
 
 
 def v_bin(s: float) -> int:
@@ -136,12 +142,12 @@ class Measure:
         self.period = event_period
         self.capped = {x[1] for x in pert.log} if pert is not None and pert.kind == "truck_fixed" else set()
         self.st_nc = np.zeros_like(self.st)     # the same field without the capped trucks' own samples (G1b for TRUCK)
-        self.road_ttc = defaultdict(lambda: defaultdict(int))     # road group -> period -> 1-Hz samples with TTC < 3 s
+        self.road_ttc = defaultdict(lambda: defaultdict(int))     # road group (junction lanes: "junction") -> period -> 1-Hz samples with TTC < 3 s
         self.road_vs = defaultdict(lambda: defaultdict(float))     # road group -> period -> vehicle-seconds (1 Hz)
         self.road_dist = defaultdict(lambda: defaultdict(float))     # road group -> period -> metres (1 Hz)
         self.robust_road = defaultdict(lambda: defaultdict(int))     # road group -> period -> robust braking events, by peak place
         self.brk = []     # per braking event: class, peak, duration, time, road group, lane position of the peak
-        self.lc_t = {}     # vehicle -> time of its latest lane change on the same road
+        self.lc_t = {}     # vehicle -> time of its latest lane change (road-lane index, across roads)
         self.rl = {}     # vehicle -> (road, road lane index)
         self.ttc_all = self.ttc_lc = 0
         self.stop_run = defaultdict(int)
@@ -188,7 +194,7 @@ class Measure:
         t0, pk, t1, (tp, road, x) = self.ev.pop(v)
         d = t1 - t0 + self.dt
         b = bin_of(pk, PEAK_EDGES)
-        g = ROAD_GROUP.get(road, "other")
+        g = group(road)
         if b >= ROBUST_BIN[c]:
             self.robust_road[g][self.period(self.spec, tp)] += 1
         self.brk.append((CLASSES.index(c), pk, d, tp, g, x))
@@ -234,10 +240,16 @@ class Measure:
         m = int((t - self.t0 - 1e-9) // 60.0)
         if not (0 <= k < self.st.shape[1]):
             return
+        per = self.period(self.spec, t)
         for v in ls.vehicle.getIDList():
             road = ls.vehicle.getRoadID(v)
             s = ls.vehicle.getSpeed(v)
-            if road.startswith(":"):
+            if road.startswith(":"):     # Plan B keys only; the round 2 keys skip junctions as before
+                self.road_vs["junction"][per] += 1
+                self.road_dist["junction"][per] += s
+                self.seen.add(v)
+                if v in self.capped:
+                    self.capped_vmax = max(self.capped_vmax, s)
                 continue
             x = ls.vehicle.getLanePosition(v)
             lane = ls.vehicle.getLaneID(v)
@@ -252,13 +264,13 @@ class Measure:
             self.seen.add(v)
             if v in self.capped:
                 self.capped_vmax = max(self.capped_vmax, s)
-            g, per = ROAD_GROUP.get(road, "other"), self.period(self.spec, t)
+            g = group(road)
             self.road_vs[g][per] += 1
             self.road_dist[g][per] += s
             ei, li = lane.rsplit("_", 1)
             rl = (road, int(li) - 1 if ei in ("3a", "4a") else int(li))
             prl = self.rl.get(v)
-            if prl is not None and prl[0] == rl[0] and prl[1] != rl[1]:
+            if prl is not None and prl[1] != rl[1]:     # road-lane index across roads, as plant_sweep's lane_t
                 self.lc_t[v] = t
             self.rl[v] = rl
             prev = self.road.get(v)
@@ -292,7 +304,6 @@ class Measure:
                     self.off_s += 1
                     self.veh_s[v][-1] += 1
         pend = ls.simulation.getPendingVehicles()
-        per = self.period(self.spec, t)
         for v in pend:
             r = self.route.get(v)
             if r in ("ramp", "ramp2"):
@@ -307,16 +318,15 @@ class Measure:
         self._pairs(ls, t, per)
 
     def _pairs(self, ls, t: float, per: str) -> None:
-        """1 Hz: close-following by road and period, the share of it near a lane change, and vehicles stuck outside a queue."""
+        """1 Hz: close-following by road and period, the share of it near a lane change, and vehicles stuck outside a queue.
+        Vehicles on junction lanes count too, so a deadlock inside a junction is caught."""
         for v in ls.vehicle.getIDList():
             road = ls.vehicle.getRoadID(v)
-            if road.startswith(":"):
-                continue
             s = ls.vehicle.getSpeed(v)
             lead = ls.vehicle.getLeader(v, 200.0)
             ls_ = ls.vehicle.getSpeed(lead[0]) if lead and lead[0] else None
             if ls_ is not None and s - ls_ > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / (s - ls_) < TTC_S:
-                self.road_ttc[ROAD_GROUP.get(road, "other")][per] += 1
+                self.road_ttc[group(road)][per] += 1
                 self.ttc_all += 1
                 self.ttc_lc += t - self.lc_t.get(v, -1e9) <= LC_WINDOW or t - self.lc_t.get(lead[0], -1e9) <= LC_WINDOW
             queued = ls_ is not None and lead[1] <= STUCK_LEAD_M and ls_ < STUCK_V

@@ -1,5 +1,8 @@
 """Plan B (planb.md §7.1): spec tests for the new perturbation kinds, without SUMO."""
 import dataclasses
+import inspect
+import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -7,9 +10,42 @@ import pytest
 
 from v5b.fleet import b_merge as bm, fleet as fl, perturb as pt
 
-SURGE = {"kind": "surge", "profile": [[0, 600, 5300], [600, 1200, 6000], [1200, 1800, 4600]]}
-TRUCK = {"kind": "truck_fixed", "n": 10, "first": 360.0, "spacing": 80.0, "cap_kmh": 40.0, "route": "main", "lane": 0}
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "docs/research/conf3"))
+from common import COND  # noqa: E402
+
+SURGE, TRUCK = COND["SURGE"], COND["TRUCK"]     # the spec tests run on the dicts the runs use (review F28)
 SEEDS = range(7_480_000, 7_480_010)
+TIE_SEEDS = (7_480_025, 7_480_027, 7_480_400, 7_480_402, 7_480_460)     # a truck departs exactly at a slot (review F28)
+
+
+def test_cells_equal_the_protocol_literals():
+    assert SURGE == {"kind": "surge", "profile": [[0.0, 600.0, 5300.0], [600.0, 1200.0, 6000.0], [1200.0, 1800.0, 4600.0]]}
+    assert TRUCK == {"kind": "truck_fixed", "n": 10, "first": 360.0, "spacing": 80.0, "cap_kmh": 40.0, "route": "main", "lane": 0}
+
+
+@pytest.mark.parametrize("seed", (*SEEDS[:3], *TIE_SEEDS))
+def test_truck_fixed_takes_the_first_eligible_truck_at_or_after_each_slot(seed):
+    env = env_for(seed)
+    elig = sorted((v.depart, v.vid) for v, r in zip(env.dem.veh, env.dem.route_of) if v.cls == "truck" and r == "main" and v.lane == 0)
+    p = pt.Perturb(env, TRUCK, seed)
+    p.demand()
+    taken = set()
+    for k, vid, dep in p.log:
+        want = next((d, v) for d, v in elig if d >= 360.0 + 80.0 * k and v not in taken)
+        assert (dep, vid) == want
+        taken.add(vid)
+
+
+def test_reset_builds_the_vehicle_sets_after_the_perturbed_demand():
+    from v5b.fleet import b_env as be
+    src = inspect.getsource(be.MergeEnv.reset)
+    assert src.index("self.pert.demand()") < src.index("self._demand_sets()") < src.index("self.dem.write(")
+    env = env_for(7_480_001)
+    pt.Perturb(env, SURGE, 7_480_001).demand()
+    be.MergeEnv._demand_sets(env)
+    assert env.alks_all == {v.vid for v in env.dem.veh if v.cls == "alks"} and env.alks_all
+    assert env.ramp == {v.vid for v, r in zip(env.dem.veh, env.dem.route_of) if r.startswith("ramp")}
+    assert env.alks == env.alks_all - env.ramp and len(env.desired) == len(env.dem.veh)
 
 
 def env_for(seed, q=5300.0):
@@ -233,3 +269,96 @@ def test_step_is_a_no_op_for_demand_kinds():
         n = len(p.log)
         p.step(700.0)     # step() dispatches to _<kind>; the demand kinds have no per-second action
         assert len(p.log) == n
+
+
+class _World(_Sim):
+    """A planted world for the pack and the PR-24 recount together: per second a scenario; braking steps read from acc."""
+    def __init__(self):
+        super().__init__()
+        self.acc, self.extra = {}, {}
+
+    def getAcceleration(self, v):
+        return self.acc.get(v, 0.0)
+
+    def getRoadID(self, v):
+        return self.extra[v][0] if v in self.extra else self.now[v][0]
+
+    def getLanePosition(self, v):
+        return self.extra[v][1] if v in self.extra else self.now[v][2]
+
+    def getLaneID(self, v):
+        road, lane = self.now[v][0], self.now[v][1]
+        return lane if isinstance(lane, str) else f"{road}_{lane}"
+
+    def getLeader(self, v, dist):
+        return ("", -1.0) if v in self.extra else super().getLeader(v, dist)
+
+
+def scene(t):
+    """vehicle -> (road, lane, position, speed, leader, gap)."""
+    w = {"f": ("3" if t < 520 else "4a", (0 if t < 400 else 1) if t < 520 else 1, 480.0, 20.0, "l", 10.0),     # 3_1 -> 4a_1: index 1 -> 0
+         "j": (":j1", ":j1_0", 1.0, 0.0, "", 0.0),     # deadlocked inside a junction
+         "d299": ("2", 0, 100.0, 0.0 if t <= 599 else 5.0, "", 0.0), "d300": ("2", 1, 100.0, 0.0 if t <= 600 else 5.0, "", 0.0),
+         "s60": ("2", 2, 100.0, 0.0, "x", 60.0), "x": ("2", 2, 162.5, 0.0, "", 0.0), "cr": ("1", 0, 50.0, 0.5, "", 0.0),
+         "q1": ("4a", 0, 100.0, 0.0, "q0", 5.0), "q0": ("4a", 0, 107.5, 0.0, "", 0.0)}
+    w["l"] = ("3", 1, 500.0, 10.0, "", 0.0) if t < 500 else (":j3", ":j3_0", 1.0, 10.0, "", 0.0) if t < 505 else ("4a", 2, 10.0, 10.0, "", 0.0)
+    w["cap"] = ("1", 0, 300.0, 40.0 / 3.6, "", 0.0) if t < 600 else (":j0", ":j0_0", 1.0, 12.0, "", 0.0) if t < 603 else ("2", 0, 5.0, 40.0 / 3.6, "", 0.0)
+    return w
+
+
+def test_pack_and_recount_agree_on_a_planted_world():
+    """PR-24 on a planted trace: the pack's Plan B counters equal the independent recount, and the hand counts hold."""
+    import importlib
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "docs/research/planb"))
+    pr24 = importlib.import_module("pr24")
+    saved = (me.Measure.__init__, me.Measure.second, me.Measure.vehicle_step)
+    try:
+        pr24.install()
+        vs = [SimpleNamespace(vid=v, depart=290.0) for v in ("pr", "pr2", "pm")]
+        env = _Env(_Pert({"kind": "truck_fixed", "first": 360.0}, [(0, "cap", 360.0)]))
+        env.dem.veh, env.dem.route_of = vs, ["ramp", "ramp2", "main"]
+        m = me.Measure(env, {"cap"}, {"main": ("1 2 3a 3 4a 4 5", 1.0, 3)}, lambda e: 1000.0, 0.1)
+        w = _World()
+        for t in range(301, 701):
+            w.now = scene(t)
+            w.pending = ["pr", "pr2", "pm"] if t < 400 else []
+            if t == 360:     # car c brakes across the period boundary and peaks on road 2 at 360.0; truck cap at -3.6
+                for tt, a, road in ((359.8, -3.2, "1"), (359.9, -3.5, "1"), (360.0, -4.2, "2"), (360.1, -3.1, "2"), (360.2, 0.0, "2")):
+                    w.extra["c"], w.acc["c"] = (road, 42.0), a
+                    m.vehicle_step(w, "c", a, 20.0, 0.0, tt)
+            if t == 450:
+                for tt, a in ((450.0, -3.6), (450.1, -3.6), (450.2, 0.0)):
+                    w.acc["cap"] = a
+                    m.vehicle_step(w, "cap", a, 10.0, 0.0, tt)
+            m.second(w, float(t))
+        row = m.finish(700.0, None, "x")
+        rc = pr24.recount(pr24._REC)
+    finally:
+        me.Measure.__init__, me.Measure.second, me.Measure.vehicle_step = saved
+    assert pr24.recount_differs(row, rc) == []
+    assert row["m_stuck_n"] == 5     # j, d300, s60 (its stopped leader is 60 m ahead), x and q0; not d299, the crawler or q1
+    assert row["m_robust_road"] == {"2": {"trucks": 1}, "1": {"trucks": 1}}     # c peaks on road 2 after 360 s; cap on road 1
+    assert row["m_road_vs"]["junction"] == {"before": 59, "trucks": 341 + 5 + 3}     # j all along, l for 5 s, cap for 3 s
+    assert row["m_capped_vmax"] == 12.0     # the capped truck's junction seconds count
+    assert row["m_main_pending_min"][0] == 60 and row["m_minute"]["ramp1_pending"][0] == 60     # minute 0 is (300, 360] s
+    f_lc = 6 + 6     # f's lane changes at 400 s (3_0 -> 3_1) and at 520 s (3_1 -> 4a_1, across the edge)
+    assert row["m_ttc3_lc"] == f_lc
+
+
+def test_ttc_threshold_includes_min_gap():
+    m = _pack()
+    w = _Sim()
+    for t, gap in ((301, 26.5), (302, 27.5)):     # (gap + 2.5) / 10 = 2.9 s and 3.0 s
+        w.now = {"l": ("r2", 0, 500.0, 10.0, "", 0.0), "f": ("r2", 0, 480.0, 20.0, "l", gap)}
+        m.second(w, float(t))
+    row = m.finish(400.0, None, "x")
+    assert row["m_road_ttc3"] == {"ramp2": {"rest": 1}} and row["m_ttc3_all"] == 1
+
+
+def test_congestion_counts_vehicle_seconds_not_cells():
+    n = np.ones((40, 20))
+    v = np.full((40, 20), 25.0)
+    v[5:40, 0:6] = 10.0
+    n[5:40, 0] = 4.0
+    v[5:40, 0] *= 4.0     # speed sums: the same 36 km/h with 4 vehicles in the first cell
+    assert me.congestion(v, n)[0] == 35 * (5 + 4)
