@@ -1,7 +1,8 @@
 """Plan B S2 (planb.md §7.3, V480): plant gates per cell, with no v3w row. Arms: no control, p333 and 3E-T in each cell and in S on
 7,480,010-049, and the placebo (V341's brake, the null of G1) with no control and p333. Each gate is read on medians over the 40
 seeds; effects are round 2's paired statistic against each arm's own S row, 95 % percentile bootstrap, 20,000 resamples.
-A cell passes S2 if G1a and G1b pass, G2 passes and G4 passes; a broken null (the placebo passes G1a or G1b) stops the stage
+G4(ii)(a,b) is the mean-excess drain test of V486 (drain.py), which replaced the registered median ratios after S2 was read; the registered
+verdicts are kept beside it. A cell passes S2 if G1a and G1b pass, G2 passes and G4 passes; a broken null (the placebo passes G1a or G1b) stops the stage
 (not a KILL: fix, log, re-run). If p333 and 3E-T both fail G2 in a cell, every other carried rule runs there before a KILL, and the
 cell is "G2 pending" until they have. G4(iv): PR-24 counter traces of no control and p333 on the first 2 gate seeds, in each cell
 and in S, recount equal to their rows and traced rows equal to the untraced ones. The drain cap for S6 is 1.5 x the largest
@@ -10,7 +11,8 @@ no-control end-of-run insertion backlog in the cell's rows.
 usage: gates2.py run --out DIR --cells SURGE,TRUCK [--workers N]           the runs (pack on)
        gates2.py trace --out DIR --cells SURGE,TRUCK [--workers N]         G4(iv): 4 traced runs per condition, after run
        gates2.py fallback --out DIR --cells SURGE,TRUCK --fallback TRUCK   G2: the other 13 carried rules in the named cells
-       gates2.py read --out DIR --cells SURGE,TRUCK                        the gate table, s2.json; exit 3 if the null is broken"""
+       gates2.py read --out DIR --cells SURGE,TRUCK [--result NAME]        the gate table, s2.json; exit 3 if the null is broken
+  --result: another output name, read once only and from a clean, detached tree (V486's re-read of the stored rows)."""
 import argparse
 import json
 import sys
@@ -20,6 +22,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pb  # noqa: E402
+import drain  # noqa: E402
 
 SEEDS = pb.seeds(7_480_010, 7_480_049)
 TRACE_SEEDS = SEEDS[:2]
@@ -193,7 +196,10 @@ def read(T: dict, cells: list, trace: dict | None = None) -> dict:
         g4["collisions_pass"] = bool(np.median(series(pc, "collisions")) <= np.median(series(ps_, "collisions")) + 1
                                      and np.median(series(pc, "contact_steps")) <= np.median(series(ps_, "contact_steps")) + 1)
         g4["pr24_pass"] = bool(trace.get(c)) and bool(trace.get("S"))
-        g4_pass = bool(g4["collisions_pass"]) and g4["pr24_pass"] and all(g4[a][k] for a in ("nc", "p333") for k in ("pr09_pass", "backlog_pass", "ramp_queue_pass", "stuck_pass"))
+        g4["drain"] = drain.read_drain({a: T[f"{c}|{a}"] for a in drain.ARMS}, {a: T[f"S|{a}"] for a in drain.ARMS}, surge=c == "SURGE", seed=RNG)
+        other = bool(g4["collisions_pass"]) and g4["pr24_pass"] and all(g4[a][k] for a in ("nc", "p333") for k in ("pr09_pass", "stuck_pass"))
+        g4_pass = other and g4["drain"]["verdict"]["pass"]
+        g4_registered = other and all(g4[a][k] for a in ("nc", "p333") for k in ("backlog_pass", "ramp_queue_pass"))
         g1_pass = all(G1[a]["G1a_pass"] and G1[a]["G1b_pass"] for a in ("nc", "p333"))
         location = {a: {"end_stop": float(np.median(series(T[f"{c}|{a}"], "end_stop"))), "end_stop2": float(np.median(series(T[f"{c}|{a}"], "end_stop2"))),
                         "ttc3_by_road_period": med_nested([r["m_road_ttc3"] for r in T[f"{c}|{a}"]])} for a in ("nc", "p333")}
@@ -205,7 +211,8 @@ def read(T: dict, cells: list, trace: dict | None = None) -> dict:
         else:
             passes, status = decided, "passes" if decided else "drops"
         res["cells"][c] = {"G1": G1, "G1_pass": g1_pass, "G2": g2, "G2_fallback": g2_fallback, "G2_pass": g2_pass, "G2_loss": {"best": best, "effect": g2l,
-                           "report_only_pass": g2l[0] >= 10.0 and g2l[1] > 0}, "G4": g4, "G4_pass": g4_pass, "location": location,
+                           "report_only_pass": g2l[0] >= 10.0 and g2l[1] > 0}, "G4": g4, "G4_pass": g4_pass, "G4_pass_registered": g4_registered,
+                           "passes_registered": g1_pass and g2_pass and g4_registered, "location": location,
                            "passes": passes, "status": status, "drain_cap": DRAIN_FACTOR * max(r["m_pending_end"] for r in T[f"{c}|nc"])}
     ps_ = [v["passes"] for v in res["cells"].values()]
     res["kill"] = None if res["null_broken"] or (None in ps_ and True not in ps_) else not any(ps_)
@@ -223,6 +230,7 @@ def main(argv: list) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--cells", required=True)
     ap.add_argument("--fallback", default="")
+    ap.add_argument("--result", default="s2.json")
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     cells = a.cells.split(",")
@@ -258,9 +266,16 @@ def main(argv: list) -> int:
     codes = [json.loads(m.read_text())["code"] if m.exists() else None for m in metas]
     if None in codes or any(c != codes[0] for c in codes):
         raise SystemExit(f"S2's rows, traces and fallback rows must come from one code: {[c and c['commit'] for c in codes]}")
+    target = out / a.result
+    if a.result != "s2.json":     # a re-read of stored rows happens once, at a known commit (V486)
+        here = pb.code_state()
+        if target.exists() or not (here["clean"] and here["detached"]):
+            raise SystemExit(f"{target} exists, or this tree is not clean and detached: the re-read happens once")
     res = read(T, cells, json.loads(tf.read_text())["pass"])
     res["code"] = codes[0]
-    pb.cma2.write_json(out / "s2.json", json.loads(json.dumps(res, default=lambda x: x.item())))
+    if a.result != "s2.json":
+        res["read_code"] = here
+    pb.cma2.write_json(target, json.loads(json.dumps(res, default=lambda x: x.item())))
     print("null broken: stage stopped" if res["null_broken"] else "null holds", "| KILL" if res["kill"] else "",
           {c: v["status"] for c, v in res["cells"].items()})
     return 3 if res["null_broken"] else 0

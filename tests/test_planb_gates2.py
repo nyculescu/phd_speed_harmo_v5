@@ -16,7 +16,7 @@ CELLS = ["SURGE", "TRUCK"]
 def row(seed, delay, cong=1000.0, run=0.0, stuck=0, pend=2.0, b3=50.0, coll=0.0, rng=None, sd=0.003):
     e = rng.normal(0, sd)
     m = {k: [60.0] * 25 for k in ("ramp1_pending", "ramp2_pending", "ramp1_queue", "ramp2_queue")}
-    return {"seed": seed, "all_delay": delay * (1 + e), "ttc_net": 1000.0, "passed": 3000.0, "collisions": coll, "contact_steps": coll,
+    return {"seed": g2.SEEDS[seed], "all_delay": delay * (1 + e), "ttc_net": 1000.0, "passed": 3000.0, "collisions": coll, "contact_steps": coll,
             "b3_step": b3, "brake3": b3 * 0.4, "out_b3": b3 * 0.6, "end_stop": 1.0, "end_stop2": 2.0, "m_cong_vs": cong * (1 + e),
             "m_cong_run_s": run, "m_cong_vs_nc": cong * (1 + e), "m_cong_run_s_nc": run, "m_stuck_n": stuck, "m_pending_end": pend,
             "m_main_pending_min": [30.0] * 25, "m_minute": m, "m_road_ttc3": {"3": {"before": 5}}}
@@ -126,34 +126,72 @@ def test_g4_components_each_drop_the_cell():
     scale(T, "SURGE|p333", "brake3", 1.2)
     assert drops(T)
     T = world()
-    for r in T["SURGE|nc"]:
-        r["m_main_pending_min"] = [31.0] * 25     # any backlog above S fails SURGE's drain
-    assert drops(T)
-    T = world()
-    for r in T["TRUCK|nc"]:
-        r["m_main_pending_min"] = [31.0] * 25     # TRUCK allows S's + 10 %
-    assert not drops(T, "TRUCK")
-    T = world()
-    for r in T["SURGE|nc"]:
-        r["m_minute"]["ramp1_pending"] = [60.0] * 20 + [90.0] * 5     # ramp pending is part of the backlog, inside minutes 20-24
-    assert drops(T)
-    T = world()
-    for r in T["SURGE|nc"]:
-        r["m_main_pending_min"] = [99.0] * 20 + [30.0] * 5     # outside the window: no effect
-    assert not drops(T)
-    T = world()
-    for r in T["SURGE|p333"]:
-        r["m_minute"]["ramp2_queue"] = [60.0] * 20 + [63.0] * 5     # +5 %: within the tolerance
-    assert not drops(T)
-    for r in T["SURGE|p333"]:
-        r["m_minute"]["ramp2_queue"] = [60.0] * 20 + [69.0] * 5     # +15 %
-    assert drops(T)
-    T = world()
     for r in T["SURGE|p333"]:
         r["collisions"] = r["contact_steps"] = 2.0
     assert drops(T)
     assert drops(world(), trace={"S": True, "SURGE": False, "TRUCK": True})     # G4(iv): a failed trace drops the cell
     assert drops(world(), trace={"S": False, "SURGE": True, "TRUCK": True})
+
+
+def raise_queue(T, name, queue, extra):
+    """Add `extra` vehicles to one queue over 1,500-1,800 s on every seed of an arm (or on the seeds listed)."""
+    for r in T[name]:
+        add = extra(r["seed"]) if callable(extra) else extra
+        if queue == "backlog":
+            r["m_main_pending_min"] = r["m_main_pending_min"][:20] + [x + 60.0 * add for x in r["m_main_pending_min"][20:]]
+        else:
+            r["m_minute"][queue] = r["m_minute"][queue][:20] + [x + 60.0 * add for x in r["m_minute"][queue][20:]]
+
+
+@pytest.mark.parametrize("arm", ("nc", "p333"))
+@pytest.mark.parametrize("queue", ("ramp1_queue", "ramp2_queue", "backlog"))
+def test_each_of_the_six_queues_can_flip_the_cell(arm, queue):
+    T = world()
+    raise_queue(T, f"TRUCK|{arm}", queue, 3.0)
+    c = read(T)["cells"]["TRUCK"]
+    assert not c["G4_pass"] and not c["passes"] and not c["G4"]["drain"]["verdict"]["pass"] and c["status"] == "drops"
+    assert c["G4"]["drain"]["verdict"]["excess"][f"{arm}|{queue}"] == pytest.approx(3.0, abs=1e-6)
+    T = world()
+    raise_queue(T, f"TRUCK|{arm}", queue, 1.9)
+    assert read(T)["cells"]["TRUCK"]["G4_pass"]
+
+
+def test_stuck_flips_the_cell_when_the_drain_passes():
+    T = world()
+    T["TRUCK|p333"][3]["m_stuck_n"] = 1
+    c = read(T)["cells"]["TRUCK"]
+    assert c["G4"]["drain"]["verdict"]["pass"] and not c["G4_pass"] and not c["G4_pass_registered"]
+
+
+def test_both_verdicts_are_kept():
+    T = world()
+    raise_queue(T, "TRUCK|p333", "ramp2_queue", 0.5)     # a registered failure (+50 %), inside the new limit
+    c = read(T)["cells"]["TRUCK"]
+    assert c["G4"]["p333"]["ramp_queue_pass"] is False and not c["G4_pass_registered"] and not c["passes_registered"]
+    assert c["G4_pass"] and c["passes"] and c["G4"]["drain"]["report"]["p333|ramp2_queue"]["old_pass"] is False
+    T = world()
+    tail = {g2.SEEDS[s] for s in range(4)}     # 4 of 40 seeds at +30: flat medians, registered pass, new failure
+    raise_queue(T, "TRUCK|nc", "ramp2_queue", lambda s: 30.0 if s in tail else 0.0)
+    c = read(T)["cells"]["TRUCK"]
+    assert c["G4_pass_registered"] and not c["G4_pass"] and not c["passes"]
+
+
+def test_surge_form_is_the_same_as_any_cell():
+    T = world()
+    for r in T["SURGE|nc"]:
+        r["m_main_pending_min"] = [31.0] * 25     # above S: failed "at most S's", passes the new form
+    c = read(T)["cells"]["SURGE"]
+    assert c["G4"]["nc"]["backlog_pass"] is False and not c["G4_pass_registered"] and c["G4_pass"]
+    assert c["G4"]["drain"]["report"]["nc|backlog"]["old_pass"] is False
+    t = read(T)["cells"]["TRUCK"]
+    assert t["G4"]["drain"]["report"]["nc|backlog"]["old_pass"] is True
+
+
+def test_the_window_is_minutes_20_to_24():
+    T = world()
+    for r in T["TRUCK|nc"]:
+        r["m_main_pending_min"] = [999.0] * 20 + [30.0] * 5     # outside the window: no effect
+    assert read(T)["cells"]["TRUCK"]["G4_pass"]
 
 
 def test_drain_cap_is_the_largest_no_control_backlog():
@@ -169,7 +207,7 @@ def write_s2(out, T, code="c" * 40, trace_code=None):
     with (out / "s2_runs.jsonl").open("w") as w:
         for n, rs in T.items():
             for r in rs:
-                w.write(json.dumps({"name": n, "q": 5300.0, **{k: v for k, v in r.items()}, "seed": g2.SEEDS[r["seed"]]}) + "\n")
+                w.write(json.dumps({"name": n, "q": 5300.0, **r}) + "\n")
     meta = {"inputs": {}, "jobs_sha256": "x", "code": {"commit": code, "clean": True, "detached": True, "diff_sha256": "d"}}
     (out / "meta.json").write_text(json.dumps(meta))
     (out / "trace").mkdir(exist_ok=True)
@@ -194,3 +232,20 @@ def test_main_read_writes_s2_json_and_exit_codes(tmp_path):
     write_s2(tmp_path / "gap", T)
     with pytest.raises(SystemExit):
         g2.main(["read", "--out", str(tmp_path / "gap"), "--cells", "SURGE,TRUCK"])
+
+
+def test_the_re_read_happens_once_from_a_clean_detached_tree(tmp_path, monkeypatch):
+    import json
+    write_s2(tmp_path / "x", world())
+    args = ["read", "--out", str(tmp_path / "x"), "--cells", "SURGE,TRUCK", "--result", "s2_v486.json"]
+    clean = {"commit": "a" * 40, "clean": True, "detached": True, "diff_sha256": "d"}
+    monkeypatch.setattr(g2.pb, "code_state", lambda: {**clean, "detached": False})
+    with pytest.raises(SystemExit):
+        g2.main(args)
+    assert not (tmp_path / "x" / "s2_v486.json").exists()
+    monkeypatch.setattr(g2.pb, "code_state", lambda: clean)
+    assert g2.main(args) == 0
+    res = json.loads((tmp_path / "x" / "s2_v486.json").read_text())
+    assert res["read_code"]["commit"] == "a" * 40 and res["code"]["commit"] == "c" * 40 and "passes_registered" in res["cells"]["TRUCK"]
+    with pytest.raises(SystemExit):
+        g2.main(args)     # never twice
