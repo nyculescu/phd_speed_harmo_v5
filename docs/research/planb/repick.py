@@ -57,6 +57,8 @@ def run(out: Path, conds: list, workers: int, runner=pb.run_jobs) -> dict:
            "steady_ctrl": every[steady] if steady else None,
            "cell_opponents": {c: sorted(set(p["forms"].values()) | {p["delay_opponent"], p["front_row"]}) for c, p in picks.items() if c != "S"},
            "own_state_repick": {c: every[p["forms"]["own"]]["own_state"] for c, p in picks.items() if c != "S" and "own" in p["forms"]},
+           "own_state_fallback": {c: every[min(fam["own"], key=lambda r: (med(T[f"{c}|{r}"], "ttc_net"), r))]["own_state"]     # V482
+                                  for c, p in picks.items() if c != "S" and "own" not in p["forms"]},
            "code": meta["code"],
            "mechanism_G": {c: {"vs_lowest_cf": mechanism(T, c, steady, picks[c]["lowest_cf"]), "differs": picks[c]["lowest_cf"] != steady}
                            for c in conds if c != "S" and steady and picks[c]["lowest_cf"]},

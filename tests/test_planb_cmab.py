@@ -119,4 +119,6 @@ def test_start_comes_from_the_repick_record():
     assert cmab.start_from(rp, "SURGE", "delay") == "p333"
     assert cmab.start_from(rp, "SURGE", "ttc") == {"level": 1, "th": 10, "crowd": 0}
     with pytest.raises(SystemExit):
-        cmab.start_from(rp, "TRUCK", "ttc")     # no own-state re-pick: stop for a V# (review F23)
+        cmab.start_from(rp, "TRUCK", "ttc")     # neither the re-pick nor its fallback
+    rp["own_state_fallback"] = {"TRUCK": {"level": 0, "th": 15, "crowd": 10}}
+    assert cmab.start_from(rp, "TRUCK", "ttc") == {"level": 0, "th": 15, "crowd": 10}     # V482

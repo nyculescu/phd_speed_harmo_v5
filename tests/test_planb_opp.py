@@ -356,3 +356,20 @@ def test_plan6_failed_builds_are_omitted_and_m_stays(tmp_path):
     assert "TRUCK|p333" not in J and "SURGE|MPC-F" not in J and "SURGE|ASCH" not in J and "SURGE|3E-D_SURGE" not in J
     assert "steady_rs" not in conf["opponents"]["SURGE"] and "S|steady_rs" not in J     # the steady pick equals os1_15_10: runs once
     assert conf["s_alias"] == {"steady_rs": "os1_15_10"} and conf["m"] == 2
+
+
+def no_own_in_truck(jobs, workers):
+    """Every own-state rule is 10 % slower than p333 in TRUCK (none admissible); os0_15_10 has the lowest close-following."""
+    for name, cfg, q, seed, rd in jobs:
+        cond, rule = name.split("|", 1)
+        slow = cond == "TRUCK" and rule.startswith("os")
+        cf = 50.0 if rule == "os0_15_10" else 80.0 if rule.startswith("os") else 100.0
+        yield (name, q, seed), {"q": q, "seed": seed, "all_delay": 1000.0 * (1.1 if slow else 1.0) + seed % 3, "delay_s": 1000.0, "ttc_net": cf,
+                                "collisions": 0.0, "passed": 3000.0, "alks_full_moving": 0.0, "finished_pct": 99.0}
+
+
+def test_repick_writes_the_v482_fallback_start(tmp_path):
+    import repick
+    res = repick.run(tmp_path, ["S", "SURGE", "TRUCK"], 1, runner=no_own_in_truck)
+    assert "TRUCK" not in res["own_state_repick"] and "SURGE" in res["own_state_repick"]
+    assert res["own_state_fallback"] == {"TRUCK": {"level": 0, "th": 15, "crowd": 10}}

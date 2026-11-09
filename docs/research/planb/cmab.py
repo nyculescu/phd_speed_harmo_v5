@@ -7,7 +7,8 @@ incumbent's check loss at 60 and at 100. Run with SUMO_HOME unset and OMP_NUM_TH
 
 usage: cmab.py --out DIR --cell SURGE|TRUCK --objective ttc|delay --repick REPICK.json [--workers N]
   The start comes from S3a's repick.json, never from the command line: 3E-C starts at the cell's own-state re-pick, encoded as
-  round 2's start (cma2.start): the upstream zone off (th 1 m/s), the other four zones equal to the re-pick (free 3 unless given).
+  round 2's start (cma2.start): the upstream zone off (th 1 m/s), the other four zones equal to the re-pick (free 3 unless given);
+  if S3a picked no admissible own-state rule in the cell, its lowest close-following own-state rule (V482).
   Zone merge1 (-100 to 594.72 m) cannot hold OwnState's x_min of 500 m exactly; disclosed. 3E-D starts at p333 (th 0, free 3).
 Files in DIR: meta.json, runs.jsonl, evals.jsonl, best.json (as cma2.py), check_runs.jsonl, checks.jsonl, incumbent.json and,
 at the end, pick.json. A file STOP_CEILING in DIR (the budget ceiling, planb.md §9) ends the search at its next check with the
@@ -103,8 +104,11 @@ def start_from(repick: dict, cell: str, objective: str):
     if objective == "delay":
         return "p333"
     st = repick.get("own_state_repick", {}).get(cell)
-    if st is None:
-        raise SystemExit(f"S3a picked no own-state rule in {cell}: 3E-C has no protocol start (review F23); stop for a V#")
+    if st is None:     # V482: the cell's lowest close-following own-state rule, admission ignored; disclosed
+        st = repick.get("own_state_fallback", {}).get(cell)
+        if st is None:
+            raise SystemExit(f"repick.json has neither an own-state re-pick nor its V482 fallback for {cell}")
+        print(f"3E-C start in {cell}: no admissible own-state re-pick, V482 fallback {st} (disclosed)", flush=True)
     return st
 
 

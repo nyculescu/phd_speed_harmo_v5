@@ -291,6 +291,24 @@ def no_control(T: dict, cfg: dict, cell: str, seeds: list, st: Stat) -> dict:
     return {"delay": (d, *ci(db, level(cfg["m"]))), "cf95": c95, "cf_shown_higher": c95[0] < HARM_CF and c95[2] < 0}
 
 
+PR28_ROADS = ("4a", "4", "ramp2", "pending_ramp2", "junction")
+
+
+def pr28(T: dict, cfg: dict, cell: str, seeds: list, o: str) -> dict:
+    """§1's PR-28 location rule (V482): the median paired road-delay difference (o minus v3w's arm) over 4a, 4, ramp 2, its insertion
+    queue and junction lanes, divided by the same over every road group; read only if the denominator's point is above 0."""
+    def road(n, s, only):
+        return sum(v for k, v in T[(cell, n)][s]["loc"].items() if k.startswith("delay|") and (only is None or k.split("|")[1] in only))
+    out = {}
+    for tag, only in (("num", PR28_ROADS), ("den", None)):
+        P = np.array([np.mean([road(n, s, only) for n in cfg["learners"]]) for s in seeds])
+        O = np.array([road(o, s, only) for s in seeds])
+        out[tag] = float(np.median(O - P))
+    read = out["den"] > 0
+    share = out["num"] / out["den"] if read else None
+    return {"opponent": o, **out, "read": read, "share": share, "adds_pr28": bool(read and share > 0.5)}
+
+
 def tile(meas: str, e: tuple) -> str:
     """V462(1)'s descriptive tile on the arm at 95 %: W, L or T (delay: 5 % / 2 %; close-following: 10 % / 10 %)."""
     win, lose = (5.0, -2.0) if meas == "delay" else (10.0, -10.0)
@@ -413,7 +431,7 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
         res["adaptation_gain"] = adaptation_gain(T, cfg, cell, sd, st)
         res["map"] = report_map(T, cfg, cell, sd, st, cfg["opponents"][cell])
         res["location"] = location_table(T, cfg, cell, sd, cfg["opponents"][cell] + [cfg["nc"]])
-        res["pr28"] = None     # the 50 % location rule waits for its definition (review F16)
+        res["pr28"] = pr28(T, cfg, cell, sd, res["closest"]["delay"]) if "closest" in res else None
         res["overfit_vs_p333"] = overfit(T, cfg, cell, sd, st)
         opp = {o: stack(T, cell, o, sd) for o in cfg["opponents"][cell]}
         p333 = stack(T, cell, cfg["p333"], sd)

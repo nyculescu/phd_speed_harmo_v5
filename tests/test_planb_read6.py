@@ -295,3 +295,19 @@ def test_t2_turns_on_the_interval_from_the_cells_matrix():
     wide = r6.read(T, cfg())["cells"]["X"]
     assert all(wide["map"]["p333"]["per_learner"][n]["cf"] >= 10.0 for n in LEARN)
     assert narrow["t2_counting_filter"]["policies"] == 5 and wide["t2_counting_filter"]["policies"] == 0
+
+
+def test_pr28_share_from_the_road_bins():
+    T = world()
+    for n in LEARN:
+        for s in range(N):
+            T[("X", n)][s]["loc"] = {"delay|4a|before": 60.0, "delay|3|before": 90.0}
+    for o in OPP:
+        for s in range(N):
+            T[("X", o)][s]["loc"] = {"delay|4a|before": 100.0, "delay|3|before": 100.0}     # 40 of the 50 veh-s gain on 4a
+    c = r6.read(T, cfg())["cells"]["X"]
+    assert c["pr28"]["share"] == pytest.approx(0.8) and c["pr28"]["adds_pr28"] and c["pr28"]["opponent"] == c["closest"]["delay"]
+    for n in LEARN:
+        for s in range(N):
+            T[("X", n)][s]["loc"] = {"delay|4a|before": 100.0, "delay|3|before": 100.0}     # no road gain: not read
+    assert not r6.read(T, cfg())["cells"]["X"]["pr28"]["read"]
