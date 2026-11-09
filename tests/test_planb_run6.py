@@ -148,4 +148,5 @@ def test_plan6_jobs_to_run6_rows_to_read6(tmp_path):
                 w.write(json.dumps(ok((n, c, pb.Q, s, "/rd", "c0"))) + "\n")
     res = read6.read(read6.load_rows(f, conf, run6.SMOKE), conf, {}, run6.SMOKE)
     assert set(res["cells"]) == {"SURGE", "TRUCK"} and all(c["n_seeds"] == 3 for c in res["cells"].values())
+    assert "G4(ii)" in res["must_carry"] and res["must_carry"] == conf["must_carry"]     # the reading cannot lose the deviation
     assert set(res["S"]["map"]) == set(read6.expected(conf)["S"]) - set(pb.V3W) - {"nc"}

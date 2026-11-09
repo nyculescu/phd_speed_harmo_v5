@@ -7,6 +7,7 @@ pack on, read once.
 
 usage: plan6.py inputs --repick REPICK.json --cmab DIR --cells SURGE,TRUCK --out DIR   steady.json, library.json, actions.json
        plan6.py freeze --s2 S2.json --repick REPICK.json --cmab DIR --asch ASCH.json --mpcf MPCF.json --out PICKS.json
+         (--s2 is V486's s2_v486.json; freeze runs where git holds both commits, i.e. the laptop; cmab's folders are CELL_ttc and CELL_delay)
        plan6.py jobs --picks PICKS.json --out DIR      writes s6_jobs.json, read6_config.json and the MPC-F model; runs nothing
 freeze checks that every stage ran at one clean, detached run commit, that the searches' picks belong to their cells and objectives,
 and that ASCH and MPC-F were tuned with exactly the frozen members; the MPC-F model travels inside the picks file (base64), so the
@@ -24,6 +25,8 @@ import pb  # noqa: E402
 SEEDS = pb.seeds(7_480_400, 7_480_639)
 M = 2     # the approved number of cells, never lowered when a cell drops (planb.md §8.2)
 OBJ = (("ttc", "3E-C"), ("delay", "3E-D"))
+MUST_CARRY = ("Every sentence about TRUCK carries §10's G4(ii) disclosure (V486, V487): S2 as registered read KILL, TRUCK failed G4(ii) as registered, "
+              "and it continues only under a replacement written after that result was known.")
 
 
 def ctrl_of(cfg: dict) -> dict:
@@ -167,7 +170,7 @@ def jobs(P: dict, out: Path) -> tuple:
         for n, k in arms.items():
             J[f"{cond}|{n}"] = {**pb.cfg(k, cond), "measure": st}
     conf = {"m": P["m"], "cells": P["cells"], "learners": list(pb.V3W), "opponents": deciding, "drain_cap": P["drain_cap"],
-            "seed_range": [SEEDS[0], SEEDS[-1]], "s_alias": alias, "omitted": P["omitted"], "run_commit": P["run_commit"],
+            "seed_range": [SEEDS[0], SEEDS[-1]], "s_alias": alias, "omitted": P["omitted"], "run_commit": P["run_commit"], "must_carry": MUST_CARRY,
             "p333": "p333", "nc": "nc", "t3e": "3e", "e3c": {c: f"3E-C_{c}" for c in P["cells"] if f"3E-C_{c}" in cells[c]},
             "e3d": {c: f"3E-D_{c}" for c in P["cells"] if f"3E-D_{c}" in cells[c]}, "null_swaps": 2000}
     return J, conf

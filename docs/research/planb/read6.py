@@ -8,7 +8,7 @@ paired means on the same matrix. Sentence-feeding readings use 1 - 0.05/m; harm,
 
 Before any statistic, every arm of every cell (and every S row the resilience reading needs) must hold exactly the expected seeds
 minus that condition's crash drops; a gap, a duplicate, a stray name or a seed outside the range stops the reading. read6 never
-labels a cell "did not bind": S2 drops come from s2.json.
+labels a cell "did not bind": S2 drops come from S2's read (s2_v486.json, V486).
 
 usage: read6.py ROWS.jsonl CONFIG.json OUT.json [--drops DROPS.json] [--seeds LO-HI]
   CONFIG: plan6.py's read6_config.json: {"m", "cells", "learners", "opponents": {cell: [...]}, "drain_cap", "seed_range": [lo, hi],
@@ -451,7 +451,7 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
     outs = [c["outcome"] for c in cells.values()]
     passed = any(o in ("W", "W-b") for o in outs) and "L" not in outs
     vetoed = [c for c, r in cells.items() if r["outcome"] in ("W", "W-b") and "L" in outs]
-    return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}),
+    return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}), "must_carry": cfg.get("must_carry"),
             "S": {"n_seeds": len(use["S"]), "dropped_seeds": sorted(drops.get("S", [])), "map": report_map(T, cfg, "S", use["S"], s_st, s_names)}}
 
 
