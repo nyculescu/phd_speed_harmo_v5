@@ -373,3 +373,23 @@ def test_repick_writes_the_v482_fallback_start(tmp_path):
     res = repick.run(tmp_path, ["S", "SURGE", "TRUCK"], 1, runner=no_own_in_truck)
     assert "TRUCK" not in res["own_state_repick"] and "SURGE" in res["own_state_repick"]
     assert res["own_state_fallback"] == {"TRUCK": {"level": 0, "th": 15, "crowd": 10}}
+
+
+def test_code_state_of_a_deployed_copy(tmp_path):
+    import hashlib
+    (tmp_path / "v5b").mkdir()
+    files = {"a.py": b"x = 1\n", "v5b/b.py": b"y = 2\n"}
+    for f, b in files.items():
+        (tmp_path / f).write_bytes(b)
+    (tmp_path / "COMMIT").write_text("f" * 40 + "\n")
+    (tmp_path / "MANIFEST").write_text("".join(f"{hashlib.sha256(b).hexdigest()}  ./{f}\n" for f, b in sorted(files.items())))
+    cs = pb.code_state(tmp_path)
+    assert cs == {"commit": "f" * 40, "clean": True, "detached": True, "diff_sha256": hashlib.sha256(b"").hexdigest()}
+    (tmp_path / "v5b" / "__pycache__").mkdir()
+    (tmp_path / "v5b" / "__pycache__" / "b.py").write_bytes(b"cache")     # caches are not code
+    assert pb.code_state(tmp_path)["clean"]
+    (tmp_path / "v5b" / "c.py").write_bytes(b"z = 3\n")     # a file added on the host
+    assert not pb.code_state(tmp_path)["clean"]
+    (tmp_path / "v5b" / "c.py").unlink()
+    (tmp_path / "a.py").write_bytes(b"x = 9\n")     # a file edited on the host
+    assert not pb.code_state(tmp_path)["clean"]

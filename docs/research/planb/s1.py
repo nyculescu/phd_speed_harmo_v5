@@ -97,10 +97,11 @@ def check(out: Path, base: Path, workers: int) -> dict:
     if not (code["clean"] and code["detached"]):
         raise SystemExit(f"run S1 from a clean, detached worktree at the run commit (found clean={code['clean']}, detached={code['detached']})")
     out.mkdir(parents=True, exist_ok=True)
-    head = subprocess.run(["git", "-C", str(base), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
-    if not head.startswith(BASE_COMMIT) or subprocess.run(["git", "-C", str(base), "status", "--porcelain"], capture_output=True, text=True).stdout.strip():
-        raise SystemExit(f"--base must be a clean checkout of {BASE_COMMIT}, found {head}")
-    res = {"code": code}
+    bc = pb.code_state(base)     # a git checkout or a deployed copy with COMMIT and MANIFEST
+    if not (bc["commit"] or "").startswith(BASE_COMMIT) or not bc["clean"]:
+        raise SystemExit(f"--base must be a clean copy of {BASE_COMMIT}, found {bc}")
+    res_base = bc
+    res = {"code": code, "base_code": res_base}
     r = subprocess.run([PY, str(pb.ROOT / "docs/research/round2/measure2.py"), "smoke", "/home/catalin/work/phd/v5b1_runs/round2", str(out / "c1"),
                         str(min(workers, 7))], capture_output=True, text=True)
     res["C1"] = {"pass": "SMOKE PASS" in r.stdout, "tail": [x for x in r.stdout.splitlines() if "differs" in x and "differs: []" not in x][:5]}
@@ -169,7 +170,7 @@ def check(out: Path, base: Path, workers: int) -> dict:
     traced_ok = len(rt) == len(jobs_t) and all(not v["recount_differs"] and not v["row_differs"] for v in traced.values())
     res["C5"] = {"pass": not bad and not calls and not sums and traced_ok, "pack_on_off_differs": bad, "calls_x": calls, "sums": sums,
                  "traced": {k: v for k, v in traced.items() if v["recount_differs"] or v["row_differs"]}}
-    res["all_pass"] = all(v["pass"] for k, v in res.items() if k != "code")
+    res["all_pass"] = all(v["pass"] for k, v in res.items() if k not in ("code", "base_code"))
     pb.cma2.write_json(out / "s1.json", res)
     return res
 
@@ -184,7 +185,7 @@ def main(argv: list) -> int:
     res = check(Path(a.out).resolve(), Path(a.base).resolve(), a.workers)
     print("commit", res["code"]["commit"])
     for k, v in res.items():
-        if k not in ("all_pass", "code"):
+        if k not in ("all_pass", "code", "base_code"):
             print(k, "PASS" if v["pass"] else "FAIL", {x: y for x, y in v.items() if x != "pass" and y})
     print("S1", "PASS" if res["all_pass"] else "FAIL")
     return 0 if res["all_pass"] else 1

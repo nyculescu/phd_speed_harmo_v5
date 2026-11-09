@@ -142,17 +142,30 @@ MAX_WORKERS = 100     # planb.md decision 7, for the whole machine
 RESERVE = Path.home() / ".planb_workers.json"
 
 
-def git(*args) -> tuple:
-    r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
+def git(*args, root: Path = ROOT) -> tuple:
+    r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
     return r.returncode, r.stdout
 
 
-def code_state() -> dict:
-    """The code a stage runs: HEAD, whether tracked files are clean, whether HEAD is detached, and a hash of the tracked diff."""
-    rc, head = git("rev-parse", "HEAD")
-    _, dirty = git("status", "--porcelain", "--untracked-files=no")
-    det, _ = git("symbolic-ref", "-q", "HEAD")
-    _, diff = git("diff", "HEAD")
+def code_state(root: Path = ROOT) -> dict:
+    """The code a stage runs: commit, whether the tracked files are clean, whether HEAD is detached, and a hash of the tracked diff.
+    A deployed copy (git archive, no .git) proves its commit by the COMMIT file and its cleanness by MANIFEST, the SHA-256 of every
+    shipped file written at deploy time (toolchain/remote/remote.sh); it counts as detached."""
+    if not (root / ".git").exists() and (root / "COMMIT").exists() and (root / "MANIFEST").exists():
+        clean = True
+        listed = set()
+        for line in (root / "MANIFEST").read_text().splitlines():
+            h, f = line.split(None, 1)
+            listed.add(f)
+            q = root / f
+            clean &= q.is_file() and hashlib.sha256(q.read_bytes()).hexdigest() == h
+        extra = [f for f in root.rglob("*.py") if "__pycache__" not in f.parts and f"./{f.relative_to(root)}" not in listed]
+        return {"commit": (root / "COMMIT").read_text().strip(), "clean": bool(clean and not extra), "detached": True,
+                "diff_sha256": hashlib.sha256(b"").hexdigest()}
+    rc, head = git("rev-parse", "HEAD", root=root)
+    _, dirty = git("status", "--porcelain", "--untracked-files=no", root=root)
+    det, _ = git("symbolic-ref", "-q", "HEAD", root=root)
+    _, diff = git("diff", "HEAD", root=root)
     return {"commit": head.strip() if rc == 0 else None, "clean": rc == 0 and not dirty.strip(), "detached": det != 0,
             "diff_sha256": hashlib.sha256(diff.encode()).hexdigest()}
 
