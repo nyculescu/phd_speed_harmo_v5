@@ -12,7 +12,7 @@ usage: gates2.py run --out DIR --cells SURGE,TRUCK [--workers N]           the r
        gates2.py trace --out DIR --cells SURGE,TRUCK [--workers N]         G4(iv): 4 traced runs per condition, after run
        gates2.py fallback --out DIR --cells SURGE,TRUCK --fallback TRUCK   G2: the other 13 carried rules in the named cells
        gates2.py read --out DIR --cells SURGE,TRUCK [--result NAME]        the gate table, s2.json; exit 3 if the null is broken
-  --result: another output name, read once only and from a clean, detached tree (V486's re-read of the stored rows)."""
+  --result s2_v486.json: V486's re-read of the stored rows, once only, from a clean, detached tree; s2.json is written only at the rows' code."""
 import argparse
 import json
 import sys
@@ -191,7 +191,8 @@ def read(T: dict, cells: list, trace: dict | None = None) -> dict:
             g4[a] = {"pr09_ratio": float(one_hz / step) if step else None, "pr09_pass": bool(step) and bool(abs(one_hz / step - 1.0) <= 0.05),
                      "backlog": (float(bl_c), float(bl_s)), "backlog_pass": bool(bl_c <= (bl_s if c == "SURGE" else 1.1 * bl_s)),
                      "ramp_queue": rq, "ramp_queue_pass": all(x <= 1.1 * y for x, y in rq.values()),
-                     "stuck_rows": int(sum(r["m_stuck_n"] > 0 for r in C)), "stuck_pass": all(r["m_stuck_n"] == 0 for r in C)}
+                     "stuck_rows": int(sum(r["m_stuck_n"] > 0 for r in C)), "stuck_rows_S": int(sum(r["m_stuck_n"] > 0 for r in S)),
+                     "stuck_pass": all(r["m_stuck_n"] == 0 for r in C)}
         pc, ps_ = T[f"{c}|p333"], T["S|p333"]
         g4["collisions_pass"] = bool(np.median(series(pc, "collisions")) <= np.median(series(ps_, "collisions")) + 1
                                      and np.median(series(pc, "contact_steps")) <= np.median(series(ps_, "contact_steps")) + 1)
@@ -210,9 +211,10 @@ def read(T: dict, cells: list, trace: dict | None = None) -> dict:
             passes, status = None, "G2 pending: run the other carried rules in this cell (gates2.py fallback)"
         else:
             passes, status = decided, "passes" if decided else "drops"
+        registered = None if res["null_broken"] or (g2_pending and g1_pass and g4_registered) else (g1_pass and g2_pass and g4_registered)
         res["cells"][c] = {"G1": G1, "G1_pass": g1_pass, "G2": g2, "G2_fallback": g2_fallback, "G2_pass": g2_pass, "G2_loss": {"best": best, "effect": g2l,
                            "report_only_pass": g2l[0] >= 10.0 and g2l[1] > 0}, "G4": g4, "G4_pass": g4_pass, "G4_pass_registered": g4_registered,
-                           "passes_registered": g1_pass and g2_pass and g4_registered, "location": location,
+                           "passes_registered": registered, "location": location,
                            "passes": passes, "status": status, "drain_cap": DRAIN_FACTOR * max(r["m_pending_end"] for r in T[f"{c}|nc"])}
     ps_ = [v["passes"] for v in res["cells"].values()]
     res["kill"] = None if res["null_broken"] or (None in ps_ and True not in ps_) else not any(ps_)
@@ -230,7 +232,7 @@ def main(argv: list) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--cells", required=True)
     ap.add_argument("--fallback", default="")
-    ap.add_argument("--result", default="s2.json")
+    ap.add_argument("--result", default="s2.json", choices=("s2.json", "s2_v486.json"))
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args(argv)
     cells = a.cells.split(",")
@@ -267,10 +269,11 @@ def main(argv: list) -> int:
     if None in codes or any(c != codes[0] for c in codes):
         raise SystemExit(f"S2's rows, traces and fallback rows must come from one code: {[c and c['commit'] for c in codes]}")
     target = out / a.result
-    if a.result != "s2.json":     # a re-read of stored rows happens once, at a known commit (V486)
-        here = pb.code_state()
-        if target.exists() or not (here["clean"] and here["detached"]):
-            raise SystemExit(f"{target} exists, or this tree is not clean and detached: the re-read happens once")
+    here = pb.code_state()
+    if a.result == "s2.json" and here != codes[0]:     # the registered name is written only at the rows' own code
+        raise SystemExit(f"s2.json is written only at the code of the rows ({codes[0]['commit']}); this tree is {here['commit']}")
+    if a.result != "s2.json" and (target.exists() or not (here["clean"] and here["detached"])):     # V486's re-read happens once
+        raise SystemExit(f"{target} exists, or this tree is not clean and detached: the re-read happens once")
     res = read(T, cells, json.loads(tf.read_text())["pass"])
     res["code"] = codes[0]
     if a.result != "s2.json":

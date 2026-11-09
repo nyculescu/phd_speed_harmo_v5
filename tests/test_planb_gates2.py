@@ -51,7 +51,7 @@ def test_a_binding_cell_passes():
     assert not res["null_broken"] and res["kill"] is False
     c = res["cells"]["SURGE"]
     assert c["G1_pass"] and c["G2_pass"] and c["G4_pass"] and c["passes"] and c["status"] == "passes"
-    assert c["drain_cap"] == 1.5 * 2.0
+    assert c["drain_cap"] == 1.5 * 2.0 and c["passes_registered"] is True
     assert c["G2"]["p333"][0] == pytest.approx(30.0, abs=0.5)     # (100,000 - 70,000) / 100,000 against no control
 
 
@@ -215,8 +215,12 @@ def write_s2(out, T, code="c" * 40, trace_code=None):
     (out / "s2_trace.json").write_text(json.dumps({"runs": {}, "pass": TRACE}))
 
 
-def test_main_read_writes_s2_json_and_exit_codes(tmp_path):
+CODE = {"commit": "c" * 40, "clean": True, "detached": True, "diff_sha256": "d"}
+
+
+def test_main_read_writes_s2_json_and_exit_codes(tmp_path, monkeypatch):
     import json
+    monkeypatch.setattr(g2.pb, "code_state", lambda: CODE)
     write_s2(tmp_path / "ok", world())
     assert g2.main(["read", "--out", str(tmp_path / "ok"), "--cells", "SURGE,TRUCK"]) == 0
     s2 = json.loads((tmp_path / "ok" / "s2.json").read_text())
@@ -239,13 +243,127 @@ def test_the_re_read_happens_once_from_a_clean_detached_tree(tmp_path, monkeypat
     write_s2(tmp_path / "x", world())
     args = ["read", "--out", str(tmp_path / "x"), "--cells", "SURGE,TRUCK", "--result", "s2_v486.json"]
     clean = {"commit": "a" * 40, "clean": True, "detached": True, "diff_sha256": "d"}
-    monkeypatch.setattr(g2.pb, "code_state", lambda: {**clean, "detached": False})
-    with pytest.raises(SystemExit):
-        g2.main(args)
-    assert not (tmp_path / "x" / "s2_v486.json").exists()
+    for bad in ({"detached": False}, {"clean": False}):
+        monkeypatch.setattr(g2.pb, "code_state", lambda: {**clean, **bad})
+        with pytest.raises(SystemExit):
+            g2.main(args)
+        assert not (tmp_path / "x" / "s2_v486.json").exists()
     monkeypatch.setattr(g2.pb, "code_state", lambda: clean)
     assert g2.main(args) == 0
     res = json.loads((tmp_path / "x" / "s2_v486.json").read_text())
     assert res["read_code"]["commit"] == "a" * 40 and res["code"]["commit"] == "c" * 40 and "passes_registered" in res["cells"]["TRUCK"]
     with pytest.raises(SystemExit):
         g2.main(args)     # never twice
+
+
+def test_the_registered_name_needs_the_rows_own_code_and_other_names_are_refused(tmp_path, monkeypatch):
+    write_s2(tmp_path / "x", world())
+    args = ["read", "--out", str(tmp_path / "x"), "--cells", "SURGE,TRUCK"]
+    monkeypatch.setattr(g2.pb, "code_state", lambda: {**CODE, "commit": "a" * 40})
+    with pytest.raises(SystemExit):
+        g2.main(args)
+    assert not (tmp_path / "x" / "s2.json").exists()
+    with pytest.raises(SystemExit):
+        g2.main(args + ["--result", "s2_other.json"])
+
+
+def test_each_arm_is_read_against_its_own_steady_rows():
+    T = world()
+    raise_queue(T, "S|p333", "ramp2_queue", 3.0)
+    raise_queue(T, "TRUCK|p333", "ramp2_queue", 3.0)     # equal to its own S, 3 above S|nc and the placebo
+    c = read(T)["cells"]["TRUCK"]
+    assert c["G4_pass"] and all(abs(v) < 1e-6 for v in c["G4"]["drain"]["verdict"]["excess"].values()) and c["G4_pass_registered"]
+
+
+def test_g2_pending_follows_the_new_form():
+    T = world(rule_gain=0.95)
+    raise_queue(T, "TRUCK|p333", "ramp2_queue", 0.5)     # registered failure, inside the new limit: waits for the fallback
+    c = read(T)["cells"]["TRUCK"]
+    assert c["passes"] is None and c["status"].startswith("G2 pending") and c["passes_registered"] is False
+    T = world(rule_gain=0.95)
+    tail = {g2.SEEDS[s] for s in range(4)}
+    raise_queue(T, "TRUCK|nc", "ramp2_queue", lambda s: 30.0 if s in tail else 0.0)     # the new form fails: it drops at once
+    c = read(T)["cells"]["TRUCK"]
+    assert c["passes"] is False and c["status"] == "drops" and c["passes_registered"] is None
+
+
+def test_registered_verdict_follows_the_same_branches():
+    assert read(world(cell_delay=1.05))["cells"]["TRUCK"]["passes_registered"] is False     # G1 fails
+    assert read(world(rule_gain=0.95))["cells"]["TRUCK"]["passes_registered"] is None     # G2 pending
+    assert read(world(placebo_delay=1.2))["cells"]["TRUCK"]["passes_registered"] is None     # null broken
+
+
+@pytest.mark.parametrize("kw,drops", [({"contact_steps": 5.0, "collisions": 0.0}, True), ({"contact_steps": 0.0, "collisions": 5.0}, True),
+                                      ({"contact_steps": 1.0, "collisions": 1.0}, False)])
+def test_g4_iii_each_count_at_s_plus_one(kw, drops):
+    T = world()
+    for r in T["TRUCK|p333"]:
+        r.update(kw)
+    assert (not read(T)["cells"]["TRUCK"]["G4_pass"]) is drops
+
+
+def test_g4_iii_reads_medians_against_p333s_own_steady_rows():
+    T = world()
+    T["TRUCK|p333"][0]["collisions"] = 50.0     # one seed: the median does not move
+    assert read(T)["cells"]["TRUCK"]["G4_pass"]
+    T = world()
+    for r in T["S|nc"]:
+        r["collisions"] = 5.0
+    for r in T["TRUCK|p333"]:
+        r["collisions"] = 2.0     # above S|p333 + 1, below S|nc
+    assert not read(T)["cells"]["TRUCK"]["G4_pass"]
+
+
+@pytest.mark.parametrize("arm,factor,ok", [("nc", 1.2, False), ("p333", 0.7, False), ("p333", 1.15, False), ("p333", 1.1, True)])
+def test_g4_i_within_five_percent_for_both_arms(arm, factor, ok):
+    T = world()
+    scale(T, f"TRUCK|{arm}", "brake3", factor)     # ratios 1.08, 0.88, 1.06 and 1.04
+    assert read(T)["cells"]["TRUCK"]["G4_pass"] is ok
+
+
+@pytest.mark.parametrize("key", ("brake3", "b3_step"))
+def test_g4_i_reads_medians(key):
+    T = world()
+    T["TRUCK|p333"][0][key] += 400.0
+    assert read(T)["cells"]["TRUCK"]["G4_pass"]
+
+
+@pytest.mark.parametrize("seed", (0, 25, 39))
+@pytest.mark.parametrize("arm", ("nc", "p333"))
+def test_stuck_on_any_gate_row_drops_the_cell(arm, seed):
+    T = world()
+    T[f"TRUCK|{arm}"][seed]["m_stuck_n"] = 1
+    assert not read(T)["cells"]["TRUCK"]["G4_pass"]
+
+
+def test_steady_stuck_rows_are_reported_beside():
+    T = world()
+    T["S|p333"][5]["m_stuck_n"] = 2
+    c = read(T)["cells"]["TRUCK"]
+    assert c["G4"]["p333"]["stuck_rows_S"] == 1 and c["G4"]["nc"]["stuck_rows_S"] == 0 and c["G4_pass"]
+
+
+def bump_backlog(T, name, vehicles):
+    for r in T[name]:
+        r["m_main_pending_min"] = r["m_main_pending_min"][:20] + [x + 60.0 * vehicles for x in r["m_main_pending_min"][20:]]
+
+
+def test_registered_verdicts_on_their_own_terms():
+    def reg(name, queue, extra, arm="nc"):
+        T = world()
+        raise_queue(T, name, queue, extra)
+        return read(T)["cells"]["TRUCK"]["G4_pass_registered"]
+    assert not reg("TRUCK|nc", "ramp2_queue", 0.5)
+    assert not reg("TRUCK|nc", "ramp2_queue", 0.15)     # +15 %
+    assert reg("TRUCK|nc", "ramp2_queue", 0.05)     # +5 %
+    assert not reg("TRUCK|p333", "backlog", 1.0)
+    assert not reg("TRUCK|nc", "backlog", 0.4)     # 2.5 -> 2.9 vehicles, +16 %
+
+
+def test_only_surge_loses_the_ten_percent_in_the_report():
+    T = world()
+    for cell in ("TRUCK", "SURGE"):
+        bump_backlog(T, f"{cell}|nc", 0.075)     # +3 % of 2.5 vehicles
+    res = read(T)["cells"]
+    t, s = res["TRUCK"]["G4"]["drain"]["report"]["nc|backlog"], res["SURGE"]["G4"]["drain"]["report"]["nc|backlog"]
+    assert t["old_pass"] is True and t["old_limit"] == pytest.approx(2.75) and s["old_pass"] is False and s["old_limit"] == pytest.approx(2.5)

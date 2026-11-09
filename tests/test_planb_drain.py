@@ -346,15 +346,17 @@ def test_row_adapter_ignores_minutes_outside_window(D=drain_rule):
 def test_realised_placebo_regression(D=drain_rule):
     by = {}
     for line in open(ROWS):
-        r = json.loads(line)
-        if r["name"].split("|")[0] in ("S", "PLACEBO"):     # no-effect rows only
+        if line.startswith(('{"name": "S|', '{"name": "PLACEBO|')):     # the perturbed rows are never parsed
+            r = json.loads(line)
             by.setdefault(r["name"], []).append(r)
+    assert len(by) == 5
     get = lambda c: {a: sorted(by[f"{c}|{a}"], key=lambda r: r["seed"]) for a in drain_rule.ARMS}
     C, sc = D.series_from_rows(get("PLACEBO"))
     S, ss = D.series_from_rows(get("S"))
     r = D.drain_test(C, S, sc, ss)
     assert r["pass"]
-    assert max(r["excess"].values()) == pytest.approx(0.398, abs=0.001)
+    want = {"nc|ramp1_queue": -0.013, "nc|ramp2_queue": 0.056, "nc|backlog": 0.398, "p333|ramp1_queue": 0.0, "p333|ramp2_queue": 0.208, "p333|backlog": -0.075}
+    assert r["excess"] == pytest.approx(want, abs=0.001)     # each arm against its own S rows
 
 
 def test_surge_flag_is_required(D=drain_rule):
@@ -410,3 +412,11 @@ def test_report_edges(D=drain_rule):
     s = np.full(N, 1.0)
     at = report(D, world(s * 1.1), world(s), b=100)["nc|ramp2_queue"]
     assert at["old_pass"] and at["steady_median"] == 1.0     # the registered form allowed equality
+
+
+def test_each_arm_is_paired_with_its_own_steady_rows(D=drain_rule):
+    S, C = world(), world()
+    S["p333"]["ramp2_queue"] = BASE + 3.0
+    C["p333"]["ramp2_queue"] = BASE + 3.0     # equal to its own S: no excess, though 3 above S's no-control rows
+    r = D.drain_test(C, S, SEEDS, SEEDS)
+    assert r["pass"] and all(v == 0 for v in r["excess"].values())
