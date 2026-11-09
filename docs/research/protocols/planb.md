@@ -8,7 +8,7 @@ v1 revises v0 after three reviews (statistics, plant, record; 47 issues). Every 
 S0 decisions, build, reviews ─► S1 smoke, identity (C1, C1b), T3 ─► S2 plant gates per cell (no control, p333, 3E-T, placebo; no v3w)
   ─► S3a grid re-pick ─► S4 3E-C and 3E-D to 100 generations, ASCH, MPC-F
   ─► S5 freeze, smoke ─► S6 evaluation, n = 240, read once by the committed script (S7)
-KILL exit: S2 (about 600 runs, laptop, $0)
+KILL exit: S2 (about 600 runs, rented, under $1; V483)
 ```
 
 ## 0. Status and open decisions
@@ -380,7 +380,7 @@ CLAUDE.md's tool checks map as follows: T0 (the actuator binds) and T1 (control 
 - **Adversarial code review** (ultracode on) before S1, and again before S6.
 - Code on branch `planb/core` from `r2/metrics` at `79b889b`, in a worktree under `~/work/phd/wt/planb`.
 
-### 7.2 S1: smoke, identity, determinism (about 130 runs, laptop by day)
+### 7.2 S1: smoke, identity, determinism (about 130 runs, rented machine; V483)
 
 | Check | Pass criterion |
 |---|---|
@@ -393,7 +393,7 @@ CLAUDE.md's tool checks map as follows: T0 (the actuator binds) and T1 (control 
 
 Any failure stops the stage until it is fixed and logged.
 
-### 7.3 S2: plant gates per cell (about 460 runs with two cells, laptop by day, pack on with its space-time field saved)
+### 7.3 S2: plant gates per cell (about 460 runs with two cells, the same rented machine as S1, pack on with its space-time field saved; V483)
 
 Arms: no control, p333 and 3E-T in the cell and in S on 7,480,010-049; the placebo with no control and p333. No v3w. Statistic: round 2's paired effect against each arm's own S row, 95 % percentile bootstrap, 20,000 resamples. Each gate is read on medians over the 40 gate seeds.
 
@@ -538,8 +538,8 @@ Rates: rental A (V475, EPYC 7702, 59 workers) **2,600-3,050 runs/h** measured; f
 | Stage | Content | Runs, two cells | Runs, three cells | Where |
 |---|---|---|---|---|
 | S0 | decisions, build, unit tests, reviews | 0 | 0 | laptop |
-| S1 | smoke, identity (C1, C1b), T3 | 130 | 134 | laptop by day |
-| S2 | plant gates, one rung | 460 | 580 | laptop by day, under 1 h |
+| S1 | smoke, identity (C1, C1b), T3 | 130 | 134 | rented (V483) |
+| S2 | plant gates, one rung | 460 | 580 | rented, same machine as S1 (V483) |
 | S3a | grid re-pick: 69 rules × 20 seeds × (cells + S), plus no control | 4,200 | 5,600 | rented |
 | S4a | 3E-C and 3E-D per cell to 100 generations: 384 runs per generation + 240 per check, 9 checks | 162,400 | 243,600 | rented |
 | S4b | ASCH: configurations × conditions × 20 seeds, top-5 check, p333 references, never switch | 3,720 | 6,400 | rented |
@@ -555,7 +555,7 @@ Rates: rental A (V475, EPYC 7702, 59 workers) **2,600-3,050 runs/h** measured; f
 | three cells, n = 120 | about 277,800 | 96-113 h | $29-38 |
 
 - Searches are 81-88 % of all runs. One futile cell's two searches cost about 81,200 runs, $8-11.
-- KILL at S2: about 600 runs (two cells), laptop, $0.
+- KILL at S2: about 600 runs (two cells), rented, under $1 (V483).
 - **Budget ceiling, action fixed now:** if spend so far plus the projected cost of S5 and S6 at the measured rate reaches $40, or machine time reaches 7 days, every running search stops at its next check, its incumbent is frozen and labelled "stopped at the budget ceiling", which is logged as a departure from V478's "to convergence" (§3.3), and the protocol continues to S5 and S6. The author is not asked to choose after seeing data. With three cells at n = 240, the ceiling may bind at the slow end of the rate range.
 - Not costed: build and author time (my estimate: 2-3 days of code and tests, MPC-F included), re-runs under the bug rule.
 - **Operating rules:** check machine resources and that the v6 sessions are idle before every batch; the CPU guard; the night cap; no co-scheduling with training (V392); long runs in their own systemd unit; at most 100 workers unless the author lifts it (decision 7); a rate check in the first 30 minutes of every rented stage, against the range above; **S3a and S4 run from a frozen detached worktree at the run commit**; the picks are then committed on the branch, and S5-S6 run from a new detached worktree at that commit, whose diff from the run commit holds only the picks file (checked); no commits in a run worktree mid-run; one platform per stage with acceptance passed (V436, V465); rentals picked by the V473 rules, fetch-verify-destroy on any failure (V471).
