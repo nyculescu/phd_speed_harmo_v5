@@ -264,3 +264,14 @@ None.
   - SUMO lane-change artefacts at the merge (V193-V195) may make B's shares untestable.
 - Confirmed issues: the earlier positive results rest on a degenerate zipper + Flow-IDM discharge (V255).
 - Status: B amendment and review.
+
+### V484. Open implementations section and replication plan (2026-11-08)
+- Decision: the comparison of ACMPC, vsl2 and DWL-ST-VSL is written as a chapter 2 section with machine-checked evidence; a replication ladder E0-E5 is planned and the protocol is a draft.
+- Potential challenges:
+  - Critique based on repositories may be unfair to published work; the text says absence from a repository is not absence from the study.
+  - The papers are unread, so the DWL comparison may change once they are.
+  - The section promises a replication that has not been run; if E2 fails for version or access reasons, the promise has to be reworded.
+  - ACMPC depends on a network file that only its maintainers can supply.
+  - Replication competes with Plan B and thesis writing for author time.
+- Confirmed issues: none yet.
+- Status: section drafted; protocol awaiting the author's approval of its section 8.

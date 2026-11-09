@@ -1,0 +1,651 @@
+{
+ "pins": {
+  "adaptive-compliance-mpc-rl-motorway-traffic": "6cca815928acaf36add3bf92abf42319a4709ac3",
+  "vsl2": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+  "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit": "c040edcadbc03cce1735e9993966bcedd06af506"
+ },
+ "numbers": {
+  "VslSeedA": "6.69",
+  "VslSeedB": "5.37",
+  "VslSeedC": "4.27",
+  "VslMaxSeedA": "3.61",
+  "VslMaxSeedB": "0.62",
+  "VslMaxSeedC": "-8.88",
+  "VslGain": "5.46",
+  "VslPooledMax": "-0.56",
+  "VslBiasMean": "0.0026",
+  "VslBiasMax": "0.0064",
+  "VslChangesMin": "86",
+  "VslChangesMax": "92",
+  "VslJumpMax": "70",
+  "VslShareFortyMin": "43",
+  "VslShareFortyMax": "44",
+  "AcSweepMin": "1.2",
+  "AcSweepMax": "3.8",
+  "AcRuns": "250",
+  "AcPools": "12",
+  "DwlExploitRuns": "99",
+  "DwlVehicles": "5{,}860",
+  "SelectionGap": "2.50",
+  "FloorThree": "0.25",
+  "FactCount": "77"
+ },
+ "facts": [
+  {
+   "id": "a_ratio",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "macroscopic/vsl.py",
+   "detail": "line 51: ratio = engine.min((self.actions[\"v_ctrl\"] / self.V) * (1+self.alpha), 1.0)"
+  },
+  {
+   "id": "a_vstar",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "macroscopic/vsl.py",
+   "detail": "line 52: v_star = engine.min(ratio * self.V, self.v_free)"
+  },
+  {
+   "id": "a_rhostar",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "macroscopic/vsl.py",
+   "detail": "line 24: rho_star = self.rho_crit * (1 + self.A * (1 - ratio))"
+  },
+  {
+   "id": "a_astar",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "macroscopic/vsl.py",
+   "detail": "line 25: a_star = self.a * (self.E - (self.E - 1) * ratio)"
+  },
+  {
+   "id": "a_objective",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "macroscopic/solvers/coordinated.py",
+   "detail": "line 63: self.environment.parameters.T * tts_term"
+  },
+  {
+   "id": "a_q_update",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/agents/qlearning.py",
+   "detail": "line 139: target_q = total_reward + self.gamma * max_next_q"
+  },
+  {
+   "id": "a_reward_scope",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/agents/reward_components.py",
+   "detail": "line 20: system (mainline + ramp queues) between the previous and the current decision."
+  },
+  {
+   "id": "a_collision_clip",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/agents/reward_components.py",
+   "detail": "line 47: collisions = min(collisions, self.clip)"
+  },
+  {
+   "id": "a_seed_default",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/simulation/base.py",
+   "detail": "line 26: seed: int = 42"
+  },
+  {
+   "id": "a_seed_passed",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/simulation/base.py",
+   "detail": "line 40: \"--seed\", str(self.seed),"
+  },
+  {
+   "id": "a_ignored_net",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": ".gitignore",
+   "detail": "line 14: micronet/"
+  },
+  {
+   "id": "a_ignored_data",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": ".gitignore",
+   "detail": "line 13: data/"
+  },
+  {
+   "id": "a_report_reads_data",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "report/report_config.json",
+   "detail": "line 8: \"rl_path\": \"data/s1_medium_rl_eval_revamped_5/s1_motorway_medium\","
+  },
+  {
+   "id": "a_readme_no_tests",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "README.md",
+   "detail": "line 341: - **No tests**: the repository has no automated test suite."
+  },
+  {
+   "id": "a_readme_unseeded",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "README.md",
+   "detail": "line 340: - **Unseeded RL**: Q-learning exploration uses an unseeded random generator, so training runs are not reproducible."
+  },
+  {
+   "id": "a_final_cfg_tts_trend",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenarios/_pools/s1_motorway_medium+s2_motorway_medium+s4_motorway_medium/rl-proper-final-mixed-pool/coordinated/rl_descriptor.json",
+   "detail": "line 32: \"source\": \"tts_trend\","
+  },
+  {
+   "id": "v_bias_range",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 401: self.curr_speed_bias = bias_act * 3.0"
+  },
+  {
+   "id": "v_sign_edge",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 120: self._vsl_edges = [\"i80_upstream_n\"]"
+  },
+  {
+   "id": "v_cav_cmd",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 523: self.sumo.vehicle.setSpeed(veh, target_v)"
+  },
+  {
+   "id": "v_sign_cmd",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 528: self.sumo.lane.setMaxSpeed(lane.getID(), vsl_ms)"
+  },
+  {
+   "id": "v_worker_reward",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 465: worker_reward = -normalized_speed_variance"
+  },
+  {
+   "id": "v_manager_reward_entry",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "line 124: self._tt_entry_edge = \"i80_upstream_n\""
+  },
+  {
+   "id": "v_eval_tt",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/evaluate_logger.py",
+   "detail": "line 183: tt = env.sumo.multientryexit.getLastIntervalMeanTravelTime('weaving_e3')"
+  },
+  {
+   "id": "v_e3_entry",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/assets/I80/i80.add.xml",
+   "detail": "line 40: <detEntry lane=\"i80_weaving_n_0\" pos=\"0.0\" friendlyPos=\"true\"/>"
+  },
+  {
+   "id": "v_e3_exit",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/assets/I80/i80.add.xml",
+   "detail": "line 41: <detExit lane=\"i80_weaving_n_0\" pos=\"200.0\" friendlyPos=\"true\"/>"
+  },
+  {
+   "id": "v_test_seeds",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/plot_figure_5_final.py",
+   "detail": "line 34: TEST_SEEDS = [101, 102, 103]"
+  },
+  {
+   "id": "v_latest_ckpt",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/evaluate_all.py",
+   "detail": "line 365: latest_exp = max(candidates, key=os.path.getmtime)"
+  },
+  {
+   "id": "d_seed",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 48: root+\"highway_model.sumocfg\", \"--seed\", str(28815),\\"
+  },
+  {
+   "id": "d_learning_runs",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1454: end_learning=14000"
+  },
+  {
+   "id": "d_exploit_runs",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1455: exploit=100 # #of sumulations for analysis"
+  },
+  {
+   "id": "d_run_seconds",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1655: while(step <= 5400):"
+  },
+  {
+   "id": "d_control_period",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1463: control_time_perid = 150 # sec"
+  },
+  {
+   "id": "d_cooperation",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1647: C = 0.75  # cooperation coefficient (see our papers)"
+  },
+  {
+   "id": "d_epsilon",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1483: epsilon=math.exp((((-1)*math.log(20))/6000)*run)"
+  },
+  {
+   "id": "d_rate_limit",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 108: x1=np.array(abs(actions_A[:] - actions_A[previous_action_index])<=20)"
+  },
+  {
+   "id": "d_actions",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1587: actions_mps = np.round((np.array([60, 60, 80, 80, 100, 100, 120, 120]))*(1/3.6),2)"
+  },
+  {
+   "id": "d_positions",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1588: position = np.array([1,3,1,3,1,3,1,3])"
+  },
+  {
+   "id": "d_states",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1501: A1.W_LPi[0] = np.resize(np.loadtxt(open(path_results+'A1W_LP1'+str(load)+'.csv', 'rt'), delimiter=\",\"), 4608).reshape(4608,1)"
+  },
+  {
+   "id": "d_arbitration",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 166: W_win = np.array([[Ws_LP[0, index_max_W_LP], C*Ws_RP[0, index_max_W_RP]]])"
+  },
+  {
+   "id": "d_w_update",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 73: W[x] = (1 - alpha_W)*W[x] + alpha_W*((1-alpha_Q_ai)**w)*(Q[x,ai] - \\"
+  },
+  {
+   "id": "d_tts_scope",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 642: numberOfVeh = traci.vehicle.getIDCount()"
+  },
+  {
+   "id": "d_tts_is_total",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1671: numVehTotal = TTS_Total()"
+  },
+  {
+   "id": "d_rate_limit_kmh",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 1712: A1.prevActionWin, A1.actions_kmph[0,:], run, numberSaveData)"
+  },
+  {
+   "id": "d_windows_path",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "line 45: root=\"C:/Users/kusic/Desktop/DWL-ST-VSL/model_MD/\""
+  },
+  {
+   "id": "d_exploit_start",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "plot_results.py",
+   "detail": "line 33: start_exploit=14000+1 # Start exploitation phase"
+  },
+  {
+   "id": "d_exploit_end",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "plot_results.py",
+   "detail": "line 34: end_exploit=14100 # End exploitation phase"
+  },
+  {
+   "id": "d_select_best",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "plot_results.py",
+   "detail": "line 62: indx_best = int(df_TTS.loc[df_TTS[['TTS']].idxmin(), 'indx'].item()) # one can play with different objectives (e.g., min Density, or max Speed)"
+  },
+  {
+   "id": "d_novsl_single",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "plot_results.py",
+   "detail": "line 71: data = pd.read_excel(path_results+\"NO_VSL_controlFile\"+str(end_exploit+1)+\".xlsx\")"
+  },
+  {
+   "id": "d_readme_synthetic",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "README.md",
+   "detail": "line 10: * SUMO synthetic motorway model and traffic scenario,"
+  },
+  {
+   "id": "d_readme_version",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "README.md",
+   "detail": "line 83: Note: in the paper, we used an older version, so the results might slightly vary depending on the SUMO version as well as on the process of training the machine"
+  },
+  {
+   "id": "a_head_lacks_tts_trend",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/agents/state_features.py",
+   "detail": "no line matches tts_trend"
+  },
+  {
+   "id": "a_no_random_flag",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "micro_main.py",
+   "detail": "no line matches --random"
+  },
+  {
+   "id": "v_train_unseeded",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/scripts/train_sac.py",
+   "detail": "no line matches seed"
+  },
+  {
+   "id": "v_no_safety_in_env",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/env.py",
+   "detail": "no line matches (?i)collision|teleport"
+  },
+  {
+   "id": "v_no_validation",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/scripts/train_sac.py",
+   "detail": "no line matches (?i)validat"
+  },
+  {
+   "id": "v_sumo_version_unrecorded",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "run_logs/sac_i80_pr_0.1/system_info.txt",
+   "detail": "no line matches (?i)sumo"
+  },
+  {
+   "id": "d_python_unseeded",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "no line matches random\\.seed\\("
+  },
+  {
+   "id": "d_no_proportional",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "no line matches (?i)proportional|spsc"
+  },
+  {
+   "id": "d_no_safety",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "DWL_ST_VSL_2Agents.py",
+   "detail": "no line matches (?i)collision|teleport"
+  },
+  {
+   "id": "v_table_mean_tt",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/eval_results_robust/",
+   "detail": "recomputed 22.848 and 21.601, stored 22.85 and 21.6"
+  },
+  {
+   "id": "v_table_gain",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/eval_results_robust/",
+   "detail": "recomputed 5.46 %"
+  },
+  {
+   "id": "v_table_max_tt",
+   "ok": true,
+   "repo": "vsl2",
+   "commit": "4819675b6acf90097b64f1ea91f53ead146e0df7",
+   "path": "sac_vsl/evaluate/eval_results_robust/",
+   "detail": "recomputed 29.807 and 29.974, stored 29.81 and 29.97"
+  },
+  {
+   "id": "a_sweep_ranges",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "sweeps/",
+   "detail": "[1.19, 3.81, 1.71]"
+  },
+  {
+   "id": "a_final_size",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenarios/_pools/s1_motorway_medium+s2_motorway_medium+s4_motorway_medium/rl-proper-final-mixed-pool/coordinated/",
+   "detail": "6 states, 5 actions"
+  },
+  {
+   "id": "a_final_runs",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenarios/_pools/s1_motorway_medium+s2_motorway_medium+s4_motorway_medium/rl-proper-final-mixed-pool/coordinated/",
+   "detail": "250 runs logged"
+  },
+  {
+   "id": "a_decision_period",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenario.json",
+   "detail": "240.0 s"
+  },
+  {
+   "id": "a_no_sumo_files",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "(tree)",
+   "detail": "no SUMO network files tracked"
+  },
+  {
+   "id": "a_no_rule_controller",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "(*.py)",
+   "detail": "no ALINEA or MTFC in any Python file"
+  },
+  {
+   "id": "a_no_calibration",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "(*.py, *.md)",
+   "detail": "the word calibration appears nowhere"
+  },
+  {
+   "id": "a_pool_experiments",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenarios/_pools/",
+   "detail": "12 experiments"
+  },
+  {
+   "id": "a_network_never_committed",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "(history)",
+   "detail": "no network file in any commit"
+  },
+  {
+   "id": "a_parent_has_tts_trend",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "microscopic/agents/state_features.py",
+   "detail": "line 83: - \"tts_trend\":    sign/magnitude of tts_increase (already computed by the controller for reward)"
+  },
+  {
+   "id": "a_seed_not_set",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "micro_main.py",
+   "detail": "from_scenario call passes no seed"
+  },
+  {
+   "id": "a_scenarios_have_no_seed",
+   "ok": true,
+   "repo": "adaptive-compliance-mpc-rl-motorway-traffic",
+   "commit": "6cca815928acaf36add3bf92abf42319a4709ac3",
+   "path": "scenarios/*/scenario.json",
+   "detail": "7 files, none sets a seed"
+  },
+  {
+   "id": "d_results_empty",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "Results/",
+   "detail": "['Results/res_info']"
+  },
+  {
+   "id": "d_inputs_present",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "model_MD/",
+   "detail": "net, routes and config tracked"
+  },
+  {
+   "id": "d_vehicle_count",
+   "ok": true,
+   "repo": "Multi_Agent_Based_Spatio_Temporal_Variable_Speed_Limit",
+   "commit": "c040edcadbc03cce1735e9993966bcedd06af506",
+   "path": "model_MD/od_route_file.odtrips.rou.xml",
+   "detail": "5860 vehicles"
+  }
+ ]
+}
