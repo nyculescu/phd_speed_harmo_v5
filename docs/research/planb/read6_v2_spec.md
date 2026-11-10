@@ -86,6 +86,14 @@ Amendment, made while implementing and before v2 ran on the S6 rows. Two v1 fiel
 
 A related detail for planted test rows without the report keys: `report_arrays` reads with `.get`. On real rows `derive()` sets every key, and a missing field stops the load.
 
+Amendment 2, after the first v2 run stopped at load, before any v2 number existed. The run stopped on row S|w0u250 7,480,462, which lacks `sev3`:
+- Over the S6 rows these counts are absent from some rows: `sev3` 265, `ttc15` 326, `ttc2` 3, and v1's `alks_full_moving` 12,413.
+- No §5 field is ever None.
+- plant_sweep counts them in a `defaultdict(float)` that writes a key only on its first hit (plant_sweep.py:111, :149, :194-198), and the row copies it (:341), so absent means zero events.
+- So `ttc2`, `ttc15` and `sev3` read an absent key as 0, and the output counts these rows (`counters_absent_read_as_zero`). Every other report field stays strict.
+- v1's default of 0 for `alks_full_moving` is correct for the same reason, so no v1 field is affected.
+- A test written before this fix (7b7fc9f) fails on 02f5aeb.
+
 ## 3. Order of work (§11's post-S6 bug rule)
 
 1. This spec and the new tests are committed together. The tests run on v1 and must fail on items 1 to 4; the failing log is kept.

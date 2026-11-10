@@ -60,6 +60,8 @@ def location(r: dict) -> dict:
 REPORT_FIELDS = ("ttc2", "ttc15", "sev3", "gap25", "delay_ramp", "delay_ramp2", "m_cong_vs", "m_cong_run_s", "m_cong_vs_nc", "m_cong_run_s_nc",
                  "contact_steps")
 V1_DEFAULTS = ("alks_full_moving", "b3_step", "b45_step", "end_stop2")
+# plant_sweep's defaultdict S writes these counts only on their first hit (plant_sweep.py:111, :194-198, :341): absent means 0
+COUNTER_FIELDS = ("ttc2", "ttc15", "sev3")
 
 
 def opt(v) -> float | None:
@@ -76,7 +78,8 @@ def derive(r: dict) -> dict:
            "robust_rate": 1000.0 * ev / km if km > 0 else 0.0, "stuck_n": float(r["m_stuck_n"]), "pending_end": float(r["m_pending_end"]),
            "b3_step": float(r.get("b3_step") or 0.0), "b45_step": float(r.get("b45_step") or 0.0), "alks_past": float(sum(r["m_peak_alks"][4:8])),
            "ttt": float(r["N"]), "loc": location(r)}
-    out |= {k: opt(r[k]) for k in REPORT_FIELDS}
+    out |= {k: opt(r.get(k, 0.0) if k in COUNTER_FIELDS else r[k]) for k in REPORT_FIELDS}
+    out["absent_zero"] = [k for k in COUNTER_FIELDS if k not in r]
     out["events_ge45"] = float(sum(sum(r[f"m_peak_{c}"][3:]) for c in ROBUST_BIN))     # measure.py:524
     out["robust_raw"] = float(ev)
     out["robust_per_served"] = ev / r["passed"] if r["passed"] > 0 else None
@@ -589,15 +592,17 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
     outs = [c["outcome"] for c in cells.values()]
     passed = any(o in ("W", "W-b") for o in outs) and "L" not in outs
     vetoed = [c for c, r in cells.items() if r["outcome"] in ("W", "W-b") and "L" in outs]
-    hit = defaultdict(int)
+    hit, zero = defaultdict(int), defaultdict(int)
     for rows in T.values():
         for d in rows.values():
             for k in d.get("defaults", ()):
                 hit[k] += 1
+            for k in d.get("absent_zero", ()):
+                zero[k] += 1
     return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}), "must_carry": cfg.get("must_carry"),
             "S": {"n_seeds": len(use["S"]), "dropped_seeds": sorted(drops.get("S", [])), "map": report_map(T, cfg, "S", use["S"], s_st, s_names),
                   "map_report_only": report_only_map(T, cfg, "S", use["S"], s_st, s_names)},
-            "report_version": 2, "provenance": provenance(cfg), "defaults_hit": dict(hit)}
+            "report_version": 2, "provenance": provenance(cfg), "defaults_hit": dict(hit), "counters_absent_read_as_zero": dict(zero)}
 
 
 def main(argv: list) -> int:
