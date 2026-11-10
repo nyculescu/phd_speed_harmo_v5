@@ -1,0 +1,15 @@
+{
+ "inputs": {
+  "seed_range": [
+   7480400,
+   7480639
+  ]
+ },
+ "jobs_sha256": "e7851c73ddfb1d9bab853dedb6f38390ce2a277be7e2be1b876b385197bd5055",
+ "code": {
+  "commit": "b0c9360c9478a2db9d8ecd7bf56c5b7d0ee6b653",
+  "clean": true,
+  "detached": true,
+  "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ }
+}
