@@ -319,3 +319,21 @@ def test_coverage_gate_reports_each_kind_of_change():
         assert len(d) == 1 and d[0].split(":")[0] == path.strip(), (path, d)
     d = gate(lambda a, b: (P333(a).update(null_ok=0.0), P333(b).update(null_ok=0.0, R=[1.0, 0.4, 2.0])))
     assert [x.split(":")[0] for x in d] == ["cells.X.resilience.per_opponent.p333.R[1]"]     # both nulls failed: a changed number is reported
+
+
+def test_an_empty_side_file_reads_as_none_and_is_listed(tmp_path):
+    """Amendment 4a: the S6 host's outage left the last 14 TRUCK side files empty (V494). Written before the fix; fails on d14307f."""
+    (tmp_path / "e.npz").write_bytes(b"")
+    d = r6.derive(st_row(f="e.npz"), tmp_path)
+    assert all(d[k] is None for k in JAM) and d["st_empty"] and d["st_sha256"] == hashlib.sha256(b"").hexdigest()
+    (tmp_path / "bad.npz").write_bytes(b"PK\x03\x04 truncated")
+    with pytest.raises(Exception):     # anything but an empty file still stops the reading
+        r6.derive(st_row(f="bad.npz"), tmp_path)
+    T = jam_world()
+    for s in (0, 1, 2):
+        T[("X", "lr")][s] |= {k: None for k in JAM} | {"st_empty": True, "st_file": f"lr{s}.npz", "st_sha256": "0"}
+    res = r6.read(T, cfg() | {"st_dir": "st"})
+    e = res["cells"]["X"]["map_report_only"]["lr"]["jam_share"]
+    assert e["effect"] is None and e["none_seeds"] == 3 and e["why"] == r6.EMPTY_ST
+    assert res["cells"]["X"]["map_report_only"]["p333"]["jam_share"]["effect"] == pytest.approx(10.0, abs=1.0)
+    assert res["space_time"]["empty_files"] == ["lr0.npz", "lr1.npz", "lr2.npz"]
