@@ -16,16 +16,20 @@ import run6  # noqa: E402
 
 
 def fake_row(a: tuple) -> dict:
-    """A run_one-shaped row with every key read6 needs; values depend on the arm and seed only."""
+    """A run_one-shaped row with every key read6 needs; values depend on the arm and seed only. As plant_sweep does, an odd seed
+    omits a zero counter (sev3) and delay_ramp2 (no ramp-2 vehicle finished)."""
     name, cfg, q, seed, rd, commit = a
     rng = np.random.default_rng(int(hashlib.sha256(name.encode()).hexdigest()[:8], 16) + seed)
-    return {"name": name, "q": q, "seed": seed, "all_delay": 100000.0 * (1 + rng.normal(0, 0.01)), "ttc_net": 1000.0 * (1 + rng.normal(0, 0.02)),
+    r = {"name": name, "q": q, "seed": seed, "all_delay": 100000.0 * (1 + rng.normal(0, 0.01)), "ttc_net": 1000.0 * (1 + rng.normal(0, 0.02)),
             "passed": 3000.0, "collisions": 0, "alks_full_moving": 0.0, "N": 200000.0, "b3_step": 100.0, "b45_step": 10.0, "end_stop2": 1.0,
             "m_peak_car": [0, 0, 1] + [0] * 6, "m_peak_alks": [0] * 9, "m_peak_truck": [0] * 9, "m_dist_m_car": 1e6, "m_dist_m_alks": 1e6,
             "m_dist_m_truck": 1e5, "m_stuck_n": 0, "m_pending_end": 1, "m_road_vs": {"3": {"rest": 10.0}}, "m_road_dist": {"3": {"rest": 100.0}},
             "m_road_ttc3": {}, "m_robust_road": {}, "pert_log": [],
             **{k: 1.0 for k in ("ttc2", "ttc15", "sev3", "gap25", "delay_ramp", "delay_ramp2", "m_cong_vs", "m_cong_run_s", "m_cong_vs_nc",
                                 "m_cong_run_s_nc", "contact_steps")}, "m_ttc3_lc": 0, "m_ttc3_all": 0}     # read6 v2's report fields
+    if seed % 2:
+        del r["sev3"], r["delay_ramp2"]
+    return r
 
 
 def ok(a: tuple) -> dict:

@@ -1,14 +1,18 @@
 """read6 v2's regression gate (read6_v2_spec.md §2): every field of v1's output is unchanged in v2's, bit for bit, except
-cells.*.t2_counting_filter; a v1 `pr28` of None that v2 fills; and a resilience R (and its % of no control's loss) that v2 hides
-because that opponent's own null failed (planb.md:462). v2's report-only map repeats v1's map on v1's measures.
+cells.*.t2_counting_filter, which must equal v2's `v1_value`; a cell's v1 `pr28` of None that v2 fills; and a resilience R (and its %
+of no control's loss) that v2 hides because that opponent's own null failed (planb.md:462). A key v2 adds must be one the spec lists
+(NEW_KEYS). v2's report-only map repeats v1's map on v1's measures.
 
 usage: read6_regress.py V1.json V2.json    exit 0 if no difference, 1 otherwise (each difference printed)"""
 import json
+import re
 import sys
 
 ALLOWED = ("t2_counting_filter",)
 FAILED = "statistic failed its null"
 V1_MEASURES = ("delay", "cf", "flow", "robust_braking", "alks_past_limit", "b45_step", "b3_step", "ttt")
+NEW_KEYS = (r"report_version", r"provenance", r"defaults_hit", r"counters_absent_read_as_zero", r"absent_read_as_none", r"S\.map_report_only",
+            r"cells\.[^.]+\.(closest|d4|braking_clause|resilience|cf_resilience|map_report_only)", r"cells\.[^.]+\.resilience\.status")
 
 
 def norm(x):
@@ -21,29 +25,51 @@ def norm(x):
     return x
 
 
+def same(a, b) -> bool:
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, float):
+        return repr(a) == repr(b)     # NaN equals NaN; 0.0 differs from -0.0
+    return a == b
+
+
+def hidden(b: dict) -> bool:
+    """That opponent's own null failed; read6.main writes the numpy bool as 0.0."""
+    return b.get("null_ok") is not None and not b["null_ok"]
+
+
 def walk(a, b, path: str, out: list) -> None:
+    join = lambda k: f"{path}.{k}" if path else k
+    at_cell = path.startswith("cells.") and path.count(".") == 1
     if isinstance(a, dict):
         if not isinstance(b, dict):
             out.append(f"{path}: dict in v1, {type(b).__name__} in v2")
             return
         for k, v in a.items():
-            if path.startswith("cells.") and path.count(".") == 1 and k in ALLOWED:
+            if at_cell and k in ALLOWED:
+                if isinstance(b.get(k), dict) and "v1_value" in b[k]:
+                    walk(v, b[k]["v1_value"], f"{join(k)}.v1_value", out)
+                else:
+                    out.append(f"{join(k)}.v1_value: missing in v2")
                 continue
-            if k == "pr28" and v is None:
+            if at_cell and k == "pr28" and v is None:
                 continue
-            if ".resilience.per_opponent." in f"{path}." and k in ("R", "pct_of_nc_loss") and b.get("null_ok") is False and b.get(k) in (FAILED, None):
+            if ".resilience.per_opponent." in f"{path}." and k in ("R", "pct_of_nc_loss") and hidden(b) and b.get(k) in (FAILED, None):
                 continue
             if k not in b:
-                out.append(f"{path}.{k}: missing in v2")
+                out.append(f"{join(k)}: missing in v2")
             else:
-                walk(v, b[k], f"{path}.{k}" if path else k, out)
+                walk(v, b[k], join(k), out)
+        for k in sorted(set(b) - set(a)):
+            if not any(re.fullmatch(p, join(k)) for p in NEW_KEYS):
+                out.append(f"{join(k)}: new in v2")
     elif isinstance(a, list):
         if not isinstance(b, list) or len(a) != len(b):
             out.append(f"{path}: list differs in type or length")
             return
         for i, (x, y) in enumerate(zip(a, b)):
             walk(x, y, f"{path}[{i}]", out)
-    elif a != b or type(a) is not type(b):
+    elif not same(a, b):
         out.append(f"{path}: v1 {a!r}, v2 {b!r}")
 
 

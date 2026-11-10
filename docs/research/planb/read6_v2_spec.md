@@ -107,10 +107,10 @@ Amendment 2, after the first v2 run stopped at load, before any v2 number existe
 
 | # | Challenge or con | Handling |
 |---|---|---|
-| C1 | Code written after the S6 result was known (forking paths) | Items are transcriptions of registered text (table in §1). This spec is fixed before v2 runs. No item feeds a decision. Interpretive choices are fixed here, not after seeing v2's numbers. |
+| C1 | Code written after the S6 result was known (forking paths) | Items are transcriptions of registered text (table in §1). This spec is fixed before v2 runs. No item feeds a decision. Interpretive choices are fixed here, not after seeing v2's numbers. But item 1's outcome was foreseeable (§5). |
 | C2 | §11: "no change to … the reading" after S1, and a reading change after S3a needs new seeds | No deciding rule changes, and the regression gate proves it. Items 1-3 are §11 bug fixes: v1 did not implement registered report text. Item 4 is output completeness. |
 | C3 | §11's post-S6 bug rule | The tests are committed before the fix and fail on v1 (§3). Both outcomes of item 1 go into the V# and into any sentence that cites the counting filter. |
-| C4 | Breaking the deciding path | The bit-for-bit regression gate, the same index matrix and rng seeds, and v1's tests unchanged. |
+| C4 | Breaking the deciding path | The bit-for-bit regression gate, the same index matrix and rng seeds, and v1's deciding assertions kept (two v1 test edits, §5). |
 | C5 | The implementer has seen the S6 numbers | Blind recounts of the new numbers by agents who see only this spec, the protocol and the rows, plus an adversarial review of the diff. |
 | C6 | R in a NULL could be read as a claim | The report-only label carries its §8.5 reason. "Resilience" stays banned (planb.md:153). The W-path reading is unchanged. |
 | C7 | Universe ambiguity (which names are the cell's forms; 3E-T in or out) | Pinned in §1.1 from round 2's code (decide1.tuned, common2e.e3_rules) and plan6's dedup, before running. |
@@ -120,3 +120,37 @@ Amendment 2, after the first v2 run stopped at load, before any v2 number existe
 | C11 | Silent defaults flagged by the data review (`r.get(..) or 0.0`) | New fields use strict access. v1's three defaults (`alks_full_moving`, `end_stop2`, `b3_step`/`b45_step`) are kept for bit-identity, and v2 reports how many rows hit each default. |
 | C12 | More numbers invite cherry-picking | Every v2 table is report-only, with no tiles or W/L words on the new measures. The sentence words come only from §1's templates. |
 | C13 | The extra reference lines beside the sentence (§10) still need the run records | V494's resume, the near-twin opponent pairs (V496) and the G4 disclosure come from the ledger. v2 carries `must_carry` and the provenance it can read. |
+
+## 5. Amendment 3: v2.1, after the review of v2
+
+v2 (f84c9dc) ran once on the S6 rows: study NULL, TRUCK = T, and the gate passed. The review in §3 step 5 (three reviews and two blind recounts) then found the defects below. v2.1 fixes them; v2's output is kept and marked superseded.
+
+Fixed in v2.1:
+- **Item 1's universe was wrong in §1.1 itself.**
+  - `s6_picks.json` `repicks` holds S3a's `cell_opponents`: the forms plus the delay opponent and the front row (repick.py:58). Round 2's universe holds the forms only (round_2.md:67; decide1.py:77).
+  - TRUCK's delay opponent os1_10_10 is not a form, so grid_os1_10_10 was in v2's universe by mistake.
+  - v2.1 takes the forms from S3a's repick.json (`--forms`). Its forms plus the delay opponent and the front row must equal the picks file's re-picks.
+  - TRUCK resolves to 9 names: p333, grid_z31333, grid_r4a2, grid_lr400_13_1, grid_a41000_10_2, os0_10_10, 3e, 3E-C_TRUCK, 3E-D_TRUCK.
+- **Excluded 3E rules are listed** (`excluded_3e`, round_2.md:73), with delay and close-following points against p333 and os1_15_10.
+- **Blocks that are not read carry no verdict.** Resilience outside W, and close-following resilience always, no longer carry `passes` or `reading` (planb.md:153, :459).
+- **No control with median(O) ≤ 0 on a v1 measure** now has a null effect, as §1.3 says. v1's 1e-9 floor stays only where v1's map has the entry.
+- **delay_ramp2:** an absent value means None, because plant_sweep.py:345-346 writes it only when a ramp-2 vehicle finished. Rows read this way are counted (`absent_read_as_none`). A None entry names its cause.
+- **Inputs:** a full reading needs `--picks` and `--forms`, and the picks file must match the config's run_commit and cells.
+- **Gate:**
+  - `t2_counting_filter` is compared with v2's `v1_value`;
+  - a key v2 adds outside the spec's list is reported;
+  - a failed per-opponent null is recognised after the JSON round trip (`null_ok` 0.0);
+  - NaN equals NaN, and 0.0 differs from -0.0;
+  - the pr28 skip applies at cell level only.
+- **Tests and fixtures:**
+  - 11 tests written before the fix (9e2f3bd) fail on f84c9dc; the log is kept. 3 coverage tests pin behaviour f84c9dc already had.
+  - test_planb_read6_v2.py's forms test now calls `resolve`, and its `conf()` gives the forms.
+  - run6's `fake_row` omits `sev3` and `delay_ramp2` on odd seeds, as plant_sweep does. pack_row's comment is corrected.
+
+Not done: §5's jam metrics (jam_share, congested_share, jams; planb.md:338) need the space-time side files (measure.py:456-483), which S6 did not keep. The map holds the pack's congestion keys only.
+
+Corrections to the text above:
+- C4's "v1's tests unchanged" was wrong. e72b337 replaced test_null_failures' `"resilience" not in c` with a report-only status check, because item 2 puts R in every outcome. 02f5aeb added the report fields to the pack_row and fake_row fixtures. The deciding assertions are kept.
+- §1.2's "delay R is read exactly as in v1" and §1.4's "the W path is unchanged" hold except for amendment 1, which hides an R whose own null fails.
+- C1: item 1's counted set could be worked out from v1's output before this spec was written. v1's `overfit_vs_p333` holds each opponent's delay point against p333, the number `counted()` filters on. Item 1 is report-only and both values are reported. Any sentence citing the counting filter says it was foreseeable.
+- The v2 test file's docstring said the regression test does not fail on v1. It did, because v1 has no `map_report_only`.

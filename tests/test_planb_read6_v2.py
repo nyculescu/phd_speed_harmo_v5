@@ -1,5 +1,5 @@
-"""read6 v2 (read6_v2_spec.md, V497): report-only additions on planted rows. Written before the fix; each test but the regression
-test fails on v1 (b0c9360)."""
+"""read6 v2 (read6_v2_spec.md, V497): report-only additions on planted rows. Written before the fix; each test fails on v1
+(b0c9360), the regression test too, since v1 has no map_report_only. v2.1 (amendment 3) moved the forms to `forms`."""
 import importlib.util
 import subprocess
 import sys
@@ -36,14 +36,15 @@ PICKS = {"repicks": {"X": {"lr": {"local_rule": {}}, "p333": {"cav_rule": [3, 3,
 
 
 def conf(**kw):
-    return cfg() | {"picks": PICKS} | kw
+    return cfg() | {"picks": PICKS, "forms": {"X": ["lr", "p333"]}} | kw
 
 
 def test_forms_resolve_to_grid_names_then_carried_twins():
-    assert r6.cell_forms(PICKS, ["p333", "lr", "3e"], "X") == ["lr", "p333"]
-    assert r6.cell_forms(PICKS, ["p333", "grid_lr", "lr", "3e"], "X") == ["grid_lr", "p333"]
+    rp = PICKS["repicks"]["X"]
+    assert r6.resolve(rp, ["p333", "lr", "3e"], "X") == ["lr", "p333"]
+    assert r6.resolve(rp, ["p333", "grid_lr", "lr", "3e"], "X") == ["grid_lr", "p333"]
     with pytest.raises(SystemExit):
-        r6.cell_forms(PICKS, ["3e"], "X")
+        r6.resolve(rp, ["3e"], "X")
 
 
 def test_counting_filter_applies_round_2s_universe():

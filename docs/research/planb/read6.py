@@ -5,7 +5,8 @@ this committed script, on the S6 rows.
 v2 (read6_v2_spec.md, V497) adds report-only items and changes no deciding rule: the T2 counting filter with round 2's universe; R
 and close-following resilience in every outcome, labelled report-only where R is not read, an R whose own null fails shown only as
 "statistic failed its null"; no control and §5's report-only measures in `map_report_only`; the NULL sentence's fields in every
-outcome; provenance from the picks. read6_regress.py checks that every v1 field is unchanged.
+outcome; provenance from the picks. read6_regress.py checks that every v1 field is unchanged. v2.1 (amendment 3) takes the
+universe's forms from S3a's repick.json, lists the excluded 3E rules, and drops the pass verdict from blocks that are not read.
 
 Statistic: effect = sign x median(P - O) / median(O) x 100 over paired seeds, positive = v3w better; P is the per-seed mean over the
 5 learners; percentile bootstrap, 20,000 resamples, one index matrix (rng 20261108) for every comparison. Side constraints use
@@ -15,12 +16,13 @@ Before any statistic, every arm of every cell (and every S row the resilience re
 minus that condition's crash drops; a gap, a duplicate, a stray name or a seed outside the range stops the reading. read6 never
 labels a cell "did not bind": S2 drops come from S2's read (s2_v486.json, V486).
 
-usage: read6.py ROWS.jsonl CONFIG.json OUT.json [--drops DROPS.json] [--seeds LO-HI] [--picks PICKS.json]
+usage: read6.py ROWS.jsonl CONFIG.json OUT.json [--drops DROPS.json] [--seeds LO-HI] [--picks PICKS.json --forms REPICK.json]
   CONFIG: plan6.py's read6_config.json: {"m", "cells", "learners", "opponents": {cell: [...]}, "drain_cap", "seed_range": [lo, hi],
            "s_alias": {name: S twin}, "omitted", "p333", "nc", "t3e", "e3c", "e3d", "null_swaps"}
   DROPS: {condition: [seeds]} from run6.py, seeds that crashed on every attempt (planb.md §8.3); each is dropped from every arm there.
   --seeds: the S5 smoke range instead of the configured one; the output is then labelled SMOKE.
-  --picks: s6_picks.json, for the cell's forms (counting filter) and the provenance (plateau labels, breakdown)."""
+  --picks: s6_picks.json, for the provenance (plateau labels, breakdown); --forms: S3a's repick.json, for the cell's forms in the
+  counting universe. A full reading needs both; a smoke reading may omit them."""
 import argparse
 import hashlib
 import json
@@ -62,15 +64,24 @@ REPORT_FIELDS = ("ttc2", "ttc15", "sev3", "gap25", "delay_ramp", "delay_ramp2", 
 V1_DEFAULTS = ("alks_full_moving", "b3_step", "b45_step", "end_stop2")
 # plant_sweep's defaultdict S writes these counts only on their first hit (plant_sweep.py:111, :194-198, :341): absent means 0
 COUNTER_FIELDS = ("ttc2", "ttc15", "sev3")
+# plant_sweep.py:345-346 writes delay_ramp2 only when a ramp-2 vehicle finished: absent means None, as delay_ramp's None
+ABSENT_NONE = ("delay_ramp2",)
 
 
 def opt(v) -> float | None:
     return None if v is None else float(v)
 
 
+def field(r: dict, k: str) -> float | None:
+    if k in COUNTER_FIELDS:
+        return opt(r.get(k, 0.0))
+    return opt(r.get(k) if k in ABSENT_NONE else r[k])
+
+
 def derive(r: dict) -> dict:
     """The values the reading and the report map use, from one S6 row with the pack. v1's keys are unchanged; the report-only keys
-    (v2) read their fields strictly, so an absent field stops the reading and a None stays None."""
+    (v2) read their fields strictly, so an absent field stops the reading and a None stays None; the exceptions are plant_sweep's
+    counters (absent = 0) and delay_ramp2 (absent = None)."""
     ev = sum(sum(r[f"m_peak_{c}"][b:]) for c, b in ROBUST_BIN.items())
     km = sum(r[f"m_dist_m_{c}"] for c in ROBUST_BIN) / 1000.0
     out = {"all_delay": float(r["all_delay"]), "ttc_net": float(r["ttc_net"]), "passed": float(r["passed"]),
@@ -78,8 +89,9 @@ def derive(r: dict) -> dict:
            "robust_rate": 1000.0 * ev / km if km > 0 else 0.0, "stuck_n": float(r["m_stuck_n"]), "pending_end": float(r["m_pending_end"]),
            "b3_step": float(r.get("b3_step") or 0.0), "b45_step": float(r.get("b45_step") or 0.0), "alks_past": float(sum(r["m_peak_alks"][4:8])),
            "ttt": float(r["N"]), "loc": location(r)}
-    out |= {k: opt(r.get(k, 0.0) if k in COUNTER_FIELDS else r[k]) for k in REPORT_FIELDS}
+    out |= {k: field(r, k) for k in REPORT_FIELDS}
     out["absent_zero"] = [k for k in COUNTER_FIELDS if k not in r]
+    out["absent_none"] = [k for k in ABSENT_NONE if k not in r]
     out["events_ge45"] = float(sum(sum(r[f"m_peak_{c}"][3:]) for c in ROBUST_BIN))     # measure.py:524
     out["robust_raw"] = float(ev)
     out["robust_per_served"] = ev / r["passed"] if r["passed"] > 0 else None
@@ -201,10 +213,10 @@ def counted(opp: dict, p333: dict) -> dict:
     return {o: O for o, O in opp.items() if pt(O, p333, "all_delay") >= -2.0}
 
 
-def cell_forms(picks: dict, deciding: list, cell: str) -> list:
-    """The cell's forms (round_2.md:67): each re-pick as its grid_ arm, or as the carried twin plan6's dedup kept; stops otherwise."""
+def resolve(names, deciding: list, cell: str) -> list:
+    """Re-pick names as their grid_ arms, or as the carried twin plan6's dedup kept; stops otherwise."""
     out = []
-    for r in picks["repicks"][cell]:
+    for r in names:
         name = f"grid_{r}" if f"grid_{r}" in deciding else r if r in deciding else None
         if name is None:
             raise SystemExit(f"{cell}: re-pick {r} is not in the deciding set")
@@ -213,12 +225,43 @@ def cell_forms(picks: dict, deciding: list, cell: str) -> list:
     return out
 
 
+def check_forms(repick: dict, picks: dict, cells: list) -> dict:
+    """The forms of each cell from S3a's repick.json. Its forms plus the delay opponent and the front row must be the picks file's
+    re-picks (repick.py:58), so both files come from the same S3a."""
+    out = {}
+    for c in cells:
+        p = repick["picks"][c]
+        forms = list(p["forms"].values())
+        if set(forms) | {p["delay_opponent"], p["front_row"]} != set(picks["repicks"][c]):
+            raise SystemExit(f"{c}: repick.json's forms, delay opponent and front row are not the picks file's re-picks")
+        out[c] = forms
+    return out
+
+
 def universe(cfg: dict, cell: str) -> tuple:
-    """Round 2's counting universe (decide1.tuned, common2e.e3_rules): p333, the cell's forms, 3E-T and the cell's 3E rules."""
-    picks = cfg.get("picks")
-    forms = cell_forms(picks, cfg["opponents"][cell], cell) if picks else []
+    """Round 2's counting universe (round_2.md:67; decide1.tuned, common2e.e3_rules): p333, the cell's forms (not its delay
+    opponent or front row), 3E-T and the cell's 3E rules."""
+    forms = resolve(cfg["forms"][cell], cfg["opponents"][cell], cell) if "forms" in cfg else []
     names = [cfg["p333"], *forms, cfg["t3e"], *(x for x in (cfg["e3c"].get(cell), cfg["e3d"].get(cell)) if x)]
-    return list(dict.fromkeys(names)), forms if picks else "unavailable (no picks)"
+    return list(dict.fromkeys(names)), forms if "forms" in cfg else "unavailable (no --forms)"
+
+
+R2_REF = "os1_15_10"     # round_2.md:73
+
+
+def excluded_3e(T: dict, cfg: dict, cell: str, seeds: list, filt: dict) -> dict:
+    """round_2.md:73: a 3E rule of the universe that does not count, with its delay and close-following points against p333 and
+    os1_15_10 (positive = the 3E rule lower)."""
+    p333 = stack(T, cell, cfg["p333"], seeds)
+    ref = stack(T, cell, R2_REF, seeds) if R2_REF in cfg["opponents"][cell] else None
+    out = {}
+    for e in (x for x in (cfg["t3e"], cfg["e3c"].get(cell), cfg["e3d"].get(cell)) if x):
+        if e in filt:
+            continue
+        E = stack(T, cell, e, seeds)
+        out[e] = {"delay_vs_p333": pt(E, p333, "all_delay"), "cf_vs_p333": pt(E, p333, "ttc_net"),
+                  "vs_os1_15_10": {"delay": pt(E, ref, "all_delay"), "cf": pt(E, ref, "ttc_net")} if ref is not None else "not in the cell"}
+    return out
 
 
 def swap_null(d: np.ndarray, pct_lo: float, swaps: int, rng_seed: int, b: int = B) -> float:
@@ -306,6 +349,11 @@ def null_check(T: dict, cfg: dict, cell: str, seeds: list, res: dict) -> dict:
 
 FAILED_NULL = "statistic failed its null"
 NOT_READ = "report-only, not read: §8.5 reads R only in a W or W-b cell after W; §10 lists R in the NULL report"
+
+
+def unread(r: dict) -> dict:
+    """A block that is not read carries no pass verdict (planb.md:153, :459)."""
+    return {k: v for k, v in r.items() if k not in ("passes", "reading")}
 
 
 def resilience(T: dict, cfg: dict, cell: str, seeds: list, st: Stat, key: str = "all_delay", rng_off: int = 11) -> dict:
@@ -418,10 +466,14 @@ def report_arrays(T: dict, cond: str, name: str, seeds: list) -> dict:
     return {k: np.array([np.nan if (v := T[(cond, name)][s].get(k)) is None else v for s in seeds], dtype=float) for k in REPORT_KEYS}
 
 
+NONE_WHY = {"delay_ramp": "no ramp finisher on some seeds", "delay_ramp2": "no ramp-2 finisher on some seeds",
+            "robust_per_served": "passed = 0 on some seeds", "ttc3_lc_share": "m_ttc3_all = 0 on some seeds"}
+
+
 def report_only_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_names: list) -> dict:
     """v2's map (read6_v2_spec.md §1.3): v3w's arm against every opponent and no control, on v1's measures and §5's report-only ones.
-    v1's measures are computed as v1's map does (its denominator floor included, flagged); a new measure with median(O) <= 0 has no
-    % effect; mean(P - O) with its 95 % interval and both medians are always given; a None on any seed leaves the entry unfilled."""
+    v1's measures against the map's opponents are computed as v1's map does (its denominator floor included, flagged); any other
+    entry with median(O) <= 0 has no % effect; mean(P - O) with its 95 % interval and both medians are always given; a None on any seed leaves the entry unfilled."""
     pct = level(cfg["m"])
     learners = cfg["learners"]
     P = arm(T, cond, learners, seeds)
@@ -436,12 +488,12 @@ def report_only_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_na
             a, b = (P[key], O[key]) if key in KEYS else (Pr[key], Or[key])
             bad = np.isnan(a) | np.isnan(b)
             if bad.any():
-                row[meas] = {"effect": None, "why": "None on some seeds", "none_seeds": int(bad.sum())}
+                row[meas] = {"effect": None, "why": NONE_WHY.get(key, "None on some seeds"), "none_seeds": int(bad.sum())}
                 continue
             mo = float(np.median(b))
             md, mb = st.mean_diff(a, b)
             e = {"median_P": float(np.median(a)), "median_O": mo, "mean_diff": (md, *ci(mb, P95))}
-            if key in v1_keys or mo > 0:
+            if (key in v1_keys and o != cfg["nc"]) or mo > 0:     # v1's floor only where v1's map has the entry
                 x, xb = st.eff(a, b, sign)
                 e |= {"effect": x, "ci95": ci(xb, P95), "ci_m": ci(xb, pct)}
                 if mo <= 0:
@@ -459,15 +511,15 @@ def provenance(cfg: dict) -> dict | None:
     picks = cfg.get("picks")
     if not picks:
         return None
-    out = {"picks_sha256": cfg.get("picks_sha256"), "s_alias": cfg.get("s_alias", {}),
+    out = {"picks_sha256": cfg.get("picks_sha256"), "forms_sha256": cfg.get("forms_sha256"), "s_alias": cfg.get("s_alias", {}),
            "plateau": {n: {"label": t.get("label"), "generations": t.get("generations")} for n, t in picks.get("tuned", {}).items()},
            "breakdown": {}}
     for c in cfg["cells"]:
         dec = cfg["opponents"][c]
-        forms = cell_forms(picks, dec, c)
-        tuned = sorted(n for n in forms if n.startswith("grid_")) + [x for x in (cfg["e3c"].get(c), cfg["e3d"].get(c)) if x]
+        rp = resolve(picks["repicks"][c], dec, c)
+        tuned = sorted(n for n in rp if n.startswith("grid_")) + [x for x in (cfg["e3c"].get(c), cfg["e3d"].get(c)) if x]
         rest = set(dec) - set(tuned) - {cfg["p333"], "MPC-F", "copy"}
-        out["breakdown"][c] = {"fixed": [cfg["p333"]], "tuned_for_cell": tuned, "repick_equal_to_carried": sorted(n for n in forms if not n.startswith("grid_")),
+        out["breakdown"][c] = {"fixed": [cfg["p333"]], "tuned_for_cell": tuned, "repick_equal_to_carried": sorted(n for n in rp if not n.startswith("grid_")),
                                "carried": sorted(rest), "distilled": ["copy"] if "copy" in dec else [], "mpcf": ["MPC-F"] if "MPC-F" in dec else [],
                                "aliases": cfg.get("s_alias", {})}
     return out
@@ -570,7 +622,7 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
         uni, forms = universe(cfg, cell)
         filt = counted({o: stack(T, cell, o, sd) for o in uni}, p333)     # complete() has checked every universe arm's rows
         res["t2_counting_filter"] = {"universe": uni, "forms": forms, "counted": sorted(filt), "policies": t2(filt),
-                                     "v1_value": {"counted": sorted(v1_filt), "policies": t2(v1_filt)}}
+                                     "excluded_3e": excluded_3e(T, cfg, cell, sd, filt), "v1_value": {"counted": sorted(v1_filt), "policies": t2(v1_filt)}}
         rs = sorted(set(sd) & set(use["S"]))
         rst = st if rs == sd else Stat(len(rs))
         if res["outcome"] in ("W", "W-b"):
@@ -582,8 +634,8 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
                 res["resilience"]["n_seeds"] = len(rs)
                 res["resilience"]["status"] = "read"
         if "resilience" not in res:
-            res["resilience"] = resilience(T, cfg, cell, rs, rst) | {"n_seeds": len(rs), "status": NOT_READ}
-        res["cf_resilience"] = resilience(T, cfg, cell, rs, rst, "ttc_net", 13) | {
+            res["resilience"] = unread(resilience(T, cfg, cell, rs, rst)) | {"n_seeds": len(rs), "status": NOT_READ}
+        res["cf_resilience"] = unread(resilience(T, cfg, cell, rs, rst, "ttc_net", 13)) | {
             "n_seeds": len(rs), "status": "report-only (§8.5: close-following resilience is report-only)" if res["resilience"]["status"] == "read" else NOT_READ}
         res["map_report_only"] = report_only_map(T, cfg, cell, sd, st, cfg["opponents"][cell])
         cells[cell] = res
@@ -592,17 +644,20 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
     outs = [c["outcome"] for c in cells.values()]
     passed = any(o in ("W", "W-b") for o in outs) and "L" not in outs
     vetoed = [c for c, r in cells.items() if r["outcome"] in ("W", "W-b") and "L" in outs]
-    hit, zero = defaultdict(int), defaultdict(int)
+    hit, zero, none = defaultdict(int), defaultdict(int), defaultdict(int)
     for rows in T.values():
         for d in rows.values():
             for k in d.get("defaults", ()):
                 hit[k] += 1
             for k in d.get("absent_zero", ()):
                 zero[k] += 1
+            for k in d.get("absent_none", ()):
+                none[k] += 1
     return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}), "must_carry": cfg.get("must_carry"),
             "S": {"n_seeds": len(use["S"]), "dropped_seeds": sorted(drops.get("S", [])), "map": report_map(T, cfg, "S", use["S"], s_st, s_names),
                   "map_report_only": report_only_map(T, cfg, "S", use["S"], s_st, s_names)},
-            "report_version": 2, "provenance": provenance(cfg), "defaults_hit": dict(hit), "counters_absent_read_as_zero": dict(zero)}
+            "report_version": "2.1", "provenance": provenance(cfg), "defaults_hit": dict(hit), "counters_absent_read_as_zero": dict(zero),
+            "absent_read_as_none": dict(none)}
 
 
 def main(argv: list) -> int:
@@ -613,11 +668,21 @@ def main(argv: list) -> int:
     ap.add_argument("--drops")
     ap.add_argument("--seeds")
     ap.add_argument("--picks")
+    ap.add_argument("--forms")
     a = ap.parse_args(argv)
     cfg = json.loads(Path(a.config).read_text())
+    if not a.seeds and not (a.picks and a.forms):
+        raise SystemExit("a full reading needs --picks and --forms (the counting universe and the provenance)")
     if a.picks:
         raw = Path(a.picks).read_bytes()
         cfg |= {"picks": json.loads(raw), "picks_sha256": hashlib.sha256(raw).hexdigest()}
+        if cfg["picks"].get("run_commit") != cfg.get("run_commit") or set(cfg["picks"]["repicks"]) != set(cfg["cells"]):
+            raise SystemExit("the picks file does not belong to this config (run_commit or cells differ)")
+    if a.forms:
+        if not a.picks:
+            raise SystemExit("--forms needs --picks")
+        raw = Path(a.forms).read_bytes()
+        cfg |= {"forms": check_forms(json.loads(raw), cfg["picks"], cfg["cells"]), "forms_sha256": hashlib.sha256(raw).hexdigest()}
     if a.seeds:
         lo, hi = map(int, a.seeds.split("-"))
         seeds = list(range(lo, hi + 1))
