@@ -7,6 +7,8 @@ and close-following resilience in every outcome, labelled report-only where R is
 "statistic failed its null"; no control and §5's report-only measures in `map_report_only`; the NULL sentence's fields in every
 outcome; provenance from the picks. read6_regress.py checks that every v1 field is unchanged. v2.1 (amendment 3) takes the
 universe's forms from S3a's repick.json, lists the excluded 3E rules, and drops the pass verdict from blocks that are not read.
+v2.2 (amendment 4) adds §5's jam and congestion metrics from the space-time side files, 95 % intervals on the excluded 3E rules,
+and the transfer 3E rules outside the universe.
 
 Statistic: effect = sign x median(P - O) / median(O) x 100 over paired seeds, positive = v3w better; P is the per-seed mean over the
 5 learners; percentile bootstrap, 20,000 resamples, one index matrix (rng 20261108) for every comparison. Side constraints use
@@ -16,15 +18,17 @@ Before any statistic, every arm of every cell (and every S row the resilience re
 minus that condition's crash drops; a gap, a duplicate, a stray name or a seed outside the range stops the reading. read6 never
 labels a cell "did not bind": S2 drops come from S2's read (s2_v486.json, V486).
 
-usage: read6.py ROWS.jsonl CONFIG.json OUT.json [--drops DROPS.json] [--seeds LO-HI] [--picks PICKS.json --forms REPICK.json]
+usage: read6.py ROWS.jsonl CONFIG.json OUT.json [--drops DROPS.json] [--seeds LO-HI] [--picks PICKS.json --forms REPICK.json] [--st DIR]
   CONFIG: plan6.py's read6_config.json: {"m", "cells", "learners", "opponents": {cell: [...]}, "drain_cap", "seed_range": [lo, hi],
            "s_alias": {name: S twin}, "omitted", "p333", "nc", "t3e", "e3c", "e3d", "null_swaps"}
   DROPS: {condition: [seeds]} from run6.py, seeds that crashed on every attempt (planb.md §8.3); each is dropped from every arm there.
   --seeds: the S5 smoke range instead of the configured one; the output is then labelled SMOKE.
   --picks: s6_picks.json, for the provenance (plateau labels, breakdown); --forms: S3a's repick.json, for the cell's forms in the
-  counting universe. A full reading needs both; a smoke reading may omit them."""
+  counting universe; --st: the folder of the runs' space-time side files (each row's m_st_file), for the jam metrics. A full reading
+  needs all three; a smoke reading may omit them."""
 import argparse
 import hashlib
+import io
 import json
 import sys
 from collections import defaultdict
@@ -78,10 +82,34 @@ def field(r: dict, k: str) -> float | None:
     return opt(r.get(k) if k in ABSENT_NONE else r[k])
 
 
-def derive(r: dict) -> dict:
-    """The values the reading and the report map use, from one S6 row with the pack. v1's keys are unchanged; the report-only keys
-    (v2) read their fields strictly, so an absent field stops the reading and a None stays None; the exceptions are plant_sweep's
-    counters (absent = 0) and delay_ramp2 (absent = None)."""
+# §5's jam and congestion metrics (planb.md:338), from measure.waves on the run's space-time field
+JAM_KEYS = ("jam_share", "congested_share", "jams", "congested_km_mean", "congested_km_max", "osc_kmh")
+NO_ST = "space-time files not read (no --st)"
+
+
+def space_time(r: dict, st: Path) -> dict:
+    """The jam metrics of one row from its side file, with the file's SHA-256; a missing file or a field shape other than the row's
+    m_st_shape stops the reading."""
+    root = str(Path(__file__).resolve().parents[3])
+    if root not in sys.path:
+        sys.path.append(root)
+    from v5b.fleet import measure
+    f = st / r["m_st_file"]
+    if not f.is_file():
+        raise SystemExit(f"row {r['name']} {r['seed']}: space-time file {f} is missing")
+    raw = f.read_bytes()
+    with np.load(io.BytesIO(raw)) as z:
+        v, n = z["v"], z["n"]
+    if list(v.shape) != list(r["m_st_shape"]) or n.shape != v.shape:
+        raise SystemExit(f"row {r['name']} {r['seed']}: space-time field {v.shape}, {n.shape}, row says {r['m_st_shape']}")
+    w = measure.waves(v, n, r["m_st_dt"], r["m_st_dx"])
+    return {k: opt(w[k]) for k in JAM_KEYS} | {"st_file": r["m_st_file"], "st_sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def derive(r: dict, st: Path | None = None) -> dict:
+    """The values the reading and the report map use, from one S6 row with the pack, and its side file in st if given. v1's keys are
+    unchanged; the report-only keys (v2) read their fields strictly, so an absent field stops the reading and a None stays None; the
+    exceptions are plant_sweep's counters (absent = 0) and delay_ramp2 (absent = None). Without st the jam keys are None."""
     ev = sum(sum(r[f"m_peak_{c}"][b:]) for c, b in ROBUST_BIN.items())
     km = sum(r[f"m_dist_m_{c}"] for c in ROBUST_BIN) / 1000.0
     out = {"all_delay": float(r["all_delay"]), "ttc_net": float(r["ttc_net"]), "passed": float(r["passed"]),
@@ -97,6 +125,7 @@ def derive(r: dict) -> dict:
     out["robust_per_served"] = ev / r["passed"] if r["passed"] > 0 else None
     out["ttc3_lc_share"] = r["m_ttc3_lc"] / r["m_ttc3_all"] if r["m_ttc3_all"] > 0 else None
     out["defaults"] = [k for k in V1_DEFAULTS if r.get(k) is None]
+    out |= space_time(r, st) if st is not None else {k: None for k in JAM_KEYS}
     return out
 
 
@@ -104,7 +133,7 @@ KEYS = ("all_delay", "ttc_net", "passed", "collisions", "alks_full_moving", "rob
         "alks_past", "ttt")
 MEASURES = (("delay", "all_delay", -1), ("cf", "ttc_net", -1), ("flow", "passed", 1), ("robust_braking", "robust_rate", -1),
             ("alks_past_limit", "alks_past", -1), ("b45_step", "b45_step", -1), ("b3_step", "b3_step", -1), ("ttt", "ttt", -1))
-REPORT_KEYS = REPORT_FIELDS + ("events_ge45", "robust_raw", "robust_per_served", "ttc3_lc_share")
+REPORT_KEYS = REPORT_FIELDS + ("events_ge45", "robust_raw", "robust_per_served", "ttc3_lc_share") + JAM_KEYS
 # v2's report-only map: v1's measures, then §5's (sign -1 = lower is positive; the share and congestion rows only orient the column)
 REPORT_MEASURES = MEASURES + tuple((k, k, -1) for k in REPORT_KEYS) + (("collisions", "collisions", -1), ("alks_full_moving", "alks_full_moving", -1))
 
@@ -226,8 +255,10 @@ def resolve(names, deciding: list, cell: str) -> list:
 
 
 def check_forms(repick: dict, picks: dict, cells: list) -> dict:
-    """The forms of each cell from S3a's repick.json. Its forms plus the delay opponent and the front row must be the picks file's
-    re-picks (repick.py:58), so both files come from the same S3a."""
+    """The forms of each cell from S3a's repick.json. It must come from the picks file's run commit, and its forms plus the delay
+    opponent and the front row must be the picks file's re-picks (repick.py:58), so both files come from the same S3a."""
+    if repick["code"]["commit"] != picks["run_commit"]:
+        raise SystemExit(f"repick.json's code commit {repick['code']['commit']} is not the picks file's run_commit {picks['run_commit']}")
     out = {}
     for c in cells:
         p = repick["picks"][c]
@@ -249,9 +280,15 @@ def universe(cfg: dict, cell: str) -> tuple:
 R2_REF = "os1_15_10"     # round_2.md:73
 
 
-def excluded_3e(T: dict, cfg: dict, cell: str, seeds: list, filt: dict) -> dict:
-    """round_2.md:73: a 3E rule of the universe that does not count, with its delay and close-following points against p333 and
-    os1_15_10 (positive = the 3E rule lower)."""
+def vs95(st: Stat, A: dict, O: dict, key: str) -> tuple:
+    """A against O on key: (point, 95 % interval), positive = A lower, as round 2's raw()."""
+    x, b = st.eff(A[key], O[key])
+    return (x, *ci(b, P95))
+
+
+def excluded_3e(T: dict, cfg: dict, cell: str, seeds: list, filt: dict, st: Stat) -> dict:
+    """round_2.md:73: a 3E rule of the universe that does not count, with its delay and close-following against p333 and os1_15_10,
+    each with its 95 % interval as round 2's e3_status (positive = the 3E rule lower)."""
     p333 = stack(T, cell, cfg["p333"], seeds)
     ref = stack(T, cell, R2_REF, seeds) if R2_REF in cfg["opponents"][cell] else None
     out = {}
@@ -259,9 +296,22 @@ def excluded_3e(T: dict, cfg: dict, cell: str, seeds: list, filt: dict) -> dict:
         if e in filt:
             continue
         E = stack(T, cell, e, seeds)
-        out[e] = {"delay_vs_p333": pt(E, p333, "all_delay"), "cf_vs_p333": pt(E, p333, "ttc_net"),
-                  "vs_os1_15_10": {"delay": pt(E, ref, "all_delay"), "cf": pt(E, ref, "ttc_net")} if ref is not None else "not in the cell"}
+        out[e] = {"delay_vs_p333": vs95(st, E, p333, "all_delay"), "cf_vs_p333": vs95(st, E, p333, "ttc_net"),
+                  "vs_os1_15_10": {"delay": vs95(st, E, ref, "all_delay"), "cf": vs95(st, E, ref, "ttc_net")} if ref is not None else "not in the cell"}
     return out
+
+
+TRANSFER_NOTE = ("3E rules in the deciding set outside the universe (round_2.md:65 gives each 3E-X rule to its own round-2 cell; Plan B "
+                 "carries both into every cell, planb.md:162): listed, not counted")
+
+
+def transfer_3e(T: dict, cfg: dict, cell: str, seeds: list, st: Stat, uni: list, t2) -> dict:
+    """The deciding set's 3E rules (names starting with 3e, any case) outside the universe, and the counting result if they were in."""
+    names = [o for o in cfg["opponents"][cell] if o.lower().startswith("3e") and o not in uni]
+    p333 = stack(T, cell, cfg["p333"], seeds)
+    alt = counted({o: stack(T, cell, o, seeds) for o in uni + names}, p333)
+    return {"names": names, "reading": TRANSFER_NOTE, "delay_vs_p333": {o: vs95(st, stack(T, cell, o, seeds), p333, "all_delay") for o in names},
+            "counted_if_included": sorted(alt), "policies_if_included": t2(alt)}
 
 
 def swap_null(d: np.ndarray, pct_lo: float, swaps: int, rng_seed: int, b: int = B) -> float:
@@ -461,13 +511,16 @@ def report_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_names: 
 
 
 def report_arrays(T: dict, cond: str, name: str, seeds: list) -> dict:
-    """The report-only keys of one arm over the seeds, None as NaN. derive() always sets every key (an absent row field stops the
-    load), so .get only spares planted test rows without them."""
+    """The report-only keys of one arm over the seeds, None as NaN. derive() always sets every key, so .get only spares planted test
+    rows without them."""
     return {k: np.array([np.nan if (v := T[(cond, name)][s].get(k)) is None else v for s in seeds], dtype=float) for k in REPORT_KEYS}
 
 
 NONE_WHY = {"delay_ramp": "no ramp finisher on some seeds", "delay_ramp2": "no ramp-2 finisher on some seeds",
-            "robust_per_served": "passed = 0 on some seeds", "ttc3_lc_share": "m_ttc3_all = 0 on some seeds"}
+            "robust_per_served": "passed = 0 on some seeds", "ttc3_lc_share": "m_ttc3_all = 0 on some seeds",
+            "jam_share": "no vehicle sampled in the space-time field on some seeds",
+            "congested_share": "no vehicle sampled in the space-time field on some seeds",
+            "osc_kmh": "no station sampled in 80 % of time bins on some seeds"}
 
 
 def report_only_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_names: list) -> dict:
@@ -488,7 +541,8 @@ def report_only_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_na
             a, b = (P[key], O[key]) if key in KEYS else (Pr[key], Or[key])
             bad = np.isnan(a) | np.isnan(b)
             if bad.any():
-                row[meas] = {"effect": None, "why": NONE_WHY.get(key, "None on some seeds"), "none_seeds": int(bad.sum())}
+                why = NO_ST if key in JAM_KEYS and not cfg.get("st_dir") else NONE_WHY.get(key, "None on some seeds")
+                row[meas] = {"effect": None, "why": why, "none_seeds": int(bad.sum())}
                 continue
             mo = float(np.median(b))
             md, mb = st.mean_diff(a, b)
@@ -577,8 +631,9 @@ def complete(T: dict, cfg: dict, seeds: list, drops: dict) -> dict:
     return use
 
 
-def load_rows(path, cfg: dict, seeds: list) -> dict:
-    """(condition, arm) -> seed -> derived values; a row's name is 'condition|arm'. Stops on a duplicate, a stray name or seed."""
+def load_rows(path, cfg: dict, seeds: list, st: Path | None = None) -> dict:
+    """(condition, arm) -> seed -> derived values; a row's name is 'condition|arm'. Stops on a duplicate, a stray name or seed.
+    With st, each row's space-time side file is read from that folder."""
     want, ok = expected(cfg), set(seeds)
     T = defaultdict(dict)
     for line in open(path):
@@ -593,7 +648,7 @@ def load_rows(path, cfg: dict, seeds: list) -> dict:
         if r["seed"] in T[(cond, name)]:
             raise SystemExit(f"duplicate row {r['name']} {r['seed']}")
         try:
-            T[(cond, name)][r["seed"]] = derive(r)
+            T[(cond, name)][r["seed"]] = derive(r, st)
         except KeyError as e:
             raise SystemExit(f"row {r['name']} {r['seed']} lacks field {e}")
     return dict(T)
@@ -622,7 +677,8 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
         uni, forms = universe(cfg, cell)
         filt = counted({o: stack(T, cell, o, sd) for o in uni}, p333)     # complete() has checked every universe arm's rows
         res["t2_counting_filter"] = {"universe": uni, "forms": forms, "counted": sorted(filt), "policies": t2(filt),
-                                     "excluded_3e": excluded_3e(T, cfg, cell, sd, filt), "v1_value": {"counted": sorted(v1_filt), "policies": t2(v1_filt)}}
+                                     "excluded_3e": excluded_3e(T, cfg, cell, sd, filt, st), "transfer_3e": transfer_3e(T, cfg, cell, sd, st, uni, t2),
+                                     "v1_value": {"counted": sorted(v1_filt), "policies": t2(v1_filt)}}
         rs = sorted(set(sd) & set(use["S"]))
         rst = st if rs == sd else Stat(len(rs))
         if res["outcome"] in ("W", "W-b"):
@@ -645,6 +701,7 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
     passed = any(o in ("W", "W-b") for o in outs) and "L" not in outs
     vetoed = [c for c, r in cells.items() if r["outcome"] in ("W", "W-b") and "L" in outs]
     hit, zero, none = defaultdict(int), defaultdict(int), defaultdict(int)
+    files = []
     for rows in T.values():
         for d in rows.values():
             for k in d.get("defaults", ()):
@@ -653,11 +710,15 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
                 zero[k] += 1
             for k in d.get("absent_none", ()):
                 none[k] += 1
+            if d.get("st_sha256"):
+                files.append(f"{d['st_file']} {d['st_sha256']}\n")
+    files.sort()
+    space = {"dir": cfg.get("st_dir"), "files": len(files), "sha256": hashlib.sha256("".join(files).encode()).hexdigest() if files else None}
     return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}), "must_carry": cfg.get("must_carry"),
             "S": {"n_seeds": len(use["S"]), "dropped_seeds": sorted(drops.get("S", [])), "map": report_map(T, cfg, "S", use["S"], s_st, s_names),
                   "map_report_only": report_only_map(T, cfg, "S", use["S"], s_st, s_names)},
-            "report_version": "2.1", "provenance": provenance(cfg), "defaults_hit": dict(hit), "counters_absent_read_as_zero": dict(zero),
-            "absent_read_as_none": dict(none)}
+            "report_version": "2.2", "provenance": provenance(cfg), "defaults_hit": dict(hit), "counters_absent_read_as_zero": dict(zero),
+            "absent_read_as_none": dict(none), "space_time": space}
 
 
 def main(argv: list) -> int:
@@ -669,10 +730,15 @@ def main(argv: list) -> int:
     ap.add_argument("--seeds")
     ap.add_argument("--picks")
     ap.add_argument("--forms")
+    ap.add_argument("--st")
     a = ap.parse_args(argv)
     cfg = json.loads(Path(a.config).read_text())
-    if not a.seeds and not (a.picks and a.forms):
-        raise SystemExit("a full reading needs --picks and --forms (the counting universe and the provenance)")
+    if not a.seeds and not (a.picks and a.forms and a.st):
+        raise SystemExit("a full reading needs --picks, --forms and --st (the counting universe, the provenance and the jam metrics)")
+    if a.st:
+        if not Path(a.st).is_dir():
+            raise SystemExit(f"--st {a.st} is not a folder")
+        cfg["st_dir"] = str(Path(a.st).resolve())
     if a.picks:
         raw = Path(a.picks).read_bytes()
         cfg |= {"picks": json.loads(raw), "picks_sha256": hashlib.sha256(raw).hexdigest()}
@@ -689,7 +755,7 @@ def main(argv: list) -> int:
     else:
         seeds = list(range(cfg["seed_range"][0], cfg["seed_range"][1] + 1))
     drops = json.loads(Path(a.drops).read_text()) if a.drops else {}
-    res = read(load_rows(a.rows, cfg, seeds), cfg, drops, seeds)
+    res = read(load_rows(a.rows, cfg, seeds, Path(cfg["st_dir"]) if a.st else None), cfg, drops, seeds)
     res["smoke"] = bool(a.seeds)
     Path(a.out).write_text(json.dumps(res, indent=1, default=float))
     if a.seeds:     # S5: the reader runs end to end; no performance field is printed

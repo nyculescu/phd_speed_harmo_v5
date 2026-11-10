@@ -1,7 +1,8 @@
 """read6 v2's regression gate (read6_v2_spec.md §2): every field of v1's output is unchanged in v2's, bit for bit, except
 cells.*.t2_counting_filter, which must equal v2's `v1_value`; a cell's v1 `pr28` of None that v2 fills; and a resilience R (and its %
-of no control's loss) that v2 hides because that opponent's own null failed (planb.md:462). A key v2 adds must be one the spec lists
-(NEW_KEYS). v2's report-only map repeats v1's map on v1's measures.
+of no control's loss) that v2 hides because that opponent's own null failed (planb.md:462), shown exactly as "statistic failed its
+null" (and None). A key v2 adds must be one the spec lists (NEW_KEYS). v2's report-only map repeats v1's map on v1's measures, and a
+block that is not read carries no verdict (amendment 3).
 
 usage: read6_regress.py V1.json V2.json    exit 0 if no difference, 1 otherwise (each difference printed)"""
 import json
@@ -10,9 +11,11 @@ import sys
 
 ALLOWED = ("t2_counting_filter",)
 FAILED = "statistic failed its null"
+HIDDEN = {"R": FAILED, "pct_of_nc_loss": None}
 V1_MEASURES = ("delay", "cf", "flow", "robust_braking", "alks_past_limit", "b45_step", "b3_step", "ttt")
-NEW_KEYS = (r"report_version", r"provenance", r"defaults_hit", r"counters_absent_read_as_zero", r"absent_read_as_none", r"S\.map_report_only",
-            r"cells\.[^.]+\.(closest|d4|braking_clause|resilience|cf_resilience|map_report_only)", r"cells\.[^.]+\.resilience\.status")
+NEW_KEYS = (r"report_version", r"provenance", r"defaults_hit", r"counters_absent_read_as_zero", r"absent_read_as_none", r"space_time",
+            r"S\.map_report_only", r"cells\.[^.]+\.(closest|d4|braking_clause|resilience|cf_resilience|map_report_only)",
+            r"cells\.[^.]+\.resilience\.status")
 
 
 def norm(x):
@@ -30,6 +33,10 @@ def same(a, b) -> bool:
         return False
     if isinstance(a, float):
         return repr(a) == repr(b)     # NaN equals NaN; 0.0 differs from -0.0
+    if isinstance(a, list):
+        return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
     return a == b
 
 
@@ -52,9 +59,9 @@ def walk(a, b, path: str, out: list) -> None:
                 else:
                     out.append(f"{join(k)}.v1_value: missing in v2")
                 continue
-            if at_cell and k == "pr28" and v is None:
+            if at_cell and k == "pr28" and v is None and k in b:
                 continue
-            if ".resilience.per_opponent." in f"{path}." and k in ("R", "pct_of_nc_loss") and hidden(b) and b.get(k) in (FAILED, None):
+            if (".resilience.per_opponent." in f"{path}." and k in HIDDEN and hidden(b) and k in b and same(b[k], HIDDEN[k])):
                 continue
             if k not in b:
                 out.append(f"{join(k)}: missing in v2")
@@ -74,7 +81,7 @@ def walk(a, b, path: str, out: list) -> None:
 
 
 def map_repeats(b: dict, out: list) -> None:
-    """v2's map_report_only equals its own map on v1's measures, against every opponent of the map."""
+    """v2's map_report_only equals its own map on v1's measures, against every opponent of the map, by same()."""
     blocks = [(f"cells.{c}", r) for c, r in b.get("cells", {}).items()] + [("S", b.get("S", {}))]
     for path, r in blocks:
         mro = r.get("map_report_only")
@@ -83,10 +90,24 @@ def map_repeats(b: dict, out: list) -> None:
             continue
         for o, row in r.get("map", {}).items():
             for m in V1_MEASURES:
-                x, y = row[m], mro.get(o, {}).get(m, {})
+                if m not in mro.get(o, {}):
+                    out.append(f"{path}.map_report_only.{o}.{m}: missing in map_report_only")
+                    continue
+                x, y = row[m], mro[o][m]
                 for k in ("effect", "ci95", "ci_m"):
-                    if x.get(k) != y.get(k):
+                    if not same(x.get(k), y.get(k)):
                         out.append(f"{path}.map_report_only.{o}.{m}.{k}: {y.get(k)!r} against map {x.get(k)!r}")
+
+
+def no_verdict(b: dict, out: list) -> None:
+    """Amendment 3: resilience outside the read W path, and close-following resilience always, carry no passes or reading."""
+    for c, r in b.get("cells", {}).items():
+        for k in ("resilience", "cf_resilience"):
+            blk = r.get(k)
+            if isinstance(blk, dict) and (k == "cf_resilience" or blk.get("status") != "read"):
+                for v in ("passes", "reading"):
+                    if v in blk:
+                        out.append(f"cells.{c}.{k}.{v}: a verdict in a block that is not read")
 
 
 def diff(v1: dict, v2: dict) -> list:
@@ -94,6 +115,7 @@ def diff(v1: dict, v2: dict) -> list:
     out = []
     walk(a, b, "", out)
     map_repeats(b, out)
+    no_verdict(b, out)
     return out
 
 

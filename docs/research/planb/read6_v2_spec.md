@@ -181,7 +181,7 @@ Fixed in v2.2:
 - **Tests:**
   - 15 tests written before the fix fail on 6b5778c; the log is kept.
   - 6 coverage tests pin: the −2 % threshold and policies against the counted set; braking_clause's lowest upper bound and its None case; no control's null effect in S; main()'s `--forms` wiring and its input checks; each kind of change the gate reports, on a fixture with no NaN.
-  - The v2.1 forms test now gives the commits.
+  - The v2.1 forms test now gives the commits. The v2.1 excluded-3E test reads the point of the new (point, interval) triple; this edit went in with the fix, because the format changes there.
 
 Corrections to the text above:
 - **v2.1's fails-on-f84c9dc evidence for its gate.** The test failed at its clean-copy assertion, on a NaN, before its planted edits ran. With a fixture that has no NaN, f84c9dc's gate misses 6 of the 7 edits, and 6b5778c's gate reports all 7 (`gate_edits_on_f84c9dc_and_6b5778c.log`).

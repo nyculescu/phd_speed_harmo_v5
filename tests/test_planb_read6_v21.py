@@ -42,7 +42,7 @@ def test_excluded_3e_rules_are_listed():
     T, c = universe_world()
     ex = r6.read(T, c)["cells"]["X"]["t2_counting_filter"]["excluded_3e"]
     assert set(ex) == {"3e"}
-    assert ex["3e"]["delay_vs_p333"] == pytest.approx(-4.0, abs=0.5) and abs(ex["3e"]["cf_vs_p333"]) < 2.0
+    assert ex["3e"]["delay_vs_p333"][0] == pytest.approx(-4.0, abs=0.5) and abs(ex["3e"]["cf_vs_p333"][0]) < 2.0     # v2.2: (point, 95 %)
     assert ex["3e"]["vs_os1_15_10"] == "not in the cell"
 
 
