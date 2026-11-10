@@ -23,7 +23,9 @@ def fake_row(a: tuple) -> dict:
             "passed": 3000.0, "collisions": 0, "alks_full_moving": 0.0, "N": 200000.0, "b3_step": 100.0, "b45_step": 10.0, "end_stop2": 1.0,
             "m_peak_car": [0, 0, 1] + [0] * 6, "m_peak_alks": [0] * 9, "m_peak_truck": [0] * 9, "m_dist_m_car": 1e6, "m_dist_m_alks": 1e6,
             "m_dist_m_truck": 1e5, "m_stuck_n": 0, "m_pending_end": 1, "m_road_vs": {"3": {"rest": 10.0}}, "m_road_dist": {"3": {"rest": 100.0}},
-            "m_road_ttc3": {}, "m_robust_road": {}, "pert_log": []}
+            "m_road_ttc3": {}, "m_robust_road": {}, "pert_log": [],
+            **{k: 1.0 for k in ("ttc2", "ttc15", "sev3", "gap25", "delay_ramp", "delay_ramp2", "m_cong_vs", "m_cong_run_s", "m_cong_vs_nc",
+                                "m_cong_run_s_nc", "contact_steps")}, "m_ttc3_lc": 0, "m_ttc3_all": 0}     # read6 v2's report fields
 
 
 def ok(a: tuple) -> dict:

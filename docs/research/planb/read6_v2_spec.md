@@ -80,6 +80,12 @@ Every field of v1's output keeps its value bit for bit, except `cells.*.t2_count
 
 `read6_regress.py V1.json V2.json` checks this, plus the consistency check in §1.3. Any other difference stops: v2's output is not used, and the difference is logged.
 
+Amendment, made while implementing and before v2 ran on the S6 rows. Two v1 fields change by design, and the gate allows exactly these:
+- `pr28`: None in a non-W cell in v1, filled in v2 (§1.4).
+- A resilience R and its % of no control's loss: v2 hides them when that opponent's own null failed (§1.2, planb.md:462). This can happen only in a W cell, so not in this S6 reading.
+
+A related detail for planted test rows without the report keys: `report_arrays` reads with `.get`. On real rows `derive()` sets every key, and a missing field stops the load.
+
 ## 3. Order of work (§11's post-S6 bug rule)
 
 1. This spec and the new tests are committed together. The tests run on v1 and must fail on items 1 to 4; the failing log is kept.

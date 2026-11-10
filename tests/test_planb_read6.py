@@ -138,6 +138,8 @@ def pack_row(name, seed, **kw):
          "m_dist_m_car": 1e6, "m_dist_m_alks": 1e6, "m_dist_m_truck": 0.0, "m_stuck_n": 0, "m_pending_end": 3, "b3_step": 4.0, "b45_step": 1.0,
          "m_road_vs": {"3": {"before": 100.0}, "pending_main": {"before": 4.0}}, "m_road_dist": {"3": {"before": 2777.7777777777778}},
          "m_road_ttc3": {"3": {"before": 2}}, "m_robust_road": {"4a": {"trucks": 1}}, "end_stop2": 3.0}
+    r |= {k: 1.0 for k in ("ttc2", "ttc15", "sev3", "gap25", "delay_ramp", "delay_ramp2", "m_cong_vs", "m_cong_run_s", "m_cong_vs_nc",
+                           "m_cong_run_s_nc", "contact_steps")} | {"m_ttc3_lc": 0, "m_ttc3_all": 0}     # v2's report fields, present in every S6 row
     return r | kw
 
 

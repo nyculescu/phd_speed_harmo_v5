@@ -1,11 +1,13 @@
 """read6 v2's regression gate (read6_v2_spec.md §2): every field of v1's output is unchanged in v2's, bit for bit, except
-cells.*.t2_counting_filter; v2's report-only map repeats v1's map on v1's measures.
+cells.*.t2_counting_filter; a v1 `pr28` of None that v2 fills; and a resilience R (and its % of no control's loss) that v2 hides
+because that opponent's own null failed (planb.md:462). v2's report-only map repeats v1's map on v1's measures.
 
 usage: read6_regress.py V1.json V2.json    exit 0 if no difference, 1 otherwise (each difference printed)"""
 import json
 import sys
 
 ALLOWED = ("t2_counting_filter",)
+FAILED = "statistic failed its null"
 V1_MEASURES = ("delay", "cf", "flow", "robust_braking", "alks_past_limit", "b45_step", "b3_step", "ttt")
 
 
@@ -26,6 +28,10 @@ def walk(a, b, path: str, out: list) -> None:
             return
         for k, v in a.items():
             if path.startswith("cells.") and path.count(".") == 1 and k in ALLOWED:
+                continue
+            if k == "pr28" and v is None:
+                continue
+            if ".resilience.per_opponent." in f"{path}." and k in ("R", "pct_of_nc_loss") and b.get("null_ok") is False and b.get(k) in (FAILED, None):
                 continue
             if k not in b:
                 out.append(f"{path}.{k}: missing in v2")
