@@ -217,7 +217,8 @@ def test_adaptation_gain_not_read_on_an_unstable_denominator():
 def test_null_failures(monkeypatch):
     monkeypatch.setattr(r6, "swap_null", lambda *a, **k: 0.5)
     c = r6.read(world(), cfg())["cells"]["X"]
-    assert c["outcome"] == "statistic failed its null" and c["outcome_before_null"] == "W" and "resilience" not in c
+    assert c["outcome"] == "statistic failed its null" and c["outcome_before_null"] == "W"
+    assert c["resilience"]["status"].startswith("report-only, not read")     # v2 (read6_v2_spec.md §1.2): R is never read here
     calls = []
 
     def later(*a, **k):
