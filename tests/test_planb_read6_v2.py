@@ -121,9 +121,19 @@ def test_derive_adds_report_keys_strictly():
     d = r6.derive(row)
     assert d["events_ge45"] == 2 + 1 + 0 + (0 + 2 + 1 + 0 + 1 + 5) + 0
     assert d["robust_raw"] == 6 + 10 + 3 and d["robust_per_served"] == pytest.approx(19 / 3.0) and d["ttc3_lc_share"] == 0.25
-    del row["ttc2"]
+    del row["delay_ramp"]     # not a counter field: absent stops the reading
     with pytest.raises((KeyError, SystemExit)):
         r6.derive(row)
+
+
+def test_counter_fields_absent_read_as_zero():
+    """plant_sweep's defaultdict S writes ttc2, ttc15 and sev3 only on their first hit (plant_sweep.py:111, :194-198, :341)."""
+    row = t1.pack_row("X|w0", 0)
+    for k in ("ttc2", "ttc15", "sev3"):
+        del row[k]
+    d = r6.derive(row)
+    assert d["ttc2"] == d["ttc15"] == d["sev3"] == 0.0 and d["absent_zero"] == ["ttc2", "ttc15", "sev3"]
+    assert r6.derive(t1.pack_row("X|w0", 0))["absent_zero"] == []
 
 
 def test_defaults_hit_are_counted(tmp_path):
