@@ -85,6 +85,7 @@ def field(r: dict, k: str) -> float | None:
 # §5's jam and congestion metrics (planb.md:338), from measure.waves on the run's space-time field
 JAM_KEYS = ("jam_share", "congested_share", "jams", "congested_km_mean", "congested_km_max", "osc_kmh")
 NO_ST = "space-time files not read (no --st)"
+EMPTY_ST = "space-time side file empty on some seeds (S6 host outage, V494)"
 
 
 def space_time(r: dict, st: Path) -> dict:
@@ -98,12 +99,15 @@ def space_time(r: dict, st: Path) -> dict:
     if not f.is_file():
         raise SystemExit(f"row {r['name']} {r['seed']}: space-time file {f} is missing")
     raw = f.read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    if not raw:     # the S6 host's unclean reboot left the last side files empty (V494; amendment 4a)
+        return {k: None for k in JAM_KEYS} | {"st_file": r["m_st_file"], "st_sha256": sha, "st_empty": True}
     with np.load(io.BytesIO(raw)) as z:
         v, n = z["v"], z["n"]
     if list(v.shape) != list(r["m_st_shape"]) or n.shape != v.shape:
         raise SystemExit(f"row {r['name']} {r['seed']}: space-time field {v.shape}, {n.shape}, row says {r['m_st_shape']}")
     w = measure.waves(v, n, r["m_st_dt"], r["m_st_dx"])
-    return {k: opt(w[k]) for k in JAM_KEYS} | {"st_file": r["m_st_file"], "st_sha256": hashlib.sha256(raw).hexdigest()}
+    return {k: opt(w[k]) for k in JAM_KEYS} | {"st_file": r["m_st_file"], "st_sha256": sha, "st_empty": False}
 
 
 def derive(r: dict, st: Path | None = None) -> dict:
@@ -541,7 +545,12 @@ def report_only_map(T: dict, cfg: dict, cond: str, seeds: list, st: Stat, opp_na
             a, b = (P[key], O[key]) if key in KEYS else (Pr[key], Or[key])
             bad = np.isnan(a) | np.isnan(b)
             if bad.any():
-                why = NO_ST if key in JAM_KEYS and not cfg.get("st_dir") else NONE_WHY.get(key, "None on some seeds")
+                if key in JAM_KEYS and not cfg.get("st_dir"):
+                    why = NO_ST
+                elif key in JAM_KEYS and any(T[(cond, n)][s].get("st_empty") for n in [*learners, o] for s in seeds):
+                    why = EMPTY_ST
+                else:
+                    why = NONE_WHY.get(key, "None on some seeds")
                 row[meas] = {"effect": None, "why": why, "none_seeds": int(bad.sum())}
                 continue
             mo = float(np.median(b))
@@ -701,7 +710,7 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
     passed = any(o in ("W", "W-b") for o in outs) and "L" not in outs
     vetoed = [c for c, r in cells.items() if r["outcome"] in ("W", "W-b") and "L" in outs]
     hit, zero, none = defaultdict(int), defaultdict(int), defaultdict(int)
-    files = []
+    files, empty = [], []
     for rows in T.values():
         for d in rows.values():
             for k in d.get("defaults", ()):
@@ -712,8 +721,11 @@ def read(T: dict, cfg: dict, drops: dict | None = None, seeds: list | None = Non
                 none[k] += 1
             if d.get("st_sha256"):
                 files.append(f"{d['st_file']} {d['st_sha256']}\n")
+            if d.get("st_empty"):
+                empty.append(d["st_file"])
     files.sort()
-    space = {"dir": cfg.get("st_dir"), "files": len(files), "sha256": hashlib.sha256("".join(files).encode()).hexdigest() if files else None}
+    space = {"dir": cfg.get("st_dir"), "files": len(files), "sha256": hashlib.sha256("".join(files).encode()).hexdigest() if files else None,
+             "empty_files": sorted(empty)}
     return {"study": "PASS" if passed else "NULL", "vetoed_cells": vetoed, "cells": cells, "m": cfg["m"], "omitted": cfg.get("omitted", {}), "must_carry": cfg.get("must_carry"),
             "S": {"n_seeds": len(use["S"]), "dropped_seeds": sorted(drops.get("S", [])), "map": report_map(T, cfg, "S", use["S"], s_st, s_names),
                   "map_report_only": report_only_map(T, cfg, "S", use["S"], s_st, s_names)},

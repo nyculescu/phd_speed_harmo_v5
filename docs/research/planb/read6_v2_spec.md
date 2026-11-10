@@ -197,4 +197,4 @@ Amendment 4a, after the first v2.2 run stopped at load, before any v2.2 number e
 - Anything else stops the reading as before: a missing file, an unreadable file, or a wrong shape.
 - On S6 this leaves 3E-C_TRUCK's jam entries in TRUCK unfilled (14 of 240 seeds). Every other entry is complete.
 - Not done: re-running those 14 runs to rebuild their side files. That needs a rental, and the run would have to reproduce the stored rows bit for bit. It is left to the author.
-- A test written before this fix fails on d14307f.
+- A test written before this fix fails on d14307f. With the fix, the digest test expects the new `empty_files` key.
