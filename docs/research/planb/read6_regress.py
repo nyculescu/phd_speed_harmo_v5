@@ -2,7 +2,7 @@
 cells.*.t2_counting_filter, which must equal v2's `v1_value`; a cell's v1 `pr28` of None that v2 fills; and a resilience R (and its %
 of no control's loss) that v2 hides because that opponent's own null failed (planb.md:462), shown exactly as "statistic failed its
 null" (and None). A key v2 adds must be one the spec lists (NEW_KEYS). v2's report-only map repeats v1's map on v1's measures, and a
-block that is not read carries no verdict (amendment 3).
+block that is not read (by v1's record) carries a report-only status and no verdict (amendments 3 and 5).
 
 usage: read6_regress.py V1.json V2.json    exit 0 if no difference, 1 otherwise (each difference printed)"""
 import json
@@ -35,8 +35,6 @@ def same(a, b) -> bool:
         return repr(a) == repr(b)     # NaN equals NaN; 0.0 differs from -0.0
     if isinstance(a, list):
         return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b))
-    if isinstance(a, dict):
-        return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
     return a == b
 
 
@@ -99,15 +97,24 @@ def map_repeats(b: dict, out: list) -> None:
                         out.append(f"{path}.map_report_only.{o}.{m}.{k}: {y.get(k)!r} against map {x.get(k)!r}")
 
 
-def no_verdict(b: dict, out: list) -> None:
-    """Amendment 3: resilience outside the read W path, and close-following resilience always, carry no passes or reading."""
+VERDICT_KEYS = ("passes", "reading", "pass", "verdict")
+
+
+def no_verdict(a: dict, b: dict, out: list) -> None:
+    """Amendments 3 and 5: a resilience block that v1 does not have (v1 writes one only where W's R is read), and close-following
+    resilience always, must carry a status starting "report-only" and no verdict key. Whether a block is read is taken from v1, not
+    from the output under test."""
     for c, r in b.get("cells", {}).items():
-        for k in ("resilience", "cf_resilience"):
+        v1_reads = "resilience" in a.get("cells", {}).get(c, {})
+        for k in ("cf_resilience",) + (() if v1_reads else ("resilience",)):
             blk = r.get(k)
-            if isinstance(blk, dict) and (k == "cf_resilience" or blk.get("status") != "read"):
-                for v in ("passes", "reading"):
-                    if v in blk:
-                        out.append(f"cells.{c}.{k}.{v}: a verdict in a block that is not read")
+            if not isinstance(blk, dict):
+                continue
+            if not str(blk.get("status", "")).startswith("report-only"):
+                out.append(f"cells.{c}.{k}.status: {blk.get('status')!r} in a block that is not read")
+            for v in VERDICT_KEYS:
+                if v in blk:
+                    out.append(f"cells.{c}.{k}.{v}: a verdict in a block that is not read")
 
 
 def diff(v1: dict, v2: dict) -> list:
@@ -115,7 +122,7 @@ def diff(v1: dict, v2: dict) -> list:
     out = []
     walk(a, b, "", out)
     map_repeats(b, out)
-    no_verdict(b, out)
+    no_verdict(a, b, out)
     return out
 
 

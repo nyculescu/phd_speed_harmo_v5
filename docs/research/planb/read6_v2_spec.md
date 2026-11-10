@@ -228,6 +228,7 @@ Fixed or added in v2.3:
   - map_repeats on ci95, ci_m, list length, the S block and a missing block;
   - no_verdict on both blocks and both keys;
   - a hidden R whose `pct_of_nc_loss` key is missing.
+  - The v2.2 digest test now compares only its own four `space_time` keys, since v2.3 adds keys beside them. This edit goes in with the fix.
 - **Corrections:**
   - amendment 4's "each kind of change the gate reports" was too broad (the gate mutants above survived);
   - `run6.py:158` is the S5 path (now `plan6.py:169-171`);

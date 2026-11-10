@@ -85,8 +85,9 @@ def test_the_output_hashes_the_side_files_it_read():
             b |= {"st_file": f"{cond}_{name}_{s}.npz", "st_sha256": hashlib.sha256(f"{cond}{name}{s}".encode()).hexdigest()}
     out = r6.read(T, cfg() | {"st_dir": "st"})["space_time"]
     lines = sorted(f"{b['st_file']} {b['st_sha256']}\n" for rows in T.values() for b in rows.values())
-    assert out == {"dir": "st", "files": len(lines), "sha256": hashlib.sha256("".join(lines).encode()).hexdigest(), "empty_files": []}
-    assert r6.read(with_report_keys(world()), cfg())["space_time"] == {"dir": None, "files": 0, "sha256": None, "empty_files": []}     # 4a
+    four = lambda d: {k: d[k] for k in ("dir", "files", "sha256", "empty_files")}     # v2.3 adds keys beside these (amendment 5)
+    assert four(out) == {"dir": "st", "files": len(lines), "sha256": hashlib.sha256("".join(lines).encode()).hexdigest(), "empty_files": []}
+    assert four(r6.read(with_report_keys(world()), cfg())["space_time"]) == {"dir": None, "files": 0, "sha256": None, "empty_files": []}     # 4a
 
 
 def picks_files(tmp_path: Path, commit_r="c0", commit_p="c0", repicks=None, front="lr") -> tuple:
