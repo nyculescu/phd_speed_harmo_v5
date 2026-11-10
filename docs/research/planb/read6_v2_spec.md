@@ -235,3 +235,16 @@ Fixed or added in v2.3:
   - §2's and C10's strict-field sentences now name amendments 2 and 3.
 
 v2.1's and v2.2's outputs are marked superseded once v2.3 passes. v1 stays the deciding reading.
+
+Amendment 5a, after the review of v2.3, with no change to what read6 computes. v2.3 ran once on `st_rebuilt` (09f49ad): NULL, TRUCK = T, the gate passed against v1, and a script check showed every v2.2 field unchanged. Blind recount F matched all 576 jam entries (12 keys, TRUCK and S, the 3E-C_TRUCK entries included) within 1.4e-14, and matched the side-file digest, `front_none_rows`, the binding and mechanism G. The review found no wrong number. Its findings:
+- **No committed check of "v2.3 equals v2.2 on every v2.2 field".** `read6_superset.py OLD NEW` now does it: every leaf of OLD is in NEW with the same type and value, and only `report_version` may differ. Run on v2.2's output on `st_rebuilt` against v2.3's output, it passes.
+- **The binding reason.** n is an integer count, stored exactly in float32. The file can differ from the row only when float32 rounding of the speed sum moves a cell's mean speed across 60 km/h. That adds or removes that cell's whole count from `m_cong_vs`, and could in principle change `m_cong_run_s`.
+  - On S6, 7 values in 4 TRUCK files differ (4 on the main field, 3 on `_nc`), by −48 to +50 vehicle-samples, at most 7.7e-4 relative. `m_cong_run_s` never differs.
+  - The files are listed in blind recount F's `binding_cells.log`. The output gives only the maximum.
+- **Front speed.** It is None on 221 of the 13,920 rows (1.59 %: S 204, TRUCK 17), not "about 1 %".
+- **`jam_clusters`.** measure.summary() keeps the whole waves() dict, and round 2's report table shows only the count. It stays out because it is a per-cluster list.
+- **Without `--st`.** `front_none_rows` and `binding.rows` read 0, which here means not computed; `space_time.dir` is null in that case.
+- **§8.7's other sources.** MPC-F's held-out MSE comes from S4c's record (`planb_s34_remote/mpcf/`). The tuning-seed half of the overfitting check comes from the S3a and S4 stage records (`planb_s34_remote/`). Neither is a read6 input.
+- **The pack's merge metrics** (minutes below 60 km/h on each acceleration section, breakdown, recovery, capacity drop) are not part of :338's "jam and congestion metrics". That phrase refers to the pack's Waves group and G1b's congestion() (round_2_measure_addendum.md:47-61, V468). This finding was refuted and is listed for completeness.
+- **The vs95 docstring** now says the bounds differ by up to 0.085 points on S6, not "in the last digits". read6.py's code is identical to 09f49ad apart from docstrings (checked by AST).
+- **Tests.** 14 coverage tests (`test_planb_read6_v23b.py`) pin what the review's surviving mutants broke: the `_nc` counts, every array's shape, front_none from the main field and its count, measure taken from this tree even when another v5b comes first on sys.path, binding on both fields and with the row's dt and dx, the `_nc` None causes, mechanism G per cell, and the gate's hidden-R rule (null_ok must be failed, path under resilience only). The reviewer's mutants, re-run on them, are logged in `planb_s6_read_v23/mutcheck/mutants_v23b.log`.

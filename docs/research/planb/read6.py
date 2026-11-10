@@ -307,7 +307,7 @@ R2_REF = "os1_15_10"     # round_2.md:73
 
 def vs95(st: Stat, A: dict, O: dict, key: str) -> tuple:
     """A against O on key: (point, 95 % interval), positive = A lower: round 2's raw() estimator on Plan B's index matrix (rng 20261108,
-    one per cell); round 2 drew a new matrix (rng 20261104) on each call, so bounds differ in the last digits (amendment 5)."""
+    one per cell); round 2 drew a new matrix (rng 20261104) on each call, so bounds differ by up to 0.085 points on S6 (amendment 5)."""
     x, b = st.eff(A[key], O[key])
     return (x, *ci(b, P95))
 
