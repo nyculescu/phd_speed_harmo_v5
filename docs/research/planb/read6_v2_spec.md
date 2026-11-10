@@ -13,12 +13,12 @@ read6 v1 (b0c9360) was run once on the S6 rows (V495). Its verdict, TRUCK = T an
 
 Item 4 was a refuted review finding: not a defect against §8, only a gap in what the reader outputs. It is added so the NULL sentence is filled by the committed script instead of by hand.
 
-### 1.1 Counting filter (item 1)
+### 1.1 Counting filter (item 1; the forms' source and TRUCK's list are corrected in amendment 3)
 
 - Universe of cell c, in this order with duplicates dropped:
   - p333;
   - the cell's forms: each re-pick name r in `s6_picks.json` `repicks[c]`, resolved to `grid_r` if that name is in the deciding set, otherwise to `r` if it is (plan6's dedup kept the carried twin's name), otherwise the reading stops;
-  - the 3E rules for the cell: 3E-T (`t3e`; round 2's e3_rules puts 3E-T in every cell), `e3c[c]` and `e3d[c]`. 3E-X1 and 3E-X2 belong to X1 and X2 only (round_2.md:69).
+  - the 3E rules for the cell: 3E-T (`t3e`; round 2's e3_rules puts 3E-T in every cell), `e3c[c]` and `e3d[c]`. 3E-X1 and 3E-X2 belong to X1 and X2 only (round_2.md:65).
 - TRUCK resolves to: p333, grid_a41000_10_2, grid_lr400_13_1, os0_10_10, grid_os1_10_10, grid_r4a2, grid_z31333, 3e, 3E-C_TRUCK, 3E-D_TRUCK.
 - An opponent counts if its delay point against p333 is at least −2 % (unchanged from v1).
 - Policies = learners meeting round 2's per-policy bar against the counted set (`t2_policy`, unchanged).
@@ -53,7 +53,7 @@ Item 4 was a refuted review finding: not a defect against §8, only a gap in wha
   - when median(O) ≤ 0, the effect is `null` with the reason;
   - always `mean_diff` (mean(P − O) and its 95 % interval) and the medians of P and O.
 - Missing or None fields:
-  - a field absent from a row stops the reading;
+  - a field absent from a row stops the reading (except amendment 2's counters and amendment 3's `delay_ramp2`);
   - a None value (possible for the ramp delays) leaves that arm's entry unfilled, with the count of None seeds. It never becomes 0.
 - Consistency check: for v1's measures against deciding opponents, `map_report_only` must equal v1's `map` (the regression script checks it).
 
@@ -112,7 +112,7 @@ Amendment 2, after the first v2 run stopped at load, before any v2 number existe
 | C3 | §11's post-S6 bug rule | The tests are committed before the fix and fail on v1 (§3). Both outcomes of item 1 go into the V# and into any sentence that cites the counting filter. |
 | C4 | Breaking the deciding path | The bit-for-bit regression gate, the same index matrix and rng seeds, and v1's deciding assertions kept (two v1 test edits, §5). |
 | C5 | The implementer has seen the S6 numbers | Blind recounts of the new numbers by agents who see only this spec, the protocol and the rows, plus an adversarial review of the diff. |
-| C6 | R in a NULL could be read as a claim | The report-only label carries its §8.5 reason. "Resilience" stays banned (planb.md:153). The W-path reading is unchanged. |
+| C6 | R in a NULL could be read as a claim | The report-only label carries its §8.5 reason. "Resilience" stays banned (planb.md:153). The W-path reading is unchanged, except amendment 1's hidden R. |
 | C7 | Universe ambiguity (which names are the cell's forms; 3E-T in or out) | Pinned in §1.1 from round 2's code (decide1.tuned, common2e.e3_rules) and plan6's dedup, before running. |
 | C8 | Null cost on the laptop (46 nulls, about 1.2 h single-threaded) | Reading only, no simulation (V483). Its own systemd unit at nice 10, single-threaded, under the CPU rules. |
 | C9 | Read-once | v1 stays the reading (V496). v2 is the report supplement. Both outputs are kept and hashed, and sentences cite v1's verdict, which v2 reproduces. |
@@ -154,3 +154,37 @@ Corrections to the text above:
 - §1.2's "delay R is read exactly as in v1" and §1.4's "the W path is unchanged" hold except for amendment 1, which hides an R whose own null fails.
 - C1: item 1's counted set could be worked out from v1's output before this spec was written. v1's `overfit_vs_p333` holds each opponent's delay point against p333, the number `counted()` filters on. Item 1 is report-only and both values are reported. Any sentence citing the counting filter says it was foreseeable.
 - The v2 test file's docstring said the regression test does not fail on v1. It did, because v1 has no `map_report_only`.
+
+## 6. Amendment 4: v2.2, after the review of v2.1
+
+v2.1 (6b5778c) ran once on the S6 rows: study NULL, TRUCK = T. The gate passed against v1 and on v2.0's output. A blind recount matched its universe (9 names), counted set (6 names), policies (5) and the excluded 3E points. The review of v2.1 (§3 step 5 again: three lenses, then skeptics on each finding) found the defects below. None of them touches a deciding field. v2.1's output is kept and marked superseded.
+
+Fixed in v2.2:
+- **Jam metrics.**
+  - Amendment 3 said S6 did not keep the space-time side files. That was false: run6.py:158 sets `measure` for every arm, and all 13,920 files are in V494's verified copy.
+  - v2.2 reads them (`--st`) and adds §5's jam and congestion metrics (planb.md:338) from `measure.waves`: `jam_share`, `congested_share`, `jams`, `congested_km_mean`, `congested_km_max` and `osc_kmh`.
+  - A missing file, or a field whose shape differs from the row's `m_st_shape`, stops the reading.
+  - The output records the folder, the file count and a SHA-256 over the sorted per-file hashes (`space_time`). A full reading needs `--st`.
+  - Left out: `front_kmh_median` (a wave speed, with no better or worse direction), `jam_clusters` (a list) and `osc_stations` (a coverage count).
+- **Excluded 3E rules** carry 95 % intervals, as round 2's `e3_status` does (decide2.py:68-76).
+- **Transfer 3E rules.**
+  - 3E-X1 and 3E-X2 are in TRUCK's deciding set (planb.md:162), but under §1.1's reading (round_2.md:65) they are outside the universe.
+  - They are now listed under `transfer_3e`: delay against p333 with its 95 % interval, and the counted set and the policies if they were included.
+  - They are found as the deciding set's names that start with "3e" (any case) and are outside the universe.
+- **`--forms`** must come from the picks file's run commit (repick.json `code.commit`).
+- **Gate:**
+  - when v1's `pr28` is None, the field must still be present in v2;
+  - a hidden R must be exactly "statistic failed its null", with its `pct_of_nc_loss` None;
+  - `map_repeats` follows the float rules and reports a missing entry;
+  - a block that is not read must carry no `passes` or `reading`;
+  - `space_time` and `report_version` are listed new keys; the spec's list had left out `report_version`.
+- **Tests:**
+  - 15 tests written before the fix fail on 6b5778c; the log is kept.
+  - 6 coverage tests pin: the −2 % threshold and policies against the counted set; braking_clause's lowest upper bound and its None case; no control's null effect in S; main()'s `--forms` wiring and its input checks; each kind of change the gate reports, on a fixture with no NaN.
+  - The v2.1 forms test now gives the commits.
+
+Corrections to the text above:
+- **v2.1's fails-on-f84c9dc evidence for its gate.** The test failed at its clean-copy assertion, on a NaN, before its planted edits ran. With a fixture that has no NaN, f84c9dc's gate misses 6 of the 7 edits, and 6b5778c's gate reports all 7 (`gate_edits_on_f84c9dc_and_6b5778c.log`).
+- **C4's count.** Three commits edit v1's test files: e72b337, 02f5aeb and 6b5778c. 6b5778c's change makes fake_row omit counters on odd seeds and corrects pack_row's comment. That fake_row change went in with the fix, not with the tests.
+- **Stale sections.** §1.1 (the universe), §1.3 (an absent field stops the reading) and C6 (the W path is unchanged) are superseded by amendments 1 to 3, and now say so.
+- **Round 2's other rows.** round_2.md's "reported beside" rows (:204-207) belong to round 2's own report, not to planb.md:476's "T2 with its counting filter". `overfit_vs_p333` already gives each opponent's delay and close-following against p333 at 95 %.

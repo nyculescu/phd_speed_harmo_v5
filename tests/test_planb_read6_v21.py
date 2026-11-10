@@ -47,10 +47,10 @@ def test_excluded_3e_rules_are_listed():
 
 
 def test_forms_must_match_the_picks(tmp_path):
-    rep = {"picks": {"X": {"forms": {"uniform": "p333", "local": "lr"}, "delay_opponent": "dly", "front_row": "lr"}}}
-    assert r6.check_forms(rep, {"repicks": {"X": {"lr": {}, "p333": {}, "dly": {}}}}, ["X"]) == {"X": ["p333", "lr"]}
+    rep = {"code": {"commit": "c0"}, "picks": {"X": {"forms": {"uniform": "p333", "local": "lr"}, "delay_opponent": "dly", "front_row": "lr"}}}
+    assert r6.check_forms(rep, {"run_commit": "c0", "repicks": {"X": {"lr": {}, "p333": {}, "dly": {}}}}, ["X"]) == {"X": ["p333", "lr"]}
     with pytest.raises(SystemExit):
-        r6.check_forms(rep, {"repicks": {"X": {"lr": {}, "p333": {}}}}, ["X"])
+        r6.check_forms(rep, {"run_commit": "c0", "repicks": {"X": {"lr": {}, "p333": {}}}}, ["X"])
 
 
 def test_unread_resilience_blocks_hold_no_verdict():
