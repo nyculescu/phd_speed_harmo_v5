@@ -106,14 +106,20 @@ def timed(a: tuple) -> dict:
 
 def twin_diff(a: dict, b: dict) -> list:
     """Keys that differ between a split (or traced) run and its plain twin, apart from identity fields and the split's own keys."""
-    skip = run6.SKIP | {"commit", "m_st_file", "name", "arm", "ctrl_sha256", "files"}
+    skip = run6.SKIP | {"commit", "m_st_file", "name", "arm", "learner", "ctrl_sha256", "files"}
     return [k for k in v5.same_row(a, b, skip) if not split_key(k) and not v5.tracer_key(k)]
 
 
 def t0_rows(A: dict, arms: dict) -> dict:
     """§10 T0 on the smoke rows: the E30 limit read back; 4a_0's length per accel2_len and edge 3 unchanged; per share and seed the same
     automated vehicles in every arm; the realised share."""
-    out = {"event": {}, "length": {}, "share": {}, "bad": []}
+    out = {"event": {}, "length": {}, "share": {}, "command": {}, "bad": []}
+    for (n, s), r in A.items():     # p333's command read back: every commanded ALKS-second at its headway, none mismatched
+        if n.split("|", 1)[1].split("~")[0] == "p333":
+            c = {k: r.get(k, 0.0) for k in ("tau_on_n", "tau_on_match", "tau_mismatch")}
+            out["command"][f"{n} {s}"] = c
+            if not (c["tau_on_n"] > 0 and c["tau_on_match"] == c["tau_on_n"] and c["tau_mismatch"] == 0):
+                out["bad"].append(f"T0 p333 command {n} {s}")
     for (n, s), r in A.items():
         if arms[n].get("t0_event"):
             ok = v5.t0_event_ok(r, arms[n])
@@ -145,7 +151,7 @@ def t0_rows(A: dict, arms: dict) -> dict:
     return out
 
 
-def smoke(jobs: dict, out: Path, workers: int) -> dict:
+def smoke(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
     """S5 practice: every arm once, then each distinct config again in its own side-file folder (T3: every row value and side-file array
     equal); each split, traced or share-field run equal to its plain twin on every stored key (V386); T0 (§10)."""
     from read_m2 import npz_equal
@@ -157,7 +163,7 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     for n, c in arms.items():
         first.setdefault(pb.sha({k: v for k, v in c.items() if k != "measure"}), n)
     rep = {n: arms[n] for n in first.values()}
-    inp = {"stage": jobs["stage"], "seed_range": jobs["seed_range"], "smoke": True}
+    inp = {"stage": jobs["stage"], "seed_range": jobs["seed_range"], "smoke": True, "cpu": cpu}     # a resume on another CPU model is refused
     da = run6.execute(v5.with_measure(arms, out / "a" / "st"), sd, out / "a", workers, inp, fn=timed)
     db = run6.execute(v5.with_measure(rep, out / "b" / "st"), sd, out / "b", workers, inp, fn=timed)
     A = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "a" / "s6_rows.jsonl")}
@@ -185,12 +191,13 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     return res
 
 
-def run(jobs: dict, out: Path, workers: int) -> dict:
+def run(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
     sd = list(range(jobs["seed_range"][0], jobs["seed_range"][1] + 1))
     seeds(jobs["stage"], *jobs["seed_range"])
     run6.check_checkpoints(jobs["arms"])
     run6.check_files(jobs["arms"])
-    return run6.execute(jobs["arms"], sd, out, workers, {"stage": jobs["stage"], "seed_range": jobs["seed_range"], "cell": jobs.get("cell")}, fn=timed)
+    inp = {"stage": jobs["stage"], "seed_range": jobs["seed_range"], "cell": jobs.get("cell"), "cpu": cpu}     # §7: one CPU model per stage
+    return run6.execute(jobs["arms"], sd, out, workers, inp, fn=timed)
 
 
 def main(argv: list) -> int:
@@ -202,6 +209,7 @@ def main(argv: list) -> int:
     ap.add_argument("--cell", default="E30", choices=tuple(EVENTS))
     ap.add_argument("--n", type=int)
     ap.add_argument("--workers", type=int, default=31)
+    ap.add_argument("--cpu", default="", help="the host's CPU model (lscpu), recorded in meta.json")
     x = ap.parse_args(argv)
     if x.step == "plan":
         out = Path(x.out).resolve()
@@ -212,10 +220,10 @@ def main(argv: list) -> int:
         return 0
     pb.reserve(x.workers)
     if x.step == "smoke":
-        res = smoke(pb.load_json(x.jobs), Path(x.out).resolve(), x.workers)
+        res = smoke(pb.load_json(x.jobs), Path(x.out).resolve(), x.workers, x.cpu)
         print("smoke", "PASS" if res["pass"] else "FAIL", {k: v for k, v in res.items() if k not in ("pass", "t0") and v} | {"t0_bad": res["t0"]["bad"]})
         return 0 if res["pass"] else 1
-    drops = run(pb.load_json(x.jobs), Path(x.out).resolve(), x.workers)
+    drops = run(pb.load_json(x.jobs), Path(x.out).resolve(), x.workers, x.cpu)
     print("rows done;", "crash drops:", drops or "none")
     return 0
 

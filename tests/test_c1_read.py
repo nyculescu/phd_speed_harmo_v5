@@ -7,6 +7,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "docs/research/c1"))
+sys.path.insert(0, str(ROOT / "docs/research/planb"))
 import c1  # noqa: E402
 import read_c1 as rc  # noqa: E402
 
@@ -162,3 +163,59 @@ def test_longer_ramp2_lane_keeps_the_other_edges(tmp_path, monkeypatch):
         for e in ("3_0", "4_0", "5_0", "3a_0", "r2_0", "rj2_0"):
             assert lens[L][e] == pytest.approx(lens[300.0][e], abs=1e-6)
     assert corridor.build(100 / 3.6, corridor.R2M3) == corridor.build(100 / 3.6, corridor.R2M3, 300.0, 300.0)
+
+
+def wrapped(name, cfg, seed=1):
+    import run6
+    return run6.wrap({"all_delay": 1.0, "name": name, "seed": seed}, (name, cfg, 5300.0, seed, "rd", "abc"))
+
+
+def test_smoke_twins_differ_only_in_identity_fields(tmp_path):
+    sm = c1.plan("c1_smoke", tmp_path)["arms"]
+    pairs = [(n[: -len(c1.TWIN)], n) for n in sm if n.endswith(c1.TWIN)] + [("E30|nc~trace", "E30|nc" + c1.TWIN), ("S|nc~share50", "S|nc")]
+    assert ("E30|w0u250", "E30|w0u250~untraced") in pairs
+    for m, n in pairs:
+        assert c1.twin_diff(wrapped(m, sm[m]), wrapped(n, sm[n])) == []
+
+
+def test_t0_requires_p333_command_read_back():
+    good = {"tau_on_n": 100.0, "tau_on_match": 100.0, "tau_mismatch": 0.0}
+    arms = {"S|p333": {}, "S|p333~untraced": {}, "S|nc": {}}
+    A = {("S|p333", 1): dict(good), ("S|p333~untraced", 1): dict(good), ("S|nc", 1): {}}
+    assert c1.t0_rows(A, arms)["bad"] == []
+    for bad in ({"tau_on_match": 99.0}, {"tau_mismatch": 1.0}, {"tau_on_n": 0.0, "tau_on_match": 0.0}):
+        A[("S|p333~untraced", 1)] = good | bad
+        assert c1.t0_rows(A, arms)["bad"] == ["T0 p333 command S|p333~untraced 1"]
+
+
+def test_ident_matches_the_real_lscpu_string():
+    ref = {"name": "S|w0u250", "seed": 1, "all_delay": 5.0}
+    S6 = {("S|w0u250", 1): ref}
+    rows = [{**ref, "all_delay": 5.1}]
+    assert rc.ident(rows, S6, "Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz")["action"] == "stop"
+    assert rc.ident(rows, S6, "AMD EPYC 7702 64-Core Processor")["action"] == "go"
+
+
+def test_n_rule_uses_the_pilot_seed_count():
+    se = {"edge": 5.58, "cost": 2.94, "delay": 0.5}
+    p = rc.n_rule(se, 57)["projected_se"][240]["edge"]
+    assert p == pytest.approx(1.15 * 5.58 * np.sqrt(57 / 240))
+
+
+def test_side_file_drift_at_float32_level_does_not_stop(monkeypatch):
+    import json
+    R = Path("/home/catalin/work/phd/v5b1_runs/v505_remote/ev_size")
+    if not (R / "s6_rows.jsonl").is_file():
+        pytest.skip("stored V505 rows not on this machine")
+    r = json.loads(next(iter(open(R / "s6_rows.jsonl"))))
+    real = rc.read6.space_time
+
+    def drift(row, st, vs):
+        out = real(row, st)
+        out["bind"] = dict(out["bind"], vs_rel=vs)
+        return out
+    monkeypatch.setattr(rc.read6, "space_time", lambda row, st: drift(row, st, 7.3e-4))
+    assert rc.jams_of(r, R / "st")[2] == 7.3e-4
+    monkeypatch.setattr(rc.read6, "space_time", lambda row, st: drift(row, st, 0.05))
+    with pytest.raises(SystemExit):
+        rc.jams_of(r, R / "st")

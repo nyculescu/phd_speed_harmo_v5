@@ -12,6 +12,7 @@ import argparse
 import io
 import json
 import multiprocessing as mp
+import re
 import sys
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
@@ -43,6 +44,7 @@ ELSE_TIES = 0.10
 P0_BAR = 10.0
 NULL_FACTOR = 1.5
 NULL_SWAPS, NULL_B = 2000, 1000
+NULL_BOUND_975 = 0.019     # §5's written bar ("at most 1.9 %"); the 95 % readings' bar is 3.75 %
 # §5 power
 PILOT_N, LADDER_N, INFLATE, Z80 = 60, (240, 480, 960, 1920), 1.15, 3.08
 PLANNED = {"edge": 10.0, "delay": 1.0, "cost": 5.0}
@@ -104,16 +106,20 @@ def events_ge45(r: dict) -> float:
     return float(sum(sum(r[f"m_peak_{c}"][3:]) for c in ("car", "alks", "truck")))     # read6.derive
 
 
+VS_REL_STOP = 1e-2     # the side file is float32 (measure.py); stored rows drift up to 7.3e-4, so only a larger gap means another run
+
+
 def jams_of(r: dict, st: Path | None) -> tuple:
-    """Jam count of one run (read6's space-time reading, with its binding check) and the jams by group of each cluster's head."""
+    """Jam count of one run (read6's space-time reading, with its binding check), the jams by group of each cluster's head, and the
+    binding's vs_rel (printed, as read6 v2.3 does)."""
     if st is None:
-        return None, {}
+        return None, {}, None
     sp = read6.space_time(r, st)
     if sp.get("st_empty"):
         raise SystemExit(f"{r['name']} {r['seed']}: empty space-time file")
     b = sp["bind"]
-    if not (b["run_s_equal"] and b["vs_rel"] < 1e-6):
-        raise SystemExit(f"{r['name']} {r['seed']}: space-time file does not bind to its row")
+    if not (b["run_s_equal"] and b["vs_rel"] < VS_REL_STOP):
+        raise SystemExit(f"{r['name']} {r['seed']}: space-time file does not bind to its row ({b})")
     with np.load(io.BytesIO((st / r["m_st_file"]).read_bytes())) as z:
         w = read6.measure_module().waves(z["v"], z["n"], r["m_st_dt"], r["m_st_dx"])
     off = sorted((v, k) for k, v in r["m_offsets"].items() if k != "_end")
@@ -121,7 +127,7 @@ def jams_of(r: dict, st: Path | None) -> tuple:
     for c in w["jam_clusters"]:
         road = max((k for v, k in off if v <= c["head_m"]), default="1", key=lambda k: r["m_offsets"][k])
         heads[GROUP.get(road, "other")] += 1
-    return float(sp["jams"]), dict(heads)
+    return float(sp["jams"]), dict(heads), float(b["vs_rel"])
 
 
 def derive(r: dict, st: Path | None = None) -> dict:
@@ -129,6 +135,7 @@ def derive(r: dict, st: Path | None = None) -> dict:
     ttc = r.get("m_road_ttc3", {})
     d = {"all_delay": float(r["all_delay"]), "ttc_net": float(r["ttc_net"]), "b45_step": float(r.get("b45_step") or 0.0),
          "events_ge45": events_ge45(r) if "m_peak_car" in r else None, "ttc_away": gsum(ttc, AWAY), "ttc_merge2": gsum(ttc, ("4a", "ramp2")),
+         "ttc_merge1": gsum(ttc, ("3a", "ramp1")), "ttc_junction": gsum(ttc, ("junction",)),
          "b45_merge2": float(r.get("b45_step_g_4a", 0.0)) + float(r.get("b45_step_g_ramp2", 0.0)),
          "passed": float(r["passed"]), "N": float(r["N"]), "collisions": float(r["collisions"]), "stuck": float(r.get("m_stuck_n", 0)),
          "teleports": float(r.get("teleports", 0.0)), "end_stop": float(r.get("end_stop", 0.0)), "end_stop2": float(r.get("end_stop2", 0.0)),
@@ -147,7 +154,7 @@ def derive(r: dict, st: Path | None = None) -> dict:
             if k.startswith("delay|"):
                 g[GROUP.get(k.split("|")[1], "other")] += v
         d["g_delay"] = dict(g)
-    d["jams"], d["g_jams"] = jams_of(r, st) if st is not None and r.get("m_st_file") else (None, {})
+    d["jams"], d["g_jams"], d["st_vs_rel"] = jams_of(r, st) if st is not None and r.get("m_st_file") else (None, {}, None)
     return d
 
 
@@ -277,9 +284,10 @@ def simulate(se: dict, truth: dict, corr: np.ndarray | None, draws: int = 20000,
     return {k: v / draws for k, v in sorted(out.items(), key=lambda kv: -kv[1])}
 
 
-def n_rule(se60: dict) -> dict:
-    """§5: SE_n = 1.15 x SE_60 x sqrt(60 / n); the smallest n of the ladder at which the edge, delay and cost are powered."""
-    proj = {n: {k: INFLATE * se60[k] * np.sqrt(PILOT_N / n) for k in se60} for n in LADDER_N}
+def n_rule(se60: dict, n_pilot: int = PILOT_N) -> dict:
+    """§5: SE_n = 1.15 x SE_60 x sqrt(60 / n) (60: the pilot's seeds after drops); the smallest n of the ladder at which the edge,
+    delay and cost are powered."""
+    proj = {n: {k: INFLATE * se60[k] * np.sqrt(n_pilot / n) for k in se60} for n in LADDER_N}
     ok = {n: all(PLANNED[k] / proj[n][k] >= Z80 for k in PLANNED) for n in LADDER_N}
     n = next((m for m in LADDER_N if ok[m]), None)
     return {"n": n, "projected_se": proj, "powered": ok}
@@ -318,6 +326,7 @@ def swap_rates(D: list, idx: np.ndarray, swaps: int = NULL_SWAPS, seed: int = 20
         hit["present"] += x["hi"] < 0 and x["pt"] <= COST_PRESENT
         hit["hi95<0"] += x["hi95"] < 0
         hit["delay_worse"] += x["pt"] <= DELAY_MARGIN and x["hi95"] < 0
+        hit["hi95==0"] += x["hi95"] == 0
     return {k: v / swaps for k, v in hit.items()}
 
 
@@ -381,9 +390,12 @@ def printed(T: dict, cell: str, seeds: list, idx: np.ndarray) -> dict:
     return out
 
 
-def screen(T: dict, seeds: list, cell: str, dropped: list, pilot: dict | None = None, swaps: int = NULL_SWAPS, b: int = read6.B) -> dict:
+def screen(T: dict, seeds: list, cell: str, dropped: list, pilot: dict | None = None, swaps: int = NULL_SWAPS, b: int = read6.B,
+           cpus: list | None = None) -> dict:
     arms = V3W + ("3E-C_TRUCK", "p333", "nc")
     void = []
+    if cpus is not None and len(set(cpus)) > 1:
+        void.append(f"CPU-model change between pilot and screen ({sorted(set(cpus))}, §7)")
     if len(set(dropped)) > DROP_VOID:
         void.append(f"{len(set(dropped))} seeds dropped (common §4)")
     seeds = seeds_of(T, cell, arms, [s for s in seeds if s not in set(dropped)])
@@ -399,7 +411,7 @@ def screen(T: dict, seeds: list, cell: str, dropped: list, pilot: dict | None = 
     with ProcessPoolExecutor(len(Ds), mp_context=mp.get_context("fork")) as ex:     # one process per measure; each null is independent
         futs = {k: ex.submit(swap_rates, D, nidx, swaps) for k, D in Ds.items()}
         nulls = {k: f.result() for k, f in futs.items()}
-    bound975, bound95 = NULL_FACTOR * L975[0] / 100.0, NULL_FACTOR * L95[0] / 100.0
+    bound975, bound95 = NULL_BOUND_975, NULL_FACTOR * L95[0] / 100.0
     null_fail = [f"{k}:{r}" for k, r, bd in (("edge", "lo>0", bound975), ("cost", "present", bound975), ("else", "lo>0", bound975),
                                              ("delay", "delay_worse", bound95), ("else", "hi95<0", bound95)) if nulls[k][r] > bd]
     if null_fail:
@@ -409,6 +421,10 @@ def screen(T: dict, seeds: list, cell: str, dropped: list, pilot: dict | None = 
     pz = p0(T, cell, seeds, idx)
     x = {"void": void, "p0": pz["pass"], "p333_stuck": dr["p333"]["stuck_fail"], "else_readable": er["readable"], **R}
     out = {"cell": cell, "n": n, "dropped": dropped, "decision": decide(x), "readings": R, "nulls": nulls, "veto_null_over_bound": veto_over,
+           "jams_hi95_zero": {"bootstrap_draws": float(np.mean(moe(Ds["jams"], idx)[1] == 0)), "reading": R["jams"]["hi95"] == 0,
+                              "swap_replicates": nulls["jams"]["hi95==0"]},
+           "else_parts": {k: reading(learner_diffs(T, cell, "3E-C_TRUCK", k, seeds), idx) for k in ("ttc_merge2", "ttc_merge1", "ttc_junction")},
+           "side_file_binding": vs_rel_summary(T, cell, seeds),
            "else_readability": er, "p0": pz, "drain": dr, "printed": printed(T, cell, seeds, idx)}
     if pilot is not None and pilot.get("n"):
         proj = pilot["n_rule"]["projected_se"][str(pilot["n"])] if str(pilot["n"]) in pilot["n_rule"]["projected_se"] else pilot["n_rule"]["projected_se"][pilot["n"]]
@@ -428,17 +444,25 @@ def pilot(T: dict, seeds: list, cell: str, b: int = read6.B) -> dict:
         _, bd = moe(learner_diffs(T, cell, opp, key, seeds), idx)
         draws[k], se60[k] = bd, float(np.std(bd))
     corr = np.corrcoef(np.array([draws[k] for k in MEASURES]))
-    rule = n_rule({k: se60[k] for k in PLANNED})
+    rule = n_rule({k: se60[k] for k in PLANNED}, n)
     er = else_readable(T, cell, seeds)
     table = {}
     for m in LADDER_N:
-        se = {k: INFLATE * se60[k] * np.sqrt(PILOT_N / m) for k in MEASURES}
-        table[m] = {t: simulate(se, TRUTHS[t], corr) for t in TRUTHS}
-        sc = se["cost"]
-        table[m]["cost_rates"] = {"P(present | -5)": float(np.mean([r_cost(_x(-5.0, sc, z)) == "present" for z in _z()])),
-                                  "P(absent | 0)": float(np.mean([r_cost(_x(0.0, sc, z)) == "absent" for z in _z()]))}
+        table[m] = {}
+        for lab, f in (("inflated (SE_n of §5)", INFLATE), ("uninflated (as §1)", 1.0)):
+            se = {k: f * se60[k] * np.sqrt(n / m) for k in MEASURES}
+            table[m][lab] = {t: simulate(se, TRUTHS[t], corr) for t in TRUTHS}
+            sc = se["cost"]
+            table[m][lab]["cost_rates"] = {"P(present | -5)": float(np.mean([r_cost(_x(-5.0, sc, z)) == "present" for z in _z()])),
+                                           "P(absent | 0)": float(np.mean([r_cost(_x(0.0, sc, z)) == "absent" for z in _z()]))}
     return {"n_pilot": n, "se60": se60, "corr": corr.tolist(), "n_rule": rule, "n": rule["n"], "outcome_table": table,
-            "else_opp_median": er["opp_median"], "else_tie_share": er["tie_share"], "else_learner_median_zero": er["learner_medians_zero"]}
+            "else_opp_median": er["opp_median"], "else_tie_share": er["tie_share"], "side_file_binding": vs_rel_summary(T, cell, seeds)}
+
+
+def vs_rel_summary(T: dict, cell: str, seeds: list) -> dict:
+    """read6 v2.3's report of the side files' binding drift: rows above 1e-6 and the largest."""
+    v = [x for (c, _), by in T.items() if c == cell for s, d in by.items() if s in set(seeds) and (x := d.get("st_vs_rel")) is not None]
+    return {"rows": len(v), "above_1e-6": int(sum(x > 1e-6 for x in v)), "max": max(v, default=None)}
 
 
 def _z(k: int = 20000) -> np.ndarray:
@@ -473,55 +497,58 @@ def flip_null(d: np.ndarray, test, swaps: int = 2000, seed: int = 20261114) -> f
     return float(np.mean([test(d * rng.choice((-1.0, 1.0), d.shape)) for _ in range(swaps)]))
 
 
-def check_a(T: dict, seeds: list) -> dict:
-    """§6 (a): usable lengths (point form), then the Bonferroni label over the tests read, with its sign-flip null."""
+def check_a(T: dict, seeds: list, flips: int = 2000) -> dict:
+    """§6 (a): usable lengths (point form, on the seeds where neither run is stuck), then the Bonferroni label over the tests read, with
+    its sign-flip null (one sign per seed and length-arm pair, shared by both keys of that pair)."""
     out = {"usable": {}, "tests": {}, "stuck_dropped": {}}
+    ok_s = {}
+    for L in ("SL450", "SL600"):
+        for a in ("nc", "p333"):
+            ok_s[(L, a)] = [s for s in seeds if T[("S", a)][s]["stuck"] == 0 and T[(L, a)][s]["stuck"] == 0]
+            out["stuck_dropped"][f"{L}|{a}"] = len(seeds) - len(ok_s[(L, a)])
     usable = []
     for L in ("SL450", "SL600"):
-        u = {}
-        for a in ("nc", "p333"):
-            u[a] = {k: float(np.mean(col(T, L, a, seeds, k) - col(T, "S", a, seeds, k))) for k in ("collisions", "alks_full_moving")}
+        u = {a: {k: float(np.mean(col(T, L, a, ok_s[(L, a)], k) - col(T, "S", a, ok_s[(L, a)], k))) for k in ("collisions", "alks_full_moving")}
+             for a in ("nc", "p333")}
         ok = all(u[a]["collisions"] <= USE_COLL and u[a]["alks_full_moving"] <= USE_FULL for a in u)
         out["usable"][L] = {"excess": u, "usable": ok}
         if ok:
             usable.append(L)
-    tests = []
-    for L in usable:
-        for a in ("nc", "p333"):
-            ok_s = [s for s in seeds if T[("S", a)][s]["stuck"] == 0 and T[(L, a)][s]["stuck"] == 0]
-            out["stuck_dropped"][f"{L}|{a}"] = len(seeds) - len(ok_s)
-            for key in ("ttc_merge2", "b45_merge2"):
-                base, var = col(T, "S", a, ok_s, key), col(T, L, a, ok_s, key)
-                if float(np.median(base)) == 0:
-                    out["tests"][f"{L}|{a}|{key}"] = "not readable (median 0 at 295 m)"
-                    continue
-                tests.append((L, a, key, -diffs(var, base)))     # positive = more at the longer length
-    k = len(tests)
     if not usable:
         out["label"] = "(a) not readable"
         return out
+    tests = []     # (L, arm, key, paired % change, positive = more at the longer length)
+    for L in usable:
+        for a in ("nc", "p333"):
+            ss = ok_s[(L, a)]
+            for key in ("ttc_merge2", "b45_merge2"):
+                base, var = col(T, "S", a, ss, key), col(T, L, a, ss, key)
+                if float(np.median(base)) == 0:
+                    out["tests"][f"{L}|{a}|{key}"] = "not readable (median 0 at 295 m)"
+                    continue
+                tests.append((L, a, key, -diffs(var, base)))
+    k = len(tests)
     pct = (100 * SENS_ALPHA / (2 * max(k, 1)), 100 - 100 * SENS_ALPHA / (2 * max(k, 1)))
+
+    def sensitive(d, idx):
+        lo, hi = ci(np.median(d[idx], axis=1), pct)
+        return abs(float(np.median(d))) >= SENS_PCT and (lo > 0 or hi < 0), lo, hi
     hit = False
     for L, a, key, d in tests:
-        st_ = read6.Stat(len(d))
-        b = np.median(d[st_.idx], axis=1)
-        lo, hi = ci(b, pct)
-        pt = float(np.median(d))
-        sens = abs(pt) >= SENS_PCT and (lo > 0 or hi < 0)
+        sens, lo, hi = sensitive(d, read6.Stat(len(d)).idx)
         hit |= sens
-        out["tests"][f"{L}|{a}|{key}"] = {"pt": pt, "ci": (lo, hi), "sensitive": sens}
-        out["tests"][f"{L}|{a}|{key}"]["printed_delay_end_stop2"] = {
-            "all_delay": float(np.median(-diffs(col(T, L, a, seeds, "all_delay"), col(T, "S", a, seeds, "all_delay")))),
-            "end_stop2": [float(np.median(col(T, "S", a, seeds, "end_stop2"))), float(np.median(col(T, L, a, seeds, "end_stop2")))]}
+        ss = ok_s[(L, a)]
+        out["tests"][f"{L}|{a}|{key}"] = {"pt": float(np.median(d)), "ci": (lo, hi), "sensitive": sens,
+                                          "printed": {"all_delay": float(np.median(-diffs(col(T, L, a, ss, "all_delay"), col(T, "S", a, ss, "all_delay")))),
+                                                      "end_stop2": [float(np.median(col(T, "S", a, ss, "end_stop2"))), float(np.median(col(T, L, a, ss, "end_stop2")))]}}
     if tests:
-        D = [d for *_, d in tests]
-        n_ = min(len(d) for d in D)
-        st_ = read6.Stat(n_, 1000, 20261115)
-
-        def family(F):
-            return any(abs(float(np.median(f))) >= SENS_PCT and not (ci(np.median(f[st_.idx], axis=1), pct)[0] <= 0 <= ci(np.median(f[st_.idx], axis=1), pct)[1]) for f in F)
         rng = np.random.default_rng(20261116)
-        out["label_null_rate"] = float(np.mean([family([d[:n_] * rng.choice((-1.0, 1.0), n_) for d in D]) for _ in range(500)]))
+        idxs = {len(d): read6.Stat(len(d), 500, 20261115).idx for *_, d in tests}
+        hits = 0
+        for _ in range(flips):
+            sign = {(L, a): rng.choice((-1.0, 1.0), len(ok_s[(L, a)])) for L in usable for a in ("nc", "p333")}
+            hits += any(sensitive(d * sign[(L, a)], idxs[len(d)])[0] for L, a, _, d in tests)
+        out["label_null_rate"] = hits / flips
     out["n_tests"], out["bonferroni_pct"] = k, pct
     out["label"] = "SENSITIVE" if hit else "sensitivity not shown at n = 60"
     return out
@@ -602,7 +629,8 @@ def ident(rows: list, S6: dict, cpu: str) -> dict:
             diag[f"{r['name']} {r['seed']}"] = dg
         if bad:
             (learner_diff if r["name"].split("|", 1)[1] in V3W else rule_diff)[f"{r['name']} {r['seed']}"] = bad
-    same_cpu = S6_CPU.lower() in cpu.lower()
+    norm = lambda t: " ".join(re.sub(r"\((r|tm)\)|@.*", " ", t.lower()).replace(" cpu", " ").split())
+    same_cpu = norm(S6_CPU) in norm(cpu)     # lscpu: "Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz"
     action = "stop" if rule_diff or missing or (learner_diff and same_cpu) else "go"
     return {"rule_diff": rule_diff, "learner_diff": learner_diff, "learner_diff_disclosed": bool(learner_diff and not same_cpu),
             "diagnostics": diag, "missing": missing, "cpu": cpu, "s6_cpu": S6_CPU, "action": action}
@@ -631,7 +659,8 @@ def main(argv: list) -> int:
     elif x.step == "screen":
         T = load(x.rows_list, x.st)
         dropped = sorted({s for p in x.rows_list for s in drops_of(Path(p))})
-        res = screen(T, plan_seeds, x.cell, dropped, json.loads(Path(x.pilot).read_text()) if x.pilot else None)
+        cpus = [json.loads((Path(p).parent / "meta.json").read_text())["inputs"].get("cpu") for p in x.rows_list]
+        res = screen(T, plan_seeds, x.cell, dropped, json.loads(Path(x.pilot).read_text()) if x.pilot else None, cpus=cpus)
     else:
         T = load([x.rows], x.st)
         dropped = drops_of(Path(x.rows))

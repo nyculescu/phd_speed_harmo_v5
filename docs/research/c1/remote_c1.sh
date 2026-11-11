@@ -21,6 +21,10 @@ T0=$(cat "$R/t0")
 unset SUMO_HOME
 export OMP_NUM_THREADS=1
 CPU=$(lscpu | sed -n 's/^Model name: *//p' | head -1)
+if [ -f "$R/cpu" ] && [ "$(cat "$R/cpu")" != "$CPU" ]; then     # §7: one CPU model; a new host follows §5's procedure under a V#
+  echo "$(date -u '+%F %T') STOPPED: CPU model changed ($(cat "$R/cpu") -> $CPU)" >> "$R/status.txt"; exit 1
+fi
+[ -f "$R/cpu" ] || echo "$CPU" > "$R/cpu"
 say() { echo "$(date -u '+%F %T') $1" >> "$R/status.txt"; }
 step() { say "start $1"; shift; "$@" >> "$R/run.log" 2>&1; rc=$?; say "end rc=$rc"; return $rc; }
 must() { step "$@" || { say "STOPPED"; exit 1; }; }
@@ -42,10 +46,10 @@ stage() {     # stage NAME [plan options]: plan, cap check, run; measures the pe
   must "plan $s" $PY $D/c1.py plan "$s" --out "$R/$s/jobs.json" "$@"
   local n t1 had
   n=$(runs_of "$R/$s/jobs.json")
-  cost_ok "$s" "$n" || return 2
-  t1=$(date +%s)
   had=$(cat "$R/$s/s6_rows.jsonl" 2>/dev/null | wc -l)
-  must "run $s ($n runs)" $PY $D/c1.py run --jobs "$R/$s/jobs.json" --out "$R/$s" --workers "$W"
+  cost_ok "$s" "$((n - had))" || return 2     # a relaunch charges only the runs still to do
+  t1=$(date +%s)
+  must "run $s ($n runs)" $PY $D/c1.py run --jobs "$R/$s/jobs.json" --out "$R/$s" --workers "$W" --cpu "$CPU"
   say "drops $s: $(cat "$R/$s/drops.json" 2>/dev/null)"
   if [ "$had" -eq 0 ] && [ "$n" -ge "$W" ]; then
     COST_PER_RUN=$($PY -c "import math; print(($(date +%s)-$t1)/3600*$PRICE/(math.ceil($n/$W)*$W))")
@@ -66,7 +70,7 @@ say "code $(cat COMMIT), cpu $CPU, workers $W, price $PRICE/h, cap $CAP, rate ${
 sha256sum -c --quiet $D/data.sha256 >> "$R/run.log" 2>&1 || { say "STOPPED: data missing or changed (data.sha256)"; exit 1; }
 
 must "plan c1_smoke" $PY $D/c1.py plan c1_smoke --out "$R/c1_smoke/jobs.json"
-must "smoke" $PY $D/c1.py smoke --jobs "$R/c1_smoke/jobs.json" --out "$R/c1_smoke" --workers "$W"
+must "smoke" $PY $D/c1.py smoke --jobs "$R/c1_smoke/jobs.json" --out "$R/c1_smoke" --workers "$W" --cpu "$CPU"
 stage c1_rate || { say "ASK AUTHOR: cap at the rate stage"; exit 0; }
 say "wall s per arm (rate stage): $(wall "$R/c1_rate/s6_rows.jsonl")"
 
@@ -77,7 +81,11 @@ say "identity: learner traffic mismatch disclosed = $(val "$R/c1_ident/ident.jso
 
 stage c1_checks || { say "ASK AUTHOR: cap at checks"; exit 0; }
 must "read checks" $PY $D/read_c1.py checks "$R/c1_checks/s6_rows.jsonl" "$R/c1_checks/checks.json" --st "$R/c1_checks/st" --seeds "$(range_of "$R/c1_checks/jobs.json")"
-say "checks: (a) $(val "$R/c1_checks/checks.json" '["a"].get("label")'), (b) amend $(val "$R/c1_checks/checks.json" '["b"]["amend"]') void $(val "$R/c1_checks/checks.json" '["b"]["void"]')"
+if [ "$(val "$R/c1_checks/checks.json" '.get("outcome")')" = VOID ]; then     # the checks are labels: C1 goes on
+  say "checks VOID: $(val "$R/c1_checks/checks.json" '.get("reason")') (labels not readable; a re-run needs its own V#)"
+else
+  say "checks: (a) $(val "$R/c1_checks/checks.json" '["a"].get("label")'), (b) amend $(val "$R/c1_checks/checks.json" '["b"]["amend"]') void $(val "$R/c1_checks/checks.json" '["b"]["void"]')"
+fi
 
 stage c1_gate || { say "ASK AUTHOR: cap at the gate"; exit 0; }
 must "read gate" $PY $D/read_c1.py gate "$R/c1_gate/s6_rows.jsonl" "$R/c1_gate/gate.json" --seeds "$(range_of "$R/c1_gate/jobs.json")"
@@ -96,6 +104,7 @@ say "gate PASS, cell $CELL"
 stage c1_pilot --cell "$CELL" || { say "ASK AUTHOR: cap at the pilot"; exit 0; }
 must "read pilot" $PY $D/read_c1.py pilot "$R/c1_pilot/s6_rows.jsonl" "$R/c1_pilot/pilot.json" --st "$R/c1_pilot/st" --cell "$CELL" --seeds "$(range_of "$R/c1_pilot/jobs.json")"
 say "wall s per arm (pilot): $(wall "$R/c1_pilot/s6_rows.jsonl")"
+[ "$(val "$R/c1_pilot/pilot.json" '.get("outcome")')" = VOID ] && { say "VOID: pilot $(val "$R/c1_pilot/pilot.json" '.get("reason")') (C parked; a re-run needs its own V#)"; exit 0; }
 N=$(val "$R/c1_pilot/pilot.json" '.get("n")')
 [ "$N" = None ] && { say "ASK AUTHOR: no n passes the n rule (§5); host to be released"; exit 0; }
 say "pilot: n = $N"
