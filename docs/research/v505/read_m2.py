@@ -262,25 +262,32 @@ def main(argv: list) -> int:
     ap.add_argument("--pick")
     ap.add_argument("--x1")
     ap.add_argument("--st")
+    ap.add_argument("--fallback", action="store_true")
     x = ap.parse_args(argv)
     T = load(Path(x.rows))
     if x.step == "trace":
         res = trace(T)
     elif x.step == "ident":
-        res = ident(T, load(S6_ROWS), Path(x.st) if x.st else None)
+        res = ident(T, load(S6_ROWS, {f"{c}|{n}" for c, n in T}), Path(x.st) if x.st else None)
     elif x.step == "pick":
         res = pick(T, v5.seeds("m2_pick"))
-        res["brake_null"] = brake_null(load(S6_ROWS))
+        res["brake_null"] = brake_null(load(S6_ROWS, {"S|p333", "S|3E-D_TRUCK"}))
     else:
         p = json.loads(Path(x.pick).read_text())
         if p["a"] is None:
             raise SystemExit("M2 is VOID at the pick: no verdict")
-        T |= {k: v for k, v in load(S6_ROWS).items() if k[0] in ("S", "TRUCK")}     # D4: the stored S6 rows are the base plant
+        if x.fallback:     # M2 §6: base and variant both in ROWS, on the fresh seeds
+            sd = v5.seeds("m2_fallback")
+        else:     # D4: the stored S6 rows are the base plant
+            keep = {f"{c}|{n}" for c in ("S", "TRUCK") for n in v5.M2_RULES + v5.pb.V3W}
+            T |= load(S6_ROWS, keep)
+            sd = v5.seeds("m2_verdict")
         x1 = None
         if x.x1:
             T |= load(Path(x.x1))
             x1 = v5.seeds("m2_x1")
-        res = verdict(T, p["a"], p["kind"], p["bar"], v5.seeds("m2_verdict"), x1)
+        res = verdict(T, p["a"], p["kind"], p["bar"], sd, x1)
+        res["base_rows"] = "fresh seeds, both plants" if x.fallback else "stored S6 rows (D4)"
     v5.pb.cma2.write_json(Path(x.out), res)
     print(x.step, json.dumps({k: v for k, v in res.items() if k in ("pass", "action", "a", "kind", "pr28")}))
     return 0

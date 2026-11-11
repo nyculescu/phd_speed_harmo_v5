@@ -89,6 +89,11 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
         if a is None:
             raise SystemExit("m2_verdict needs --a, the level M2's pick reading chose")
         jobs = {f"{n.split('|')[0]}V{a:g}|{n.split('|')[1]}": m2_cfg(arms[n], a, st) for n in rules + learners}
+    elif stage == "m2_fallback":     # M2 §6: fresh seeds on both plants if a v3w identity replay differs (D4's alternative)
+        if a is None:
+            raise SystemExit("m2_fallback needs --a")
+        jobs = {n: {**{k: v for k, v in arms[n].items() if k != "measure"}, "measure": str(st)} for n in rules + learners}
+        jobs |= plan("m2_verdict", out_dir, a)["arms"]
     elif stage == "m2_x1":
         if a is None:
             raise SystemExit("m2_x1 needs --a")
@@ -180,6 +185,7 @@ def main(argv: list) -> int:
     x = ap.parse_args(argv)
     if x.step == "plan":
         out = Path(x.out).resolve()
+        out.parent.mkdir(parents=True, exist_ok=True)
         j = plan(x.stage, out.parent, x.a)
         pb.cma2.write_json(out, j)
         print(j["stage"], len(j["arms"]), "arms, seeds", j["seed_range"])
