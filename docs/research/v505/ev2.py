@@ -151,23 +151,29 @@ def paired_med(T: dict, cell: str, a: str, b: str, seeds: list) -> float:
     return float(np.median(arr(T, cell, a, seeds, "all_delay") - arr(T, cell, b, seeds, "all_delay")))
 
 
-def picks(T: dict, cell: str, fx: str, seeds: list, sw_jobs: dict) -> dict:
+def picks(T: dict, cell: str, fx: str, seeds: list, sw_jobs: dict, fx_jobs: dict | None = None) -> dict:
     """EV §3: IP and SW (a) by the median paired difference against the FX base; SW (b) (ASCH) against p333; SW = the better of (a)
     and (b) by median event-cell delay; bU = the lowest median event-cell delay of N, FX and SW, all on the tuning seeds."""
     names = lambda pre: [n.split("|", 1)[1] for n in sw_jobs if n.split("|", 1)[1].startswith(pre)]
     by = lambda pre, ref: min(names(pre), key=lambda n: paired_med(T, cell, n, ref, seeds)) if names(pre) else None
     ip, swa, swb = by("ip_", fx), by("swa_", fx), by("swb_", "p333")
+    if swb and paired_med(T, cell, swb, "p333", seeds) >= 0.0:     # EV §3: ASCH's "never switch" (p333 itself) is the 55th setting
+        swb = "p333"
     ip_vs_fx = paired_med(T, cell, ip, fx, seeds)
+    st = read6.Stat(len(seeds))
+    _, b = st.med_diff(arr(T, cell, ip, seeds, "all_delay") - arr(T, cell, fx, seeds, "all_delay"))
+    ip_ci = read6.ci(b, LVL)
+    fx_jobs = fx_jobs or {}
     cand = {k: med_delay(T, cell, n, seeds) for k, n in (("swa", swa), ("swb", swb)) if n}
     sw_key = min(cand, key=cand.get)
     sw = swa if sw_key == "swa" else swb
     u = {"N": med_delay(T, cell, "p333", seeds), "FX": med_delay(T, cell, fx, seeds), "SW": med_delay(T, cell, sw, seeds)}
-    return {"fx": fx, "ip": ip, "ip_vs_fx_median": ip_vs_fx, "kill_by_pick": ip_vs_fx >= 0.0, "swa": swa, "swb": swb, "sw": sw,
-            "ip_cfg": sw_jobs[f"{cell}|{ip}"], "sw_cfg": sw_jobs[f"{cell}|{sw}"], "swa_cfg": sw_jobs[f"{cell}|{swa}"] if swa else None, "bU": min(u, key=u.get), "untold_medians": u, "n": len(seeds)}
+    return {"fx": fx, "ip": ip, "ip_vs_fx_median": ip_vs_fx, "ip_vs_fx_ci95": ip_ci, "kill_by_pick": ip_vs_fx >= 0.0, "swa": swa, "swb": swb, "sw": sw,
+            "ip_cfg": sw_jobs[f"{cell}|{ip}"], "sw_cfg": sw_jobs.get(f"{cell}|{sw}") or fx_jobs[f"{cell}|{sw}"], "swa_cfg": sw_jobs[f"{cell}|{swa}"] if swa else None, "bU": min(u, key=u.get), "untold_medians": u, "n": len(seeds)}
 
 
 def power(fx_T: dict, gate_T: dict, cell: str, fx: str, tune_n: int, eval_n: int, n_ip: int, t_seeds: list, g_seeds: list,
-          sims: int = 400, seed: int = 505_501) -> dict:
+          sims: int = 2000, seed: int = 505_501) -> dict:
     """EV §5's planned power, model fixed in the protocol: one IP setting has a true G of 15 %, every other 0; the setting-to-setting
     spread is that of the FX family's paired differences against the FX pick on the tuning seeds; the event cost and its spread come
     from the gate rows (p333); evaluation n as given. Returns P(KILL | true 15 %)."""
@@ -231,7 +237,9 @@ def read(T: dict, p: dict, cell: str, seeds: list, swaps: int = 2000, s_cell: st
     side = flow >= FLOW_PCT and coll <= COLL and not (brake[0] > BRAKE_RATIO and brake[1] > BRAKE_LB)
     if (cell, "SWA") in T:     # report-only: IP against the matched detector (SW (a)'s pick), when SW is ASCH (review)
         G["SWA"] = gain(st, T, cell, "SWA", seeds, s_cell=s_cell)
+    ties = {u: float(np.mean(arr(T, cell, u, seeds, "all_delay") == arr(T, cell, "IP", seeds, "all_delay"))) for u in G}     # common §4
     out = {"G": {u: {"G": r["G"], "ci": r["ci"], "event_cost_median": r["event_cost_median"]} for u, r in G.items()}, "nulls": nulls, "bU": p["bU"],
+           "tie_share": ties,
            "side": {"flow_pct": flow, "coll_excess": coll, "b45_ratio_ci95": brake, "ok": side}, "n": len(seeds)}
     if by_pick and p["kill_by_pick"]:     # the told grid found nothing better than its FX base on the tuning seeds (EV §5)
         out["outcome"] = "KILL BY PICK"
@@ -247,13 +255,14 @@ def read(T: dict, p: dict, cell: str, seeds: list, swaps: int = 2000, s_cell: st
         out["kill_sentence"] = (f"being told the time and place of this upstream slowdown, used as zone headway switching, did not cut its delay cost "
                                 f"by 10 % against the best untold rule{' (by pick)' if out['outcome'] == 'KILL BY PICK' else ''}; "
                                 f"a gain of up to {b['ci'][1]:.1f} % is not excluded")
-        groups = sorted({k.split("|")[1] for k in read6.location(T[(cell, "IP")][seeds[0]]) if k.startswith("delay|")} - set(M2_GROUPS))
+        groups = sorted({k.split("|")[1] for a in ("IP", p["bU"]) for q in seeds for k in read6.location(T[(cell, a)][q]) if k.startswith("delay|")}
+                        - set(M2_GROUPS))
         g_off = gain(st, T, cell, p["bU"], seeds, groups=tuple(groups), s_cell=s_cell)
         out["kill_off_merge2"] = {"G": g_off["G"], "ci": g_off["ci"], "groups": groups}
         out["lane_end_bound"] = g_off["ci"][1] >= G_BAR     # common §6: the KILL does not hold once merge 2 is taken out
     elif out["outcome"] == "GAIN":
         share = location_share(T, cell, p["bU"], seeds)
-        out["location_share"] = share
+        out["location_share"] = share if share is not None else "location not read"     # common §6
         out["lane_end_bound"] = share is not None and share > 0.5
     else:
         out["lane_end_bound"] = False
@@ -323,8 +332,14 @@ def main(argv: list) -> int:
         fx_rows, gate_rows, fxj, out = map(Path, x.args)
         T, G = load(fx_rows), load(gate_rows)
         cell = f"EVA{x.limit:g}"
-        fx = json.loads(fxj.read_text())["fx"]
-        n_ip = len(IP_D) * len(LEVELS) * len(IP_AFTER)
+        fxd = json.loads(fxj.read_text())
+        if "fx" not in fxd:     # the fx step was VOID (tuning drops)
+            write(out, {"rule": "VOID"})
+            print("power VOID")
+            return 0
+        fx = fxd["fx"]
+        u = uniform_level(ctrl_of(v5.s6_arms()[f"S|{fx}"]))
+        n_ip = len(IP_D) * (len(LEVELS) - (u is not None)) * len(IP_AFTER)     # the IP settings ev_tune_sw will actually plan
         t_seeds, tv = usable(v5.seeds("ev_tune"), drops_of(fx_rows))
         g_seeds, gv = usable(v5.seeds("ev_gate"), drops_of(gate_rows))
         if tv or gv:
@@ -347,7 +362,8 @@ def main(argv: list) -> int:
         stage = "ev_tune_ext" if x.ext else "ev_tune"
         sd, void = usable(v5.seeds("ev_tune") + (v5.seeds("ev_tune_ext") if x.ext else []), dropped)
         sw_jobs = json.loads((sw_rows.parent / "jobs.json").read_text())["arms"]
-        res = {"outcome": "VOID"} if void else picks(T, cell, json.loads(fxj.read_text())["fx"], sd, sw_jobs)
+        fx_jobs = json.loads((fx_rows.parent / "jobs.json").read_text())["arms"]
+        res = {"outcome": "VOID"} if void else picks(T, cell, json.loads(fxj.read_text())["fx"], sd, sw_jobs, fx_jobs)
         res["stage"] = stage
         write(out, res)
         print("picks", {k: res.get(k) for k in ("fx", "ip", "sw", "bU", "kill_by_pick")})
@@ -363,7 +379,10 @@ def main(argv: list) -> int:
             T = merge(T, load(Path(x.va_rows)))
         cell = next(k for k in T if k[0].startswith("EVA") and "V" not in k[0][3:])[0]
         sd = v5.seeds("ev_eval") + (v5.seeds("ev_eval_ext") if x.ext_rows else [])
-        sd, _ = usable(sd, drops_of(rows) + (drops_of(Path(x.va_rows)) if x.va_rows else []))
+        ext_va = Path(str(x.va_rows).replace("/ev_va/", "/ev_va_ext/")) if x.va_rows and x.ext_rows else None
+        sd, _ = usable(sd, drops_of(rows) + (drops_of(Path(x.ext_rows)) if x.ext_rows else []) + (drops_of(Path(x.va_rows)) if x.va_rows else [])
+                       + (drops_of(ext_va) if ext_va else []))
+        sd = [q for q in sd if all(q in T.get((cell, n), {}) for n in ("nc", base.get("bU", "FX"), "IP"))]
         if x.a is not None:     # the binding check needs the V-A rows on the same seeds (base 120, or 160 with ev_va_ext merged)
             vcell = f"{cell}V{x.a:g}"
             for extra in ([Path(str(x.va_rows).replace("/ev_va/", "/ev_va_ext/"))] if x.va_rows and x.ext_rows else []):

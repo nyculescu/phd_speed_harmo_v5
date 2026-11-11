@@ -43,10 +43,16 @@ ev2() {
   [ "$(val "$R/ev_gate/gate.json" '["outcome"]')" = pass ] || { say "EV part 2 not run: the gate did not pass"; return 0; }
   LIM=$(val "$R/ev_size/size.json" '["limit_kmh"]')
   # projected EV runs before the power rule: FX 21 + IP and SW up to 36 + 108 + 54, each x 60, and evaluation 9 x 120
-  fits "EV tuning and evaluation" $(( (21 + 36 + 108 + 54) * 60 + 9 * 120 )) || { say "cap: EV part 2 not started"; return 0; }
+  # common §7: tuning starts only if all of EV fits, extensions included (worst case: n = 100 tuning, n = 160 evaluation, smoke2)
+  if [ -f "$R/ev_tune_fx/s6_rows.jsonl" ]; then
+    say "EV part 2 resumed: the first projection is skipped"
+  else
+    fits "EV tuning and evaluation (worst case)" $(( 21 * 100 + 5 * 2 + (36 + 108 + 54) * 100 + 11 * 160 )) || { say "cap: EV part 2 not started"; return 0; }
+  fi
   ev_run ev_tune_fx
   must "read fx" $PY $D/ev2.py fx "$R/ev_tune_fx/s6_rows.jsonl" "$R/ev_tune_fx/fx.json"
   must "planned power" $PY $D/ev2.py power "$R/ev_tune_fx/s6_rows.jsonl" "$R/ev_gate/s6_rows.jsonl" "$R/ev_tune_fx/fx.json" "$R/ev_power.json" --limit "$LIM"
+  [ "$(val "$R/ev_tune_fx/fx.json" '.get("outcome")')" = VOID ] && { say "EV VOID: FX tuning dropped more than 3 seeds"; return 0; }
   rule=$(val "$R/ev_power.json" '["rule"]')
   say "EV power rule: $rule"
   [ "$rule" = VOID ] && { say "EV VOID: tuning or gate dropped more than 3 seeds"; return 0; }
@@ -84,12 +90,13 @@ ev2() {
   must "read EV" $PY $D/ev2.py read "$R/ev_eval/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result.json" $EXTR $UP
   say "EV: $(val "$R/ev_result.json" '["outcome"]'), lane-end-bound $(val "$R/ev_result.json" '.get("lane_end_bound")')"
   VA=""
-  if [ "$(val "$R/ev_result.json" '.get("lane_end_bound")')" = True ] && [ "$A" != None ] && [ -z "$UP" ]; then     # common §6: repeat on V-A
+  OUT=$(val "$R/ev_result.json" '["outcome"]')
+  if [ "$(val "$R/ev_result.json" '.get("lane_end_bound")')" = True ] && [ "$A" != None ] && [[ "$OUT" != *underpowered* ]]; then     # common §6: repeat on V-A
     n_va=$(( 11 * 120 )); [ -n "$EXTR" ] && n_va=$(( 11 * 160 ))
     if fits "ev_va" "$n_va"; then
       ev_run ev_va --picks "$R/ev_picks.json" --a "$A"
       if [ -n "$EXTR" ]; then ev_run ev_va_ext --picks "$R/ev_picks.json" --a "$A"; VAX="--ext-rows $R/ev_va_ext/s6_rows.jsonl"; fi
-      must "read EV on V-A" $PY $D/ev2.py read "$R/ev_va/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result_va.json" --s-cell "SV${A%.0}" --by-pick 0 $VAX
+      must "read EV on V-A" $PY $D/ev2.py read "$R/ev_va/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result_va.json" --s-cell "SV${A%.0}" --by-pick 0 $VAX $UP
       VA="--va $R/ev_result_va.json --va-rows $R/ev_va/s6_rows.jsonl"
     else
       say "cap: ev_va not started"
