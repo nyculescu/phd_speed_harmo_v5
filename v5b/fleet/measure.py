@@ -146,6 +146,7 @@ class Measure:
         self.road_vs = defaultdict(lambda: defaultdict(float))     # road group -> period -> vehicle-seconds (1 Hz)
         self.road_dist = defaultdict(lambda: defaultdict(float))     # road group -> period -> metres (1 Hz)
         self.robust_road = defaultdict(lambda: defaultdict(int))     # road group -> period -> robust braking events, by peak place
+        self.ge45_road = defaultdict(int)     # C1: road group -> events with a peak at or beyond -4.5 m/s² (events_ge45), by peak place
         self.brk = []     # per braking event: class, peak, duration, time, road group, lane position of the peak
         self.lc_t = {}     # vehicle -> time of its latest lane change (road-lane index, across roads)
         self.rl = {}     # vehicle -> (road, road lane index)
@@ -197,6 +198,8 @@ class Measure:
         g = group(road)
         if b >= ROBUST_BIN[c]:
             self.robust_road[g][self.period(self.spec, tp)] += 1
+        if b >= 3:     # the bins summary() counts as events_ge45
+            self.ge45_road[g] += 1
         self.brk.append((CLASSES.index(c), pk, d, tp, g, x))
         self.peak[c][b] += 1
         self.dur[c][bin_of(d, DUR_EDGES)] += 1
@@ -374,6 +377,7 @@ class Measure:
             row["m_dec_off_s"] = int(self.off_s)
         nest = lambda d: {g: dict(x) for g, x in d.items()}
         row["m_road_ttc3"], row["m_road_vs"], row["m_road_dist"], row["m_robust_road"] = map(nest, (self.road_ttc, self.road_vs, self.road_dist, self.robust_road))
+        row["m_road_ge45"] = dict(self.ge45_road)
         row["m_ttc3_all"], row["m_ttc3_lc"] = self.ttc_all, self.ttc_lc
         row["m_stuck_n"], row["m_pending_end"] = len(self.stuck), self.pending_end
         row["m_capped"] = sorted(self.capped)
@@ -475,7 +479,7 @@ def waves(v_sum, n, dt: float = ST_DT, dx: float = ST_DX) -> dict:
         front = np.array([xi[ti == t].min() for t in ts]) * dx
         speed = float(np.polyfit(ts * dt, front, 1)[0] * 3.6) if len(ts) >= 3 else None
         clusters.append({"duration_s": float((ts.max() - ts.min() + 1) * dt), "extent_m": float((xi.max() - xi.min() + 1) * dx),
-                         "cells": int(len(ti)), "front_kmh": speed})
+                         "cells": int(len(ti)), "front_kmh": speed, "head_m": float((xi.max() + 0.5) * dx)})     # head: centre of the most downstream cell
     cov = occ.mean(axis=0) >= OSC_COVER
     osc = [float(np.nanstd(V[:, j])) for j in np.nonzero(cov)[0]]
     ckm = cong.sum(axis=1) * dx / 1000.0

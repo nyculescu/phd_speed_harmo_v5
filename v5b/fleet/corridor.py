@@ -56,12 +56,17 @@ def routes_of(name: str) -> dict:
     return {r: (e, RAMP_SHARE if r == "ramp" else 1 - RAMP_SHARE, lanes["r" if r == "ramp" else "1"]) for r, e in ROUTES.items()}
 
 
-def build(speed: float, name: str = NAME, accel_len: float = 300.0) -> Path:
+def build(speed: float, name: str = NAME, accel_len: float = 300.0, accel2_len: float = 300.0) -> Path:
+    """accel2_len (r2m3 only, C1 check (a)): 4a is lengthened downstream; e2, b and x move by the same amount, so the merge spacing
+    and the lengths of edges 4 and 5 are kept."""
     edges, loops = NETS[name]
     x_ae = dict((n, x) for n, x, _ in NODES)["ae"]
     nodes = [(n, x + (accel_len - 300.0 if x >= x_ae else 0.0), y) for n, x, y in NODES]
     if name == R2M3:
-        nodes = [(n, *R2_NODES.get(n, (x, y))) for n, x, y in nodes] + [(n, *R2_NODES[n]) for n in ("e2", "r02", "rm2")]
+        r2 = {n: (x + (accel2_len - 300.0 if n in ("e2", "b", "x") else 0.0), y) for n, (x, y) in R2_NODES.items()}
+        nodes = [(n, *r2.get(n, (x, y))) for n, x, y in nodes] + [(n, *r2[n]) for n in ("e2", "r02", "rm2")]
+    elif accel2_len != 300.0:
+        raise ValueError("accel2_len needs the r2m3 network")
     spec = {"v": 1, "name": name, "nodes": nodes, "edges": edges, "loops": loops, "speed": speed}
     h = hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:10]
     d = NET_CACHE / f"{name}_{h}"
