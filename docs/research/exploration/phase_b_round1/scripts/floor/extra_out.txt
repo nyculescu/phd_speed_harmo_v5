@@ -1,0 +1,66 @@
+##### S
+ nc: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 1054 1068 1110 1079 1081 | total 5496
+    3a: 1317 1370 1427 1395 1377 | total 7168
+    edge 3: 4522 5816 7310 9973 11651 | total 40579
+    4a: 2546 5977 7714 8404 8703 | total 34445
+    four edges: 9662 14208 18485 20941 23332
+ p333: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 858 819 831 837 819 | total 4233
+    3a: 1058 1095 1080 1056 1086 | total 5563
+    edge 3: 3525 3468 3468 3499 3511 | total 17981
+    4a: 1814 2087 2329 2654 2477 | total 14048
+    four edges: 7470 7875 8122 8236 8592
+ v3w: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 860 817 832 832 825 | total 4251
+    3a: 1083 1090 1113 1122 1124 | total 5745
+    edge 3: 3516 3531 3673 3702 3731 | total 18315
+    4a: 1989 2922 3191 3370 3652 | total 16028
+    four edges: 7517 8547 8978 9305 9373
+ paired p333 - v3w per block, four edges together: -135 [-225, -86] | -357 [-597, -192] | -485 [-645, -235] | -480 [-665, -247] | -302 [-617, -48]
+ paired p333 - v3w per block, 4a: -109 [-144, -79] | -378 [-528, -237] | -345 [-490, -131] | -298 [-502, -80] | -145 [-294, +84]
+ p333: minutes with 4a < 60 km/h: quartiles [ 0.  3.  7. 12. 25.]
+    slow minutes 0-0: 22 seeds; all_delay median 108912 veh-s, per planned vehicle 50.0 s; planned median 2184; passed - planned median -4
+    slow minutes 1-5: 81 seeds; all_delay median 116949 veh-s, per planned vehicle 52.9 s; planned median 2207; passed - planned median -2
+    slow minutes 6-12: 80 seeds; all_delay median 131077 veh-s, per planned vehicle 59.2 s; planned median 2212; passed - planned median -11
+    slow minutes 13-25: 57 seeds; all_delay median 155807 veh-s, per planned vehicle 69.4 s; planned median 2237; passed - planned median -25
+    least squares all_delay = 111285 + 174 x (planned - mean) + 2341 x slow minutes; R2 0.85; intercept / mean all_delay = 85.4 %; mean 130269
+    correlation planned vs slow minutes 0.28; planned vs all_delay 0.61
+ nc: minutes with 4a < 60 km/h: quartiles [ 3. 18. 20. 22. 25.]
+    slow minutes 1-5: 4 seeds; all_delay median 136861 veh-s, per planned vehicle 64.3 s; planned median 2151; passed - planned median -36
+    slow minutes 6-12: 15 seeds; all_delay median 152378 veh-s, per planned vehicle 72.7 s; planned median 2189; passed - planned median -49
+    slow minutes 13-25: 221 seeds; all_delay median 203775 veh-s, per planned vehicle 92.5 s; planned median 2215; passed - planned median -74
+    least squares all_delay = 136929 + 376 x (planned - mean) + 3367 x slow minutes; R2 0.68; intercept / mean all_delay = 67.9 %; mean 201754
+    correlation planned vs slow minutes 0.30; planned vs all_delay 0.70
+##### TRUCK
+ nc: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 1001 1553 1842 2036 1224 | total 7793
+    3a: 1297 1671 2258 2531 2587 | total 11244
+    edge 3: 4523 5471 8757 11973 17140 | total 49506
+    4a: 2615 4344 7497 8777 8891 | total 32657
+    four edges: 9524 13562 20644 26051 31105
+ p333: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 818 1187 1367 1488 873 | total 5790
+    3a: 1002 1235 1473 1698 1276 | total 7035
+    edge 3: 3487 4018 5671 5949 5769 | total 25336
+    4a: 1802 1949 3831 5072 8012 | total 22183
+    four edges: 7357 8559 12440 14640 16325
+ v3w: delay veh-s per 5-min block (median over seeds), window minutes 0-5 .. 20-25:
+    edge 2: 817 1189 1364 1473 867 | total 5797
+    3a: 1040 1279 1488 1733 1377 | total 7210
+    edge 3: 3467 4037 5812 6191 6012 | total 25935
+    4a: 1982 2357 4065 5153 7186 | total 21558
+    four edges: 7431 8995 12804 14905 15907
+ paired p333 - v3w per block, four edges together: -128 [-200, -81] | -170 [-303, -48] | -271 [-495, -94] | -24 [-357, +229] | +486 [-56, +879]
+ paired p333 - v3w per block, 4a: -96 [-144, -56] | -134 [-206, -40] | -180 [-409, -37] | +84 [-179, +437] | +916 [+492, +1199]
+ p333: minutes with 4a < 60 km/h: quartiles [ 4.    9.75 13.   15.   24.  ]
+    slow minutes 1-5: 7 seeds; all_delay median 135959 veh-s, per planned vehicle 62.2 s; planned median 2151; passed - planned median -28
+    slow minutes 6-12: 104 seeds; all_delay median 149542 veh-s, per planned vehicle 68.3 s; planned median 2188; passed - planned median -18
+    slow minutes 13-25: 129 seeds; all_delay median 172446 veh-s, per planned vehicle 77.2 s; planned median 2234; passed - planned median -40
+    least squares all_delay = 133029 + 229 x (planned - mean) + 2352 x slow minutes; R2 0.80; intercept / mean all_delay = 81.7 %; mean 162800
+    correlation planned vs slow minutes 0.51; planned vs all_delay 0.79
+ nc: minutes with 4a < 60 km/h: quartiles [10. 16. 19. 22. 25.]
+    slow minutes 6-12: 3 seeds; all_delay median 169447 veh-s, per planned vehicle 79.1 s; planned median 2146; passed - planned median -70
+    slow minutes 13-25: 237 seeds; all_delay median 231887 veh-s, per planned vehicle 104.5 s; planned median 2211; passed - planned median -98
+    least squares all_delay = 181809 + 426 x (planned - mean) + 2555 x slow minutes; R2 0.67; intercept / mean all_delay = 78.7 %; mean 231082
+    correlation planned vs slow minutes 0.22; planned vs all_delay 0.77

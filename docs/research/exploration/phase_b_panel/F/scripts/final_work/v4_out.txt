@@ -1,0 +1,12 @@
+1. share of v3w's counted seconds on roads 4a, 4 and ramp 2: ratio of means 0.779, median of per-seed ratios 0.791
+2. all_delay: 168 pseudo-arms; offset pooled minus mean of singles: median -0.17, 5th-95th -0.39 to -0.02, share below 0 0.98
+   null at n = 480, 24 pseudo-arms x 250 studies, every single tied: pooled form shown worse (upper bound < 0) 0.225, shown better (lower bound > 0) 0.003, lower bound <= -1 0.024
+   single-mean form shown worse 0.013, shown better 0.012, lower bound <= -1 0.000 (nominal 0.0125 per side)
+2. ttc_net: 168 pseudo-arms; offset pooled minus mean of singles: median -0.42, 5th-95th -3.05 to +2.13, share below 0 0.65
+   null at n = 480, 24 pseudo-arms x 250 studies, every single tied: pooled form shown worse (upper bound < 0) 0.128, shown better (lower bound > 0) 0.030, lower bound <= -1 0.909
+   single-mean form shown worse 0.009, shown better 0.011, lower bound <= -1 0.893 (nominal 0.0125 per side)
+3. per-policy K2, n = 480, 400 studies, 10 rule arms: P(at least 4 of 5 learners above -M against every arm)
+   stored differences             M = 1: 0.858 | M = 2: 1.000
+   every learner ties every arm   M = 1: 0.410 | M = 2: 1.000
+   every learner 1 % worse        M = 1: 0.000 | M = 2: 0.407
+   every learner 2 % worse        M = 1: 0.000 | M = 2: 0.000

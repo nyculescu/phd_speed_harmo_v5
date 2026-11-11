@@ -1,0 +1,92 @@
+
+## S: X minus p333, veh-s upstream of edge 4 if the window ended at T (positive = p333 better); median [95 %], v3w = stacked single learners
+  v3w         600 s: +120 [+60, +180] (mean +116 [-36, +266]) | 900 s: +180 [-60, +360] (mean +220 [-271, +701]) | 1200 s: +360 [-120, +720] (mean +296 [-515, +1094]) | 1500 s: +180 [-540, +810] (mean +242 [-921, +1427]) | 1800 s: +0 [-900, +1020] (mean -189 [-1707, +1374])
+              cumulative passed at 1,800 s, X minus p333: +1.0 [+0.0, +2.0]
+  os0_10_10   600 s: +0 [+0, +0] (mean +10 [-20, +42]) | 900 s: +0 [+0, +0] (mean -20 [-230, +204]) | 1200 s: +0 [+0, +0] (mean -185 [-684, +369]) | 1500 s: +0 [+0, +0] (mean -503 [-1364, +411]) | 1800 s: +0 [+0, +0] (mean -714 [-1972, +590])
+              cumulative passed at 1,800 s, X minus p333: +0.0 [+0.0, +0.0]
+  3E-C_TRUCK  600 s: +180 [+120, +300] (mean +203 [+12, +392]) | 900 s: +720 [+420, +1050] (mean +809 [+158, +1465]) | 1200 s: +1230 [+780, +1830] (mean +1696 [+580, +2845]) | 1500 s: +1740 [+1050, +2760] (mean +2526 [+897, +4200]) | 1800 s: +2070 [+1320, +3420] (mean +3191 [+1062, +5322])
+              cumulative passed at 1,800 s, X minus p333: -1.0 [-2.0, +1.0]
+  nc          600 s: +3060 [+2940, +3300] (mean +3466 [+3230, +3704]) | 900 s: +11250 [+10260, +11910] (mean +11938 [+11160, +12719]) | 1200 s: +23400 [+21840, +25260] (mean +24121 [+22710, +25557]) | 1500 s: +38700 [+36150, +41280] (mean +39454 [+37344, +41583]) | 1800 s: +56670 [+53640, +60990] (mean +57154 [+54228, +60022])
+              cumulative passed at 1,800 s, X minus p333: -59.0 [-66.0, -56.0]
+  5-min blocks, edges 2-4a + ramp queues, v3w minus p333, % of p333's block median (stacked median | mean of paired, pooled arm):
+    block 1 (300-600 s): p333 median 7475 veh-s | +0.97 [+0.44, +1.61] | +0.96 [-0.77, +2.66]
+    block 2 (600-900 s): p333 median 7885 veh-s | +0.18 [-1.43, +2.05] | +1.25 [-3.28, +5.61]
+    block 3 (900-1200 s): p333 median 8148 veh-s | +0.40 [-1.55, +1.79] | -0.17 [-5.15, +4.85]
+    block 4 (1200-1500 s): p333 median 8247 veh-s | +0.90 [-1.21, +2.74] | -0.87 [-6.73, +4.94]
+    block 5 (1500-1800 s): p333 median 8638 veh-s | +0.33 [-2.31, +2.29] | -5.81 [-11.69, +0.13]
+  passed per 5-min block, v3w minus p333 (vehicles; stacked median | mean): -1.0 [-1.0, +0.0] / -0.46 | +1.0 [+0.0, +2.0] / +0.62 | +0.0 [-2.0, +1.0] / -0.07 | +0.0 [-1.0, +2.0] / +0.62 | +1.0 [+0.0, +2.0] / +1.42
+
+## TRUCK: X minus p333, veh-s upstream of edge 4 if the window ended at T (positive = p333 better); median [95 %], v3w = stacked single learners
+  v3w         600 s: +60 [+0, +120] (mean +76 [-71, +220]) | 900 s: +180 [+0, +300] (mean +156 [-204, +501]) | 1200 s: +300 [+0, +660] (mean +243 [-272, +726]) | 1500 s: +330 [-300, +780] (mean -115 [-862, +592]) | 1800 s: -180 [-1140, +780] (mean -998 [-2091, +58])
+              cumulative passed at 1,800 s, X minus p333: +3.0 [+1.0, +5.0]
+  os0_10_10   600 s: +0 [+0, +0] (mean +7 [-26, +38]) | 900 s: +0 [+0, +0] (mean +18 [-145, +178]) | 1200 s: +0 [+0, +0] (mean +6 [-324, +347]) | 1500 s: +0 [+0, +0] (mean -28 [-650, +604]) | 1800 s: +0 [+0, +420] (mean -150 [-1240, +913])
+              cumulative passed at 1,800 s, X minus p333: -1.0 [-3.0, +0.0]
+  3E-C_TRUCK  600 s: +180 [+120, +300] (mean +157 [-31, +335]) | 900 s: +600 [+330, +810] (mean +530 [+49, +1006]) | 1200 s: +1200 [+780, +1680] (mean +1408 [+704, +2136]) | 1500 s: +1440 [+750, +2280] (mean +2208 [+1149, +3368]) | 1800 s: +2580 [+1380, +3300] (mean +3466 [+1880, +5145])
+              cumulative passed at 1,800 s, X minus p333: -4.0 [-7.5, -1.5]
+  nc          600 s: +3120 [+2910, +3300] (mean +3454 [+3213, +3690]) | 900 s: +10230 [+9120, +10890] (mean +10893 [+10226, +11558]) | 1200 s: +21090 [+20100, +22290] (mean +22088 [+21047, +23135]) | 1500 s: +35220 [+33630, +37740] (mean +36897 [+35317, +38499]) | 1800 s: +53520 [+51030, +56880] (mean +55678 [+53409, +57920])
+              cumulative passed at 1,800 s, X minus p333: -66.0 [-72.5, -61.0]
+  5-min blocks, edges 2-4a + ramp queues, v3w minus p333, % of p333's block median (stacked median | mean of paired, pooled arm):
+    block 1 (300-600 s): p333 median 7388 veh-s | +0.93 [+0.46, +1.49] | +0.90 [-0.78, +2.56]
+    block 2 (600-900 s): p333 median 8606 veh-s | +0.27 [-0.59, +1.18] | +0.23 [-2.54, +2.92]
+    block 3 (900-1200 s): p333 median 12462 veh-s | +1.01 [-0.31, +1.94] | +0.50 [-1.43, +2.27]
+    block 4 (1200-1500 s): p333 median 14644 veh-s | -0.12 [-1.63, +1.18] | -2.66 [-5.06, -0.37]
+    block 5 (1500-1800 s): p333 median 16349 veh-s | -3.31 [-6.27, -0.60] | -5.21 [-7.95, -2.47]
+  passed per 5-min block, v3w minus p333 (vehicles; stacked median | mean): +0.0 [-1.0, +0.0] / +0.10 | -1.0 [-1.0, +0.0] / -0.83 | +0.0 [-1.0, +1.0] / +0.58 | +1.0 [+0.0, +3.0] / +1.76 | +2.0 [+0.0, +4.0] / +2.21
+
+## X1 (round 2 test, 40 seeds): p333 or rule minus v3w, veh-s upstream of edge 4 if the window ended at T (positive = v3w better)
+  p333       600 s: +0 [-120, +180] | 900 s: +900 [+60, +1890] | 1200 s: +3990 [+1020, +5880] | 1500 s: +6960 [+3360, +11280] | 1800 s: +12150 [+7140, +17760] | v3w extra passed at 1,800 s: +22.0 [+13.5, +27.5]
+  os0_10_10  600 s: +0 [-120, +180] | 900 s: +1770 [+840, +2640] | 1200 s: +3810 [+720, +6720] | 1500 s: +5160 [+1350, +14070] | 1800 s: +11550 [+3180, +20790] | v3w extra passed at 1,800 s: +18.0 [+7.0, +32.0]
+  3ex1       600 s: +180 [-60, +390] | 900 s: +1500 [+630, +2490] | 1200 s: +5070 [+2580, +9210] | 1500 s: +13680 [+8130, +18300] | 1800 s: +21450 [+13680, +27180] | v3w extra passed at 1,800 s: +21.0 [+12.0, +34.5]
+
+## X2 (round 2 test, 40 seeds): p333 or rule minus v3w, veh-s upstream of edge 4 if the window ended at T (positive = v3w better)
+  p333       600 s: +0 [-120, +180] | 900 s: -60 [-390, +240] | 1200 s: +870 [-960, +2280] | 1500 s: +4770 [+1590, +8940] | 1800 s: +12960 [+6750, +18720] | v3w extra passed at 1,800 s: +26.5 [+18.0, +35.0]
+  os0_10_10  600 s: +0 [-120, +180] | 900 s: -60 [-360, +360] | 1200 s: +840 [-480, +2340] | 1500 s: +4290 [+810, +7801] | 1800 s: +6990 [+180, +14220] | v3w extra passed at 1,800 s: +11.0 [-0.5, +22.5]
+  3ex2       600 s: +60 [-120, +240] | 900 s: -60 [-360, +270] | 1200 s: +1050 [-30, +2340] | 1500 s: +4830 [+1860, +6660] | 1800 s: +7800 [+3240, +11550] | v3w extra passed at 1,800 s: +14.0 [+7.0, +23.0]
+
+X1 r2t: NULL of the pooled-arm statistic (mean of the other 4 learners minus one learner, % of its median): -1.75 [-5.77, +2.53] | -1.47 [-3.56, -0.39] | +0.83 [-2.00, +4.26] | +0.59 [-1.42, +5.03] | +1.62 [-2.65, +2.67] | mean -0.04
+
+X2 r2t: NULL of the pooled-arm statistic (mean of the other 4 learners minus one learner, % of its median): +0.71 [-2.19, +2.99] | -1.03 [-4.87, +3.19] | +1.08 [-2.42, +3.27] | +0.72 [-2.43, +4.40] | +1.43 [-1.78, +2.51] | mean +0.58
+
+## totals over seeds: collisions, teleports, moving full-emergency events, stuck, dropped, pending at the end (sum)
+  S6 S     3E-C_TRUCK  n=240 collisions 0 contact_steps 0 teleports 0 full_moving 21 stuck 0 dropped 0 pending_end 705
+  S6 S     3E-D_TRUCK  n=240 collisions 0 contact_steps 0 teleports 0 full_moving 36 stuck 0 dropped 0 pending_end 704
+  S6 S     lr1000_10_1 n=240 collisions 0 contact_steps 0 teleports 0 full_moving 36 stuck 1 dropped 0 pending_end 697
+  S6 S     nc          n=240 collisions 0 contact_steps 0 teleports 0 full_moving 0 stuck 0 dropped 0 pending_end 828
+  S6 S     os0_10_10   n=240 collisions 0 contact_steps 0 teleports 0 full_moving 35 stuck 0 dropped 0 pending_end 696
+  S6 S     p333        n=240 collisions 0 contact_steps 0 teleports 0 full_moving 36 stuck 1 dropped 0 pending_end 697
+  S6 S     w0u250      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 25 stuck 0 dropped 0 pending_end 708
+  S6 S     w1u500      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 22 stuck 0 dropped 0 pending_end 692
+  S6 S     w2u250      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 28 stuck 0 dropped 0 pending_end 710
+  S6 S     w3u500      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 34 stuck 0 dropped 0 pending_end 710
+  S6 S     w4u500      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 27 stuck 0 dropped 0 pending_end 701
+  S6 TRUCK 3E-C_TRUCK  n=240 collisions 0 contact_steps 0 teleports 0 full_moving 32 stuck 0 dropped 0 pending_end 729
+  S6 TRUCK 3E-D_TRUCK  n=240 collisions 0 contact_steps 0 teleports 0 full_moving 34 stuck 0 dropped 0 pending_end 714
+  S6 TRUCK lr1000_10_1 n=240 collisions 0 contact_steps 0 teleports 0 full_moving 33 stuck 0 dropped 0 pending_end 700
+  S6 TRUCK nc          n=240 collisions 0 contact_steps 0 teleports 0 full_moving 0 stuck 0 dropped 0 pending_end 829
+  S6 TRUCK os0_10_10   n=240 collisions 0 contact_steps 0 teleports 0 full_moving 27 stuck 0 dropped 0 pending_end 708
+  S6 TRUCK p333        n=240 collisions 0 contact_steps 0 teleports 0 full_moving 34 stuck 0 dropped 0 pending_end 708
+  S6 TRUCK w0u250      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 21 stuck 0 dropped 0 pending_end 714
+  S6 TRUCK w1u500      n=240 collisions 1 contact_steps 65 teleports 0 full_moving 16 stuck 0 dropped 0 pending_end 688
+  S6 TRUCK w2u250      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 24 stuck 0 dropped 0 pending_end 709
+  S6 TRUCK w3u500      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 21 stuck 0 dropped 0 pending_end 688
+  S6 TRUCK w4u500      n=240 collisions 0 contact_steps 0 teleports 0 full_moving 27 stuck 0 dropped 0 pending_end 699
+  round 2 test X1    3ex1        n=40 collisions 0 contact_steps 0 teleports 0 full_moving 7 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    lr1000_10_1 n=40 collisions 0 contact_steps 0 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    nc          n=40 collisions 0 contact_steps 0 teleports 0 full_moving 0 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    os0_10_10   n=40 collisions 0 contact_steps 0 teleports 0 full_moving 5 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    p333        n=40 collisions 0 contact_steps 0 teleports 0 full_moving 9 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    w0u250      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    w1u500      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 9 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    w2u250      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    w3u500      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 1 stuck 0 dropped 0 pending_end 0
+  round 2 test X1    w4u500      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 2 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    3ex2        n=40 collisions 0 contact_steps 0 teleports 0 full_moving 5 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    lr1000_10_1 n=40 collisions 0 contact_steps 0 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    nc          n=40 collisions 0 contact_steps 0 teleports 0 full_moving 0 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    os0_10_10   n=40 collisions 0 contact_steps 0 teleports 0 full_moving 8 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    p333        n=40 collisions 0 contact_steps 0 teleports 0 full_moving 7 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    w0u250      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 3 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    w1u500      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 3 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    w2u250      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    w3u500      n=40 collisions 1 contact_steps 1 teleports 0 full_moving 4 stuck 0 dropped 0 pending_end 0
+  round 2 test X2    w4u500      n=40 collisions 0 contact_steps 0 teleports 0 full_moving 3 stuck 0 dropped 0 pending_end 0

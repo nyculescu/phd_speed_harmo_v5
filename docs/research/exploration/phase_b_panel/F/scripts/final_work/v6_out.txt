@@ -1,0 +1,6 @@
+stored: v3w collisions 1 and moving full-emergency events 109 in 1200 runs; per rule arm (collisions, full-emergency) in 240 runs: {'3E-C_TRUCK': (0, 32), 'os0_10_10': (0, 27), 'p333': (0, 34), 'lr1000_10_1': (0, 33), 'grid_os1_10_10': (0, 23), 'os1_15_10': (0, 26), '3E-D_TRUCK': (0, 34), 'lr1000_16_2': (0, 25), 'grid_lr400_13_1': (0, 27), 'lr400_13_2': (0, 31)}
+n = 480, 500 studies, 10 rule arms. At the stored values K4 fires: collisions 0.000, full-emergency 0.000, flow 0.000, braking 0.000, any 0.000
+planted collisions per learner run [(0.01, 0.008), (0.02, 0.972), (0.03, 1.0)]
+planted moving full-emergency events per learner run [(0.05, 0.038), (0.1, 0.946), (0.15, 1.0)]
+flow scaled down by % [(0.3, 0.0), (0.6, 0.706), (0.8, 1.0)]
+robust braking scaled up by % [(5.0, 0.0), (10.0, 0.366), (12.0, 0.996)]

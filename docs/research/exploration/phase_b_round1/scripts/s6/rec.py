@@ -1,0 +1,15 @@
+import json
+J=json.load(open('/home/catalin/work/phd/v5b1_runs/planb_s6_read_v23/read6_v23.json'))
+T=J['cells']['TRUCK']['map_report_only']; S=J['S']['map_report_only']
+print('example entry TRUCK p333 ttc15:', json.dumps(T['p333']['ttc15'])[:600])
+print('example entry TRUCK p333 delay:', json.dumps(T['p333']['delay'])[:600])
+print('example entry TRUCK p333 osc_kmh:', json.dumps(T['p333']['osc_kmh'])[:600])
+print('example entry TRUCK p333 collisions:', json.dumps(T['p333']['collisions'])[:600])
+print('example entry TRUCK p333 alks_full_moving:', json.dumps(T['p333']['alks_full_moving'])[:600])
+print('example entry TRUCK p333 robust_braking:', json.dumps(T['p333']['robust_braking'])[:600])
+print('example entry TRUCK p333 markers:', json.dumps(J['cells']['TRUCK']['map']['p333']['markers'])[:600])
+print('example entry TRUCK p333 per_learner:', json.dumps(J['cells']['TRUCK']['map']['p333']['per_learner'])[:900])
+print('no_control', json.dumps(J['cells']['TRUCK']['no_control'])[:900])
+print('braking_clause', json.dumps(J['cells']['TRUCK']['braking_clause'])[:900])
+print('location v3w', json.dumps(J['cells']['TRUCK']['location']['v3w'])[:1500])
+print('counters_absent', json.dumps(J['counters_absent_read_as_zero'])[:400], json.dumps(J['defaults_hit'])[:300])

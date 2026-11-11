@@ -1,0 +1,8 @@
+## K2 passes when every lower bound > -1; n = 480, 1500 studies, B = 1000; v3w's delay shifted by a constant per rule
+truth | P(pass) 3 kept stored rules | P(pass) kept + 5 dropped delay-close rules | per rule: p333 os0_10_10 3E-D_TRUCK grid_os1_10_10 os1_15_10 lr1000_16_2 grid_lr400_13_1 lr400_13_2
+stored             | 0.905 | 0.905 | 0.945 0.937 1.000 0.997 1.000 1.000 1.000 1.000
+learner tie        | 0.757 | 0.395 | 0.835 0.855 0.988 0.667 0.747 0.986 0.648 0.887
+learner 0.5 worse  | 0.007 | 0.001 | 0.048 0.010 0.498 0.111 0.069 0.103 0.105 0.345
+learner 1.0 worse  | 0.000 | 0.000 | 0.001 0.000 0.007 0.005 0.001 0.000 0.000 0.012
+pooled tie         | 0.984 | 0.832 | 0.987 1.000 0.997 0.982 0.969 1.000 0.929 0.909
+pooled 1.0 worse   | 0.001 | 0.000 | 0.019 0.020 0.015 0.020 0.012 0.014 0.013 0.025

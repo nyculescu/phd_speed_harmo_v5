@@ -1,0 +1,20 @@
+
+S proxy r4a1: paired sd 17.2 %, robust 15.6 %
+  n 80: median half-width 4.92 | e=-4: P 0 K 99 U 1; e=+0: P 1 K 20 U 79; e=+1.5: P 10 K 7 U 83; e=+3: P 23 K 2 U 75; e=+5: P 42 K 0 U 58; e=+7: P 72 K 0 U 28;
+  n 120: median half-width 4.03 | e=-4: P 0 K 100 U 0; e=+0: P 1 K 23 U 76; e=+1.5: P 12 K 9 U 79; e=+3: P 33 K 1 U 66; e=+5: P 57 K 0 U 43; e=+7: P 85 K 0 U 15;
+  n 240: median half-width 2.68 | e=-4: P 0 K 100 U 0; e=+0: P 1 K 48 U 51; e=+1.5: P 16 K 11 U 73; e=+3: P 46 K 1 U 52; e=+5: P 87 K 0 U 13; e=+7: P 99 K 0 U 1;
+
+S proxy z33133: paired sd 17.3 %, robust 12.6 %
+  n 80: median half-width 2.94 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 75 U 25; e=+1.5: P 10 K 14 U 76; e=+3: P 36 K 2 U 62; e=+5: P 84 K 0 U 16; e=+7: P 93 K 0 U 7;
+  n 120: median half-width 2.32 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 93 U 7; e=+1.5: P 6 K 22 U 72; e=+3: P 40 K 0 U 60; e=+5: P 92 K 0 U 8; e=+7: P 99 K 0 U 1;
+  n 240: median half-width 1.53 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 100 U 0; e=+1.5: P 4 K 41 U 55; e=+3: P 49 K 1 U 50; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0;
+
+S proxy os1_10_0: paired sd 17.1 %, robust 14.8 %
+  n 80: median half-width 4.04 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 58 U 42; e=+1.5: P 5 K 13 U 82; e=+3: P 18 K 2 U 80; e=+5: P 46 K 0 U 53; e=+7: P 77 K 0 U 23;
+  n 120: median half-width 3.29 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 74 U 26; e=+1.5: P 6 K 22 U 73; e=+3: P 24 K 0 U 76; e=+5: P 67 K 0 U 33; e=+7: P 89 K 0 U 11;
+  n 240: median half-width 2.22 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 96 U 4; e=+1.5: P 2 K 42 U 56; e=+3: P 45 K 2 U 54; e=+5: P 89 K 0 U 11; e=+7: P 100 K 0 U 0;
+
+TRUCK proxy z33133: paired sd 7.5 %, robust 6.0 %
+  n 80: median half-width 1.63 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 97 U 3; e=+1.5: P 1 K 52 U 47; e=+3: P 49 K 1 U 50; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0;
+  n 120: median half-width 1.29 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 99 U 1; e=+1.5: P 0 K 71 U 29; e=+3: P 50 K 1 U 49; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0;
+  n 240: median half-width 0.94 | e=-4: P 0 K 100 U 0; e=+0: P 0 K 100 U 0; e=+1.5: P 0 K 96 U 4; e=+3: P 48 K 2 U 50; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0;

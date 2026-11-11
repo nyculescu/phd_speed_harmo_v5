@@ -1,0 +1,6 @@
+r4a1 e +5 -> against os0_10_10 +3.84, against the Z16 stand-in +5.78; e +6 -> against os0_10_10 +4.85, against the Z16 stand-in +6.77 | corr of its paired difference with (os0 - p333): -0.23
+z33133 e +5 -> against os0_10_10 +5.05, against the Z16 stand-in +6.21; e +6 -> against os0_10_10 +6.05, against the Z16 stand-in +7.20 | corr of its paired difference with (os0 - p333): -0.27
+grid_r4a2 e +5 -> against os0_10_10 +4.60, against the Z16 stand-in +4.92; e +6 -> against os0_10_10 +5.60, against the Z16 stand-in +5.90 | corr of its paired difference with (os0 - p333): -0.25
+grid_z31333 e +5 -> against os0_10_10 +4.99, against the Z16 stand-in +6.17; e +6 -> against os0_10_10 +5.99, against the Z16 stand-in +7.16 | corr of its paired difference with (os0 - p333): -0.30
+os0_10_10 against p333: identical seeds 81; where they differ: os0 lower on 76, higher on 83; mean +0.82 %, median +0.00 % (positive = os0 has less delay)
+rules: 22 ; with median paired difference above 0 veh-s: []

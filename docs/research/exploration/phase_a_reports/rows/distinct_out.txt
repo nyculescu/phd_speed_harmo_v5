@@ -1,0 +1,10 @@
+TRUCK distinct delay values among 23 opponents per seed: median 21, min 18, max 23
+  nc cf median 1234.0 mean 1230.8; nc delay median 231312
+  seeds on which an opponent's delay equals the best single's (lr1000_10_1): {'p333': 194, 'grid_os1_10_10': 15, 'os0_10_10': 14, 'os1_15_10': 14}
+  best single within 0.5 % of the per-seed minimum on 11.2 % of seeds, within 1 % on 17.9 %, within 2 % on 33.8 %
+  per-seed gap best single - minimum, % of best median: quartiles [ 1.19  3.42  6.6  12.58]
+S distinct delay values among 23 opponents per seed: median 20, min 13, max 23
+  nc cf median 1234.0 mean 1155.2; nc delay median 200589
+  seeds on which an opponent's delay equals the best single's (grid_os1_10_10): {'os0_10_10': 112, 'os1_15_10': 85, 'lr1000_10_1': 81, 'p333': 81, 'lr1000_16_2': 65, 'lr400_13_2': 21, 'grid_lr400_13_1': 16, '3E-D_TRUCK': 15}
+  best single within 0.5 % of the per-seed minimum on 14.2 % of seeds, within 1 % on 19.6 %, within 2 % on 27.9 %
+  per-seed gap best single - minimum, % of best median: quartiles [ 1.59  5.19 14.97 27.02]

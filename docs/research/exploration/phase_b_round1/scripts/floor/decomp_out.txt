@@ -1,0 +1,130 @@
+
+##### S
+nc: all_delay median 200589 mean 201754; sum of components median 200583; max |all_delay - sum| 46; N median 644224; max |N - sum vs| 0
+p333: all_delay median 126296 mean 130269; sum of components median 126284; max |all_delay - sum| 58; N median 578720; max |N - sum vs| 0
+v3w: all_delay median 127465 mean 129875; sum of components median 127466; max |all_delay - sum| 39; N median 577241; max |N - sum vs| 0
+component | nc median (mean) | p333 median (mean) | v3w median (mean) | p333 share of its mean total % | paired p333 - v3w median [CI] | paired nc - p333
+pending_main | 4418 (4700) | 4404 (4660) | 4338 (4636) | 3.6 | +13 [-14, +38] | +52 [+20, +86]
+pending_ramp | 55 (68) | 56 (68) | 56 (68) | 0.1 | +0 [+0, +0] | +0 [+0, +0]
+pending_ramp2 | 61 (151) | 58 (70) | 60 (75) | 0.1 | +0 [-0, +0] | +0 [+0, +0]
+ramp1 | 857 (861) | 809 (811) | 816 (817) | 0.6 | -6 [-6, -5] | +50 [+49, +52]
+ramp2 | 3714 (5401) | 866 (1224) | 1057 (1510) | 0.9 | -99 [-132, -68] | +2548 [+1993, +3140]
+1 | 45078 (44580) | 35275 (35040) | 35309 (35097) | 26.9 | -85 [-174, +42] | +9456 [+9209, +9628]
+2 | 5496 (5531) | 4233 (4236) | 4251 (4240) | 3.3 | -7 [-24, +9] | +1275 [+1234, +1331]
+3a | 7168 (7444) | 5563 (5738) | 5745 (5790) | 4.4 | -128 [-206, -84] | +1563 [+1472, +1666]
+3 | 40579 (43301) | 17981 (18544) | 18315 (19167) | 14.2 | -425 [-688, -248] | +22275 [+20325, +24991]
+4a | 34445 (33340) | 14048 (18253) | 16028 (17150) | 14.0 | -666 [-1494, -78] | +16095 [+14554, +17999]
+4 | 39144 (38966) | 28546 (28794) | 28049 (28515) | 22.1 | -93 [-347, +172] | +10687 [+10148, +11243]
+5 | 16118 (16047) | 11978 (12093) | 11967 (12078) | 9.3 | -12 [-102, +76] | +4023 [+3883, +4126]
+junction | 1387 (1357) | 637 (731) | 667 (722) | 0.6 | -12 [-37, +6] | +621 [+559, +697]
+origin queue main | 4418 (4700) | 4404 (4660) | 4338 (4636) | 3.6 | +13 [-14, +38] | +52 [+20, +86]
+origin queues ramps | 130 (219) | 126 (137) | 128 (143) | 0.1 | -0 [-0, +0] | +1 [+0, +1]
+ramp roads | 4654 (6262) | 1693 (2035) | 1909 (2328) | 1.6 | -106 [-142, -73] | +2606 [+2051, +3197]
+upstream 1+2 | 50615 (50111) | 39435 (39276) | 39584 (39338) | 30.2 | -95 [-180, +16] | +10779 [+10430, +11013]
+merge 1 (3a) | 7168 (7444) | 5563 (5738) | 5745 (5790) | 4.4 | -128 [-206, -84] | +1563 [+1472, +1666]
+between (3) | 40579 (43301) | 17981 (18544) | 18315 (19167) | 14.2 | -425 [-688, -248] | +22275 [+20325, +24991]
+merge 2 (4a) | 34445 (33340) | 14048 (18253) | 16028 (17150) | 14.0 | -666 [-1494, -78] | +16095 [+14554, +17999]
+downstream 4+5 | 55257 (55013) | 40593 (40888) | 40001 (40593) | 31.4 | -96 [-492, +217] | +14759 [+14011, +15465]
+junction | 1387 (1357) | 637 (731) | 667 (722) | 0.6 | -12 [-37, +6] | +621 [+559, +697]
+total all_delay paired p333 - v3w: -1988 [-3303, -693] ; nc - p333: +70723 [+69120, +74697] ; os0_10_10 - p333: +0 [+0, +0]
+periods: ['rest']
+planned in window: median 2210 min 2096 max 2332
+ nc: passed median 2137 mean 2138.5; passed - planned median -73 mean -73.7 [min -221, max +28]; arrived median 2089; pending at end median 2 mean 3.5 max 29; finished_pct median 79.04; delay/veh finished median 87.95, ramp 91.34, ramp2 78.59; teleports max 0
+ p333: passed median 2202 mean 2200.3; passed - planned median -8 mean -12.0 [min -116, max +64]; arrived median 2164; pending at end median 2 mean 2.9 max 14; finished_pct median 82.21; delay/veh finished median 52.14, ramp 46.92, ramp2 38.32; teleports max 0
+ os0_10_10: passed median 2204 mean 2201.1; passed - planned median -9 mean -11.2 [min -125, max +66]; arrived median 2164; pending at end median 2 mean 2.9 max 14; finished_pct median 82.35; delay/veh finished median 51.82, ramp 46.36, ramp2 37.48; teleports max 0
+ w0u250: passed median 2206 mean 2204.2; passed - planned median -6 mean -8.1 [min -93, max +65]; arrived median 2170; pending at end median 2 mean 3.0 max 15; finished_pct median 82.37; delay/veh finished median 51.17, ramp 46.61, ramp2 38.05; teleports max 0
+ w1u500: passed median 2205 mean 2201.9; passed - planned median -8 mean -10.4 [min -90, max +62]; arrived median 2168; pending at end median 2 mean 2.9 max 14; finished_pct median 82.39; delay/veh finished median 52.43, ramp 47.96, ramp2 37.99; teleports max 0
+ w2u250: passed median 2205 mean 2201.9; passed - planned median -8 mean -10.4 [min -126, max +63]; arrived median 2168; pending at end median 2 mean 3.0 max 25; finished_pct median 82.49; delay/veh finished median 52.62, ramp 47.78, ramp2 38.07; teleports max 0
+ w3u500: passed median 2202 mean 2202.2; passed - planned median -8 mean -10.1 [min -91, max +66]; arrived median 2167; pending at end median 2 mean 3.0 max 16; finished_pct median 82.40; delay/veh finished median 52.19, ramp 47.27, ramp2 39.36; teleports max 0
+ w4u500: passed median 2203 mean 2201.7; passed - planned median -9 mean -10.6 [min -104, max +62]; arrived median 2167; pending at end median 2 mean 2.9 max 14; finished_pct median 82.29; delay/veh finished median 51.76, ramp 46.89, ramp2 38.33; teleports max 0
+ nc per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 3.0 3.4 3.1 3.2 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.1 0.1 0.3
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.3 0.8 1.6 2.6
+   m1_out veh/h: 4446.9 4493.1 4519.7 4521.0 4527.5 | m2_out veh/h: 4983.2 5117.0 5144.6 5174.9 5220.4
+   speed km/h: 3a 73.8 73.5 72.4 71.9 72.6 | edge 2 83.6 83.5 83.1 83.2 83.4 | 4a 60.2 43.5 37.6 35.9 35.1 | edge 3 77.1 71.8 65.5 59.7 55.7
+   minutes (of 25) with 3a mean speed < 60 km/h: median 0, mean 1.1, seeds with 0: 133; 4a: median 20, mean 19.2, seeds with 0: 0
+   m2_out: mean over window 5128 veh/h; best 5-min per seed median 5412 veh/h, p95 5592; max 1-min median 5700
+ p333 per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 3.0 3.4 3.1 3.1 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.0 0.0 0.1
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.0 0.1 0.2 0.3
+   m1_out veh/h: 4540.1 4501.9 4527.1 4526.0 4512.1 | m2_out veh/h: 5216.1 5282.5 5286.6 5295.9 5299.9
+   speed km/h: 3a 78.0 77.3 77.7 77.9 77.7 | edge 2 86.5 86.9 86.8 87.0 86.8 | 4a 67.8 59.1 55.2 52.4 50.1 | edge 3 81.9 81.9 81.4 81.2 80.5
+   minutes (of 25) with 3a mean speed < 60 km/h: median 0, mean 0.5, seeds with 0: 163; 4a: median 7, mean 8.1, seeds with 0: 22
+   m2_out: mean over window 5276 veh/h; best 5-min per seed median 5628 veh/h, p95 5857; max 1-min median 6060
+ w0u250 per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 2.9 3.3 3.1 3.1 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.0 0.0 0.1
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.1 0.1 0.2 0.3
+   m1_out veh/h: 4544.4 4491.2 4530.6 4525.7 4512.3 | m2_out veh/h: 5217.6 5296.8 5287.6 5303.6 5322.4
+   speed km/h: 3a 78.5 77.8 77.2 77.3 77.3 | edge 2 86.5 87.0 86.8 86.9 86.8 | 4a 67.8 60.7 57.7 55.7 55.2 | edge 3 81.8 81.9 81.3 80.6 80.7
+   minutes (of 25) with 3a mean speed < 60 km/h: median 0, mean 0.5, seeds with 0: 170; 4a: median 6, mean 7.5, seeds with 0: 24
+   m2_out: mean over window 5286 veh/h; best 5-min per seed median 5640 veh/h, p95 5880; max 1-min median 6060
+ class delay (n*0.1 - dist/REF), veh-s, median | per vehicle-second share:
+   nc alks: delay 118195, veh-s 337456, mean speed 65.0 km/h; car: delay 62183, veh-s 252001, mean speed 75.3 km/h; truck: delay 14963, veh-s 48303, mean speed 69.1 km/h
+   p333 alks: delay 70272, veh-s 295477, mean speed 76.2 km/h; car: delay 40742, veh-s 232327, mean speed 82.4 km/h; truck: delay 10232, veh-s 44187, mean speed 76.6 km/h
+   w0u250 alks: delay 69485, veh-s 294502, mean speed 76.4 km/h; car: delay 40126, veh-s 231643, mean speed 82.6 km/h; truck: delay 10152, veh-s 43874, mean speed 76.9 km/h
+
+##### TRUCK
+nc: all_delay median 231312 mean 231082; sum of components median 231288; max |all_delay - sum| 46; N median 673260; max |N - sum vs| 0
+p333: all_delay median 161493 mean 162800; sum of components median 161509; max |all_delay - sum| 61; N median 609719; max |N - sum vs| 0
+v3w: all_delay median 161591 mean 161907; sum of components median 161584; max |all_delay - sum| 41; N median 609851; max |N - sum vs| 0
+component | nc median (mean) | p333 median (mean) | v3w median (mean) | p333 share of its mean total % | paired p333 - v3w median [CI] | paired nc - p333
+pending_main | 4484 (4767) | 4384 (4706) | 4391 (4699) | 2.9 | +6 [-22, +34] | +70 [+48, +86]
+pending_ramp | 56 (68) | 56 (68) | 55 (68) | 0.0 | +0 [+0, +0] | +0 [+0, +0]
+pending_ramp2 | 62 (142) | 59 (71) | 59 (70) | 0.0 | +0 [+0, +0] | +0 [+0, +0]
+ramp1 | 877 (914) | 809 (811) | 816 (819) | 0.5 | -8 [-8, -7] | +53 [+51, +54]
+ramp2 | 3779 (5287) | 919 (1346) | 1104 (1530) | 0.8 | -108 [-152, -76] | +2412 [+2014, +3106]
+1 | 54442 (54290) | 43194 (42914) | 43360 (42947) | 26.4 | -75 [-186, -7] | +11272 [+11000, +11591]
+2 | 7793 (7828) | 5790 (5788) | 5797 (5792) | 3.6 | -8 [-35, +11] | +1955 [+1907, +2019]
+3a | 11244 (11831) | 7035 (7394) | 7210 (7386) | 4.5 | -187 [-256, -40] | +3756 [+3450, +4161]
+3 | 49506 (49920) | 25336 (26026) | 25935 (26436) | 16.0 | -455 [-643, -244] | +22522 [+21233, +24336]
+4a | 32657 (32992) | 22183 (23242) | 21558 (21743) | 14.3 | +381 [-267, +1275] | +10160 [+8458, +11572]
+4 | 43266 (43424) | 34566 (34454) | 34233 (34377) | 21.2 | -26 [-191, +204] | +9258 [+8721, +9517]
+5 | 18124 (18153) | 15030 (15065) | 15171 (15154) | 9.3 | -66 [-171, +43] | +3148 [+3012, +3274]
+junction | 1435 (1457) | 855 (908) | 853 (876) | 0.6 | +8 [-11, +25] | +524 [+488, +553]
+origin queue main | 4484 (4767) | 4384 (4706) | 4391 (4699) | 2.9 | +6 [-22, +34] | +70 [+48, +86]
+origin queues ramps | 131 (211) | 127 (139) | 128 (138) | 0.1 | -0 [-0, +0] | +0 [+0, +1]
+ramp roads | 4778 (6201) | 1732 (2157) | 1975 (2349) | 1.3 | -114 [-158, -81] | +2536 [+2105, +3249]
+upstream 1+2 | 62210 (62119) | 49128 (48702) | 49213 (48739) | 29.9 | -123 [-188, +13] | +13168 [+12970, +13548]
+merge 1 (3a) | 11244 (11831) | 7035 (7394) | 7210 (7386) | 4.5 | -187 [-256, -40] | +3756 [+3450, +4161]
+between (3) | 49506 (49920) | 25336 (26026) | 25935 (26436) | 16.0 | -455 [-643, -244] | +22522 [+21233, +24336]
+merge 2 (4a) | 32657 (32992) | 22183 (23242) | 21558 (21743) | 14.3 | +381 [-267, +1275] | +10160 [+8458, +11572]
+downstream 4+5 | 61349 (61577) | 49409 (49519) | 49374 (49531) | 30.4 | -150 [-446, +101] | +12179 [+11598, +12861]
+junction | 1435 (1457) | 855 (908) | 853 (876) | 0.6 | +8 [-11, +25] | +524 [+488, +553]
+total all_delay paired p333 - v3w: -402 [-1260, +739] ; nc - p333: +67612 [+64725, +69746] ; os0_10_10 - p333: +0 [-21, +113]
+periods: ['before', 'trucks']
+ period before: delay nc 4487, p333 3945, v3w 3950; veh-s p333 20958; p333 - v3w -10 [-13, -8]
+ period trucks: delay nc 226625, p333 157356, v3w 157308; veh-s p333 588785; p333 - v3w -432 [-1263, +734]
+planned in window: median 2210 min 2096 max 2332
+ nc: passed median 2110 mean 2111.8; passed - planned median -98 mean -100.5 [min -229, max +11]; arrived median 2051; pending at end median 2 mean 3.5 max 23; finished_pct median 77.15; delay/veh finished median 100.47, ramp 102.35, ramp2 84.92; teleports max 0
+ p333: passed median 2181 mean 2180.1; passed - planned median -31 mean -32.2 [min -148, max +48]; arrived median 2130; pending at end median 2 mean 3.0 max 14; finished_pct median 80.66; delay/veh finished median 70.08, ramp 65.56, ramp2 52.86; teleports max 0
+ os0_10_10: passed median 2182 mean 2180.5; passed - planned median -31 mean -31.8 [min -115, max +48]; arrived median 2132; pending at end median 2 mean 3.0 max 15; finished_pct median 80.71; delay/veh finished median 70.51, ramp 65.62, ramp2 53.36; teleports max 0
+ w0u250: passed median 2188 mean 2185.9; passed - planned median -26 mean -26.4 [min -134, max +49]; arrived median 2137; pending at end median 2 mean 3.0 max 15; finished_pct median 80.93; delay/veh finished median 69.33, ramp 65.37, ramp2 52.25; teleports max 0
+ w1u500: passed median 2185 mean 2183.5; passed - planned median -26 mean -28.8 [min -145, max +45]; arrived median 2132; pending at end median 2 mean 2.9 max 14; finished_pct median 80.71; delay/veh finished median 69.79, ramp 66.63, ramp2 52.53; teleports max 0
+ w2u250: passed median 2183 mean 2184.0; passed - planned median -27 mean -28.3 [min -141, max +58]; arrived median 2134; pending at end median 2 mean 3.0 max 15; finished_pct median 80.91; delay/veh finished median 69.35, ramp 66.17, ramp2 52.16; teleports max 0
+ w3u500: passed median 2183 mean 2183.5; passed - planned median -28 mean -28.8 [min -156, max +58]; arrived median 2132; pending at end median 2 mean 2.9 max 14; finished_pct median 80.83; delay/veh finished median 70.03, ramp 66.60, ramp2 53.89; teleports max 0
+ w4u500: passed median 2182 mean 2182.9; passed - planned median -30 mean -29.3 [min -153, max +60]; arrived median 2132; pending at end median 2 mean 2.9 max 14; finished_pct median 80.92; delay/veh finished median 70.10, ramp 66.62, ramp2 53.88; teleports max 0
+ nc per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 3.0 3.4 3.2 3.2 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.0 0.1 0.3
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.2 0.5 1.7 3.4
+   m1_out veh/h: 4425.2 4300.4 4514.8 4563.1 4680.2 | m2_out veh/h: 4982.8 4968.8 5025.4 5129.9 5212.1
+   speed km/h: 3a 73.9 69.0 60.8 58.9 56.7 | edge 2 84.0 77.8 74.7 73.7 81.5 | 4a 60.2 47.0 38.4 34.4 33.8 | edge 3 77.1 73.0 63.6 56.2 48.6
+   minutes (of 25) with 3a mean speed < 60 km/h: median 6, mean 6.5, seeds with 0: 3; 4a: median 19, mean 19.3, seeds with 0: 0
+   m2_out: mean over window 5064 veh/h; best 5-min per seed median 5364 veh/h, p95 5545; max 1-min median 5640
+ p333 per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 3.0 3.4 3.1 3.1 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.0 0.0 0.1
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.0 0.0 0.2 0.7
+   m1_out veh/h: 4510.4 4384.9 4512.1 4598.5 4595.2 | m2_out veh/h: 5212.5 5074.4 5209.5 5261.9 5380.1
+   speed km/h: 3a 78.6 75.5 71.3 69.3 72.1 | edge 2 86.8 82.1 80.3 79.6 86.2 | 4a 67.7 62.9 51.3 44.1 37.8 | edge 3 81.9 79.8 73.7 72.4 72.2
+   minutes (of 25) with 3a mean speed < 60 km/h: median 1, mean 1.9, seeds with 0: 62; 4a: median 13, mean 12.7, seeds with 0: 0
+   m2_out: mean over window 5228 veh/h; best 5-min per seed median 5556 veh/h, p95 5844; max 1-min median 6060
+ w0u250 per 5-min block (window minutes 0-25; mean over seeds):
+   main pending veh (mean number waiting): 3.0 3.4 3.2 3.1 3.0 | ramp1 pending: 0.0 0.0 0.0 0.0 0.0 | ramp2 pending: 0.0 0.0 0.0 0.0 0.1
+   ramp1 queued veh (<queue speed): 0.0 0.0 0.0 0.0 0.0 | ramp2: 0.0 0.0 0.0 0.3 0.6
+   m1_out veh/h: 4511.0 4377.2 4518.2 4595.6 4599.5 | m2_out veh/h: 5230.4 5049.2 5217.6 5286.8 5424.7
+   speed km/h: 3a 78.8 74.9 71.5 69.2 72.5 | edge 2 86.8 82.0 80.2 79.5 86.3 | 4a 68.4 64.9 52.2 47.0 41.3 | edge 3 81.9 79.9 73.4 72.0 72.8
+   minutes (of 25) with 3a mean speed < 60 km/h: median 1, mean 1.8, seeds with 0: 59; 4a: median 12, mean 12.3, seeds with 0: 0
+   m2_out: mean over window 5242 veh/h; best 5-min per seed median 5604 veh/h, p95 5880; max 1-min median 6060
+ class delay (n*0.1 - dist/REF), veh-s, median | per vehicle-second share:
+   nc alks: delay 138609, veh-s 357398, mean speed 61.2 km/h; car: delay 66964, veh-s 255956, mean speed 73.8 km/h; truck: delay 20505, veh-s 53436, mean speed 62.0 km/h
+   p333 alks: delay 92876, veh-s 317459, mean speed 70.8 km/h; car: delay 47663, veh-s 238250, mean speed 79.9 km/h; truck: delay 16068, veh-s 49791, mean speed 67.7 km/h
+   w0u250 alks: delay 92399, veh-s 316655, mean speed 71.0 km/h; car: delay 47035, veh-s 237787, mean speed 80.2 km/h; truck: delay 15868, veh-s 49625, mean speed 67.9 km/h

@@ -1,0 +1,26 @@
+sum of road groups minus all_delay, max abs veh-s: 58
+E median 9.20; share of seeds with E < 5: 2.1 %
+K0 at 5,300: studies of 240 seeds resampled from the stored E: 97.5 % upper bound below 5 in 0 of 4000; smallest upper bound 8.53
+4a minutes below 60 km/h: median 7.0, seeds with 0: 22; edge-3 slow minutes: median 0.0, seeds with 0: 233 (of 25 minutes)
+least squares per road group: delay_g = a + b x (planned - mean) + c x (4a slow minutes); c in veh-s per slow minute
+   1              c =      0.1   mean delay    35040
+   2              c =      2.2   mean delay     4236
+   3a             c =     -6.1   mean delay     5738
+   3              c =    187.9   mean delay    18544
+   4a             c =   1519.5   mean delay    18253
+   4              c =    424.8   mean delay    28794
+   5              c =     91.9   mean delay    12093
+   ramp1          c =     -0.9   mean delay      811
+   ramp2          c =     75.6   mean delay     1224
+   junction       c =     36.5   mean delay      731
+   pending_main   c =      9.4   mean delay     4660
+   pending_ramp   c =     -0.2   mean delay       68
+   pending_ramp2  c =      0.8   mean delay       70
+all_delay: c = 2341.2 (sum over groups 2341.4), intercept 111285 = 85.4 % of mean; mean slow minutes 8.11 -> slow-minute part 14.6 % of mean delay
+E's numerator (veh-s): c = 1458.9 per slow minute, intercept 3902; so E's numerator moves 62 % as much as all_delay per slow minute
+share of the slow-minute slope on 4a itself: 65 %; on 3: 8 %; on 4+5: 22 %; on 1+2+3a: -0 %
+seeds with 0 slow minutes at 4a: n 22; median all_delay 108912 against 126296 for all (13.8 % lower); their E median 5.72 %; E numerator median 6254 against 11556 veh-s
+   difference of medians, all seeds minus no-slow seeds: all_delay 17383 veh-s; E numerator 5303 veh-s
+rates veh-s per veh-km, medians: 1 7.57, 2 5.45, 3a 10.04, 3 7.96, 4a 21.79, 4 13.07, 5 11.02
+rate on edge 3 against 4a slow minutes: corr 0.52; rate(3) median in no-slow seeds 7.53 against 8.48 in seeds with 10 or more slow minutes (n 90)
+run size N (veh-s): median 578720

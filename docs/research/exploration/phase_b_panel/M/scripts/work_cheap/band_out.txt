@@ -1,0 +1,14 @@
+os1_15_10 {"own_state": {"level": 1, "th": 15, "crowd": 10}, "env": {"hold": 10.0, "perturb": {"kind": "random"}}}
+   pert_log sample: ['[[899, true], [986, false]]', '[[1117, true], [1250, false]]']
+p333 {"cav_rule": [3, 3, 3], "env": {"hold": 10.0, "perturb": {"kind": "random"}}}
+   pert_log sample: ['[[899, true], [986, false]]', '[[906, true], [1016, false]]']
+nc {"env": {"perturb": {"kind": "random"}}}
+   pert_log sample: ['[[899, true], [986, false]]', '[[856, true], [978, false]]']
+3e {"zone_own_state": {"zones": [{"th": 10.6, "crowd": 16, "level": 1, "free": 3}, {"th": 8.0, "crowd": 9, "level": 0, "free": 3}, {"th": 15.4, "crowd": 28, "level": 1, "free": 1}, {"th": 6.0, "crowd": 0, "level": 0, "free": 3}, {"th": 15.5, "crowd": 24, "level":
+   pert_log sample: ['[[899, true], [986, false]]', '[[1117, true], [1250, false]]']
+keys with pend/queue/road: []
+4500.0 seeds 7440880 7440899 20 p333 all_delay med 75261; end_stop2 med 34.5; finished % med 83.7; os1_15_10 vs p333 % med +0.00 sd 2.96; nc vs p333 med -30.3 sd 8.0
+5000.0 seeds 7440880 7440899 20 p333 all_delay med 105944; end_stop2 med 134.5; finished % med 83.3; os1_15_10 vs p333 % med +0.00 sd 11.04; nc vs p333 med -59.9 sd 20.7
+5250.0 seeds 7440880 7440899 20 p333 all_delay med 137904; end_stop2 med 785.5; finished % med 82.3; os1_15_10 vs p333 % med +0.00 sd 7.72; nc vs p333 med -52.1 sd 21.0
+5500.0 seeds 7440880 7440899 20 p333 all_delay med 192101; end_stop2 med 1219.0; finished % med 80.1; os1_15_10 vs p333 % med -0.66 sd 10.72; nc vs p333 med -47.9 sd 17.6
+6000.0 seeds 7440880 7440899 20 p333 all_delay med 341366; end_stop2 med 2295.5; finished % med 73.8; os1_15_10 vs p333 % med -1.44 sd 7.86; nc vs p333 med -32.8 sd 11.4

@@ -1,0 +1,13 @@
+stored, 240 seeds
+  collisions v3w total 1.0 of 1200 runs; {'3E-C_TRUCK': (0.0, 0.0008), 'p333': (0.0, 0.0008), 'os0_10_10': (0.0, 0.0008), '3E-D_TRUCK': (0.0, 0.0008)}
+  alks_full_moving v3w total 109.0 of 1200 runs; {'3E-C_TRUCK': (32.0, -0.0425), 'p333': (34.0, -0.0508), 'os0_10_10': (27.0, -0.0217), '3E-D_TRUCK': (34.0, -0.0508)}
+  drain: v3w rows 1200 stuck>0: 0 pending_end max 15.0 p99 13.0 p99.9 14.801000000000158 rows above 20: 0 above 30: 0
+  drain: rule rows 5520 max 37.0 above 39: 0 stuck>0: 12
+  no control pending_end max 23.0
+collisions, planted extra per learner run n = 480 P(condition fails against any of 4 rules): [(0.0, np.float64(0.0)), (0.01, np.float64(0.017)), (0.02, np.float64(0.96)), (0.03, np.float64(1.0)), (0.05, np.float64(1.0))]
+moving full-emergency, planted extra per learner run n = 480 P(condition fails against any of 4 rules): [(0.0, np.float64(0.0)), (0.05, np.float64(0.0)), (0.1, np.float64(0.722)), (0.15, np.float64(1.0)), (0.2, np.float64(1.0)), (0.25, np.float64(1.0))]
+flow, v3w scaled down by % n = 480 P(condition fails against any of 4 rules): [(0.0, np.float64(0.0)), (0.3, np.float64(0.0)), (0.6, np.float64(0.695)), (0.8, np.float64(1.0)), (1.0, np.float64(1.0))]
+robust braking, v3w scaled up by % n = 480 P(condition fails against any of 4 rules): [(0.0, np.float64(0.0)), (5.0, np.float64(0.0)), (10.0, np.float64(0.373)), (12.0, np.float64(0.998)), (15.0, np.float64(1.0))]
+learner rule with a delay point above 0.0 %: fails in 0.822 of studies at the stored values, n = 480
+learner rule with a delay point above -1.0 %: fails in 0.000 of studies at the stored values, n = 480
+learner rule with a delay point above -2.0 %: fails in 0.000 of studies at the stored values, n = 480

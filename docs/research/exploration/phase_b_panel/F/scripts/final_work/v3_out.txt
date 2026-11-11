@@ -1,0 +1,52 @@
+n = 480, 1500 studies, B = 1000. Stored-sample statistics (240 seeds):
+  3E-C_TRUCK       cf pooled +11.80, learner mean +12.68 | delay pooled +1.12, learner mean +1.66
+  os0_10_10        cf pooled +22.57, learner mean +24.35 | delay pooled -0.58, learner mean +0.04
+  p333             cf pooled +26.94, learner mean +28.49 | delay pooled -0.25, learner mean +0.14
+  lr1000_10_1      cf pooled +26.94, learner mean +28.66 | delay pooled -0.25, learner mean +0.11
+  grid_os1_10_10   cf pooled +27.17, learner mean +26.23 | delay pooled +0.16, learner mean +0.39
+  os1_15_10        cf pooled +25.75, learner mean +24.19 | delay pooled +0.18, learner mean +0.42
+  3E-D_TRUCK       cf pooled +30.25, learner mean +30.53 | delay pooled +0.08, learner mean +0.22
+  lr1000_16_2      cf pooled +28.80, learner mean +29.64 | delay pooled +0.27, learner mean +0.59
+  grid_lr400_13_1  cf pooled +25.26, learner mean +26.45 | delay pooled +0.83, learner mean +1.04
+  lr400_13_2       cf pooled +28.50, learner mean +28.40 | delay pooled +0.72, learner mean +0.75
+
+K1 against 3E-C (proxy for every 3E-C arm): P(KILL)
+true edge | pooled statistic, truth pooled | pooled statistic, truth = learner mean | learner-mean statistic, truth = learner mean | planb.md:438 form (lb > 0 and >= 20 s), pooled
+  0.0 | 1.000 | 1.000 | 1.000 | 0.987
+  5.0 | 0.988 | 0.997 | 1.000 | 0.425
+  8.0 | 0.902 | 0.926 | 0.853 | 0.099
+ 10.0 | 0.518 | 0.823 | 0.503 | 0.023
+ 11.0 | 0.397 | 0.486 | 0.312 | 0.017
+ 12.0 | 0.237 | 0.379 | 0.156 | 0.003
+ 13.0 | 0.024 | 0.204 | 0.047 | 0.000
+ 15.0 | 0.003 | 0.006 | 0.003 | 0.000
+ 20.0 | 0.000 | 0.000 | 0.000 | 0.000
+
+K2 P(pass), 10 rule arms: truth | pooled, margin 1 % | pooled, margin 2 % | learner mean, margin 1 % | learner mean, margin 2 %
+  stored differences             | 0.917 | 1.000 | 1.000 | 1.000
+  every learner ties every arm   | 0.359 | 1.000 | 0.987 | 1.000
+  every learner 0.5 % worse      | 0.000 | 0.993 | 0.165 | 1.000
+  every learner 1.0 % worse      | 0.000 | 0.355 | 0.000 | 0.983
+  pooled arm ties every arm      | 0.844 | 1.000 | 0.997 | 1.000
+  pooled arm 1.0 % worse         | 0.000 | 0.831 | 0.001 | 0.997
+  every learner 2.0 % worse      | 0.000 | 0.000 | 0.000 | 0.000
+
+K2 P(pass), 4 rule arms (the earlier text): truth | pooled, margin 1 % | pooled, margin 2 % | learner mean, margin 1 % | learner mean, margin 2 %
+  stored differences             | 0.917 | 1.000 | 1.000 | 1.000
+  every learner ties every arm   | 0.708 | 1.000 | 0.995 | 1.000
+  every learner 0.5 % worse      | 0.000 | 0.996 | 0.325 | 1.000
+  every learner 1.0 % worse      | 0.000 | 0.703 | 0.000 | 0.993
+  pooled arm ties every arm      | 0.991 | 1.000 | 1.000 | 1.000
+  pooled arm 1.0 % worse         | 0.000 | 0.991 | 0.063 | 1.000
+  every learner 2.0 % worse      | 0.000 | 0.000 | 0.000 | 0.000
+
+K3 P(fires): stored 0.000 | every learner 0.5 % worse on delay 0.078 | 1.0 % worse 0.841 | true pooled edge 0 against 3E-C 0.568
+
+All of K1-K3 pass, delay at the stored differences, 10 rule arms: true pooled edge | pooled statistic | learner-mean statistic (truth = learner mean)
+  0.0 | 0.000 | 0.000
+  5.0 | 0.011 | 0.000
+  8.0 | 0.089 | 0.147
+ 10.0 | 0.451 | 0.497
+ 12.0 | 0.705 | 0.844
+ 15.0 | 0.915 | 0.997
+ 20.0 | 0.917 | 1.000

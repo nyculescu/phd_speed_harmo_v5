@@ -1,0 +1,26 @@
+S: K1 fires, pooled form, against 3 ['3E-C_TRUCK', 'grid_z31333', 'lr400_16_1']; single-mean form, against 0 []
+S: K2 (margin 1 %) fires, pooled form, against 13; single-mean form, against 5 ['grid_os1_10_10', 'lr1000_10_1', 'os0_10_10', 'os1_15_10', 'p333']
+   cf  grid_z31333      pooled +7.05 [-18.23, +34.23] | single mean +14.17 [+2.36, +40.38] | learners +9.8..+20.4
+   cf  3E-C_TRUCK       pooled +7.99 [-12.47, +31.05] | single mean +17.27 [+5.06, +33.47] | learners +6.7..+29.4
+   cf  lr400_16_1       pooled +4.96 [-3.78, +26.93] | single mean +17.92 [+8.43, +29.40] | learners +13.6..+24.7
+   cf  3ex2             pooled +16.99 [+0.07, +39.93] | single mean +20.64 [+11.95, +36.84] | learners +12.6..+27.5
+   cf  os0_10_10        pooled +17.65 [+6.31, +34.87] | single mean +21.12 [+11.09, +33.66] | learners +9.6..+28.1
+   del os0_10_10        pooled -1.61 [-2.79, -0.89] | single mean -0.46 [-1.39, +0.55] | learners -1.10..+0.09
+   del grid_os1_10_10   pooled -1.11 [-2.23, +0.50] | single mean -0.12 [-1.16, +0.98] | learners -0.46..+0.52
+   del p333             pooled -1.57 [-2.70, -0.31] | single mean -0.11 [-1.09, +0.89] | learners -0.79..+0.49
+   del lr1000_10_1      pooled -1.57 [-2.70, -0.31] | single mean -0.10 [-1.08, +0.90] | learners -0.71..+0.49
+   del os1_15_10        pooled -1.66 [-3.18, -0.65] | single mean -0.12 [-1.03, +0.88] | learners -0.54..+0.18
+   del 3E-D_TRUCK       pooled -0.70 [-1.85, +0.36] | single mean +0.07 [-0.81, +1.15] | learners -0.75..+0.60
+TRUCK: K1 fires, pooled form, against 0 []; single-mean form, against 0 []
+TRUCK: K2 (margin 1 %) fires, pooled form, against 0; single-mean form, against 0 []
+   cf  3E-C_TRUCK       pooled +11.80 [+5.05, +19.64] | single mean +12.68 [+6.32, +18.35] | learners +11.5..+13.9
+   cf  os1_15_10        pooled +25.75 [+18.38, +29.86] | single mean +24.19 [+19.74, +29.39] | learners +21.9..+26.2
+   cf  lr400_16_1       pooled +23.47 [+17.61, +32.32] | single mean +24.21 [+19.32, +30.85] | learners +21.6..+25.3
+   cf  os0_10_10        pooled +22.57 [+17.44, +27.90] | single mean +24.35 [+19.29, +28.19] | learners +22.4..+25.7
+   cf  3ex2             pooled +25.11 [+19.52, +29.88] | single mean +25.20 [+20.80, +30.36] | learners +22.7..+26.8
+   del os0_10_10        pooled -0.58 [-0.94, +0.20] | single mean +0.04 [-0.59, +0.61] | learners -0.22..+0.40
+   del lr1000_10_1      pooled -0.25 [-0.83, +0.46] | single mean +0.11 [-0.41, +0.74] | learners -0.33..+0.44
+   del p333             pooled -0.25 [-0.83, +0.48] | single mean +0.14 [-0.39, +0.76] | learners -0.31..+0.52
+   del 3E-D_TRUCK       pooled +0.08 [-0.57, +0.89] | single mean +0.22 [-0.22, +0.92] | learners -0.17..+0.68
+   del os1_15_10        pooled +0.18 [-0.64, +0.84] | single mean +0.42 [-0.17, +0.96] | learners +0.21..+0.88
+   del grid_os1_10_10   pooled +0.16 [-0.68, +1.05] | single mean +0.39 [-0.16, +0.96] | learners +0.17..+0.70

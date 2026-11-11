@@ -1,0 +1,7 @@
+TRUCK arms with stuck rows: {'TRUCK|z33133': 2, 'TRUCK|lr400_13_2': 2, 'TRUCK|lr1000_16_2': 2, 'TRUCK|lr400_16_1': 1, 'TRUCK|a4400_10_1': 1, 'TRUCK|os1_10_0': 1, 'TRUCK|grid_a41000_10_2': 1, 'TRUCK|grid_lr400_13_1': 1, 'TRUCK|grid_r4a2': 1}
+S arms with stuck rows: {'S|p333': 1, 'S|z33133': 1, 'S|lr1000_10_1': 1, 'S|lr400_16_1': 1, 'S|grid_a41000_10_2': 1, 'S|grid_lr400_13_1': 2, 'S|grid_r4a2': 1, 'S|grid_z31333': 1}
+every learner's delay made worse by 0.0 % of the rule's median: learner rule (margin -1 %) fails in 0.0
+every learner's delay made worse by 0.5 % of the rule's median: learner rule (margin -1 %) fails in 0.06733333333333333
+every learner's delay made worse by 1.0 % of the rule's median: learner rule (margin -1 %) fails in 0.8246666666666667
+every learner's delay made worse by 1.5 % of the rule's median: learner rule (margin -1 %) fails in 1.0
+every learner's delay made worse by 2.0 % of the rule's median: learner rule (margin -1 %) fails in 1.0

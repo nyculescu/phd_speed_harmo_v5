@@ -1,0 +1,232 @@
+231
+E15 13920 float 1.0 
+E30 13920 float 85.0 
+N 13920 float 620398.0 
+a2 13920 float 263890.06423658767 
+alks_b3_step 13920 float 1362.799999999856 
+alks_b45_step 13920 float 340.20000000000886 
+alks_b7_step 13920 float 2.2000000000000006 
+alks_full_creep 13758 float 17.0 
+alks_full_events 13775 float 17.0 
+alks_full_moving 1507 float null 
+all_delay 13920 float 168481.2525542018 
+arm 13920 str "w0u250" 
+arrived 13920 int 2156 
+b3_step 13920 float 2672.099999998665 
+b45 13920 float 375.0 
+b45_net 13920 float 375.0 
+b45_step 13920 float 385.7000000000192 
+b7 13920 float 0.0 
+b7_net 13920 float 0.0 
+b7_step 13920 float 2.2000000000000006 
+brake3 13920 float 437.0 
+brake45 13920 float 76.0 
+brake_net 13920 float 2662.0 
+cell 13920 str "TRUCK" 
+cell_spec 13920 NoneType {"kind": "truck_fixed", "n": 10, "first": 360.0, "spacing": 80.0, "cap_kmh": 40.0, "route" len=7
+cfg 13920 dict {"smooth": true, "ease": true, "lcAssertive": 1.4, "smooth_s": 8.0, "ease_max": 4.4, "tau_ len=10
+collisions 13920 int 0 
+commit 13920 str "b0c9360c9478a2db9d8ecd7bf56c5b7d0ee6b653" 
+contact_steps 13920 int 0 
+ctrl_diag 480 dict null 
+ctrl_log 480 list null 
+ctrl_sha256 13920 str "fbce985043f10a72ae411536800410d3199d73f20b09dd0551bf67429b4e8949" 
+delay 13920 float 75.80157188509463 
+delay_p95 13920 float 175.16205599999986 
+delay_ramp 13920 float 66.63432150791064 
+delay_ramp2 13920 float 64.27483572541115 
+delay_s 13920 float 168471.29249487887 
+dist 13920 float 12553519.652919838 
+dist_step 13920 float 12553242.984605506 
+end_stop 13920 float 114.0 
+end_stop2 13920 float 811.0 
+files 13920 dict {"/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C0_u250.pt": "283e2f983d79bde03a47 len=1
+finished_pct 13920 float 81.5580985915493 
+flow_min 13920 list [77, 97, 85, 72, 80, 88, 98, 88, 74, 90, 88, 87, 88, 96, 89, 90, 98, 86, 88, 92, 98, 87, 8 len=26
+free_brake_alks 13920 float 346.0 
+free_brake_alks_step 13920 float 364.9000000000145 
+fuel 13920 float 988932955.0659885 
+fuel_km 13920 float 78777.3455101073 
+fuel_step 13920 float 989450833.143662 
+fuel_truck 13920 float 366062385.7610943 
+gap25 13920 int 0 
+halt_3a_0 13920 float 96.0 
+halt_3a_1 13920 float 1.0 
+jerk 13920 float 204909.88070177264 
+jerk_step 13920 float 975010.8382170605 
+learner 13920 str "w0u250" 
+lv 13440 list [2540, 5953, 6272, 52966, 401, 804, 1464, 15239, 3936, 3926, 9262, 78856] len=12
+lv_n_1 13440 float 108538.0 
+lv_n_2 13440 float 17366.0 
+lv_n_3 13440 float 55275.0 
+lv_n_3a 13440 float 14577.0 
+lv_n_4 13440 float 58930.0 
+lv_n_4a 13440 float 28426.0 
+lv_n_5 13440 float 28059.0 
+lv_n_r 13440 float 2529.0 
+lv_n_r2 13440 float 2967.0 
+lv_n_rj 13440 float 182.0 
+lv_n_rj2 13440 float 240.0 
+lv_sum_1 13440 float 238341.0 
+lv_sum_2 13440 float 47277.0 
+lv_sum_3 13440 float 127851.0 
+lv_sum_3a 13440 float 35091.0 
+lv_sum_4 13440 float 159369.0 
+lv_sum_4a 13440 float 57022.0 
+lv_sum_5 13440 float 79865.0 
+lv_sum_r 13440 float 1845.0 
+lv_sum_r2 13440 float 1024.0 
+lv_sum_rj 13440 float 192.0 
+lv_sum_rj2 13440 float 97.0 
+m_a2_alks 13920 float 1350460.0999656692 
+m_a2_car 13920 float 1239300.5890971802 
+m_a2_truck 13920 float 108043.08446300148 
+m_ah_alks 13920 list [0, 0, 17, 0, 0, 5, 22, 37, 63, 100, 3151, 4889, 1794, 3550, 8023, 13840, 52080, 37221, 10 len=30
+m_ah_car 13920 list [0, 0, 0, 0, 0, 0, 0, 4, 9, 7, 434, 6488, 1809, 2983, 4460, 8774, 26241, 50115, 199977, 90 len=30
+m_ah_truck 13920 list [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 259, 822, 278, 585, 1050, 2880, 4233, 15821, 205945, 199 len=30
+m_capped 13920 list ["main.1025", "main.1243", "main.1304", "main.1415", "main.1486", "main.1677", "main.493", len=10
+m_capped_vmax 13920 float 11.1111 
+m_cascade_alks 13920 int 503 
+m_cascade_car 13920 int 562 
+m_cascade_truck 13920 int 168 
+m_cong_run_s 13920 float 930.0 
+m_cong_run_s_nc 13920 float 930.0 
+m_cong_vs 13920 float 97019.0 
+m_cong_vs_nc 13920 float 93581.0 
+m_dec_asked_hist 13440 list [0, 48, 64, 303, 754, 99, 0] len=7
+m_dec_changes_hist 13440 list [0, 24, 15, 353, 193, 353, 330] len=7
+m_dec_conf 13440 list [0, 0, 476, 5271, 4765, 2626, 1627, 1620, 2100, 13665] len=10
+m_dec_entropy_mean 13440 float 0.6792856285721173 
+m_dec_excess 13440 int 5824 
+m_dec_excess_hist 13440 list [390, 0, 192, 0, 167, 303, 216] len=7
+m_dec_level_s 13440 list [6877, 10683, 16998, 147061] len=4
+m_dec_off_s 13440 int 136957 
+m_dec_place 13440 dict {"up": [12799, 3559, 0, 9240], "m1": [1445, 495, 0, 950], "between": [5544, 1926, 0, 3618] len=8
+m_dec_totals 13440 dict {"asked": 32150, "changed": 9342, "ignored": 0, "kept": 22808, "reversals": 4030} len=5
+m_dec_vehicles 13440 int 1268 
+m_dec_want 13440 list [2763, 3853, 2222, 23312] len=4
+m_dist_m_alks 13920 float 6176700.552442512 
+m_dist_m_car 13920 float 5478771.032003829 
+m_dist_m_truck 13920 float 897771.4001592993 
+m_dropped 13920 int 0 
+m_dur_alks 13920 list [773, 755, 236, 57, 27, 0, 0] len=7
+m_dur_car 13920 list [2615, 458, 110, 40, 18, 9, 0] len=7
+m_dur_truck 13920 list [788, 22, 12, 4, 1, 1, 0] len=7
+m_event_s_alks 13920 float 1362.7999999999804 
+m_event_s_car 13920 float 1173.400000000004 
+m_event_s_truck 13920 float 135.89999999999884 
+m_events_alks 13920 int 1848 
+m_events_car 13920 int 3250 
+m_events_truck 13920 int 828 
+m_fuel_mg_alks 13920 float 327581428.46966815 
+m_fuel_mg_car 13920 float 295468711.57873064 
+m_fuel_mg_truck 13920 float 366400693.0954912 
+m_main_pending_min 13920 list [124.0, 145.0, 273.0, 477.0, 168.0, 15.0, 280.0, 511.0, 226.0, 80.0, 4.0, 306.0, 186.0, 53 len=25
+m_mergepos_m1 13920 list [40, 32, 36, 41, 43, 25, 9, 12, 9, 14] len=10
+m_mergepos_m2 13920 list [22, 24, 31, 48, 45, 36, 21, 16, 17, 23] len=10
+m_minute 13920 dict {"m1_out": [82.0, 68.0, 60.0, 65.0, 86.0, 78.0, 76.0, 81.0, 78.0, 68.0, 79.0, 88.0, 86.0,  len=18
+m_n_alks 13920 int 3185701 
+m_n_car 13920 int 2474138 
+m_n_truck 13920 int 485998 
+m_offsets 13920 dict {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.0200000000004, "4a": 4987.320000000001, "4 len=8
+m_peak_alks 13920 list [370, 262, 627, 528, 30, 13, 1, 0, 17] len=9
+m_peak_car 13920 list [675, 398, 1999, 172, 5, 1, 0, 0, 0] len=9
+m_peak_truck 13920 list [78, 515, 235, 0, 0, 0, 0, 0, 0] len=9
+m_pending_end 13920 int 11 
+m_planned_window 13920 int 2272 
+m_road_dist 13920 dict {"5": {"before": 31975.678076143813, "trucks": 1051652.999295281}, "3": {"before": 93295.9 len=10
+m_road_ttc3 13920 dict {"3a": {"trucks": 86}, "4a": {"trucks": 830}, "2": {"trucks": 1}, "3": {"trucks": 81}, "ra len=6
+m_road_vs 13920 dict {"5": {"before": 1336.0, "trucks": 53154.0}, "3": {"before": 3994.0, "trucks": 103594.0},  len=13
+m_robust_road 13920 dict {"2": {"before": 5, "trucks": 59}, "3a": {"before": 26, "trucks": 955}, "1": {"before": 66 len=9
+m_st_dt 13920 float 10.0 
+m_st_dx 13920 float 50.0 
+m_st_file 13920 str "TRUCK__w0u250__5300__7480400.npz" 
+m_st_shape 13920 list [150, 136] len=2
+m_stuck_n 13920 int 0 
+m_ttc3_all 13920 int 1047 
+m_ttc3_lc 13920 int 272 
+m_vh_alks 13920 list [41382, 27334, 38402, 25097, 18240, 18034, 17809, 184744, 114296, 59889, 49093, 118709, 25 len=30
+m_vh_car 13920 list [9110, 6259, 11015, 7735, 6695, 7166, 7629, 30430, 36482, 19868, 17844, 47317, 103314, 119 len=30
+m_vh_truck 13920 list [2340, 2261, 4546, 2641, 2739, 2924, 3154, 85799, 20060, 8616, 6426, 12917, 29674, 26550,  len=30
+mean_v 13920 float 30828.020501594496 
+n_3_0 13920 float 34910.0 
+n_3_1 13920 float 34596.0 
+n_3_2 13920 float 38082.0 
+n_3a_1 13920 float 10423.0 
+n_3a_2 13920 float 8041.0 
+n_3a_3 13920 float 7554.0 
+n_4a_1 13920 float 18875.0 
+n_4a_3 13920 float 10866.0 
+name 13920 str "TRUCK|w0u250" 
+nv_3_0 13920 float 603839.1295726127 
+nv_3_1 13920 float 745191.7463083665 
+nv_3_2 13920 float 918974.1945100025 
+nv_3a_1 13920 float 161993.1168799561 
+nv_3a_2 13920 float 175855.1436314859 
+nv_3a_3 13920 float 191105.05302629952 
+nv_4a_1 13920 float 155620.2653817674 
+nv_4a_3 13920 float 251641.2014097051 
+out_E30 13920 float 962.0 
+out_b3 13920 float 2225.0 
+pass_lane_change 9807 float 2.0 
+pass_merging 13920 float 108.0 
+pass_side_by_side 13920 float 45.0 
+pass_straight 13920 float 41.0 
+passed 13920 int 2213 
+pert_log 6960 list [[0, "main.493", 360.6], [1, "main.760", 522.6], [2, "main.799", 546.8], [3, "main.933", 6 len=10
+q 13920 float 5300.0 
+seed 13920 int 7480400 
+sev3 13655 float 54.0 
+sev3_p_before 356 float null 
+sev3_p_rest 6703 float null 
+sev3_p_trucks 6952 float 54.0 
+sev3_r_3 8758 float 5.0 
+sev3_r_4a 13298 float 30.0 
+sev3_r_ramp2 9506 float 18.0 
+sev3_r_rest 11581 float 1.0 
+sev3_s_hi 13640 float 53.0 
+sev3_s_mid 11797 float 1.0 
+steps 13920 int 1500 
+stop_gap 13920 int 26 
+tau_mismatch 13440 float 0.0 
+tau_on_match 13440 float 181480.0 
+tau_on_n 13440 float 181619.0 
+teleports 13920 float 0.0 
+ttc15 13594 float 29.0 
+ttc15_p_before 325 float null 
+ttc15_p_rest 6642 float null 
+ttc15_p_trucks 6952 float 29.0 
+ttc15_r_3 5559 float null 
+ttc15_r_4a 13359 float 28.0 
+ttc15_r_ramp2 5836 float null 
+ttc15_r_rest 9417 float 1.0 
+ttc15_s_hi 6149 float 1.0 
+ttc15_s_lo 13216 float 10.0 
+ttc15_s_mid 13450 float 18.0 
+ttc2 13917 float 148.0 
+ttc2_p_before 1441 float null 
+ttc2_p_rest 6958 float null 
+ttc2_p_trucks 6959 float 148.0 
+ttc2_r_3 9697 float 3.0 
+ttc2_r_4a 13888 float 123.0 
+ttc2_r_ramp2 7194 float 9.0 
+ttc2_r_rest 13490 float 13.0 
+ttc2_s_hi 13804 float 24.0 
+ttc2_s_lo 13789 float 59.0 
+ttc2_s_mid 13906 float 65.0 
+ttc3 13920 float 1047.0 
+ttc3_p_before 3112 float null 
+ttc3_p_rest 6960 float null 
+ttc3_p_trucks 6960 float 1047.0 
+ttc3_r_3 11162 float 81.0 
+ttc3_r_4a 13920 float 830.0 
+ttc3_r_ramp2 8499 float 37.0 
+ttc3_r_rest 13918 float 99.0 
+ttc3_s_hi 13920 float 290.0 
+ttc3_s_lo 13908 float 381.0 
+ttc3_s_mid 13920 float 376.0 
+ttc_half 13920 float 1063.0 
+ttc_net 13920 float 1047.0 
+undertakes 13920 float 196.0 
+v20_min 13920 list [23.03, 23.18, 23.07, 21.32, 21.34, 19.75, 15.91, 23.7, 19.25, 18.08, 18.17, 14.7, 21.03,  len=26
+vs 13920 float 614613.0 

@@ -1,0 +1,8 @@
+bins 10 merges per run at m2, p333 median 288.0
+p333: share of merge-2 lane changes in the last 2 of 10 bins, median 11.81 %; last bin 7.80 %; merge 1 last 2 bins 3.98 %
+nc last-2-bin share median 20.89 %; arm minus p333, points: +8.22 [+6.68, +9.54] | last bin: +4.44 [+3.14, +5.91]
+grid_r4a2 last-2-bin share median 16.24 %; arm minus p333, points: +2.80 [+1.84, +4.22] | last bin: +2.44 [+1.39, +3.12]
+r4a1 last-2-bin share median 18.20 %; arm minus p333, points: +4.09 [+2.59, +5.85] | last bin: +2.40 [+1.37, +3.68]
+os0_10_10 last-2-bin share median 11.42 %; arm minus p333, points: +0.00 [+0.00, +0.00] | last bin: +0.00 [+0.00, +0.00]
+v3w (mean of 5) last-2-bin share median 11.52 %; minus p333: -0.60 [-2.14, +0.31]
+end_stop2 medians: {'nc': 522.5, 'p333': 391.5, 'grid_r4a2': 677.5, 'r4a1': 653.0, 'os0_10_10': 353.5} v3w 362.4

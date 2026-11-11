@@ -1,0 +1,13 @@
+recorded effects, no shift         P(K1 delay) 0.001 | P(K2 edge) 0.142 | P(K3 learners) 0.000 | P(KILL) 0.142 | P(guard fails) 0.192
+true edge vs closest rule  0.0 %   P(K1 delay) 0.001 | P(K2 edge) 0.987 | P(K3 learners) 0.605 | P(KILL) 0.987 | P(guard fails) 0.990
+true edge vs closest rule  5.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.693 | P(K3 learners) 0.071 | P(KILL) 0.693 | P(guard fails) 0.642
+true edge vs closest rule  8.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.369 | P(K3 learners) 0.004 | P(KILL) 0.369 | P(guard fails) 0.425
+true edge vs closest rule 10.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.233 | P(K3 learners) 0.001 | P(KILL) 0.233 | P(guard fails) 0.301
+true edge vs closest rule 12.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.114 | P(K3 learners) 0.001 | P(KILL) 0.114 | P(guard fails) 0.197
+true edge vs closest rule 15.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.011 | P(K3 learners) 0.000 | P(KILL) 0.011 | P(guard fails) 0.077
+true edge vs closest rule 20.0 %   P(K1 delay) 0.001 | P(K2 edge) 0.000 | P(K3 learners) 0.000 | P(KILL) 0.001 | P(guard fails) 0.013
+true delay vs os0_10_10 +0.0 %     P(K1 delay) 0.000 | P(K2 edge) 0.143 | P(K3 learners) 0.000 | P(KILL) 0.143 | P(guard fails) 0.198
+true delay vs os0_10_10 -1.0 %     P(K1 delay) 0.030 | P(K2 edge) 0.148 | P(K3 learners) 0.000 | P(KILL) 0.170 | P(guard fails) 0.187
+true delay vs os0_10_10 -1.5 %     P(K1 delay) 0.333 | P(K2 edge) 0.136 | P(K3 learners) 0.001 | P(KILL) 0.417 | P(guard fails) 0.202
+true delay vs os0_10_10 -2.0 %     P(K1 delay) 0.988 | P(K2 edge) 0.142 | P(K3 learners) 0.133 | P(KILL) 0.989 | P(guard fails) 0.199
+true delay vs os0_10_10 -3.0 %     P(K1 delay) 1.000 | P(K2 edge) 0.145 | P(K3 learners) 0.997 | P(KILL) 1.000 | P(guard fails) 0.191

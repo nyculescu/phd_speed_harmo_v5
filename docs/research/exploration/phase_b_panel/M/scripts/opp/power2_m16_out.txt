@@ -1,0 +1,7 @@
+m = 16: two-sided level 99.688 %
+  z33133 n 240: e=-4: P 0 K 100 U 0; e=+0: P 0 K 99 U 1; e=+3: P 40 K 0 U 60; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0; half-width 2.09
+  z33133 n 360: e=-4: P 0 K 100 U 0; e=+0: P 0 K 100 U 0; e=+3: P 56 K 0 U 44; e=+5: P 100 K 0 U 0; e=+7: P 100 K 0 U 0; half-width 1.71
+  os1_10_0 n 240: e=-4: P 0 K 100 U 0; e=+0: P 0 K 85 U 15; e=+3: P 24 K 0 U 76; e=+5: P 79 K 0 U 21; e=+7: P 98 K 0 U 2; half-width 2.85
+  os1_10_0 n 360: e=-4: P 0 K 100 U 0; e=+0: P 0 K 99 U 1; e=+3: P 42 K 0 U 58; e=+5: P 93 K 0 U 7; e=+7: P 100 K 0 U 0; half-width 2.38
+  r4a1 n 240: e=-4: P 0 K 100 U 0; e=+0: P 0 K 23 U 77; e=+3: P 30 K 0 U 70; e=+5: P 63 K 0 U 37; e=+7: P 95 K 0 U 5; half-width 3.78
+  r4a1 n 360: e=-4: P 0 K 100 U 0; e=+0: P 0 K 43 U 57; e=+3: P 44 K 0 U 56; e=+5: P 91 K 0 U 9; e=+7: P 100 K 0 U 0; half-width 2.90

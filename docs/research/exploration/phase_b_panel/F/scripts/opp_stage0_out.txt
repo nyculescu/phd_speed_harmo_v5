@@ -1,0 +1,85 @@
+intervals 97.5 %, 10,000 resamples, rng 20261110; positive = v3w lower
+  ttc_net (deciding count)           TRUCK vs 3E-C_TRUCK  per learner +11.5..+13.9, LB>0: 5/5, UB<0: 0/5 | pooled +11.8 [+4.8, +19.9] | medians v3w 773/794/780/836/809, opp 951.0
+  road sum (pack m_road_ttc3)        TRUCK vs 3E-C_TRUCK  per learner +11.5..+13.9, LB>0: 5/5, UB<0: 0/5 | pooled +11.8 [+4.8, +19.9] | medians v3w 773/794/780/836/809, opp 951.0
+  merge 2: 4a+ramp2+junction         TRUCK vs 3E-C_TRUCK  per learner +11.3..+12.3, LB>0: 5/5, UB<0: 0/5 | pooled +11.7 [+3.6, +17.5] | medians v3w 635/618/604/657/650, opp 754.5
+  off merge 2 (all other roads)      TRUCK vs 3E-C_TRUCK  per learner +7.7..+19.6, LB>0: 3/5, UB<0: 0/5 | pooled +9.0 [+3.8, +18.7] | medians v3w 138/156/154/154/155, opp 189.0
+  off both merges (1,2,3,4,5)        TRUCK vs 3E-C_TRUCK  per learner +21.7..+38.4, LB>0: 5/5, UB<0: 0/5 | pooled +28.9 [+13.8, +51.6] | medians v3w 46/70/52/55/58, opp 101.5
+  ttc3 at >= 10 m/s (s_hi)           TRUCK vs 3E-C_TRUCK  per learner +20.5..+24.5, LB>0: 5/5, UB<0: 0/5 | pooled +24.0 [+15.3, +31.1] | medians v3w 224/242/232/244/242, opp 331.0
+  ttc3 below 5 m/s (s_lo)            TRUCK vs 3E-C_TRUCK  per learner +0.2..+7.2, LB>0: 2/5, UB<0: 0/5 | pooled +4.6 [-4.0, +12.3] | medians v3w 258/243/251/262/268, opp 290.5
+  delay                              TRUCK vs 3E-C_TRUCK  per learner +1.3..+2.2, LB>0: 5/5, UB<0: 0/5 | pooled +1.1 [+0.7, +2.1] | medians v3w 158775/160333/160065/162362/161252, opp 164871.3
+  fuel per km                        TRUCK vs 3E-C_TRUCK  per learner +0.0..+0.2, LB>0: 0/5, UB<0: 0/5 | pooled +0.1 [-0.1, +0.2] | medians v3w 79519/79607/79666/79625/79535, opp 79712.4
+
+  ttc_net (deciding count)           TRUCK vs os0_10_10   per learner +22.4..+25.7, LB>0: 5/5, UB<0: 0/5 | pooled +22.6 [+17.4, +28.4] | medians v3w 773/794/780/836/809, opp 1116.0
+  road sum (pack m_road_ttc3)        TRUCK vs os0_10_10   per learner +22.4..+25.7, LB>0: 5/5, UB<0: 0/5 | pooled +22.6 [+17.4, +28.4] | medians v3w 773/794/780/836/809, opp 1116.0
+  merge 2: 4a+ramp2+junction         TRUCK vs os0_10_10   per learner +19.0..+24.0, LB>0: 5/5, UB<0: 0/5 | pooled +19.0 [+14.0, +23.2] | medians v3w 635/618/604/657/650, opp 832.5
+  off merge 2 (all other roads)      TRUCK vs os0_10_10   per learner +29.4..+34.1, LB>0: 5/5, UB<0: 0/5 | pooled +28.2 [+21.7, +37.1] | medians v3w 138/156/154/154/155, opp 234.5
+  off both merges (1,2,3,4,5)        TRUCK vs os0_10_10   per learner +35.4..+48.1, LB>0: 5/5, UB<0: 0/5 | pooled +39.7 [+24.2, +62.7] | medians v3w 46/70/52/55/58, opp 134.0
+  ttc3 at >= 10 m/s (s_hi)           TRUCK vs os0_10_10   per learner +31.8..+35.8, LB>0: 5/5, UB<0: 0/5 | pooled +33.3 [+28.8, +40.3] | medians v3w 224/242/232/244/242, opp 390.0
+  ttc3 below 5 m/s (s_lo)            TRUCK vs os0_10_10   per learner +11.9..+21.4, LB>0: 5/5, UB<0: 0/5 | pooled +13.1 [+7.8, +21.2] | medians v3w 258/243/251/262/268, opp 332.5
+  delay                              TRUCK vs os0_10_10   per learner -0.2..+0.4, LB>0: 0/5, UB<0: 0/5 | pooled -0.6 [-0.9, +0.3] | medians v3w 158775/160333/160065/162362/161252, opp 162350.2
+  fuel per km                        TRUCK vs os0_10_10   per learner +0.1..+0.3, LB>0: 3/5, UB<0: 0/5 | pooled +0.1 [-0.0, +0.3] | medians v3w 79519/79607/79666/79625/79535, opp 79861.5
+
+  ttc_net (deciding count)           TRUCK vs p333        per learner +25.4..+32.9, LB>0: 5/5, UB<0: 0/5 | pooled +26.9 [+19.2, +35.3] | medians v3w 773/794/780/836/809, opp 1178.0
+  road sum (pack m_road_ttc3)        TRUCK vs p333        per learner +25.4..+32.9, LB>0: 5/5, UB<0: 0/5 | pooled +26.9 [+19.2, +35.3] | medians v3w 773/794/780/836/809, opp 1178.0
+  merge 2: 4a+ramp2+junction         TRUCK vs p333        per learner +26.1..+35.3, LB>0: 5/5, UB<0: 0/5 | pooled +26.4 [+23.0, +36.4] | medians v3w 635/618/604/657/650, opp 907.5
+  off merge 2 (all other roads)      TRUCK vs p333        per learner +23.8..+39.8, LB>0: 5/5, UB<0: 0/5 | pooled +29.7 [+20.7, +38.5] | medians v3w 138/156/154/154/155, opp 218.5
+  off both merges (1,2,3,4,5)        TRUCK vs p333        per learner +35.4..+43.6, LB>0: 5/5, UB<0: 0/5 | pooled +42.3 [+17.8, +63.2] | medians v3w 46/70/52/55/58, opp 97.5
+  ttc3 at >= 10 m/s (s_hi)           TRUCK vs p333        per learner +32.5..+35.5, LB>0: 5/5, UB<0: 0/5 | pooled +31.5 [+27.2, +40.2] | medians v3w 224/242/232/244/242, opp 372.0
+  ttc3 below 5 m/s (s_lo)            TRUCK vs p333        per learner +24.0..+37.6, LB>0: 5/5, UB<0: 0/5 | pooled +28.3 [+19.0, +39.7] | medians v3w 258/243/251/262/268, opp 400.5
+  delay                              TRUCK vs p333        per learner -0.3..+0.5, LB>0: 0/5, UB<0: 0/5 | pooled -0.2 [-0.8, +0.5] | medians v3w 158775/160333/160065/162362/161252, opp 161493.2
+  fuel per km                        TRUCK vs p333        per learner +0.2..+0.3, LB>0: 5/5, UB<0: 0/5 | pooled +0.2 [+0.0, +0.3] | medians v3w 79519/79607/79666/79625/79535, opp 79941.5
+
+  ttc_net (deciding count)           TRUCK vs nc          per learner +28.9..+35.5, LB>0: 5/5, UB<0: 0/5 | pooled +29.1 [+25.7, +33.8] | medians v3w 773/794/780/836/809, opp 1234.0
+  road sum (pack m_road_ttc3)        TRUCK vs nc          per learner +28.9..+35.5, LB>0: 5/5, UB<0: 0/5 | pooled +29.1 [+25.7, +33.8] | medians v3w 773/794/780/836/809, opp 1234.0
+  merge 2: 4a+ramp2+junction         TRUCK vs nc          per learner +24.8..+32.7, LB>0: 5/5, UB<0: 0/5 | pooled +27.9 [+23.7, +30.9] | medians v3w 635/618/604/657/650, opp 930.5
+  off merge 2 (all other roads)      TRUCK vs nc          per learner +33.1..+42.9, LB>0: 5/5, UB<0: 0/5 | pooled +34.7 [+29.0, +40.3] | medians v3w 138/156/154/154/155, opp 255.0
+  off both merges (1,2,3,4,5)        TRUCK vs nc          per learner +36.7..+52.6, LB>0: 5/5, UB<0: 0/5 | pooled +42.5 [+36.5, +51.4] | medians v3w 46/70/52/55/58, opp 107.5
+  ttc3 at >= 10 m/s (s_hi)           TRUCK vs nc          per learner +23.2..+27.4, LB>0: 5/5, UB<0: 0/5 | pooled +22.0 [+19.3, +25.7] | medians v3w 224/242/232/244/242, opp 328.0
+  ttc3 below 5 m/s (s_lo)            TRUCK vs nc          per learner +34.8..+42.4, LB>0: 5/5, UB<0: 0/5 | pooled +35.2 [+31.4, +38.9] | medians v3w 258/243/251/262/268, opp 463.5
+  delay                              TRUCK vs nc          per learner +28.7..+29.6, LB>0: 5/5, UB<0: 0/5 | pooled +28.9 [+28.1, +30.1] | medians v3w 158775/160333/160065/162362/161252, opp 231311.6
+  fuel per km                        TRUCK vs nc          per learner +0.5..+0.6, LB>0: 5/5, UB<0: 0/5 | pooled +0.6 [+0.4, +0.7] | medians v3w 79519/79607/79666/79625/79535, opp 80078.3
+
+  ttc_net (deciding count)           S     vs 3E-C_TRUCK  per learner +6.7..+29.4, LB>0: 3/5, UB<0: 0/5 | pooled +8.0 [-12.2, +29.1] | medians v3w 452/456/482/468/457, opp 545.5
+  road sum (pack m_road_ttc3)        S     vs 3E-C_TRUCK  per learner +6.7..+29.4, LB>0: 3/5, UB<0: 0/5 | pooled +8.0 [-12.2, +29.1] | medians v3w 452/456/482/468/457, opp 545.5
+  merge 2: 4a+ramp2+junction         S     vs 3E-C_TRUCK  per learner +4.7..+26.1, LB>0: 2/5, UB<0: 0/5 | pooled +7.1 [-12.0, +28.7] | medians v3w 362/364/391/369/370, opp 440.5
+  off merge 2 (all other roads)      S     vs 3E-C_TRUCK  per learner +9.6..+19.8, LB>0: 1/5, UB<0: 0/5 | pooled +6.3 [-17.6, +28.1] | medians v3w 76/94/98/94/88, opp 83.5
+  off both merges (1,2,3,4,5)        S     vs 3E-C_TRUCK  per learner +0.0..+4.3, LB>0: 0/5, UB<0: 0/5 | pooled -3.4 [-40.9, +30.6] | medians v3w 20/30/20/26/18, opp 23.5
+  ttc3 at >= 10 m/s (s_hi)           S     vs 3E-C_TRUCK  per learner +17.8..+35.7, LB>0: 5/5, UB<0: 0/5 | pooled +18.2 [+4.4, +43.6] | medians v3w 150/166/170/164/150, opp 207.5
+  ttc3 below 5 m/s (s_lo)            S     vs 3E-C_TRUCK  per learner -2.2..+22.2, LB>0: 1/5, UB<0: 0/5 | pooled -11.1 [-24.2, +19.4] | medians v3w 116/112/130/127/126, opp 135.0
+  delay                              S     vs 3E-C_TRUCK  per learner +0.9..+2.2, LB>0: 1/5, UB<0: 0/5 | pooled -0.0 [-1.3, +1.2] | medians v3w 124690/126160/126380/126693/125863, opp 126479.8
+  fuel per km                        S     vs 3E-C_TRUCK  per learner -0.1..+0.1, LB>0: 0/5, UB<0: 0/5 | pooled -0.1 [-0.3, +0.1] | medians v3w 78162/78136/78400/78304/78374, opp 78349.6
+
+  ttc_net (deciding count)           S     vs os0_10_10   per learner +9.6..+28.1, LB>0: 4/5, UB<0: 0/5 | pooled +17.7 [+6.3, +34.0] | medians v3w 452/456/482/468/457, opp 596.0
+  road sum (pack m_road_ttc3)        S     vs os0_10_10   per learner +9.6..+28.1, LB>0: 4/5, UB<0: 0/5 | pooled +17.7 [+6.3, +34.0] | medians v3w 452/456/482/468/457, opp 596.0
+  merge 2: 4a+ramp2+junction         S     vs os0_10_10   per learner +4.7..+23.9, LB>0: 4/5, UB<0: 0/5 | pooled +23.0 [+1.9, +35.1] | medians v3w 362/364/391/369/370, opp 494.0
+  off merge 2 (all other roads)      S     vs os0_10_10   per learner +12.1..+29.8, LB>0: 4/5, UB<0: 0/5 | pooled +15.2 [-0.6, +32.3] | medians v3w 76/94/98/94/88, opp 124.0
+  off both merges (1,2,3,4,5)        S     vs os0_10_10   per learner +0.0..+2.1, LB>0: 0/5, UB<0: 0/5 | pooled -2.1 [-29.2, +38.8] | medians v3w 20/30/20/26/18, opp 24.0
+  ttc3 at >= 10 m/s (s_hi)           S     vs os0_10_10   per learner +21.1..+34.9, LB>0: 5/5, UB<0: 0/5 | pooled +31.1 [+16.8, +42.1] | medians v3w 150/166/170/164/150, opp 227.5
+  ttc3 below 5 m/s (s_lo)            S     vs os0_10_10   per learner +1.0..+20.2, LB>0: 2/5, UB<0: 0/5 | pooled +1.8 [-13.8, +25.7] | medians v3w 116/112/130/127/126, opp 151.0
+  delay                              S     vs os0_10_10   per learner -1.1..+0.1, LB>0: 0/5, UB<0: 0/5 | pooled -1.6 [-2.8, -0.9] | medians v3w 124690/126160/126380/126693/125863, opp 126111.1
+  fuel per km                        S     vs os0_10_10   per learner -0.1..+0.1, LB>0: 1/5, UB<0: 0/5 | pooled -0.0 [-0.1, +0.1] | medians v3w 78162/78136/78400/78304/78374, opp 78477.3
+
+  ttc_net (deciding count)           S     vs p333        per learner +18.1..+31.7, LB>0: 5/5, UB<0: 0/5 | pooled +17.2 [+6.0, +36.8] | medians v3w 452/456/482/468/457, opp 628.5
+  road sum (pack m_road_ttc3)        S     vs p333        per learner +18.1..+31.7, LB>0: 5/5, UB<0: 0/5 | pooled +17.2 [+6.0, +36.8] | medians v3w 452/456/482/468/457, opp 628.5
+  merge 2: 4a+ramp2+junction         S     vs p333        per learner +19.0..+34.9, LB>0: 5/5, UB<0: 0/5 | pooled +22.8 [+7.1, +41.3] | medians v3w 362/364/391/369/370, opp 532.5
+  off merge 2 (all other roads)      S     vs p333        per learner +9.8..+26.0, LB>0: 2/5, UB<0: 0/5 | pooled +3.1 [-10.1, +30.7] | medians v3w 76/94/98/94/88, opp 102.0
+  off both merges (1,2,3,4,5)        S     vs p333        per learner +0.0..+2.9, LB>0: 0/5, UB<0: 0/5 | pooled -24.6 [-61.7, +0.0] | medians v3w 20/30/20/26/18, opp 17.5
+  ttc3 at >= 10 m/s (s_hi)           S     vs p333        per learner +25.4..+37.6, LB>0: 5/5, UB<0: 0/5 | pooled +29.7 [+16.2, +40.1] | medians v3w 150/166/170/164/150, opp 238.0
+  ttc3 below 5 m/s (s_lo)            S     vs p333        per learner +14.4..+33.0, LB>0: 4/5, UB<0: 0/5 | pooled +12.4 [-8.3, +36.1] | medians v3w 116/112/130/127/126, opp 163.5
+  delay                              S     vs p333        per learner -0.8..+0.5, LB>0: 0/5, UB<0: 0/5 | pooled -1.6 [-2.7, -0.2] | medians v3w 124690/126160/126380/126693/125863, opp 126295.7
+  fuel per km                        S     vs p333        per learner -0.0..+0.2, LB>0: 1/5, UB<0: 0/5 | pooled -0.0 [-0.1, +0.1] | medians v3w 78162/78136/78400/78304/78374, opp 78456.3
+
+  ttc_net (deciding count)           S     vs nc          per learner +45.0..+51.3, LB>0: 5/5, UB<0: 0/5 | pooled +45.9 [+41.9, +51.1] | medians v3w 452/456/482/468/457, opp 1234.0
+  road sum (pack m_road_ttc3)        S     vs nc          per learner +45.0..+51.3, LB>0: 5/5, UB<0: 0/5 | pooled +45.9 [+41.9, +51.1] | medians v3w 452/456/482/468/457, opp 1234.0
+  merge 2: 4a+ramp2+junction         S     vs nc          per learner +45.5..+54.3, LB>0: 5/5, UB<0: 0/5 | pooled +47.3 [+40.8, +52.8] | medians v3w 362/364/391/369/370, opp 1026.5
+  off merge 2 (all other roads)      S     vs nc          per learner +40.7..+53.3, LB>0: 5/5, UB<0: 0/5 | pooled +40.8 [+31.6, +48.5] | medians v3w 76/94/98/94/88, opp 199.0
+  off both merges (1,2,3,4,5)        S     vs nc          per learner +63.9..+75.1, LB>0: 5/5, UB<0: 0/5 | pooled +65.0 [+56.0, +71.6] | medians v3w 20/30/20/26/18, opp 169.0
+  ttc3 at >= 10 m/s (s_hi)           S     vs nc          per learner +35.7..+41.9, LB>0: 5/5, UB<0: 0/5 | pooled +37.3 [+31.0, +42.8] | medians v3w 150/166/170/164/150, opp 313.5
+  ttc3 below 5 m/s (s_lo)            S     vs nc          per learner +53.3..+61.4, LB>0: 5/5, UB<0: 0/5 | pooled +54.2 [+49.0, +58.9] | medians v3w 116/112/130/127/126, opp 449.0
+  delay                              S     vs nc          per learner +34.6..+36.5, LB>0: 5/5, UB<0: 0/5 | pooled +35.5 [+33.3, +38.3] | medians v3w 124690/126160/126380/126693/125863, opp 200589.4
+  fuel per km                        S     vs nc          per learner +1.0..+1.3, LB>0: 5/5, UB<0: 0/5 | pooled +1.1 [+0.9, +1.3] | medians v3w 78162/78136/78400/78304/78374, opp 79371.0
+
+check TRUCK p333 median ttc_net 1178.0, road sum 1178.0, m_ttc3_all 1178.0, ttc3 1178.0; max |ttc_net - road sum| 0.0
+check TRUCK w0u250 median ttc_net 773.0, road sum 773.0, m_ttc3_all 773.0, ttc3 773.0; max |ttc_net - road sum| 0.0
+check S p333 median ttc_net 628.5, road sum 628.5, m_ttc3_all 628.5, ttc3 628.5; max |ttc_net - road sum| 0.0
+check S w0u250 median ttc_net 451.5, road sum 451.5, m_ttc3_all 451.5, ttc3 451.5; max |ttc_net - road sum| 0.0

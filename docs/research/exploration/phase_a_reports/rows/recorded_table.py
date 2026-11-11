@@ -1,0 +1,27 @@
+import json
+J=json.load(open('/home/catalin/work/phd/v5b1_runs/planb_s6_read_v23/read6_v23.json'))
+c=J['cells']['TRUCK']
+f=lambda t: "%+.2f [%+.2f, %+.2f]"%tuple(t)
+print("recorded comparisons, pct",c['pct'],"n_seeds",c['n_seeds'])
+print("opp | delay(98.75) | delay95 | cf(98.75) | cf_per_run | flow(98.75) | brake_excess95")
+for o,x in sorted(c['comparisons'].items(), key=lambda kv: kv[1]['delay'][0]):
+    print(o,'|',f(x['delay']),'|',f(x['delay95']),'|',f(x['cf']),'|',"%.1f"%x['cf_per_run'],'|',f(x['flow']),'|',f(x['brake_excess']))
+print('learner_signs',c['learner_signs'])
+print('closest',c['closest'])
+print('d4',json.dumps(c['d4']))
+print('no_control',json.dumps(c['no_control']))
+print('adaptation_gain',json.dumps(c['adaptation_gain']))
+print('pr28',json.dumps(c['pr28']))
+t=c['t2_counting_filter']
+print('t2 universe',t['universe'],'counted',t['counted'],'policies',t['policies'],'v1',t['v1_value'])
+print('excluded_3e',json.dumps(t['excluded_3e'])[:600])
+print('transfer_3e',json.dumps(t['transfer_3e'])[:600])
+print('breakdown',json.dumps(J['provenance']['breakdown']))
+print('mechG',json.dumps(J['provenance']['mechanism_G'])[:800])
+print('plateau',json.dumps(J['provenance']['plateau'])[:400])
+print('overfit keys', json.dumps(c['overfit_vs_p333']['3e'])[:300])
+print('nc map_report_only keys', list(c['map_report_only']['nc'])[:50])
+print('nc delay', json.dumps(c['map_report_only']['nc']['delay']))
+print('nc cf', json.dumps(c['map_report_only']['nc']['cf']))
+print('nc flow', json.dumps(c['map_report_only']['nc']['flow']))
+print('map entry', json.dumps(c['map']['p333'])[:500])

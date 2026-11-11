@@ -1,0 +1,31 @@
+A. pooled effects, 97.5 % (record: cf vs 3E-C +11.80 [+4.97, +19.71]; delay vs os0_10_10 -0.58 [-0.93, +0.20])
+  cf vs 3E-C_TRUCK +11.80 [+4.31, +19.71]
+  delay vs os0_10_10 -0.58 [-0.93, +0.20]
+B. pooled-arm offset = pooled effect minus mean of the 5 single-learner effects; 95 % interval of the offset; then the 97.5 % interval of the single-learner mean
+  ttc_net   vs 3E-C_TRUCK       pooled +11.80 | learner mean +12.68 | offset -0.88 [-4.01, +2.50] | learner-mean 97.5 % interval [+6.30, +18.31]
+  ttc_net   vs p333             pooled +26.94 | learner mean +28.49 | offset -1.54 [-4.82, +0.84] | learner-mean 97.5 % interval [+22.91, +35.80]
+  ttc_net   vs os0_10_10        pooled +22.57 | learner mean +24.35 | offset -1.77 [-3.86, +0.98] | learner-mean 97.5 % interval [+19.41, +28.28]
+  all_delay vs os0_10_10        pooled -0.58 | learner mean +0.04 | offset -0.63 [-0.86, -0.21] | learner-mean 97.5 % interval [-0.56, +0.63]
+  all_delay vs p333             pooled -0.25 | learner mean +0.14 | offset -0.39 [-0.68, +0.05] | learner-mean 97.5 % interval [-0.38, +0.73]
+  all_delay vs lr1000_10_1      pooled -0.25 | learner mean +0.11 | offset -0.36 [-0.66, +0.07] | learner-mean 97.5 % interval [-0.40, +0.71]
+  all_delay vs grid_os1_10_10   pooled +0.16 | learner mean +0.39 | offset -0.24 [-0.68, +0.19] | learner-mean 97.5 % interval [-0.15, +0.97]
+  all_delay vs os1_15_10        pooled +0.18 | learner mean +0.42 | offset -0.25 [-0.68, +0.09] | learner-mean 97.5 % interval [-0.16, +0.96]
+  all_delay vs 3E-D_TRUCK       pooled +0.08 | learner mean +0.22 | offset -0.14 [-0.46, +0.19] | learner-mean 97.5 % interval [-0.19, +0.90]
+  all_delay vs lr1000_16_2      pooled +0.27 | learner mean +0.59 | offset -0.31 [-0.65, -0.09] | learner-mean 97.5 % interval [+0.14, +1.26]
+  all_delay vs grid_lr400_13_1  pooled +0.83 | learner mean +1.04 | offset -0.20 [-0.69, +0.07] | learner-mean 97.5 % interval [+0.37, +1.90]
+  all_delay vs lr400_13_2       pooled +0.72 | learner mean +0.75 | offset -0.03 [-0.39, +0.41] | learner-mean 97.5 % interval [+0.16, +1.38]
+  all_delay vs 3E-C_TRUCK       pooled +1.12 | learner mean +1.66 | offset -0.55 [-0.83, -0.07] | learner-mean 97.5 % interval [+1.00, +2.29]
+C. fuel per km, pooled arm, 95 % (correction 5: TRUCK p333 +0.2 [+0.0, +0.3]; S -0.0 [-0.1, +0.1]; 3E-C +0.1 [-0.1, +0.2] and -0.1 [-0.3, +0.1]; nc +0.6 and +1.1)
+  TRUCK vs p333        +0.16 [+0.03, +0.29]
+  TRUCK vs 3E-C_TRUCK  +0.06 [-0.06, +0.18]
+  TRUCK vs nc          +0.58 [+0.41, +0.73]
+  TRUCK vs os0_10_10   +0.10 [+0.01, +0.25]
+  TRUCK vs 3E-D_TRUCK  +0.28 [+0.15, +0.40]
+  S     vs p333        -0.03 [-0.09, +0.08]
+  S     vs 3E-C_TRUCK  -0.12 [-0.27, +0.07]
+  S     vs nc          +1.10 [+0.97, +1.30]
+  S     vs os0_10_10   -0.01 [-0.09, +0.07]
+  S     vs 3E-D_TRUCK  +0.05 [-0.10, +0.18]
+D. paired SD of the pooled cf difference against 3E-C, % of its median (critic: 37.8); delay against os0_10_10 (critic: 5.3 in TRUCK)
+  cf SD 37.8 % ; delay SD vs os0_10_10 5.2 % ; vs p333 5.3 %
+  medians: 3E-C cf 951, v3w pooled cf 820; 10 % of 3E-C median = 95 s; stored median paired reduction 112 s

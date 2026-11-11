@@ -1,0 +1,38 @@
+A. verdict rule per cell. PASS = point >= 5 and lower bound > 0; bounded KILL = upper bound < 5; else 'not shown'
+r4a1           n= 40 se 3.08 up-half 5.05 low-half 8.28 | d=0.0 P  0.7 K 44.5 L  1.8 | d=2.0 P  6.1 K 10.2 L  8.0 | d=3.0 P  9.9 K  5.0 L 11.9 | d=4.0 P 15.2 K  2.2 L 16.4 | d=5.0 P 19.7 K  1.1 L 20.6 | d=6.0 P 26.8 K  0.2 L 27.5 | d=7.0 P 37.7 K  0.1 L 37.9 | d=9.2 P 56.8 K  0.0 L 57.2
+r4a1           n= 80 se 2.24 up-half 3.91 low-half 5.76 | d=0.0 P  0.1 K 75.9 L  1.8 | d=2.0 P  8.1 K 17.4 L 16.0 | d=3.0 P 14.9 K  8.2 L 24.2 | d=4.0 P 25.0 K  2.8 L 31.6 | d=5.0 P 34.2 K  1.4 L 39.4 | d=6.0 P 49.2 K  0.4 L 50.3 | d=7.0 P 68.1 K  0.1 L 68.8 | d=9.2 P 86.7 K  0.0 L 87.2
+r4a1           n=120 se 1.79 up-half 3.35 low-half 4.60 | d=0.0 P  0.0 K 92.1 L  1.7 | d=2.0 P  5.8 K 26.2 L 23.2 | d=3.0 P 13.7 K 13.0 L 33.8 | d=4.0 P 30.1 K  3.6 L 44.7 | d=5.0 P 43.3 K  1.3 L 55.6 | d=6.0 P 65.4 K  0.1 L 68.6 | d=7.0 P 83.9 K  0.0 L 85.0 | d=9.2 P 95.0 K  0.0 L 95.5
+r4a1           n=240 se 1.21 up-half 2.61 low-half 2.78 | d=0.0 P  0.0 K 99.9 L  1.2 | d=2.0 P  1.4 K 45.6 L 45.8 | d=3.0 P  7.5 K 22.4 L 63.6 | d=4.0 P 34.7 K  4.3 L 77.9 | d=5.0 P 52.6 K  1.3 L 86.2 | d=6.0 P 87.3 K  0.1 L 94.8 | d=7.0 P 98.2 K  0.0 L 99.2 | d=9.2 P 99.8 K  0.0 L100.0
+grid_r4a2      n= 40 se 1.99 up-half 3.54 low-half 5.43 | d=0.0 P  0.1 K 78.5 L  1.4 | d=2.0 P  1.6 K 38.8 L  8.2 | d=3.0 P  5.9 K 22.1 L 17.0 | d=4.0 P 16.2 K  7.4 L 29.4 | d=5.0 P 34.0 K  1.3 L 41.3 | d=6.0 P 49.4 K  0.3 L 53.8 | d=7.0 P 62.3 K  0.1 L 65.5 | d=9.2 P 82.2 K  0.1 L 82.8
+grid_r4a2      n= 80 se 1.27 up-half 2.43 low-half 3.56 | d=0.0 P  0.0 K 97.5 L  1.4 | d=2.0 P  0.3 K 65.0 L 16.4 | d=3.0 P  2.3 K 41.0 L 36.1 | d=4.0 P 15.1 K 10.4 L 59.6 | d=5.0 P 49.4 K  0.7 L 73.0 | d=6.0 P 77.2 K  0.0 L 86.8 | d=7.0 P 87.9 K  0.0 L 94.2 | d=9.2 P 98.7 K  0.0 L 99.0
+grid_r4a2      n=120 se 1.05 up-half 1.90 low-half 2.93 | d=0.0 P  0.0 K 99.8 L  1.2 | d=2.0 P  0.0 K 83.0 L 22.1 | d=3.0 P  0.5 K 59.2 L 50.9 | d=4.0 P 11.9 K 17.3 L 77.8 | d=5.0 P 49.4 K  1.2 L 88.1 | d=6.0 P 84.0 K  0.0 L 96.4 | d=7.0 P 92.5 K  0.0 L 99.0 | d=9.2 P100.0 K  0.0 L100.0
+grid_r4a2      n=240 se 0.66 up-half 1.29 low-half 2.14 | d=0.0 P  0.0 K100.0 L  1.6 | d=2.0 P  0.0 K 98.9 L 40.8 | d=3.0 P  0.0 K 90.4 L 85.0 | d=4.0 P  4.3 K 30.9 L 97.4 | d=5.0 P 52.6 K  1.5 L 99.7 | d=6.0 P 92.7 K  0.0 L100.0 | d=7.0 P 97.9 K  0.0 L100.0 | d=9.2 P100.0 K  0.0 L100.0
+z33133         n= 40 se 1.85 up-half 3.61 low-half 4.98 | d=0.0 P  0.1 K 73.7 L  1.7 | d=2.0 P  1.6 K 44.4 L 13.3 | d=3.0 P  7.3 K 18.4 L 20.8 | d=4.0 P 20.3 K  5.5 L 35.2 | d=5.0 P 37.7 K  1.7 L 50.4 | d=6.0 P 57.1 K  0.5 L 63.1 | d=7.0 P 66.3 K  0.1 L 68.8 | d=9.2 P 80.8 K  0.0 L 81.2
+z33133         n= 80 se 1.25 up-half 2.43 low-half 3.32 | d=0.0 P  0.0 K 96.2 L  1.2 | d=2.0 P  0.1 K 75.8 L 24.1 | d=3.0 P  3.5 K 34.1 L 39.8 | d=4.0 P 21.1 K  7.8 L 65.3 | d=5.0 P 47.4 K  1.8 L 82.0 | d=6.0 P 81.6 K  0.1 L 92.8 | d=7.0 P 91.0 K  0.0 L 94.9 | d=9.2 P 98.5 K  0.0 L 98.5
+z33133         n=120 se 1.01 up-half 2.03 low-half 2.59 | d=0.0 P  0.0 K 99.7 L  1.2 | d=2.0 P  0.1 K 92.0 L 36.6 | d=3.0 P  1.6 K 50.1 L 55.1 | d=4.0 P 15.3 K 12.8 L 82.2 | d=5.0 P 47.6 K  1.4 L 94.5 | d=6.0 P 87.1 K  0.1 L 98.8 | d=7.0 P 96.8 K  0.0 L 99.3 | d=9.2 P 99.8 K  0.0 L 99.9
+z33133         n=240 se 0.69 up-half 1.57 low-half 1.61 | d=0.0 P  0.0 K100.0 L  1.2 | d=2.0 P  0.0 K 99.8 L 69.0 | d=3.0 P  0.1 K 80.5 L 86.8 | d=4.0 P  8.8 K 20.6 L 98.8 | d=5.0 P 50.8 K  1.7 L100.0 | d=6.0 P 95.0 K  0.0 L100.0 | d=7.0 P 99.7 K  0.0 L100.0 | d=9.2 P100.0 K  0.0 L100.0
+grid_z31333    n= 40 se 1.61 up-half 3.70 low-half 3.92 | d=0.0 P  0.1 K 76.8 L  1.4 | d=2.0 P  2.1 K 37.8 L 15.8 | d=3.0 P  6.7 K 22.2 L 30.0 | d=4.0 P 18.6 K  8.4 L 47.0 | d=5.0 P 43.9 K  1.8 L 65.8 | d=6.0 P 67.8 K  0.2 L 81.7 | d=7.0 P 82.2 K  0.1 L 88.2 | d=9.2 P 97.4 K  0.0 L 98.4
+grid_z31333    n= 80 se 1.06 up-half 2.42 low-half 2.70 | d=0.0 P  0.0 K 97.5 L  1.5 | d=2.0 P  0.4 K 64.9 L 29.9 | d=3.0 P  2.1 K 39.2 L 55.6 | d=4.0 P 13.2 K 12.0 L 79.2 | d=5.0 P 51.0 K  1.2 L 94.1 | d=6.0 P 83.5 K  0.1 L 99.1 | d=7.0 P 96.6 K  0.0 L 99.9 | d=9.2 P 99.9 K  0.0 L100.0
+grid_z31333    n=120 se 0.86 up-half 1.90 low-half 2.13 | d=0.0 P  0.0 K 99.8 L  1.2 | d=2.0 P  0.1 K 83.1 L 47.0 | d=3.0 P  0.4 K 58.0 L 74.5 | d=4.0 P  8.0 K 20.9 L 92.9 | d=5.0 P 50.0 K  1.5 L 98.9 | d=6.0 P 85.6 K  0.1 L 99.9 | d=7.0 P 98.3 K  0.0 L100.0 | d=9.2 P100.0 K  0.0 L100.0
+grid_z31333    n=240 se 0.59 up-half 1.33 low-half 1.52 | d=0.0 P  0.0 K100.0 L  1.4 | d=2.0 P  0.0 K 98.5 L 77.4 | d=3.0 P  0.0 K 86.9 L 96.7 | d=4.0 P  3.0 K 39.6 L 99.8 | d=5.0 P 51.1 K  1.8 L100.0 | d=6.0 P 93.2 K  0.0 L100.0 | d=7.0 P 99.7 K  0.0 L100.0 | d=9.2 P100.0 K  0.0 L100.0
+
+B. sign-flip null at n = 240 (true effect 0, symmetric): rate of lower bound > 0 (nominal 1.25 %), of PASS, of bounded KILL
+  r4a1           LB>0 1.30 %  PASS 0.00 %  boundedKILL 99.8 %  UB>... median UB 2.07
+  grid_r4a2      LB>0 2.10 %  PASS 0.00 %  boundedKILL 100.0 %  UB>... median UB 1.94
+  z33133         LB>0 1.70 %  PASS 0.00 %  boundedKILL 100.0 %  UB>... median UB 2.01
+  grid_z31333    LB>0 1.35 %  PASS 0.00 %  boundedKILL 100.0 %  UB>... median UB 1.68
+
+C. selection stage: 8 arms on n_sel seeds, pick the largest point. Joint seed resampling of 8 stored proxies.
+  proxies' stored medians [ -7.51  -3.75  -4.14  -2.11  -3.75 -11.15  -5.6   -2.54]
+  n_sel=20 all eight at 0: best-of-8 point median +3.40, p95 +8.21, P(best >= 5) 26.2 %
+     good arm noise z33133   P(pick good) others stored / others at 0: d=3.0  91.3/ 43.5 | d=5.0  96.3/ 69.2 | d=6.0  97.8/ 78.6 | d=7.0  98.4/ 85.1 | d=9.2  99.5/ 94.2
+     good arm noise r4a1     P(pick good) others stored / others at 0: d=3.0  80.9/ 45.2 | d=5.0  88.8/ 68.2 | d=6.0  91.6/ 75.8 | d=7.0  94.0/ 82.1 | d=9.2  97.5/ 90.7
+  n_sel=40 all eight at 0: best-of-8 point median +2.72, p95 +6.43, P(best >= 5) 14.8 %
+     good arm noise z33133   P(pick good) others stored / others at 0: d=3.0  98.5/ 54.9 | d=5.0  99.5/ 81.2 | d=6.0  99.8/ 89.8 | d=7.0  99.9/ 94.6 | d=9.2 100.0/ 98.9
+     good arm noise r4a1     P(pick good) others stored / others at 0: d=3.0  91.7/ 58.4 | d=5.0  96.8/ 82.6 | d=6.0  98.0/ 89.5 | d=7.0  98.9/ 94.0 | d=9.2  99.8/ 98.2
+  n_sel=60 all eight at 0: best-of-8 point median +2.12, p95 +5.26, P(best >= 5) 8.1 %
+     good arm noise z33133   P(pick good) others stored / others at 0: d=3.0  99.7/ 63.1 | d=5.0 100.0/ 87.9 | d=6.0 100.0/ 94.5 | d=7.0 100.0/ 97.8 | d=9.2 100.0/ 99.7
+     good arm noise r4a1     P(pick good) others stored / others at 0: d=3.0  95.4/ 68.2 | d=5.0  98.7/ 89.6 | d=6.0  99.4/ 94.5 | d=7.0  99.8/ 97.3 | d=9.2 100.0/ 99.6
+  n_sel=80 all eight at 0: best-of-8 point median +2.02, p95 +5.07, P(best >= 5) 5.8 %
+     good arm noise z33133   P(pick good) others stored / others at 0: d=3.0 100.0/ 67.4 | d=5.0 100.0/ 91.4 | d=6.0 100.0/ 97.1 | d=7.0 100.0/ 99.1 | d=9.2 100.0/ 99.9
+     good arm noise r4a1     P(pick good) others stored / others at 0: d=3.0  97.5/ 74.0 | d=5.0  99.6/ 93.8 | d=6.0  99.8/ 97.7 | d=7.0  99.9/ 99.0 | d=9.2 100.0/ 99.9

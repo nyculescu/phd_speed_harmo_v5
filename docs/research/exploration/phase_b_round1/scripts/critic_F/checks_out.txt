@@ -1,0 +1,47 @@
+meta: {'cell': 'TRUCK', 'objective': 'ttc', 'pool': [7480150, 7480189], 'check': [7480190, 7480229], 'pop': 24, 'sigma': 0.25, 'seeds_per_gen': 16, 'gens': 100, 'check_at': [20, 30, 40, 50, 60, 70, 80, 90, 100], 'k_check': 5, 'cma_seed': 20261109, 'loss': {'cap': 1.0, 'w_delay': 10.0, 'w_coll': 5.0}, 'start': {'level': 0, 'th': 10, 'crowd': 10}}
+pick label: not converged at 100 generations | incumbent g098i00 found_at 100 check_loss -32.53 {'ttc_pct': -32.53, 'delay_pct': -0.1, 'delay_over': 0.0, 'coll_extra': 0.0, 'alks_full_events': -8.5, 'alks_b45_step': -71.9}
+incumbent params: [{'th': 6.1, 'crowd': 28, 'level': 3, 'free': 3}, {'th': 13.5, 'crowd': 4, 'level': 3, 'free': 1}, {'th': 17.0, 'crowd': 0, 'level': 0, 'free': 3}, {'th': 13.8, 'crowd': 9, 'level': 0, 'free': 3}, {'th': 9.1, 'crowd': 29, 'level': 0, 'free': 3}]
+check gen  20: 6 cands, 5 admissible; cand check_loss min -11.62 med -5.52; cand ttc_pct -5.2 -12.7 3.4 -5.4 -11.6 -6.7; cand delay_pct 1.00 1.71 5.60 -1.09 -0.54 0.51 | incumbent g003i06 found_at 20 loss -11.62 ttc -11.62 delay -0.54
+check gen  30: 6 cands, 5 admissible; cand check_loss min -16.80 med -10.60; cand ttc_pct -12.2 -10.0 -9.0 -0.3 -16.8 -13.8; cand delay_pct -0.35 2.18 -0.65 0.48 0.13 -0.69 | incumbent g028i23 found_at 30 loss -16.80 ttc -16.80 delay 0.13
+check gen  40: 6 cands, 6 admissible; cand check_loss min -20.60 med -11.91; cand ttc_pct -15.5 -10.8 -3.1 -4.7 -20.6 -15.3; cand delay_pct -0.32 1.23 1.02 0.15 -1.41 -0.50 | incumbent g031i19 found_at 40 loss -20.60 ttc -20.60 delay -1.41
+check gen  50: 6 cands, 6 admissible; cand check_loss min -23.41 med -15.44; cand ttc_pct -23.4 -13.7 -10.9 -22.3 -17.6 -17.0; cand delay_pct -1.03 -1.74 0.20 -1.83 1.37 -0.00 | incumbent g043i20 found_at 50 loss -23.41 ttc -23.41 delay -1.03
+check gen  60: 6 cands, 6 admissible; cand check_loss min -23.97 med -17.19; cand ttc_pct -9.9 -22.4 -20.3 -14.1 -12.7 -24.0; cand delay_pct -0.89 -1.21 -0.31 -0.31 -0.72 0.07 | incumbent mean_g060 found_at 60 loss -23.97 ttc -23.97 delay 0.07
+check gen  70: 6 cands, 5 admissible; cand check_loss min -32.22 med -20.78; cand ttc_pct -32.2 -15.3 -18.1 -23.4 -23.9 -20.6; cand delay_pct -1.83 3.02 0.97 -0.43 0.26 -0.55 | incumbent g065i01 found_at 70 loss -32.22 ttc -32.22 delay -1.83
+check gen  80: 6 cands, 6 admissible; cand check_loss min -28.12 med -16.05; cand ttc_pct -28.1 -10.4 -27.8 -18.8 -20.3 -18.3; cand delay_pct -0.90 1.08 -0.50 -0.79 1.89 0.25 | incumbent g065i01 found_at 70 loss -32.22 ttc -32.22 delay -1.83
+check gen  90: 6 cands, 4 admissible; cand check_loss min -26.78 med -13.86; cand ttc_pct -14.6 -14.2 -26.8 -16.5 -21.1 -15.7; cand delay_pct 2.35 1.22 0.44 -0.49 2.58 -0.21 | incumbent g065i01 found_at 70 loss -32.22 ttc -32.22 delay -1.83
+check gen 100: 6 cands, 4 admissible; cand check_loss min -32.53 med -14.67; cand ttc_pct -16.5 -16.5 -32.5 -20.0 -24.4 -19.9; cand delay_pct 2.16 1.93 -0.10 1.05 1.29 0.41 | incumbent g098i00 found_at 100 loss -32.53 ttc -32.53 delay -0.10
+generations: 100
+gen   0 seeds 7480150..7480165 (16): loss min -16.73 med 29.48 | ttc_pct med -3.40 | delay_pct med 4.12 | share with delay>1%: 0.88
+gen   5 seeds 7480150..7480165 (16): loss min -23.00 med 2.60 | ttc_pct med -0.65 | delay_pct med 1.04 | share with delay>1%: 0.50
+gen  10 seeds 7480150..7480165 (16): loss min -21.57 med -3.83 | ttc_pct med -5.03 | delay_pct med 0.51 | share with delay>1%: 0.42
+gen  15 seeds 7480150..7480165 (16): loss min -18.93 med 8.71 | ttc_pct med -1.97 | delay_pct med 1.47 | share with delay>1%: 0.54
+gen  20 seeds 7480150..7480165 (16): loss min -26.71 med 10.53 | ttc_pct med -1.63 | delay_pct med 2.13 | share with delay>1%: 0.67
+gen  25 seeds 7480150..7480165 (16): loss min -21.61 med -2.37 | ttc_pct med -4.65 | delay_pct med 0.09 | share with delay>1%: 0.29
+gen  30 seeds 7480150..7480165 (16): loss min -26.58 med -1.34 | ttc_pct med -5.70 | delay_pct med 0.70 | share with delay>1%: 0.42
+gen  35 seeds 7480150..7480165 (16): loss min -22.06 med -8.86 | ttc_pct med -8.86 | delay_pct med 0.01 | share with delay>1%: 0.21
+gen  40 seeds 7480150..7480165 (16): loss min -25.28 med -9.26 | ttc_pct med -9.53 | delay_pct med 0.42 | share with delay>1%: 0.25
+gen  45 seeds 7480150..7480165 (16): loss min -31.05 med -13.51 | ttc_pct med -14.72 | delay_pct med -0.35 | share with delay>1%: 0.12
+gen  50 seeds 7480150..7480165 (16): loss min -29.84 med -17.97 | ttc_pct med -18.19 | delay_pct med -0.42 | share with delay>1%: 0.04
+gen  55 seeds 7480150..7480165 (16): loss min -27.20 med -12.71 | ttc_pct med -13.49 | delay_pct med -0.40 | share with delay>1%: 0.04
+gen  60 seeds 7480150..7480165 (16): loss min -31.99 med -16.09 | ttc_pct med -16.89 | delay_pct med 0.25 | share with delay>1%: 0.33
+gen  65 seeds 7480150..7480165 (16): loss min -41.03 med -14.63 | ttc_pct med -15.15 | delay_pct med 0.54 | share with delay>1%: 0.33
+gen  70 seeds 7480150..7480165 (16): loss min -39.02 med -14.72 | ttc_pct med -15.59 | delay_pct med -0.40 | share with delay>1%: 0.17
+gen  75 seeds 7480150..7480165 (16): loss min -28.86 med -19.24 | ttc_pct med -19.24 | delay_pct med -0.33 | share with delay>1%: 0.17
+gen  80 seeds 7480150..7480165 (16): loss min -37.27 med -14.36 | ttc_pct med -16.82 | delay_pct med 0.52 | share with delay>1%: 0.46
+gen  85 seeds 7480150..7480165 (16): loss min -34.36 med -19.22 | ttc_pct med -20.07 | delay_pct med 0.68 | share with delay>1%: 0.38
+gen  90 seeds 7480150..7480165 (16): loss min -32.08 med -18.79 | ttc_pct med -19.64 | delay_pct med 0.70 | share with delay>1%: 0.46
+gen  95 seeds 7480150..7480165 (16): loss min -31.95 med -12.45 | ttc_pct med -16.51 | delay_pct med 1.21 | share with delay>1%: 0.58
+gen  96 seeds 7480166..7480181 (16): loss min -28.67 med -17.64 | ttc_pct med -19.02 | delay_pct med 1.23 | share with delay>1%: 0.62
+gen  97 seeds 7480182..7480157 (16): loss min -34.56 med -15.95 | ttc_pct med -17.11 | delay_pct med 0.86 | share with delay>1%: 0.42
+gen  98 seeds 7480158..7480173 (16): loss min -42.34 med 0.85 | ttc_pct med -14.93 | delay_pct med 2.48 | share with delay>1%: 0.75
+gen  99 seeds 7480174..7480189 (16): loss min -32.75 med -15.59 | ttc_pct med -16.92 | delay_pct med 0.74 | share with delay>1%: 0.46
+gens   0-  9: median of generation-median loss 9.59, ttc_pct -2.30
+gens  10- 19: median of generation-median loss 1.49, ttc_pct -3.35
+gens  20- 29: median of generation-median loss -0.80, ttc_pct -4.19
+gens  30- 39: median of generation-median loss -7.88, ttc_pct -8.22
+gens  40- 49: median of generation-median loss -8.22, ttc_pct -9.45
+gens  50- 59: median of generation-median loss -11.65, ttc_pct -12.23
+gens  60- 69: median of generation-median loss -10.45, ttc_pct -11.72
+gens  70- 79: median of generation-median loss -12.29, ttc_pct -12.94
+gens  80- 89: median of generation-median loss -11.37, ttc_pct -12.57
+gens  90- 99: median of generation-median loss -15.77, ttc_pct -17.02

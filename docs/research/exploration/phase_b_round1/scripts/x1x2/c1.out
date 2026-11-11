@@ -1,0 +1,22 @@
+
+
+X1 vs p333: n=120 median +4.24 mean +3.76 SD 7.47 (per set r1test 8.3, r2val 6.9, r2test 6.7); robust SD (MAD) 6.37; single-learner SD 8.9-11.2
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 59, 5 % -> 22; x pi/2 for a median of normal data: 93, 34
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (80, np.float64(0.8533333333333334)), 5 % -> (30, np.float64(0.818))
+X1 vs lr1000_10_1: n=120 median +4.60 mean +4.78 SD 7.37 (per set r1test 7.1, r2val 8.0, r2test 6.8); robust SD (MAD) 6.57; single-learner SD 9.1-10.7
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 58, 5 % -> 21; x pi/2 for a median of normal data: 91, 33
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (50, np.float64(0.866)), 5 % -> (25, np.float64(0.8786666666666667))
+X1 vs os0_10_10: n=120 median +4.63 mean +5.71 SD 10.26 (per set r1test 11.3, r2val 9.5, r2test 9.7); robust SD (MAD) 9.40; single-learner SD 10.4-13.3
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 112, 5 % -> 41; x pi/2 for a median of normal data: 175, 63
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (120, np.float64(0.8206666666666667)), 5 % -> (60, np.float64(0.8))
+X2 vs os0_10_10: n=120 median +1.94 mean +2.48 SD 6.98 (per set r1test 8.1, r2val 5.8, r2test 6.9); robust SD (MAD) 7.66; single-learner SD 8.1-9.4
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 52, 5 % -> 19; x pi/2 for a median of normal data: 81, 30
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (100, np.float64(0.8146666666666667)), 5 % -> (25, np.float64(0.858))
+X2 vs lr1000_10_1: n=120 median +3.27 mean +2.73 SD 6.88 (per set r1test 7.0, r2val 7.0, r2test 6.7); robust SD (MAD) 8.76; single-learner SD 8.1-9.4
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 50, 5 % -> 18; x pi/2 for a median of normal data: 79, 29
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (240, np.float64(0.8273333333333334)), 5 % -> (80, np.float64(0.8646666666666667))
+X2 vs p333: n=120 median +3.74 mean +3.56 SD 6.08 (per set r1test 6.0, r2val 5.5, r2test 6.3); robust SD (MAD) 6.24; single-learner SD 7.1-8.9
+   normal approx (mean, 97.5 % two-sided, 80 % power): 3 % -> 40, 5 % -> 15; x pi/2 for a median of normal data: 62, 23
+   resampling (median, percentile bootstrap 97.5 %): 3 % -> (60, np.float64(0.8346666666666667)), 5 % -> (25, np.float64(0.84))
+X1 share of 60-seed resamples in which v3w is NOT killed in this cell (stored rules only): {'fixed p333': np.float64(0.83), 'lowest median delay rule': np.float64(0.76), 'smallest advantage rule': np.float64(0.7)}
+X2 share of 60-seed resamples in which v3w is NOT killed in this cell (stored rules only): {'fixed p333': np.float64(0.84), 'lowest median delay rule': np.float64(0.35), 'smallest advantage rule': np.float64(0.09)}

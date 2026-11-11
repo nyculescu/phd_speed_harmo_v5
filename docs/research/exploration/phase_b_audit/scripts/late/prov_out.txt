@@ -1,0 +1,30 @@
+== conf3 eval primary files 1 rows 720 all_delay rows 720
+   plant 720 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 20 7440200 7440219 | levels 1 [5300.0] ... [5300.0] | cond ['X1', 'X2']
+== conf3b x2 files 1 rows 360 all_delay rows 360
+   plant 360 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 20 7440220 7440239 | levels 1 [5300.0] ... [5300.0] | cond ['X2']
+== sweep V409 files 1 rows 1728 all_delay rows 1728
+   plant 1728 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 4 7440200 7440203 | levels 16 [3920.0, 4200.0, 4310.0, 4540.0] ... [5870.0, 5910.0] | cond ['S', 'X1', 'X2']
+== osc V410 files 1 rows 360 all_delay rows 360
+   plant 360 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 10 7440200 7440209 | levels 1 [4800.0] ... [4800.0] | cond ['S']
+== round1_sweep V419 files 1 rows 1680 all_delay rows 1680
+   plant 1680 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 10 7440600 7440609 | levels 21 [2500.0, 2750.0, 3000.0, 3250.0] ... [7250.0, 7500.0] | cond ['T']
+== round1 test files 1 rows 2240 all_delay rows 2240
+   plant 2240 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 40 7440500 7440539 | levels 1 [5300.0] ... [5300.0] | cond ['X1', 'X2']
+== round1 band files 1 rows 1300 all_delay rows 1300
+   plant 1300 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 20 7440540 7440559 | levels 5 [4500.0, 5000.0, 5250.0, 5500.0] ... [5500.0, 6000.0] | cond ['B']
+== round2 test files 1 rows 2800 all_delay rows 2800
+   plant 2800 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 40 7440840 7440879 | levels 1 [5300.0] ... [5300.0] | cond ['X1', 'X2']
+== round2 val files 6 rows 7200 all_delay rows 7200
+   plant 7200 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 40 7440800 7440839 | levels 1 [5300.0] ... [5300.0] | cond ['X1', 'X2']
+== s01 rows_s1 files 1 rows 360 all_delay rows 360
+   plant 360 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+   seeds 20 7440900 7440919 | levels 2 [3500.0, 7000.0] ... [3500.0, 7000.0] | cond ['B']

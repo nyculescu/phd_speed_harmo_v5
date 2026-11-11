@@ -1,0 +1,2 @@
+all_delay pseudo-arms of 5 rules against a sixth, 168 combinations: offset (pooled minus mean of singles) median -0.17, 5th-95th percentile -0.39 to -0.02, share below 0: 0.98
+ttc_net   pseudo-arms of 5 rules against a sixth, 168 combinations: offset (pooled minus mean of singles) median -1.55, 5th-95th percentile -4.27 to -0.02, share below 0: 0.95

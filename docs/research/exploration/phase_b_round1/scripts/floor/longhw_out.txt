@@ -1,0 +1,33 @@
+p333 {"cav_rule": [3, 3, 3]}
+grid_z31333 {"pattern": [3, 1, 3, 3, 3]}
+z33133 {"pattern": [3, 3, 1, 3, 3]}
+r4a1 {"road_levels": {"4a": 1}}
+grid_r4a2 {"road_levels": {"4a": 2}}
+a4400_10_1 {"adaptive_4a": {"r": 400, "th": 10, "level": 1, "road_level": 1}}
+grid_a41000_10_2 {"adaptive_4a": {"r": 1000, "th": 10, "level": 2, "road_level": 2}}
+copy {"road_levels": {"1": 2, "2": 3, "3": 2, "3a": 2, "4": 2, "4a": 1, "5": 2, "r": 1, "r2": 0, "rj": 1, "rj2": 0}}
+os0_10_10 {"own_state": {"level": 0, "th": 10, "crowd": 10}}
+os1_15_10 {"own_state": {"level": 1, "th": 15, "crowd": 10}}
+os1_10_0 {"own_state": {"level": 1, "th": 10, "crowd": 0}}
+##### S arm minus p333, % of p333's median; positive = the arm has more
+ grid_z31333: all_delay +2.11 [+1.00, +3.52] %; close-following -7.64 [-14.32, +3.50] %; delay on 3 +6.70 [+5.56, +7.79], on 4a -2.43 [-5.34, +5.20], on 3a +16.64 [+15.11, +18.21], ramp2 +0.01 [-0.09, +0.18]; medians all_delay 127475 vs 126296
+ z33133: all_delay +4.14 [+2.60, +5.61] %; close-following +15.43 [+1.91, +31.66] %; delay on 3 +17.67 [+16.04, +18.71], on 4a +11.51 [+4.66, +20.70], on 3a -1.42 [-2.52, -0.27], ramp2 +0.54 [+0.25, +1.13]; medians all_delay 132047 vs 126296
+ r4a1: all_delay +7.51 [+4.74, +9.24] %; close-following +38.82 [+11.14, +61.10] %; delay on 3 +4.87 [+3.63, +7.91], on 4a +40.34 [+28.57, +53.50], on 3a -1.02 [-2.39, +1.33], ramp2 +8.34 [+1.46, +20.53]; medians all_delay 138812 vs 126296
+ grid_r4a2: all_delay +3.75 [+2.56, +5.57] %; close-following +18.85 [+4.38, +30.71] %; delay on 3 +2.45 [+1.35, +3.77], on 4a +23.58 [+16.45, +35.12], on 3a -1.47 [-2.52, +0.09], ramp2 +0.44 [+0.25, +0.85]; medians all_delay 133398 vs 126296
+ a4400_10_1: all_delay +11.15 [+6.69, +13.02] %; close-following +37.47 [+18.38, +72.79] %; delay on 3 +8.48 [+4.61, +12.46], on 4a +50.05 [+36.03, +66.70], on 3a -0.37 [-2.14, +1.71], ramp2 +17.61 [+7.38, +37.55]; medians all_delay 139804 vs 126296
+ grid_a41000_10_2: all_delay +3.75 [+2.56, +5.57] %; close-following +18.85 [+4.38, +31.34] %; delay on 3 +2.45 [+1.35, +3.77], on 4a +24.29 [+17.65, +36.88], on 3a -1.22 [-2.46, +0.29], ramp2 +0.44 [+0.25, +0.85]; medians all_delay 133398 vs 126296
+ copy: all_delay +16.61 [+14.79, +18.89] %; close-following +49.32 [+24.02, +74.14] %; delay on 3 +19.71 [+16.31, +23.44], on 4a +58.80 [+44.55, +69.65], on 3a +6.20 [+5.08, +8.49], ramp2 +35.06 [+15.79, +71.86]; medians all_delay 150344 vs 126296
+ os0_10_10: all_delay +0.00 [+0.00, +0.00] %; close-following +0.00 [+0.00, +0.00] %; delay on 3 +0.00 [+0.00, +0.00], on 4a +0.00 [+0.00, +0.00], on 3a +0.00 [+0.00, +0.00], ramp2 +0.00 [+0.00, +0.00]; medians all_delay 126111 vs 126296
+ os1_15_10: all_delay +0.00 [+0.00, +0.00] %; close-following +0.00 [+0.00, +0.00] %; delay on 3 +0.00 [+0.00, +0.00], on 4a +0.00 [+0.00, +0.00], on 3a +0.00 [+0.00, +0.00], ramp2 +0.00 [+0.00, +0.00]; medians all_delay 127037 vs 126296
+ os1_10_0: all_delay +2.05 [+0.55, +4.53] %; close-following +13.05 [-0.24, +30.07] %; delay on 3 +2.69 [+1.13, +3.83], on 4a +9.31 [+2.43, +21.64], on 3a -0.53 [-1.60, +0.80], ramp2 +0.39 [+0.19, +1.05]; medians all_delay 130006 vs 126296
+##### TRUCK arm minus p333, % of p333's median; positive = the arm has more
+ grid_z31333: all_delay +1.41 [+0.76, +2.10] %; close-following +0.13 [-5.77, +4.80] %; delay on 3 +4.81 [+4.04, +5.57], on 4a +0.27 [-3.25, +3.99], on 3a +13.65 [+12.30, +15.71], ramp2 -0.04 [-0.20, +0.11]; medians all_delay 164117 vs 161493
+ z33133: all_delay +3.00 [+2.35, +4.08] %; close-following +5.60 [+1.78, +12.31] %; delay on 3 +15.43 [+14.00, +17.56], on 4a +7.27 [+3.54, +11.47], on 3a -0.50 [-1.63, +1.05], ramp2 +0.75 [+0.33, +1.50]; medians all_delay 166922 vs 161493
+ r4a1: all_delay +3.91 [+3.12, +4.97] %; close-following +7.22 [+1.61, +12.35] %; delay on 3 +4.35 [+2.92, +6.64], on 4a +18.52 [+14.57, +24.97], on 3a -0.48 [-1.95, +0.98], ramp2 +3.94 [+0.92, +14.47]; medians all_delay 169002 vs 161493
+ grid_r4a2: all_delay +2.30 [+1.22, +3.12] %; close-following +5.94 [-2.76, +12.73] %; delay on 3 +1.93 [+1.22, +3.06], on 4a +13.92 [+9.83, +18.10], on 3a +0.26 [-0.92, +1.48], ramp2 +0.89 [+0.47, +4.36]; medians all_delay 165644 vs 161493
+ a4400_10_1: all_delay +4.56 [+3.24, +5.41] %; close-following -0.85 [-8.23, +6.80] %; delay on 3 +7.08 [+5.55, +10.59], on 4a +21.34 [+16.22, +25.69], on 3a -0.15 [-1.70, +1.27], ramp2 +6.78 [+2.46, +19.18]; medians all_delay 170652 vs 161493
+ grid_a41000_10_2: all_delay +2.30 [+1.22, +3.19] %; close-following +7.60 [+0.21, +13.07] %; delay on 3 +1.93 [+1.17, +3.01], on 4a +14.27 [+10.17, +18.97], on 3a +0.15 [-1.07, +1.48], ramp2 +0.88 [+0.46, +3.90]; medians all_delay 165558 vs 161493
+ copy: all_delay +12.17 [+11.33, +13.03] %; close-following +6.07 [+0.89, +14.81] %; delay on 3 +20.75 [+17.76, +23.15], on 4a +28.20 [+22.52, +32.01], on 3a +8.08 [+6.95, +10.04], ramp2 +54.12 [+32.73, +75.83]; medians all_delay 181190 vs 161493
+ os0_10_10: all_delay +0.00 [-0.01, +0.07] %; close-following -5.22 [-8.74, -2.72] %; delay on 3 +0.33 [+0.12, +1.01], on 4a +0.00 [-2.30, +0.29], on 3a +0.00 [-0.26, +0.00], ramp2 +0.01 [+0.00, +0.06]; medians all_delay 162350 vs 161493
+ os1_15_10: all_delay +0.14 [+0.00, +0.43] %; close-following -2.72 [-4.20, -0.21] %; delay on 3 +0.27 [+0.08, +0.74], on 4a +0.44 [+0.00, +1.33], on 3a -0.00 [-0.47, +0.00], ramp2 +0.02 [+0.00, +0.13]; medians all_delay 163151 vs 161493
+ os1_10_0: all_delay +1.60 [+1.16, +2.52] %; close-following -0.68 [-6.79, +4.33] %; delay on 3 +3.23 [+2.41, +4.24], on 4a +5.35 [+0.81, +9.75], on 3a -1.04 [-1.89, +0.19], ramp2 +0.38 [+0.12, +1.50]; medians all_delay 165583 vs 161493

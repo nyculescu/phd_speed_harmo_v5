@@ -1,0 +1,48 @@
+
+##### TRUCK
+(a) pooled median 161591; mean of the 5 learner medians 160557; pooled mean 161907
+    skewness of all_delay: single learner runs 0.55 0.32 0.62 0.37 0.41; pooled 0.32; lr1000_10_1 0.49
+    opp | pooled median-stat (pos = v3w better) | mean of 5 per-learner points | paired MEAN diff, pos = v3w higher delay, % of opp mean [95 % CI]
+    lr1000_10_1      -0.25 [-0.78, +0.46] | +0.11 | -0.55 [-1.24, +0.11]
+    p333             -0.25 [-0.78, +0.46] | +0.14 | -0.55 [-1.23, +0.10]
+    lr1000_16_2      +0.27 [-0.19, +0.81] | +0.59 | -1.19 [-1.88, -0.53]
+    grid_lr400_13_1  +0.83 [-0.02, +1.54] | +1.04 | -2.28 [-3.16, -1.45]
+    os0_10_10        -0.58 [-0.91, +0.04] | +0.04 | -0.41 [-1.10, +0.25]
+    3E-D_TRUCK       +0.08 [-0.47, +0.81] | +0.22 | -0.71 [-1.37, -0.06]
+    grid_os1_10_10   +0.16 [-0.61, +0.92] | +0.39 | -0.83 [-1.49, -0.17]
+    lr400_13_2       +0.72 [-0.03, +1.47] | +0.75 | -1.59 [-2.36, -0.85]
+    os1_15_10        +0.18 [-0.57, +0.83] | +0.42 | -0.94 [-1.62, -0.28]
+(b) scheduler that picks per seed the opponent lowest in S on that seed, vs best single lr1000_10_1 (pos = scheduler lower): -0.97 [-1.47, -0.37]
+    per-seed rank correlation of the 23 opponents' delay between TRUCK and S: median 0.29, IQR [0.12, 0.44]
+    per-opponent correlation across seeds of its seed-centred delay in TRUCK and in S: median 0.20, min -0.03, max 0.28
+(d) close-following median s per run: nc 1234.0, lowest opponent 3E-C_TRUCK 951.0, v3w pooled 819.5; v3w vs nc +29.06 [+26.35, +33.23]; lowest opp vs nc +22.29 [+16.94, +28.93]
+    opponents with CI-clear lower cf than nc: 4 of 23
+
+##### S
+(a) pooled median 127465; mean of the 5 learner medians 125957; pooled mean 129875
+    skewness of all_delay: single learner runs 1.49 1.24 1.43 1.05 0.94; pooled 0.81; grid_os1_10_10 1.06
+    opp | pooled median-stat (pos = v3w better) | mean of 5 per-learner points | paired MEAN diff, pos = v3w higher delay, % of opp mean [95 % CI]
+    grid_os1_10_10   -1.11 [-2.14, +0.18] | -0.12 | -0.09 [-1.45, +1.28]
+    3E-D_TRUCK       -0.70 [-1.43, +0.19] | +0.07 | -0.73 [-2.08, +0.63]
+    os0_10_10        -1.61 [-2.64, -1.03] | -0.46 | +0.50 [-0.96, +1.93]
+    MPC-F            -0.53 [-1.26, +0.79] | +0.72 | -1.80 [-3.32, -0.30]
+    lr1000_10_1      -1.57 [-2.62, -0.55] | -0.10 | -0.31 [-1.71, +1.12]
+    p333             -1.57 [-2.62, -0.55] | -0.11 | -0.30 [-1.69, +1.12]
+    3E-C_TRUCK       -0.01 [-1.20, +1.20] | +1.43 | -2.67 [-4.18, -1.19]
+    lr400_13_2       -0.43 [-1.95, +0.67] | +0.40 | -1.35 [-2.88, +0.16]
+    grid_lr400_13_1  -0.50 [-1.77, +0.38] | +0.62 | -2.21 [-3.82, -0.64]
+    recorded S map os0_10_10 delay: {"effect": -1.6085629484076893, "ci95": [-2.636058294548708, -1.0265176101833273], "ci_m": [-2.7776445198874593, -0.8868349650311278], "tile": "T", "policies_w": 0}
+(b) scheduler that picks per seed the opponent lowest in TRUCK on that seed, vs best single grid_os1_10_10 (pos = scheduler lower): +0.00 [-0.20, +0.00]
+    per-seed rank correlation of the 23 opponents' delay between TRUCK and S: median 0.29, IQR [0.12, 0.44]
+    per-opponent correlation across seeds of its seed-centred delay in TRUCK and in S: median 0.20, min -0.03, max 0.28
+(d) close-following median s per run: nc 1234.0, lowest opponent MPC-F 523.5, v3w pooled 548.5; v3w vs nc +45.86 [+42.20, +50.47]; lowest opp vs nc +35.17 [+25.85, +44.09]
+    opponents with CI-clear lower cf than nc: 17 of 23
+
+(c) loss = TRUCK - S delay on the same seed (veh-s), median [95 % CI]
+    nc +28788.11 [+25185.27, +31821.02]
+    lr1000_10_1 +33162.70 [+31239.57, +35253.07]
+    os0_10_10 +33561.02 [+31746.44, +36593.65]
+    grid_os1_10_10 +33167.63 [+31089.67, +35504.12]
+    3E-D_TRUCK +33377.01 [+31777.56, +35235.31]
+    v3w pooled +31458.76 [+30805.65, +32908.95]
+    recorded nc_median_loss: 28788.110339030973 status: report-only, not read: §8.5 reads R only

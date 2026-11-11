@@ -1,0 +1,26 @@
+delay non-inferiority: at least 4 of 5 learners with the 97.5 %% lower bound above -margin; true = the learners' delay effect (negative = worse)
+cell | opponent | seeds | margin | true %% | P(pass, learners) | P(pass, arm)
+TRUCK | p333       | 240 | 2 | +0.0 | 0.999 | 1.000
+TRUCK | p333       | 240 | 2 | -1.0 | 0.617 | 0.529
+TRUCK | p333       | 240 | 2 | -2.0 | 0.000 | 0.003
+TRUCK | p333       | 240 | 2 | -3.0 | 0.000 | 0.000
+TRUCK | os0_10_10  | 240 | 2 | +0.0 | 0.999 | 0.998
+TRUCK | os0_10_10  | 240 | 2 | -1.0 | 0.411 | 0.568
+TRUCK | os0_10_10  | 240 | 2 | -2.0 | 0.001 | 0.000
+TRUCK | os0_10_10  | 240 | 2 | -3.0 | 0.000 | 0.000
+TRUCK | 3E-C_TRUCK | 240 | 2 | +0.0 | 1.000 | 0.999
+TRUCK | 3E-C_TRUCK | 240 | 2 | -1.0 | 0.428 | 0.615
+TRUCK | 3E-C_TRUCK | 240 | 2 | -2.0 | 0.000 | 0.000
+TRUCK | 3E-C_TRUCK | 240 | 2 | -3.0 | 0.000 | 0.000
+S     | p333       | 240 | 2 | +0.0 | 0.622 | 0.255
+S     | p333       | 240 | 2 | -1.0 | 0.073 | 0.000
+S     | p333       | 240 | 2 | -2.0 | 0.000 | 0.000
+S     | p333       | 240 | 2 | -3.0 | 0.000 | 0.000
+S     | os0_10_10  | 240 | 2 | +0.0 | 0.642 | 0.303
+S     | os0_10_10  | 240 | 2 | -1.0 | 0.067 | 0.009
+S     | os0_10_10  | 240 | 2 | -2.0 | 0.000 | 0.000
+S     | os0_10_10  | 240 | 2 | -3.0 | 0.000 | 0.000
+TRUCK | p333       | 240 | 2 | stored effect | 1.000 | 1.000
+TRUCK | os0_10_10  | 240 | 2 | stored effect | 0.999 | 1.000
+S     | p333       | 240 | 2 | stored effect | 0.623 | 0.192
+S     | os0_10_10  | 240 | 2 | stored effect | 0.315 | 0.069

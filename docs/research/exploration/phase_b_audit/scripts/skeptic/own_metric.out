@@ -1,0 +1,111 @@
+### A. End-of-window backlog per arm (vehicles; medians), S6, 240 seeds
+  S     nc          unfinished   464.0 (mean   465.7) | not inserted at end   2.0 (mean   3.5) | passed  2137.0 | arrived  2089.0 | all_delay median    200589
+  S     p333        unfinished   392.0 (mean   393.2) | not inserted at end   2.0 (mean   2.9) | passed  2201.5 | arrived  2163.5 | all_delay median    126296
+  S     os0_10_10   unfinished   390.5 (mean   392.4) | not inserted at end   2.0 (mean   2.9) | passed  2204.0 | arrived  2164.0 | all_delay median    126111
+  S     3E-C_TRUCK  unfinished   391.0 (mean   395.4) | not inserted at end   2.0 (mean   2.9) | passed  2200.0 | arrived  2164.5 | all_delay median    126480
+  S     3E-D_TRUCK  unfinished   389.0 (mean   393.6) | not inserted at end   2.0 (mean   2.9) | passed  2202.5 | arrived  2162.5 | all_delay median    126057
+  S     w0u250      unfinished   388.0 (mean   389.9) | not inserted at end   2.0 (mean   3.0) | passed  2206.0 | arrived  2170.5 | all_delay median    124690
+  S     w1u500      unfinished   389.5 (mean   391.7) | not inserted at end   2.0 (mean   2.9) | passed  2205.0 | arrived  2168.5 | all_delay median    126160
+  S     w2u250      unfinished   387.5 (mean   391.4) | not inserted at end   2.0 (mean   3.0) | passed  2205.0 | arrived  2167.5 | all_delay median    126380
+  S     w3u500      unfinished   390.0 (mean   390.9) | not inserted at end   2.0 (mean   3.0) | passed  2202.0 | arrived  2167.0 | all_delay median    126693
+  S     w4u500      unfinished   390.0 (mean   392.8) | not inserted at end   2.0 (mean   2.9) | passed  2203.0 | arrived  2167.0 | all_delay median    125863
+  S v3w         minus p333: unfinished +0.0 [-1.0, +2.0] | not inserted +0.0 [+0.0, +0.0] | passed +1.0 [+0.0, +2.0] | arrived +0.0 [-2.0, +1.0]
+  S os0_10_10   minus p333: unfinished +0.0 [+0.0, +0.0] | not inserted +0.0 [+0.0, +0.0] | passed +0.0 [+0.0, +0.0] | arrived +0.0 [+0.0, +0.0]
+  S 3E-C_TRUCK  minus p333: unfinished +2.0 [+0.5, +4.0] | not inserted +0.0 [+0.0, +0.0] | passed -1.0 [-2.0, +1.0] | arrived -2.0 [-4.0, -0.5]
+  S 3E-D_TRUCK  minus p333: unfinished +0.0 [+0.0, +2.0] | not inserted +0.0 [+0.0, +0.0] | passed +0.0 [+0.0, +1.0] | arrived +0.0 [-2.0, +0.0]
+  S nc          minus p333: unfinished +73.5 [+67.0, +77.0] | not inserted +0.0 [+0.0, +0.0] | passed -59.0 [-66.0, -56.0] | arrived -73.5 [-77.0, -67.0]
+  TRUCK nc          unfinished   507.5 (mean   505.1) | not inserted at end   2.0 (mean   3.5) | passed  2110.0 | arrived  2051.0 | all_delay median    231312
+  TRUCK p333        unfinished   428.0 (mean   428.1) | not inserted at end   2.0 (mean   3.0) | passed  2181.0 | arrived  2130.5 | all_delay median    161493
+  TRUCK os0_10_10   unfinished   426.0 (mean   427.2) | not inserted at end   2.0 (mean   3.0) | passed  2181.5 | arrived  2131.5 | all_delay median    162350
+  TRUCK 3E-C_TRUCK  unfinished   427.5 (mean   431.1) | not inserted at end   2.0 (mean   3.0) | passed  2174.0 | arrived  2127.5 | all_delay median    164871
+  TRUCK 3E-D_TRUCK  unfinished   428.0 (mean   427.4) | not inserted at end   2.0 (mean   3.0) | passed  2181.0 | arrived  2130.5 | all_delay median    162405
+  TRUCK w0u250      unfinished   420.0 (mean   422.9) | not inserted at end   2.0 (mean   3.0) | passed  2188.0 | arrived  2137.0 | all_delay median    158775
+  TRUCK w1u500      unfinished   424.5 (mean   425.3) | not inserted at end   2.0 (mean   2.9) | passed  2185.0 | arrived  2131.5 | all_delay median    160333
+  TRUCK w2u250      unfinished   422.5 (mean   423.9) | not inserted at end   2.0 (mean   3.0) | passed  2183.0 | arrived  2134.0 | all_delay median    160065
+  TRUCK w3u500      unfinished   425.5 (mean   425.1) | not inserted at end   2.0 (mean   2.9) | passed  2183.0 | arrived  2132.5 | all_delay median    162362
+  TRUCK w4u500      unfinished   422.5 (mean   424.3) | not inserted at end   2.0 (mean   2.9) | passed  2182.0 | arrived  2132.5 | all_delay median    161252
+  TRUCK v3w         minus p333: unfinished -2.0 [-4.0, -1.0] | not inserted +0.0 [+0.0, +0.0] | passed +3.0 [+1.0, +5.0] | arrived +2.0 [+1.0, +4.0]
+  TRUCK os0_10_10   minus p333: unfinished +0.0 [+0.0, +0.0] | not inserted +0.0 [+0.0, +0.0] | passed -1.0 [-3.0, +0.0] | arrived +0.0 [+0.0, +0.0]
+  TRUCK 3E-C_TRUCK  minus p333: unfinished +2.0 [+0.0, +6.0] | not inserted +0.0 [+0.0, +0.0] | passed -4.0 [-7.5, -1.5] | arrived -2.0 [-6.0, +0.0]
+  TRUCK 3E-D_TRUCK  minus p333: unfinished -1.0 [-3.0, +1.0] | not inserted +0.0 [+0.0, +0.0] | passed +0.0 [-3.0, +3.0] | arrived +1.0 [-1.0, +3.0]
+  TRUCK nc          minus p333: unfinished +76.0 [+72.0, +79.0] | not inserted +0.0 [+0.0, +0.0] | passed -66.0 [-72.5, -61.0] | arrived -76.0 [-79.0, -72.0]
+
+### B. Reference speed sweep: delay(v) = N - dist_step / v. X minus p333, % of p333's median; positive = p333 better
+  S      80 km/h: p333 median     13408 | v3w +1.76 [-7.34, +9.74] | os0 +0.00 [+0.00, +0.00] | 3E-C +19.35 [+7.45, +30.55] | 3E-D +0.00 [-0.00, +2.02]
+  S      90 km/h: p333 median     75998 | v3w +0.24 [-1.23, +1.68] | os0 +0.00 [+0.00, +0.00] | 3E-C +3.43 [+1.20, +5.18] | 3E-D +0.00 [-0.00, +0.29]
+  S     100 km/h: p333 median    126296 | v3w +0.13 [-0.74, +0.98] | os0 +0.00 [+0.00, +0.00] | 3E-C +2.09 [+0.69, +3.08] | 3E-D +0.00 [-0.00, +0.21]
+  S     110 km/h: p333 median    167383 | v3w +0.10 [-0.55, +0.72] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.59 [+0.50, +2.30] | 3E-D +0.00 [-0.02, +0.16]
+  S     120 km/h: p333 median    201640 | v3w +0.10 [-0.47, +0.57] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.32 [+0.38, +1.89] | 3E-D +0.00 [-0.04, +0.14]
+  S     130 km/h: p333 median    230689 | v3w +0.09 [-0.39, +0.50] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.13 [+0.30, +1.65] | 3E-D +0.00 [-0.03, +0.13]
+  TRUCK  80 km/h: p333 median     49302 | v3w -0.59 [-2.32, +0.95] | os0 +0.01 [-0.05, +0.32] | 3E-C +4.57 [+1.43, +7.28] | 3E-D -0.18 [-0.88, +1.60]
+  TRUCK  90 km/h: p333 median    111700 | v3w -0.22 [-0.96, +0.40] | os0 +0.01 [-0.01, +0.12] | 3E-C +1.92 [+0.69, +3.09] | 3E-D -0.06 [-0.38, +0.64]
+  TRUCK 100 km/h: p333 median    161493 | v3w -0.13 [-0.65, +0.28] | os0 +0.00 [-0.01, +0.07] | 3E-C +1.28 [+0.48, +2.06] | 3E-D -0.01 [-0.25, +0.45]
+  TRUCK 110 km/h: p333 median    202119 | v3w -0.10 [-0.51, +0.23] | os0 +0.01 [-0.00, +0.05] | 3E-C +1.00 [+0.41, +1.66] | 3E-D +0.01 [-0.19, +0.36]
+  TRUCK 120 km/h: p333 median    235960 | v3w -0.07 [-0.45, +0.23] | os0 +0.00 [-0.00, +0.04] | 3E-C +0.86 [+0.37, +1.41] | 3E-D +0.02 [-0.20, +0.33]
+  TRUCK 130 km/h: p333 median    264968 | v3w -0.06 [-0.39, +0.21] | os0 +0.00 [+0.00, +0.04] | 3E-C +0.76 [+0.31, +1.25] | 3E-D +0.04 [-0.16, +0.29]
+
+### C. Completion charge: all_delay + h x unfinished vehicles at 1,800 s. X minus p333, % of p333's median; positive = p333 better
+  S     h=   0 s: v3w +0.13 [-0.74, +0.98] | os0 +0.00 [+0.00, +0.00] | 3E-C +2.09 [+0.69, +3.08] | 3E-D +0.00 [-0.00, +0.21]
+  S     h=  60 s: v3w +0.15 [-0.55, +0.90] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.91 [+0.77, +2.80] | 3E-D +0.00 [-0.00, +0.28]
+  S     h= 120 s: v3w +0.15 [-0.49, +0.86] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.63 [+0.36, +2.68] | 3E-D +0.00 [-0.01, +0.26]
+  S     h= 300 s: v3w +0.07 [-0.41, +0.54] | os0 +0.00 [+0.00, +0.00] | 3E-C +1.00 [+0.10, +2.18] | 3E-D +0.00 [-0.06, +0.33]
+  S     h= 600 s: v3w -0.04 [-0.48, +0.47] | os0 +0.00 [+0.00, +0.00] | 3E-C +0.88 [+0.11, +1.49] | 3E-D +0.00 [-0.02, +0.25]
+  S     h= 900 s: v3w +0.08 [-0.43, +0.50] | os0 +0.00 [+0.00, +0.00] | 3E-C +0.67 [+0.18, +1.24] | 3E-D +0.00 [-0.00, +0.52]
+  TRUCK h=   0 s: v3w -0.13 [-0.65, +0.28] | os0 +0.00 [-0.01, +0.07] | 3E-C +1.28 [+0.48, +2.06] | 3E-D -0.01 [-0.25, +0.45]
+  TRUCK h=  60 s: v3w -0.18 [-0.69, +0.25] | os0 +0.00 [-0.02, +0.08] | 3E-C +1.24 [+0.53, +1.93] | 3E-D -0.09 [-0.38, +0.41]
+  TRUCK h= 120 s: v3w -0.22 [-0.80, +0.23] | os0 +0.00 [-0.02, +0.09] | 3E-C +1.04 [+0.40, +1.82] | 3E-D -0.09 [-0.58, +0.35]
+  TRUCK h= 300 s: v3w -0.30 [-0.83, +0.12] | os0 +0.00 [-0.09, +0.03] | 3E-C +1.03 [+0.35, +1.60] | 3E-D -0.13 [-0.60, +0.37]
+  TRUCK h= 600 s: v3w -0.35 [-0.86, +0.06] | os0 +0.00 [-0.06, +0.08] | 3E-C +0.84 [+0.18, +1.75] | 3E-D -0.23 [-0.62, +0.31]
+  TRUCK h= 900 s: v3w -0.41 [-0.89, -0.02] | os0 +0.00 [-0.08, +0.02] | 3E-C +0.95 [+0.11, +1.79] | 3E-D -0.20 [-0.71, +0.28]
+
+### D. Start-up excluded: edges 2 to 4a plus ramp queues, minutes k0 to 24. X minus p333, % of p333's median; positive = p333 better
+  S     from minute  0: p333 median    42834 veh-s | v3w +0.50 [-1.94, +2.08] | os0 +0.00 [+0.00, +0.00] | 3E-C +4.75 [+2.46, +7.21] | 3E-D +0.00 [-0.59, +0.47]
+  S     from minute  5: p333 median    34945 veh-s | v3w +0.20 [-2.13, +1.75] | os0 +0.00 [+0.00, +0.00] | 3E-C +4.60 [+1.50, +8.28] | 3E-D +0.00 [-0.62, +0.58]
+  S     from minute 10: p333 median    26158 veh-s | v3w +0.03 [-1.61, +2.04] | os0 +0.00 [+0.00, +0.00] | 3E-C +4.64 [+1.40, +7.36] | 3E-D +0.00 [-0.75, +0.79]
+  S     from minute 15: p333 median    16549 veh-s | v3w +0.41 [-1.58, +2.31] | os0 +0.00 [+0.00, +0.00] | 3E-C +4.88 [+1.41, +8.43] | 3E-D +0.00 [-0.28, +1.70]
+  S     from minute 20: p333 median     8638 veh-s | v3w +0.33 [-2.31, +2.29] | os0 +0.00 [+0.00, +0.00] | 3E-C +4.61 [+1.84, +8.57] | 3E-D -0.15 [-2.40, +0.00]
+  S whole network all_delay, v3w minus p333, veh-s: +164 [-937, +1239]; edges 2-4a + ramp queues: all minutes +212 [-830, +889], first 5 +72 [+33, +121], last 5 +28 [-200, +198]
+  TRUCK from minute  0: p333 median    61203 veh-s | v3w -0.54 [-1.94, +0.92] | os0 +0.03 [-0.00, +0.47] | 3E-C +3.66 [+2.29, +6.03] | 3E-D -0.36 [-1.27, +1.10]
+  TRUCK from minute  5: p333 median    53269 veh-s | v3w -0.51 [-2.15, +0.84] | os0 +0.04 [-0.00, +0.54] | 3E-C +4.60 [+2.28, +6.39] | 3E-D -0.42 [-1.39, +1.20]
+  TRUCK from minute 10: p333 median    43716 veh-s | v3w -0.81 [-2.45, +0.62] | os0 +0.05 [-0.00, +0.64] | 3E-C +4.56 [+2.59, +6.80] | 3E-D -0.25 [-1.33, +1.46]
+  TRUCK from minute 15: p333 median    30654 veh-s | v3w -1.75 [-3.65, +0.24] | os0 +0.00 [-0.09, +0.72] | 3E-C +4.42 [+2.45, +7.07] | 3E-D -0.77 [-2.59, +1.49]
+  TRUCK from minute 20: p333 median    16349 veh-s | v3w -3.31 [-6.27, -0.60] | os0 +0.09 [+0.00, +1.11] | 3E-C +6.11 [+2.42, +9.41] | 3E-D -0.65 [-3.16, +1.51]
+  TRUCK whole network all_delay, v3w minus p333, veh-s: -215 [-1046, +449]; edges 2-4a + ramp queues: all minutes -328 [-1185, +564], first 5 +69 [+34, +110], last 5 -542 [-1026, -98]
+
+### E. Null of the pooled-arm statistic: mean of the other four learners minus one learner, % of that learner's median (all_delay)
+  S: +1.61 [+0.89, +2.81] | +1.60 [+0.55, +2.86] | +1.04 [-0.32, +1.96] | +0.45 [-1.43, +2.02] | +1.83 [+0.67, +2.51] | mean of the five +1.31
+  S: single learner minus single learner, 20 ordered pairs: medians min -1.31, max +1.33
+  S: each learner minus p333, % of p333 median: -0.49 [-1.65, +0.75] | -0.43 [-1.62, +1.22] | +0.27 [-0.98, +1.71] | +0.79 [-0.57, +1.89] | +0.41 [-0.62, +1.12]
+  TRUCK: +1.07 [+0.55, +1.49] | +0.51 [-0.26, +1.13] | +1.04 [+0.48, +1.42] | -0.27 [-0.81, +0.66] | -0.03 [-0.41, +0.58] | mean of the five +0.46
+  TRUCK: single learner minus single learner, 20 ordered pairs: medians min -1.00, max +1.01
+  TRUCK: each learner minus p333, % of p333 median: -0.09 [-0.61, +0.27] | -0.32 [-0.96, +0.24] | -0.52 [-1.29, +0.14] | +0.31 [-0.60, +0.82] | -0.08 [-0.79, +0.93]
+
+### F. X1, X2 (round 2 test rows, 40 seeds): p333 or rule minus v3w; positive = v3w better
+  X1: n=40, planned count in rows: False
+  X1 p333       | ref 80: +9.78 [+5.04, +13.76] | ref 100: +5.24 [+2.62, +7.45] | ref 120: +3.88 [+1.96, +5.63] | unfinished points of planned: +0.9 [+0.5, +1.3] | passed: -22.0 [-27.5, -13.5]
+  X1 os0_10_10  | ref 80: +8.98 [+2.60, +14.87] | ref 100: +4.65 [+1.33, +8.04] | ref 120: +3.42 [+0.99, +6.12] | unfinished points of planned: +0.9 [+0.4, +1.5] | passed: -18.0 [-32.0, -7.0]
+  X1 3ex1       | ref 80: +15.53 [+10.93, +20.05] | ref 100: +8.16 [+5.60, +10.69] | ref 120: +6.13 [+4.13, +8.06] | unfinished points of planned: +1.1 [+0.6, +1.6] | passed: -21.0 [-34.5, -12.0]
+  X1 nc         | ref 80: +42.25 [+39.93, +45.14] | ref 100: +27.45 [+25.91, +29.47] | ref 120: +22.09 [+20.90, +23.75] | unfinished points of planned: +5.0 [+4.5, +5.3] | passed: -104.5 [-115.0, -96.0]
+    X1 nc         unfinished % of planned, median 25.76 | passed  2037.0 | all_delay    322813
+    X1 p333       unfinished % of planned, median 21.96 | passed  2118.5 | all_delay    242346
+    X1 os0_10_10  unfinished % of planned, median 22.23 | passed  2122.5 | all_delay    248766
+    X1 3ex1       unfinished % of planned, median 22.27 | passed  2123.5 | all_delay    238503
+    X1 w0u250     unfinished % of planned, median 21.30 | passed  2134.5 | all_delay    231320
+    X1 w1u500     unfinished % of planned, median 20.75 | passed  2141.5 | all_delay    226376
+    X1 w2u250     unfinished % of planned, median 20.96 | passed  2134.0 | all_delay    236832
+    X1 w3u500     unfinished % of planned, median 20.82 | passed  2147.5 | all_delay    223733
+    X1 w4u500     unfinished % of planned, median 20.81 | passed  2145.0 | all_delay    224698
+  X2: n=40, planned count in rows: False
+  X2 p333       | ref 80: +9.21 [+5.08, +14.08] | ref 100: +4.69 [+2.54, +7.28] | ref 120: +3.49 [+1.84, +5.48] | unfinished points of planned: +1.3 [+0.8, +1.7] | passed: -26.5 [-35.0, -18.0]
+  X2 os0_10_10  | ref 80: +6.48 [+0.63, +11.16] | ref 100: +3.34 [+0.25, +5.51] | ref 120: +2.53 [+0.21, +4.07] | unfinished points of planned: +0.6 [+0.1, +1.0] | passed: -11.0 [-22.5, +0.5]
+  X2 3ex2       | ref 80: +5.43 [+2.49, +9.36] | ref 100: +2.56 [+1.16, +4.74] | ref 120: +1.97 [+0.87, +3.53] | unfinished points of planned: +0.7 [+0.1, +1.1] | passed: -14.0 [-23.0, -7.0]
+  X2 nc         | ref 80: +39.89 [+36.57, +43.03] | ref 100: +24.06 [+22.13, +25.77] | ref 120: +18.84 [+17.37, +20.16] | unfinished points of planned: +4.3 [+3.9, +4.7] | passed: -92.0 [-103.0, -84.0]
+    X2 nc         unfinished % of planned, median 24.43 | passed  2060.0 | all_delay    287340
+    X2 p333       unfinished % of planned, median 21.24 | passed  2126.5 | all_delay    237372
+    X2 os0_10_10  unfinished % of planned, median 20.37 | passed  2145.5 | all_delay    231634
+    X2 3ex2       unfinished % of planned, median 20.47 | passed  2145.5 | all_delay    229111
+    X2 w0u250     unfinished % of planned, median 19.99 | passed  2156.0 | all_delay    224622
+    X2 w1u500     unfinished % of planned, median 19.88 | passed  2158.0 | all_delay    221996
+    X2 w2u250     unfinished % of planned, median 20.01 | passed  2150.5 | all_delay    223340
+    X2 w3u500     unfinished % of planned, median 19.87 | passed  2155.0 | all_delay    220235
+    X2 w4u500     unfinished % of planned, median 20.08 | passed  2153.0 | all_delay    218321

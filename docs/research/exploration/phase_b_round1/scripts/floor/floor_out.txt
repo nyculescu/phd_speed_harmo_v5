@@ -1,0 +1,48 @@
+##### S
+ nc: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 78.9, 2 83.4, 3a 72.8, 3 65.0, 4a 40.6, 4 66.2, 5 70.2; ramp1 85.2, ramp2 47.7
+ p333: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 82.7, 2 86.8, 3a 77.7, 3 81.4, 4a 56.2, 4 73.2, 5 76.4; ramp1 86.0, ramp2 80.3
+   reference = 3,500 p333 unperturbed speeds: mainline delay now median 119234, at reference speeds 54234 veh-s; share of total all_delay at reference speeds 43.1 [41.6, 43.7] %; mainline excess over reference 51.4 [50.6, 52.2] % of total = median 64660 veh-s; off-mainline (origin queues, ramps, junctions) 5.5 [5.4, 5.7] %
+      edge 1: excess over reference median 16246 veh-s (12.4 % of mean total)
+      edge 2: excess over reference median 1500 veh-s (1.2 % of mean total)
+      edge 3a: excess over reference median 2667 veh-s (2.2 % of mean total)
+      edge 3: excess over reference median 8353 veh-s (6.9 % of mean total)
+      edge 4a: excess over reference median 10119 veh-s (11.0 % of mean total)
+      edge 4: excess over reference median 17553 veh-s (13.7 % of mean total)
+      edge 5: excess over reference median 6918 veh-s (5.4 % of mean total)
+   reference = 3,500 no-control unperturbed speeds: mainline delay now median 119234, at reference speeds 65223 veh-s; share of total all_delay at reference speeds 51.9 [50.1, 52.6] %; mainline excess over reference 42.9 [41.7, 43.7] % of total = median 53641 veh-s; off-mainline (origin queues, ramps, junctions) 5.5 [5.4, 5.7] %
+   reference = drawn desired speeds 97.35 km/h: mainline delay now median 119234, at reference speeds 11918 veh-s; share of total all_delay at reference speeds 9.5 [9.2, 9.6] %; mainline excess over reference 84.8 [84.7, 85.0] % of total = median 107290 veh-s; off-mainline (origin queues, ramps, junctions) 5.5 [5.4, 5.7] %
+ v3w: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 82.7, 2 86.8, 3a 77.6, 3 80.9, 4a 57.7, 4 73.4, 5 76.4; ramp1 85.9, ramp2 76.7
+   reference = 3,500 p333 unperturbed speeds: mainline delay now median 120640, at reference speeds 54240 veh-s; share of total all_delay at reference speeds 42.5 [41.8, 43.2] %; mainline excess over reference 51.6 [51.0, 52.3] % of total = median 65985 veh-s; off-mainline (origin queues, ramps, junctions) 5.8 [5.6, 5.9] %
+      edge 1: excess over reference median 16345 veh-s (12.4 % of mean total)
+      edge 2: excess over reference median 1516 veh-s (1.2 % of mean total)
+      edge 3a: excess over reference median 2829 veh-s (2.2 % of mean total)
+      edge 3: excess over reference median 8697 veh-s (7.4 % of mean total)
+      edge 4a: excess over reference median 12094 veh-s (10.2 % of mean total)
+      edge 4: excess over reference median 17108 veh-s (13.5 % of mean total)
+      edge 5: excess over reference median 6963 veh-s (5.4 % of mean total)
+   reference = 3,500 no-control unperturbed speeds: mainline delay now median 120640, at reference speeds 65240 veh-s; share of total all_delay at reference speeds 51.2 [50.3, 52.0] %; mainline excess over reference 42.9 [42.2, 43.8] % of total = median 54859 veh-s; off-mainline (origin queues, ramps, junctions) 5.8 [5.6, 5.9] %
+   reference = drawn desired speeds 97.35 km/h: mainline delay now median 120640, at reference speeds 11927 veh-s; share of total all_delay at reference speeds 9.4 [9.2, 9.5] %; mainline excess over reference 84.8 [84.5, 84.9] % of total = median 108485 veh-s; off-mainline (origin queues, ramps, junctions) 5.8 [5.6, 5.9] %
+##### TRUCK
+ nc: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 75.4, 2 78.0, 3a 62.7, 3 61.5, 4a 40.6, 4 63.4, 5 67.1; ramp1 84.5, ramp2 48.2
+ p333: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 79.6, 2 82.8, 3a 73.0, 3 75.7, 4a 50.0, 4 69.3, 5 71.9; ramp1 86.0, ramp2 78.7
+   reference = 3,500 p333 unperturbed speeds: mainline delay now median 154067, at reference speeds 53985 veh-s; share of total all_delay at reference speeds 33.5 [32.8, 34.1] %; mainline excess over reference 61.8 [61.3, 62.2] % of total = median 100111 veh-s; off-mainline (origin queues, ramps, junctions) 4.6 [4.5, 4.8] %
+      edge 1: excess over reference median 24276 veh-s (14.7 % of mean total)
+      edge 2: excess over reference median 3061 veh-s (1.9 % of mean total)
+      edge 3a: excess over reference median 4119 veh-s (2.8 % of mean total)
+      edge 3: excess over reference median 15687 veh-s (10.1 % of mean total)
+      edge 4a: excess over reference median 18220 veh-s (11.9 % of mean total)
+      edge 4: excess over reference median 23684 veh-s (14.5 % of mean total)
+      edge 5: excess over reference median 10059 veh-s (6.2 % of mean total)
+   reference = 3,500 no-control unperturbed speeds: mainline delay now median 154067, at reference speeds 64900 veh-s; share of total all_delay at reference speeds 40.3 [39.4, 41.0] %; mainline excess over reference 55.0 [54.4, 55.5] % of total = median 89058 veh-s; off-mainline (origin queues, ramps, junctions) 4.6 [4.5, 4.8] %
+   reference = drawn desired speeds 97.35 km/h: mainline delay now median 154067, at reference speeds 11881 veh-s; share of total all_delay at reference speeds 7.4 [7.2, 7.5] %; mainline excess over reference 87.8 [87.7, 88.0] % of total = median 142268 veh-s; off-mainline (origin queues, ramps, junctions) 4.6 [4.5, 4.8] %
+ v3w: per-edge mean speed km/h (sum dist / sum veh-s over 240 seeds): 1 79.6, 2 82.8, 3a 73.0, 3 75.4, 4a 51.7, 4 69.4, 5 71.8; ramp1 85.8, ramp2 76.5
+   reference = 3,500 p333 unperturbed speeds: mainline delay now median 153386, at reference speeds 54027 veh-s; share of total all_delay at reference speeds 33.5 [33.1, 33.9] %; mainline excess over reference 61.6 [61.3, 61.9] % of total = median 99266 veh-s; off-mainline (origin queues, ramps, junctions) 4.8 [4.7, 5.0] %
+      edge 1: excess over reference median 24312 veh-s (14.8 % of mean total)
+      edge 2: excess over reference median 3045 veh-s (1.9 % of mean total)
+      edge 3a: excess over reference median 4300 veh-s (2.8 % of mean total)
+      edge 3: excess over reference median 16324 veh-s (10.4 % of mean total)
+      edge 4a: excess over reference median 17622 veh-s (11.0 % of mean total)
+      edge 4: excess over reference median 23336 veh-s (14.5 % of mean total)
+      edge 5: excess over reference median 10182 veh-s (6.3 % of mean total)
+   reference = 3,500 no-control unperturbed speeds: mainline delay now median 153386, at reference speeds 64946 veh-s; share of total all_delay at reference speeds 40.3 [39.8, 40.7] %; mainline excess over reference 54.7 [54.4, 55.2] % of total = median 88366 veh-s; off-mainline (origin queues, ramps, junctions) 4.8 [4.7, 5.0] %
+   reference = drawn desired speeds 97.35 km/h: mainline delay now median 153386, at reference speeds 11883 veh-s; share of total all_delay at reference speeds 7.4 [7.3, 7.4] %; mainline excess over reference 87.7 [87.6, 87.9] % of total = median 141512 veh-s; off-mainline (origin queues, ramps, junctions) 4.8 [4.7, 5.0] %

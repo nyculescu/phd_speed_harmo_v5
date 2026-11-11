@@ -1,0 +1,32 @@
+
+n = 240, 2000 studies. Delay within 1 % of all four (as stored): 0.551; within 2 %: 0.999
+true edge | stage 1 PASS (one opponent; cf rule, learners, delay 1 %) | both stages PASS (second opponent with 3ex1's noise at the same true edge) | cf rule alone, one opp
+  0.0 | 0.002 | 0.000 | 0.002
+  5.0 | 0.042 | 0.000 | 0.067
+  8.0 | 0.110 | 0.046 | 0.180
+ 10.0 | 0.285 | 0.176 | 0.467
+ 11.0 | 0.333 | 0.257 | 0.564
+ 12.0 | 0.404 | 0.345 | 0.706
+ 13.0 | 0.506 | 0.460 | 0.909
+ 15.0 | 0.536 | 0.520 | 0.972
+ 20.0 | 0.550 | 0.550 | 0.998
+judgement aid: true edge against today's 3E-C drawn from N(11.8, 3.3) (the stored point and interval width; not a posterior): stage 1 PASS 0.36
+   if the edge against the continued rule is N(6, 3.3): PASS against it (one opponent curve) 0.11
+   if the edge against the continued rule is N(8, 3.3): PASS against it (one opponent curve) 0.18
+   if the edge against the continued rule is N(10, 3.3): PASS against it (one opponent curve) 0.27
+
+n = 480, 2000 studies. Delay within 1 % of all four (as stored): 0.916; within 2 %: 1.000
+true edge | stage 1 PASS (one opponent; cf rule, learners, delay 1 %) | both stages PASS (second opponent with 3ex1's noise at the same true edge) | cf rule alone, one opp
+  0.0 | 0.000 | 0.000 | 0.000
+  5.0 | 0.013 | 0.000 | 0.015
+  8.0 | 0.090 | 0.028 | 0.099
+ 10.0 | 0.444 | 0.258 | 0.475
+ 11.0 | 0.547 | 0.454 | 0.591
+ 12.0 | 0.711 | 0.660 | 0.771
+ 13.0 | 0.885 | 0.857 | 0.965
+ 15.0 | 0.914 | 0.905 | 0.997
+ 20.0 | 0.916 | 0.916 | 1.000
+judgement aid: true edge against today's 3E-C drawn from N(11.8, 3.3) (the stored point and interval width; not a posterior): stage 1 PASS 0.59
+   if the edge against the continued rule is N(6, 3.3): PASS against it (one opponent curve) 0.12
+   if the edge against the continued rule is N(8, 3.3): PASS against it (one opponent curve) 0.25
+   if the edge against the continued rule is N(10, 3.3): PASS against it (one opponent curve) 0.42

@@ -1,0 +1,10 @@
+n 120 order-statistic ranks (48, 73) coverage 0.9779172841902958
+  r4a1         | d=0.0 P  0.1 K 90.0 | d=3.0 P 14.7 K  9.4 | d=4.0 P 31.4 K  2.0 | d=5.0 P 43.0 K  0.9 | d=6.0 P 65.0 K  0.1 | d=7.0 P 83.4 K  0.0 | d=9.2 P 95.7 K  0.0 || flip: LBboot>0 1.10 LBos>0 1.05 both 0.95; UB half os 3.42 boot 3.32
+  grid_r4a2    | d=0.0 P  0.0 K 99.7 | d=3.0 P  0.8 K 56.4 | d=4.0 P 11.1 K 14.4 | d=5.0 P 52.4 K  0.9 | d=6.0 P 84.7 K  0.1 | d=7.0 P 92.5 K  0.0 | d=9.2 P 99.8 K  0.0 || flip: LBboot>0 1.10 LBos>0 0.95 both 0.90; UB half os 1.97 boot 1.91
+  z33133       | d=0.0 P  0.0 K 98.8 | d=3.0 P  1.4 K 45.4 | d=4.0 P 15.7 K 10.3 | d=5.0 P 48.6 K  1.2 | d=6.0 P 86.4 K  0.0 | d=7.0 P 95.9 K  0.0 | d=9.2 P 99.8 K  0.0 || flip: LBboot>0 1.60 LBos>0 1.10 both 1.10; UB half os 2.15 boot 2.07
+  grid_z31333  | d=0.0 P  0.0 K 99.7 | d=3.0 P  1.0 K 53.5 | d=4.0 P  9.0 K 17.5 | d=5.0 P 50.7 K  1.3 | d=6.0 P 85.7 K  0.1 | d=7.0 P 98.0 K  0.0 | d=9.2 P100.0 K  0.0 || flip: LBboot>0 1.30 LBos>0 0.95 both 0.95; UB half os 2.00 boot 1.93
+n 240 order-statistic ranks (103, 138) coverage 0.9763323597436335
+  r4a1         | d=0.0 P  0.0 K 99.7 | d=3.0 P  7.1 K 17.9 | d=4.0 P 32.2 K  2.9 | d=5.0 P 50.9 K  1.2 | d=6.0 P 86.5 K  0.0 | d=7.0 P 98.0 K  0.0 | d=9.2 P 99.9 K  0.0 || flip: LBboot>0 1.50 LBos>0 1.30 both 1.15; UB half os 2.73 boot 2.65
+  grid_r4a2    | d=0.0 P  0.0 K100.0 | d=3.0 P  0.1 K 87.9 | d=4.0 P  4.5 K 31.8 | d=5.0 P 49.0 K  0.9 | d=6.0 P 93.0 K  0.0 | d=7.0 P 97.9 K  0.0 | d=9.2 P100.0 K  0.0 || flip: LBboot>0 1.30 LBos>0 1.10 both 1.05; UB half os 1.33 boot 1.30
+  z33133       | d=0.0 P  0.0 K100.0 | d=3.0 P  0.1 K 80.0 | d=4.0 P  8.3 K 18.2 | d=5.0 P 50.3 K  0.9 | d=6.0 P 96.0 K  0.0 | d=7.0 P 99.8 K  0.0 | d=9.2 P100.0 K  0.0 || flip: LBboot>0 1.30 LBos>0 0.95 both 0.85; UB half os 1.60 boot 1.59
+  grid_z31333  | d=0.0 P  0.0 K100.0 | d=3.0 P  0.1 K 85.5 | d=4.0 P  2.4 K 36.5 | d=5.0 P 52.1 K  1.2 | d=6.0 P 94.9 K  0.0 | d=7.0 P 99.9 K  0.0 | d=9.2 P100.0 K  0.0 || flip: LBboot>0 1.00 LBos>0 1.15 both 0.90; UB half os 1.37 boot 1.34

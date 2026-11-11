@@ -1,0 +1,18 @@
+X1 type list len 4
+  fields of one event: list | cell_spec keys: []
+  X1 nc         against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 os0_10_10  against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 w0u250     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 w1u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 w2u250     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 w3u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+  X1 w4u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((4, 4), 40)]
+X2 type list len 2
+  fields of one event: list | cell_spec keys: []
+  X2 nc         against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 os0_10_10  against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 w0u250     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 w1u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 w2u250     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 w3u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]
+  X2 w4u500     against p333, seeds with equal value of 40: whole log equal 40 | events per run p333/arm: [((2, 2), 40)]

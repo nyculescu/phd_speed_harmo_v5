@@ -1,0 +1,32 @@
+
+##### S nc: mean out-flow 5128, mean in-flow 5190 veh/h; 4a speed median 43, upstream speed median 71 km/h; vehicles on 4a first 5 min 25.2, last 5 min 43.8
+ A report: 4a < 60 km/h, 2 min: runs with onset 238, usable (onset minute 5-19) 101, placebo windows 39 in 12 runs
+    before minus after, %: -0.5 [-1.7, +0.7] n=101 | minus matched placebo: -0.0 [-1.2, +1.2] n=89
+    pre flow median 5088, post flow median 5112 veh/h; post out minus in, veh/h: -84.0 [-132.0, -60.0] n=101
+ B strict: 4a < 50 km/h, 3 min: runs with onset 233, usable (onset minute 5-19) 157, placebo windows 181 in 35 runs
+    before minus after, %: +1.1 [+0.5, +1.9] n=157 | minus matched placebo: +0.6 [-0.3, +1.1] n=146
+    pre flow median 5148, post flow median 5088 veh/h; post out minus in, veh/h: -48.0 [-84.0, -24.0] n=157
+ C spillback: upstream of merge 2 < 60 km/h, 2 min: runs with onset 180, usable (onset minute 5-19) 152, placebo windows 1584 in 184 runs
+    before minus after, %: -4.2 [-5.1, -3.4] n=152 | minus matched placebo: -3.5 [-4.2, -2.8] n=152
+    pre flow median 5052, post flow median 5292 veh/h; post out minus in, veh/h: -18.0 [-36.0, +30.0] n=152
+ D deep: 4a < 40 km/h, 2 min: runs with onset 228, usable (onset minute 5-19) 174, placebo windows 363 in 62 runs
+    before minus after, %: +0.1 [-0.9, +0.6] n=174 | minus matched placebo: -0.5 [-1.0, +0.0] n=173
+    pre flow median 5154, post flow median 5154 veh/h; post out minus in, veh/h: +60.0 [+24.0, +84.0] n=174
+ demand 5,300 against saturated throughput 5342 veh/h (an_delay_floor.md:43, 6 seeds at 7,000): demand is 99.2 % of it; a discharge capacity cut by up to 0.8 % would still pass the whole demand, so the before/after flow test cannot see it
+ free 5-min windows (no minute of 4a below 60 km/h): 346; flow median 5028, p95 5292, max 5508 veh/h; share above the saturated throughput 1.4 %
+
+##### S p333: mean out-flow 5276, mean in-flow 5307 veh/h; 4a speed median 70, upstream speed median 83 km/h; vehicles on 4a first 5 min 23.1, last 5 min 31.2
+ A report: 4a < 60 km/h, 2 min: runs with onset 200, usable (onset minute 5-19) 121, placebo windows 926 in 139 runs
+    before minus after, %: -0.5 [-2.1, +0.2] n=121 | minus matched placebo: -1.3 [-1.9, -0.1] n=119
+    pre flow median 5280, post flow median 5304 veh/h; post out minus in, veh/h: +24.0 [-12.0, +96.0] n=121
+ B strict: 4a < 50 km/h, 3 min: runs with onset 131, usable (onset minute 5-19) 94, placebo windows 1585 in 181 runs
+    before minus after, %: +0.7 [-1.0, +1.8] n=94 | minus matched placebo: +0.4 [-0.6, +1.1] n=94
+    pre flow median 5298, post flow median 5256 veh/h; post out minus in, veh/h: -24.0 [-78.0, +0.0] n=94
+ C spillback: upstream of merge 2 < 60 km/h, 2 min: runs with onset 4, usable (onset minute 5-19) 1, placebo windows 3553 in 240 runs
+    before minus after, %: n=1 (<5) | minus matched placebo: n=1 (<5)
+    pre flow median 5364, post flow median 5340 veh/h; post out minus in, veh/h: n=1 (<5)
+ D deep: 4a < 40 km/h, 2 min: runs with onset 114, usable (onset minute 5-19) 81, placebo windows 2158 in 204 runs
+    before minus after, %: -0.2 [-1.8, +0.7] n=81 | minus matched placebo: -0.6 [-1.1, +0.7] n=81
+    pre flow median 5256, post flow median 5304 veh/h; post out minus in, veh/h: +12.0 [-24.0, +72.0] n=81
+ demand 5,300 against saturated throughput 5544 veh/h (an_delay_floor.md:43, 6 seeds at 7,000): demand is 95.6 % of it; a discharge capacity cut by up to 4.4 % would still pass the whole demand, so the before/after flow test cannot see it
+ free 5-min windows (no minute of 4a below 60 km/h): 2330; flow median 5268, p95 5628, max 5940 veh/h; share above the saturated throughput 9.9 %

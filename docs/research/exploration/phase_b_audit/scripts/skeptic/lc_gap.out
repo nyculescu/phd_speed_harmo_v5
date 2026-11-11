@@ -1,0 +1,19 @@
+v 27.78 m/s, merger slower by +0 m/s: rear gap needed 0.8 s  15.9 m, 1.6 s  31.7 m, ratio 0.50
+v 27.78 m/s, merger slower by +3 m/s: rear gap needed 0.8 s  24.6 m, 1.6 s  40.5 m, ratio 0.61
+v 27.78 m/s, merger slower by -3 m/s: rear gap needed 0.8 s   7.2 m, 1.6 s  23.0 m, ratio 0.31
+v 27.78: stopped merger (dv = v): 0.8 s   96.5 m, 1.6 s  112.3 m
+   tau 0.8: gap held  24.7 m, needed for an equal-speed human merger  38.8 m, surplus  -14.1 m
+   tau 1.2: gap held  35.8 m, needed for an equal-speed human merger  46.8 m, surplus  -10.9 m
+   tau 1.6: gap held  46.9 m, needed for an equal-speed human merger  54.7 m, surplus   -7.8 m
+   tau 2.0: gap held  58.1 m, needed for an equal-speed human merger  62.6 m, surplus   -4.6 m
+   tau 2.5: gap held  72.0 m, needed for an equal-speed human merger  72.6 m, surplus   -0.6 m
+v 20.00 m/s, merger slower by +0 m/s: rear gap needed 0.8 s  11.4 m, 1.6 s  22.9 m, ratio 0.50
+v 20.00 m/s, merger slower by +3 m/s: rear gap needed 0.8 s  17.7 m, 1.6 s  29.1 m, ratio 0.61
+v 20.00 m/s, merger slower by -3 m/s: rear gap needed 0.8 s   5.2 m, 1.6 s  16.6 m, ratio 0.31
+v 20.00: stopped merger (dv = v): 0.8 s   53.2 m, 1.6 s   64.6 m
+   tau 0.8: gap held  18.5 m, needed for an equal-speed human merger  29.2 m, surplus  -10.7 m
+   tau 1.2: gap held  26.5 m, needed for an equal-speed human merger  34.9 m, surplus   -8.4 m
+   tau 1.6: gap held  34.5 m, needed for an equal-speed human merger  40.6 m, surplus   -6.1 m
+   tau 2.0: gap held  42.5 m, needed for an equal-speed human merger  46.4 m, surplus   -3.9 m
+   tau 2.5: gap held  52.5 m, needed for an equal-speed human merger  53.5 m, surplus   -1.0 m
+share of each added metre of ALKS gap that counts toward acceptance: 1 - 1/lcAssertive = 0.286 at 1.4, 0.000 at 1.0

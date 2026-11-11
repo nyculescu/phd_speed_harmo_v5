@@ -1,0 +1,238 @@
+
+##### TRUCK  n paired seeds = 240
+planned_window identical across arms: True median 2210.0 min 2096.0 max 2332.0
+
+(1) v3w against each opponent, % of the opponent's median, positive = v3w better; 95 % CI
+opp | med delay veh-s | pooled delay | pooled flow | pooled cf | per-learner delay points | learners delay CI>0 / CI<0 | learners cf CI>0
+lr1000_10_1 | 161493 | -0.25 [-0.78, +0.46] | +0.16 [+0.08, +0.28] | +26.94 [+19.89, +33.15] | +0.10 +0.28 +0.44 -0.33 +0.07 | 0 / 0 | 5
+p333 | 161493 | -0.25 [-0.78, +0.46] | +0.14 [+0.07, +0.23] | +26.94 [+19.89, +33.23] | +0.09 +0.32 +0.52 -0.31 +0.08 | 0 / 0 | 5
+lr1000_16_2 | 161961 | +0.27 [-0.19, +0.81] | +0.38 [+0.28, +0.52] | +28.80 [+22.76, +34.50] | +0.70 +0.64 +0.88 +0.52 +0.20 | 3 / 0 | 5
+grid_lr400_13_1 | 162333 | +0.83 [-0.02, +1.54] | +0.52 [+0.31, +0.73] | +25.26 [+20.02, +30.79] | +1.25 +0.78 +1.64 +0.90 +0.62 | 4 / 0 | 5
+os0_10_10 | 162350 | -0.58 [-0.91, +0.04] | +0.11 [+0.04, +0.22] | +22.57 [+17.70, +27.20] | +0.04 +0.06 +0.40 -0.22 -0.07 | 0 / 0 | 5
+3E-D_TRUCK | 162405 | +0.08 [-0.47, +0.81] | +0.10 [+0.00, +0.20] | +30.25 [+23.40, +36.77] | +0.68 +0.08 +0.35 -0.17 +0.14 | 1 / 0 | 5
+grid_os1_10_10 | 162649 | +0.16 [-0.61, +0.92] | +0.22 [+0.10, +0.36] | +27.17 [+20.57, +32.34] | +0.28 +0.44 +0.70 +0.38 +0.17 | 1 / 0 | 5
+lr400_13_2 | 162833 | +0.72 [-0.03, +1.47] | +0.33 [+0.19, +0.48] | +28.50 [+23.06, +33.26] | +1.17 +0.46 +1.29 +0.29 +0.53 | 3 / 0 | 5
+os1_15_10 | 163151 | +0.18 [-0.57, +0.83] | +0.19 [+0.02, +0.28] | +25.75 [+19.95, +28.96] | +0.44 +0.33 +0.88 +0.25 +0.21 | 1 / 0 | 5
+grid_z31333 | 164117 | +0.98 [+0.64, +1.89] | +0.30 [+0.17, +0.43] | +27.97 [+20.62, +34.50] | +1.99 +1.50 +1.72 +0.99 +1.51 | 4 / 0 | 5
+MPC-F | 164464 | +1.09 [+0.64, +1.68] | +0.42 [+0.23, +0.53] | +27.59 [+23.01, +31.67] | +1.82 +1.22 +1.83 +1.27 +1.27 | 5 / 0 | 5
+3E-C_TRUCK | 164871 | +1.12 [+0.84, +1.96] | +0.13 [+0.04, +0.29] | +11.80 [+6.23, +18.95] | +1.88 +1.49 +2.18 +1.28 +1.50 | 5 / 0 | 5
+3ex2 | 164989 | +1.63 [+1.10, +2.21] | +0.42 [+0.30, +0.52] | +25.11 [+20.13, +29.52] | +2.34 +1.80 +2.73 +1.27 +1.76 | 5 / 0 | 5
+grid_a41000_10_2 | 165558 | +2.12 [+1.09, +2.87] | +0.55 [+0.39, +0.70] | +36.25 [+28.12, +41.04] | +3.18 +1.95 +2.69 +1.92 +2.12 | 5 / 0 | 5
+os1_10_0 | 165583 | +1.33 [+0.64, +2.27] | +0.34 [+0.24, +0.45] | +29.95 [+26.46, +34.85] | +2.05 +1.67 +2.11 +1.47 +1.78 | 5 / 0 | 5
+grid_r4a2 | 165644 | +2.12 [+1.09, +2.87] | +0.55 [+0.40, +0.69] | +35.90 [+27.84, +40.08] | +3.18 +1.94 +2.69 +1.92 +2.12 | 5 / 0 | 5
+z33133 | 166922 | +2.90 [+2.30, +3.85] | +0.67 [+0.55, +0.79] | +33.08 [+26.00, +42.39] | +3.69 +3.22 +3.77 +2.85 +3.07 | 5 / 0 | 5
+lr400_16_1 | 167002 | +3.09 [+1.84, +4.08] | +0.88 [+0.72, +1.04] | +23.47 [+18.15, +30.16] | +3.14 +3.04 +3.45 +2.54 +2.84 | 5 / 0 | 5
+3ex1 | 168089 | +3.45 [+2.79, +4.26] | +0.57 [+0.43, +0.67] | +31.35 [+25.42, +35.78] | +3.62 +3.42 +4.21 +3.43 +3.39 | 5 / 0 | 5
+r4a1 | 169002 | +3.81 [+3.10, +5.12] | +0.67 [+0.44, +0.86] | +34.85 [+28.75, +39.33] | +4.52 +4.15 +4.87 +3.66 +4.15 | 5 / 0 | 5
+3e | 169182 | +4.62 [+3.91, +5.73] | +0.56 [+0.41, +0.66] | +29.48 [+24.07, +35.17] | +4.87 +4.66 +4.97 +4.56 +4.70 | 5 / 0 | 5
+a4400_10_1 | 170652 | +4.55 [+3.47, +5.92] | +0.78 [+0.58, +1.00] | +34.02 [+28.72, +38.09] | +5.05 +5.28 +4.59 +4.29 +4.60 | 5 / 0 | 5
+copy | 181190 | +11.11 [+10.14, +12.15] | +1.16 [+0.89, +1.30] | +33.33 [+29.54, +37.91] | +11.43 +10.97 +11.90 +11.14 +10.98 | 5 / 0 | 5
+opponents whose 95 % delay CI does not exclude 0 or is below (block the delay claim): ['3E-D_TRUCK', 'grid_lr400_13_1', 'grid_os1_10_10', 'lr1000_10_1', 'lr1000_16_2', 'lr400_13_2', 'os0_10_10', 'os1_15_10', 'p333']
+
+(2) headroom; best single opponent by median: lr1000_10_1 ; by mean: os0_10_10
+  nc: median all_delay 231312 veh-s, mean 231082; per planned vehicle median 104.34 s, mean 104.29 s
+  lr1000_10_1: median all_delay 161493 veh-s, mean 162799; per planned vehicle median 72.67 s, mean 73.47 s
+  v3w pooled: median all_delay 161591 veh-s, mean 161907; per planned vehicle median 72.62 s, mean 73.08 s
+  w0u250: median all_delay 158775 veh-s, mean 160980; per planned vehicle median 71.86 s, mean 72.66 s
+  w1u500: median all_delay 160333 veh-s, mean 162026; per planned vehicle median 72.53 s, mean 73.13 s
+  w2u250: median all_delay 160065 veh-s, mean 161501; per planned vehicle median 72.06 s, mean 72.89 s
+  w3u500: median all_delay 162362 veh-s, mean 162651; per planned vehicle median 73.18 s, mean 73.42 s
+  w4u500: median all_delay 161252 veh-s, mean 162376; per planned vehicle median 72.57 s, mean 73.28 s
+  row field 'delay' (mean over finished vehicles, s): nc 100.47, best 70.08
+  share of nc delay removed by best opponent (median paired (nc-best)/median(nc)): +29.29 [+27.97, +30.20]
+  share removed by v3w pooled: +28.94 [+28.24, +30.01]
+  ratio of medians: best/nc = 0.6982, v3w/nc = 0.6986
+  served: nc 2110.0, best 2180.5, v3w 2184.5 (median passed)
+
+(3) hindsight oracle over 23 opponents vs best single (lr1000_10_1): gain % of best median, positive = oracle lower: +3.42 [+2.70, +4.17]
+  oracle median 154847 veh-s; mean gain 7927 veh-s (4.87 % of best mean)
+  with nc added to the pool: +3.42 [+2.70, +4.17]
+  v3w pooled vs oracle (positive = v3w lower): -4.14 [-4.68, -3.66]
+  noise yardstick: per-seed min over the 5 learners vs best single learner (w0u250): +2.09 [+1.49, +2.53]
+  oracle over the 5 lowest-median opponents ['lr1000_10_1', 'p333', 'lr1000_16_2', 'grid_lr400_13_1', 'os0_10_10'] vs best single: +1.19 [+0.74, +1.81]
+  split-half (2,000 random splits): out-of-sample gain of a 3-bin scheduler on no-control delay vs best single chosen on the other half: mean +0.01 %, 2.5-97.5 pct [-0.91, +1.02]
+  same splits, hindsight oracle gain on the held-out half: mean +3.83 %; winner's curse of best single (its held-out median over the held-out best): mean +1.02 %
+  permutation check (each opponent's difference to the best shuffled across seeds, 500 draws): oracle gain mean +9.75 % [+9.28, +10.20]; observed +3.42 %
+  twins p333 / lr1000_10_1: delay differs on 46 of 240 seeds; on those, SD of the difference 2570 veh-s (1.59 % of best median), median |diff| 44
+  twins grid_r4a2 / grid_a41000_10_2: delay differs on 50 of 240 seeds; on those, SD of the difference 5103 veh-s (3.16 % of best median), median |diff| 103
+  twin-noise null, K = 5 identical controllers with that noise: oracle gain +0.13 % [+0.10, +0.15]
+  twin-noise null, K = 23 identical controllers with that noise: oracle gain +0.46 % [+0.43, +0.64]
+
+(4) per-seed lowest-delay opponent, share of 240 seeds (ties split): lr400_13_2 10.0%, 3E-D_TRUCK 8.3%, grid_lr400_13_1 7.5%, MPC-F 7.5%, grid_z31333 7.1%, lr400_16_1 7.1%, lr1000_16_2 6.7%, 3E-C_TRUCK 6.2%, os1_10_0 5.8%, grid_os1_10_10 4.9%, os0_10_10 4.5%, os1_15_10 3.7%, 3ex2 3.3%, p333 3.2%, lr1000_10_1 2.8%, grid_r4a2 2.5%, grid_a41000_10_2 2.5%, a4400_10_1 2.1%, 3e 1.2%, 3ex1 1.2%, z33133 0.8%, r4a1 0.8%
+  best single (lr1000_10_1) is the per-seed best on 2.8 % of seeds; number of distinct winners 22
+  twins p333 / lr1000_10_1: identical delay on 194 of 240 seeds; cf identical on 200
+  twins grid_r4a2 / grid_a41000_10_2: identical delay on 190 of 240 seeds; cf identical on 199
+
+(5) frontier: median all_delay (veh-s) and median close-following (ttc_net) per arm
+  w0u250                158775   773.0
+  w2u250                160065   780.0
+  w1u500                160333   793.5
+  w4u500                161252   809.0
+  lr1000_10_1           161493  1178.0
+  p333                  161493  1178.0
+  v3w                   161591   819.5
+  lr1000_16_2           161961  1141.0
+  grid_lr400_13_1       162333  1080.5
+  os0_10_10             162350  1116.0
+  w3u500                162362   835.5
+  3E-D_TRUCK            162405  1142.0
+  grid_os1_10_10        162649  1126.5
+  lr400_13_2            162833  1163.0
+  os1_15_10             163151  1172.0
+  grid_z31333           164117  1209.5
+  MPC-F                 164464  1176.0
+  3E-C_TRUCK            164871   951.0
+  3ex2                  164989  1169.5
+  grid_a41000_10_2      165558  1265.5
+  os1_10_0              165583  1221.5
+  grid_r4a2             165644  1278.0
+  z33133                166922  1259.0
+  lr400_16_1            167002  1154.0
+  3ex1                  168089  1205.5
+  r4a1                  169002  1358.0
+  3e                    169182  1144.0
+  a4400_10_1            170652  1278.5
+  copy                  181190  1327.5
+  nc                    231312  1234.0
+  Pareto set by medians (v3w pooled, 23 opponents, nc): ['v3w', 'lr1000_10_1', 'p333']
+  opponents shown better than v3w on both (paired 95 % CIs): []
+  opponents v3w is shown better than on both (paired 95 pct CIs): 15 of 24: ['3E-C_TRUCK', '3e', '3ex1', '3ex2', 'MPC-F', 'a4400_10_1', 'copy', 'grid_a41000_10_2', 'grid_r4a2', 'grid_z31333', 'lr400_16_1', 'os1_10_0', 'r4a1', 'z33133', 'nc']
+  lowest-cf opponents: 3E-C_TRUCK cf diff (o - v3w) +112.20 [+59.20, +180.20] s per run; delay diff (o - v3w) +1839.39 [+1391.05, +3232.73] veh-s
+  lowest-cf opponents: grid_lr400_13_1 cf diff (o - v3w) +272.90 [+216.30, +332.70] s per run; delay diff (o - v3w) +1354.40 [-28.29, +2494.51] veh-s
+  lowest-cf opponents: os0_10_10 cf diff (o - v3w) +251.90 [+197.50, +303.60] s per run; delay diff (o - v3w) -945.80 [-1470.07, +70.03] veh-s
+  lowest-cf opponents: grid_os1_10_10 cf diff (o - v3w) +306.10 [+231.70, +364.30] s per run; delay diff (o - v3w) +255.48 [-988.90, +1501.97] veh-s
+
+(6) variance of the paired delay difference v3w - best opponent (lr1000_10_1)
+  pooled 5-learner mean  SD 5.32 % (8586 veh-s), IQR 5.83 %, mean -0.55, median +0.25; SE(mean) 0.343, bootstrap SE(median) 0.342
+     95 % two-sided: MDE at 80 % power, n = 240: mean-based 0.96 %, median-based 0.96 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 221, 2: 56, 3: 25, 5: 9} ; mean-based: {1: 222, 2: 56, 3: 25, 5: 9}
+     97.5 % two-sided (S6's m = 2 level): MDE at 80 % power, n = 240: mean-based 1.06 %, median-based 1.06 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 268, 2: 67, 3: 30, 5: 11} ; mean-based: {1: 269, 2: 68, 3: 30, 5: 11}
+  w0u250                 SD 6.61 % (10670 veh-s), IQR 7.07 %, mean -1.13, median -0.10; SE(mean) 0.426, bootstrap SE(median) 0.210
+     95 % two-sided: MDE at 80 % power, n = 240: mean-based 1.19 %, median-based 0.59 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 84, 2: 21, 3: 10, 5: 4} ; mean-based: {1: 343, 2: 86, 3: 39, 5: 14}
+     97.5 % two-sided (S6's m = 2 level): MDE at 80 % power, n = 240: mean-based 1.31 %, median-based 0.65 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 101, 2: 26, 3: 12, 5: 5} ; mean-based: {1: 415, 2: 104, 3: 47, 5: 17}
+  w1u500                 SD 6.31 % (10195 veh-s), IQR 6.34 %, mean -0.48, median -0.28; SE(mean) 0.407, bootstrap SE(median) 0.353
+  w2u250                 SD 6.72 % (10845 veh-s), IQR 6.63 %, mean -0.80, median -0.44; SE(mean) 0.433, bootstrap SE(median) 0.372
+  w3u500                 SD 6.47 % (10450 veh-s), IQR 6.55 %, mean -0.09, median +0.33; SE(mean) 0.418, bootstrap SE(median) 0.366
+  w4u500                 SD 6.18 % (9982 veh-s), IQR 6.79 %, mean -0.26, median -0.07; SE(mean) 0.399, bootstrap SE(median) 0.402
+
+##### S  n paired seeds = 240
+planned_window identical across arms: True median 2210.0 min 2096.0 max 2332.0
+
+(1) v3w against each opponent, % of the opponent's median, positive = v3w better; 95 % CI
+opp | med delay veh-s | pooled delay | pooled flow | pooled cf | per-learner delay points | learners delay CI>0 / CI<0 | learners cf CI>0
+grid_os1_10_10 | 125808 | -1.11 [-2.14, +0.18] | -0.06 [-0.10, +0.02] | +19.82 [+5.10, +39.32] | +0.52 -0.05 -0.21 -0.42 -0.46 | 0 / 0 | 5
+3E-D_TRUCK | 126057 | -0.70 [-1.43, +0.19] | -0.08 [-0.13, +0.01] | +15.86 [+5.45, +27.83] | +0.60 +0.24 +0.43 -0.75 -0.20 | 0 / 0 | 5
+os0_10_10 | 126111 | -1.61 [-2.64, -1.03] | -0.06 [-0.12, -0.01] | +17.65 [+7.01, +32.68] | +0.09 -0.05 -0.65 -0.61 -1.10 | 0 / 0 | 5
+MPC-F | 126151 | -0.53 [-1.26, +0.79] | +0.05 [+0.01, +0.15] | +17.98 [+4.37, +36.89] | +1.12 +1.58 +0.42 -0.05 +0.51 | 2 / 0 | 5
+lr1000_10_1 | 126296 | -1.57 [-2.62, -0.55] | -0.02 [-0.10, +0.05] | +17.25 [+7.10, +35.67] | +0.49 +0.43 -0.27 -0.71 -0.46 | 0 / 0 | 5
+p333 | 126296 | -1.57 [-2.62, -0.55] | -0.02 [-0.10, +0.04] | +17.25 [+7.10, +35.67] | +0.49 +0.43 -0.27 -0.79 -0.41 | 0 / 0 | 5
+3E-C_TRUCK | 126480 | -0.01 [-1.20, +1.20] | -0.01 [-0.05, +0.08] | +7.99 [-9.72, +25.32] | +2.17 +1.14 +0.90 +1.67 +1.26 | 3 / 0 | 3
+lr400_13_2 | 126640 | -0.43 [-1.95, +0.67] | -0.03 [-0.09, +0.05] | +21.47 [+1.84, +36.59] | +1.11 +0.17 +0.59 -0.37 +0.49 | 0 / 0 | 5
+grid_lr400_13_1 | 126934 | -0.50 [-1.77, +0.38] | +0.02 [-0.04, +0.14] | +18.44 [+4.14, +30.50] | +0.57 +0.70 +1.16 +0.37 +0.31 | 0 / 0 | 5
+os1_15_10 | 127037 | -1.66 [-2.86, -0.83] | -0.02 [-0.10, +0.04] | +15.38 [+3.49, +33.86] | +0.18 +0.10 -0.06 -0.54 -0.29 | 0 / 0 | 5
+grid_z31333 | 127475 | -0.26 [-1.17, +1.18] | +0.00 [-0.07, +0.07] | +7.05 [-16.56, +26.67] | +1.85 +1.01 +1.04 +1.12 +0.91 | 3 / 0 | 3
+lr1000_16_2 | 127553 | -1.02 [-1.61, +0.31] | -0.03 [-0.10, +0.03] | +21.24 [+7.26, +40.59] | +1.43 +0.73 +0.38 -0.66 -0.62 | 0 / 0 | 5
+lr400_16_1 | 128465 | -0.85 [-1.98, +0.81] | +0.06 [-0.03, +0.16] | +4.96 [-3.34, +22.20] | +1.94 +1.00 +0.61 +1.13 +0.86 | 1 / 0 | 5
+3ex1 | 129105 | +0.65 [-0.25, +2.09] | +0.00 [-0.05, +0.08] | +15.77 [+2.16, +33.19] | +2.61 +2.75 +2.61 +2.12 +2.68 | 5 / 0 | 5
+3ex2 | 129965 | -0.11 [-0.90, +1.72] | -0.00 [-0.05, +0.04] | +16.99 [+2.35, +37.00] | +2.42 +1.79 +0.94 +0.52 +1.62 | 3 / 0 | 5
+os1_10_0 | 130006 | +1.76 [-0.04, +3.58] | +0.07 [+0.00, +0.20] | +35.71 [+21.75, +60.81] | +4.15 +2.64 +2.19 +1.98 +2.51 | 5 / 0 | 5
+z33133 | 132047 | +2.75 [+1.41, +3.83] | +0.29 [+0.10, +0.48] | +32.14 [+19.47, +48.97] | +3.83 +4.13 +3.87 +2.98 +3.92 | 5 / 0 | 5
+3e | 133169 | +5.71 [+3.85, +7.42] | +0.21 [+0.12, +0.33] | +40.04 [+27.51, +52.60] | +7.85 +5.96 +5.77 +4.30 +5.41 | 5 / 0 | 5
+grid_a41000_10_2 | 133398 | +2.85 [+1.23, +4.44] | +0.12 [+0.05, +0.31] | +45.28 [+31.58, +56.91] | +4.21 +4.24 +4.07 +3.93 +4.01 | 5 / 0 | 5
+grid_r4a2 | 133398 | +2.85 [+1.23, +4.44] | +0.12 [+0.04, +0.31] | +45.28 [+31.58, +56.91] | +4.21 +4.24 +4.40 +3.93 +3.95 | 5 / 0 | 5
+r4a1 | 138812 | +6.65 [+4.07, +8.68] | +0.37 [+0.22, +0.53] | +54.40 [+44.67, +64.43] | +7.44 +7.19 +6.81 +6.81 +5.95 | 5 / 0 | 5
+a4400_10_1 | 139804 | +9.15 [+6.11, +10.79] | +0.45 [+0.34, +0.63] | +49.16 [+39.11, +60.69] | +9.17 +8.25 +8.58 +8.78 +7.68 | 5 / 0 | 5
+copy | 150344 | +14.35 [+12.55, +16.24] | +1.04 [+0.80, +1.24] | +49.41 [+39.28, +56.28] | +16.23 +14.81 +14.24 +14.52 +13.85 | 5 / 0 | 5
+opponents whose 95 % delay CI does not exclude 0 or is below (block the delay claim): ['3E-C_TRUCK', '3E-D_TRUCK', '3ex1', '3ex2', 'MPC-F', 'grid_lr400_13_1', 'grid_os1_10_10', 'grid_z31333', 'lr1000_10_1', 'lr1000_16_2', 'lr400_13_2', 'lr400_16_1', 'os0_10_10', 'os1_10_0', 'os1_15_10', 'p333']
+
+(2) headroom; best single opponent by median: grid_os1_10_10 ; by mean: os0_10_10
+  nc: median all_delay 200589 veh-s, mean 201754; per planned vehicle median 90.96 s, mean 91.02 s
+  grid_os1_10_10: median all_delay 125808 veh-s, mean 129986; per planned vehicle median 57.04 s, mean 58.66 s
+  v3w pooled: median all_delay 127465 veh-s, mean 129875; per planned vehicle median 57.75 s, mean 58.60 s
+  w0u250: median all_delay 124690 veh-s, mean 128244; per planned vehicle median 55.92 s, mean 57.87 s
+  w1u500: median all_delay 126160 veh-s, mean 129638; per planned vehicle median 57.08 s, mean 58.49 s
+  w2u250: median all_delay 126380 veh-s, mean 131022; per planned vehicle median 56.72 s, mean 59.10 s
+  w3u500: median all_delay 126693 veh-s, mean 130598; per planned vehicle median 56.76 s, mean 58.92 s
+  w4u500: median all_delay 125863 veh-s, mean 129871; per planned vehicle median 56.78 s, mean 58.60 s
+  row field 'delay' (mean over finished vehicles, s): nc 87.95, best 51.85
+  share of nc delay removed by best opponent (median paired (nc-best)/median(nc)): +35.20 [+34.25, +38.32]
+  share removed by v3w pooled: +35.54 [+33.30, +37.56]
+  ratio of medians: best/nc = 0.6272, v3w/nc = 0.6355
+  served: nc 2137.0, best 2201.5, v3w 2205.9 (median passed)
+
+(3) hindsight oracle over 23 opponents vs best single (grid_os1_10_10): gain % of best median, positive = oracle lower: +5.19 [+4.00, +6.61]
+  oracle median 117625 veh-s; mean gain 12196 veh-s (9.38 % of best mean)
+  with nc added to the pool: +5.19 [+4.00, +6.61]
+  v3w pooled vs oracle (positive = v3w lower): -8.02 [-9.55, -6.94]
+  noise yardstick: per-seed min over the 5 learners vs best single learner (w0u250): +4.10 [+3.08, +4.93]
+  oracle over the 5 lowest-median opponents ['grid_os1_10_10', '3E-D_TRUCK', 'os0_10_10', 'MPC-F', 'lr1000_10_1'] vs best single: +2.39 [+1.59, +3.55]
+  split-half (2,000 random splits): out-of-sample gain of a 3-bin scheduler on no-control delay vs best single chosen on the other half: mean +0.12 %, 2.5-97.5 pct [-0.90, +1.92]
+  same splits, hindsight oracle gain on the held-out half: mean +6.21 %; winner's curse of best single (its held-out median over the held-out best): mean +2.12 %
+  permutation check (each opponent's difference to the best shuffled across seeds, 500 draws): oracle gain mean +23.65 % [+22.71, +24.38]; observed +5.19 %
+  twins p333 / lr1000_10_1: delay differs on 20 of 240 seeds; on those, SD of the difference 6158 veh-s (4.89 % of best median), median |diff| 29
+  twins grid_r4a2 / grid_a41000_10_2: delay differs on 22 of 240 seeds; on those, SD of the difference 6710 veh-s (5.33 % of best median), median |diff| 1071
+  twin-noise null, K = 5 identical controllers with that noise: oracle gain +1.07 % [+0.38, +1.83]
+  twin-noise null, K = 23 identical controllers with that noise: oracle gain +6.55 % [+6.09, +8.27]
+
+(4) per-seed lowest-delay opponent, share of 240 seeds (ties split): lr400_16_1 13.3%, os1_10_0 11.2%, grid_z31333 10.0%, 3ex2 8.8%, 3E-D_TRUCK 7.9%, 3E-C_TRUCK 7.1%, 3ex1 6.2%, MPC-F 5.4%, grid_lr400_13_1 4.5%, lr400_13_2 3.7%, lr1000_16_2 3.5%, grid_a41000_10_2 2.7%, grid_r4a2 2.7%, grid_os1_10_10 2.6%, os1_15_10 2.2%, os0_10_10 2.2%, 3e 2.1%, p333 1.6%, lr1000_10_1 1.6%, z33133 0.8%
+  best single (grid_os1_10_10) is the per-seed best on 2.6 % of seeds; number of distinct winners 20
+  twins p333 / lr1000_10_1: identical delay on 220 of 240 seeds; cf identical on 222
+  twins grid_r4a2 / grid_a41000_10_2: identical delay on 218 of 240 seeds; cf identical on 219
+
+(5) frontier: median all_delay (veh-s) and median close-following (ttc_net) per arm
+  w0u250                124690   451.5
+  grid_os1_10_10        125808   558.5
+  w4u500                125863   457.0
+  3E-D_TRUCK            126057   674.0
+  os0_10_10             126111   596.0
+  MPC-F                 126151   523.5
+  w1u500                126160   456.0
+  lr1000_10_1           126296   628.5
+  p333                  126296   628.5
+  w2u250                126380   482.5
+  3E-C_TRUCK            126480   545.5
+  lr400_13_2            126640   674.5
+  w3u500                126693   468.0
+  grid_lr400_13_1       126934   704.5
+  os1_15_10             127037   578.5
+  v3w                   127465   548.5
+  grid_z31333           127475   526.5
+  lr1000_16_2           127553   614.0
+  lr400_16_1            128465   701.0
+  3ex1                  129105   721.5
+  3ex2                  129965   714.0
+  os1_10_0              130006   876.5
+  z33133                132047   902.5
+  3e                    133169   912.5
+  grid_a41000_10_2      133398   983.0
+  grid_r4a2             133398   983.0
+  r4a1                  138812  1131.5
+  a4400_10_1            139804  1247.0
+  copy                  150344  1265.0
+  nc                    200589  1234.0
+  Pareto set by medians (v3w pooled, 23 opponents, nc): ['MPC-F', 'grid_os1_10_10']
+  opponents shown better than v3w on both (paired 95 % CIs): []
+  opponents v3w is shown better than on both (paired 95 pct CIs): 8 of 24: ['3e', 'a4400_10_1', 'copy', 'grid_a41000_10_2', 'grid_r4a2', 'r4a1', 'z33133', 'nc']
+  lowest-cf opponents: MPC-F cf diff (o - v3w) +94.10 [+22.90, +193.10] s per run; delay diff (o - v3w) -662.42 [-1593.24, +1002.72] veh-s
+  lowest-cf opponents: grid_z31333 cf diff (o - v3w) +37.10 [-87.20, +140.40] s per run; delay diff (o - v3w) -327.37 [-1487.86, +1509.76] veh-s
+  lowest-cf opponents: 3E-C_TRUCK cf diff (o - v3w) +43.60 [-53.00, +138.10] s per run; delay diff (o - v3w) -11.92 [-1522.04, +1513.49] veh-s
+  lowest-cf opponents: grid_os1_10_10 cf diff (o - v3w) +110.70 [+28.48, +219.60] s per run; delay diff (o - v3w) -1401.86 [-2688.81, +231.00] veh-s
+
+(6) variance of the paired delay difference v3w - best opponent (grid_os1_10_10)
+  pooled 5-learner mean  SD 11.21 % (14100 veh-s), IQR 12.09 %, mean -0.09, median +1.11; SE(mean) 0.723, bootstrap SE(median) 0.490
+     95 % two-sided: MDE at 80 % power, n = 240: mean-based 2.03 %, median-based 1.37 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 452, 2: 113, 3: 51, 5: 19} ; mean-based: {1: 986, 2: 247, 3: 110, 5: 40}
+     97.5 % two-sided (S6's m = 2 level): MDE at 80 % power, n = 240: mean-based 2.23 %, median-based 1.51 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 548, 2: 137, 3: 61, 5: 22} ; mean-based: {1: 1194, 2: 299, 3: 133, 5: 48}
+  w0u250                 SD 13.35 % (16795 veh-s), IQR 12.81 %, mean -1.38, median -0.52; SE(mean) 0.862, bootstrap SE(median) 0.650
+     95 % two-sided: MDE at 80 % power, n = 240: mean-based 2.41 %, median-based 1.82 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 796, 2: 199, 3: 89, 5: 32} ; mean-based: {1: 1399, 2: 350, 3: 156, 5: 56}
+     97.5 % two-sided (S6's m = 2 level): MDE at 80 % power, n = 240: mean-based 2.66 %, median-based 2.00 %
+     seeds needed (median-based SE scaled by sqrt(n)): {1: 963, 2: 241, 3: 107, 5: 39} ; mean-based: {1: 1695, 2: 424, 3: 189, 5: 68}
+  w1u500                 SD 13.87 % (17454 veh-s), IQR 12.22 %, mean -0.28, median +0.05; SE(mean) 0.896, bootstrap SE(median) 0.832
+  w2u250                 SD 15.01 % (18883 veh-s), IQR 15.34 %, mean +0.82, median +0.21; SE(mean) 0.969, bootstrap SE(median) 0.640
+  w3u500                 SD 14.85 % (18684 veh-s), IQR 13.82 %, mean +0.49, median +0.42; SE(mean) 0.959, bootstrap SE(median) 0.719
+  w4u500                 SD 14.55 % (18304 veh-s), IQR 12.49 %, mean -0.09, median +0.46; SE(mean) 0.939, bootstrap SE(median) 0.566

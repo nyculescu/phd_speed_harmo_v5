@@ -1,0 +1,30 @@
+## X1: grid rules against p333 on delay, 20 tuning seeds; positive = rule has LESS delay than p333; p333 median 243051; rules 69
+  os0_10_10       +1.3 [ -2.5,  +4.1]  median 248608  mean collisions 0.00
+  lr1000_13_1     +0.6 [ -4.9,  +3.3]  median 247977  mean collisions 0.00
+  z31333          +0.6 [ -4.8,  +4.2]  median 245512  mean collisions 0.00
+  lr1000_10_1     -0.1 [ -4.0,  +6.5]  median 229742  mean collisions 0.00
+  lr400_13_2      -1.0 [ -7.9,  +2.7]  median 254084  mean collisions 0.00
+  z33133          -1.2 [ -4.3,  +3.8]  median 247871  mean collisions 0.00
+  os1_10_10       -1.7 [ -6.9,  +4.6]  median 251266  mean collisions 0.00
+  z13333          -1.9 [ -4.5,  +5.6]  median 250863  mean collisions 0.05
+  lr1000_10_2     -1.9 [ -4.9,  +0.1]  median 254821  mean collisions 0.00
+  lr1000_13_2     -2.0 [ -3.7,  -1.1]  median 251094  mean collisions 0.00
+  rules with point > 0: 3 ; with CI lower bound > 0: 0
+## X2: grid rules against p333 on delay, 20 tuning seeds; positive = rule has LESS delay than p333; p333 median 229146; rules 69
+  lr1000_16_2     -0.4 [ -5.3,  +1.9]  median 239666  mean collisions 0.00
+  lr1000_10_2     -0.4 [ -3.4,  +5.3]  median 235974  mean collisions 0.00
+  lr400_13_2      -0.6 [ -5.7,  +3.8]  median 231362  mean collisions 0.00
+  lr400_10_2      -0.8 [ -6.4,  +2.3]  median 230287  mean collisions 0.00
+  r4a1            -1.1 [ -6.7,  +1.6]  median 239415  mean collisions 0.00
+  lr400_16_2      -1.2 [ -4.4,  +1.8]  median 238835  mean collisions 0.00
+  lr1000_13_2     -1.3 [ -4.9,  +6.9]  median 226410  mean collisions 0.00
+  os1_15_10       -1.3 [ -5.4,  +3.8]  median 233950  mean collisions 0.00
+  os1_10_10       -1.4 [ -3.2,  -0.0]  median 238647  mean collisions 0.00
+  a4400_10_1      -1.6 [-11.2,  +1.3]  median 228819  mean collisions 0.00
+  rules with point > 0: 0 ; with CI lower bound > 0: 0
+X1 lowest median delay (median, mean): [('lr1000_10_1', 229742, 243021), ('p333', 243051, 244689), ('z31333', 245512, 243629), ('z33133', 247871, 244760), ('lr1000_13_1', 247977, 249573), ('os0_10_10', 248608, 245260), ('z11333', 249125, 252816), ('z11133', 250686, 252883)]
+X1 p333: [('p333', 243051, 244689)] rank 2 of 70
+X1 lowest mean delay: [('lr1000_10_1', 243021), ('z31333', 243629), ('z13333', 243875), ('p333', 244689), ('z33133', 244760), ('os0_10_10', 245260)]
+X2 lowest median delay (median, mean): [('os1_10_0', 226136, 228583), ('lr1000_13_2', 226410, 227739), ('os1_15_0', 228735, 232503), ('a4400_10_1', 228819, 237247), ('p333', 229146, 226524), ('lr400_10_2', 230287, 231913), ('lr400_13_2', 231362, 229782), ('a41000_10_2', 231557, 230712)]
+X2 p333: [('p333', 229146, 226524)] rank 5 of 70
+X2 lowest mean delay: [('lr1000_10_2', 226284), ('p333', 226524), ('lr1000_13_2', 227739), ('os1_10_0', 228583), ('lr400_13_2', 229782), ('os1_15_10', 230515)]

@@ -1,0 +1,18 @@
+== V382 T0 files 1 rows 300 all_delay 300 | seeds 10 (7440065, 7440074) | q [5300.0] | cond ['S', 'X1', 'X2']
+   plant 300 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+== conf3 map files 2 rows 1280 all_delay 1280 | seeds 20 (7440200, 7440219) | q [4600.0, 5300.0] | cond ['H1', 'H2', 'S', 'X1', 'X2']
+   plant 1280 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+== round1 val files 1 rows 3440 all_delay 3440 | seeds 40 (7440400, 7440439) | q [5300.0] | cond ['X1', 'X2']
+   plant 3440 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+== round1 stage0b files 1 rows 980 all_delay 980 | seeds 20 (7440340, 7440359) | q [4500.0, 4750.0, 5000.0, 5250.0, 5500.0, 5750.0, 6000.0] | cond ['T']
+   plant 980 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+== planb S3a files 1 rows 2800 all_delay 2800 | seeds 20 (7480100, 7480119) | q [5300.0] | cond ['S', 'TRUCK']
+   plant 2800 {}
+== planb ASCH tune files 1 rows 1520 all_delay 1520 | seeds 20 (7480230, 7480249) | q [5300.0] | cond ['S', 'TRUCK']
+   plant 1520 {}
+== planb MPC-F gate files 1 rows 300 all_delay 300 | seeds 30 (7480310, 7480339) | q [5300.0] | cond ['S', 'TRUCK']
+   plant 300 {}
+== planb 3E-D check files 1 rows 2200 all_delay 2200 | seeds 40 (7480190, 7480229) | q [5300.0] | cond []
+   plant 2200 {}
+== planb S2 files 1 rows 440 all_delay 440 | seeds 40 (7480010, 7480049) | q [5300.0] | cond ['PLACEBO', 'S', 'SURGE', 'TRUCK']
+   plant 440 {}

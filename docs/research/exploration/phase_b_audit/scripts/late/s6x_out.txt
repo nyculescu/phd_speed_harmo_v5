@@ -1,0 +1,4 @@
+rows 13920 arms 58
+ plant S 6960 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+ plant TRUCK 6960 {'ease': 'True', 'ease_max': '4.4', 'fix_x': 'True', 'geom': 'r2m3', 'smooth': 'True', 'smooth_s': '8.0', 'taper_fast': 'True', 'tau_rise': '0.2'}
+['3E-C_TRUCK', '3E-D_TRUCK', '3e', '3ex1', '3ex2', 'MPC-F', 'a4400_10_1', 'copy', 'grid_a41000_10_2', 'grid_lr400_13_1', 'grid_os1_10_10', 'grid_r4a2', 'grid_z31333', 'lr1000_10_1', 'lr1000_16_2', 'lr400_13_2', 'lr400_16_1', 'nc', 'os0_10_10', 'os1_10_0', 'os1_15_10', 'p333', 'r4a1', 'w0u250', 'w1u500', 'w2u250', 'w3u500', 'w4u500', 'z33133']

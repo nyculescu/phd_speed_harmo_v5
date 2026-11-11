@@ -1,0 +1,15 @@
+multiplicative model skipped in pass 1
+## K1 (point < 10 or lower bound <= 0) against 3E-C_TRUCK, n = 480, 2000 studies, B = 1000
+true edge | P(KILL) additive shift | alt form (lb <= 0 or < 20 s) | P(KILL) when the stated edge is the mean of the single-learner effects
+  0.0 | 1.000 | 0.991 | 1.000
+  5.0 | 0.985 | 0.431 | 0.995
+  8.0 | 0.906 | 0.098 | 0.929
+ 10.0 | 0.534 | 0.025 | 0.830
+ 11.0 | 0.416 | 0.021 | 0.504
+ 12.0 | 0.236 | 0.004 | 0.397
+ 13.0 | 0.025 | 0.000 | 0.194
+ 15.0 | 0.005 | 0.000 | 0.012
+K2 at the stored differences, n = 480: P(lowest lower bound > -1) over 4 rule arms = 0.912; > -2: 1.000
+K2 at the stored differences, n = 480: P(lowest lower bound > -1) over 10 rule arms = 0.912; > -2: 1.000
+
+[exited with code 0]

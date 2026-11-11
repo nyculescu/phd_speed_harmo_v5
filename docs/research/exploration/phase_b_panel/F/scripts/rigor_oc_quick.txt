@@ -1,0 +1,126 @@
+## Stored rows, 240 seeds, 97.5 % intervals, last value = SD of the paired difference in % of the opponent median
+TRUCK cf arm vs 3E-C_TRUCK +11.80 [+4.78, +19.71] SD 37.8
+TRUCK cf arm vs 3ex1 +31.35 [+24.21, +36.52] SD 28.1
+TRUCK cf arm vs p333 +26.94 [+19.22, +34.99] SD 44.2
+TRUCK cf per learner vs 3E-C_TRUCK +11.83 +11.46 +13.93 +13.14 +13.04 mean +12.68
+TRUCK delay arm vs 3E-C_TRUCK +1.12 [+0.74, +2.11] SD 6.50
+TRUCK delay arm vs p333 -0.25 [-0.83, +0.48] SD 5.26
+TRUCK delay arm vs os0_10_10 -0.58 [-0.93, +0.20] SD 5.21
+TRUCK delay arm vs 3E-D_TRUCK +0.08 [-0.59, +0.90] SD 5.26
+S cf arm vs 3E-C_TRUCK +7.99 [-12.47, +31.46] SD 123.9
+S cf arm vs 3ex1 +15.77 [+0.14, +35.66] SD 87.2
+S cf arm vs p333 +17.25 [+5.98, +36.75] SD 124.9
+S cf per learner vs 3E-C_TRUCK +29.42 +10.36 +6.69 +23.19 +16.68 mean +17.27
+S delay arm vs 3E-C_TRUCK -0.01 [-1.33, +1.28] SD 12.65
+S delay arm vs p333 -1.57 [-2.70, -0.31] SD 11.63
+S delay arm vs os0_10_10 -1.61 [-2.79, -0.92] SD 11.58
+S delay arm vs 3E-D_TRUCK -0.70 [-1.85, +0.36] SD 11.24
+correlation of the per-seed cf difference (v3w - rule) with the one against 3E-C_TRUCK: {'3E-C_TRUCK': 1.0, '3e': 0.02, '3ex1': 0.19, '3ex2': 0.21, '3E-D_TRUCK': 0.14, 'grid_os1_10_10': 0.07}
+correlation of the rules' own cf per seed with 3E-C_TRUCK: {'3e': 0.45, '3ex1': 0.58, '3ex2': 0.58, '3E-D_TRUCK': 0.55, 'p333': 0.51}
+
+label-swap null, cf, TRUCK, v3w arm vs 3E-C_TRUCK, 240 seeds: false 'lower bound > 0' in 1.05 % of 2000 swaps (nominal 1.25 %)
+
+## n = 80 verdict seeds, 1000 studies, B = 1000, 97.5 % intervals; second opponent stand-in = 3ex1
+true cf edge % | KILL-A one opp | KILL-A two opps | part: point<10 | part: lb<=0 | KILL-B (lb<=0 or <20 s/run) one opp | learner cond fails (one opp) | SD of point | mean upper bound minus point
+  0.0 | 0.996 | 1.000 | 0.964 | 0.992 | 0.992 | 0.600 | 5.93 | 12.48
+  5.0 | 0.913 | 0.993 | 0.795 | 0.879 | 0.879 | 0.231 | 5.67 | 12.48
+  8.0 | 0.830 | 0.944 | 0.688 | 0.779 | 0.779 | 0.097 | 5.52 | 12.48
+ 10.0 | 0.714 | 0.846 | 0.516 | 0.664 | 0.664 | 0.050 | 5.42 | 12.48
+ 12.0 | 0.589 | 0.712 | 0.355 | 0.564 | 0.564 | 0.009 | 5.33 | 12.48
+ 15.0 | 0.337 | 0.436 | 0.140 | 0.331 | 0.331 | 0.000 | 5.20 | 12.48
+ 20.0 | 0.104 | 0.116 | 0.045 | 0.093 | 0.093 | 0.000 | 5.01 | 12.48
+delay non-inferiority, P(lower bound > -margin) at 97.5 %; opponents 3E-C_TRUCK, p333, os0_10_10, 3E-D_TRUCK
+true v3w delay effect % (same against each; 'stored' = unshifted) | margin 1: each opp, all | margin 2: each opp, all | SD of point per opp
+stored | 0.991 0.261 0.236 0.567 all 0.117 | 1.000 0.887 0.862 0.983 all 0.799 | 0.53 0.52 0.48 0.53
+   0.0 | 0.602 0.393 0.616 0.490 all 0.141 | 0.982 0.954 0.983 0.976 all 0.911 | 0.54 0.52 0.47 0.53
+  -0.5 | 0.249 0.131 0.313 0.145 all 0.015 | 0.868 0.809 0.889 0.829 all 0.585 | 0.55 0.52 0.48 0.53
+  -1.0 | 0.021 0.015 0.017 0.027 all 0.000 | 0.598 0.392 0.616 0.491 all 0.140 | 0.55 0.53 0.48 0.54
+  -2.0 | 0.000 0.000 0.000 0.000 all 0.000 | 0.024 0.015 0.021 0.027 all 0.000 | 0.56 0.53 0.48 0.54
+joint PASS (cf rule A against both opponents, learner condition against both, delay within 2 % of all four as stored):
+  true edge  0.0: PASS 0.000 (stage 1 alone, one opponent: 0.004)
+  true edge  5.0: PASS 0.006 (stage 1 alone, one opponent: 0.068)
+  true edge  8.0: PASS 0.046 (stage 1 alone, one opponent: 0.140)
+  true edge 10.0: PASS 0.130 (stage 1 alone, one opponent: 0.233)
+  true edge 12.0: PASS 0.244 (stage 1 alone, one opponent: 0.331)
+  true edge 15.0: PASS 0.462 (stage 1 alone, one opponent: 0.535)
+  true edge 20.0: PASS 0.716 (stage 1 alone, one opponent: 0.722)
+
+## n = 240 verdict seeds, 1000 studies, B = 1000, 97.5 % intervals; second opponent stand-in = 3ex1
+true cf edge % | KILL-A one opp | KILL-A two opps | part: point<10 | part: lb<=0 | KILL-B (lb<=0 or <20 s/run) one opp | learner cond fails (one opp) | SD of point | mean upper bound minus point
+  0.0 | 0.999 | 1.000 | 0.999 | 0.991 | 0.991 | 0.578 | 3.17 | 7.84
+  5.0 | 0.940 | 0.999 | 0.940 | 0.659 | 0.659 | 0.056 | 3.03 | 7.84
+  8.0 | 0.811 | 0.933 | 0.809 | 0.396 | 0.396 | 0.003 | 2.95 | 7.84
+ 10.0 | 0.518 | 0.739 | 0.509 | 0.223 | 0.223 | 0.001 | 2.90 | 7.84
+ 12.0 | 0.285 | 0.403 | 0.270 | 0.121 | 0.121 | 0.000 | 2.85 | 7.84
+ 15.0 | 0.028 | 0.068 | 0.028 | 0.008 | 0.008 | 0.000 | 2.78 | 7.84
+ 20.0 | 0.002 | 0.002 | 0.002 | 0.000 | 0.000 | 0.000 | 2.68 | 7.84
+delay non-inferiority, P(lower bound > -margin) at 97.5 %; opponents 3E-C_TRUCK, p333, os0_10_10, 3E-D_TRUCK
+true v3w delay effect % (same against each; 'stored' = unshifted) | margin 1: each opp, all | margin 2: each opp, all | SD of point per opp
+stored | 1.000 0.697 0.672 0.964 all 0.537 | 1.000 1.000 1.000 1.000 all 1.000 | 0.25 0.34 0.25 0.31
+   0.0 | 0.967 0.854 0.983 0.928 all 0.774 | 1.000 1.000 1.000 1.000 all 1.000 | 0.26 0.34 0.25 0.31
+  -0.5 | 0.704 0.329 0.772 0.370 all 0.115 | 0.998 0.999 1.000 1.000 all 0.997 | 0.26 0.34 0.25 0.31
+  -1.0 | 0.011 0.014 0.013 0.019 all 0.000 | 0.962 0.856 0.984 0.924 all 0.772 | 0.26 0.34 0.25 0.31
+  -2.0 | 0.000 0.000 0.000 0.000 all 0.000 | 0.013 0.014 0.015 0.019 all 0.000 | 0.27 0.35 0.26 0.31
+joint PASS (cf rule A against both opponents, learner condition against both, delay within 2 % of all four as stored):
+  true edge  0.0: PASS 0.000 (stage 1 alone, one opponent: 0.001)
+  true edge  5.0: PASS 0.001 (stage 1 alone, one opponent: 0.060)
+  true edge  8.0: PASS 0.067 (stage 1 alone, one opponent: 0.189)
+  true edge 10.0: PASS 0.261 (stage 1 alone, one opponent: 0.482)
+  true edge 12.0: PASS 0.597 (stage 1 alone, one opponent: 0.715)
+  true edge 15.0: PASS 0.932 (stage 1 alone, one opponent: 0.972)
+  true edge 20.0: PASS 0.998 (stage 1 alone, one opponent: 0.998)
+
+## n = 360 verdict seeds, 1000 studies, B = 1000, 97.5 % intervals; second opponent stand-in = 3ex1
+true cf edge % | KILL-A one opp | KILL-A two opps | part: point<10 | part: lb<=0 | KILL-B (lb<=0 or <20 s/run) one opp | learner cond fails (one opp) | SD of point | mean upper bound minus point
+  0.0 | 1.000 | 1.000 | 1.000 | 0.986 | 0.986 | 0.555 | 2.57 | 6.50
+  5.0 | 0.971 | 0.999 | 0.971 | 0.540 | 0.540 | 0.028 | 2.46 | 6.50
+  8.0 | 0.857 | 0.954 | 0.857 | 0.192 | 0.192 | 0.000 | 2.40 | 6.50
+ 10.0 | 0.537 | 0.741 | 0.537 | 0.077 | 0.077 | 0.000 | 2.36 | 6.50
+ 12.0 | 0.261 | 0.341 | 0.261 | 0.025 | 0.025 | 0.000 | 2.33 | 6.50
+ 15.0 | 0.009 | 0.022 | 0.009 | 0.000 | 0.000 | 0.000 | 2.28 | 6.50
+ 20.0 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 2.20 | 6.50
+delay non-inferiority, P(lower bound > -margin) at 97.5 %; opponents 3E-C_TRUCK, p333, os0_10_10, 3E-D_TRUCK
+true v3w delay effect % (same against each; 'stored' = unshifted) | margin 1: each opp, all | margin 2: each opp, all | SD of point per opp
+stored | 1.000 0.876 0.849 0.996 all 0.787 | 1.000 1.000 1.000 1.000 all 1.000 | 0.19 0.29 0.22 0.25
+   0.0 | 0.998 0.970 0.999 0.984 all 0.955 | 1.000 1.000 1.000 1.000 all 1.000 | 0.20 0.29 0.22 0.25
+  -0.5 | 0.830 0.516 0.911 0.555 all 0.300 | 1.000 1.000 1.000 1.000 all 1.000 | 0.20 0.29 0.22 0.26
+  -1.0 | 0.014 0.014 0.020 0.014 all 0.000 | 0.998 0.970 0.999 0.978 all 0.949 | 0.20 0.29 0.22 0.26
+  -2.0 | 0.000 0.000 0.000 0.000 all 0.000 | 0.016 0.016 0.020 0.015 all 0.000 | 0.21 0.29 0.22 0.26
+joint PASS (cf rule A against both opponents, learner condition against both, delay within 2 % of all four as stored):
+  true edge  0.0: PASS 0.000 (stage 1 alone, one opponent: 0.000)
+  true edge  5.0: PASS 0.001 (stage 1 alone, one opponent: 0.029)
+  true edge  8.0: PASS 0.046 (stage 1 alone, one opponent: 0.143)
+  true edge 10.0: PASS 0.259 (stage 1 alone, one opponent: 0.463)
+  true edge 12.0: PASS 0.659 (stage 1 alone, one opponent: 0.739)
+  true edge 15.0: PASS 0.978 (stage 1 alone, one opponent: 0.991)
+  true edge 20.0: PASS 1.000 (stage 1 alone, one opponent: 1.000)
+
+## n = 480 verdict seeds, 1000 studies, B = 1000, 97.5 % intervals; second opponent stand-in = 3ex1
+true cf edge % | KILL-A one opp | KILL-A two opps | part: point<10 | part: lb<=0 | KILL-B (lb<=0 or <20 s/run) one opp | learner cond fails (one opp) | SD of point | mean upper bound minus point
+  0.0 | 1.000 | 1.000 | 1.000 | 0.981 | 0.981 | 0.553 | 2.18 | 5.72
+  5.0 | 0.983 | 1.000 | 0.983 | 0.397 | 0.397 | 0.009 | 2.08 | 5.72
+  8.0 | 0.890 | 0.953 | 0.890 | 0.096 | 0.096 | 0.000 | 2.03 | 5.72
+ 10.0 | 0.511 | 0.723 | 0.511 | 0.024 | 0.024 | 0.000 | 2.00 | 5.72
+ 12.0 | 0.222 | 0.296 | 0.222 | 0.006 | 0.006 | 0.000 | 1.96 | 5.72
+ 15.0 | 0.004 | 0.010 | 0.004 | 0.000 | 0.000 | 0.000 | 1.92 | 5.72
+ 20.0 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 1.85 | 5.72
+delay non-inferiority, P(lower bound > -margin) at 97.5 %; opponents 3E-C_TRUCK, p333, os0_10_10, 3E-D_TRUCK
+true v3w delay effect % (same against each; 'stored' = unshifted) | margin 1: each opp, all | margin 2: each opp, all | SD of point per opp
+stored | 1.000 0.957 0.937 0.999 all 0.913 | 1.000 1.000 1.000 1.000 all 1.000 | 0.16 0.26 0.19 0.22
+   0.0 | 1.000 0.991 0.999 0.998 all 0.988 | 1.000 1.000 1.000 1.000 all 1.000 | 0.16 0.26 0.19 0.22
+  -0.5 | 0.937 0.657 0.970 0.716 all 0.484 | 1.000 1.000 1.000 1.000 all 1.000 | 0.17 0.26 0.19 0.22
+  -1.0 | 0.016 0.013 0.019 0.014 all 0.000 | 1.000 0.991 0.999 0.998 all 0.988 | 0.17 0.26 0.20 0.22
+  -2.0 | 0.000 0.000 0.000 0.000 all 0.000 | 0.016 0.013 0.021 0.014 all 0.000 | 0.17 0.27 0.20 0.22
+joint PASS (cf rule A against both opponents, learner condition against both, delay within 2 % of all four as stored):
+  true edge  0.0: PASS 0.000 (stage 1 alone, one opponent: 0.000)
+  true edge  5.0: PASS 0.000 (stage 1 alone, one opponent: 0.017)
+  true edge  8.0: PASS 0.047 (stage 1 alone, one opponent: 0.110)
+  true edge 10.0: PASS 0.277 (stage 1 alone, one opponent: 0.489)
+  true edge 12.0: PASS 0.704 (stage 1 alone, one opponent: 0.778)
+  true edge 15.0: PASS 0.990 (stage 1 alone, one opponent: 0.996)
+  true edge 20.0: PASS 1.000 (stage 1 alone, one opponent: 1.000)
+
+## S (steady): half-width of the 97.5 % interval of the cf effect against 3E-C_TRUCK, stored rows resampled to n
+240 median half-width 20.5 points
+480 median half-width 15.2 points
+960 median half-width 10.9 points

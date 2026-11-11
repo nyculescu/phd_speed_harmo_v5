@@ -1,0 +1,105 @@
+m = 2
+TRUCK delay lower bounds (ci_m), min: os0_10_10 -0.931 | count lb > -2: 23 of 23 | count lb > -1: 23
+TRUCK 3E-C_TRUCK cf +11.80 [+4.97, +19.71] | delay +1.12 [+0.75, +2.11]
+TRUCK os0_10_10 cf +22.57 [+17.44, +27.90] | delay -0.58 [-0.93, +0.20]
+TRUCK p333 cf +26.94 [+19.21, +35.30] | delay -0.25 [-0.83, +0.50]
+TRUCK 3E-D_TRUCK cf +30.25 [+22.98, +38.45] | delay +0.08 [-0.57, +0.90]
+S delay lower bounds min: os1_15_10 -3.184 | count lb > -2: 16 of 23
+S 3E-C_TRUCK cf +7.99 [-11.71, +31.46] | delay -0.01 [-1.33, +1.28]
+S os0_10_10 cf +17.65 [+6.57, +34.04] | delay -1.61 [-2.78, -0.89]
+S p333 cf +17.25 [+6.24, +36.75] | delay -1.57 [-2.70, -0.24]
+S: opponents with cf point < 10 or lb <= 0: ['3E-C_TRUCK', 'grid_z31333', 'lr400_16_1']
+TRUCK: opponents with cf point < 10 or lb <= 0: []
+TRUCK cf points sorted: [(11.8, '3E-C_TRUCK'), (22.57, 'os0_10_10'), (23.47, 'lr400_16_1'), (25.11, '3ex2')]
+report-only TRUCK 3E-C_TRUCK jam_share -0.57 [-7.30, +11.32] (95 %) ci_m [-8.77, +12.24]
+report-only TRUCK 3E-C_TRUCK congested_share +0.65 [-1.52, +2.42] (95 %) ci_m [-1.79, +2.68]
+report-only TRUCK 3E-C_TRUCK congested_km_mean +1.17 [+0.05, +2.69] (95 %) ci_m [-0.22, +2.82]
+report-only TRUCK 3E-C_TRUCK osc_kmh +1.02 [+0.55, +1.36] (95 %) ci_m [+0.47, +1.40]
+report-only TRUCK 3E-C_TRUCK events_ge45 -5.73 [-8.28, -2.31] (95 %) ci_m [-8.80, -1.29]
+report-only TRUCK 3E-C_TRUCK ttc15 +37.47 [+27.37, +46.74] (95 %) ci_m [+26.53, +49.47]
+report-only TRUCK 3E-C_TRUCK ttc2 +40.52 [+34.81, +45.62] (95 %) ci_m [+34.25, +47.12]
+report-only TRUCK 3E-C_TRUCK sev3 +26.84 [+19.65, +38.95] (95 %) ci_m [+18.95, +39.30]
+report-only TRUCK 3E-C_TRUCK robust_braking -0.50 [-1.46, +1.18] (95 %) ci_m [-1.89, +1.28]
+report-only TRUCK 3E-C_TRUCK b45_step -1.55 [-4.44, +2.37] (95 %) ci_m [-5.05, +3.56]
+report-only TRUCK 3E-C_TRUCK delay_ramp +3.48 [+2.61, +4.29] (95 %) ci_m [+2.50, +4.35]
+report-only TRUCK 3E-C_TRUCK delay_ramp2 -4.04 [-5.58, -2.32] (95 %) ci_m [-5.69, -1.72]
+report-only TRUCK 3E-C_TRUCK ttc3_lc_share -6.33 [-9.45, -4.00] (95 %) ci_m [-10.50, -3.46]
+report-only TRUCK p333 jam_share +10.65 [+0.02, +17.61] (95 %) ci_m [-0.78, +19.26]
+report-only TRUCK p333 congested_share -0.33 [-1.95, +1.17] (95 %) ci_m [-2.23, +1.32]
+report-only TRUCK p333 congested_km_mean -1.43 [-3.04, -0.63] (95 %) ci_m [-3.35, -0.58]
+report-only TRUCK p333 osc_kmh -0.15 [-0.36, +0.28] (95 %) ci_m [-0.39, +0.32]
+report-only TRUCK p333 events_ge45 +9.93 [+4.54, +15.82] (95 %) ci_m [+3.63, +16.52]
+report-only TRUCK p333 ttc15 +51.85 [+43.11, +60.30] (95 %) ci_m [+41.33, +61.63]
+report-only TRUCK p333 ttc2 +54.00 [+43.99, +61.19] (95 %) ci_m [+42.90, +61.75]
+report-only TRUCK p333 sev3 +36.38 [+30.55, +43.15] (95 %) ci_m [+28.19, +44.09]
+report-only TRUCK p333 robust_braking +1.89 [-0.36, +3.74] (95 %) ci_m [-0.52, +3.93]
+report-only TRUCK p333 b45_step +13.26 [+7.26, +18.14] (95 %) ci_m [+6.70, +18.97]
+report-only TRUCK p333 delay_ramp -1.68 [-2.34, -0.66] (95 %) ci_m [-2.47, -0.57]
+report-only TRUCK p333 delay_ramp2 -1.35 [-2.70, +0.57] (95 %) ci_m [-2.84, +0.81]
+report-only TRUCK p333 ttc3_lc_share -21.58 [-25.55, -18.61] (95 %) ci_m [-26.23, -17.13]
+report-only TRUCK nc jam_share +62.91 [+57.65, +70.86] (95 %) ci_m [+57.28, +72.29]
+report-only TRUCK nc congested_share +48.42 [+47.19, +51.04] (95 %) ci_m [+46.69, +51.22]
+report-only TRUCK nc congested_km_mean +54.10 [+52.08, +56.67] (95 %) ci_m [+51.89, +56.99]
+report-only TRUCK nc osc_kmh +6.94 [+6.36, +7.63] (95 %) ci_m [+6.31, +7.71]
+report-only TRUCK nc events_ge45 +15.42 [+11.19, +19.09] (95 %) ci_m [+10.93, +19.69]
+report-only TRUCK nc ttc15 +43.19 [+36.17, +46.81] (95 %) ci_m [+35.74, +47.23]
+report-only TRUCK nc ttc2 +31.30 [+26.56, +34.05] (95 %) ci_m [+26.06, +34.40]
+report-only TRUCK nc sev3 +44.59 [+40.27, +51.08] (95 %) ci_m [+39.19, +51.22]
+report-only TRUCK nc robust_braking +4.19 [+1.93, +5.75] (95 %) ci_m [+1.41, +6.21]
+report-only TRUCK nc b45_step +13.92 [+10.98, +17.58] (95 %) ci_m [+10.01, +18.14]
+report-only TRUCK nc delay_ramp +33.83 [+32.35, +36.44] (95 %) ci_m [+32.21, +36.63]
+report-only TRUCK nc delay_ramp2 +34.78 [+32.85, +39.08] (95 %) ci_m [+32.20, +39.36]
+report-only TRUCK nc ttc3_lc_share +12.20 [+5.03, +18.67] (95 %) ci_m [+4.73, +19.19]
+no_control keys: ['delay', 'cf95', 'cf_shown_higher']
+{'delay': [28.940376865777893, 28.068642250438785, 30.10407512372958], 'cf95': [29.059967585089147, 26.35332252836305, 33.306320907617504], 'cf_shown_higher': False}
+
+recount, pooled, 97.5 %:
+ TRUCK vs 3E-C_TRUCK cf +11.80 [+4.78, +19.89] | delay +1.12 [+0.74, +2.11]
+ TRUCK vs os0_10_10 cf +22.57 [+17.39, +28.40] | delay -0.58 [-0.94, +0.32]
+ TRUCK vs p333 cf +26.94 [+19.22, +35.30] | delay -0.25 [-0.83, +0.48]
+ 3E-C vs p333 cf +21.18 [+13.92, +31.92] delay -1.28 [-2.25, -0.37]
+ paired delay diff vs 3E-C_TRUCK SD 6.50 IQR [-1.09, 4.71]
+ paired delay diff vs os0_10_10 SD 5.21 IQR [-2.66, 3.04]
+ paired delay diff vs p333 SD 5.26 IQR [-2.65, 3.32]
+
+Rule: KILL if cf point < 10 or cf lower bound <= 0 or delay lower bound <= -2 (97.5 % two-sided), pooled arm vs a rule with 3E-C_TRUCK's seed noise
+true cf edge | true delay | seeds | P(KILL) | by cf | by delay
+  0.0 | +0.0 | 240 | 0.999 | 0.999 | 0.000
+  5.0 | +0.0 | 240 | 0.947 | 0.947 | 0.000
+  8.0 | +0.0 | 240 | 0.828 | 0.828 | 0.000
+ 10.0 | +0.0 | 240 | 0.526 | 0.526 | 0.000
+ 12.0 | +0.0 | 240 | 0.297 | 0.297 | 0.000
+ 15.0 | +0.0 | 240 | 0.025 | 0.025 | 0.000
+ 18.0 | +0.0 | 240 | 0.001 | 0.001 | 0.000
+ 20.0 | +0.0 | 240 | 0.000 | 0.000 | 0.000
+  0.0 | +0.0 | 160 | 0.996 | 0.996 | 0.000
+  5.0 | +0.0 | 160 | 0.922 | 0.922 | 0.000
+  8.0 | +0.0 | 160 | 0.777 | 0.777 | 0.000
+ 10.0 | +0.0 | 160 | 0.566 | 0.566 | 0.000
+ 12.0 | +0.0 | 160 | 0.382 | 0.382 | 0.000
+ 15.0 | +0.0 | 160 | 0.081 | 0.081 | 0.000
+ 18.0 | +0.0 | 160 | 0.022 | 0.022 | 0.000
+ 20.0 | +0.0 | 160 | 0.009 | 0.009 | 0.000
+  0.0 | +0.0 | 120 | 0.993 | 0.993 | 0.001
+  5.0 | +0.0 | 120 | 0.904 | 0.904 | 0.001
+  8.0 | +0.0 | 120 | 0.786 | 0.786 | 0.001
+ 10.0 | +0.0 | 120 | 0.632 | 0.632 | 0.001
+ 12.0 | +0.0 | 120 | 0.465 | 0.465 | 0.001
+ 15.0 | +0.0 | 120 | 0.169 | 0.169 | 0.001
+ 18.0 | +0.0 | 120 | 0.052 | 0.052 | 0.001
+ 20.0 | +0.0 | 120 | 0.016 | 0.015 | 0.001
+
+delay non-inferiority alone (margin 2 %, 97.5 % two-sided), by opponent noise; true delay difference (negative = v3w worse)
+3E-C_TRUCK 240 +0.0:0.000 -0.5:0.000 -1.0:0.024 -1.5:0.340 -2.0:0.977 -3.0:1.000
+3E-C_TRUCK 120 +0.0:0.001 -0.5:0.035 -1.0:0.220 -1.5:0.642 -2.0:0.983 -3.0:1.000
+os0_10_10 240 +0.0:0.000 -0.5:0.000 -1.0:0.017 -1.5:0.218 -2.0:0.982 -3.0:1.000
+os0_10_10 120 +0.0:0.000 -0.5:0.017 -1.0:0.179 -1.5:0.543 -2.0:0.977 -3.0:1.000
+p333 240 +0.0:0.000 -0.5:0.001 -1.0:0.133 -1.5:0.665 -2.0:0.985 -3.0:1.000
+p333 120 +0.0:0.001 -0.5:0.045 -1.0:0.429 -1.5:0.818 -2.0:0.978 -3.0:1.000
+
+selection: SD of the search loss term (close-following % change vs p333, median paired) for 3E-C_TRUCK, by seed count
+40 loss term mean -21.94 SD 7.86 | delay % mean 1.41 SD 1.09 | share with delay > +2 %: 0.248
+80 loss term mean -21.94 SD 6.15 | delay % mean 1.35 SD 0.72 | share with delay > +2 %: 0.158
+120 loss term mean -21.81 SD 5.26 | delay % mean 1.35 SD 0.58 | share with delay > +2 %: 0.116
+160 loss term mean -21.73 SD 4.71 | delay % mean 1.33 SD 0.51 | share with delay > +2 %: 0.088
+240 loss term mean -21.68 SD 4.09 | delay % mean 1.33 SD 0.40 | share with delay > +2 %: 0.046

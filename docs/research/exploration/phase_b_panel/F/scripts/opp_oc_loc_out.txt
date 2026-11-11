@@ -1,0 +1,19 @@
+location clauses at the stored effect (no shift) and at a true 0: at least 4 of 5 learners with the 97.5 % lower bound > 0, 240 seeds
+TRUCK vs 3E-C_TRUCK outside both merge sections  stored effect: learners 0.995, arm 0.958 | true 0: learners 0.001, arm 0.011
+TRUCK vs 3E-C_TRUCK outside lane-change windows  stored effect: learners 0.941, arm 0.955 | true 0: learners 0.001, arm 0.003
+TRUCK vs 3E-C_TRUCK deciding count               stored effect: learners 0.897, arm 0.853 | true 0: learners 0.000, arm 0.003
+/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/89ba3663-8e1a-45c3-9415-9e2a743fb16b/scratchpad/phaseB/panel/F/opp_oc.py:27: RuntimeWarning: divide by zero encountered in divide
+  d = -(p[s] - o) / mo * 100.0
+/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/89ba3663-8e1a-45c3-9415-9e2a743fb16b/scratchpad/phaseB/panel/F/opp_oc.py:27: RuntimeWarning: invalid value encountered in divide
+  d = -(p[s] - o) / mo * 100.0
+/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/lib/python3.14/site-packages/numpy/_core/_methods.py:132: RuntimeWarning: invalid value encountered in reduce
+  ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
+/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/89ba3663-8e1a-45c3-9415-9e2a743fb16b/scratchpad/phaseB/panel/F/opp_oc.py:31: RuntimeWarning: divide by zero encountered in divide
+  d = -(Ps[:, s].mean(axis=0) - o) / mo * 100.0
+/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/89ba3663-8e1a-45c3-9415-9e2a743fb16b/scratchpad/phaseB/panel/F/opp_oc.py:31: RuntimeWarning: invalid value encountered in divide
+  d = -(Ps[:, s].mean(axis=0) - o) / mo * 100.0
+/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/lib/python3.14/site-packages/numpy/lib/_function_base_impl.py:4608: RuntimeWarning: invalid value encountered in scalar subtract
+  diff_b_a = b - a
+S     vs 3E-C_TRUCK outside both merge sections  stored effect: learners 0.000, arm 0.000 | true 0: learners 0.000, arm 0.000
+S     vs 3E-C_TRUCK outside lane-change windows  stored effect: learners 0.402, arm 0.085 | true 0: learners 0.001, arm 0.000
+S     vs 3E-C_TRUCK deciding count               stored effect: learners 0.354, arm 0.113 | true 0: learners 0.001, arm 0.003

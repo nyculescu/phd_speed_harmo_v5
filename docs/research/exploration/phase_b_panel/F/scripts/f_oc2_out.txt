@@ -1,0 +1,3 @@
+recorded effects, no shift         P(K1 delay) 0.001 | P(K2 edge) 0.142 | P(K3 learners) 0.000 | P(KILL) 0.142 | P(guard fails) 0.192 | P(pass, guard holds) 0.738
+true edge vs closest rule 12.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.114 | P(K3 learners) 0.001 | P(KILL) 0.114 | P(guard fails) 0.197 | P(pass, guard holds) 0.745
+true edge vs closest rule 15.0 %   P(K1 delay) 0.000 | P(K2 edge) 0.011 | P(K3 learners) 0.000 | P(KILL) 0.011 | P(guard fails) 0.077 | P(pass, guard holds) 0.918

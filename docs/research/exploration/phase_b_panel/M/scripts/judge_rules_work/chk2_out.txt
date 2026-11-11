@@ -1,0 +1,28 @@
+seeds 240 7480400 7480639 arms ['grid_r4a2', 'grid_z31333', 'nc', 'os0_10_10', 'p333', 'r4a1', 'z33133']
+p333 median all_delay 126296
+merge excess % of delay: 9.20, 95 % [8.48, 11.23], 97.5 % [8.33, 11.41]; merge1 1.94 merge2 7.13
+r4a1         edge -7.51 95 % [-9.19, -4.74] 97.5 % [-10.31, -4.42] paired sd 17.2
+z33133       edge -4.14 95 % [-5.52, -2.59] 97.5 % [-5.80, -2.49] paired sd 17.3
+grid_r4a2    edge -3.75 95 % [-5.57, -2.58] 97.5 % [-6.08, -2.28] paired sd 16.7
+grid_z31333  edge -2.11 95 % [-3.52, -1.12] 97.5 % [-3.70, -0.58] paired sd 15.8
+os0_10_10    edge +0.00 95 % [+0.00, +0.00] 97.5 % [+0.00, +0.00] paired sd 8.9
+nc           edge -56.00 95 % [-59.20, -54.84] 97.5 % [-60.68, -54.41] paired sd 18.5
+rule: PASS = point >= thr and lower bound > 0; BOUNDED = upper bound < thr; else not shown. Columns PASS/BOUNDED/not shown, %
+  cheap    noise z33133  n 120 thr 3 level 97.50 true +0:   0.0 /  91.3 /   8.7
+  cheap    noise z33133  n 120 thr 3 level 97.50 true +3:  42.8 /   1.7 /  55.5
+  cheap    noise z33133  n 120 thr 3 level 97.50 true +5:  93.2 /   0.0 /   6.8
+  rigor    noise z33133  n 240 thr 5 level 97.50 true +0:   0.0 / 100.0 /   0.0
+  rigor    noise z33133  n 240 thr 5 level 97.50 true +3:   0.3 /  79.3 /  20.3
+  rigor    noise z33133  n 240 thr 5 level 97.50 true +5:  53.0 /   1.5 /  45.5
+  opponent noise z33133  n 360 thr 3 level 99.69 true +0:   0.0 / 100.0 /   0.0
+  opponent noise z33133  n 360 thr 3 level 99.69 true +3:  57.2 /   0.3 /  42.5
+  opponent noise z33133  n 360 thr 3 level 99.69 true +5: 100.0 /   0.0 /   0.0
+  cheap    noise r4a1    n 120 thr 3 level 97.50 true +0:   0.7 /  25.3 /  74.0
+  cheap    noise r4a1    n 120 thr 3 level 97.50 true +3:  31.8 /   0.3 /  67.8
+  cheap    noise r4a1    n 120 thr 3 level 97.50 true +5:  56.5 /   0.0 /  43.5
+  rigor    noise r4a1    n 240 thr 5 level 97.50 true +0:   0.0 /  99.8 /   0.2
+  rigor    noise r4a1    n 240 thr 5 level 97.50 true +3:  10.2 /  23.5 /  66.3
+  rigor    noise r4a1    n 240 thr 5 level 97.50 true +5:  52.3 /   1.5 /  46.2
+  opponent noise r4a1    n 360 thr 3 level 99.69 true +0:   0.2 /  38.2 /  61.7
+  opponent noise r4a1    n 360 thr 3 level 99.69 true +3:  48.5 /   0.0 /  51.5
+  opponent noise r4a1    n 360 thr 3 level 99.69 true +5:  87.0 /   0.0 /  13.0

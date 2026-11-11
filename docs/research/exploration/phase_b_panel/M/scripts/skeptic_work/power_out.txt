@@ -1,0 +1,49 @@
+true effect against p333 | PASS against p333 alone / p333 and os0_10_10 / all three | BOUNDED (%), n = 240, 97.5 %
+noise r4a1
+   +0:   0.0 /   0.0 /   0.0 |  99.8
+   +3:   6.0 /   0.1 /   0.1 |  24.3
+   +4:  32.9 /   3.3 /   3.1 |   3.7
+   +5:  50.5 /   9.7 /   9.5 |   0.9
+   +6:  87.9 /  43.1 /  43.0 |   0.1
+   +7:  97.1 /  75.1 /  75.1 |   0.0
+   +8:  99.3 /  88.8 /  88.8 |   0.0
+noise z33133
+   +0:   0.0 /   0.0 /   0.0 | 100.0
+   +3:   0.0 /   0.0 /   0.0 |  81.2
+   +4:   7.5 /   3.9 /   3.5 |  20.8
+   +5:  47.5 /  41.3 /  39.9 |   1.7
+   +6:  96.7 /  91.3 /  90.3 |   0.0
+   +7:  99.7 /  99.1 /  99.1 |   0.0
+   +8: 100.0 /  99.7 /  99.7 |   0.0
+noise grid_r4a2
+   +0:   0.0 /   0.0 /   0.0 | 100.0
+   +3:   0.1 /   0.0 /   0.0 |  90.4
+   +4:   4.1 /   0.7 /   0.5 |  31.9
+   +5:  49.4 /  16.4 /  12.3 |   1.4
+   +6:  92.7 /  75.8 /  70.6 |   0.1
+   +7:  98.3 /  96.3 /  94.9 |   0.0
+   +8: 100.0 /  99.5 /  99.4 |   0.0
+noise grid_z31333
+   +0:   0.0 /   0.0 /   0.0 | 100.0
+   +3:   0.0 /   0.0 /   0.0 |  86.3
+   +4:   2.2 /   0.5 /   0.4 |  39.7
+   +5:  48.5 /  38.7 /  38.3 |   1.5
+   +6:  94.9 /  90.4 /  90.4 |   0.0
+   +7:  99.9 /  99.4 /  99.4 |   0.0
+   +8: 100.0 / 100.0 / 100.0 |   0.0
+chain: 4 long arms, one with true effect e, three at 0; pick = highest median paired difference on 60 seeds; verdict on 240 other draws (all three opponents)
+   noise r4a1, e +5: true arm picked 82.8 %, screen PASS in the cell 8.6 %
+   noise r4a1, e +6: true arm picked 90.9 %, screen PASS in the cell 37.1 %
+   noise r4a1, e +7: true arm picked 93.0 %, screen PASS in the cell 68.1 %
+   noise grid_z31333, e +5: true arm picked 98.3 %, screen PASS in the cell 36.9 %
+   noise grid_z31333, e +6: true arm picked 99.8 %, screen PASS in the cell 89.6 %
+   noise grid_z31333, e +7: true arm picked 99.8 %, screen PASS in the cell 99.6 %
+6,000 veh/h, normal stand-in with the band rows' paired SD (8-11 % of p333's median; n = 240; one comparison):
+   SD 8, e +0: PASS   0.0 | BOUNDED 100.0
+   SD 8, e +3: PASS   0.1 | BOUNDED  81.1
+   SD 8, e +5: PASS  51.1 | BOUNDED   1.4
+   SD 8, e +6: PASS  94.0 | BOUNDED   0.0
+   SD 11, e +0: PASS   0.0 | BOUNDED 100.0
+   SD 11, e +3: PASS   1.0 | BOUNDED  50.0
+   SD 11, e +5: PASS  48.7 | BOUNDED   1.3
+   SD 11, e +6: PASS  87.5 | BOUNDED   0.0

@@ -1,0 +1,27 @@
+stored points: {'p333': 4.24, 'lr1000_10_1': 4.6, 'os0_10_10': 4.63, 'lr1000_16_2': 6.32, 'os1_15_10': 6.42, 'lr400_13_2': 6.71, 'z33133': 6.96, 'os1_10_0': 7.86, 'r4a1': 8.7, 'a4400_10_1': 10.6, 'lr400_16_1': 11.48, 'copy': 14.13}
+
+A. one new arm = p333 shifted (others as stored), n = 160: PASS, K1 point, K1 bound, K2
+  edge 0: PASS 0.000 (point>=3 0.000, LB>0 0.009, K2 ok 0.082); arm passes but K2 fires 0.000
+  edge 1: PASS 0.001 (point>=3 0.001, LB>0 0.204, K2 ok 0.293); arm passes but K2 fires 0.000
+  edge 2: PASS 0.048 (point>=3 0.049, LB>0 0.805, K2 ok 0.784); arm passes but K2 fires 0.000
+  edge 3: PASS 0.518 (point>=3 0.519, LB>0 0.982, K2 ok 0.991); arm passes but K2 fires 0.000
+  edge 3.5: PASS 0.790 (point>=3 0.792, LB>0 0.989, K2 ok 0.999); arm passes but K2 fires 0.000
+  edge 4: PASS 0.913 (point>=3 0.915, LB>0 0.993, K2 ok 1.000); arm passes but K2 fires 0.000
+  edge 5: PASS 0.934 (point>=3 0.936, LB>0 0.993, K2 ok 1.000); arm passes but K2 fires 0.000
+
+B. k arms at the same true edge (nearest k stored rules shifted; others as stored), n = 160
+  k=1 (p333): e=3: 0.518 | e=3.5: 0.790 | e=4: 0.913 | e=4.24: 0.934 | e=5: 0.979
+  k=3 (p333,lr1000_10_1,os0_10_10): e=3: 0.227 | e=3.5: 0.572 | e=4: 0.852 | e=4.24: 0.915 | e=5: 0.987
+  k=5 (p333,lr1000_10_1,os0_10_10,lr1000_16_2,os1_15_10): e=3: 0.099 | e=3.5: 0.378 | e=4: 0.711 | e=4.24: 0.850 | e=5: 0.983
+  k=12 (p333,lr1000_10_1,os0_10_10,lr1000_16_2,os1_15_10...): e=3: 0.011 | e=3.5: 0.121 | e=4: 0.445 | e=4.24: 0.563 | e=5: 0.874
+
+C. which stored rule is the closest by point (as stored)
+  n=160: PASS 0.934; closest: p333 0.59, lr1000_10_1 0.21, os0_10_10 0.20, lr1000_16_2 0.00, os1_15_10 0.00
+  three nearest all at edge 3.5: closest p333 0.37, lr1000_10_1 0.33, os0_10_10 0.31
+
+D. recorded 5 % bar at arm level (confirmatory_3.md:108 is per policy, 4 of 5), as stored, n = 160
+  arm point >= 5 against every stored rule and LB>0 and K2: 0.022 (point clause 0.022)
+
+E. direct percentile bootstrap check of the count-form bound, n = 160, p333 shifted to edge 0 and 2 (400 studies, B = 4,000)
+  edge 0: LB>0 direct 0.010, count form 0.010
+  edge 2: LB>0 direct 0.818, count form 0.797

@@ -1,0 +1,24 @@
+q 5250 all 20 (condition T): n 20; p333 median all_delay 137904; N median 597476; finished % 82.3; edge-3 minutes below 60 km/h median 0.0 (of 25), seeds with 0: 14; 4a slow minutes median 11.5; end_stop2 median 786
+     os1_15_10  edge vs p333 median  +0.00 %, paired SD   7.7 %, range [-21.2, +15.3]
+     3e         edge vs p333 median  -6.53 %, paired SD  15.2 %, range [-30.2, +37.2]
+     nc         edge vs p333 median -52.05 %, paired SD  21.0 %, range [-91.3, -13.8]
+q 5250 no slowdown drawn: n 5; p333 median all_delay 122915; N median 564915; finished % 82.8; edge-3 minutes below 60 km/h median 0.0 (of 25), seeds with 0: 5; 4a slow minutes median 3.0; end_stop2 median 147
+     os1_15_10  edge vs p333 median  +0.06 %, paired SD   9.4 %, range [-8.6, +17.2]
+     3e         edge vs p333 median -10.89 %, paired SD  27.6 %, range [-28.2, +41.8]
+     nc         edge vs p333 median -51.07 %, paired SD  35.1 %, range [-102.5, -15.5]
+q 5500 all 20 (condition T): n 20; p333 median all_delay 192101; N median 664672; finished % 80.1; edge-3 minutes below 60 km/h median 0.0 (of 25), seeds with 0: 11; 4a slow minutes median 16.5; end_stop2 median 1219
+     os1_15_10  edge vs p333 median  -0.66 %, paired SD  10.7 %, range [-29.7, +25.8]
+     3e         edge vs p333 median -14.25 %, paired SD  17.7 %, range [-44.7, +19.1]
+     nc         edge vs p333 median -47.93 %, paired SD  17.6 %, range [-75.4, -12.7]
+q 5500 no slowdown drawn: n 5; p333 median all_delay 152618; N median 622284; finished % 81.9; edge-3 minutes below 60 km/h median 0.0 (of 25), seeds with 0: 5; 4a slow minutes median 11.0; end_stop2 median 634
+     os1_15_10  edge vs p333 median  -0.93 %, paired SD   9.5 %, range [-16.9, +3.9]
+     3e         edge vs p333 median -33.95 %, paired SD  25.9 %, range [-56.3, +4.9]
+     nc         edge vs p333 median -75.88 %, paired SD  13.3 %, range [-94.9, -59.2]
+q 6000 all 20 (condition T): n 20; p333 median all_delay 341366; N median 845125; finished % 73.8; edge-3 minutes below 60 km/h median 17.0 (of 25), seeds with 0: 0; 4a slow minutes median 22.0; end_stop2 median 2296
+     os1_15_10  edge vs p333 median  -1.44 %, paired SD   7.9 %, range [-11.4, +18.9]
+     3e         edge vs p333 median  -0.31 %, paired SD  10.7 %, range [-24.7, +23.0]
+     nc         edge vs p333 median -32.83 %, paired SD  11.4 %, range [-56.7, -11.0]
+q 6000 no slowdown drawn: n 5; p333 median all_delay 339185; N median 844496; finished % 74.7; edge-3 minutes below 60 km/h median 13.0 (of 25), seeds with 0: 0; 4a slow minutes median 18.0; end_stop2 median 2578
+     os1_15_10  edge vs p333 median  -2.05 %, paired SD  10.8 %, range [-9.6, +19.0]
+     3e         edge vs p333 median  +1.12 %, paired SD   8.7 %, range [-16.1, +2.5]
+     nc         edge vs p333 median -44.07 %, paired SD   8.5 %, range [-45.6, -25.3]

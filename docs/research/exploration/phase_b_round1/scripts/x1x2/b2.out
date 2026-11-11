@@ -1,0 +1,260 @@
+X1 w0u250 40
+X1 w1u500 40
+X1 w2u250 40
+X1 w3u500 40
+X1 w4u500 40
+X1 p333 40
+X1 lr1000_10_1 40
+X1 os0_10_10 40
+X1 3ex1 40
+X1 nc 40
+X2 w0u250 40
+X2 w1u500 40
+X2 w2u250 40
+X2 w3u500 40
+X2 w4u500 40
+X2 p333 40
+X2 os0_10_10 40
+X2 3ex2 40
+X2 lr1000_10_1 40
+X2 nc 40
+
+## X1 rule p333 minus v3w arm, n=40; total diff mean 13921 veh-s (+5.7 % of rule median 242346), median 13288 (+5.5 %)
+  main_all: mean +10354 [+6855, +14024] = 74 % of total mean diff
+  pend_all: mean +436 [-177, +1181] = 3 % of total mean diff
+  resid: mean +3131 [+1286, +5112] = 22 % of total mean diff
+  N: mean +12539 [+7998, +17130] = 90 % of total mean diff
+  dist: mean -1382 [-1858, -884] = -10 % of total mean diff
+  N_off_main: mean +3030 [+1239, +4977] = 22 % of total mean diff
+  end_stop2: rule med 2518.0 v3w med 1277.8 mean diff +1290.2 [+1098.8, +1481.0]
+  end_stop: rule med 26.0 v3w med 44.3 mean diff +5.4 [-17.6, +32.7]
+  passed: rule med 2118.5 v3w med 2139.2 mean diff -20.3 [-26.7, -13.6]
+  arrived: rule med 2062.5 v3w med 2083.5 mean diff -20.5 [-26.9, -13.6]
+  delay_ramp2: rule med 131.1 v3w med 112.2 mean diff +18.9 [+12.0, +26.2]
+  delay_ramp: rule med 110.1 v3w med 106.7 mean diff +4.7 [+2.1, +7.3]
+  delay: rule med 113.3 v3w med 106.3 mean diff +6.0 [+3.7, +8.3]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-600 | -43 (-0) | +7 (+0) | +13 (+0) | +146 (+1) | -3 (-0) | +121 (+1) | +40 | +0 | -0 | -1*
+  slow1 600-720 | -10 (-0) | -25 (-0) | +45 (+0) | +217 (+2) | -73 (-1) | +154 (+1) | +128 | -0 | -0 | +18
+  after1 720-840 | -20 (-0) | -35 (-0) | -81 (-1) | +424 (+3)* | +5 (+0) | +293 (+2) | +244 | -0 | -0 | -40
+  mid 840-1200 | +19 (+0) | -74 (-1) | +419 (+3) | +3382 (+24)* | -306 (-2)* | +3439 (+25)* | +955 | -0 | -39* | +45
+  slow2 1200-1320 | -3 (-0) | -20 (-0) | +573 (+4)* | +925 (+7)* | -82 (-1) | +1392 (+10)* | +1160 | +0 | -24 | +342*
+  after2 1320-1440 | -15 (-0) | +2 (+0) | +677 (+5)* | +373 (+3)* | +38 (+0) | +1076 (+8)* | +896 | -0 | +3 | +391*
+  end 1440-1800 | -53 (-0) | -67 (-0) | +1218 (+9)* | +2828 (+20)* | -47 (-0) | +3879 (+28)* | +1078 | -0 | +496 | +1896*
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.9 -1.9 -4.4 -9.0 -14.8 -15.0 -14.9 -18.0 -20.3
+
+## X1 rule lr1000_10_1 minus v3w arm, n=40; total diff mean 15285 veh-s (+6.2 % of rule median 246666), median 12284 (+5.0 %)
+  main_all: mean +11329 [+7208, +15829] = 74 % of total mean diff
+  pend_all: mean +668 [-154, +1735] = 4 % of total mean diff
+  resid: mean +3289 [+1425, +5255] = 22 % of total mean diff
+  N: mean +13844 [+9298, +18606] = 91 % of total mean diff
+  dist: mean -1442 [-2069, -822] = -9 % of total mean diff
+  N_off_main: mean +3206 [+1405, +5132] = 21 % of total mean diff
+  end_stop2: rule med 2293.5 v3w med 1277.8 mean diff +1132.5 [+912.4, +1365.9]
+  end_stop: rule med 34.5 v3w med 44.3 mean diff +4.0 [-17.7, +27.3]
+  passed: rule med 2117.0 v3w med 2139.2 mean diff -20.0 [-28.6, -11.4]
+  arrived: rule med 2064.5 v3w med 2083.5 mean diff -18.4 [-26.7, -10.4]
+  delay_ramp2: rule med 135.5 v3w med 112.2 mean diff +20.8 [+13.7, +28.5]
+  delay_ramp: rule med 107.0 v3w med 106.7 mean diff +6.1 [+3.2, +9.3]
+  delay: rule med 111.5 v3w med 106.3 mean diff +6.8 [+4.5, +9.1]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-600 | -43 (-0) | +7 (+0) | +13 (+0) | +146 (+1) | -3 (-0) | +121 (+1) | +40 | +0 | -0 | -1*
+  slow1 600-720 | -10 (-0) | -22 (-0) | +96 (+1) | +412 (+3)* | -219 (-1)* | +256 (+2) | +213 | -0 | -0 | -0
+  after1 720-840 | -9 (-0) | +41 (+0) | +220 (+1) | +433 (+3)* | -352 (-2)* | +332 (+2) | +277 | -0 | -0 | -10
+  mid 840-1200 | +52 (+0) | -95 (-1)* | +706 (+5) | +3466 (+23)* | -228 (-1) | +3902 (+26)* | +1084 | -0 | +32 | +352
+  slow2 1200-1320 | -7 (-0) | -25 (-0) | +811 (+5)* | +1168 (+8)* | -83 (-1) | +1865 (+12)* | +1554 | +0 | +17 | +231*
+  after2 1320-1440 | -3 (-0) | -22 (-0) | +1541 (+10)* | -190 (-1) | -81 (-1) | +1245 (+8)* | +1038 | +0 | +59 | +503*
+  end 1440-1800 | +111 (+1) | -60 (-0) | +1561 (+10) | +1937 (+13)* | +59 (+0) | +3609 (+24)* | +1002 | -0 | +560 | +1483*
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.9 -6.0 -5.9 -13.1 -16.1 -19.5 -15.5 -15.5 -20.0
+
+## X1 rule os0_10_10 minus v3w arm, n=40; total diff mean 15040 veh-s (+6.0 % of rule median 248766), median 13687 (+5.5 %)
+  main_all: mean +15397 [+9453, +21587] = 102 % of total mean diff
+  pend_all: mean -263 [-657, +194] = -2 % of total mean diff
+  resid: mean -94 [-2361, +2211] = -1 % of total mean diff
+  N: mean +13413 [+6949, +20501] = 89 % of total mean diff
+  dist: mean -1627 [-2480, -771] = -11 % of total mean diff
+  N_off_main: mean -98 [-2300, +2146] = -1 % of total mean diff
+  end_stop2: rule med 1340.0 v3w med 1277.8 mean diff +36.1 [-128.4, +208.8]
+  end_stop: rule med 31.0 v3w med 44.3 mean diff +0.6 [-16.7, +19.3]
+  passed: rule med 2122.5 v3w med 2139.2 mean diff -20.1 [-31.9, -8.8]
+  arrived: rule med 2068.0 v3w med 2083.5 mean diff -22.7 [-34.0, -11.3]
+  delay_ramp2: rule med 117.3 v3w med 112.2 mean diff +3.4 [-5.6, +12.9]
+  delay_ramp: rule med 113.2 v3w med 106.7 mean diff +8.7 [+4.7, +13.0]
+  delay: rule med 114.0 v3w med 106.3 mean diff +6.5 [+3.2, +10.0]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-600 | -43 (-0) | +8 (+0) | +22 (+0) | +135 (+1) | +7 (+0) | +127 (+1) | +42 | +0 | -0 | -0
+  slow1 600-720 | -9 (-0) | -24 (-0) | +76 (+1) | +181 (+1) | -65 (-0) | +160 (+1) | +133 | -0 | -0 | +8
+  after1 720-840 | -7 (-0) | -32 (-0) | +397 (+3)* | +508 (+3)* | -87 (-1) | +779 (+5)* | +649 | -0 | -0 | -13
+  mid 840-1200 | -34 (-0) | -105 (-1)* | +2849 (+19)* | +757 (+5) | -7 (-0) | +3460 (+23)* | +961 | -0 | -41* | -8
+  slow2 1200-1320 | +21 (+0) | -33 (-0) | +861 (+6)* | +242 (+2) | +109 (+1) | +1200 (+8)* | +1000 | -0 | -24 | -63
+  after2 1320-1440 | -16 (-0) | -13 (-0) | +1883 (+13)* | +251 (+2) | -1 (-0) | +2104 (+14)* | +1753 | -0 | -41* | -223*
+  end 1440-1800 | -105 (-1)* | -63 (-0) | +7952 (+53)* | +89 (+1) | -307 (-2) | +7567 (+50)* | +2102 | +0 | -157 | +22
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.8 -2.6 -11.3 -8.7 -7.2 -8.3 -19.9 -22.6 -20.1
+
+## X1 rule 3ex1 minus v3w arm, n=40; total diff mean 18035 veh-s (+7.6 % of rule median 238503), median 18549 (+7.8 %)
+  main_all: mean +15458 [+11144, +19872] = 86 % of total mean diff
+  pend_all: mean +696 [-73, +1611] = 4 % of total mean diff
+  resid: mean +1881 [-283, +4023] = 10 % of total mean diff
+  N: mean +16099 [+10528, +21683] = 89 % of total mean diff
+  dist: mean -1935 [-2688, -1212] = -11 % of total mean diff
+  N_off_main: mean +1810 [-371, +3932] = 10 % of total mean diff
+  end_stop2: rule med 1261.5 v3w med 1277.8 mean diff +39.8 [-96.5, +186.1]
+  end_stop: rule med 19.0 v3w med 44.3 mean diff -10.8 [-27.1, +5.6]
+  passed: rule med 2123.5 v3w med 2139.2 mean diff -22.6 [-32.8, -13.1]
+  arrived: rule med 2057.0 v3w med 2083.5 mean diff -25.4 [-34.8, -16.2]
+  delay_ramp2: rule med 115.6 v3w med 112.2 mean diff +8.0 [-0.7, +16.9]
+  delay_ramp: rule med 116.1 v3w med 106.7 mean diff +9.7 [+6.5, +13.1]
+  delay: rule med 111.9 v3w med 106.3 mean diff +7.9 [+5.1, +10.6]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-600 | +335 (+2)* | -31 (-0) | +147 (+1)* | -50 (-0) | -74 (-0) | +327 (+2)* | +109 | +0 | -0 | +0
+  slow1 600-720 | +185 (+1)* | -25 (-0) | +84 (+0) | -22 (-0) | +26 (+0) | +248 (+1)* | +207 | +0 | -0 | -6
+  after1 720-840 | +171 (+1)* | -37 (-0) | +395 (+2)* | +212 (+1) | -264 (-1)* | +476 (+3)* | +397 | +0 | +0 | -13
+  mid 840-1200 | +494 (+3)* | -187 (-1)* | +3197 (+18)* | +1038 (+6)* | -523 (-3)* | +4019 (+22)* | +1116 | +0 | +7 | +148
+  slow2 1200-1320 | +171 (+1)* | -6 (-0) | +1090 (+6)* | +366 (+2) | +21 (+0) | +1641 (+9)* | +1368 | -0 | +10 | +186*
+  after2 1320-1440 | +210 (+1)* | +3 (+0) | +2324 (+13)* | +135 (+1) | -578 (-3)* | +2094 (+12)* | +1745 | -0 | +90 | +179
+  end 1440-1800 | +440 (+2)* | -49 (-0) | +6920 (+38)* | -326 (-2) | -333 (-2) | +6652 (+37)* | +1848 | +0 | +589 | +525
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.9 -1.7 -8.6 -13.8 -15.3 -18.0 -24.7 -24.1 -22.6
+
+## X1 rule nc minus v3w arm, n=40; total diff mean 92660 veh-s (+28.7 % of rule median 322813), median 88249 (+27.3 %)
+  main_all: mean +83576 [+77474, +90193] = 90 % of total mean diff
+  pend_all: mean +1024 [-6, +2323] = 1 % of total mean diff
+  resid: mean +8059 [+5239, +10865] = 9 % of total mean diff
+  N: mean +82088 [+76560, +88244] = 89 % of total mean diff
+  dist: mean -10571 [-11685, -9545] = -11 % of total mean diff
+  N_off_main: mean +7896 [+5113, +10590] = 9 % of total mean diff
+  end_stop2: rule med 728.0 v3w med 1277.8 mean diff -461.5 [-562.3, -360.1]
+  end_stop: rule med 42.0 v3w med 44.3 mean diff +129.8 [+42.9, +232.5]
+  passed: rule med 2037.0 v3w med 2139.2 mean diff -109.5 [-118.9, -100.6]
+  arrived: rule med 1979.5 v3w med 2083.5 mean diff -110.9 [-119.8, -102.5]
+  delay_ramp2: rule med 146.6 v3w med 112.2 mean diff +35.6 [+24.3, +46.9]
+  delay_ramp: rule med 156.0 v3w med 106.7 mean diff +57.6 [+52.0, +64.0]
+  delay: rule med 145.8 v3w med 106.3 mean diff +40.4 [+37.7, +43.5]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-600 | +1753 (+2)* | +255 (+0)* | +1123 (+1)* | +830 (+1)* | +1206 (+1)* | +5167 (+6)* | +1722 | +0 | +0 | +3
+  slow1 600-720 | +813 (+1)* | +151 (+0)* | +911 (+1)* | +1044 (+1)* | -88 (-0) | +2832 (+3)* | +2360 | +0 | +0 | +13
+  after1 720-840 | +838 (+1)* | +218 (+0)* | +2455 (+3)* | +932 (+1)* | +42 (+0) | +4485 (+5)* | +3737 | +0* | +0 | +106*
+  mid 840-1200 | +2696 (+3)* | +529 (+1)* | +14429 (+16)* | +1094 (+1)* | +1057 (+1)* | +19804 (+21)* | +5501 | -0 | +74 | +493*
+  slow2 1200-1320 | +909 (+1)* | +230 (+0)* | +5870 (+6)* | +450 (+0)* | +8 (+0) | +7467 (+8)* | +6222 | +0 | +51 | +367*
+  after2 1320-1440 | +939 (+1)* | +287 (+0)* | +7647 (+8)* | +78 (+0) | +396 (+0)* | +9348 (+10)* | +7790 | -0 | +49 | +463*
+  end 1440-1800 | +2871 (+3)* | +2741 (+3)* | +28322 (+31)* | -575 (-1) | +1115 (+1)* | +34474 (+37)* | +9576 | +0 | +850* | +479
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -19.2 -28.8 -43.2 -55.6 -66.4 -73.6 -86.1 -101.5 -109.2
+
+## X2 rule p333 minus v3w arm, n=40; total diff mean 11475 veh-s (+4.8 % of rule median 237372), median 14532 (+6.1 %)
+  main_all: mean +8374 [+4485, +12163] = 73 % of total mean diff
+  pend_all: mean +241 [+19, +542] = 2 % of total mean diff
+  resid: mean +2860 [+1417, +4301] = 25 % of total mean diff
+  N: mean +9865 [+5593, +13923] = 86 % of total mean diff
+  dist: mean -1610 [-2133, -1065] = -14 % of total mean diff
+  N_off_main: mean +2780 [+1412, +4181] = 24 % of total mean diff
+  end_stop2: rule med 1911.5 v3w med 818.9 mean diff +1100.6 [+881.8, +1321.7]
+  end_stop: rule med 156.0 v3w med 177.0 mean diff +106.6 [+0.3, +214.8]
+  passed: rule med 2126.5 v3w med 2157.1 mean diff -24.9 [-32.7, -17.0]
+  arrived: rule med 2075.5 v3w med 2102.4 mean diff -25.9 [-33.5, -18.0]
+  delay_ramp2: rule med 88.0 v3w med 73.9 mean diff +14.3 [+9.1, +19.2]
+  delay_ramp: rule med 131.1 v3w med 128.1 mean diff +2.8 [-0.5, +6.1]
+  delay: rule med 107.2 v3w med 104.3 mean diff +4.6 [+2.5, +6.6]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-700 | -49 (-0) | -19 (-0) | +29 (+0) | +309 (+3) | +43 (+0) | +313 (+3) | +78 | -0 | -0* | +3
+  slow 700-880 | -44 (-0) | -129 (-1) | +99 (+1) | +91 (+1) | +190 (+2)* | +206 (+2) | +115 | -0 | +0 | -1
+  after 880-1000 | -25 (-0) | -114 (-1) | -4 (-0) | +141 (+1)* | -13 (-0) | -14 (-0) | -12 | -0 | +0 | -1*
+  1000-1400 | +18 (+0) | -1 (-0) | -142 (-1) | +2657 (+23)* | -500 (-4)* | +2033 (+18)* | +508 | +0 | +7 | +333*
+  1400-1800 | -43 (-0) | -143 (-1)* | +2030 (+18)* | +4095 (+36)* | -103 (-1) | +5835 (+51)* | +1459 | -0 | +234* | +1796*
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.9 -1.5 -0.3 -0.9 -6.6 -11.6 -15.9 -23.0 -25.0
+
+## X2 rule os0_10_10 minus v3w arm, n=40; total diff mean 6495 veh-s (+2.8 % of rule median 231634), median 5640 (+2.4 %)
+  main_all: mean +6300 [+2255, +10244] = 97 % of total mean diff
+  pend_all: mean +84 [-60, +309] = 1 % of total mean diff
+  resid: mean +111 [-1255, +1522] = 2 % of total mean diff
+  N: mean +5727 [+1372, +10075] = 88 % of total mean diff
+  dist: mean -767 [-1540, -33] = -12 % of total mean diff
+  N_off_main: mean +103 [-1221, +1442] = 2 % of total mean diff
+  end_stop2: rule med 858.0 v3w med 818.9 mean diff +52.1 [-86.0, +193.9]
+  end_stop: rule med 181.0 v3w med 177.0 mean diff +124.6 [+50.8, +203.2]
+  passed: rule med 2145.5 v3w med 2157.1 mean diff -9.7 [-20.1, +0.4]
+  arrived: rule med 2093.5 v3w med 2102.4 mean diff -9.0 [-18.8, +0.7]
+  delay_ramp2: rule med 75.7 v3w med 73.9 mean diff +1.1 [-4.0, +6.4]
+  delay_ramp: rule med 134.2 v3w med 128.1 mean diff +5.0 [+1.4, +8.7]
+  delay: rule med 108.1 v3w med 104.3 mean diff +2.6 [+0.5, +4.8]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-700 | -48 (-1) | -22 (-0) | +63 (+1) | +242 (+4) | +58 (+1) | +294 (+5) | +73 | -0 | -0* | +7
+  slow 700-880 | -29 (-0) | -116 (-2) | +82 (+1) | +50 (+1) | +151 (+2) | +138 (+2) | +76 | -0 | +0 | -1
+  after 880-1000 | -7 (-0) | -41 (-1) | +68 (+1) | +17 (+0) | -35 (-1) | +3 (+0) | +2 | -0 | +0 | -1*
+  1000-1400 | -7 (-0) | +62 (+1) | +2284 (+35)* | +730 (+11)* | -564 (-9)* | +2504 (+39)* | +626 | -0 | -3* | -157
+  1400-1800 | -20 (-0) | +88 (+1) | +3536 (+54)* | -166 (-3) | -77 (-1) | +3362 (+52)* | +840 | -0 | +87 | +189
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.8 -1.0 -0.2 -0.4 -8.2 -8.6 -11.3 -8.8 -9.8
+
+## X2 rule 3ex2 minus v3w arm, n=40; total diff mean 8219 veh-s (+3.6 % of rule median 229111), median 6933 (+3.0 %)
+  main_all: mean +9331 [+5616, +13095] = 114 % of total mean diff
+  pend_all: mean -36 [-105, +50] = -0 % of total mean diff
+  resid: mean -1076 [-2217, +200] = -13 % of total mean diff
+  N: mean +7134 [+3456, +11169] = 87 % of total mean diff
+  dist: mean -1085 [-1678, -485] = -13 % of total mean diff
+  N_off_main: mean -1069 [-2204, +118] = -13 % of total mean diff
+  end_stop2: rule med 722.0 v3w med 818.9 mean diff -53.2 [-164.7, +65.3]
+  end_stop: rule med 146.5 v3w med 177.0 mean diff +107.6 [+25.3, +196.5]
+  passed: rule med 2145.5 v3w med 2157.1 mean diff -15.4 [-23.2, -7.5]
+  arrived: rule med 2092.5 v3w med 2102.4 mean diff -14.5 [-22.6, -6.3]
+  delay_ramp2: rule med 67.6 v3w med 73.9 mean diff -3.1 [-7.7, +1.9]
+  delay_ramp: rule med 131.5 v3w med 128.1 mean diff +7.5 [+4.3, +10.7]
+  delay: rule med 106.6 v3w med 104.3 mean diff +3.3 [+1.4, +5.2]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-700 | -56 (-1) | -12 (-0) | +278 (+3)* | -240 (-3) | +50 (+1) | +20 (+0) | +5 | +0 | -0 | -9*
+  slow 700-880 | -40 (-0) | -134 (-2) | +192 (+2)* | -73 (-1) | +100 (+1) | +44 (+1) | +25 | -0 | -0 | -1
+  after 880-1000 | -5 (-0) | -65 (-1) | +433 (+5)* | -54 (-1) | -28 (-0) | +282 (+3)* | +235 | -0 | +0 | -1*
+  1000-1400 | -52 (-1) | +114 (+1) | +3954 (+48)* | -215 (-3) | -821 (-10)* | +2979 (+36)* | +745 | +0 | -3* | -238*
+  1400-1800 | -116 (-1) | -31 (-0) | +5976 (+73)* | +325 (+4) | -148 (-2) | +6006 (+73)* | +1502 | -0 | -33 | -514*
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -0.9 +1.2 -0.5 -2.2 -9.8 -11.0 -12.6 -14.4 -15.6
+
+## X2 rule lr1000_10_1 minus v3w arm, n=40; total diff mean 7126 veh-s (+3.2 % of rule median 226204), median 9234 (+4.1 %)
+  main_all: mean +5955 [+2246, +9675] = 84 % of total mean diff
+  pend_all: mean +150 [-37, +417] = 2 % of total mean diff
+  resid: mean +1021 [-373, +2500] = 14 % of total mean diff
+  N: mean +6076 [+1755, +10134] = 85 % of total mean diff
+  dist: mean -1050 [-1593, -476] = -15 % of total mean diff
+  N_off_main: mean +975 [-438, +2409] = 14 % of total mean diff
+  end_stop2: rule med 1733.0 v3w med 818.9 mean diff +842.2 [+643.3, +1044.2]
+  end_stop: rule med 363.5 v3w med 177.0 mean diff +150.3 [+74.8, +227.3]
+  passed: rule med 2140.0 v3w med 2157.1 mean diff -15.3 [-22.8, -7.6]
+  arrived: rule med 2084.5 v3w med 2102.4 mean diff -15.8 [-23.9, -7.3]
+  delay_ramp2: rule med 85.2 v3w med 73.9 mean diff +9.0 [+3.5, +14.4]
+  delay_ramp: rule med 128.6 v3w med 128.1 mean diff +2.3 [-1.2, +5.6]
+  delay: rule med 104.5 v3w med 104.3 mean diff +2.7 [+0.6, +4.8]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-700 | -49 (-1) | -19 (-0) | +29 (+0) | +309 (+4) | +43 (+1) | +313 (+4) | +78 | -0 | -0* | +3
+  slow 700-880 | -42 (-1) | +380 (+5)* | -263 (-4)* | +87 (+1) | +182 (+3) | +344 (+5)* | +191 | +0 | +0 | -1
+  after 880-1000 | -0 (-0) | +688 (+10)* | -881 (-12)* | +13 (+0) | +19 (+0) | -162 (-2) | -135 | -0 | +0 | -1
+  1000-1400 | +12 (+0) | +485 (+7)* | -1081 (-15) | +2227 (+31)* | -469 (-7)* | +1173 (+16) | +293 | -0 | -3* | +118
+  1400-1800 | +2 (+0) | -66 (-1) | +1614 (+23) | +2880 (+40)* | -142 (-2) | +4288 (+60)* | +1072 | -0 | +153 | +815*
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -1.9 -1.5 -0.3 +1.2 -4.2 -7.8 -11.3 -14.0 -15.2
+
+## X2 rule nc minus v3w arm, n=40; total diff mean 69623 veh-s (+24.2 % of rule median 287340), median 67638 (+23.5 %)
+  main_all: mean +66589 [+62677, +70555] = 96 % of total mean diff
+  pend_all: mean -13 [-82, +68] = -0 % of total mean diff
+  resid: mean +3047 [+1728, +4482] = 4 % of total mean diff
+  N: mean +60465 [+56256, +64666] = 87 % of total mean diff
+  dist: mean -9158 [-10068, -8231] = -13 % of total mean diff
+  N_off_main: mean +2976 [+1627, +4379] = 4 % of total mean diff
+  end_stop2: rule med 591.5 v3w med 818.9 mean diff -228.6 [-326.9, -128.4]
+  end_stop: rule med 369.5 v3w med 177.0 mean diff +222.2 [+132.7, +324.2]
+  passed: rule med 2060.0 v3w med 2157.1 mean diff -96.3 [-105.7, -87.4]
+  arrived: rule med 2009.5 v3w med 2102.4 mean diff -97.3 [-105.8, -88.7]
+  delay_ramp2: rule med 82.7 v3w med 73.9 mean diff +8.9 [+4.3, +13.6]
+  delay_ramp: rule med 186.1 v3w med 128.1 mean diff +58.4 [+54.3, +62.5]
+  delay: rule med 130.4 v3w med 104.3 mean diff +26.1 [+24.2, +28.1]
+  mainline delay diff by period x segment: mean veh-s (share of total mean diff %); * = 95 % CI of mean excludes 0
+  period | up 1-2 | m1 3a | between 3 | m2 4a | down 4-5 | row sum | per 100 s | pend r1 | pend r2 | stopped r2 (veh-s)
+  before 300-700 | +2433 (+3)* | +371 (+1)* | +1813 (+3)* | +1543 (+2)* | +2011 (+3)* | +8171 (+12)* | +2043 | +0 | +0 | +17
+  slow 700-880 | +1283 (+2)* | +1091 (+2)* | -267 (-0)* | +605 (+1)* | +1503 (+2)* | +4214 (+6)* | +2341 | +0* | +0 | +20
+  after 880-1000 | +1212 (+2)* | +2123 (+3)* | -354 (-1)* | -154 (-0)* | +58 (+0) | +2885 (+4)* | +2404 | -0 | +0 | -1*
+  1000-1400 | +3872 (+6)* | +4787 (+7)* | +10330 (+15)* | -98 (-0) | -373 (-1)* | +18517 (+27)* | +4629 | +0 | -3* | -133
+  1400-1800 | +3281 (+5)* | +3753 (+5)* | +25070 (+36)* | +45 (+0) | +652 (+1)* | +32801 (+47)* | +8200 | -0 | -11 | -78
+  cumulative vehicles into road 4 (rule minus v3w), mean at min 5,7,9,12,15,17,19,22,25: -19.2 -24.2 -9.6 -24.8 -49.8 -60.5 -70.8 -85.3 -96.1
