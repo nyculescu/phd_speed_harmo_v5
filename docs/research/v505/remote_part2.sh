@@ -11,7 +11,9 @@ PY=$P/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 D=docs/research/v505
 unset SUMO_HOME
 export OMP_NUM_THREADS=1
-T2=$(date +%s)
+mkdir -p "$R"
+[ -f "$R/t2" ] || date +%s > "$R/t2"     # part 2's start, so spend survives a relaunch (as part 1's t0)
+T2=$(cat "$R/t2")
 say() { echo "$(date -u '+%F %T') $1" >> "$R/status.txt"; }
 step() { say "start $1"; shift; "$@" >> "$R/run.log" 2>&1; rc=$?; say "end rc=$rc"; return $rc; }
 must() { step "$@" || { say "STOPPED"; exit 1; }; }
@@ -47,6 +49,14 @@ ev2() {
   must "planned power" $PY $D/ev2.py power "$R/ev_tune_fx/s6_rows.jsonl" "$R/ev_gate/s6_rows.jsonl" "$R/ev_tune_fx/fx.json" "$R/ev_power.json" --limit "$LIM"
   rule=$(val "$R/ev_power.json" '["rule"]')
   say "EV power rule: $rule"
+  [ "$rule" = VOID ] && { say "EV VOID: tuning or gate dropped more than 3 seeds"; return 0; }
+  # cap action once the stage's size is known (common §7): every EV run still to come, extensions included
+  case $rule in
+    tune60_eval120) left=$(( (36 + 108 + 54) * 60 + 11 * 120 )) ;;
+    tune100_eval120) left=$(( 21 * 40 + (36 + 108 + 54) * 100 + 11 * 120 )) ;;
+    *) left=$(( 21 * 40 + (36 + 108 + 54) * 100 + 11 * 160 )) ;;
+  esac
+  fits "EV after the power rule ($rule)" "$left" || { say "cap: EV tuning not continued after the power rule; EV reads nothing"; return 0; }
   FXJ="$R/ev_tune_fx/fx.json"
   if [ "$rule" != tune60_eval120 ]; then     # EV §5: extend tuning to n = 100, every family re-picked
     ev_run ev_tune_fx_ext
@@ -65,7 +75,7 @@ ev2() {
   must "read picks" $PY $D/ev2.py picks "$R/ev_tune_fx/s6_rows.jsonl" "$R/ev_tune_sw/s6_rows.jsonl" "$FXJ" "$R/ev_picks.json" $EXT
   [ "$(val "$R/ev_picks.json" '.get("outcome")')" = VOID ] && { say "EV VOID: tuning dropped more than 3 seeds"; return 0; }
   ev_run ev_eval --picks "$R/ev_picks.json"
-  UP=""; EXTR=""
+  UP=""; EXTR=""; VAX=""
   if [ "$rule" = tune100_eval160 ] || [ "$rule" = underpowered ]; then
     ev_run ev_eval_ext --picks "$R/ev_picks.json"
     EXTR="--ext-rows $R/ev_eval_ext/s6_rows.jsonl"
@@ -73,15 +83,21 @@ ev2() {
   [ "$rule" = underpowered ] && UP="--underpowered $(val "$R/ev_power.json" '["tune100_eval160"]["p_false_kill_at_15"]')"
   must "read EV" $PY $D/ev2.py read "$R/ev_eval/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result.json" $EXTR $UP
   say "EV: $(val "$R/ev_result.json" '["outcome"]'), lane-end-bound $(val "$R/ev_result.json" '.get("lane_end_bound")')"
-  if [ "$(val "$R/ev_result.json" '.get("lane_end_bound")')" = True ]; then     # common §6: repeat on V-A
-    if [ "$A" = None ]; then
-      say "EV lane-end-bound with no V-A level (M2 VOID): GAIN reads NOT SHOWN, KILL reads unresolved"
-    else
+  VA=""
+  if [ "$(val "$R/ev_result.json" '.get("lane_end_bound")')" = True ] && [ "$A" != None ] && [ -z "$UP" ]; then     # common §6: repeat on V-A
+    n_va=$(( 11 * 120 )); [ -n "$EXTR" ] && n_va=$(( 11 * 160 ))
+    if fits "ev_va" "$n_va"; then
       ev_run ev_va --picks "$R/ev_picks.json" --a "$A"
-      must "read EV on V-A" $PY $D/ev2.py read "$R/ev_va/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result_va.json" --s-cell "SV${A%.0}" $UP
-      say "EV on V-A: $(val "$R/ev_result_va.json" '["outcome"]')"
+      if [ -n "$EXTR" ]; then ev_run ev_va_ext --picks "$R/ev_picks.json" --a "$A"; VAX="--ext-rows $R/ev_va_ext/s6_rows.jsonl"; fi
+      must "read EV on V-A" $PY $D/ev2.py read "$R/ev_va/s6_rows.jsonl" "$R/ev_picks.json" "$R/ev_result_va.json" --s-cell "SV${A%.0}" --by-pick 0 $VAX
+      VA="--va $R/ev_result_va.json --va-rows $R/ev_va/s6_rows.jsonl"
+    else
+      say "cap: ev_va not started"
     fi
   fi
+  AA=""; [ "$A" != None ] && AA="--a $A"
+  must "EV final (common §6)" $PY $D/ev2.py final "$R/ev_eval/s6_rows.jsonl" "$R/ev_result.json" "$R/ev_final.json" $EXTR $VA $AA
+  say "EV final: $(val "$R/ev_final.json" '["outcome"]') ($(val "$R/ev_final.json" '["repeat"]'))"
 }
 
 x1() {

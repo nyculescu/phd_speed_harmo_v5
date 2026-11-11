@@ -111,6 +111,8 @@ def run_one(a: tuple) -> dict:
     if "told" in ctrl or "detect" in ctrl:     # V505 EV §3: the FX base rule decides; the switch replaces its level per second
         from v5b.fleet.planb_ctrl import build_rule
         from v5b.fleet.v505 import Detect, Told
+        if ctrl.get("env", {}).get("hw_type") or (ctrl.get("env", {}).get("perturb") or {}).get("hw_oracle"):
+            raise ValueError("a told or detected switch replaces the level after the hw_type and hw_oracle caps; do not combine them")
         k = "told" if "told" in ctrl else "detect"
         x = dict(ctrl[k])
         rule = build_rule(env, x.pop("base"), bool(c.get("fix_x")))

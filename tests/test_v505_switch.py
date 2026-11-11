@@ -22,7 +22,7 @@ def fls(monkeypatch):
 
 def env(t=0.0, spec=None):
     pert = SimpleNamespace(kind="slowdown", s=spec or {"times": [600.0], "dur": 300.0}) if spec is not False else None
-    return SimpleNamespace(sim=SimpleNamespace(t=t), pert=pert, headways=(1.6, 1.2, 1.0, 0.8), v2v_lead={}, plant={"geom": "r2m3"}, bins={})
+    return SimpleNamespace(sim=SimpleNamespace(t=t), pert=pert, headways=(1.6, 1.2, 1.0, 0.8), v2v_lead={}, plant={"geom": "r2m3"}, bins={}, on=set())
 
 
 def test_told_zone_and_window(fls):
@@ -56,6 +56,7 @@ def test_t0_counts_read_back_after_the_rise_time(fls):
     sw = v505.Told(e, d=500.0, L=0, after=0.0)
     fls.road["a"], fls.pos["a"] = "2", 50.0
     e.v2v_lead["a"] = "x"
+    e.on.add("a")
     for k in range(8):
         e.sim.t = 700.0 + k
         fls.tau["a"] = 1.6 if k >= 4 else 0.8 + 0.2 * k
@@ -93,3 +94,47 @@ def test_detect_idle_before_the_bins_exist(fls):
     sw = v505.Detect(e, r=1000.0, th=13.0, L=1, after=60.0)
     sw.look = FakeLook({"a": 1.0})
     assert sw.level("a", 3, True) == 3
+
+
+def test_t0_read_back_skips_the_first_on_second_after_a_leader_change(fls):
+    """Review blocker: after a second without an ALKS leader SUMO holds the contract 1.6 s; that second must not count as bad."""
+    e = env(700.0)
+    sw = v505.Told(e, d=500.0, L=3, after=0.0)
+    fls.road["a"], fls.pos["a"] = "2", 50.0
+    for k in range(20):
+        e.sim.t = 700.0 + k
+        lost = k == 10     # leader lost at k = 10: _v2v commands 1.6 s that second, so SUMO holds 1.6 at k = 11
+        on_now = not lost
+        fls.tau["a"] = 1.6 if k == 11 else 0.8
+        sw.level("a", 0, on_now)
+        (e.on.add if on_now else e.on.discard)("a")     # what CavEnv._v2v does after level() returns
+    assert sw.t0["read_bad"] == 0 and sw.t0["read_n"] > 0
+    fls.tau["a"] = 1.2     # a wrong tau on a second consecutive on-second is still caught
+    e.sim.t = 720.0
+    sw.level("a", 0, True)
+    assert sw.t0["read_bad"] == 1
+
+
+def test_detect_release_timing_is_checked(fls):
+    e = env()
+    e.bins = {("1", 0): 20.0}
+    sw = v505.Detect(e, r=1000.0, th=13.0, L=1, after=60.0)
+
+    class Look:
+        sp = 8.0
+
+        def _ahead(self, v):
+            return self.sp
+    sw.look = Look()
+    for k in range(0, 80):
+        e.sim.t = 100.0 + k
+        sw.look.sp = 8.0 if k < 5 else 20.0
+        sw.level("a", 3, True)
+    assert sw.t0["release_n"] == 1 and sw.t0["release_bad"] == 0
+
+
+def test_told_refuses_a_changed_edge2(fls, monkeypatch):
+    from v5b.fleet import b_env
+    monkeypatch.setitem(b_env.ROAD_X, "2", 2990.0)
+    with pytest.raises(ValueError):
+        v505.Told(env(), d=500.0, L=1, after=0.0)

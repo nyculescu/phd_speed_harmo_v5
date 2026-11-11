@@ -105,3 +105,35 @@ def test_smoke2_plan_and_switch_t0_check(tmp_path):
     j = ev2.plan("ev_smoke2", tmp_path, 20.0, {"fx": "os0_10_10"})
     assert j["seed_range"] == [7_488_201, 7_488_201] and len(j["arms"]) == 5
     assert v5.seeds(j["stage"], *j["seed_range"]) == [7_488_201]
+
+
+
+def test_braking_side_condition_uses_the_m2_form(no_null, monkeypatch):
+    """Review: a noisy b45 ratio above 1.05 whose 95 % lower bound is below 1 must not block a GAIN; a tight one must."""
+    seeds = list(range(120))
+    monkeypatch.setattr(ev2, "location_share", lambda *a, **k: 0.1)
+    rng = np.random.default_rng(9)
+    T = rows(seeds, 25.0)
+    for s in seeds:
+        T[("EVA20", "FX")][s]["b45_step"] = float(rng.gamma(2.0, 50.0))
+        T[("EVA20", "IP")][s]["b45_step"] = float(rng.gamma(2.0, 50.0)) * 1.07
+    r = ev2.read(T, {"bU": "FX", "kill_by_pick": False}, "EVA20", seeds)
+    if r["side"]["b45_ratio_ci95"][1] <= 1.0:
+        assert r["outcome"] == "GAIN"
+    for s in seeds:
+        T[("EVA20", "FX")][s]["b45_step"] = 100.0
+        T[("EVA20", "IP")][s]["b45_step"] = 107.0
+    assert ev2.read(T, {"bU": "FX", "kill_by_pick": False}, "EVA20", seeds)["outcome"] == "NOT SHOWN"
+
+
+def test_final_applies_common_6(monkeypatch):
+    base = {"outcome": "KILL", "lane_end_bound": True, "bU": "FX"}
+    assert ev2.final({**base, "lane_end_bound": False}, None, {}, "EVA20", 3.0, [])["outcome"] == "KILL"
+    assert ev2.final(base, None, {}, "EVA20", None, [])["outcome"] == "unresolved"
+    assert ev2.final({**base, "outcome": "GAIN"}, None, {}, "EVA20", None, [])["outcome"] == "NOT SHOWN"
+    assert ev2.final({**base, "outcome": "KILL, underpowered (P = 0.20)"}, None, {}, "EVA20", None, [])["repeat"].startswith("not run")
+    monkeypatch.setattr(ev2, "bind", lambda *a, **k: {"nc": {"binds": True}})
+    assert ev2.final(base, {"outcome": "KILL"}, {}, "EVA20", 3.0, [1])["outcome"] == "KILL"
+    assert ev2.final(base, {"outcome": "NOT SHOWN"}, {}, "EVA20", 3.0, [1])["outcome"] == "unresolved"
+    monkeypatch.setattr(ev2, "bind", lambda *a, **k: {"nc": {"binds": False}})
+    assert ev2.final(base, {"outcome": "KILL"}, {}, "EVA20", 3.0, [1])["outcome"] == "unresolved"

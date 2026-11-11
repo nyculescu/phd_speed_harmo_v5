@@ -27,7 +27,7 @@ STAGES = {     # v505_common.md §5 (V508); inclusive ranges
     "m2_x1": (7_488_600, 7_488_759), "m2_fallback": (7_488_760, 7_488_999)}
 ALIASES = {     # part 2's sub-stages on the ranges above (common §5): two tuning steps, and EV's pre-planned repeat on V-A (common §6)
     "ev_tune_fx": "ev_tune", "ev_tune_sw": "ev_tune", "ev_tune_fx_ext": "ev_tune_ext", "ev_tune_sw_ext": "ev_tune_ext", "ev_va": "ev_eval",
-    "ev_smoke2": "ev_smoke"}
+    "ev_smoke2": "ev_smoke", "ev_va_ext": "ev_eval_ext"}
 STAGES |= {k: STAGES[v] for k, v in ALIASES.items()}
 S6_JOBS = Path("/home/catalin/work/phd/v5b1_runs/planb_s56_remote/jobs/s6_jobs.json")
 M2_RULES = ("nc", "p333", "os0_10_10", "3E-C_TRUCK", "3E-D_TRUCK", "lr1000_16_2")     # M2 §6
@@ -213,7 +213,7 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     t0 = {f"{n} {s}": t0_event_ok(r, arms[n]) for (n, s), r in A.items() if arms[n].get("t0_event")}
     t0_bad = sorted(k for k, v in t0.items() if not v["pass"])
     sw = {f"{n} {s}": r.get("t0_switch", {}) for (n, s), r in A.items() if {"told", "detect"} & set(arms[n].get("ctrl", {}))}
-    t0_bad += sorted(k for k, x in sw.items() if not x.get("switched_s") or x.get("read_bad", 1) or not x.get("read_n"))     # EV §8 T0 IP, SW (a)
+    t0_bad += sorted(k for k, x in sw.items() if not x.get("switched_s") or x.get("read_bad", 1) or not x.get("read_n") or x.get("release_bad", 0))     # EV §8 T0 IP, SW (a)
     res = {"missing_in_a": missing_a, "replay_differs": differs, "side_files_differ": side, "twin_differs": twins, "va_not_bound": va_bad, "va": va, "no_r2_counts": counts,
            "t0_event_fail": t0_bad, "t0_event": t0, "t0_switch": sw, "drops": [da, db],
            "pass": not missing_a and not differs and not side and not twins and not va_bad and not counts and not t0_bad and not da and not db}

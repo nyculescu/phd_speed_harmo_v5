@@ -22,7 +22,7 @@ sys.path.insert(0, str(HERE.parent / "planb"))
 sys.path.insert(0, str(HERE))
 import read6  # noqa: E402
 import v5  # noqa: E402
-from read_m2 import arr, drops_of, load, usable  # noqa: E402
+from read_m2 import BRAKE_LB, BRAKE_RATIO, arr, bind, boot_ratio, drops_of, load, usable  # noqa: E402
 
 FX_NAMES = tuple(n for n in v5.pb.CARRIED if n != "copy") + ("grid_a41000_10_2", "grid_lr400_13_1", "grid_os1_10_10", "grid_r4a2", "grid_z31333",
                                                               "3E-C_TRUCK", "3E-D_TRUCK")     # EV §3: 21 rules
@@ -33,7 +33,7 @@ ASCH_THETA, ASCH_TAU, ASCH_H = (40.0, 55.0, 70.0), (10.0, 30.0, 60.0), (5.0, 15.
 ASCH_DIST = ("3e", "3E-C_TRUCK", "3E-D_TRUCK")
 G_BAR = 10.0     # % of the untold arm's event cost (E3)
 LVL = (2.5, 97.5)     # 95 % two-sided: one event decides (EV §5)
-FLOW_PCT, COLL, BRAKE_RATIO = -0.5, 0.05, 1.05
+FLOW_PCT, COLL = -0.5, 0.05
 M2_GROUPS = ("4a", "4", "ramp2", "pending_ramp2", "junction")     # V482's merge-2 groups (planb.md:143)
 FALSE_KILL_MAX = 0.10
 
@@ -66,7 +66,7 @@ def plan(stage: str, out_dir: Path, limit: float, picks: dict | None = None, a: 
     base = lambda n: v5.ev_cfg(arms[f"S|{n}"], limit, None)
     s_cfg = lambda n: v5.ev_cfg(arms[f"S|{n}"], None, None)
     cell = f"EVA{limit:g}"
-    pack = stage in ("ev_eval", "ev_eval_ext", "ev_va")
+    pack = stage in ("ev_eval", "ev_eval_ext", "ev_va", "ev_va_ext")
     st = out_dir / "st"
     stem = stage.removesuffix("_ext")
     jobs = {}
@@ -107,6 +107,9 @@ def plan(stage: str, out_dir: Path, limit: float, picks: dict | None = None, a: 
         jobs = {f"{cell}|{k}": copy.deepcopy(c) for k, c in sel.items()}
         jobs |= {f"S|{k}": s_cfg(n) for k, n in (("nc", "nc"), ("N", "p333"), ("FX", picks["fx"]))}
         jobs["S|SW"] = s_with(picks["sw_cfg"], arms)
+        if picks.get("sw") != picks.get("swa") and picks.get("swa_cfg"):     # report-only matched detector (review)
+            jobs[f"{cell}|SWA"] = copy.deepcopy(picks["swa_cfg"])
+            jobs["S|SWA"] = s_with(picks["swa_cfg"], arms)
         if stem == "ev_va":
             if a is None:
                 raise SystemExit("ev_va needs --a, M2's picked V-A level")
@@ -160,19 +163,18 @@ def picks(T: dict, cell: str, fx: str, seeds: list, sw_jobs: dict) -> dict:
     sw = swa if sw_key == "swa" else swb
     u = {"N": med_delay(T, cell, "p333", seeds), "FX": med_delay(T, cell, fx, seeds), "SW": med_delay(T, cell, sw, seeds)}
     return {"fx": fx, "ip": ip, "ip_vs_fx_median": ip_vs_fx, "kill_by_pick": ip_vs_fx >= 0.0, "swa": swa, "swb": swb, "sw": sw,
-            "ip_cfg": sw_jobs[f"{cell}|{ip}"], "sw_cfg": sw_jobs[f"{cell}|{sw}"], "bU": min(u, key=u.get), "untold_medians": u, "n": len(seeds)}
+            "ip_cfg": sw_jobs[f"{cell}|{ip}"], "sw_cfg": sw_jobs[f"{cell}|{sw}"], "swa_cfg": sw_jobs[f"{cell}|{swa}"] if swa else None, "bU": min(u, key=u.get), "untold_medians": u, "n": len(seeds)}
 
 
-def power(fx_T: dict, gate_T: dict, cell: str, fx: str, tune_n: int, eval_n: int, n_ip: int, sims: int = 400, seed: int = 505_501) -> dict:
+def power(fx_T: dict, gate_T: dict, cell: str, fx: str, tune_n: int, eval_n: int, n_ip: int, t_seeds: list, g_seeds: list,
+          sims: int = 400, seed: int = 505_501) -> dict:
     """EV §5's planned power, model fixed in the protocol: one IP setting has a true G of 15 %, every other 0; the setting-to-setting
     spread is that of the FX family's paired differences against the FX pick on the tuning seeds; the event cost and its spread come
     from the gate rows (p333); evaluation n as given. Returns P(KILL | true 15 %)."""
     rng = np.random.default_rng(seed)
-    t_seeds = sorted(next(iter(fx_T.values())))
     fxd = arr(fx_T, cell, fx, t_seeds, "all_delay")
     diffs = np.concatenate([arr(fx_T, cell, n, t_seeds, "all_delay") - fxd for n in FX_NAMES if n != fx])
     diffs = diffs - np.median(diffs)
-    g_seeds = sorted(gate_T[(cell, "p333")])
     cost = arr(gate_T, cell, "p333", g_seeds, "all_delay") - arr(gate_T, "S", "p333", g_seeds, "all_delay")
     true = 0.15 * float(np.median(cost))
     kills = 0
@@ -216,24 +218,26 @@ def location_share(T: dict, cell: str, u: str, seeds: list, loser: str = "IP") -
     return float(np.median(per(a, True) - per(b, True))) / den if den > 0 else None
 
 
-def read(T: dict, p: dict, cell: str, seeds: list, swaps: int = 2000, s_cell: str = "S", underpowered: float | None = None) -> dict:
+def read(T: dict, p: dict, cell: str, seeds: list, swaps: int = 2000, s_cell: str = "S", underpowered: float | None = None, by_pick: bool = True) -> dict:
     """EV §5: GAIN, KILL, KILL BY PICK or NOT SHOWN; nulls per comparison; the location rule of common §6 (repeat on V-A flagged)."""
     st = read6.Stat(len(seeds))
     G = {u: gain(st, T, cell, u, seeds, s_cell=s_cell) for u in ("N", "FX", "SW")}
-    nulls = {u: read6.swap_null(G[u]["d"], LVL[0], swaps, 505_601) for u in G}
+    nulls = {u: read6.swap_null(G[u]["d"], LVL[0], swaps, 505_601) for u in ("N", "FX", "SW")}
     failed = sorted(u for u, r in nulls.items() if r > read6.NULL_FACTOR * LVL[0] / 100.0)
     b = G[p["bU"]]
     flow = 100.0 * float(np.median(arr(T, cell, "IP", seeds, "passed") - arr(T, cell, p["bU"], seeds, "passed"))) / max(float(np.median(arr(T, cell, p["bU"], seeds, "passed"))), 1e-9)
     coll = float(arr(T, cell, "IP", seeds, "collisions").mean() - arr(T, cell, p["bU"], seeds, "collisions").mean())
-    brake = float(arr(T, cell, "IP", seeds, "b45_step").mean() / max(arr(T, cell, p["bU"], seeds, "b45_step").mean(), 1e-9))
-    side = flow >= FLOW_PCT and coll <= COLL and brake <= BRAKE_RATIO
+    brake = boot_ratio(st, arr(T, cell, "IP", seeds, "b45_step"), arr(T, cell, p["bU"], seeds, "b45_step"), "mean")     # M2 §2's form
+    side = flow >= FLOW_PCT and coll <= COLL and not (brake[0] > BRAKE_RATIO and brake[1] > BRAKE_LB)
+    if (cell, "SWA") in T:     # report-only: IP against the matched detector (SW (a)'s pick), when SW is ASCH (review)
+        G["SWA"] = gain(st, T, cell, "SWA", seeds, s_cell=s_cell)
     out = {"G": {u: {"G": r["G"], "ci": r["ci"], "event_cost_median": r["event_cost_median"]} for u, r in G.items()}, "nulls": nulls, "bU": p["bU"],
-           "side": {"flow_pct": flow, "coll_excess": coll, "b45_ratio": brake, "ok": side}, "n": len(seeds)}
-    if p["kill_by_pick"]:     # the told grid found nothing better than its FX base on the tuning seeds (EV §5)
+           "side": {"flow_pct": flow, "coll_excess": coll, "b45_ratio_ci95": brake, "ok": side}, "n": len(seeds)}
+    if by_pick and p["kill_by_pick"]:     # the told grid found nothing better than its FX base on the tuning seeds (EV §5)
         out["outcome"] = "KILL BY PICK"
     elif p["bU"] in failed:
         out["outcome"] = read6.FAILED_NULL
-    elif b["G"] >= G_BAR and all(G[u]["ci"][0] > 0 for u in G) and side and not failed:
+    elif b["G"] >= G_BAR and all(G[u]["ci"][0] > 0 for u in ("N", "FX", "SW")) and side and not failed:
         out["outcome"] = "GAIN"
     elif b["ci"][1] < G_BAR:
         out["outcome"] = "KILL" if underpowered is None else f"KILL, underpowered (P = {underpowered:.2f})"     # EV §5: closes nothing
@@ -256,9 +260,33 @@ def read(T: dict, p: dict, cell: str, seeds: list, swaps: int = 2000, s_cell: st
     return out
 
 
+def final(base: dict, va: dict | None, T: dict, cell: str, a: float | None, seeds: list) -> dict:
+    """Common §6: a lane-end-bound outcome stands only if V-A binds in the EV cell (M2's binding test on end_stop2 for no control,
+    bU and IP, base against V-A on the same seeds) and V-A reads the same outcome; otherwise a GAIN reads NOT SHOWN and a KILL reads
+    unresolved. Outcomes that close nothing are not repeated."""
+    o = base["outcome"]
+    if not base.get("lane_end_bound"):
+        return {"outcome": o, "repeat": "not needed"}
+    kill = o.startswith("KILL") and "underpowered" not in o
+    if not (o == "GAIN" or kill):
+        return {"outcome": o, "repeat": "not run: the outcome closes nothing"}
+    down = "NOT SHOWN" if o == "GAIN" else "unresolved"
+    if va is None or a is None:
+        return {"outcome": down, "repeat": "no V-A (M2 VOID, cap, or not run)"}
+    st = read6.Stat(len(seeds))
+    bd = bind(T, cell, f"{cell}V{a:g}", ["nc", base["bU"], "IP"], seeds, st)
+    if not all(x["binds"] for x in bd.values()):
+        return {"outcome": down, "repeat": "V-A did not bind in the EV cell", "bind": bd}
+    same = va["outcome"].startswith("KILL") if kill else va["outcome"] == "GAIN"
+    return {"outcome": o if same else down, "repeat": f"V-A read {va['outcome']}", "bind": bd}
+
+
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("step", choices=("plan", "fx", "power", "picks", "read"))
+    ap.add_argument("step", choices=("plan", "fx", "power", "picks", "read", "final"))
+    ap.add_argument("--va")
+    ap.add_argument("--va-rows")
+    ap.add_argument("--by-pick", type=int, default=1)
     ap.add_argument("args", nargs="*")
     ap.add_argument("--out")
     ap.add_argument("--limit", type=float)
@@ -297,7 +325,13 @@ def main(argv: list) -> int:
         cell = f"EVA{x.limit:g}"
         fx = json.loads(fxj.read_text())["fx"]
         n_ip = len(IP_D) * len(LEVELS) * len(IP_AFTER)
-        res = {f"tune{t}_eval{e}": power(T, G, cell, fx, t, e, n_ip) for t, e in ((60, 120), (100, 120), (100, 160))}
+        t_seeds, tv = usable(v5.seeds("ev_tune"), drops_of(fx_rows))
+        g_seeds, gv = usable(v5.seeds("ev_gate"), drops_of(gate_rows))
+        if tv or gv:
+            write(out, {"rule": "VOID"})
+            print("power VOID")
+            return 0
+        res = {f"tune{t}_eval{e}": power(T, G, cell, fx, t, e, n_ip, t_seeds, g_seeds) for t, e in ((60, 120), (100, 120), (100, 160))}
         res["rule"] = next((k for k in ("tune60_eval120", "tune100_eval120", "tune100_eval160") if res[k]["p_false_kill_at_15"] <= FALSE_KILL_MAX), "underpowered")
         write(out, res)
         print("power", res["rule"], {k: v["p_false_kill_at_15"] for k, v in res.items() if k != "rule"})
@@ -318,6 +352,28 @@ def main(argv: list) -> int:
         write(out, res)
         print("picks", {k: res.get(k) for k in ("fx", "ip", "sw", "bU", "kill_by_pick")})
         return 0
+    if x.step == "final":     # final ROWS RESULT OUT --va RESULT_VA --va-rows VA_ROWS --a A [--ext-rows ...]
+        rows, rj, out = map(Path, x.args)
+        T = load(rows)
+        if x.ext_rows:
+            T = merge(T, load(Path(x.ext_rows)))
+        base = json.loads(rj.read_text())
+        va = json.loads(Path(x.va).read_text()) if x.va and Path(x.va).is_file() else None
+        if x.va_rows and Path(x.va_rows).is_file():
+            T = merge(T, load(Path(x.va_rows)))
+        cell = next(k for k in T if k[0].startswith("EVA") and "V" not in k[0][3:])[0]
+        sd = v5.seeds("ev_eval") + (v5.seeds("ev_eval_ext") if x.ext_rows else [])
+        sd, _ = usable(sd, drops_of(rows) + (drops_of(Path(x.va_rows)) if x.va_rows else []))
+        if x.a is not None:     # the binding check needs the V-A rows on the same seeds (base 120, or 160 with ev_va_ext merged)
+            vcell = f"{cell}V{x.a:g}"
+            for extra in ([Path(str(x.va_rows).replace("/ev_va/", "/ev_va_ext/"))] if x.va_rows and x.ext_rows else []):
+                if extra.is_file():
+                    T = merge(T, load(extra))
+            sd = [q for q in sd if all(q in T.get((vcell, n), {}) for n in ("nc", base.get("bU", "FX"), "IP"))] if va else sd
+        res = final(base, va, T, cell, x.a, sd)
+        write(out, res)
+        print("EV final", res["outcome"])
+        return 0
     rows, pj, out = map(Path, x.args)
     T = load(rows)
     p = json.loads(pj.read_text())
@@ -329,7 +385,7 @@ def main(argv: list) -> int:
         sd += v5.seeds("ev_eval_ext")
         dropped += drops_of(Path(x.ext_rows))
     sd, void = usable(sd, dropped)
-    res = {"outcome": "VOID", "reason": "more than 3 seeds dropped"} if void else read(T, p, cell, sd, s_cell=x.s_cell, underpowered=x.underpowered)
+    res = {"outcome": "VOID", "reason": "more than 3 seeds dropped"} if void else read(T, p, cell, sd, s_cell=x.s_cell, underpowered=x.underpowered, by_pick=bool(x.by_pick))
     res["dropped"] = dropped
     write(out, res)
     print("ev", res["outcome"], res.get("lane_end_bound"))

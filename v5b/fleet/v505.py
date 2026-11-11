@@ -116,7 +116,9 @@ class _Switch:
             return lev
         self.t0["switched_s"] += 1
         s = self.since.setdefault(v, t)
-        if on and t - s >= TAU_RISE_MAX_S and self.env.v2v_lead.get(v) is not None:
+        # read back only when the car held a commanded level last second too (env.on still holds last second's state here), so the
+        # tau SUMO holds is last second's command at L, not the contract 1.6 s of a second without an ALKS leader (review blocker)
+        if on and v in getattr(self.env, "on", ()) and t - s >= TAU_RISE_MAX_S:
             self.t0["read_n"] += 1
             self.t0["read_bad"] += abs(ls.vehicle.getTau(v) - self.env.headways[self.L]) > 1e-6
         return self.L
@@ -129,6 +131,9 @@ class Told(_Switch):
     def __init__(self, env, d: float, L: int, after: float):
         super().__init__(env, L, after)
         self.d = float(d)
+        from v5b.fleet.b_env import ROAD_X
+        if (ROAD_X.get("2"), ROAD_X.get("3a")) != (EDGE2_X, EDGE2_END):     # a geometry change must fail loudly
+            raise ValueError(f"edge 2 is not at {EDGE2_X}-{EDGE2_END} m: {ROAD_X}")
 
     def active(self, v: str, t: float) -> bool:
         import libsumo as ls
@@ -139,6 +144,8 @@ class Told(_Switch):
         if not t0 - self.d / 25.0 <= t < t0 + dur + self.after:
             return False
         road = ls.vehicle.getRoadID(v)
+        if road.startswith(":n2"):     # the junction at the edge-2 entry lies inside the zone
+            return True
         if road not in ("1", "2"):
             return False
         x = (0.0 if road == "1" else EDGE2_X) + ls.vehicle.getLanePosition(v)
@@ -163,4 +170,9 @@ class Detect(_Switch):
             s = None
         if s is not None and s < self.th:
             self.fired[v] = t
-        return v in self.fired and t - self.fired[v] <= self.after
+        on = v in self.fired and t - self.fired[v] <= self.after
+        if not on and v in self.fired and v in self.since:     # EV §8 T0: a release comes `after` s past the last detection, within 1 s
+            gap = t - self.fired[v]
+            self.t0["release_n"] = self.t0.get("release_n", 0) + 1
+            self.t0["release_bad"] = self.t0.get("release_bad", 0) + (not self.after < gap <= self.after + 1.0 + 1e-6)
+        return on
