@@ -119,6 +119,7 @@ def run_one(a: tuple) -> dict:
     # is reset within one step. The base value is the plant's own, which fleet.py:179 writes last into every vType.
     from v5b.fleet.v505 import Ramp2Assertive
     r2 = Ramp2Assertive(ls, c.get("ramp2_assertive"), c.get("lcAssertive", 1.0)) if "ramp2_assertive" in c or c.get("m2_counts") else None
+    etrace = [] if c.get("trace_end") else None
 
     def step():
         step0()
@@ -295,6 +296,11 @@ def run_one(a: tuple) -> dict:
             n = ls.lane.getLastStepVehicleNumber(x)
             S["n_" + x] += n
             S["nv_" + x] += n * ls.lane.getLastStepMeanSpeed(x)
+        if etrace is not None:     # M2 §7 PR-24: raw samples of both accelerating lanes, recounted offline; reads only
+            for x in ("3a_0", "4a_0"):
+                if x in lanes:
+                    etrace.append([round(env.sim.t, 1), x, round(ls.lane.getLength(x), 3),
+                                   [[v, round(ls.vehicle.getLanePosition(v), 3), round(ls.vehicle.getSpeed(v), 4)] for v in ls.lane.getLastStepVehicleIDs(x)]])
         l3a = ls.lane.getLength("3a_0")
         S["end_stop"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l3a - 30.0 for v in ls.lane.getLastStepVehicleIDs("3a_0"))
         if "4a_0" in lanes:
@@ -363,6 +369,8 @@ def run_one(a: tuple) -> dict:
         row["attrib"] = dict(attr)
     if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline
         row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
+    if etrace is not None:
+        row["end_trace"] = etrace
     if env.pert is not None:
         row["pert_log"] = env.pert.log
     if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):
