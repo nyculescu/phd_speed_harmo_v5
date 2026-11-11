@@ -21,16 +21,16 @@ T0=$(cat "$R/t0")
 unset SUMO_HOME
 export OMP_NUM_THREADS=1
 CPU=$(lscpu | sed -n 's/^Model name: *//p' | head -1)
-if [ -f "$R/cpu" ] && [ "$(cat "$R/cpu")" != "$CPU" ]; then     # §7: one CPU model; a new host follows §5's procedure under a V#
-  echo "$(date -u '+%F %T') STOPPED: CPU model changed ($(cat "$R/cpu") -> $CPU)" >> "$R/status.txt"; exit 1
-fi
-[ -f "$R/cpu" ] || echo "$CPU" > "$R/cpu"
 say() { echo "$(date -u '+%F %T') $1" >> "$R/status.txt"; }
 step() { say "start $1"; shift; "$@" >> "$R/run.log" 2>&1; rc=$?; say "end rc=$rc"; return $rc; }
 must() { step "$@" || { say "STOPPED"; exit 1; }; }
 val() { $PY -c "import json,sys; print(json.load(open(sys.argv[1]))$2)" "$1"; }
 sums() { (cd "$R" && find . -type f ! -name SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SHA256SUMS); }
 trap sums EXIT
+if [ -f "$R/cpu" ] && [ "$(cat "$R/cpu")" != "$CPU" ]; then     # §7: one CPU model; a new host follows §5's procedure under a V#
+  say "STOPPED: CPU model changed ($(cat "$R/cpu") -> $CPU)"; exit 1
+fi
+[ -f "$R/cpu" ] || echo "$CPU" > "$R/cpu"
 COST_PER_RUN=$(cat "$R/cost_per_run" 2>/dev/null)
 cost_ok() {     # cost_ok STAGE RUNS
   [ -z "$COST_PER_RUN" ] && return 0

@@ -543,7 +543,7 @@ def check_a(T: dict, seeds: list, flips: int = 2000) -> dict:
                                                       "end_stop2": [float(np.median(col(T, "S", a, ss, "end_stop2"))), float(np.median(col(T, L, a, ss, "end_stop2")))]}}
     if tests:
         rng = np.random.default_rng(20261116)
-        idxs = {len(d): read6.Stat(len(d), 500, 20261115).idx for *_, d in tests}
+        idxs = {len(d): read6.Stat(len(d)).idx for *_, d in tests}     # the tests' own index, so the null matches the label as read
         hits = 0
         for _ in range(flips):
             sign = {(L, a): rng.choice((-1.0, 1.0), len(ok_s[(L, a)])) for L in usable for a in ("nc", "p333")}
