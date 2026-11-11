@@ -13,7 +13,7 @@ need = pytest.mark.skipif(not v5.S6_JOBS.is_file() or not v5.pb.JOB.is_file(), r
 
 
 def test_stage_ranges_do_not_overlap_and_match_the_protocol():
-    r = sorted(v for k, v in v5.STAGES.items() if k != "m2_ident")     # identity replays reuse the first 3 verdict seeds (M2 §6)
+    r = sorted(v for k, v in v5.STAGES.items() if k != "m2_ident" and k not in v5.ALIASES)     # ident and the aliases reuse ranges on purpose
     assert all(b < c for (_, b), (c, _) in zip(r, r[1:]))
     assert v5.STAGES["m2_verdict"] == (7_480_400, 7_480_639) and v5.STAGES["m2_fallback"] == (7_488_760, 7_488_999)
     assert len(v5.seeds("ev_eval")) == 120 and len(v5.seeds("m2_pick")) == 60 and len(v5.seeds("m2_x1")) == 160

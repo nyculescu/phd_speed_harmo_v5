@@ -776,6 +776,9 @@ class CavEnv(ZoneEnv):
             on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
             lev = self._hw_level(v, self.lvl.get(v, 0))
+            sw = getattr(self, "hw_switch", None)     # V505 EV: a told or detected switch replaces the level (absent: unchanged)
+            if sw is not None:
+                lev = sw.level(v, lev, on)
             want = self.headways[lev] if on else ALKS_TAU0
             (self.on.add if on else self.on.discard)(v)
             if rise:     # an instant rise brakes hard and ends before the next 1-Hz sample (V377)

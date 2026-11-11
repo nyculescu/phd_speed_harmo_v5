@@ -67,7 +67,7 @@ def run_one(a: tuple) -> dict:
     import libsumo as ls
     from v5b.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch", "asch", "mpcf"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch", "asch", "mpcf", "told", "detect"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     if "pt" in ctrl:     # round 1: a policy brings the environment options it acts through, e.g. 3B's base rule
         from v5b.fleet.c_train import act_env
@@ -107,6 +107,14 @@ def run_one(a: tuple) -> dict:
     if "mpcf" in ctrl:     # Plan B (planb.md §3.5)
         from v5b.fleet.planb_ctrl import MpcF
         rule = MpcF(env, ctrl["mpcf"], bool(c.get("fix_x")))
+    sw = None
+    if "told" in ctrl or "detect" in ctrl:     # V505 EV §3: the FX base rule decides; the switch replaces its level per second
+        from v5b.fleet.planb_ctrl import build_rule
+        from v5b.fleet.v505 import Detect, Told
+        k = "told" if "told" in ctrl else "detect"
+        x = dict(ctrl[k])
+        rule = build_rule(env, x.pop("base"), bool(c.get("fix_x")))
+        sw = env.hw_switch = (Told if k == "told" else Detect)(env, **x)
     meter = bank = None
     S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
     road_lane, lane_t, accel_t = {}, {}, {}
@@ -390,6 +398,8 @@ def run_one(a: tuple) -> dict:
         row["end_trace"] = etrace
     if t0ev is not None:
         row["t0_event"] = dict(t0ev)
+    if sw is not None:
+        row["t0_switch"] = dict(sw.t0)
     if env.pert is not None:
         row["pert_log"] = env.pert.log
     if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):

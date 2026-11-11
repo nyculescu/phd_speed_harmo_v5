@@ -89,3 +89,78 @@ class Ramp2Assertive:
             key = ("on" if lane == "4a_0" else "feed") if on_va else "back" if lane == "4a_0" else "off"
             S[f"va_n_{key}"] += 1
             S[f"va_bad_{key}"] += abs(float(self.ls.vehicle.getParameter(v, KEY)) - want) > 1e-6
+
+
+EDGE2_X, EDGE2_END = 3000.0, 3498.3     # r2m3 (corridor.py): edge 1 runs 0-3000 m, edge 2 3000-3498.3 m, as on r1m3
+TAU_RISE_MAX_S = 5.0     # 0.8 -> 1.6 s at tau_rise 0.2 s/s takes 4 s; read-back is checked after 5 s in the switched state
+
+
+class _Switch:
+    """V505 EV §3: a level that replaces the base rule's in the per-second headway update (b_env._v2v), for every ALKS at once,
+    bypassing the 10-s hold but not tau_rise. Told (IP) and detected (SW (a)) switches share this path, so they differ only in how
+    they know about the event. T0 counts (EV §8): cars switched and read back at L after TAU_RISE_MAX_S."""
+
+    def __init__(self, env, L: int, after: float):
+        self.env, self.L, self.after = env, int(L), float(after)
+        self.since = {}
+        self.t0 = {"switched_s": 0, "read_n": 0, "read_bad": 0}
+
+    def active(self, v: str, t: float) -> bool:
+        raise NotImplementedError
+
+    def level(self, v: str, lev: int, on: bool) -> int:
+        import libsumo as ls
+        t = self.env.sim.t
+        if not self.active(v, t):
+            self.since.pop(v, None)
+            return lev
+        self.t0["switched_s"] += 1
+        s = self.since.setdefault(v, t)
+        if on and t - s >= TAU_RISE_MAX_S and self.env.v2v_lead.get(v) is not None:
+            self.t0["read_n"] += 1
+            self.t0["read_bad"] += abs(ls.vehicle.getTau(v) - self.env.headways[self.L]) > 1e-6
+        return self.L
+
+
+class Told(_Switch):
+    """IP: ALKS within d m upstream of the edge-2 entry, or on edge 2, from d / 25 s before onset until `after` s past the end of
+    the drawn event (EV §3). Reads the event schedule, which no real controller has."""
+
+    def __init__(self, env, d: float, L: int, after: float):
+        super().__init__(env, L, after)
+        self.d = float(d)
+
+    def active(self, v: str, t: float) -> bool:
+        import libsumo as ls
+        p = self.env.pert
+        if p is None or p.kind != "slowdown":
+            return False
+        t0, dur = p.s["times"][0], p.s["dur"]
+        if not t0 - self.d / 25.0 <= t < t0 + dur + self.after:
+            return False
+        road = ls.vehicle.getRoadID(v)
+        if road not in ("1", "2"):
+            return False
+        x = (0.0 if road == "1" else EDGE2_X) + ls.vehicle.getLanePosition(v)
+        return EDGE2_X - self.d <= x <= EDGE2_END
+
+
+class Detect(_Switch):
+    """SW (a): a car whose roadside mean speed over the next r m is below th m/s switches to L, and holds it `after` s after the
+    condition clears (EV §3). It knows nothing about the event in advance."""
+
+    def __init__(self, env, r: float, th: float, L: int, after: float):
+        super().__init__(env, L, after)
+        from v5b.fleet.b_env import LocalRule
+        self.look = LocalRule(env, r, th)
+        self.th = float(th)
+        self.fired = {}
+
+    def active(self, v: str, t: float) -> bool:
+        if getattr(self.env, "bins", None):     # the roadside bins exist only once the env reports (not in the first warm-up second)
+            s = self.look._ahead(v)
+        else:
+            s = None
+        if s is not None and s < self.th:
+            self.fired[v] = t
+        return v in self.fired and t - self.fired[v] <= self.after

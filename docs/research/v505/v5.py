@@ -25,6 +25,9 @@ STAGES = {     # v505_common.md §5 (V508); inclusive ranges
     "ev_tune": (7_488_280, 7_488_339), "ev_eval": (7_488_340, 7_488_459), "ev_repeat": (7_488_460, 7_488_499),
     "ev_tune_ext": (7_488_500, 7_488_539), "ev_eval_ext": (7_488_540, 7_488_579),
     "m2_x1": (7_488_600, 7_488_759), "m2_fallback": (7_488_760, 7_488_999)}
+ALIASES = {     # part 2's sub-stages on the ranges above (common §5): two tuning steps, and EV's pre-planned repeat on V-A (common §6)
+    "ev_tune_fx": "ev_tune", "ev_tune_sw": "ev_tune", "ev_tune_fx_ext": "ev_tune_ext", "ev_tune_sw_ext": "ev_tune_ext", "ev_va": "ev_eval"}
+STAGES |= {k: STAGES[v] for k, v in ALIASES.items()}
 S6_JOBS = Path("/home/catalin/work/phd/v5b1_runs/planb_s56_remote/jobs/s6_jobs.json")
 M2_RULES = ("nc", "p333", "os0_10_10", "3E-C_TRUCK", "3E-D_TRUCK", "lr1000_16_2")     # M2 §6
 M2_X1 = ("nc", "p333", "os0_10_10", "3e")     # 3E-T is the stored arm 3e
