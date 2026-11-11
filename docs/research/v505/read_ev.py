@@ -1,5 +1,6 @@
 """EV readings, part 1 (docs/research/protocols/v505_ev_informed_rule.md v2 §2, V508): the sizing pass on throw-away seeds and the
-gate. Event cost = all_delay in the cell minus all_delay in S on the same seed. Read once each, by this committed script.
+gate. Event cost = all_delay in the cell minus all_delay in S on the same seed. Read once each, by this committed script. Crash drops
+(common §4): the union of the stage's dropped seeds leaves every arm, cell and S alike; more than 3 make the stage VOID.
 
 usage: read_ev.py size ROWS.jsonl OUT.json
        read_ev.py gate ROWS.jsonl OUT.json --size SIZE.json"""
@@ -16,7 +17,7 @@ sys.path.insert(0, str(HERE))
 import drain  # noqa: E402
 import read6  # noqa: E402
 import v5  # noqa: E402
-from read_m2 import arr, load  # noqa: E402
+from read_m2 import arr, drops_of, load, usable  # noqa: E402
 
 SIZE_SHARE = 0.15     # EV §2: no control's median event cost at least 15 % of S's median delay
 G1A = 10.0     # EV §2 gate: delay in the cell at least 10 % above S, CI lower bound above 0
@@ -75,14 +76,20 @@ def main(argv: list) -> int:
     ap.add_argument("out")
     ap.add_argument("--size")
     x = ap.parse_args(argv)
-    T = load(Path(x.rows))
-    if x.step == "size":
-        res = size(T, v5.seeds("ev_size"))
+    rows = Path(x.rows)
+    T = load(rows)
+    dropped = drops_of(rows)
+    seeds, void = usable(v5.seeds("ev_size" if x.step == "size" else "ev_gate"), dropped)
+    if void:
+        res = {"outcome": "VOID", "reason": "more than 3 seeds dropped", "limit_kmh": None}
+    elif x.step == "size":
+        res = size(T, seeds)
     else:
         lim = json.loads(Path(x.size).read_text())["limit_kmh"]
         if lim is None:
             raise SystemExit("EV is VOID at sizing: no gate")
-        res = gate(T, lim, v5.seeds("ev_gate"))
+        res = gate(T, lim, seeds)
+    res["dropped"] = dropped
     v5.pb.cma2.write_json(Path(x.out), res)
     print(x.step, res["outcome"], res.get("limit_kmh"))
     return 0

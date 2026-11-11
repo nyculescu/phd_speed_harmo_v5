@@ -120,22 +120,16 @@ def run_one(a: tuple) -> dict:
     from v5b.fleet.v505 import Ramp2Assertive
     r2 = Ramp2Assertive(ls, c.get("ramp2_assertive"), c.get("lcAssertive", 1.0)) if "ramp2_assertive" in c or c.get("m2_counts") else None
     etrace = [] if c.get("trace_end") else None
-    t0ev = defaultdict(float) if c.get("t0_event") else None     # EV §8 T0: the slowdown's limit read back from SUMO every step
+    r2_lane = {}     # last 1-Hz lane of each tracked ramp-2 car
+    t0ev = {} if c.get("t0_event") else None     # EV §8 T0: the slowdown's limit read back from SUMO every step
 
     def t0_event(t):
         p = env.pert
         if p is None or p.kind != "slowdown":
             return
-        from v5b.fleet.v505 import slowdown_limit
+        from v5b.fleet.v505 import t0_step
         edge = p.s.get("edge", "4")
-        got = ls.lane.getMaxSpeed(f"{edge}_0")
-        want = [slowdown_limit(p.s, x, env.plant.get("limit", 100.0 / 3.6)) for x in (t, t - env.dt)]
-        t0ev["steps"] += 1
-        t0ev["limit_bad"] += min(abs(got - w) for w in want) > 1e-6
-        t1 = p.s["times"][0]
-        if t1 + p.s.get("taper", 0.0) <= t < t1 + p.s["dur"]:
-            t0ev["hold_steps"] += 1
-            t0ev["hold_speed_sum"] += ls.edge.getLastStepMeanSpeed(edge)
+        t0_step(t0ev, p.s, t, env.dt, ls.lane.getMaxSpeed(f"{edge}_0"), ls.edge.getLastStepMeanSpeed(edge), env.plant.get("limit", 100.0 / 3.6))
 
     def step():
         step0()
@@ -260,8 +254,14 @@ def run_one(a: tuple) -> dict:
                 rl = int(i) - 1 if e in ("3a", "4a") else int(i)
                 if road_lane.get(v, rl) != rl:
                     lane_t[v] = env.sim.t
-                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of ramp-2 cars, by edge
-                        S[f"r2_lc_{e}"] += 1
+                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of merged ramp-2 cars on 4a_1-3, 4 and 5; merges apart
+                        prev_ln = r2_lane.get(v, "")
+                        if prev_ln == "4a_0":
+                            S["r2_merge"] += 1
+                        elif e in ("4a", "4", "5") and ln != "4a_0" and prev_ln.rsplit("_", 1)[0] in ("4a", "4", "5"):
+                            S[f"r2_lc_{e}"] += 1
+                if r2 is not None and v in r2.state:
+                    r2_lane[v] = ln
                 road_lane[v] = rl
                 if ln in ("3a_0", "4a_0"):
                     accel_t[v] = env.sim.t
@@ -317,8 +317,8 @@ def run_one(a: tuple) -> dict:
         if etrace is not None:     # M2 §7 PR-24: raw samples of both accelerating lanes, recounted offline; reads only
             for x in ("3a_0", "4a_0"):
                 if x in lanes:
-                    etrace.append([round(env.sim.t, 1), x, round(ls.lane.getLength(x), 3),
-                                   [[v, round(ls.vehicle.getLanePosition(v), 3), round(ls.vehicle.getSpeed(v), 4)] for v in ls.lane.getLastStepVehicleIDs(x)]])
+                    etrace.append([env.sim.t, x, ls.lane.getLength(x),     # raw floats: the recount must see what the counter saw
+                                   [[v, ls.vehicle.getLanePosition(v), ls.vehicle.getSpeed(v)] for v in ls.lane.getLastStepVehicleIDs(x)]])
         l3a = ls.lane.getLength("3a_0")
         S["end_stop"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l3a - 30.0 for v in ls.lane.getLastStepVehicleIDs("3a_0"))
         if "4a_0" in lanes:

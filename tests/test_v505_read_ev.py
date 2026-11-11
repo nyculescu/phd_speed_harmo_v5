@@ -78,4 +78,5 @@ def test_ev_jobs(tmp_path):
     g = v5.plan("ev_gate", tmp_path, 15.0)
     assert sorted(g["arms"]) == ["EVA15|nc", "EVA15|p333", "S|nc", "S|p333"] and g["seed_range"] == [7_488_240, 7_488_279]
     sm = v5.plan("ev_smoke", tmp_path)
-    assert all(c.get("t0_event") for n, c in sm["arms"].items() if n.startswith("EVA")) and sm["seed_range"] == [7_488_200, 7_488_200]
+    assert all(c.get("t0_event") for n, c in sm["arms"].items() if n.startswith("EVA") and not n.endswith("~untraced"))
+    assert sm["seed_range"] == [7_488_200, 7_488_200] and "t0_event" not in sm["arms"]["EVA10|nc~untraced"]

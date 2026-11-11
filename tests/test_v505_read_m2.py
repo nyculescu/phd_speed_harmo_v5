@@ -41,32 +41,60 @@ def planted(n=240, shift=0.0, es_cut=0.9, seed=1):
     seeds = list(range(7_480_400, 7_480_400 + n))
     for cell, s_, cut in (("TRUCK", 0.0, 0.0), ("TRUCKV3", shift, es_cut)):
         base = {s: 160_000.0 + rng.normal(0, 5_000) for s in seeds}
-        T[(cell, "os0_10_10")] = {s: {"all_delay": base[s], "end_stop2": 800.0 * (1 - cut)} for s in seeds}
-        T[(cell, "nc")] = {s: {"all_delay": base[s] * 1.4, "end_stop2": 600.0 * (1 - cut)} for s in seeds}
+        es = lambda m: max(m * (1 - cut) * (1 + rng.normal(0, 0.3)), 0.0)     # skewed, noisy lane-end waiting
+        T[(cell, "os0_10_10")] = {s: {"all_delay": base[s], "end_stop2": es(800.0)} for s in seeds}
+        T[(cell, "nc")] = {s: {"all_delay": base[s] * 1.4, "end_stop2": es(600.0)} for s in seeds}
         for w in v5.pb.V3W:
-            T[(cell, w)] = {s: {"all_delay": base[s] * (1 - s_ / 100) + rng.normal(0, 3_000), "end_stop2": 500.0 * (1 - cut)} for s in seeds}
+            T[(cell, w)] = {s: {"all_delay": base[s] * (1 - s_ / 100) + rng.normal(0, 3_000), "end_stop2": es(500.0)} for s in seeds}
     return T, seeds
 
 
-def test_same_when_nothing_changes_and_changed_on_a_large_shift():
+@pytest.fixture
+def no_null(monkeypatch):
+    """The reading logic apart from the swap null (2,000 swaps at B = 20,000 take minutes; the null has its own test)."""
+    monkeypatch.setattr(rm.read6, "swap_null", lambda *a, **k: 0.0)
+
+
+def test_null_failure_blocks_the_reading(monkeypatch):
     T, seeds = planted()
-    r = rm.conclusion(T, "C1", 3.0, 0.75, seeds, swaps=200)
+    monkeypatch.setattr(rm.read6, "swap_null", lambda *a, **k: 0.05)
+    assert rm.conclusion(T, "C1", 3.0, seeds)["reading"] == rm.read6.FAILED_NULL
+
+
+def test_same_when_nothing_changes_and_changed_on_a_large_shift(no_null):
+    T, seeds = planted()
+    r = rm.conclusion(T, "C1", 3.0, seeds)
     assert r["reading"] == "SAME" and r["base_reading"] == "neither" and "detectable_shift_80" in r
     T, seeds = planted(shift=4.0)
-    assert rm.conclusion(T, "C1", 3.0, 0.75, seeds, swaps=200)["reading"] == "CHANGED"
+    assert rm.conclusion(T, "C1", 3.0, seeds)["reading"] == "CHANGED"
 
 
-def test_variant_that_does_not_cut_lane_end_waiting_is_not_read():
-    T, seeds = planted(es_cut=0.5)
-    assert rm.conclusion(T, "C1", 3.0, 0.75, seeds, swaps=200)["reading"] == "VARIANT DID NOT BIND"
+def test_variant_that_does_not_cut_lane_end_waiting_is_not_read(no_null):
+    T, seeds = planted(es_cut=0.3)
+    assert rm.conclusion(T, "C1", 3.0, seeds)["reading"] == "VARIANT DID NOT BIND"
+    T, seeds = planted(es_cut=0.7)     # a cut well above the 50 % floor binds
+    assert rm.conclusion(T, "C1", 3.0, seeds)["reading"] == "SAME"
 
 
-def test_pr28_status_needs_same_everywhere():
+def test_fallback_base_that_differs_from_the_record_is_not_replicated(no_null):
+    T, seeds = planted(shift=0.0)
+    for s in seeds:     # make the base read "better" for C1, recorded as "neither"
+        for w in v5.pb.V3W:
+            T[("TRUCK", w)][s]["all_delay"] *= 0.95
+    assert rm.conclusion(T, "C1", 3.0, seeds, fallback=True)["reading"] == "NOT REPLICATED"
+    assert rm.conclusion(T, "C1", 3.0, seeds, fallback=False)["reading"] != "NOT REPLICATED"
+
+
+def test_pr28_status_needs_same_everywhere_and_waits_for_x1():
     same = {c: {"reading": "SAME"} for c in ("C1", "C2", "C3")}
-    assert rm.pr28_status(same, 3.0, "full", 0.75).startswith("partial: located by road and period (not lane)")
-    assert "partial variant (cut 60%)" in rm.pr28_status(same, 3.0, "partial", 0.6)
-    assert rm.pr28_status({**same, "C2": {"reading": "CHANGED"}}, 3.0, "full", 0.75) == "gap"
-    assert rm.pr28_status({**same, "C5": {"reading": "NOT REPLICATED"}}, 3.0, "full", 0.75) == "gap"
+    x1 = {"C5": {"reading": "SAME"}, "C5b": {"reading": "SAME"}}
+    assert rm.pr28_status(same, 3.0, "full", 0.8, "pending") == "provisional, X1 pending"
+    assert rm.pr28_status({**same, **x1}, 3.0, "full", 0.8, "read").startswith("partial: located by road and period (not lane)")
+    assert rm.pr28_status(same, 3.0, "full", 0.8, "dropped").startswith("partial:")
+    assert "partial variant (cut 60%)" in rm.pr28_status({**same, **x1}, 3.0, "partial", 0.6, "read")
+    assert rm.pr28_status({**same, "C2": {"reading": "CHANGED"}, **x1}, 3.0, "full", 0.8, "read") == "gap"
+    assert rm.pr28_status({**same, **x1, "C5": {"reading": "NOT REPLICATED"}}, 3.0, "full", 0.8, "read") == "gap"
+    assert rm.pr28_status({**same, **x1, "C5": {"reading": "VARIANT DID NOT BIND"}}, 3.0, "full", 0.8, "read").startswith("partial:")
 
 
 def pick_rows(cuts, unsafe=()):
@@ -87,6 +115,6 @@ def test_pick_smallest_full_then_partial_then_void():
     assert rm.pick(T, seeds)["a"] == 3.0 and rm.pick(T, seeds)["kind"] == "full"
     T, seeds = pick_rows((0.5, 0.8, 0.9, 0.95), unsafe=(3.0, 5.0, 10.0))
     p = rm.pick(T, seeds)
-    assert p["a"] == 2.0 and p["kind"] == "partial" and abs(p["bar"] - 0.5) < 1e-9
+    assert p["a"] == 2.0 and p["kind"] == "partial" and abs(p["cut"] - 0.5) < 1e-9
     T, seeds = pick_rows((0.2, 0.3, 0.4, 0.45))
     assert rm.pick(T, seeds)["kind"] == "VOID"

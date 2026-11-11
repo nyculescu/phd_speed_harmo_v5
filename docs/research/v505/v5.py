@@ -108,12 +108,18 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
             raise SystemExit("ev_gate needs --a, the limit (km/h) EV's sizing reading chose")
         jobs = {f"S|{r}": ev_cfg(arms[f"S|{r}"], None, st) for r in ("nc", "p333")}
         jobs |= {f"EVA{a:g}|{r}": ev_cfg(arms[f"S|{r}"], a, st) for r in ("nc", "p333")}
-    elif stage == "ev_smoke":     # part 1: the sizing configs once, each EV-A level with its T0 trace
-        jobs = {n: c | ({"t0_event": True} if n.startswith("EVA") else {}) for n, c in plan("ev_size", out_dir)["arms"].items()}
-    elif stage == "m2_smoke":     # every distinct config of the M2 stages once (S5 practice), on the smoke seeds
+    elif stage == "ev_smoke":     # part 1: the sizing configs once, each EV-A level with its T0 trace and an untraced twin (EV §8)
+        size = plan("ev_size", out_dir)["arms"]
+        jobs = {n: c | ({"t0_event": True} if n.startswith("EVA") else {}) for n, c in size.items()}
+        jobs |= {f"EVA{x:g}|nc{TWIN}": size[f"EVA{x:g}|nc"] for x in EV_LADDER}
+    elif stage == "m2_smoke":     # every distinct config of the M2 stages once (S5 practice), plus traced/untraced twins (M2 §7)
         jobs = {}
         for s, x in (("m2_pick", None), ("m2_verdict", LADDER[0]), ("m2_x1", LADDER[0])):
             jobs |= plan(s, out_dir, x)["arms"]
+        for n in ("S|nc", "S|p333", "X1|p333"):
+            plain = {k: v for k, v in jobs[n].items() if k != "m2_counts"}
+            jobs[n + TWIN] = plain
+            jobs[n + "~trace"] = plain | {"trace_end": True}
     else:
         raise SystemExit(f"no M2 job for stage {stage}")
     lo, hi = STAGES[stage]
@@ -122,6 +128,14 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
     if stage in ("m2_smoke", "ev_smoke"):
         hi = lo
     return {"stage": stage, "seed_range": [lo, hi], "q": pb.Q, "a": a, "arms": jobs}
+
+
+TWIN = "~untraced"
+TRACER_KEYS = {"end_trace", "t0_event", "va_skipped"}     # a tracer's own output, skipped when a traced run meets its untraced twin
+
+
+def tracer_key(k: str) -> bool:
+    return k in TRACER_KEYS or k.startswith(("r2_lc_", "r2_merge", "va_n_", "va_bad_"))
 
 
 def same_row(a: dict, b: dict, skip=run6.SKIP | {"commit", "name", "cfg"}) -> list:
@@ -134,13 +148,29 @@ def t0_event_ok(row: dict, cfg: dict) -> dict:
     t = row.get("t0_event", {})
     lim = cfg["ctrl"]["env"]["perturb"]["limit_kmh"] / 3.6
     mean = t.get("hold_speed_sum", 0.0) / max(t.get("hold_steps", 0.0), 1.0)
-    return {"limit_bad": t.get("limit_bad"), "steps": t.get("steps"), "hold_mean_ms": mean, "limit_ms": lim,
+    return {"limit_bad": t.get("limit_bad"), "steps": t.get("steps"), "max_err": t.get("max_err"), "hold_mean_ms": mean, "limit_ms": lim,
             "pass": t.get("steps", 0) > 0 and t.get("limit_bad", 1) == 0 and t.get("hold_steps", 0) > 0 and mean <= 1.05 * lim}
 
 
+def twin_pairs(arms: dict) -> list:
+    """(traced or counted arm, untraced twin) pairs in a smoke job: "X~untraced" pairs with "X" and with "X~trace"."""
+    out = []
+    for n in arms:
+        if n.endswith(TWIN):
+            base = n[: -len(TWIN)]
+            out += [(m, n) for m in (base, base + "~trace") if m in arms]
+    return out
+
+
+def with_measure(arms: dict, st: Path) -> dict:
+    return {n: ({**c, "measure": str(st)} if "measure" in c else c) for n, c in arms.items()}
+
+
 def smoke(jobs: dict, out: Path, workers: int) -> dict:
-    """S5 practice for V505: every arm once, then each distinct config again, every value equal; V-A read back where it is on; the
-    traced twin equal to the untraced one apart from its trace."""
+    """S5 practice for V505: every arm once, then each distinct config again in its own side-file folder, every row value and every
+    side-file array equal; V-A read back on and off 4a_0; each traced or counted run equal to its untraced twin apart from the
+    tracer's own keys (V386); T0 of every EV-A level."""
+    from read_m2 import npz_equal
     arms = jobs["arms"]
     sd = seeds(jobs["stage"], *jobs["seed_range"])
     run6.check_checkpoints(arms)
@@ -150,19 +180,29 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
         first.setdefault(pb.sha({k: v for k, v in c.items() if k != "measure"}), n)
     rep = {n: arms[n] for n in first.values()}
     inp = {"stage": jobs["stage"], "seed_range": jobs["seed_range"], "smoke": True}
-    da, db = run6.execute(arms, sd, out / "a", workers, inp), run6.execute(rep, sd, out / "b", workers, inp)
+    da = run6.execute(with_measure(arms, out / "a" / "st"), sd, out / "a", workers, inp)
+    db = run6.execute(with_measure(rep, out / "b" / "st"), sd, out / "b", workers, inp)
     A = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "a" / "s6_rows.jsonl")}
     B = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "b" / "s6_rows.jsonl")}
-    differs = {f"{k[0]} {k[1]}": d for k in B if (d := same_row(A[k], B[k], run6.SKIP | {"commit", "m_st_file"}))}
-    va = {f"{n} {s}": {k: r.get(k) for k in ("va_n_0", "va_n_1", "va_n_2", "va_bad_0", "va_bad_1", "va_bad_2")}
+    skip = run6.SKIP | {"commit", "m_st_file"}
+    differs = {f"{k[0]} {k[1]}": d for k in B if (d := same_row(A[k], B[k], skip))}
+    side = sorted(f"{k[0]} {k[1]}" for k in B if A[k].get("m_st_file") and not npz_equal(out / "a" / "st" / A[k]["m_st_file"], out / "b" / "st" / B[k]["m_st_file"]))
+    twins = {}
+    for m, n in twin_pairs(arms):
+        for s in sd:
+            if (m, s) in A and (n, s) in A:
+                d = [k for k in same_row(A[(m, s)], {**A[(n, s)], "arm": A[(m, s)]["arm"]}, skip | {"ctrl_sha256", "files"}) if not tracer_key(k)]
+                if d:
+                    twins[f"{m} {s}"] = d
+    va = {f"{n} {s}": {k: r.get(k, 0.0) for k in ("va_n_on", "va_n_off", "va_bad_on", "va_bad_off", "va_bad_feed", "va_skipped")}
           for (n, s), r in A.items() if "ramp2_assertive" in arms[n]}
-    va_bad = sorted(k for k, x in va.items() if any(x.get(f"va_bad_{i}") for i in range(3)) or not x.get("va_n_1"))
-    counts = sorted(f"{n} {s}" for (n, s), r in A.items()
-                    if ("m2_counts" in arms[n] or "ramp2_assertive" in arms[n]) and not any(k.startswith("r2_lc_") for k in r))
+    va_bad = sorted(k for k, x in va.items() if x["va_bad_on"] or x["va_bad_off"] or x["va_bad_feed"] or not x["va_n_on"] or not x["va_n_off"])
+    counts = sorted(f"{n} {s}" for (n, s), r in A.items() if ("m2_counts" in arms[n] or "ramp2_assertive" in arms[n]) and "r2_merge" not in r)
     t0 = {f"{n} {s}": t0_event_ok(r, arms[n]) for (n, s), r in A.items() if arms[n].get("t0_event")}
     t0_bad = sorted(k for k, v in t0.items() if not v["pass"])
-    res = {"replay_differs": differs, "va_not_bound": va_bad, "no_r2_counts": counts, "t0_event_fail": t0_bad, "t0_event": t0, "drops": [da, db],
-           "pass": not differs and not va_bad and not counts and not t0_bad and not da and not db}
+    res = {"replay_differs": differs, "side_files_differ": side, "twin_differs": twins, "va_not_bound": va_bad, "va": va, "no_r2_counts": counts,
+           "t0_event_fail": t0_bad, "t0_event": t0, "drops": [da, db],
+           "pass": not differs and not side and not twins and not va_bad and not counts and not t0_bad and not da and not db}
     pb.cma2.write_json(out / "smoke.json", res)
     return res
 
