@@ -35,6 +35,7 @@ At merge 2, a car that finds no gap stops at the end of the accelerating lane an
   - collisions per run at most the base's + 0.05;
   - `m_stuck_n` 0, and drain: the mean backlog over 1,500-1,800 s (ramp-1 queue, ramp-2 queue, total) at most 2 vehicles above the base on the same seed (V486's form, variant against base).
   - Before the pick, the false-fail rate of the braking bound at n = 60 is computed from S6 S rows (two rules of near-equal braking) and printed.
+  - **Binding reachable (V513):** for both arms, the 95 % lower bound of the cut in median `end_stop2` on the pick seeds is at least 50 %. This is §4's binding test (V512) applied at the pick, so the verdict only runs where binding can pass.
 - **If no a reaches 75 % within the bounds:** the a with the largest cut that meets every other bound is used, if its cut is at least 50 %, and every M2 sentence names it "partial variant (cut x %)". If no a reaches 50 %, M2 is VOID and PR-28 stays a gap.
 - **A dose check** at a second level is not run, to keep the test simple. The weaker alternative costs about 2,640 runs.
 - **Printed beside the pick:**
