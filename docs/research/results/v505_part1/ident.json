@@ -1,0 +1,106 @@
+{
+ "rule_diff": {},
+ "learner_diff": {
+  "S|w0u250 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w0u250 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w0u250 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w1u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w1u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w1u500 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w2u250 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w2u250 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w2u250 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w3u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w3u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w3u500 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w4u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w4u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "S|w4u500 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w0u250 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w0u250 7480401": [
+   "lv_sum_3",
+   "m_dec_changes_hist",
+   "m_dec_conf",
+   "m_dec_entropy_mean",
+   "m_dec_excess",
+   "m_dec_excess_hist",
+   "m_dec_place",
+   "m_dec_totals",
+   "m_dec_want"
+  ],
+  "TRUCK|w0u250 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w1u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w1u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w1u500 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w2u250 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w2u250 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w2u250 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w3u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w3u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w3u500 7480402": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w4u500 7480400": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w4u500 7480401": [
+   "m_dec_entropy_mean"
+  ],
+  "TRUCK|w4u500 7480402": [
+   "m_dec_entropy_mean"
+  ]
+ },
+ "missing": [],
+ "action": "fresh_seeds",
+ "dropped": []
+}

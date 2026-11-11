@@ -1,0 +1,387 @@
+{
+ "missing_in_a": [],
+ "replay_differs": {},
+ "side_files_differ": [],
+ "twin_differs": {},
+ "va_not_bound": [],
+ "va": {
+  "SV2|nc 7488000": {
+   "va_n_on": 5364.0,
+   "va_n_off": 33143.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 14.0
+  },
+  "SV10|nc 7488000": {
+   "va_n_on": 1692.0,
+   "va_n_off": 34451.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 52.0
+  },
+  "SV5|nc 7488000": {
+   "va_n_on": 2852.0,
+   "va_n_off": 34854.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 51.0
+  },
+  "SV2|p333 7488000": {
+   "va_n_on": 1800.0,
+   "va_n_off": 29113.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 46.0
+  },
+  "SV3|p333 7488000": {
+   "va_n_on": 1328.0,
+   "va_n_off": 29750.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 54.0
+  },
+  "SV2|3E-C_TRUCK 7488000": {
+   "va_n_on": 1692.0,
+   "va_n_off": 29048.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 38.0
+  },
+  "SV2|w3u500 7488000": {
+   "va_n_on": 2152.0,
+   "va_n_off": 29533.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 35.0
+  },
+  "SV3|nc 7488000": {
+   "va_n_on": 4590.0,
+   "va_n_off": 34245.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 25.0
+  },
+  "SV2|3E-D_TRUCK 7488000": {
+   "va_n_on": 1715.0,
+   "va_n_off": 29331.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 39.0
+  },
+  "SV5|p333 7488000": {
+   "va_n_on": 936.0,
+   "va_n_off": 29499.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 76.0
+  },
+  "SV2|os0_10_10 7488000": {
+   "va_n_on": 1800.0,
+   "va_n_off": 29113.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 46.0
+  },
+  "TRUCKV2|nc 7488000": {
+   "va_n_on": 5843.0,
+   "va_n_off": 37764.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 20.0
+  },
+  "X1V2|w0u250 7488000": {
+   "va_n_on": 5982.0,
+   "va_n_off": 39875.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 18.0
+  },
+  "SV2|w1u500 7488000": {
+   "va_n_on": 1843.0,
+   "va_n_off": 29420.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 33.0
+  },
+  "SV10|p333 7488000": {
+   "va_n_on": 729.0,
+   "va_n_off": 30464.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 78.0
+  },
+  "SV2|lr1000_16_2 7488000": {
+   "va_n_on": 1800.0,
+   "va_n_off": 29113.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 46.0
+  },
+  "SV2|w4u500 7488000": {
+   "va_n_on": 2064.0,
+   "va_n_off": 29343.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 35.0
+  },
+  "SV2|w2u250 7488000": {
+   "va_n_on": 2121.0,
+   "va_n_off": 29982.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 38.0
+  },
+  "SV2|w0u250 7488000": {
+   "va_n_on": 2085.0,
+   "va_n_off": 30017.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 36.0
+  },
+  "TRUCKV2|w4u500 7488000": {
+   "va_n_on": 3038.0,
+   "va_n_off": 34090.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 31.0
+  },
+  "TRUCKV2|os0_10_10 7488000": {
+   "va_n_on": 3717.0,
+   "va_n_off": 33130.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 38.0
+  },
+  "TRUCKV2|p333 7488000": {
+   "va_n_on": 3499.0,
+   "va_n_off": 32827.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 39.0
+  },
+  "TRUCKV2|w3u500 7488000": {
+   "va_n_on": 3184.0,
+   "va_n_off": 33910.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 43.0
+  },
+  "TRUCKV2|w0u250 7488000": {
+   "va_n_on": 2561.0,
+   "va_n_off": 33594.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 44.0
+  },
+  "TRUCKV2|3E-D_TRUCK 7488000": {
+   "va_n_on": 2160.0,
+   "va_n_off": 33660.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 47.0
+  },
+  "TRUCKV2|3E-C_TRUCK 7488000": {
+   "va_n_on": 2034.0,
+   "va_n_off": 33343.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 36.0
+  },
+  "TRUCKV2|lr1000_16_2 7488000": {
+   "va_n_on": 3159.0,
+   "va_n_off": 33238.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 40.0
+  },
+  "X1V2|3e 7488000": {
+   "va_n_on": 6287.0,
+   "va_n_off": 38206.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 15.0
+  },
+  "X1V2|nc 7488000": {
+   "va_n_on": 9828.0,
+   "va_n_off": 40217.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 5.0
+  },
+  "TRUCKV2|w2u250 7488000": {
+   "va_n_on": 3023.0,
+   "va_n_off": 32970.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 46.0
+  },
+  "X1V2|os0_10_10 7488000": {
+   "va_n_on": 7673.0,
+   "va_n_off": 40440.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 23.0
+  },
+  "TRUCKV2|w1u500 7488000": {
+   "va_n_on": 2533.0,
+   "va_n_off": 33292.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 34.0
+  },
+  "X1V2|w1u500 7488000": {
+   "va_n_on": 4472.0,
+   "va_n_off": 38722.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 28.0
+  },
+  "X1V2|w4u500 7488000": {
+   "va_n_on": 4826.0,
+   "va_n_off": 38633.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 21.0
+  },
+  "X1V2|w2u250 7488000": {
+   "va_n_on": 4356.0,
+   "va_n_off": 38354.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 26.0
+  },
+  "X1V2|p333 7488000": {
+   "va_n_on": 7542.0,
+   "va_n_off": 40376.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 17.0
+  },
+  "X1V2|w3u500 7488000": {
+   "va_n_on": 7351.0,
+   "va_n_off": 39506.0,
+   "va_n_back": 0.0,
+   "va_bad_on": 0.0,
+   "va_bad_off": 0.0,
+   "va_bad_feed": 0.0,
+   "va_bad_back": 0.0,
+   "va_skipped": 18.0
+  }
+ },
+ "no_r2_counts": [],
+ "t0_event_fail": [],
+ "t0_event": {},
+ "drops": [
+  {},
+  {}
+ ],
+ "pass": true
+}

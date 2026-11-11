@@ -1,0 +1,88 @@
+{
+ "runs": {
+  "S|nc 7488010": {
+   "end_stop": [
+    80,
+    80.0
+   ],
+   "end_stop2": [
+    365,
+    365.0
+   ],
+   "cars_waiting": {
+    "3a_0": 2,
+    "4a_0": 24
+   },
+   "wait_s_max": {
+    "3a_0": 78,
+    "4a_0": 58
+   },
+   "traced_differs": [],
+   "count_ok": true
+  },
+  "S|nc 7488011": {
+   "end_stop": [
+    32,
+    32.0
+   ],
+   "end_stop2": [
+    262,
+    262.0
+   ],
+   "cars_waiting": {
+    "3a_0": 3,
+    "4a_0": 15
+   },
+   "wait_s_max": {
+    "3a_0": 29,
+    "4a_0": 54
+   },
+   "traced_differs": [],
+   "count_ok": true
+  },
+  "S|p333 7488010": {
+   "end_stop": [
+    10,
+    10.0
+   ],
+   "end_stop2": [
+    604,
+    604.0
+   ],
+   "cars_waiting": {
+    "3a_0": 1,
+    "4a_0": 22
+   },
+   "wait_s_max": {
+    "3a_0": 10,
+    "4a_0": 125
+   },
+   "traced_differs": [],
+   "count_ok": true
+  },
+  "S|p333 7488011": {
+   "end_stop": [
+    59,
+    59.0
+   ],
+   "end_stop2": [
+    5,
+    5.0
+   ],
+   "cars_waiting": {
+    "3a_0": 6,
+    "4a_0": 2
+   },
+   "wait_s_max": {
+    "3a_0": 32,
+    "4a_0": 3
+   },
+   "traced_differs": [],
+   "count_ok": true
+  }
+ },
+ "count_ok": true,
+ "twin_equal": true,
+ "action": "go",
+ "dropped": []
+}

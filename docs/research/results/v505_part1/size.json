@@ -1,0 +1,115 @@
+{
+ "levels": {
+  "30": {
+   "nc": {
+    "cost_median": 30076.93199161894,
+    "S_median": 219971.498918582,
+    "share": 0.13673104079156778,
+    "drain_excess": {
+     "ramp1_queue": 0.02566666666666667,
+     "ramp2_queue": -1.3171666666666666,
+     "backlog": -0.4905000000000001
+    },
+    "drain_pass": true,
+    "stuck_rows": 0
+   },
+   "p333": {
+    "cost_median": 32038.46224519951,
+    "S_median": 138185.1990370157,
+    "share": 0.23185161991638017,
+    "drain_excess": {
+     "ramp1_queue": 8.673617379884036e-20,
+     "ramp2_queue": 1.1101666666666667,
+     "backlog": -0.05000000000000012
+    },
+    "drain_pass": true,
+    "stuck_rows": 0
+   }
+  },
+  "20": {
+   "nc": {
+    "cost_median": 72409.74703170088,
+    "S_median": 219971.498918582,
+    "share": 0.32917785889390105,
+    "drain_excess": {
+     "ramp1_queue": 0.8236666666666667,
+     "ramp2_queue": -0.03383333333333334,
+     "backlog": -0.45466666666666666
+    },
+    "drain_pass": true,
+    "stuck_rows": 0
+   },
+   "p333": {
+    "cost_median": 82872.84831808723,
+    "S_median": 138185.1990370157,
+    "share": 0.5997230448384567,
+    "drain_excess": {
+     "ramp1_queue": 0.02416666666666667,
+     "ramp2_queue": 4.278333333333333,
+     "backlog": 0.04483333333333349
+    },
+    "drain_pass": false,
+    "stuck_rows": 0
+   }
+  },
+  "15": {
+   "nc": {
+    "cost_median": 120315.15013685406,
+    "S_median": 219971.498918582,
+    "share": 0.5469579046755793,
+    "drain_excess": {
+     "ramp1_queue": 2.9816666666666665,
+     "ramp2_queue": -0.6016666666666663,
+     "backlog": -0.4966666666666669
+    },
+    "drain_pass": false,
+    "stuck_rows": 0
+   },
+   "p333": {
+    "cost_median": 129776.77375015133,
+    "S_median": 138185.1990370157,
+    "share": 0.9391510426191737,
+    "drain_excess": {
+     "ramp1_queue": 2.1505,
+     "ramp2_queue": 4.601166666666666,
+     "backlog": 0.34883333333333344
+    },
+    "drain_pass": false,
+    "stuck_rows": 0
+   }
+  },
+  "10": {
+   "nc": {
+    "cost_median": 185560.4533208032,
+    "S_median": 219971.498918582,
+    "share": 0.8435658902769247,
+    "drain_excess": {
+     "ramp1_queue": 5.842333333333334,
+     "ramp2_queue": 0.9588333333333333,
+     "backlog": 0.3311666666666663
+    },
+    "drain_pass": false,
+    "stuck_rows": 0
+   },
+   "p333": {
+    "cost_median": 185341.4492637752,
+    "S_median": 138185.1990370157,
+    "share": 1.3412539878031926,
+    "drain_excess": {
+     "ramp1_queue": 4.0986666666666665,
+     "ramp2_queue": 6.037666666666667,
+     "backlog": 0.22800000000000004
+    },
+    "drain_pass": false,
+    "stuck_rows": 0
+   }
+  }
+ },
+ "limit_kmh": 20.0,
+ "outcome": "sized",
+ "seeds": [
+  7488220,
+  7488239
+ ],
+ "dropped": []
+}

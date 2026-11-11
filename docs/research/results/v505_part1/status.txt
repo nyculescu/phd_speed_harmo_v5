@@ -1,0 +1,57 @@
+2026-11-11 06:56:57 code fcc83105b35818e29d91df559963fbccad7326e3, workers 60, price 0.296/h, cap 3.0, rate not yet measured
+2026-11-11 06:56:58 start M2 planned power (S6 rows, before any variant row)
+2026-11-11 06:57:28 end rc=0
+2026-11-11 06:57:28 start plan m2_smoke
+2026-11-11 06:57:28 end rc=0
+2026-11-11 06:57:28 start smoke m2
+2026-11-11 07:02:21 end rc=0
+2026-11-11 07:02:21 start plan m2_ident
+2026-11-11 07:02:22 end rc=0
+2026-11-11 07:02:22 start run m2_ident (66 runs)
+2026-11-11 07:06:02 end rc=0
+2026-11-11 07:06:02 drops m2_ident: {}
+2026-11-11 07:06:02 rate from m2_ident: 0.00015074074074074073 USD per worker slot
+2026-11-11 07:06:02 start read ident
+2026-11-11 07:06:08 end rc=0
+2026-11-11 07:06:08 start plan m2_trace
+2026-11-11 07:06:09 end rc=0
+2026-11-11 07:06:09 cap check m2_trace: fits/spent/next 1 0.05 0.01 (cap 3.0)
+2026-11-11 07:06:09 start run m2_trace (8 runs)
+2026-11-11 07:07:14 end rc=0
+2026-11-11 07:07:14 drops m2_trace: {}
+2026-11-11 07:07:14 start read trace
+2026-11-11 07:07:15 end rc=0
+2026-11-11 07:07:15 start plan m2_pick
+2026-11-11 07:07:15 end rc=0
+2026-11-11 07:07:16 cap check m2_pick: fits/spent/next 1 0.05 0.09 (cap 3.0)
+2026-11-11 07:07:16 start run m2_pick (600 runs)
+2026-11-11 07:27:57 end rc=0
+2026-11-11 07:27:57 drops m2_pick: {}
+2026-11-11 07:27:58 rate from m2_pick: 0.00017006296296296294 USD per worker slot
+2026-11-11 07:27:58 start read pick
+2026-11-11 07:28:07 end rc=0
+2026-11-11 07:28:07 M2 VOID at the pick
+2026-11-11 07:28:07 start plan ev_smoke
+2026-11-11 07:28:08 end rc=0
+2026-11-11 07:28:08 start smoke ev
+2026-11-11 07:32:29 end rc=0
+2026-11-11 07:32:29 start plan ev_size
+2026-11-11 07:32:30 end rc=0
+2026-11-11 07:32:30 cap check ev_size: fits/spent/next 1 0.18 0.04 (cap 3.0)
+2026-11-11 07:32:30 start run ev_size (200 runs)
+2026-11-11 07:41:39 end rc=0
+2026-11-11 07:41:39 drops ev_size: {}
+2026-11-11 07:41:39 rate from ev_size: 0.00018808333333333334 USD per worker slot
+2026-11-11 07:41:39 start read size
+2026-11-11 07:41:40 end rc=0
+2026-11-11 07:41:40 start plan ev_gate
+2026-11-11 07:41:41 end rc=0
+2026-11-11 07:41:41 cap check ev_gate: fits/spent/next 1 0.22 0.03 (cap 3.0)
+2026-11-11 07:41:41 start run ev_gate (160 runs)
+2026-11-11 07:48:33 end rc=0
+2026-11-11 07:48:33 drops ev_gate: {}
+2026-11-11 07:48:33 rate from ev_gate: 0.00018819753086419752 USD per worker slot
+2026-11-11 07:48:33 start read gate
+2026-11-11 07:48:33 end rc=0
+2026-11-11 07:48:33 EV gate: VOID
+2026-11-11 07:48:33 DONE
