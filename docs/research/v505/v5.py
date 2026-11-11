@@ -162,6 +162,13 @@ def twin_pairs(arms: dict) -> list:
     return out
 
 
+def twin_diff(traced: dict, untraced: dict) -> list:
+    """Keys whose values differ between a traced or counted run and its untraced twin, apart from the identity fields that carry the
+    twin's own name (name, arm, ctrl_sha256, files) and the tracer's own output (V386: tracing must not change the run)."""
+    skip = run6.SKIP | {"commit", "m_st_file", "name", "arm", "ctrl_sha256", "files"}
+    return [k for k in same_row(traced, untraced, skip) if not tracer_key(k)]
+
+
 def with_measure(arms: dict, st: Path) -> dict:
     return {n: ({**c, "measure": str(st)} if "measure" in c else c) for n, c in arms.items()}
 
@@ -190,10 +197,10 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     twins = {}
     for m, n in twin_pairs(arms):
         for s in sd:
-            if (m, s) in A and (n, s) in A:
-                d = [k for k in same_row(A[(m, s)], {**A[(n, s)], "arm": A[(m, s)]["arm"]}, skip | {"ctrl_sha256", "files"}) if not tracer_key(k)]
-                if d:
-                    twins[f"{m} {s}"] = d
+            if (m, s) not in A or (n, s) not in A:
+                twins[f"{m} {s}"] = ["missing row"]
+            elif d := twin_diff(A[(m, s)], A[(n, s)]):
+                twins[f"{m} {s}"] = d
     va = {f"{n} {s}": {k: r.get(k, 0.0) for k in ("va_n_on", "va_n_off", "va_bad_on", "va_bad_off", "va_bad_feed", "va_skipped")}
           for (n, s), r in A.items() if "ramp2_assertive" in arms[n]}
     va_bad = sorted(k for k, x in va.items() if x["va_bad_on"] or x["va_bad_off"] or x["va_bad_feed"] or not x["va_n_on"] or not x["va_n_off"])

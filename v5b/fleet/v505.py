@@ -21,11 +21,11 @@ def t0_step(acc: dict, spec: dict, t: float, dt: float, got: float, edge_speed: 
     """EV §8 T0, one step: the lane limit read back (got) against the schedule at t or t - dt. Outside the event the free limit is
     accepted within netconvert's rounding; inside it, exactly. The hold's mean edge speed is accumulated."""
     want = [slowdown_limit(spec, x, free) for x in (t, t - dt)]
-    in_event = any(w != free for w in want)
-    err = min(abs(got - w) for w in want)
+    tol = lambda w: FREE_TOL if w == free else 1e-6     # per candidate: at onset the lane may still hold the net's free value
+    ok = [abs(got - w) for w in want if abs(got - w) <= tol(w)]
     acc["steps"] = acc.get("steps", 0) + 1
-    acc["limit_bad"] = acc.get("limit_bad", 0) + (err > (1e-6 if in_event else FREE_TOL))
-    acc["max_err"] = max(acc.get("max_err", 0.0), err if in_event else 0.0)
+    acc["limit_bad"] = acc.get("limit_bad", 0) + (not ok)
+    acc["max_err"] = max(acc.get("max_err", 0.0), min(ok) if ok else min(abs(got - w) for w in want))
     t1 = spec["times"][0]
     if t1 + spec.get("taper", 0.0) <= t < t1 + spec["dur"]:
         acc["hold_steps"] = acc.get("hold_steps", 0) + 1
@@ -39,9 +39,11 @@ class Ramp2Assertive:
         self.ls, self.a, self.base = ls, a, str(base)
         self.state = {}
         self.skipped = 0     # cars seen past the feed without a step on 4a_0 (entered and merged within one step)
+        self.merges = 0     # every ramp-2 car that left the feed and 4a_0, counted at 0.1-s resolution
 
     def _done(self, v) -> None:
         self.state[v] = AFTER
+        self.merges += 1
         if self.a is not None:
             self.ls.vehicle.setParameter(v, KEY, self.base)
 
@@ -66,17 +68,21 @@ class Ramp2Assertive:
                 self.skipped += 1     # SUMO moves and changes lanes in the same step (MSNet.cpp:872-884)
                 self._done(v)
 
+    def counts(self, S) -> None:
+        S["r2_merge"] = float(self.merges)
+        S["va_skipped"] = float(self.skipped)
+
     def read_back(self, S) -> None:
-        """M2 §7 "V-A binds", by lane: a on the feed and on 4a_0, the plant's value on any other road lane."""
+        """M2 §7 "V-A binds", by lane: a on the feed and on 4a_0 before the merge, the plant's value on any other road lane and on
+        4a_0 for a merged car that moved back onto it (counted apart)."""
         if self.a is None:
             return
         for v, k in self.state.items():
             lane = self.ls.vehicle.getLaneID(v)
             if lane.startswith(":"):
                 continue
-            on_va = lane == "4a_0" or lane.rsplit("_", 1)[0] in RAMP2_FEED
+            on_va = k != AFTER and (lane == "4a_0" or lane.rsplit("_", 1)[0] in RAMP2_FEED)
             want = float(self.a) if on_va else float(self.base)
-            key = "on" if lane == "4a_0" else "feed" if on_va else "off"
+            key = ("on" if lane == "4a_0" else "feed") if on_va else "back" if lane == "4a_0" else "off"
             S[f"va_n_{key}"] += 1
             S[f"va_bad_{key}"] += abs(float(self.ls.vehicle.getParameter(v, KEY)) - want) > 1e-6
-        S["va_skipped"] = float(self.skipped)

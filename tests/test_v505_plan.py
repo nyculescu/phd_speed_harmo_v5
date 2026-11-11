@@ -112,3 +112,57 @@ def test_smoke_jobs_hold_untraced_twins(tmp_path):
     e = v5.plan("ev_smoke", tmp_path)["arms"]
     assert ("EVA20|nc", "EVA20|nc~untraced") in v5.twin_pairs(e) and "t0_event" not in e["EVA20|nc~untraced"]
     assert v5.tracer_key("r2_lc_4") and v5.tracer_key("va_bad_on") and v5.tracer_key("end_trace") and not v5.tracer_key("all_delay")
+
+
+def test_npz_equal_compares_arrays_by_value(tmp_path):
+    import numpy as np
+    a, b, c = tmp_path / "a.npz", tmp_path / "b.npz", tmp_path / "c.npz"
+    np.savez(a, v=np.arange(4.0), n=np.ones(4))
+    np.savez(b, n=np.ones(4), v=np.arange(4.0))
+    np.savez(c, v=np.arange(4.0) + 1e-9, n=np.ones(4))
+    assert rm.npz_equal(a, b) and not rm.npz_equal(a, c)
+
+
+@need
+def test_twin_diff_on_runner_rows_of_the_real_smoke_pairs(tmp_path):
+    """Second review blocker: the twin carries its own name; identical runs must compare equal, a changed value must not."""
+    for stage in ("m2_smoke", "ev_smoke"):
+        arms = v5.plan(stage, tmp_path)["arms"]
+        for m, n in v5.twin_pairs(arms):
+            row = {"all_delay": 1.0, "ttc_net": 3.0}
+            tracer = {"end_trace": [[1]], "t0_event": {"steps": 1}, "r2_merge": 2.0, "r2_lc_4": 1.0, "va_n_on": 3.0}
+            A = wrapped(m, arms[m], 7_488_000, {**row, **tracer})
+            B = wrapped(n, arms[n], 7_488_000, dict(row))
+            assert v5.twin_diff(A, B) == [], (stage, m, n)
+            assert v5.twin_diff(A, {**B, "all_delay": 2.0}) == ["all_delay"]
+
+
+def test_check_stages_stop_on_lost_runs():
+    T = trace_rows()
+    assert rm.trace(T, [], [("S", "p333")])["action"] == "stop"     # every seed lost: nothing was checked
+    assert rm.trace({k: v for k, v in T.items() if k[1].endswith("~untraced")}, [7_488_010], [("S", "p333")])["action"] == "stop"
+    assert rm.ident({}, {}, [("S", "p333")], [])["action"] == "stop"
+
+
+@need
+def test_smoke_runs_end_to_end_on_planted_rows(tmp_path, monkeypatch):
+    """smoke() through its real code path (imports, replays, twins, V-A and T0 checks), with run6.execute writing planted runner rows
+    instead of simulating (the second review found an ImportError no test reached)."""
+    def fake_execute(arms, seeds, out, workers, inp):
+        out.mkdir(parents=True, exist_ok=True)
+        with open(out / "s6_rows.jsonl", "w") as f:
+            for n, c in arms.items():
+                for s in seeds:
+                    row = {"all_delay": 100.0, "r2_merge": 5.0}
+                    if "ramp2_assertive" in c:
+                        row |= {"va_n_on": 3.0, "va_n_off": 4.0, "va_bad_on": 0.0, "va_bad_off": 0.0, "va_bad_feed": 0.0}
+                    if c.get("t0_event"):
+                        lim = c["ctrl"]["env"]["perturb"]["limit_kmh"] / 3.6
+                        row["t0_event"] = {"steps": 10, "limit_bad": 0, "hold_steps": 5, "hold_speed_sum": 5 * lim}
+                    f.write(json.dumps(wrapped(n, c, s, row)) + "\n")
+        return {}
+    import json
+    monkeypatch.setattr(v5.run6, "execute", fake_execute)
+    for stage in ("m2_smoke", "ev_smoke"):
+        res = v5.smoke(v5.plan(stage, tmp_path / stage), tmp_path / stage, 4)
+        assert res["pass"], (stage, {k: v for k, v in res.items() if v and k not in ("pass", "va", "t0_event")})

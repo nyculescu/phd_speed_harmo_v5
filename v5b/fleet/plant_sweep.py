@@ -254,11 +254,9 @@ def run_one(a: tuple) -> dict:
                 rl = int(i) - 1 if e in ("3a", "4a") else int(i)
                 if road_lane.get(v, rl) != rl:
                     lane_t[v] = env.sim.t
-                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of merged ramp-2 cars on 4a_1-3, 4 and 5; merges apart
+                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of merged ramp-2 cars among 4a_1-3, 4 and 5 (merges: r2_merge)
                         prev_ln = r2_lane.get(v, "")
-                        if prev_ln == "4a_0":
-                            S["r2_merge"] += 1
-                        elif e in ("4a", "4", "5") and ln != "4a_0" and prev_ln.rsplit("_", 1)[0] in ("4a", "4", "5"):
+                        if e in ("4a", "4", "5") and ln != "4a_0" and prev_ln != "4a_0" and prev_ln.rsplit("_", 1)[0] in ("4a", "4", "5"):
                             S[f"r2_lc_{e}"] += 1
                 if r2 is not None and v in r2.state:
                     r2_lane[v] = ln
@@ -327,6 +325,7 @@ def run_one(a: tuple) -> dict:
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
         if r2 is not None:
             r2.read_back(S)
+            r2.counts(S)
         if meas is not None:
             meas.second(ls, env.sim.t)
         return r

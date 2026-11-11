@@ -6,8 +6,10 @@
 #   DATA_EXTRA="$P/v5b1_runs/planb_s56_remote/jobs/s6_jobs.json $P/v5b1_runs/planb_s56_remote/s6/s6_rows.jsonl
 #               $P/v5b1_runs/round2/test/job_6c49e7e.json $P/v5b1_runs/baseline_v4/policies"
 # usage: remote_part1.sh WORKERS PRICE_USD_H CAP_USD [RUN]
-#   PRICE_USD_H: the accepted offer's price; CAP_USD: the cap left for this rental. Common §7's cap action: after the identity stage
-#   the measured cost per run projects each next stage; a stage that would pass the cap does not start, and this is logged.
+#   PRICE_USD_H: the accepted offer's price; CAP_USD: the cap left for this rental. Common §7's cap action: from the identity stage on,
+#   the measured cost per worker slot projects each next stage; a stage that would pass the cap does not start, and this is logged.
+# After DONE or STOPPED: fetch v5b1_runs/v505 with remote.sh fetch, run `sha256sum -c SHA256SUMS` in the laptop copy, then destroy
+# (finish.sh is not used: its run list is round1/round2).
 set -u
 W=${1:?WORKERS}; PRICE=${2:?PRICE_USD_H}; CAP=${3:?CAP_USD}
 P=/home/catalin/work/phd
@@ -28,7 +30,7 @@ COST_PER_RUN=""
 cost_ok() {     # cost_ok STAGE RUNS: common §7's cap action
   [ -z "$COST_PER_RUN" ] && return 0
   local ok
-  ok=$($PY -c "import sys,time; spent=(time.time()-$T0)/3600*$PRICE; nxt=$2*$COST_PER_RUN; print(int(spent+nxt<=$CAP), round(spent,2), round(nxt,2))" "$1")
+  ok=$($PY -c "import math,time; spent=(time.time()-$T0)/3600*$PRICE; nxt=math.ceil($2/$W)*$W*$COST_PER_RUN; print(int(spent+nxt<=$CAP), round(spent,2), round(nxt,2))")
   say "cap check $1: fits/spent/next $ok (cap $CAP)"
   [ "${ok%% *}" = 1 ] || { say "cap: $1 not started"; return 1; }
 }
@@ -38,14 +40,17 @@ stage() {     # stage NAME [--a A]: plan the job file, check the cap, run it
   local n
   n=$($PY -c "import json,sys; j=json.load(open(sys.argv[1])); print(len(j['arms'])*(j['seed_range'][1]-j['seed_range'][0]+1))" "$R/$s/jobs.json")
   cost_ok "$s" "$n" || return 2
-  local t1
+  local t1 had
   t1=$(date +%s)
+  had=$(cat "$R/$s/s6_rows.jsonl" 2>/dev/null | wc -l)
   must "run $s ($n runs)" $PY $D/v5.py run --jobs "$R/$s/jobs.json" --out "$R/$s" --workers "$W"
   say "drops $s: $(cat "$R/$s/drops.json" 2>/dev/null)"
-  if [ -z "$COST_PER_RUN" ]; then     # the first measured stage sets the rate; kept in a file so EV sees it after M2's subshell
-    COST_PER_RUN=$($PY -c "print(($(date +%s)-$t1)/3600*$PRICE/max($n,1))")
+  # common §7's rate, per worker slot at full load (ceil(n/W) waves of W), from every fresh stage of at least W runs; kept in a file so
+  # EV sees it after M2's subshell. A resumed stage (rows already there) is not measured.
+  if [ "$had" -eq 0 ] && [ "$n" -ge "$W" ]; then
+    COST_PER_RUN=$($PY -c "import math; print(($(date +%s)-$t1)/3600*$PRICE/(math.ceil($n/$W)*$W))")
     echo "$COST_PER_RUN" > "$R/cost_per_run"
-    say "rate: $COST_PER_RUN USD per run"
+    say "rate from $s: $COST_PER_RUN USD per worker slot"
   fi
 }
 

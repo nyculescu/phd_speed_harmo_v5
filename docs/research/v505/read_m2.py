@@ -10,6 +10,7 @@ usage: read_m2.py power - OUT.json                        (S6 rows only; before 
        read_m2.py pick ROWS.jsonl OUT.json
        read_m2.py verdict ROWS.jsonl OUT.json --pick PICK.json [--fallback] [--x1 X1_ROWS.jsonl | --x1-dropped]"""
 import argparse
+import io
 import json
 import sys
 from collections import defaultdict
@@ -71,17 +72,24 @@ def complete(T: dict, names: list, seeds: list) -> list:
     return [f"{c}|{a} {s}" for c, a in names for s in seeds if s not in T.get((c, a), {})]
 
 
+def npz_equal(a: Path, b: Path) -> bool:
+    """Two side files hold the same arrays (by value, not by file bytes)."""
+    with np.load(io.BytesIO(a.read_bytes())) as x, np.load(io.BytesIO(b.read_bytes())) as y:
+        return sorted(x.files) == sorted(y.files) and all(np.array_equal(x[k], y[k]) for k in x.files)
+
+
 def read6_skip() -> set:
     return v5.run6.SKIP | {"commit", "name", "cfg", "ctrl_sha256", "files"}
 
 
-def trace(T: dict, seeds: list) -> dict:
+def trace(T: dict, seeds: list, names: list | None = None) -> dict:
     """PR-24 (M2 §7): end_stop and end_stop2 recounted from the raw samples (a mismatch makes M2 VOID); the traced run equal to its
-    untraced twin apart from the trace (a difference is a bug: stop)."""
-    out, count_ok, twin_ok = {}, True, True
-    for (cond, arm), by_seed in T.items():
-        if arm.endswith(TWIN):
-            continue
+    untraced twin apart from the trace (a difference, or a missing traced run or twin, is a bug: stop). names: the planned traced arms;
+    seeds: every planned seed, crash drops included, so a lost run stops M2 instead of passing unchecked."""
+    out, count_ok, twin_ok = {}, True, bool(seeds)
+    names = names if names is not None else [k for k in T if not k[1].endswith(TWIN)]
+    for cond, arm in names:
+        by_seed = T.get((cond, arm), {})
         for s in seeds:
             r, twin = by_seed.get(s), T.get((cond, arm + TWIN), {}).get(s)
             if r is None or twin is None:
@@ -119,7 +127,7 @@ def ident(T: dict, S6: dict, names: list, seeds: list) -> dict:
             d = v5.same_row(T[(c, a)][s], S6[(c, a)][s], read6_skip() | {"m_st_file"})
             if d:
                 (learner_diff if a in v5.pb.V3W else rule_diff)[f"{c}|{a} {s}"] = d
-    action = "stop" if rule_diff or missing else "fresh_seeds" if learner_diff else "go"
+    action = "stop" if rule_diff or missing or not seeds else "fresh_seeds" if learner_diff else "go"
     return {"rule_diff": rule_diff, "learner_diff": learner_diff, "missing": missing, "action": action}
 
 
@@ -337,13 +345,15 @@ def main(argv: list) -> int:
     if x.step == "trace":
         hi = lo + v5.TRACE_SEEDS - 1
     seeds, void = usable(list(range(lo, hi + 1)), dropped)
-    if void:
+    full = list(range(lo, hi + 1))
+    if x.step in ("trace", "ident"):     # check stages: every planned run must be there, drops included (a lost run stops M2)
+        planned = [tuple(n.split("|", 1)) for n in v5.plan(stage, rows.parent)["arms"]]
+        if x.step == "trace":
+            res = trace(T, full, [k for k in planned if not k[1].endswith(TWIN)])
+        else:
+            res = ident(T, load(S6_ROWS, {f"{c}|{n}" for c, n in planned}), planned, full)
+    elif void:
         res = {"outcome": "VOID", "reason": f"more than {DROP_VOID} seeds dropped", "dropped": dropped}
-    elif x.step == "trace":
-        res = trace(T, seeds)
-    elif x.step == "ident":
-        names = sorted(T)
-        res = ident(T, load(S6_ROWS, {f"{c}|{n}" for c, n in names}), names, seeds)
     elif x.step == "pick":
         need = [("S", r) for r in ("nc", "p333")] + [(f"SV{a:g}", r) for a in v5.LADDER for r in ("nc", "p333")]
         if miss := complete(T, need, seeds):

@@ -121,3 +121,30 @@ def test_t0_one_step_lag_in_the_taper_is_accepted():
         t = i * 0.1
         t0_step(acc, SPEC, t, 0.1, slowdown_limit(SPEC, t - 0.1, FREE), 9.5, FREE)
     assert acc["limit_bad"] == 0
+
+
+def test_merged_car_back_on_4a_0_wants_the_plant_value_and_merges_are_counted():
+    ls, h = run(3)
+    for ln in ("rj2_0", ":d_0_0", "4a_1"):     # entered and merged within one step: counted as a merge and as skipped
+        ls.tick(r=ln)
+        h.step()
+    ls.tick(r="4a_0")     # moved back right onto the accelerating lane
+    h.step()
+    S = defaultdict(float)
+    h.read_back(S)
+    h.counts(S)
+    assert S["va_n_back"] == 1 and S["va_bad_back"] == 0 and S["r2_merge"] == 1 and S["va_skipped"] == 1
+
+
+def test_t0_onset_lag_with_the_nets_value_and_an_off_grid_onset():
+    """The hook reads the lane before perturb's tick writes it, so at the first step after an off-grid onset the lane still holds
+    netconvert's 27.78 (second review blocker). Emulate that order exactly."""
+    spec = {"times": [500.05], "dur": 300.0, "taper": 20.0, "limit_kmh": 36.0}
+    lane, slow_v, acc = 27.78, FREE, {}
+    for i in range(1, 18_001):
+        t = round(i * 0.1, 10)
+        t0_step(acc, spec, t, 0.1, lane, 9.5, FREE)     # the hook, inside _sim_step
+        v = slowdown_limit(spec, t, FREE)     # perturb.tick(t) afterwards writes only on a change of value
+        if v != slow_v:
+            lane, slow_v = v, v
+    assert acc["limit_bad"] == 0 and acc["steps"] == 18_000
