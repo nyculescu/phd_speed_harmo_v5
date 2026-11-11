@@ -2,6 +2,16 @@
 accelerating lane 4a_0, and go back to the plant's value the step after they leave it (V508 D3)."""
 
 KEY = "laneChangeModel.lcAssertive"
+
+
+def slowdown_limit(spec: dict, t: float, free: float) -> float:
+    """The edge limit a slowdown spec asks for at time t, written apart from perturb._slowdown so T0 can check that code against it."""
+    for t0 in spec["times"]:
+        if t0 <= t < t0 + spec["dur"]:
+            taper = spec.get("taper", 0.0)
+            lim = spec["limit_kmh"] / 3.6
+            return free + (lim - free) * (t - t0) / taper if taper and t < t0 + taper else lim
+    return free
 BEFORE, ON, AFTER = 0, 1, 2
 
 

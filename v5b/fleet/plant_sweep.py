@@ -120,11 +120,29 @@ def run_one(a: tuple) -> dict:
     from v5b.fleet.v505 import Ramp2Assertive
     r2 = Ramp2Assertive(ls, c.get("ramp2_assertive"), c.get("lcAssertive", 1.0)) if "ramp2_assertive" in c or c.get("m2_counts") else None
     etrace = [] if c.get("trace_end") else None
+    t0ev = defaultdict(float) if c.get("t0_event") else None     # EV §8 T0: the slowdown's limit read back from SUMO every step
+
+    def t0_event(t):
+        p = env.pert
+        if p is None or p.kind != "slowdown":
+            return
+        from v5b.fleet.v505 import slowdown_limit
+        edge = p.s.get("edge", "4")
+        got = ls.lane.getMaxSpeed(f"{edge}_0")
+        want = [slowdown_limit(p.s, x, env.plant.get("limit", 100.0 / 3.6)) for x in (t, t - env.dt)]
+        t0ev["steps"] += 1
+        t0ev["limit_bad"] += min(abs(got - w) for w in want) > 1e-6
+        t1 = p.s["times"][0]
+        if t1 + p.s.get("taper", 0.0) <= t < t1 + p.s["dur"]:
+            t0ev["hold_steps"] += 1
+            t0ev["hold_speed_sum"] += ls.edge.getLastStepMeanSpeed(edge)
 
     def step():
         step0()
         if r2 is not None:
             r2.step()
+        if t0ev is not None:
+            t0_event(env.sim.t)
         for v in ls.simulation.getArrivedIDList():
             arr[v] = env.sim.t
         if env.sim.t > env.warm + 1e-9:
@@ -371,6 +389,8 @@ def run_one(a: tuple) -> dict:
         row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
     if etrace is not None:
         row["end_trace"] = etrace
+    if t0ev is not None:
+        row["t0_event"] = dict(t0ev)
     if env.pert is not None:
         row["pert_log"] = env.pert.log
     if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):

@@ -59,6 +59,18 @@ def m2_cfg(cfg: dict, a: float | None, measure: Path | None, **extra) -> dict:
     return c | extra
 
 
+EV_LADDER = (30.0, 20.0, 15.0, 10.0)     # EV §2, mildest first
+EV_SPEC = {"kind": "slowdown_draw", "edge": "2", "onset": [450.0, 800.0], "dur": [240.0, 420.0], "taper": 20.0, "salt": 505_001}
+
+
+def ev_cfg(cfg: dict, limit: float | None, measure: Path | None) -> dict:
+    """A stored S arm in EV-A at the given limit (None = S), with the pack."""
+    c = pb.with_cond(cfg, "S", {**EV_SPEC, "limit_kmh": float(limit)} if limit is not None else None)
+    if measure is not None:
+        c["measure"] = str(measure)
+    return c
+
+
 def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
     """The job file of one M2 stage. Arm names are "<cell>|<arm>" for the base plant and "<cell>V<a>|<arm>" for V-A."""
     arms = s6_arms()
@@ -83,6 +95,16 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
         x1 = {n: c for n, c in pb.stored_arms().items() if n in M2_X1 or n in pb.V3W}
         x1 = {n: pb.with_cond(c, "X1") for n, c in x1.items()}
         jobs = {f"X1|{n}": m2_cfg(c, None, st) for n, c in x1.items()} | {f"X1V{a:g}|{n}": m2_cfg(c, a, st) for n, c in x1.items()}
+    elif stage == "ev_size":     # EV §2: no control decides, p333 is printed; S beside each
+        jobs = {f"S|{r}": ev_cfg(arms[f"S|{r}"], None, st) for r in ("nc", "p333")}
+        jobs |= {f"EVA{x:g}|{r}": ev_cfg(arms[f"S|{r}"], x, st) for x in EV_LADDER for r in ("nc", "p333")}
+    elif stage == "ev_gate":
+        if a is None:
+            raise SystemExit("ev_gate needs --a, the limit (km/h) EV's sizing reading chose")
+        jobs = {f"S|{r}": ev_cfg(arms[f"S|{r}"], None, st) for r in ("nc", "p333")}
+        jobs |= {f"EVA{a:g}|{r}": ev_cfg(arms[f"S|{r}"], a, st) for r in ("nc", "p333")}
+    elif stage == "ev_smoke":     # part 1: the sizing configs once, each EV-A level with its T0 trace
+        jobs = {n: c | ({"t0_event": True} if n.startswith("EVA") else {}) for n, c in plan("ev_size", out_dir)["arms"].items()}
     elif stage == "m2_smoke":     # every distinct config of the M2 stages once (S5 practice), on the smoke seeds
         jobs = {}
         for s, x in (("m2_pick", None), ("m2_verdict", LADDER[0]), ("m2_x1", LADDER[0])):
@@ -92,7 +114,7 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
     lo, hi = STAGES[stage]
     if stage == "m2_trace":
         hi = lo + TRACE_SEEDS - 1
-    if stage == "m2_smoke":
+    if stage in ("m2_smoke", "ev_smoke"):
         hi = lo
     return {"stage": stage, "seed_range": [lo, hi], "q": pb.Q, "a": a, "arms": jobs}
 
@@ -100,6 +122,15 @@ def plan(stage: str, out_dir: Path, a: float | None = None) -> dict:
 def same_row(a: dict, b: dict, skip=run6.SKIP | {"commit", "name", "cfg"}) -> list:
     """Keys whose values differ between two rows, compared by value (V499: never by line text)."""
     return sorted(k for k in (set(a) | set(b)) - set(skip) if json.dumps(a.get(k), sort_keys=True) != json.dumps(b.get(k), sort_keys=True))
+
+
+def t0_event_ok(row: dict, cfg: dict) -> dict:
+    """EV §8 T0: the edge limit read back equals the schedule on every step, and the hold's mean edge speed is at most 1.05 x the limit."""
+    t = row.get("t0_event", {})
+    lim = cfg["ctrl"]["env"]["perturb"]["limit_kmh"] / 3.6
+    mean = t.get("hold_speed_sum", 0.0) / max(t.get("hold_steps", 0.0), 1.0)
+    return {"limit_bad": t.get("limit_bad"), "steps": t.get("steps"), "hold_mean_ms": mean, "limit_ms": lim,
+            "pass": t.get("steps", 0) > 0 and t.get("limit_bad", 1) == 0 and t.get("hold_steps", 0) > 0 and mean <= 1.05 * lim}
 
 
 def smoke(jobs: dict, out: Path, workers: int) -> dict:
@@ -121,9 +152,12 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     va = {f"{n} {s}": {k: r.get(k) for k in ("va_n_0", "va_n_1", "va_n_2", "va_bad_0", "va_bad_1", "va_bad_2")}
           for (n, s), r in A.items() if "ramp2_assertive" in arms[n]}
     va_bad = sorted(k for k, x in va.items() if any(x.get(f"va_bad_{i}") for i in range(3)) or not x.get("va_n_1"))
-    counts = sorted(f"{n} {s}" for (n, s), r in A.items() if not any(k.startswith("r2_lc_") for k in r))
-    res = {"replay_differs": differs, "va_not_bound": va_bad, "no_r2_counts": counts, "drops": [da, db],
-           "pass": not differs and not va_bad and not counts and not da and not db}
+    counts = sorted(f"{n} {s}" for (n, s), r in A.items()
+                    if ("m2_counts" in arms[n] or "ramp2_assertive" in arms[n]) and not any(k.startswith("r2_lc_") for k in r))
+    t0 = {f"{n} {s}": t0_event_ok(r, arms[n]) for (n, s), r in A.items() if arms[n].get("t0_event")}
+    t0_bad = sorted(k for k, v in t0.items() if not v["pass"])
+    res = {"replay_differs": differs, "va_not_bound": va_bad, "no_r2_counts": counts, "t0_event_fail": t0_bad, "t0_event": t0, "drops": [da, db],
+           "pass": not differs and not va_bad and not counts and not t0_bad and not da and not db}
     pb.cma2.write_json(out / "smoke.json", res)
     return res
 
