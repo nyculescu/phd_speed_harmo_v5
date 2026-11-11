@@ -115,9 +115,15 @@ def run_one(a: tuple) -> dict:
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
     step0, sec0 = env._sim_step, env._second
     meas = None     # V468: report-only measurement pack, created after reset; reads only
+    # V508 D3 (variant V-A): ramp-2 cars merge with lcAssertive = a while on 4a_0; the hook runs every 0.1-s step, so a merged car
+    # is reset within one step. The base value is the plant's own, which fleet.py:179 writes last into every vType.
+    from v5b.fleet.v505 import Ramp2Assertive
+    r2 = Ramp2Assertive(ls, c.get("ramp2_assertive"), c.get("lcAssertive", 1.0)) if "ramp2_assertive" in c or c.get("m2_counts") else None
 
     def step():
         step0()
+        if r2 is not None:
+            r2.step()
         for v in ls.simulation.getArrivedIDList():
             arr[v] = env.sim.t
         if env.sim.t > env.warm + 1e-9:
@@ -235,6 +241,8 @@ def run_one(a: tuple) -> dict:
                 rl = int(i) - 1 if e in ("3a", "4a") else int(i)
                 if road_lane.get(v, rl) != rl:
                     lane_t[v] = env.sim.t
+                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of ramp-2 cars, by edge
+                        S[f"r2_lc_{e}"] += 1
                 road_lane[v] = rl
                 if ln in ("3a_0", "4a_0"):
                     accel_t[v] = env.sim.t
@@ -293,6 +301,8 @@ def run_one(a: tuple) -> dict:
             l4a = ls.lane.getLength("4a_0")
             S["end_stop2"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l4a - 30.0 for v in ls.lane.getLastStepVehicleIDs("4a_0"))
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
+        if r2 is not None:
+            r2.read_back(S)
         if meas is not None:
             meas.second(ls, env.sim.t)
         return r

@@ -10,6 +10,8 @@ event until it ends (V343): the upper bound of what a controller that knows the 
 With `hw_oracle` {d, level, after} every ALKS from d m upstream of edge 4 to its end uses at most that headway level, from
 d / ORACLE_SPEED s before the event until `after` s past its end (V346). `taper` lowers the limit gradually, because vehicles
 already on the edge must obey a new limit at once (V345).
+Kind slowdown_draw (V505 EV-A): a slowdown on `edge` to `limit_kmh` whose onset and duration are drawn uniformly from the ranges
+`onset` and `dur` with default_rng(seed + `salt`), then run as a slowdown.
 Kind random: for training (V358), each episode draws no perturbation (one third) or a tapered slowdown on edge 3, 4 or 5, from
 the episode's seed, so the draw repeats. `edge` selects a slowdown's edge, 4 by default.
 Plan B (planb.md §4.2) adds two kinds that act only on the demand list, before the route file is written:
@@ -62,18 +64,29 @@ def event_period(spec: dict | None, t: float) -> str:
     return "rest"
 
 
+def draw_slowdown(spec: dict, seed: int) -> dict:
+    """V505 EV-A: a slowdown whose onset and duration are drawn from the seed, so every arm on a seed meets the same event and
+    period splits see the drawn times."""
+    r = np.random.default_rng(seed + spec["salt"])
+    t0, dur = float(r.uniform(*spec["onset"])), float(r.uniform(*spec["dur"]))
+    return {"kind": "slowdown", "edge": spec["edge"], "limit_kmh": spec["limit_kmh"], "dur": dur, "times": [t0], "taper": spec.get("taper", 0.0)}
+
+
 class Perturb:
     def __init__(self, env, spec: dict, seed: int = 0):
+        drawn = None
         if spec["kind"] == "random":
             r = np.random.default_rng(seed + 910_000)
             spec = {"kind": "none"}
             if r.random() >= 1.0 / 3.0:
                 spec = {"kind": "slowdown", "edge": str(r.choice(("3", "4", "5"))), "limit_kmh": float(r.uniform(25.0, 60.0)), "dur": float(r.uniform(60.0, 180.0)), "times": [float(r.uniform(400.0, 1200.0))], "taper": 20.0}
+        elif spec["kind"] == "slowdown_draw":
+            spec, drawn = draw_slowdown(spec, seed), spec
         self.env, self.s, self.kind, self.seed = env, spec, spec["kind"], seed
         self.next_t = spec.get("first", env.warm)
         self.active = None
         self.slow_on = False
-        self.log = []
+        self.log = [("drawn", spec["times"][0], spec["dur"])] if drawn else []
         self.oracle_now = self.hw_now = None
         self.slow_v = env.plant.get("limit", FREE_LIMIT)
 
