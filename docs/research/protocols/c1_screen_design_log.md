@@ -1,0 +1,46 @@
+# C1 screen: how draft v0 was built
+
+Three independent drafts (minimal, rigor, aim), two judges, one synthesis, 2026-11-11. Fact reports and drafts are in the session scratchpad. Change log of the synthesis:
+
+- **Base: rigor** (best total over both judges: rigor 71, minimal 68, aim 62). Kept from it:
+  - the new event cell (renamed E30, as in aim and `size.json`);
+  - TRUCK, X1 and X2 kept closed, and the count going 94 → 95;
+  - `b45_step` deciding, paired with a −4.5 m/s² charge read every 0.1 s, with the −3 % floor (V429);
+  - the one fallback gate, fixed now;
+  - the NOT RESOLVABLE rule (1.5 × the planned width);
+  - the prior of 15-25 %;
+  - the planted-row tests;
+  - the "what a ROOM commits stage 2 to" list;
+  - the §11 closures.
+- **Fact fixes (judge 1, checked in `docs/research/results/v505_part1/size.json`):**
+  - drain at 30 km/h is now "thin", not "unknown": p333 ramp-2 +1.11 against a limit of 2; no control 13.7 % of S and p333 23.2 %;
+  - the p333 sizing rows are now disclosed as seen;
+  - added that EV's sizing passed over 30 km/h (under its 15 %);
+  - dropped the 5 % size bar, which was set after the sizing was seen. The gate now reads drain, stuck runs, and whether the event binds.
+- **From aim:**
+  - the KILL sentence stating the UB;
+  - per-arm drain on the screen rows. I used read6's house `drain_fail` with Plan B's 1.5 × no-control cap (`gates2.py:33`, `:218`), not aim's 5 %-of-seeds rule;
+  - "an underpowered KILL closes nothing";
+  - the T0 check that the same vehicle IDs are automated for every arm;
+  - NO COST opens an optional fresh-seed confirmation in E30;
+  - E30 named as stage 2's cell (judge 2).
+- **From minimal:**
+  - CI-based readings at 97.5 %: R-star (lower bound above 0), R-delay (lower bound above −1 %), R-cost (upper bound below 0);
+  - K1, K2 and K3, and the lane-end-weighted co-star rule;
+  - the P0 early KILL;
+  - a failed swap null reads VOID;
+  - the itemised disclosure of why 3E-C_TRUCK is not a same-goal rule;
+  - deferring check (b), now C-D9 and flagged as a departure from V520 (judge 2);
+  - the lane rule (SENSITIVE at 10 %, CI excluding 0). UNRESOLVED is treated as SENSITIVE, as in rigor;
+  - the TRUCK reopen kept only as C-D1's alternative.
+- **From judge 2:**
+  - delay read against p333 (3E-C_TRUCK is +1.28 % against p333);
+  - every quoted CI labelled. The S edge [−9.72, +25.43] is the 95 % map interval; its 97.5 % interval is [−11.71, +31.46].
+- **Power (new, my design):** judge 1 asked for planning on the wider of the S and TRUCK spreads. I recomputed this with `cpow.py` on the S6 rows (exploratory): the SE at n = 240 is 9.9 in S against 2.9 in TRUCK for the edge, and 7.0 against 2.0 for braking. An S-like spread needs about 2,200 seeds. So a fixed n was replaced by a 60-seed pilot that sees only the SE and sets n from 240 to 1,920 by a fixed rule. Fixing n ≈ 2,240 now is listed as the alternative in C-D7.
+- **Dropped:**
+  - the 1D arm (rigor's D5);
+  - os0_10_10 as a deciding arm;
+  - aim's 23 rules, its OR across braking measures, and its robustness row inside step 1;
+  - identity replays in TRUCK. They now run in S only, so nothing runs in a closed cell.
+- **Not verified:** the pack-on rate (inferred); the 8-12 h build; the normal approximations in the power rule; the judgement that a KILL against a rule aimed only at close-following carries over to a same-goal rule (3E-C was not converged).
+- The draft is also saved at /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/24a0150f-4eb7-443d-8a6d-3d8d8c91d56d/scratchpad/c1_final.txt (about 3,000 words). No repo files were edited, and nothing was run except the read-only `cpow.py` recompute.
