@@ -61,8 +61,11 @@ Each conclusion has one deciding opponent. The others are printed beside it. Bas
 
 ## 4. Reading
 
-- **Binding check per cell, on the verdict runs.** For every arm in the conclusion's deciding comparison, and for no control, V-A must cut median `end_stop2` by at least the pick's bar (75 %, or the partial cut x achieved), judged by the paired-ratio 95 % upper bound. Otherwise the conclusion reads **VARIANT DID NOT BIND**.
-- **Base on fresh seeds (X1 only):** the base reading is made on the fresh base rows first. If C5 is not "better" there, it reads **NOT REPLICATED**, and the variant reading is not made. C5b likewise.
+- **Binding check per cell, on the verdict runs (amended by V512).** For every arm in the conclusion's deciding comparison, and for no control, the 95 % lower bound of V-A's cut in median `end_stop2` must be at least 50 %. The bound comes from the paired ratio of medians, bootstrapped on the shared index matrix. Otherwise the conclusion reads **VARIANT DID NOT BIND**.
+  - The approved form (the pick's own cut, judged by the 95 % bound) was replaced before any data: a true cut equal to the bar would pass it about 2.5-33 % of the time.
+- **Base on fresh seeds:** the base reading is made on the fresh base rows first.
+  - **X1:** if C5 is not "better" there, it reads **NOT REPLICATED**, and the variant reading is not made. C5b likewise.
+  - **S and TRUCK, if M2 §6's fallback runs (V512):** a conclusion whose fresh base reading differs from its recorded reading (§3) reads **NOT REPLICATED** in the same way.
 - **Variant reading:**
   - **SAME:** Δv's comparison reading (common §4) equals the base reading;
   - **CHANGED:** it differs; the direction is printed in the V&V record;
