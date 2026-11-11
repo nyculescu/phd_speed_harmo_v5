@@ -149,6 +149,7 @@ def pick_one(T: dict, a: float, seeds: list, st: read6.Stat) -> dict:
         base, var = ("S", arm), (f"SV{a:g}", arm)
         es_b, es_v = arr(T, *base, seeds, "end_stop2"), arr(T, *var, seeds, "end_stop2")
         cut = 1.0 - float(np.median(es_v)) / max(float(np.median(es_b)), 1e-9)
+        cut_lb = 1.0 - boot_ratio(st, es_v, es_b, "median")[2]     # V513: binding's statistic and bar, applied at the pick
         brake = {k: boot_ratio(st, arr(T, *var, seeds, k), arr(T, *base, seeds, k), "mean") for k in ("b45_step", "alks_b45_step")}
         brake_fail = [k for k, (p, lo, _) in brake.items() if p > BRAKE_RATIO and lo > BRAKE_LB]
         _, fb = st.mean_diff(arr(T, *var, seeds, "alks_full_moving"), arr(T, *base, seeds, "alks_full_moving"))
@@ -159,7 +160,7 @@ def pick_one(T: dict, a: float, seeds: list, st: read6.Stat) -> dict:
         db = [drain.series_from_row(T[base][s]) for s in seeds]
         excess = {k: float(np.mean([x[k] - y[k] for x, y in zip(dv, db)])) for k in drain.KEYS}
         safe = not brake_fail and full_ub <= FULL_UB and coll <= COLL_EXCESS and stuck == 0 and all(v <= DRAIN_VEH for v in excess.values())
-        out[arm] = {"cut": cut, "end_stop2_median": [float(np.median(es_b)), float(np.median(es_v))], "brake_ratio": brake,
+        out[arm] = {"cut": cut, "cut_lb95": cut_lb, "end_stop2_median": [float(np.median(es_b)), float(np.median(es_v))], "brake_ratio": brake,
                     "brake_fail": brake_fail, "full_ub": full_ub, "coll_excess": coll, "stuck_rows": stuck, "drain_excess": excess, "safe": safe,
                     "end_stop_merge1_median": [float(np.median(arr(T, *base, seeds, "end_stop"))), float(np.median(arr(T, *var, seeds, "end_stop")))],
                     "va_skipped_mean": float(arr(T, *var, seeds, "va_skipped").mean()),
@@ -170,11 +171,12 @@ def pick_one(T: dict, a: float, seeds: list, st: read6.Stat) -> dict:
 
 def pick(T: dict, seeds: list) -> dict:
     """M2 §2: the smallest a whose cut is at least 75 % for both arms within every bound; else the largest cut of at least 50 %
-    within the bounds ("partial variant"); else VOID."""
+    within the bounds ("partial variant"); else VOID. V513: a level is eligible only if, for both arms, the 95 % lower bound of its
+    median cut on the pick seeds is at least 50 % (binding's own test, V512)."""
     st = read6.Stat(len(seeds))
     lv = {f"{a:g}": pick_one(T, a, seeds, st) for a in v5.LADDER}
     min_cut = lambda r: min(r[x]["cut"] for x in ("nc", "p333"))
-    safe = lambda r: all(r[x]["safe"] for x in ("nc", "p333"))
+    safe = lambda r: all(r[x]["safe"] and r[x]["cut_lb95"] >= BIND_LB for x in ("nc", "p333"))     # V513: eligible only if binding is reachable
     full = [a for a in v5.LADDER if safe(lv[f"{a:g}"]) and min_cut(lv[f"{a:g}"]) >= PICK_BAR]
     if full:
         a, kind = full[0], "full"

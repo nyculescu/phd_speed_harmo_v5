@@ -118,3 +118,19 @@ def test_pick_smallest_full_then_partial_then_void():
     assert p["a"] == 2.0 and p["kind"] == "partial" and abs(p["cut"] - 0.5) < 1e-9
     T, seeds = pick_rows((0.2, 0.3, 0.4, 0.45))
     assert rm.pick(T, seeds)["kind"] == "VOID"
+
+
+def test_pick_needs_the_binding_bound_on_the_pick_seeds():
+    """V513: a point cut of 60 % whose 95 % lower bound is below 50 % is not eligible."""
+    T, seeds = pick_rows((0.6, 0.6, 0.6, 0.6))
+    rng = np.random.default_rng(4)
+    for a in v5.LADDER:
+        for arm in ("nc", "p333"):
+            for s in seeds:
+                T[(f"SV{a:g}", arm)][s]["end_stop2"] = 400.0 * 0.4 * rng.lognormal(0, 1.2)
+    p = rm.pick(T, seeds)
+    weak = [k for k, r in p["levels"].items() if min(r[x]["cut"] for x in ("nc", "p333")) >= 0.5 and min(r[x]["cut_lb95"] for x in ("nc", "p333")) < 0.5]
+    assert weak, "the planted rows should hold a level with a 50 %+ point cut but a lower bound under 50 %"
+    assert p["a"] is None or f"{p['a']:g}" not in weak
+    if p["a"] is not None:
+        assert all(p["levels"][f"{p['a']:g}"][x]["cut_lb95"] >= 0.5 for x in ("nc", "p333"))
