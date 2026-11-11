@@ -25,7 +25,9 @@ def t0_step(acc: dict, spec: dict, t: float, dt: float, got: float, edge_speed: 
     ok = [abs(got - w) for w in want if abs(got - w) <= tol(w)]
     acc["steps"] = acc.get("steps", 0) + 1
     acc["limit_bad"] = acc.get("limit_bad", 0) + (not ok)
-    acc["max_err"] = max(acc.get("max_err", 0.0), min(ok) if ok else min(abs(got - w) for w in want))
+    inev = [abs(got - w) for w in want if w != free]
+    if inev:
+        acc["max_err"] = max(acc.get("max_err", 0.0), min(inev))
     t1 = spec["times"][0]
     if t1 + spec.get("taper", 0.0) <= t < t1 + spec["dur"]:
         acc["hold_steps"] = acc.get("hold_steps", 0) + 1
@@ -41,13 +43,14 @@ class Ramp2Assertive:
         self.skipped = 0     # cars seen past the feed without a step on 4a_0 (entered and merged within one step)
         self.merges = 0     # every ramp-2 car that left the feed and 4a_0, counted at 0.1-s resolution
 
-    def _done(self, v) -> None:
+    def _done(self, v, count: bool) -> None:
         self.state[v] = AFTER
-        self.merges += 1
+        self.merges += count
         if self.a is not None:
             self.ls.vehicle.setParameter(v, KEY, self.base)
 
-    def step(self) -> None:
+    def step(self, count: bool = True) -> None:
+        """count: whether merges and same-step merges are counted (False in the warm-up, so the counts cover the 1-Hz window)."""
         ls = self.ls
         for v in ls.simulation.getDepartedIDList():
             if ls.vehicle.getRoadID(v) == "r2":
@@ -63,10 +66,10 @@ class Ramp2Assertive:
             if lane == "4a_0":
                 self.state[v] = ON
             elif k == ON:
-                self._done(v)
+                self._done(v, count)
             elif not lane.startswith(":") and lane.rsplit("_", 1)[0] not in RAMP2_FEED:
-                self.skipped += 1     # SUMO moves and changes lanes in the same step (MSNet.cpp:872-884)
-                self._done(v)
+                self.skipped += count     # SUMO moves and changes lanes in the same step (MSNet.cpp:872-884)
+                self._done(v, count)
 
     def counts(self, S) -> None:
         S["r2_merge"] = float(self.merges)

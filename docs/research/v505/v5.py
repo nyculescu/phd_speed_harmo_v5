@@ -192,8 +192,9 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
     A = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "a" / "s6_rows.jsonl")}
     B = {(r["name"], r["seed"]): r for r in pb.cma2.load(out / "b" / "s6_rows.jsonl")}
     skip = run6.SKIP | {"commit", "m_st_file"}
-    differs = {f"{k[0]} {k[1]}": d for k in B if (d := same_row(A[k], B[k], skip))}
-    side = sorted(f"{k[0]} {k[1]}" for k in B if A[k].get("m_st_file") and not npz_equal(out / "a" / "st" / A[k]["m_st_file"], out / "b" / "st" / B[k]["m_st_file"]))
+    missing_a = sorted(f"{k[0]} {k[1]}" for k in B if k not in A)
+    differs = {f"{k[0]} {k[1]}": d for k in B if k in A and (d := same_row(A[k], B[k], skip))}
+    side = sorted(f"{k[0]} {k[1]}" for k in B if k in A and A[k].get("m_st_file") and not npz_equal(out / "a" / "st" / A[k]["m_st_file"], out / "b" / "st" / B[k]["m_st_file"]))
     twins = {}
     for m, n in twin_pairs(arms):
         for s in sd:
@@ -201,15 +202,15 @@ def smoke(jobs: dict, out: Path, workers: int) -> dict:
                 twins[f"{m} {s}"] = ["missing row"]
             elif d := twin_diff(A[(m, s)], A[(n, s)]):
                 twins[f"{m} {s}"] = d
-    va = {f"{n} {s}": {k: r.get(k, 0.0) for k in ("va_n_on", "va_n_off", "va_bad_on", "va_bad_off", "va_bad_feed", "va_skipped")}
+    va = {f"{n} {s}": {k: r.get(k, 0.0) for k in ("va_n_on", "va_n_off", "va_n_back", "va_bad_on", "va_bad_off", "va_bad_feed", "va_bad_back", "va_skipped")}
           for (n, s), r in A.items() if "ramp2_assertive" in arms[n]}
-    va_bad = sorted(k for k, x in va.items() if x["va_bad_on"] or x["va_bad_off"] or x["va_bad_feed"] or not x["va_n_on"] or not x["va_n_off"])
+    va_bad = sorted(k for k, x in va.items() if x["va_bad_on"] or x["va_bad_off"] or x["va_bad_feed"] or x["va_bad_back"] or not x["va_n_on"] or not x["va_n_off"])
     counts = sorted(f"{n} {s}" for (n, s), r in A.items() if ("m2_counts" in arms[n] or "ramp2_assertive" in arms[n]) and "r2_merge" not in r)
     t0 = {f"{n} {s}": t0_event_ok(r, arms[n]) for (n, s), r in A.items() if arms[n].get("t0_event")}
     t0_bad = sorted(k for k, v in t0.items() if not v["pass"])
-    res = {"replay_differs": differs, "side_files_differ": side, "twin_differs": twins, "va_not_bound": va_bad, "va": va, "no_r2_counts": counts,
+    res = {"missing_in_a": missing_a, "replay_differs": differs, "side_files_differ": side, "twin_differs": twins, "va_not_bound": va_bad, "va": va, "no_r2_counts": counts,
            "t0_event_fail": t0_bad, "t0_event": t0, "drops": [da, db],
-           "pass": not differs and not side and not twins and not va_bad and not counts and not t0_bad and not da and not db}
+           "pass": not missing_a and not differs and not side and not twins and not va_bad and not counts and not t0_bad and not da and not db}
     pb.cma2.write_json(out / "smoke.json", res)
     return res
 

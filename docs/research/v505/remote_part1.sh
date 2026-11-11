@@ -16,8 +16,9 @@ P=/home/catalin/work/phd
 R=${4:-$P/v5b1_runs/v505}
 PY=$P/phd_speed_harmo_v5b1_toolchain/venv/bin/python
 D=docs/research/v505
-T0=$(date +%s)
 mkdir -p "$R"
+[ -f "$R/t0" ] || date +%s > "$R/t0"     # the first launch's start, so spend survives a relaunch
+T0=$(cat "$R/t0")
 unset SUMO_HOME
 export OMP_NUM_THREADS=1
 say() { echo "$(date -u '+%F %T') $1" >> "$R/status.txt"; }
@@ -26,7 +27,7 @@ must() { step "$@" || { say "STOPPED"; exit 1; }; }
 val() { $PY -c "import json,sys; print(json.load(open(sys.argv[1]))$2)" "$1"; }
 sums() { (cd "$R" && find . -type f ! -name SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SHA256SUMS); }
 trap sums EXIT
-COST_PER_RUN=""
+COST_PER_RUN=$(cat "$R/cost_per_run" 2>/dev/null)     # a relaunch keeps the measured rate
 cost_ok() {     # cost_ok STAGE RUNS: common §7's cap action
   [ -z "$COST_PER_RUN" ] && return 0
   local ok
@@ -54,7 +55,7 @@ stage() {     # stage NAME [--a A]: plan the job file, check the cap, run it
   fi
 }
 
-say "code $(cat COMMIT), workers $W, price $PRICE/h, cap $CAP"
+say "code $(cat COMMIT), workers $W, price $PRICE/h, cap $CAP, rate ${COST_PER_RUN:-not yet measured}"
 sha256sum -c --quiet $D/data.sha256 >> "$R/run.log" 2>&1 || { say "STOPPED: data missing or changed (data.sha256)"; exit 1; }
 
 m2() {
@@ -64,12 +65,12 @@ m2() {
   stage m2_ident || exit 0
   must "read ident" $PY $D/read_m2.py ident "$R/m2_ident/s6_rows.jsonl" "$R/m2_ident/ident.json"
   act=$(val "$R/m2_ident/ident.json" '.get("action", "void")')
-  [ "$act" = stop ] && { say "M2 STOPPED: a rule replay differs from S6 or is missing (bug rule)"; exit 1; }
+  [ "$act" = stop ] && { say "M2 STOPPED: a rule replay differs from S6 or a planned replay is missing (bug rule; see ident.json)"; exit 1; }
   [ "$act" = void ] && { say "M2 VOID: identity stage dropped more than 3 seeds"; exit 0; }
   stage m2_trace || exit 0
   must "read trace" $PY $D/read_m2.py trace "$R/m2_trace/s6_rows.jsonl" "$R/m2_trace/trace.json"
   tr=$(val "$R/m2_trace/trace.json" '.get("action", "void")')
-  [ "$tr" = stop ] && { say "M2 STOPPED: a traced run differs from its untraced twin (bug rule)"; exit 1; }
+  [ "$tr" = stop ] && { say "M2 STOPPED: a traced run differs from or lacks its untraced twin (bug rule; see trace.json)"; exit 1; }
   [ "$tr" = void ] && { say "M2 VOID: the PR-24 recount differs from the counter"; exit 0; }
   stage m2_pick || exit 0
   must "read pick" $PY $D/read_m2.py pick "$R/m2_pick/s6_rows.jsonl" "$R/m2_pick/pick.json"

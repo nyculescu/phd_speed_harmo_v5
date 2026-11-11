@@ -134,7 +134,7 @@ def run_one(a: tuple) -> dict:
     def step():
         step0()
         if r2 is not None:
-            r2.step()
+            r2.step(env.sim.t > env.warm + 1e-9)
         if t0ev is not None:
             t0_event(env.sim.t)
         for v in ls.simulation.getArrivedIDList():
