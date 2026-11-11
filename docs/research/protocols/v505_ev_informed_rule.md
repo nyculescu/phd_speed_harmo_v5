@@ -1,108 +1,131 @@
-# EV: does knowing about an event in advance help a rule? (early KILL for the "recovery after an event" direction)
+# EV: does knowing about an event in advance help a rule? (an early KILL for the "recovery after an event" direction)
 
-Status: **DRAFT v0, not approved.** Rules only, no DRL training, no claim. The outcome is HEADROOM, KILL, NOT SHOWN or VOID. Approval: V505 (the step), with the open decisions in §0 of this file and of `v505_m2_merge_check.md` (D5 budget, D6 branch).
+Status: **DRAFT v2, not approved.** Rules only, no DRL, no claim. Outcomes: GAIN, KILL, NOT SHOWN or VOID. Approved so far: V505 (the step), V507 (cap about $6). Shared rules, words, seeds and cost: `v505_common.md`.
 
-## 0. Decisions for the author
+## 0. Decisions still open
 
-| # | Decision | Recommendation | Why | Weaker alternative and why |
-|---|---|---|---|---|
-| E1 | The two events | EV-A, an upstream slowdown; EV-B, one slow vehicle (§2) | Both happen on real roads. Both exist in code with small changes. Neither is X1, X2, TRUCK or the training draw. EV-A sits upstream of merge 1, away from the merge-2 lane end. | A ramp-2 demand surge: SURGE failed the drain test (V487). A short lane blockage: excluded (planb.md:308-320), because with teleport off a stranded vehicle blocks the lane until the run ends. |
-| E2 | The informed rule's lever | Headway only, the same 0.8-1.6 s levels v3w uses | The test must bound what an adaptive headway policy could gain. A wider lever would test a different controller. | Add speed caps: a different actuator, outside v3w's action and outside PR-10's checked range. |
-| E3 | The deciding size | 10 % of the best uninformed rule's event cost | D2's headroom bar (screen_D2_incidents.md:58) and Plan B's G2-loss size; Fable's hint was about 5 %, which this design could not separate from noise in the event cost. | 5 %: closer to the hint, but in delay terms about 1 % of total, where Plan B's ties already sit. |
+| # | Decision | Recommendation | Pros | Cons | Weaker alternatives |
+|---|---|---|---|---|---|
+| E1 | Which event | **One event, EV-A:** a slowdown on edge 2 (upstream of merge 1), with its severity sized on no-control runs before it is fixed (§2) | far from the merge-2 lane end; already in code; sized so that it can pass the gate | a KILL speaks for this one event only | Adding EV-B, one slow vehicle on lane 0: it rides past both merges, so its cost is lane-end-loaded, and it needs about 816 s to cross the road, so its effect is cut off at the window end. A lane blockage: excluded, because with teleport off a stranded car blocks the lane to the run's end |
+| E2 | The told rule's lever | headway only, at 0.8-1.6 s, set by an **override** inside the zone and window | the same lever v3w uses | on a 0.8-s base it can only lengthen headways (§1) | the existing `hw_oracle` path: it takes the minimum level (b_env.py:735), and on r2m3 it sits about 293 m off and skips 4a. Speed caps: a different actuator |
+| E3 | The deciding size | 10 % of the best untold rule's event cost | a size worth a Plan 1 study; 5 % of event cost is about 1 % of total delay, inside Plan B's tie band | a true gain below 10 % can end in KILL; every KILL sentence states the gain it does not exclude | 5 %: closer to the memo's hint, but a wide NOT SHOWN zone at this n. (Screen D2's 10 % bar was of total delay, a different quantity) |
 
-## 1. Question
+## 1. Question and the expected answer
 
-On two new events fixed in advance, does a rule that is **told** where and when the event comes beat the best rule that is **not told**, on delay in the event cell?
-- The told rule is the upper limit of what this headway lever can gain from knowing the event. A DRL policy is never told; it can only infer the event from its inputs.
-- **If being told does not help (KILL),** the "recovery after an event" direction stops on this plant and this lever before any training.
-- **If it helps (HEADROOM),** a Plan 1 protocol may be written: DRL trained on an event family, against the same opponents re-tuned on that family.
+On one new event fixed in advance, does a rule that is **told** when and where the event happens beat the best rule that is **not told**, on the event's delay cost?
+- **What IP is:** the best of a grid of headway switches. It is a lower bound on what being told can give, not an upper limit. It is also V506's "per-type plan" for this one event type, told the timing. A DRL policy is never told; it can only infer the event from its inputs.
+- **The expected answer is KILL, and this screen is built to deliver it cheaply.**
+  - Every delay-best stored rule holds 0.8 s as its free level. On such a base, the told rule can only lengthen headways near the event.
+  - At a capacity-limited slowdown, lengthening lowers throughput, and no delay mechanism for a told gain was identified in advance.
+  - On r1m3, told lengthening cost 4.5 % delay (V347).
+- **KILL:** the recovery direction is not pursued with the headway lever for this event, before any training. **GAIN:** a Plan 1 protocol may be written.
+- **Prior evidence:**
+  - a local rule that detects slow traffic matched the told rule on r1m3 (V351);
+  - on BN4 with mainline metering, per-incident information helped in 1 of 4 cells (V101, V102);
+  - none of these ran on plant_c3.
 
-Prior evidence, both directions: on r1m3 P0 a told headway rule helped close-following and not delay (V347), and a local rule that detects slow traffic matched it (V351). On BN4 with mainline metering, per-incident information helped in 1 of 4 cells (V101, V102). Neither ran on plant_c3.
+## 2. The event (EV-A)
 
-## 2. Events (fixed now, before any control result on them)
-
-| Event | Definition | Timing per seed | Real-road meaning |
-|---|---|---|---|
-| EV-A | speed limit on edge 2 (498 m, upstream of merge 1) to 40 km/h, tapered over 20 s as X1 | onset U(600, 1,000) s, duration U(180, 360) s, from `default_rng(seed + 505_001)` | an incident or rubbernecking zone, or a temporary limit |
-| EV-B | one vehicle on route `main`, lane 0, capped at 30 km/h for its whole trip | departure U(600, 900) s, from `default_rng(seed + 505_002)` | a slow vehicle: oversize load, farm vehicle, broken-down truck limping on |
-
-- Both differ from X1 and X2 in edge set, limit and duration, and from the training draw (edges 3-5, 25-60 km/h) by edge (EV-A) or kind (EV-B).
-- The same event is drawn for every arm on a seed, before any control acts. The timing is logged in the row.
-- **Gate, on seeds 7,488,340-359 with no control and p333:**
-  - delay in the cell is at least 10 % above S, with the CI lower bound above 0 (G1a);
-  - the drain test of V486 passes, and `m_stuck_n` is 0.
-  - An event that fails is dropped, not re-parameterised. If both fail, EV is VOID: nothing is closed, and any new event set is a new study.
+- **What it is:** a speed limit L_ev on edge 2 (498 m, upstream of merge 1), tapered over 20 s as in X1. It represents an incident zone or a temporary limit.
+- **Timing per seed:** onset drawn from U(450, 800) s, duration from U(240, 420) s, from `default_rng(seed + 505_001)`. The draw is made when the run starts and is written into the perturbation spec. It is the same for every arm on a seed. The end is at most 1,220 s, at least 280 s before the drain window (1,500-1,800 s).
+- **Novelty:** it differs from X1 and X2 in edge, limit and duration, and from the training draw by edge (the training draw used edges 3-5).
+- **Sizing,** on throw-away seeds 7,488,220-239 (n = 20), **no control only**, disclosed. p333 is run and printed but not used.
+  - L_ev from the ladder {30, 20, 15, 10} km/h.
+  - Pick the mildest level whose median event cost under no control (cell minus S on the same seed) is at least 15 % of S's median delay, with drain passed and `m_stuck_n` 0.
+  - Reason: a 40 km/h limit on a road carrying 3,710 veh/h forms no queue by the review's spacing arithmetic.
+  - If no level qualifies, EV is VOID.
+- **Gate,** on seeds 7,488,240-279 (n = 40), no control and p333:
+  - G1a: delay in the cell at least 10 % above S, CI lower bound above 0;
+  - drain as V486 (cell minus S, mean over the 40 seeds, at most 2 vehicles);
+  - `m_stuck_n` 0.
+  - A failed gate makes EV VOID. The event is not re-sized; any new event is a new study.
 
 ## 3. Arms
 
-Per event, each family is picked by median `all_delay` on the tuning seeds 7,488,360-399, then frozen before the evaluation seeds.
+Picks are made on the tuning seeds 7,488,280-339 (n = 60) and frozen before evaluation.
 
-| Arm | Told? | Family | Size |
-|---|---|---|---|
-| NC | no | no control (shown, never deciding) | 1 |
-| N | no | p333, the steady delay-best rule | 1 |
-| FX | no | the best stored rule in this event cell: the 11 carried rules, the 5 grid re-picks, 3e, 3ex1, 3ex2, 3E-C_TRUCK and 3E-D_TRUCK (BASELINE v5 list; `copy` and MPC-F are left out, as a policy-derived rule and a model fitted to TRUCK) | 21 |
-| SW | no | the best rule that **detects** the event: LocalRule (r ∈ {400, 1,000, 2,000} m, threshold ∈ {10, 13, 16} m/s, level ∈ {1.6, 1.2, 1.0} s) and ASCH's Plan B grid | 27 + 18 |
-| IP | yes | from the FX pick, switch ALKS within d m upstream of the event to level L, from d/25 s before the event reaches them until `after` s past its end; d ∈ {500, 1,000, 2,000} m, L ∈ {1.6, 1.2, 1.0} s, after ∈ {0, 60, 180} s, plus "no switch" | 28 |
+| Arm | Told? | Definition | Size | Pick by |
+|---|---|---|---|---|
+| NC | no | no control; printed, never deciding | 1 | none |
+| N | no | p333 | 1 | none |
+| FX | no | the best stored rule in this cell: the 14 carried rules (p333 among them) and the 5 grid re-picks, with 3E-T, 3E-C_TRUCK and 3E-D_TRUCK among them | about 21 | median `all_delay` (no shared base; the noisiest pick) |
+| SW (a) | no | on the FX base: when the mean roadside speed over the next r m is below th, use level L, held for `after` s once the speed recovers. r ∈ {400, 1,000, 2,000} m, th ∈ {10, 13, 16} m/s, L ∈ {1.6, 1.2, 1.0, 0.8} s, after ∈ {0, 60, 180} s | up to 108 | median paired difference against the FX base |
+| SW (b) | no | ASCH: steady rule p333; switched rule from {3E-T, 3E-C_TRUCK, 3E-D_TRUCK}; θ ∈ {40, 55, 70} km/h, τ ∈ {10, 30, 60} s, h ∈ {5, 15} km/h; plus never switch | 55 | median paired difference against p333 |
+| IP | **yes** | on the FX base: for ALKS within d m upstream of the edge-2 entry, or on edge 2, set the level to L, from d/25 s before onset until `after` s past the end. d ∈ {500, 1,000, 2,000} m, L ∈ {1.6, 1.2, 1.0, 0.8} s, after ∈ {0, 60, 180} s, plus no switch | up to 37 | median paired difference against the FX base |
 
-- IP includes "no switch", so its pick on the tuning seeds is at least as good as FX there.
-- For EV-B the zone moves with the slow vehicle (its live position from libsumo).
-- IP reads the event schedule, which no real controller has. It is an upper limit and never an opponent in any later claim.
-- **Code needed:** the existing `hw_oracle` cannot be used. It is anchored to r1m3's edge 4 (`EDGE4_X` 4,989.02 m, perturb.py:36), and `ROAD_X` has no "4a" (b_env.py:74), so on r2m3 it skips merge 2 and sits about 293 m short. IP needs a new class with r2m3 offsets (`_x_base`) and the event's own position, applied through `_hw_level` (it bypasses the 10-s hold, not `tau_rise`), and checked by T0.
+- **Duplicates dropped:** settings with L equal to the FX pick's level in the zone duplicate FX and are not run (for a 0.8-s base: IP 28, SW (a) 81).
+- **Sequence:** FX is picked first; SW (a) and IP are then built on that pick. All picks use the same 60 tuning seeds, and the evaluation seeds are fresh.
+- **Best untold arm (bU):** whichever of N, FX and SW (the better of (a) and (b) by median event-cell delay) has the lowest median event-cell delay on the tuning seeds, frozen with the picks.
+- **Disclosed exclusions:**
+  - MPC-F: its prediction model must be fitted to each cell's dynamics, a fitting stage this screen does not run. The 3E rules are parameter sets used as they are. CLAUDE.md allows dropping the MPC arm if disclosed.
+  - `copy`: it is derived from the policies.
+- **IP reads the event schedule,** which no real controller has. It is never an opponent in any later claim.
 
 ## 4. Measures
 
-- **Deciding:** `all_delay` in the event cell (veh-s, including insertion queues), paired by seed.
-- **Event cost**, for the threshold and the report: each arm's `all_delay` in the cell minus its own `all_delay` in S on the same seed. In S, IP equals its FX base.
-- **Report-only:** close-following, hard braking (`b45_net`), flow, collisions; delay by road and period; `end_stop2`; the time after the event's end until edge speeds at the event and at merge 2 are back above 60 km/h for 2 minutes.
+- **Deciding:** the event's delay cost, read through `all_delay` in the event cell, paired by seed.
+- **Event cost of an arm:** its `all_delay` in the cell minus its own `all_delay` in S on the same seed. In S, IP and SW (a) equal their FX base.
+- **Report-only:**
+  - common §3's measures;
+  - delay by road and period; `end_stop2`;
+  - **recovery time:** after the event's end, the time until the 1-minute mean speed on edges 1 and 2 is within 5 km/h of the same arm's S run on that seed. It is censored at 1,800 s, and the censored share is printed.
 
 ## 5. Reading (fixed now)
 
-For each event that passed the gate, and for each uninformed arm U in {N, FX, SW}, H(U) = median over seeds of (delay_U − delay_IP) in the event cell, divided by the median event cost of U. CIs are percentile bootstrap, B = 20,000, at 98.75 % two-sided (Bonferroni over 2 events).
-- **HEADROOM:** in at least one event, H(U) ≥ 10 % with the CI lower bound above 0 against every U; IP's flow is at most 0.5 % lower by point; IP's collisions are at most U's + 0.05 per run.
-- **KILL:** in every event that passed the gate, the CI upper bound of H against the best U is below 10 %.
-- **NOT SHOWN:** otherwise. It closes nothing and allows no protocol.
-- **Location:** for a HEADROOM event, the share of the delay difference that sits on road 4a, ramp 2 and the ramp-2 insertion queue is reported. If it is above 50 %, the result is labelled "lane-end-bound" and the deciding comparison must be repeated on M2's variant plant on the same evaluation seeds before Plan 1 may be written. It must hold there with the same rule.
-- **Null:** before the reading, a label-swap null of IP against N must give a lower bound above 0 in at most 1.5 times the nominal share.
-- **T4-style report:** whether the per-seed best IP setting differs from "no switch" on more than half the seeds.
-- **Consequences, fixed now:**
-  - KILL: the recovery direction (Plan 1 of `drl_aim_plans_v0.md`) closes for the headway lever on this plant. Plan 2 is not affected.
-  - HEADROOM: a Plan 1 protocol may be written. Its events are new, chosen before data, and its opponents include SW and FX re-tuned on the training event family.
-  - Cells-tested count: unchanged, because no DRL policy runs (planb.md:145). Each EV event is labelled post hoc (planb.md:576).
+**Informed gain against an untold arm U:** G(U) = median over seeds of (delay_U − delay_IP) in the cell, divided by U's median event cost. The point is the full-sample ratio. Seeds are resampled jointly for the numerator and the denominator. CIs are 95 % two-sided, because one event decides.
+- **GAIN:** all of these:
+  - G(bU) ≥ 10 % with the lower bound above 0;
+  - the lower bound above 0 against N, FX and SW;
+  - IP's `passed` at most 0.5 % lower than bU's by point;
+  - IP's collisions at most bU's + 0.05 per run;
+  - IP's `b45_step` paired mean ratio against bU not failing common §4's braking form (M2 §2).
+- **KILL:** the upper bound of G(bU) is below 10 %. The sentence: "being told the time and place of this upstream slowdown, used as zone headway switching, did not cut its delay cost by 10 % against the best untold rule; a gain of up to [UB] % is not excluded."
+- **KILL BY PICK:** IP's tuning pick is "no switch", or its rows equal FX's on every tuning seed. The told grid found nothing better than its base. It reads as KILL, with the same sentence plus "by pick". The best switching setting's paired difference and CI on the tuning seeds are printed. The zero-width rule of common §4 does not apply here.
+- **NOT SHOWN:** otherwise. It closes nothing.
+- **Null:** for IP against each of N, FX and SW, a label-swap null within seed must give a lower bound above 0 in at most 1.5 times the nominal 2.5 %. A comparison that fails reads "statistic failed its null", and GAIN and KILL cannot be read from it.
+- **Location:** common §6 applies to GAIN and to KILL.
+- **Planned power,** computed after FX's tuning rows and before the rest of tuning. The model is fixed now:
+  - one IP setting has a true G of 15 %, and every other setting 0;
+  - the setting-to-setting spread is taken as the spread of the FX family's paired differences against the FX pick on the 60 tuning seeds;
+  - the event cost and its spread come from the gate rows;
+  - the evaluation uses n = 120.
+  - If the false-KILL probability is above 10 %, tuning extends to n = 100 (7,488,500-539, all families re-picked). If it is still above 10 %, evaluation extends to n = 160 (7,488,540-579). If it is still above 10 %, a KILL reads "KILL, underpowered (P = x)" and closes nothing.
 
-## 6. Seeds, runs and cost
+## 6. Consequences (fixed now)
 
-| Seeds | Use |
+| Outcome | What changes |
 |---|---|
-| 7,488,300-309 | smoke, T0 of IP and of both events, determinism |
-| 7,488,310-339 | reserved: repeats after a code fix |
-| 7,488,340-359 | event gate |
-| 7,488,360-399 | tuning (picks of FX, SW and IP), n = 40 |
-| 7,488,400-519 | evaluation, n = 120, used once |
-| 7,488,520-599 | reserved |
+| KILL, KILL BY PICK | the recovery direction (Plan 1 of `drl_aim_plans_v0.md`) is not pursued with the headway lever for this event (EV-A at L_ev on edge 2). Other events, other actuators and Plan 2 are not affected |
+| GAIN | a Plan 1 protocol may be written: events fixed before data, DRL trained on an event family, against FX and SW re-tuned on that family |
+| NOT SHOWN, VOID, KILL underpowered, unresolved | nothing closes; the outcome is logged |
+| Cells tested | unchanged: no DRL policy runs here (planb.md:145). The event is labelled post hoc (planb.md:576) |
+
+## 7. Runs
 
 | Stage | Runs |
 |---|---|
-| Smoke and T0 | about 60 |
-| Gate: 2 events × 2 arms × 20 seeds + S 2 × 20 | 120 |
-| Tuning, no pack: (21 + 45 + 28 + 1) arms × 40 seeds × 2 events | 7,600 |
-| Evaluation, with the pack: 5 arms × 120 × 2 events, plus S for NC, N and each FX and SW pick | about 1,920 |
-| Repeat on M2's variant, only if lane-end-bound | up to 480 |
+| Smoke and T0: every distinct configuration once, plus 3 seeds for the 5 evaluation arms | about 250 |
+| Sizing: 4 levels × 2 arms × 20 + S 2 × 20, with the pack | 200 |
+| Gate: 2 arms × 40 in the cell and in S, with the pack | 160 |
+| Tuning, without the pack: FX about 21 × 60; then IP 28-37, SW (a) 81-108 and SW (b) 55, each × 60 | about 9,700-12,000 |
+| Evaluation, with the pack: 5 arms × 120 in the cell; S for NC, N, FX and SW | 1,080 |
 
-Cost: about $0.9 for tuning and $0.7 for evaluation, about $1.7 with setup. Machine time about 2.5 h. Build: the two event kinds with per-seed timing, the IP class, the readers with planted-row tests: about 8-10 h.
+Only if triggered: the repeat on V-A (1,080) and the power extensions (common §7). Costs are in common §7.
 
-## 7. Checks before tuning
+## 8. Checks before tuning
 
 | Check | Requirement | If it fails |
 |---|---|---|
-| T0 events | edge-2 speeds fall to 40 km/h ± 5 % inside the window; the slow vehicle holds at most 30 km/h | stop; fix; repeat on 7,488,310-339 |
-| T0 IP | inside its window and zone, commanded and read-back headways of ALKS behind an ALKS leader equal L; outside, equal the FX base | stop |
-| Determinism | the same run twice is equal | stop |
-| Untraced equal | traced and untraced rows are equal (V386) | stop |
-| Power (planning) | from S6 TRUCK rows: the share of studies that read HEADROOM at a true H of 0 and of 15 % | stated in the run record; thresholds are not changed after it |
+| T0 event | the edge-2 limit read back from libsumo follows the schedule (taper and value) at every 0.1 s; mean edge-2 speed inside the window is at most 1.05 × L_ev | stop; fix; repeat on 7,488,460-499 |
+| T0 IP | for ALKS that hold a commanded level (an ALKS leader, the same one as the last second), the commanded level inside zone and window equals L; the read-back headway reaches L within the `tau_rise` time for rises and at once for falls; outside, it equals the FX base | stop |
+| T0 SW (a) | the level switches when the detector condition holds and returns `after` s after it clears | stop |
+| Determinism; traced equals untraced | as in M2 | stop |
 
-## 8. Disclosures every EV sentence carries
+## 9. Disclosures every EV sentence carries
 
-- Exploratory screen, rules only; post hoc events; IP is an upper limit with information no controller has.
-- One lever (headway, 0.8-1.6 s); a KILL says nothing about speed, lane or ramp actuators.
-- PR-28 open unless M2 closes it; capacity drop not settled (PR-26); synthetic, uncalibrated plant.
+- Exploratory screen, rules only.
+- The event is post hoc, and its severity was sized on throw-away no-control runs.
+- IP is the best of one told grid: a lower bound on the value of being told, using information no controller has.
+- KILL was the expected reading (§1). FX's pick is the noisiest of the three picks.
+- One lever: headway at 0.8-1.6 s. One event. No MPC arm.
+- PR-28 is open: M2 can at most make it partial. The capacity drop is not settled (PR-26). The plant is synthetic and uncalibrated.
