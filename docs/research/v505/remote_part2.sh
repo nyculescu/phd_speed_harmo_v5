@@ -54,6 +54,8 @@ ev2() {
     FXJ="$R/ev_tune_fx_ext/fx.json"
   fi
   [ "$(val "$FXJ" '.get("outcome")')" = VOID ] && { say "EV VOID: tuning dropped more than 3 seeds"; return 0; }
+  must "plan ev_smoke2" $PY $D/ev2.py plan ev_smoke2 --out "$R/ev_smoke2/jobs.json" --limit "$LIM" --picks "$FXJ"
+  must "smoke ev part 2 (T0 IP, SW)" $PY $D/v5.py smoke --jobs "$R/ev_smoke2/jobs.json" --out "$R/ev_smoke2" --workers "$W"
   ev_run ev_tune_sw --picks "$FXJ"
   EXT=""
   if [ "$rule" != tune60_eval120 ]; then

@@ -98,3 +98,10 @@ def test_merge_joins_seeds_of_the_same_arm():
     A = {("EVA20", "p333"): {1: {"all_delay": 1.0}}}
     B = {("EVA20", "p333"): {2: {"all_delay": 2.0}}, ("EVA20", "3e"): {2: {"all_delay": 3.0}}}
     assert ev2.merge(A, B) == {("EVA20", "p333"): {1: {"all_delay": 1.0}, 2: {"all_delay": 2.0}}, ("EVA20", "3e"): {2: {"all_delay": 3.0}}}
+
+
+@need
+def test_smoke2_plan_and_switch_t0_check(tmp_path):
+    j = ev2.plan("ev_smoke2", tmp_path, 20.0, {"fx": "os0_10_10"})
+    assert j["seed_range"] == [7_488_201, 7_488_201] and len(j["arms"]) == 5
+    assert v5.seeds(j["stage"], *j["seed_range"]) == [7_488_201]

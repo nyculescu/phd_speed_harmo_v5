@@ -94,6 +94,14 @@ def plan(stage: str, out_dir: Path, limit: float, picks: dict | None = None, a: 
                     for h in ASCH_H:
                         jobs[f"{cell}|swb_{dn}_t{th:g}_s{tau:g}_h{h:g}"] = with_ctrl(base("p333"), {"asch": {"steady": p3, "dist": ctrl_of(arms[f"S|{dn}"]),
                                                                                                            "theta_kmh": th, "tau_s": tau, "h_kmh": h}})
+    elif stem == "ev_smoke2":     # EV §8 before tuning: each switch kind and lever direction once, with untraced-equal checks via replay
+        fx = picks["fx"]
+        fxc = ctrl_of(arms[f"S|{fx}"])
+        p3 = ctrl_of(arms["S|p333"])
+        for L in (0, 3):
+            jobs[f"{cell}|ip_d1000_L{L}_a60"] = with_ctrl(base("p333"), {"told": {"base": fxc, "d": 1000.0, "L": L, "after": 60.0}})
+            jobs[f"{cell}|swa_r1000_th16_L{L}_a60"] = with_ctrl(base("p333"), {"detect": {"base": fxc, "r": 1000.0, "th": 16.0, "L": L, "after": 60.0}})
+        jobs[f"{cell}|swb_3e_t55_s30_h5"] = with_ctrl(base("p333"), {"asch": {"steady": p3, "dist": ctrl_of(arms["S|3e"]), "theta_kmh": 55.0, "tau_s": 30.0, "h_kmh": 5.0}})
     elif stem in ("ev_eval", "ev_va"):
         sel = {"nc": base("nc"), "N": base("p333"), "FX": base(picks["fx"]), "SW": picks["sw_cfg"], "IP": picks["ip_cfg"]}
         jobs = {f"{cell}|{k}": copy.deepcopy(c) for k, c in sel.items()}
@@ -111,6 +119,8 @@ def plan(stage: str, out_dir: Path, limit: float, picks: dict | None = None, a: 
         if pack:
             c["measure"] = str(st)
     lo, hi = v5.STAGES[stage]
+    if stage == "ev_smoke2":
+        lo = hi = lo + 1     # 7,488,201: part 1's EV smoke used 7,488,200
     return {"stage": stage, "seed_range": [lo, hi], "q": v5.pb.Q, "limit": limit, "a": a, "arms": jobs}
 
 
