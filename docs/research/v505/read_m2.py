@@ -26,7 +26,7 @@ import v5  # noqa: E402
 
 S6_ROWS = Path("/home/catalin/work/phd/v5b1_runs/planb_s56_remote/s6/s6_rows.jsonl")
 PICK_BAR, PARTIAL_BAR = 0.75, 0.50     # M2 §2
-BIND_LB = 0.50     # V512 pending: V-A binds in a cell when the 95 % lower bound of the median cut is at least 50 %
+BIND_LB = 0.50     # V512: V-A binds in a cell when the 95 % lower bound of the median cut is at least 50 %
 BRAKE_RATIO, BRAKE_LB = 1.05, 1.00
 FULL_UB, COLL_EXCESS, DRAIN_VEH = 0.05, 0.05, 2.0
 NOT_RESOLVABLE = 1.5     # Δv half-width over Δb half-width (M2 §4)
@@ -225,7 +225,7 @@ def component(r: dict, key: str) -> str:
 
 
 def bind(T: dict, cell: str, vcell: str, arms: list, seeds: list, st: read6.Stat) -> dict:
-    """M2 §4 (V512 pending): V-A binds in the cell when, for every arm of the comparison and for no control, the 95 % lower bound of
+    """M2 §4 (V512): V-A binds in the cell when, for every arm of the comparison and for no control, the 95 % lower bound of
     the median end_stop2 cut is at least 50 % (the paired ratio of medians has its 95 % upper bound at most 0.5)."""
     out = {}
     for a in arms:
@@ -251,7 +251,7 @@ def conclusion(T: dict, name: str, a: float, seeds: list, fallback: bool = False
     recorded = RECORDED.get(name)
     if cell == "X1" and cb != "better":
         out["reading"] = "NOT REPLICATED"
-    elif fallback and recorded is not None and cb != recorded:     # V512 pending: fresh base differs from the record
+    elif fallback and recorded is not None and cb != recorded:     # V512: fresh base differs from the record
         out["reading"] = "NOT REPLICATED"
     elif not all(x["binds"] for x in bd.values()):
         out["reading"] = "VARIANT DID NOT BIND"
