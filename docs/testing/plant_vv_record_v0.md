@@ -8,6 +8,10 @@ Structure follows the usual systems-engineering pattern: intended use, requireme
 
 **Use:** compare controllers that set the time headway of automated cars (ALKS; 1.6, 1.2, 1.0 or 0.8 s) against rule-based controllers and no control, on paired differences in door-to-door delay (with insertion queues), served flow, close-following (TTC below 3 s), braking at step resolution and severe events, on a synthetic three-lane freeway with two on-ramps, 50 % ALKS, demand 4,090-6,000 veh/h, steady or with tapered slowdowns (X1, X2).
 
+**Amendment (V521 C-D14, V523):** the share of automated cars may be 30-70 % in steady traffic at 5,300 veh/h. C1's check (b) read PLANT OK at 30 % and 70 % (no extra collisions, no stuck or teleported runs, the headway command acts, no oversaturation; `docs/research/results/c1/checks.json`). Other demands and perturbed traffic at shares other than 50 % stay outside until checked.
+
+**Label (V523, C1 check (a)):** close-following and hard braking at merge 2 depend on the length of the ramp-2 accelerating lane. At 445 and 595 m instead of 295 m they fall by about 35-98 % for no control and p333 (8 of 8 tests SENSITIVE at a Bonferroni level). Merge-2 readings carry this label (PR-28 gap).
+
 **Not for:** absolute travel times or capacities of a real road; effects on a calibrated or field site (V245); lateral or merge-conflict safety; V2V with latency or loss; human adaptation to automated cars.
 
 **Acceptance:** the plant is valid for this use when every requirement below is met, or its gap is stated as a limit that every claim sentence carries.

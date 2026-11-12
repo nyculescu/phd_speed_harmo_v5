@@ -1,0 +1,330 @@
+{
+ "n_pilot": 60,
+ "se60": {
+  "edge": 5.188610153170164,
+  "cost": 2.9840878964462623,
+  "delay": 0.9619065650986426,
+  "else": 7.176875144367463,
+  "ev45": 3.43825245605732,
+  "jams": 5.087935407958277
+ },
+ "corr": [
+  [
+   1.0,
+   0.860866286610619,
+   0.10448976967324104,
+   0.7239937045023741,
+   0.784275493139432,
+   0.3929278868536972
+  ],
+  [
+   0.860866286610619,
+   1.0,
+   0.2034196435878459,
+   0.6220814681610376,
+   0.8837418047482134,
+   0.4125160419853648
+  ],
+  [
+   0.10448976967324103,
+   0.20341964358784592,
+   1.0,
+   0.035784722432582405,
+   0.16244715704246995,
+   0.05889868473697125
+  ],
+  [
+   0.723993704502374,
+   0.6220814681610376,
+   0.035784722432582405,
+   1.0,
+   0.5485556786902349,
+   0.20116169896490807
+  ],
+  [
+   0.784275493139432,
+   0.8837418047482135,
+   0.16244715704246998,
+   0.5485556786902349,
+   0.9999999999999999,
+   0.36254110440967086
+  ],
+  [
+   0.3929278868536972,
+   0.41251604198536485,
+   0.05889868473697125,
+   0.20116169896490804,
+   0.36254110440967086,
+   1.0
+  ]
+ ],
+ "n_rule": {
+  "n": 960,
+  "projected_se": {
+   "240": {
+    "edge": 2.9834508380728444,
+    "delay": 0.5530962749317194,
+    "cost": 1.7158505404566007
+   },
+   "480": {
+    "edge": 2.1096183189379967,
+    "delay": 0.3910981266532379,
+    "cost": 1.213289552659465
+   },
+   "960": {
+    "edge": 1.4917254190364222,
+    "delay": 0.2765481374658597,
+    "cost": 0.8579252702283003
+   },
+   "1920": {
+    "edge": 1.0548091594689983,
+    "delay": 0.19554906332661895,
+    "cost": 0.6066447763297325
+   }
+  },
+  "powered": {
+   "240": false,
+   "480": false,
+   "960": true,
+   "1920": true
+  }
+ },
+ "n": 960,
+ "outcome_table": {
+  "240": {
+   "inflated (SE_n of \u00a75)": {
+    "premise": {
+     "NOT RESOLVABLE (delay)": 0.5549,
+     "NOT RESOLVABLE (edge)": 0.11815,
+     "ROOM WITH COST": 0.1003,
+     "COST UNDECIDED": 0.10005,
+     "ROOM WITH COST, merge-weighted": 0.08735,
+     "K2 DELAY": 0.01955,
+     "K1 NO ROOM": 0.01305,
+     "NO COST": 0.00665
+    },
+    "stored": {
+     "NOT RESOLVABLE (delay)": 0.5468,
+     "NO COST": 0.16955,
+     "COST UNDECIDED": 0.1407,
+     "COST ON ANOTHER MEASURE": 0.1005,
+     "NOT RESOLVABLE (edge)": 0.02265,
+     "K2 DELAY": 0.0117,
+     "ROOM WITH COST": 0.0074,
+     "K1 NO ROOM": 0.0007
+    },
+    "null": {
+     "K1 NO ROOM": 0.86405,
+     "NOT RESOLVABLE (edge)": 0.123,
+     "NOT RESOLVABLE (delay)": 0.00695,
+     "NO COST": 0.00585,
+     "K2 DELAY": 0.00015
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.73955,
+     "P(absent | 0)": 0.75375
+    }
+   },
+   "uninflated (as \u00a71)": {
+    "premise": {
+     "NOT RESOLVABLE (delay)": 0.5151,
+     "ROOM WITH COST": 0.24255,
+     "ROOM WITH COST, merge-weighted": 0.09845,
+     "COST UNDECIDED": 0.0659,
+     "NOT RESOLVABLE (edge)": 0.04105,
+     "K2 DELAY": 0.01605,
+     "K1 NO ROOM": 0.01305,
+     "NO COST": 0.00785
+    },
+    "stored": {
+     "NOT RESOLVABLE (delay)": 0.4394,
+     "COST ON ANOTHER MEASURE": 0.24815,
+     "NO COST": 0.1595,
+     "COST UNDECIDED": 0.1202,
+     "ROOM WITH COST": 0.01995,
+     "K2 DELAY": 0.00865,
+     "NOT RESOLVABLE (edge)": 0.0038,
+     "K1 NO ROOM": 0.00035
+    },
+    "null": {
+     "K1 NO ROOM": 0.9446,
+     "NOT RESOLVABLE (edge)": 0.04245,
+     "NO COST": 0.00715,
+     "NOT RESOLVABLE (delay)": 0.0057,
+     "K2 DELAY": 0.0001
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.8631,
+     "P(absent | 0)": 0.86645
+    }
+   }
+  },
+  "480": {
+   "inflated (SE_n of \u00a75)": {
+    "premise": {
+     "ROOM WITH COST": 0.51475,
+     "NOT RESOLVABLE (delay)": 0.3712,
+     "ROOM WITH COST, merge-weighted": 0.06275,
+     "COST UNDECIDED": 0.02955,
+     "NO COST": 0.0104,
+     "K1 NO ROOM": 0.0064,
+     "K2 DELAY": 0.00495
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.5735,
+     "NOT RESOLVABLE (delay)": 0.2497,
+     "NO COST": 0.09005,
+     "COST UNDECIDED": 0.0572,
+     "ROOM WITH COST": 0.0278,
+     "K2 DELAY": 0.0017,
+     "K1 NO ROOM": 5e-05
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.0092,
+     "NOT RESOLVABLE (delay)": 0.00375
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.95055,
+     "P(absent | 0)": 0.96895
+    }
+   },
+   "uninflated (as \u00a71)": {
+    "premise": {
+     "ROOM WITH COST": 0.6988,
+     "NOT RESOLVABLE (delay)": 0.2424,
+     "ROOM WITH COST, merge-weighted": 0.0302,
+     "COST UNDECIDED": 0.02085,
+     "NO COST": 0.00575,
+     "K2 DELAY": 0.00155,
+     "K1 NO ROOM": 0.00045
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.75005,
+     "NOT RESOLVABLE (delay)": 0.13545,
+     "COST UNDECIDED": 0.04935,
+     "NO COST": 0.0461,
+     "ROOM WITH COST": 0.0187,
+     "K2 DELAY": 0.00035
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.01065,
+     "NOT RESOLVABLE (delay)": 0.0023
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.97095,
+     "P(absent | 0)": 0.98725
+    }
+   }
+  },
+  "960": {
+   "inflated (SE_n of \u00a75)": {
+    "premise": {
+     "ROOM WITH COST": 0.9,
+     "NOT RESOLVABLE (delay)": 0.08615,
+     "COST UNDECIDED": 0.00985,
+     "ROOM WITH COST, merge-weighted": 0.0038,
+     "NO COST": 0.0001,
+     "K2 DELAY": 0.0001
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.8497,
+     "COST UNDECIDED": 0.107,
+     "NOT RESOLVABLE (delay)": 0.0284,
+     "ROOM WITH COST": 0.00755,
+     "NO COST": 0.00735
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.01255,
+     "NOT RESOLVABLE (delay)": 0.0004
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.9903,
+     "P(absent | 0)": 0.98725
+    }
+   },
+   "uninflated (as \u00a71)": {
+    "premise": {
+     "ROOM WITH COST": 0.96935,
+     "NOT RESOLVABLE (delay)": 0.02675,
+     "COST UNDECIDED": 0.0035,
+     "ROOM WITH COST, merge-weighted": 0.0004
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.8361,
+     "COST UNDECIDED": 0.1538,
+     "NOT RESOLVABLE (delay)": 0.00605,
+     "ROOM WITH COST": 0.00285,
+     "NO COST": 0.0012
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.0128,
+     "NOT RESOLVABLE (delay)": 0.00015
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.9963,
+     "P(absent | 0)": 0.98725
+    }
+   }
+  },
+  "1920": {
+   "inflated (SE_n of \u00a75)": {
+    "premise": {
+     "ROOM WITH COST": 0.99775,
+     "NOT RESOLVABLE (delay)": 0.0019,
+     "COST UNDECIDED": 0.00035
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.76095,
+     "COST UNDECIDED": 0.23855,
+     "ROOM WITH COST": 0.00035,
+     "NOT RESOLVABLE (delay)": 0.00015
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.01295
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.9995,
+     "P(absent | 0)": 0.98725
+    }
+   },
+   "uninflated (as \u00a71)": {
+    "premise": {
+     "ROOM WITH COST": 0.99985,
+     "NOT RESOLVABLE (delay)": 0.0001,
+     "COST UNDECIDED": 5e-05
+    },
+    "stored": {
+     "COST ON ANOTHER MEASURE": 0.6868,
+     "COST UNDECIDED": 0.3132
+    },
+    "null": {
+     "K1 NO ROOM": 0.98705,
+     "NO COST": 0.01295
+    },
+    "cost_rates": {
+     "P(present | -5)": 0.99995,
+     "P(absent | 0)": 0.98725
+    }
+   }
+  }
+ },
+ "else_opp_median": 286.5,
+ "else_tie_share": [
+  0.0,
+  0.0,
+  0.016666666666666666,
+  0.0,
+  0.0
+ ],
+ "side_file_binding": {
+  "rows": 480,
+  "above_1e-6": 0,
+  "max": 0.0
+ },
+ "dropped": []
+}

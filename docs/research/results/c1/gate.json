@@ -1,0 +1,38 @@
+{
+ "nc": {
+  "drain_excess": {
+   "ramp1_queue": 0.09575,
+   "ramp2_queue": 1.1945000000000001,
+   "backlog": -0.18074999999999994
+  },
+  "drain_pass": true,
+  "stuck_runs": {
+   "S": 0,
+   "E30": 0
+  },
+  "stuck_pass": true
+ },
+ "p333": {
+  "drain_excess": {
+   "ramp1_queue": -8.673617379884036e-20,
+   "ramp2_queue": 1.5278333333333332,
+   "backlog": 0.07516666666666656
+  },
+  "drain_pass": true,
+  "stuck_runs": {
+   "S": 0,
+   "E30": 0
+  },
+  "stuck_pass": true
+ },
+ "bind": {
+  "nc_delay_cost": [
+   42862.7550488635,
+   36343.10764595584,
+   50764.058155635605
+  ],
+  "pass": true
+ },
+ "outcome": "PASS",
+ "dropped": []
+}
