@@ -124,7 +124,7 @@ def test_ident_actions():
 
 
 def test_stage_ranges_are_inside_the_approved_block_and_disjoint():
-    rngs = sorted(v for k, v in c1.STAGES.items() if k != "c1_ident")
+    rngs = sorted(v for k, v in c1.STAGES.items() if not k.endswith("_ident"))
     for a, b in rngs:
         assert 7_489_000 <= a <= b <= 7_491_919
     for (a, b), (c, d) in zip(rngs, rngs[1:]):
@@ -179,7 +179,7 @@ def test_smoke_twins_differ_only_in_identity_fields(tmp_path):
 
 
 def test_t0_requires_p333_command_read_back():
-    good = {"tau_on_n": 100.0, "tau_on_match": 100.0, "tau_mismatch": 0.0}
+    good = {"tau_on_n": 100.0, "tau_on_match": 100.0, "tau_mismatch": 0.0, **{f"lv_sum_{r}": 300.0 for r in "2345"}, **{f"lv_n_{r}": 100.0 for r in "2345"}}
     arms = {"S|p333": {}, "S|p333~untraced": {}, "S|nc": {}}
     A = {("S|p333", 1): dict(good), ("S|p333~untraced", 1): dict(good), ("S|nc", 1): {}}
     assert c1.t0_rows(A, arms)["bad"] == []

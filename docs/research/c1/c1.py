@@ -24,7 +24,9 @@ import v5  # noqa: E402
 STAGES = {     # §8, inclusive ranges
     "c1_smoke": (7_489_000, 7_489_000), "c1_rate": (7_489_001, 7_489_010), "c1_ident": (7_480_400, 7_480_402),
     "c1_checks": (7_489_020, 7_489_079), "c1_gate": (7_489_080, 7_489_119), "c1_fallback": (7_489_120, 7_489_159),
-    "c1_pilot": (7_490_000, 7_490_059), "c1_screen": (7_490_060, 7_491_919)}
+    "c1_pilot": (7_490_000, 7_490_059), "c1_screen": (7_490_060, 7_491_919),
+    # C1 confirmation (c1_confirm.md CF-D8, V527)
+    "cf_smoke": (7_489_640, 7_489_640), "cf_ident": (7_480_400, 7_480_402), "cf_screen": (7_489_160, 7_489_639)}
 PILOT_N = 60
 LADDER_N = (240, 480, 960, 1920)     # §5
 SCREEN0 = STAGES["c1_pilot"][0]
@@ -34,6 +36,9 @@ SHARES = (0.3, 0.7)     # §6 (b)
 EV = {"kind": "slowdown_draw", "edge": "2", "onset": [450.0, 800.0], "dur": [240.0, 420.0], "taper": 20.0, "salt": 505_001, "limit_kmh": 30.0}
 EVENTS = {"E30": EV, "E30s": {**EV, "dur": [120.0, 240.0]}}     # §2: the cell, and its fallback E30-short
 TWIN = v5.TWIN
+UNIFORM = {"p111": 1, "p222": 2}     # CF-D2: every ALKS at one level, as p333 (level 3)
+UNIFORM_LEVEL = {"p333": 3, **UNIFORM}
+MPCF_OLD, MPCF_NEW = "/home/catalin/work/phd/v5b1_runs/planb_s56/jobs/", "/home/catalin/work/phd/v5b1_runs/planb_s56_remote/jobs/"
 SPLIT_KEYS = ("c1_t0", "wall_s")     # a split run's own output, skipped when it meets its unsplit twin
 
 
@@ -56,6 +61,29 @@ def arm_cfg(stored: dict, st: Path | None, event: dict | None = None, **extra) -
     if st is not None:
         c["measure"] = str(st)
     return c | extra
+
+
+def fix_paths(c: dict) -> dict:
+    """§3: MPC-F's model ships from planb_s56_remote/jobs/; its stored path names a folder that exists on no machine. model_sha256 is
+    unchanged and MpcF checks it on load."""
+    c = copy.deepcopy(c)
+    m = c.get("ctrl", {}).get("mpcf")
+    if m and isinstance(m.get("model"), str) and m["model"].startswith(MPCF_OLD):
+        m["model"] = MPCF_NEW + m["model"][len(MPCF_OLD):]
+    return c
+
+
+def stored_cf() -> dict:
+    """CF-D2: every stored S6 S arm (23 rules, no control, the 5 learners) with MPC-F's path fixed, plus the uniform rules from p333."""
+    arms = v5.s6_arms()
+    out = {n.split("|", 1)[1]: fix_paths(c) for n, c in arms.items() if n.startswith("S|")}
+    if len(out) != 29 or not set(pb.V3W) <= set(out):
+        raise SystemExit(f"expected 29 stored S arms, found {len(out)}")
+    for u, k in UNIFORM.items():
+        c = copy.deepcopy(out["p333"])
+        c["ctrl"]["cav_rule"] = [k, k, k]
+        out[u] = c
+    return out
 
 
 def plan(stage: str, out_dir: Path, cell: str = "E30", n: int | None = None) -> dict:
@@ -91,6 +119,19 @@ def plan(stage: str, out_dir: Path, cell: str = "E30", n: int | None = None) -> 
         jobs["E30|nc~trace"] = jobs["E30|nc"] | {"t0_event": True}
         jobs["E30|nc" + TWIN] = {k: v for k, v in jobs["E30|nc"].items() if k != "split"}
         jobs["S|nc~share50"] = jobs["S|nc"] | {"share": 0.5}
+    elif stage == "cf_ident":     # CF §3: all 29 stored arms, configs unchanged apart from MPC-F's model path
+        jobs = {f"S|{r}": {**{k: v for k, v in c.items() if k != "measure"}, "measure": str(st)} for r, c in stored_cf().items() if r not in UNIFORM}
+    elif stage == "cf_screen":
+        jobs = {f"E30|{r}": arm_cfg(c, st, EVENTS["E30"]) for r, c in stored_cf().items()}
+        bad = [n_ for n_, c in jobs.items() if c["ctrl"]["env"]["perturb"] != EV]
+        if bad or len(jobs) != 31:
+            raise SystemExit(f"cf_screen: {len(jobs)} arms, perturb differs from C1's E30 in {bad}")
+    elif stage == "cf_smoke":     # every screen arm once, unsplit twins of four kinds, the E30 T0 trace
+        jobs = dict(plan("cf_screen", out_dir)["arms"])
+        for n_ in ("E30|p333", "E30|p111", "E30|w0u250", "E30|MPC-F"):
+            jobs[n_ + TWIN] = {k: v for k, v in jobs[n_].items() if k != "split"}
+        jobs["E30|nc~trace"] = jobs["E30|nc"] | {"t0_event": True}
+        jobs["E30|nc" + TWIN] = {k: v for k, v in jobs["E30|nc"].items() if k != "split"}
     else:
         raise SystemExit(f"no C1 job for stage {stage}")
     return {"stage": stage, "seed_range": [lo, hi], "q": pb.Q, "cell": cell, "n": n, "arms": jobs}
@@ -114,12 +155,17 @@ def t0_rows(A: dict, arms: dict) -> dict:
     """§10 T0 on the smoke rows: the E30 limit read back; 4a_0's length per accel2_len and edge 3 unchanged; per share and seed the same
     automated vehicles in every arm; the realised share."""
     out = {"event": {}, "length": {}, "share": {}, "command": {}, "bad": []}
-    for (n, s), r in A.items():     # p333's command read back: every commanded ALKS-second at its headway, none mismatched
-        if n.split("|", 1)[1].split("~")[0] == "p333":
+    for (n, s), r in A.items():     # uniform rules' command read back (p333 as C1; p111, p222 as CF §3), and their commanded level
+        arm = n.split("|", 1)[1].split("~")[0]
+        if arm in UNIFORM_LEVEL:
             c = {k: r.get(k, 0.0) for k in ("tau_on_n", "tau_on_match", "tau_mismatch")}
-            out["command"][f"{n} {s}"] = c
+            k = UNIFORM_LEVEL[arm]
+            lv = {rd: r[f"lv_sum_{rd}"] / r[f"lv_n_{rd}"] for rd in ("2", "3", "4", "5") if r.get(f"lv_n_{rd}")}
+            out["command"][f"{n} {s}"] = c | {"level": lv}
             if not (c["tau_on_n"] > 0 and c["tau_on_match"] == c["tau_on_n"] and c["tau_mismatch"] == 0):
-                out["bad"].append(f"T0 p333 command {n} {s}")
+                out["bad"].append(f"T0 {arm} command {n} {s}")
+            if len(lv) < 4 or any(abs(x - k) > 0.15 for x in lv.values()):
+                out["bad"].append(f"T0 {arm} level {n} {s}: {lv}")
     for (n, s), r in A.items():
         if arms[n].get("t0_event"):
             ok = v5.t0_event_ok(r, arms[n])
@@ -174,6 +220,7 @@ def smoke(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
     side = sorted(f"{k[0]} {k[1]}" for k in B if k in A and A[k].get("m_st_file")
                   and not npz_equal(out / "a" / "st" / A[k]["m_st_file"], out / "b" / "st" / B[k]["m_st_file"]))
     pairs = [(n[: -len(TWIN)], n) for n in arms if n.endswith(TWIN)] + [("E30|nc~trace", "E30|nc" + TWIN), ("S|nc~share50", "S|nc")]
+    pairs = [(m, n) for m, n in pairs if m in arms and n in arms]
     twins = {}
     for m, n in pairs:
         for s in sd:
