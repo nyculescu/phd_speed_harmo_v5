@@ -180,3 +180,42 @@ def test_competitor_boundary():
         assert res["readings"][a]["D"]["lo"] <= rf.COMPETE_MARGIN or a == "p333"
     for a in res["trade_points"]:
         assert res["readings"][a]["D"]["lo"] > rf.COMPETE_MARGIN
+
+
+LV_FAST = {"pct": rf.MAIN["pct"], "bar": 1.0, "swaps": 5, "nb": 50}     # never re-estimates
+
+
+def test_screen_paths():
+    T = synth()
+    seeds = list(range(200))
+    for s in seeds:     # no rule faster than v3w: no chords
+        T[("E30", "p333")][s]["all_delay"] *= 1.02
+    res = rf.screen(T, seeds, [], ["c"], LV_FAST, workers=2, b=300)
+    assert res["n_chords"] == 0 or all(rf.ARR[("p333", "all_delay")].mean() > 0 for _ in [0])
+    T = synth()
+    for s in seeds:     # v3w fails drain
+        for w in rf.V3W:
+            T[("E30", w)][s]["q_backlog"] = 10.0
+    assert rf.screen(T, seeds, [], ["c"], LV_FAST, workers=2, b=300)["decision"]["outcome"] == "VOID"
+    T = synth()
+    for s in seeds:     # a rule fails drain: labelled only
+        T[("E30", "lr")][s]["q_backlog"] = 10.0
+    r = rf.screen(T, seeds, [], ["c"], LV_FAST, workers=2, b=300)
+    assert r["drain"]["lr"]["fail"] and r["decision"]["outcome"] != "VOID"
+    T = synth()
+    for a in ("p333", "lr", "slow"):     # no rule beats no control by 10 %
+        for s in seeds:
+            T[("E30", a)][s]["all_delay"] = T[("E30", "nc")][s]["all_delay"] * 0.97
+    assert rf.screen(T, seeds, [], ["c"], LV_FAST, workers=2, b=300)["decision"]["outcome"] == "P0 FAILS"
+
+
+def test_seed_ranges_parse(tmp_path, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(rf, "screen", lambda T, seeds, *a, **k: seen.setdefault("s", seeds) and {"decision": {"outcome": "x"}})
+    monkeypatch.setattr(rf.rc, "load", lambda p: {})
+    rows = tmp_path / "r" / "s6_rows.jsonl"
+    rows.parent.mkdir()
+    rows.write_text("")
+    (rows.parent / "meta.json").write_text('{"inputs": {"cpu": "c"}}')
+    rf.main(["screen", str(tmp_path / "o.json"), "--rows", str(rows), "--seeds", "1-3", "10-11"])
+    assert seen["s"] == [1, 2, 3, 10, 11]

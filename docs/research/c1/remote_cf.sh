@@ -76,9 +76,9 @@ if [ -z "$COST_PER_RUN" ]; then     # the rate per worker slot from the 31 scree
   COST_PER_RUN=$($PY -c "
 import json,sys
 w=[r['wall_s'] for r in map(json.loads, open(sys.argv[1])) if '~' not in r['arm']]
-print(sum(w)/len(w)/3600*$PRICE/$W)" "$R/cf_smoke/a/s6_rows.jsonl")
+print(1.3*sum(w)/len(w)/3600*$PRICE/$W)" "$R/cf_smoke/a/s6_rows.jsonl")     # x 1.3: one seed, one wave; C1's screen ran 1.3 x its smoke rate
   echo "$COST_PER_RUN" > "$R/cost_per_run"
-  say "rate from the smoke's screen arms: $COST_PER_RUN USD per worker slot"
+  say "rate from the smoke's screen arms (x 1.3, one seed, one wave): $COST_PER_RUN USD per worker slot"
 fi
 say "wall s per arm (smoke): $(wall "$R/cf_smoke/a/s6_rows.jsonl")"
 

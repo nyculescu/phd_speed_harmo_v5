@@ -236,8 +236,9 @@ def screen(T: dict, seeds: list, dropped: list, cpus: list, lv: dict = MAIN, wor
     braking = {a: {"lo": R[a]["brake"]["lo"], "null_ok": nulls[f"brake {a}"]["ok"]} for a in comp}
     p333D = R["p333"]["D"]
     out = {"n": n, "level": lv, "dropped": dropped, "cpus": sorted(set(map(str, cpus))), "decision": decide(x),
-           "competitors": comp, "trade_points": [a for a in rules if a not in comp], "n_chords": len(chords),
-           "smallest_lower_bound": min([competitors[a]["E"]["lo"] for a in comp] + [c["lo"] for c in chords]),
+           "competitors": comp, "trade_points": [a for a in rules if a not in comp],
+           "n_chords": sum(not c.get("trade_end") for c in chords), "n_chords_trade_end": sum(bool(c.get("trade_end")) for c in chords),
+           "smallest_lower_bound": min([competitors[a]["E"]["lo"] for a in comp] + [c["lo"] for c in chords if not c.get("trade_end")]),
            "braking_shown": bool(comp) and all(v["lo"] > 0 and v["null_ok"] for v in braking.values()), "braking": braking,
            "braking_vs_3E-C_TRUCK": R["3E-C_TRUCK"]["brake"] if "3E-C_TRUCK" in R else None,
            "delay_vs_p333": p333D | {"reading": rc.r_delay({"pt": p333D["pt"], "lo": p333D["lo"], "hi95": p333D["hi95"]})},
