@@ -123,3 +123,60 @@ def test_t0_uniform_level():
     A = {("E30|p111", 1): row}
     bad = c1.t0_rows(A, {"E30|p111": {}})["bad"]
     assert len(bad) == 1 and bad[0].startswith("T0 p111 level E30|p111 1")
+
+
+def test_clamped_chord_reads_as_its_rule():
+    good = {"p333": comp(t(30, 25, 35)), "q": comp(t(1.1, 0.1, 2.1), Dpt=1.16, Dlo=-0.04)}
+    c = ch("q", "r", t(1.1, 0.1, 2.1)) | {"end_D": {"pt": 1.16, "lo": -0.04, "hi": 2.44}}
+    assert out(good, [c]) == "UNRESOLVED"     # MATCHED AT A DELAY COST, as the rule itself
+    c2 = ch("p333", "nc", t(1.0, -1, 3)) | {"trade_end": True}
+    assert out({"p333": comp(t(30, 25, 35))}, [c2]) == "PASS"     # an end at a trade point is not a competitor test
+
+
+def test_null_reestimate(monkeypatch):
+    calls = iter([0.020, 0.015])
+    monkeypatch.setattr(rf, "null_rate", lambda *a, **k: next(calls))
+    rf.CTX["lv"] = rf.MAIN
+    r = rf.null_check([np.zeros(3)], 1)
+    assert r["ok"] and r["re_rate"] == 0.015
+    calls = iter([0.0095])
+    monkeypatch.setattr(rf, "null_rate", lambda *a, **k: next(calls))
+    rf.CTX["lv"] = rf.EXT
+    assert not rf.null_check([np.zeros(3)], 1)["ok"]     # no second draw at the extension
+
+
+def synth(n=200, seed=0):
+    """Synthetic E30 rows: v3w, p333 (faster, more close-following), lr (competitor, slower by 0.5 %), slow (trade point), nc."""
+    rng = np.random.default_rng(seed)
+    T = {}
+    spec = {"p333": (-0.9, 1600), "lr": (0.5, 1500), "slow": (2.6, 1400), "nc": (28.0, 1330)}
+    base = 166_000.0
+    for a, (d, cf) in list(spec.items()) + [(w, (0.0, 1030)) for w in rf.V3W]:
+        T[("E30", a)] = {s: {"all_delay": base * (1 + d / 100) + rng.normal(0, 300), "ttc_net": cf + rng.normal(0, 60), "ttc_away": 200 + rng.normal(0, 20),
+                             "b45_step": 450 + rng.normal(0, 20) - (30 if a in rf.V3W else 0), "events_ge45": 950 + rng.normal(0, 30), "passed": 9000.0,
+                             "N": 1e6, "stuck": 0.0, "q_ramp1_queue": 1.0, "q_ramp2_queue": 1.0, "q_backlog": 1.0} for s in range(n)}
+    return T
+
+
+def test_screen_end_to_end_on_synthetic_rows():
+    lv = {"pct": rf.MAIN["pct"], "bar": 0.019, "swaps": 40, "nb": 200}
+    res = rf.screen(synth(), list(range(200)), [], ["cpu"], lv, workers=2, b=1000)
+    assert res["competitors"] == ["lr", "p333"] and set(res["trade_points"]) == {"slow", "nc"}
+    names = [(c["q"], c["r"]) for c in res["chords"]]
+    assert len(names) == len(set(frozenset(x) for x in names))     # no pair twice
+    assert res["decision"]["outcome"] == "PASS" and res["braking_shown"] and res["p0"]["pass"]
+    assert "p333" in res["drain"] and not res["drain"]["v3w"]["fail"]
+    void = rf.screen(synth(), list(range(200)), [1, 2, 3, 4], ["cpu"], lv, workers=2, b=1000)
+    assert void["decision"]["outcome"] == "VOID"
+    two = rf.screen(synth(), list(range(200)), [], ["a", "b"], lv, workers=2, b=1000)
+    assert two["decision"]["outcome"] == "VOID"
+
+
+def test_competitor_boundary():
+    T = synth()
+    lv = {"pct": rf.MAIN["pct"], "bar": 0.019, "swaps": 10, "nb": 100}
+    res = rf.screen(T, list(range(200)), [], ["cpu"], lv, workers=2, b=500)
+    for a in res["competitors"]:
+        assert res["readings"][a]["D"]["lo"] <= rf.COMPETE_MARGIN or a == "p333"
+    for a in res["trade_points"]:
+        assert res["readings"][a]["D"]["lo"] > rf.COMPETE_MARGIN

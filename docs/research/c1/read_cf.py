@@ -110,7 +110,7 @@ def null_check(D: list, seed: int) -> dict:
     lv = CTX["lv"]
     rate = null_rate(D, lv["swaps"], lv["nb"], lv["pct"], seed)
     out = {"rate": rate, "swaps": lv["swaps"]}
-    if rate > lv["bar"]:
+    if rate > lv["bar"] and lv["swaps"] < RE_SWAPS:     # the main read's one re-estimate; the extension's 20,000-swap value decides
         out["re_rate"] = rate = null_rate(D, RE_SWAPS, lv["nb"], lv["pct"], seed + 7_919)
         out["re_swaps"] = RE_SWAPS
     out["ok"] = rate <= lv["bar"]
@@ -147,7 +147,7 @@ def decide(x: dict) -> dict:
     if not x["p0"]:
         return {"outcome": "P0 FAILS"}
     reads = {f"competitor {n}": read_test(c["E"], c["D"]) for n, c in x["competitors"].items()}
-    reads |= {f"chord {c['q']}~{c['r']}": read_test(c) for c in x["chords"]}
+    reads |= {f"chord {c['q']}~{c['r']}": read_test(c, c.get("end_D")) for c in x["chords"] if not c.get("trade_end")}
     matched = [k for k, v in reads.items() if v == "MATCHED"]
     if matched:
         return {"outcome": "KILL", "matched": matched, "reads": reads}
@@ -157,13 +157,14 @@ def decide(x: dict) -> dict:
 
 
 def drain(arms: list) -> dict:
-    """C1 §2 per arm against p333 on the read seeds: queues in V486's form (v3w averaged per seed first) and stuck rows."""
+    """C1 §2 per arm against p333 on the read seeds: queues in V486's form (v3w averaged per seed first) and stuck rows; per-learner
+    stuck counts printed."""
     out = {}
-    for a in ["v3w"] + [x for x in arms if x != "p333"]:
+    for a in ["v3w"] + list(arms):
         names = V3W if a == "v3w" else (a,)
         ex = {k: float(np.mean(np.mean([col(w, f"q_{k}") for w in names], axis=0) - col("p333", f"q_{k}"))) for k in rc.drain.KEYS}
         share = float(np.mean([np.mean(col(w, "stuck") > 0) for w in names]))
-        out[a] = {"queue_excess": ex, "stuck_share": share,
+        out[a] = {"queue_excess": ex, "stuck_share": share, "stuck_rows": {w: int(np.sum(col(w, "stuck") > 0)) for w in names},
                   "fail": any(v > rc.DRAIN_VEH for v in ex.values()) or share > rc.STUCK_SHARE}
     return out
 
@@ -177,7 +178,7 @@ def p0(rules: list) -> dict:
             continue
         d = -(col(a, "all_delay") - nc) / max(float(np.median(nc)), 1e-9) * 100.0
         pt, (lo, _) = float(np.median(d)), ci(np.median(d[idx], axis=1), L95)
-        out[a] = {"pt": pt, "lo95": lo, "pass": pt >= P0_BAR and lo > 0}
+        out[a] = {"pt": pt, "lo95": lo, "pass": pt >= P0_BAR and lo > 0, "printed_cf": single(a, "nc", "ttc_net")}
     return {"arms": out, "pass": any(v["pass"] for v in out.values())}
 
 
@@ -210,6 +211,7 @@ def screen(T: dict, seeds: list, dropped: list, cpus: list, lv: dict = MAIN, wor
          for a in rules}
     comp = [a for a in rules if R[a]["D"]["lo"] <= COMPETE_MARGIN or a == "p333"]
     pairs = [(q, r) for q in rules for r in rules if q != r and R[q]["D"]["lo"] < 0 and R[r]["D"]["hi"] > 0]
+    pairs = [(q, r) for q, r in pairs if not ((r, q) in pairs and r < q)]     # (q, r) and (r, q) are the same mix; keep one
     ctx = mp.get_context("fork")
     with ProcessPoolExecutor(min(workers, os.cpu_count() or 1), mp_context=ctx) as ex:
         chords = list(ex.map(chord_job, [(i, q, r) for i, (q, r) in enumerate(pairs)]))
@@ -218,8 +220,13 @@ def screen(T: dict, seeds: list, dropped: list, cpus: list, lv: dict = MAIN, wor
     for a in rules:
         for k in R[a]:
             R[a][k].pop("_D", None)
-    for c in chords:
+    for c in chords:     # §1: a clamped chord reads as its nearer rule; an end at a trade point is not a competitor test
         c["null_ok"] = c["null"]["ok"]
+        end = c["q"] if c["w"] == 0.0 else c["r"] if c["w"] == 1.0 else None
+        if end is not None:
+            c["end"] = end
+            c["end_D"] = {k: R[end]["D"][k] for k in ("pt", "lo", "hi")}
+            c["trade_end"] = end not in comp
     competitors = {a: {"E": R[a]["E"] | {"null_ok": nulls[f"E {a}"]["ok"]}, "D": R[a]["D"]} for a in comp}
     dr = drain(rules)
     if dr["v3w"]["fail"]:
@@ -238,7 +245,27 @@ def screen(T: dict, seeds: list, dropped: list, cpus: list, lv: dict = MAIN, wor
            "arm_medians": sorted(({"arm": a, **{k: float(np.median(np.mean([col(w, k) for w in V3W], axis=0) if a == "v3w" else col(a, k)))
                                               for k in ("all_delay", "ttc_net", "b45_step", "events_ge45", "passed", "N")}}
                                   for a in ["v3w"] + rules), key=lambda d: d["all_delay"]),
-           "learners_vs_p333": {w: float(np.median(d)) for w, d in zip(V3W, learner_d("p333", "ttc_net"))}}
+           "learners_vs_p333": {w: float(np.median(d)) for w, d in zip(V3W, learner_d("p333", "ttc_net"))},
+           "printed": printed(rules)}
+    return out
+
+
+def printed(rules: list) -> dict:
+    """§1, never deciding: per rule and measure the pooled arm's effect with its interval and the five learners' medians; the
+    4-against-1 learner effects against p333."""
+    idx, pct = CTX["idx"], CTX["pct"]
+    out = {"pooled": {}, "four_against_one": {}}
+    for a in rules:
+        for key in ("all_delay", "ttc_net", "b45_step"):
+            O = col(a, key)
+            d = -(np.mean([col(w, key) for w in V3W], axis=0) - O) / max(float(np.median(O)), 1e-9) * 100.0
+            out["pooled"][f"{a}|{key}"] = {"pt": float(np.median(d)), "ci": ci(np.median(d[idx], axis=1), pct),
+                                           "learners": [float(np.median(x)) for x in learner_d(a, key)]}
+    for key in ("all_delay", "ttc_net", "b45_step"):
+        for w in V3W:
+            rest = np.mean([col(v, key) for v in V3W if v != w], axis=0)
+            d = -(rest - col(w, key)) / max(float(np.median(col(w, key))), 1e-9) * 100.0
+            out["four_against_one"][f"{w}|{key}"] = {"pt": float(np.median(d)), "ci95": ci(np.median(d[idx], axis=1), L95)}
     return out
 
 
@@ -273,7 +300,7 @@ def main(argv: list) -> int:
     ap.add_argument("out")
     ap.add_argument("--rows", dest="rows_list", nargs="+")
     ap.add_argument("--cpu", default="")
-    ap.add_argument("--seeds")
+    ap.add_argument("--seeds", nargs="+", help="one or more LO-HI ranges (the extension's seeds need not be contiguous)")
     ap.add_argument("--ext", action="store_true")
     ap.add_argument("--workers", type=int, default=16)
     x = ap.parse_args(argv)
@@ -283,11 +310,11 @@ def main(argv: list) -> int:
         S6 = {(r["name"], r["seed"]): r for r in map(json.loads, open(rc.S6_ROWS)) if r["name"] in names}
         res = ident(rows, S6, x.cpu)
     else:
-        lo, hi = (int(v) for v in x.seeds.split("-"))
+        seeds = sorted({s for r_ in x.seeds for s in range(int(r_.split("-")[0]), int(r_.split("-")[1]) + 1)})
         T = rc.load(x.rows_list)
         dropped = sorted({s for p in x.rows_list for s in rc.drops_of(Path(p))})
         cpus = [json.loads((Path(p).parent / "meta.json").read_text())["inputs"].get("cpu") for p in x.rows_list]
-        res = screen(T, list(range(lo, hi + 1)), dropped, cpus, EXT if x.ext else MAIN, x.workers)
+        res = screen(T, seeds, dropped, cpus, EXT if x.ext else MAIN, x.workers)
     Path(x.out).parent.mkdir(parents=True, exist_ok=True)
     Path(x.out).write_text(json.dumps(res, indent=1, default=str))
     print(x.step, json.dumps({"action": res.get("action")} if x.step == "ident" else {"outcome": res["decision"]["outcome"]}))

@@ -52,7 +52,7 @@ stage() {     # stage NAME [plan options]: plan, cap check, run; measures the pe
   t1=$(date +%s)
   must "run $s ($n runs)" $PY $D/c1.py run --jobs "$R/$s/jobs.json" --out "$R/$s" --workers "$W" --cpu "$CPU"
   say "drops $s: $(cat "$R/$s/drops.json" 2>/dev/null)"
-  if [ "$had" -eq 0 ] && [ "$n" -ge "$W" ]; then
+  if [ "$had" -eq 0 ] && [ "$n" -ge "$W" ] && [ "$s" != cf_ident ]; then     # the screen's rate comes from the smoke's E30 runs
     COST_PER_RUN=$($PY -c "import math; print(($(date +%s)-$t1)/3600*$PRICE/(math.ceil($n/$W)*$W))")
     echo "$COST_PER_RUN" > "$R/cost_per_run"
     say "rate from $s: $COST_PER_RUN USD per worker slot"
@@ -71,17 +71,19 @@ say "code $(cat COMMIT), cpu $CPU, workers $W, price $PRICE/h, cap $CAP, rate ${
 sha256sum -c --quiet $D/data.sha256 >> "$R/run.log" 2>&1 || { say "STOPPED: data missing or changed (data.sha256)"; exit 1; }
 
 must "plan cf_smoke" $PY $D/c1.py plan cf_smoke --out "$R/cf_smoke/jobs.json"
-t1=$(date +%s)
 must "smoke" $PY $D/c1.py smoke --jobs "$R/cf_smoke/jobs.json" --out "$R/cf_smoke" --workers "$W" --cpu "$CPU"
-if [ -z "$COST_PER_RUN" ]; then     # the smoke's two passes (every arm, then each distinct config again) set the rate before the screen
-  n=$(( $(wc -l < "$R/cf_smoke/a/s6_rows.jsonl") + $(wc -l < "$R/cf_smoke/b/s6_rows.jsonl") ))
-  COST_PER_RUN=$($PY -c "import math; print(($(date +%s)-$t1)/3600*$PRICE/(math.ceil($n/$W)*$W))")
+if [ -z "$COST_PER_RUN" ]; then     # the rate per worker slot from the 31 screen arms' smoke runs, weighted as the screen
+  COST_PER_RUN=$($PY -c "
+import json,sys
+w=[r['wall_s'] for r in map(json.loads, open(sys.argv[1])) if '~' not in r['arm']]
+print(sum(w)/len(w)/3600*$PRICE/$W)" "$R/cf_smoke/a/s6_rows.jsonl")
   echo "$COST_PER_RUN" > "$R/cost_per_run"
-  say "rate from the smoke: $COST_PER_RUN USD per worker slot ($n runs)"
+  say "rate from the smoke's screen arms: $COST_PER_RUN USD per worker slot"
 fi
 say "wall s per arm (smoke): $(wall "$R/cf_smoke/a/s6_rows.jsonl")"
 
 stage cf_ident || { say "ASK AUTHOR: cap at identity"; exit 0; }
+[ "$(wc -l < "$R/cf_ident/s6_rows.jsonl")" -eq "$(runs_of "$R/cf_ident/jobs.json")" ] || { say "STOPPED: identity rows missing (crash drops; every replay is needed)"; exit 1; }
 must "read ident" $PY $D/read_cf.py ident "$R/cf_ident/s6_rows.jsonl" "$R/cf_ident/ident.json" --cpu "$CPU"
 [ "$(val "$R/cf_ident/ident.json" '["action"]')" = stop ] && { say "STOPPED: identity (bug rule; see ident.json)"; exit 1; }
 say "identity: learner-class traffic mismatch disclosed = $(val "$R/cf_ident/ident.json" '["learner_diff_disclosed"]')"
