@@ -96,12 +96,12 @@ Every source requires an end taper; the plant has none. AASHTO was not read [VER
 
 - **E30's PASS reading stands** under its own protocol: no BUG, and the replication reads REPLICATED.
 - **Its meaning narrows further.** The edge is a property of this plant's 295-m acceleration lanes, which end without a taper and where SUMO's vehicles stand at the lane end. With 600-m lanes it is not shown against grid_lr400_13_1 and reverses against lr400_16_1 on the median seed. Whether the 300-m behaviour is an artefact is not answered (§5 of the plan).
-- **The E30 sentence must carry:** the replication line, both record sentences, "the 0.1-s edge is within 3 points of the 1-Hz edge against both rules", M1 and the V4 sentence. It must not use "survives", "shown at both lengths" or "verified and validated". Proposed for the author: scope it as "in this plant, with 295-m acceleration lanes ending without a taper", and do not call the edge a safety benefit.
+- **The E30 sentence must carry:** the replication line, both record sentences, "the 0.1-s edge is within 3 points of the 1-Hz edge against both rules", M1 and the V4 sentence. It must not use "survives", "shown at both lengths" or "verified and validated". Approved (V537): scope it as "in this plant, with 295-m acceleration lanes ending without a taper", and never call the edge a safety benefit.
 - **The V462 gate stays shut:** PR-15 closes, but PR-24 is met only for the traced counters and PR-28 is partial (period part open; the artefact question unanswered); the record is not reviewed.
 
 ## 6. Open items
 
-1. Author: confirm the filling choices in §2 (per-learner standing; per-rule wording against grid_lr400_13_1).
+1. Done (V537): the author approved the §2 filling choices and the E30 scope wording.
 2. PR-24: trace `b45_step`, `ttc2`, `ttc15`, `sev3` and jams before they enter a claim.
 3. PR-28 period part: no pre-stated test; closing it needs a new item.
 4. V6: Google Scholar not run; Barthauer (SUMO 2016) not read; Berghaus and Oeser 2025 full text blocked.
