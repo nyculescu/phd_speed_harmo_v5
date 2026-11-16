@@ -14,6 +14,7 @@ runs/raw/
 # Temporary folders at the repo root
 /tmp*/
 docs/local/
-docs/papers/local/*
+docs/other_papers/*
+docs/other_theses/*
+docs/tutorials/*
 CLAUDE.md
-docs/other_papers/
