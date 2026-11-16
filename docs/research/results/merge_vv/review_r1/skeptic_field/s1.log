@@ -1,0 +1,22 @@
+us rows 4802933 dup full(loaded cols) 704000 dup (veh,time) 704000
+i80 rows 4566387 dup full 0 dup (veh,time) 0
+us-101 distinct Vehicle_ID 2847 tracks 6101
+  lane 1: Local_Y min 0 max 2206 Local_X p50 7.0
+  lane 2: Local_Y min 0 max 2225 Local_X p50 18.7
+  lane 3: Local_Y min 0 max 2223 Local_X p50 29.9
+  lane 4: Local_Y min 5 max 2235 Local_X p50 41.0
+  lane 5: Local_Y min 0 max 2227 Local_X p50 52.9
+  lane 6: Local_Y min 615 max 1350 Local_X p50 64.1
+  lane 7: Local_Y min 368 max 656 Local_X p50 66.2
+  lane 8: Local_Y min 1310 max 1605 Local_X p50 67.8
+  7->6 label changes n=495 Local_Y q05/50/95 [616. 653. 659.] share>=660 0.026 Local_X q25/50/75 [62.6 64.7 65.9]
+i-80 distinct Vehicle_ID 3001 tracks 5678
+  lane 1: Local_Y min 0 max 1767 Local_X p50 4.6
+  lane 2: Local_Y min 0 max 1705 Local_X p50 17.3
+  lane 3: Local_Y min 0 max 1791 Local_X p50 29.4
+  lane 4: Local_Y min 0 max 1757 Local_X p50 41.6
+  lane 5: Local_Y min 0 max 1723 Local_X p50 53.8
+  lane 6: Local_Y min 0 max 1756 Local_X p50 66.7
+  lane 7: Local_Y min 125 max 700 Local_X p50 81.7
+  7->6 label changes n=655 Local_Y q05/50/95 [511. 666. 668.] share>=660 0.748 Local_X q25/50/75 [73.7 75.7 77.7]
+  ramp tracks 611 with both 611: lateral Local_Y p50 713; label Local_Y p50 666; lateral minus label s q10/50/90 [0.1 2.8 6.9]

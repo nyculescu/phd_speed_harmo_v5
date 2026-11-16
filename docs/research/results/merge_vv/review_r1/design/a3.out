@@ -1,0 +1,80 @@
+== E30|lr400_16_1
+ttc_net n=480                                        pt  +9.93 SE  1.92 97.5% [ +6.24,+14.95] 98.75% [ +5.86,+15.49] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +9.9): z=2.24 (97.5%) 0.998; z=2.50 (98.75%) 0.996
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.644; z=2.50 (98.75%) 0.545
+ttc_net n=320                                        pt  +9.93 SE  2.36 97.5% [ +5.32,+16.13] 98.75% [ +4.94,+16.83] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +9.9): z=2.24 (97.5%) 0.976; z=2.50 (98.75%) 0.957
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.451; z=2.50 (98.75%) 0.353
+ttc_net n=240                                        pt  +9.93 SE  2.73 97.5% [ +4.73,+16.84] 98.75% [ +4.17,+17.57] P(lb>0) boot-shift 97.5%: 0.98
+      normal approx power P(lower>0 | true +9.9): z=2.24 (97.5%) 0.918; z=2.50 (98.75%) 0.872
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.340; z=2.50 (98.75%) 0.252
+ttc_net n=160                                        pt  +9.93 SE  3.31 97.5% [ +3.59,+18.34] 98.75% [ +2.94,+19.20] P(lb>0) boot-shift 97.5%: 0.90
+      normal approx power P(lower>0 | true +9.9): z=2.24 (97.5%) 0.775; z=2.50 (98.75%) 0.692
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.232; z=2.50 (98.75%) 0.161
+ttc_net n=120                                        pt  +9.93 SE  3.86 97.5% [ +2.44,+19.52] 98.75% [ +1.49,+20.49] P(lb>0) boot-shift 97.5%: 0.78
+      normal approx power P(lower>0 | true +9.9): z=2.24 (97.5%) 0.631; z=2.50 (98.75%) 0.531
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.172; z=2.50 (98.75%) 0.115
+m1 n=480                                             pt +10.55 SE  2.36 97.5% [ +5.12,+15.44] 98.75% [ +4.63,+15.97] P(lb>0) boot-shift 97.5%: 0.98
+m2 n=480                                             pt +11.88 SE  2.33 97.5% [ +6.86,+17.57] 98.75% [ +6.34,+18.21] P(lb>0) boot-shift 97.5%: 1.00
+away n=480                                           pt  -8.62 SE  2.90 97.5% [-14.53, -1.54] 98.75% [-15.24, -0.77] P(lb>0) boot-shift 97.5%: 0.00
+ttc_half n=480                                       pt +10.43 SE  1.92 97.5% [ +6.32,+15.08] 98.75% [ +5.96,+15.61] P(lb>0) boot-shift 97.5%: 1.00
+merges (m1+m2) n=480                                 pt +13.05 SE  1.70 97.5% [ +9.57,+17.10] 98.75% [ +9.16,+17.54] P(lb>0) boot-shift 97.5%: 1.00
+not within LC window n=480                           pt +10.53 SE  1.95 97.5% [ +6.56,+15.46] 98.75% [ +6.01,+16.18] P(lb>0) boot-shift 97.5%: 1.00
+within LC window n=480                               pt  +6.26 SE  1.90 97.5% [ +1.95,+10.48] 98.75% [ +1.50,+11.02] P(lb>0) boot-shift 97.5%: 0.84
+edge(ttc_half) - edge(ttc_net), same runs: pt +0.50 SE 0.34 95% [-0.43,+0.91]
+corr(ttc_net, ttc_half) per arm: [0.9992 0.9992 0.9993 0.9993 0.9991 0.9995] | ratio of sums half/net: [0.9961, 0.9975, 0.9974, 0.9984, 0.9975, 1.0007]
+model: merges x0.65 both arms                        pt  +8.84 SE  2.02 97.5% [ +5.00,+13.91] 98.75% [ +4.63,+14.54] P(lb>0) boot-shift 97.5%: 1.00
+      median opp count 857; normal power P(lb>0): z2.24 0.98 z2.50 0.97; P(ub<0): z2.50 0.00
+model: merges x0.34 both arms                        pt  +7.29 SE  2.09 97.5% [ +2.48,+11.91] 98.75% [ +2.01,+12.43] P(lb>0) boot-shift 97.5%: 0.86
+      median opp count 536; normal power P(lb>0): z2.24 0.89 z2.50 0.84; P(ub<0): z2.50 0.00
+model: merges x0.2 both arms                         pt  +4.70 SE  2.43 97.5% [ -0.70,+10.08] 98.75% [ -1.23,+10.74] P(lb>0) boot-shift 97.5%: 0.35
+      median opp count 386; normal power P(lb>0): z2.24 0.38 z2.50 0.28; P(ub<0): z2.50 0.00
+model: merges x0.1 both arms                         pt  +0.36 SE  2.56 97.5% [ -5.00, +6.28] 98.75% [ -5.53, +7.02] P(lb>0) boot-shift 97.5%: 0.03
+      median opp count 281; normal power P(lb>0): z2.24 0.02 z2.50 0.01; P(ub<0): z2.50 0.00
+model: merges x0.02 both arms                        pt  -5.63 SE  2.72 97.5% [-11.01, +1.52] 98.75% [-11.53, +2.20] P(lb>0) boot-shift 97.5%: 0.00
+      median opp count 195; normal power P(lb>0): z2.24 0.00 z2.50 0.00; P(ub<0): z2.50 0.33
+== E30|grid_lr400_13_1
+ttc_net n=480                                        pt +22.76 SE  2.20 97.5% [+17.51,+27.12] 98.75% [+16.99,+27.56] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +22.8): z=2.24 (97.5%) 1.000; z=2.50 (98.75%) 1.000
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.511; z=2.50 (98.75%) 0.409
+ttc_net n=320                                        pt +22.76 SE  2.63 97.5% [+16.41,+28.19] 98.75% [+15.85,+28.86] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +22.8): z=2.24 (97.5%) 1.000; z=2.50 (98.75%) 1.000
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.367; z=2.50 (98.75%) 0.276
+ttc_net n=240                                        pt +22.76 SE  3.03 97.5% [+15.61,+28.95] 98.75% [+14.89,+29.79] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +22.8): z=2.24 (97.5%) 1.000; z=2.50 (98.75%) 1.000
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.276; z=2.50 (98.75%) 0.198
+ttc_net n=160                                        pt +22.76 SE  3.64 97.5% [+14.40,+30.50] 98.75% [+13.57,+31.43] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +22.8): z=2.24 (97.5%) 1.000; z=2.50 (98.75%) 1.000
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.193; z=2.50 (98.75%) 0.131
+ttc_net n=120                                        pt +22.76 SE  4.20 97.5% [+12.97,+31.87] 98.75% [+12.23,+32.91] P(lb>0) boot-shift 97.5%: 1.00
+      normal approx power P(lower>0 | true +22.8): z=2.24 (97.5%) 0.999; z=2.50 (98.75%) 0.998
+      normal approx power P(lower>0 | true +5.0): z=2.24 (97.5%) 0.147; z=2.50 (98.75%) 0.096
+m1 n=480                                             pt +15.09 SE  2.19 97.5% [+10.18,+19.96] 98.75% [ +9.58,+20.53] P(lb>0) boot-shift 97.5%: 1.00
+m2 n=480                                             pt +29.01 SE  2.63 97.5% [+22.49,+33.75] 98.75% [+21.86,+34.30] P(lb>0) boot-shift 97.5%: 1.00
+away n=480                                           pt  +4.60 SE  3.35 97.5% [ -2.25,+12.70] 98.75% [ -3.10,+13.85] P(lb>0) boot-shift 97.5%: 0.28
+ttc_half n=480                                       pt +22.50 SE  2.08 97.5% [+17.92,+27.07] 98.75% [+17.37,+27.46] P(lb>0) boot-shift 97.5%: 1.00
+merges (m1+m2) n=480                                 pt +24.35 SE  2.01 97.5% [+19.84,+28.91] 98.75% [+19.34,+29.40] P(lb>0) boot-shift 97.5%: 1.00
+not within LC window n=480                           pt +23.94 SE  2.06 97.5% [+19.26,+28.58] 98.75% [+18.76,+29.24] P(lb>0) boot-shift 97.5%: 1.00
+within LC window n=480                               pt +12.72 SE  1.97 97.5% [ +8.72,+17.65] 98.75% [ +8.27,+18.23] P(lb>0) boot-shift 97.5%: 1.00
+edge(ttc_half) - edge(ttc_net), same runs: pt -0.26 SE 0.36 95% [-0.63,+0.80]
+corr(ttc_net, ttc_half) per arm: [0.9992 0.9992 0.9993 0.9993 0.9991 0.9996] | ratio of sums half/net: [0.9961, 0.9975, 0.9974, 0.9984, 0.9975, 0.9973]
+model: merges x0.65 both arms                        pt +21.18 SE  2.32 97.5% [+16.28,+26.45] 98.75% [+15.74,+26.99] P(lb>0) boot-shift 97.5%: 1.00
+      median opp count 1015; normal power P(lb>0): z2.24 1.00 z2.50 1.00; P(ub<0): z2.50 0.00
+model: merges x0.34 both arms                        pt +18.47 SE  2.72 97.5% [+13.10,+24.54] 98.75% [+12.58,+24.97] P(lb>0) boot-shift 97.5%: 1.00
+      median opp count 646; normal power P(lb>0): z2.24 1.00 z2.50 1.00; P(ub<0): z2.50 0.00
+model: merges x0.2 both arms                         pt +16.36 SE  2.60 97.5% [+10.28,+21.85] 98.75% [ +9.85,+22.32] P(lb>0) boot-shift 97.5%: 1.00
+      median opp count 471; normal power P(lb>0): z2.24 1.00 z2.50 1.00; P(ub<0): z2.50 0.00
+model: merges x0.1 both arms                         pt +12.34 SE  3.15 97.5% [ +5.74,+19.55] 98.75% [ +4.99,+20.38] P(lb>0) boot-shift 97.5%: 0.97
+      median opp count 344; normal power P(lb>0): z2.24 0.95 z2.50 0.92; P(ub<0): z2.50 0.00
+model: merges x0.02 both arms                        pt  +7.47 SE  3.47 97.5% [ -0.33,+14.88] 98.75% [ -1.00,+15.86] P(lb>0) boot-shift 97.5%: 0.47
+      median opp count 238; normal power P(lb>0): z2.24 0.46 z2.50 0.36; P(ub<0): z2.50 0.00
+== lane-end stopped vehicle-seconds at 300 m in E30 (end_stop + end_stop2), per arm: median, mean, p10, p90
+E30|w0u250             664.5 738.3 [ 164.8 1425.2] | merge1 median 140.5 merge2 median 435.0 | 20 % of median: 132.9
+E30|w1u500             608.0 711.9 [ 175.9 1360.3] | merge1 median 136.5 merge2 median 417.5 | 20 % of median: 121.6
+E30|w2u250             692.0 794.3 [ 173.8 1529.5] | merge1 median 167.0 merge2 median 458.5 | 20 % of median: 138.4
+E30|w3u500             721.5 748.8 [ 198.8 1384.1] | merge1 median 176.5 merge2 median 443.0 | 20 % of median: 144.3
+E30|w4u500             711.5 798.0 [ 211.5 1456.7] | merge1 median 172.5 merge2 median 471.5 | 20 % of median: 142.3
+E30|lr400_16_1         1120.0 1165.2 [ 263.8 2020.1] | merge1 median 256.5 merge2 median 711.5 | 20 % of median: 224.0
+E30|grid_lr400_13_1    1225.5 1292.6 [ 305.9 2361.9] | merge1 median 253.5 merge2 median 901.0 | 20 % of median: 245.1
+E30|p333               1181.0 1238.0 [ 295.6 2241.9] | merge1 median 209.5 merge2 median 852.5 | 20 % of median: 236.2
+E30|nc                 816.0 842.2 [ 363.7 1374.3] | merge1 median 204.5 merge2 median 558.0 | 20 % of median: 163.2

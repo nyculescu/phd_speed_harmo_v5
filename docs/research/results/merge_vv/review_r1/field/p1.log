@@ -1,0 +1,33 @@
+Location row counts (raw): {'us-101': 4802933, 'i-80': 4566387, 'lankershim': 1607319, 'peachtree': 873887}
+us-101 raw 4802933 after exact-duplicate drop 4098933 unique (veh,total_frames,time) 4098933
+Vehicle_ID         int64
+Frame_ID           int64
+Total_Frames       int64
+Global_Time        int64
+Local_X          float64
+Local_Y          float64
+v_length         float64
+v_Class            int64
+v_Vel            float64
+v_Acc            float64
+Lane_ID            int64
+Preceding          int64
+Following          int64
+Space_Headway    float64
+Time_Headway     float64
+i-80 raw 4566387 after exact-duplicate drop 4566387 unique (veh,total_frames,time) 4566387
+Vehicle_ID         int64
+Frame_ID           int64
+Total_Frames       int64
+Global_Time        int64
+Local_X          float64
+Local_Y          float64
+v_length         float64
+v_Class            int64
+v_Vel            float64
+v_Acc            float64
+Lane_ID            int64
+Preceding          int64
+Following          int64
+Space_Headway    float64
+Time_Headway     float64

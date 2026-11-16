@@ -1,0 +1,99 @@
+learners [np.str_('E30|w0u250'), np.str_('E30|w1u500'), np.str_('E30|w2u250'), np.str_('E30|w3u500'), np.str_('E30|w4u500')]
+ttc_net == E30+out_E30: True ; == road sum: True
+
+[1] edges on ttc_net and delay, all non-learning arms, sorted by ttc edge (point; 97.5 % interval = pct 1.25-98.75)
+  E30|lr400_16_1         E  +9.93 [ +6.11,+15.06]  D +0.44 (lower -0.33) competitor
+  E30|3E-C_TRUCK         E +20.46 [+16.77,+24.39]  D +2.63 (lower +1.82) trade point
+  E30|nc                 E +20.66 [+17.25,+24.41]  D +28.75 (lower +28.03) trade point
+  E30|3ex2               E +21.25 [+17.94,+24.52]  D +0.48 (lower -0.22) competitor
+  E30|3ex1               E +21.54 [+17.60,+26.26]  D +2.44 (lower +1.72) trade point
+  E30|grid_lr400_13_1    E +22.76 [+17.43,+27.03]  D +1.18 (lower +0.26) competitor
+  E30|3e                 E +23.32 [+19.60,+27.00]  D +4.71 (lower +3.81) trade point
+  E30|os0_10_10          E +25.12 [+20.10,+29.78]  D -0.23 (lower -1.05) competitor
+  E30|lr400_13_2         E +25.30 [+19.90,+31.16]  D +0.20 (lower -0.70) competitor
+  E30|os1_15_10          E +26.41 [+21.76,+32.08]  D +0.17 (lower -0.61) competitor
+  E30|grid_os1_10_10     E +26.68 [+21.57,+31.52]  D -0.33 (lower -1.15) competitor
+  E30|3E-D_TRUCK         E +27.11 [+21.50,+33.30]  D -0.79 (lower -1.55) competitor
+  E30|lr1000_16_2        E +28.14 [+23.22,+33.42]  D +0.17 (lower -0.55) competitor
+  E30|grid_z31333        E +28.34 [+21.33,+35.78]  D +0.81 (lower +0.10) competitor
+  E30|MPC-F              E +28.34 [+22.48,+34.31]  D +0.38 (lower -0.52) competitor
+  E30|os1_10_0           E +30.73 [+26.97,+34.47]  D +1.62 (lower +0.60) competitor
+  E30|p333               E +30.80 [+24.86,+36.94]  D -0.31 (lower -1.09) competitor
+  E30|p111               E +31.10 [+28.02,+34.71]  D +16.90 (lower +16.12) trade point
+  E30|lr1000_10_1        E +33.20 [+27.12,+38.44]  D -0.16 (lower -1.01) competitor
+  E30|a4400_10_1         E +33.39 [+30.39,+36.73]  D +6.41 (lower +5.41) trade point
+  E30|z33133             E +34.94 [+31.39,+39.06]  D +3.12 (lower +2.35) trade point
+  E30|copy               E +35.68 [+32.84,+38.38]  D +11.68 (lower +10.78) trade point
+  E30|p222               E +36.27 [+32.40,+40.18]  D +9.21 (lower +8.29) trade point
+  E30|grid_a41000_10_2   E +36.74 [+32.44,+40.48]  D +3.01 (lower +2.32) trade point
+  E30|grid_r4a2          E +37.10 [+33.88,+41.23]  D +3.21 (lower +2.36) trade point
+  E30|r4a1               E +38.94 [+35.59,+42.47]  D +5.53 (lower +4.60) trade point
+
+[2] composition, medians per run and shares of sums
+  E30|w0u250           med ttc  1000.0 m1  231.5 m2  607.0 edge1  24.0 rest  104.0 junction  13.0 | share merge(3a,4a,ramps) 0.842 junction 0.013 edge1 0.025 rest 0.121 | es  140.5 es2  435.0
+  E30|w1u500           med ttc  1068.5 m1  238.5 m2  623.0 edge1  25.0 rest  160.0 junction  14.0 | share merge(3a,4a,ramps) 0.803 junction 0.014 edge1 0.024 rest 0.159 | es  136.5 es2  417.5
+  E30|w2u250           med ttc  1091.5 m1  245.0 m2  628.0 edge1  25.0 rest  128.5 junction  13.0 | share merge(3a,4a,ramps) 0.827 junction 0.013 edge1 0.025 rest 0.136 | es  167.0 es2  458.5
+  E30|w3u500           med ttc  1046.5 m1  250.0 m2  608.0 edge1  25.0 rest  121.0 junction  13.0 | share merge(3a,4a,ramps) 0.825 junction 0.013 edge1 0.025 rest 0.136 | es  176.5 es2  443.0
+  E30|w4u500           med ttc  1075.0 m1  251.5 m2  631.5 edge1  22.0 rest  132.0 junction  13.0 | share merge(3a,4a,ramps) 0.829 junction 0.013 edge1 0.022 rest 0.137 | es  172.5 es2  471.5
+  E30|lr400_16_1       med ttc  1219.0 m1  265.5 m2  741.0 edge1   2.0 rest  151.5 junction  13.0 | share merge(3a,4a,ramps) 0.850 junction 0.012 edge1 0.002 rest 0.135 | es  256.5 es2  711.5
+  E30|grid_lr400_13_1  med ttc  1439.5 m1  283.0 m2  921.0 edge1   3.0 rest  198.0 junction  14.0 | share merge(3a,4a,ramps) 0.849 junction 0.011 edge1 0.002 rest 0.138 | es  253.5 es2  901.0
+  E30|p333             med ttc  1669.0 m1  283.5 m2 1004.0 edge1  25.0 rest  218.0 junction  15.0 | share merge(3a,4a,ramps) 0.805 junction 0.010 edge1 0.017 rest 0.169 | es  209.5 es2  852.5
+  E30|nc               med ttc  1326.0 m1  300.0 m2  804.0 edge1   1.0 rest  167.0 junction  22.0 | share merge(3a,4a,ramps) 0.853 junction 0.017 edge1 0.001 rest 0.128 | es  204.5 es2  558.0
+
+[3] merge-scaling model: merge-area counts (3a, 4a, ramps) x k in every arm, the rest unchanged
+  lr400_16_1           k=1.00 edge  +9.93 SE 1.93 97.5% [ +6.15,+14.91] | P(lower>0) normal 0.998 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 6.8, n=960 4.8 | P(lower>0) at n=960 1.000
+  lr400_16_1           k=0.34 edge  +7.29 SE 2.12 97.5% [ +2.41,+12.01] | P(lower>0) normal 0.883 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 7.5, n=960 5.3 | P(lower>0) at n=960 0.995
+  lr400_16_1           k=0.20 edge  +4.70 SE 2.45 97.5% [ -0.81,+10.27] | P(lower>0) normal 0.374 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 8.6, n=960 6.1 | P(lower>0) at n=960 0.682
+  lr400_16_1           k=0.10 edge  +0.36 SE 2.58 97.5% [ -5.16, +6.53] | P(lower>0) normal 0.018 | P(98.75% upper<0) normal 0.004 | edge with power .9: n=480 9.1, n=960 6.4 | P(lower>0) at n=960 0.020
+  lr400_16_1           k=0.02 edge  -5.63 SE 2.73 97.5% [-11.09, +1.68] | P(lower>0) normal 0.000 | P(98.75% upper<0) normal 0.330 | edge with power .9: n=480 9.6, n=960 6.8 | P(lower>0) at n=960 0.000
+  grid_lr400_13_1      k=1.00 edge +22.76 SE 2.23 97.5% [+17.39,+27.20] | P(lower>0) normal 1.000 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 7.8, n=960 5.5 | P(lower>0) at n=960 1.000
+  grid_lr400_13_1      k=0.34 edge +18.47 SE 2.73 97.5% [+13.06,+24.57] | P(lower>0) normal 1.000 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 9.6, n=960 6.8 | P(lower>0) at n=960 1.000
+  grid_lr400_13_1      k=0.20 edge +16.36 SE 2.63 97.5% [+10.22,+21.92] | P(lower>0) normal 1.000 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 9.3, n=960 6.6 | P(lower>0) at n=960 1.000
+  grid_lr400_13_1      k=0.10 edge +12.34 SE 3.16 97.5% [ +5.60,+19.59] | P(lower>0) normal 0.952 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 11.1, n=960 7.9 | P(lower>0) at n=960 0.999
+  grid_lr400_13_1      k=0.02 edge  +7.47 SE 3.47 97.5% [ -0.24,+14.85] | P(lower>0) normal 0.463 | P(98.75% upper<0) normal 0.000 | edge with power .9: n=480 12.2, n=960 8.7 | P(lower>0) at n=960 0.788
+  same model without edge 1 (entry) samples, against lr400_16_1:
+    k=1.00 edge +11.74 SE 1.98 [ +8.04,+16.88]
+    k=0.34 edge +11.50 SE 2.10 [ +6.77,+16.26]
+    k=0.20 edge +10.25 SE 2.45 [ +5.11,+16.44]
+    k=0.10 edge  +8.28 SE 2.48 [ +3.08,+14.61]
+    k=0.02 edge  +5.95 SE 3.02 [ +0.00,+13.60]
+
+[4] V2 proxy: ttc_half edge minus ttc_net edge, same runs
+  lr400_16_1           net  +9.93 (SE 1.93) half +10.43 diff +0.50 SE 0.346 95% [-0.46,+0.91]; corr of boot edges 0.984
+     SE 0.35: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 1.000 1.000 0.825 0.304 0.025
+     SE 0.69: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 0.983 0.825 0.304 0.108 0.025
+     SE 1.04: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 0.649 0.459 0.158 0.069 0.025
+     per-run corr net vs half: 0.9991-0.9995; ratio of sums half/net 0.9961-1.0007
+  grid_lr400_13_1      net +22.76 (SE 2.23) half +22.50 diff -0.26 SE 0.357 95% [-0.62,+0.78]; corr of boot edges 0.988
+     SE 0.36: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 1.000 1.000 0.800 0.288 0.025
+     SE 0.71: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 0.975 0.800 0.288 0.104 0.025
+     SE 1.07: P(95% interval inside +-3) for true diff 0/1/2/2.5/3 = 0.601 0.426 0.149 0.067 0.025
+     per-run corr net vs half: 0.9991-0.9996; ratio of sums half/net 0.9961-0.9984
+
+[5] 0 of n bounds
+  0 of 20: 95 % upper bound 0.1391
+  0 of 40: 95 % upper bound 0.0722
+  stratified 20 merge-area + 20 elsewhere, merge share 0.80: 95 % bound on the overall non-event share 0.1113
+  stratified 20 merge-area + 20 elsewhere, merge share 0.85: 95 % bound on the overall non-event share 0.1182
+
+[6] other measures, edge against the two rules (97.5 % interval)
+   lr400_16_1 ttc2 +32.1 [+26.4,+37.1] ttc15 +21.9 [+17.1,+27.2] sev3 +16.0 [+11.7,+21.3] b45 +2.4 [-0.6,+5.0]
+   grid_lr400_13_1 ttc2 +45.6 [+40.1,+50.9] ttc15 +38.7 [+34.0,+43.8] sev3 +28.9 [+23.2,+34.2] b45 +7.6 [+4.2,+10.0]
+
+[7] gate: lane-end standing; no-effect behaviour of the cut (random halves of one arm, 240 vs 240)
+  nc                   es  median  204.5  null cut 2.5/97.5 pct -0.290 +0.215
+  nc                   es2 median  558.0  null cut 2.5/97.5 pct -0.131 +0.116
+  lr400_16_1           es  median  256.5  null cut 2.5/97.5 pct -0.449 +0.307
+  lr400_16_1           es2 median  711.5  null cut 2.5/97.5 pct -0.328 +0.242
+  grid_lr400_13_1      es  median  253.5  null cut 2.5/97.5 pct -0.292 +0.230
+  grid_lr400_13_1      es2 median  901.0  null cut 2.5/97.5 pct -0.265 +0.205
+  w1u500               es  median  136.5  null cut 2.5/97.5 pct -0.414 +0.294
+  w1u500               es2 median  417.5  null cut 2.5/97.5 pct -0.233 +0.186
+  v3w learners es medians [140.5, 136.5, 167.0, 176.5, 172.5] es2 [435.0, 417.5, 458.5, 443.0, 471.5]
+
+[8] replication line: P(both 97.5 % lower bounds > 0) on 480 fresh seeds, normal approx, if the true edges equal the stored ones, or the stored lower bound
+  true edge vs lr400_16_1 +9.93: P(lower>0) 0.998
+  true edge vs lr400_16_1 +6.15: P(lower>0) 0.829
+  true edge vs lr400_16_1 +5.00: P(lower>0) 0.638
+  true edge vs lr400_16_1 +3.00: P(lower>0) 0.247
+  true edge vs lr400_16_1 +0.00: P(lower>0) 0.013

@@ -1,0 +1,38 @@
+keys ['E30', 'c1_t0', 'end_stop', 'end_stop2', 'm_road_dist', 'm_road_ge45', 'm_road_ttc3', 'm_road_vs', 'm_ttc3_all', 'm_ttc3_lc', 'out_E30', 'ttc15', 'ttc15_p_rest', 'ttc15_r_4a', 'ttc15_s_lo', 'ttc15_s_mid', 'ttc2', 'ttc2_p_before', 'ttc2_p_rest', 'ttc2_r_4a', 'ttc2_r_ramp2', 'ttc2_r_rest', 'ttc2_s_hi', 'ttc2_s_lo', 'ttc2_s_mid', 'ttc3', 'ttc3_p_after', 'ttc3_p_before', 'ttc3_p_hold', 'ttc3_p_rest', 'ttc3_r_3', 'ttc3_r_4a', 'ttc3_r_ramp2', 'ttc3_r_rest', 'ttc3_s_hi', 'ttc3_s_lo', 'ttc3_s_mid', 'ttc_half', 'ttc_net', 'wall_s']
+c1_t0 {'veh_n': 2648, 'alks_n': 1319, 'alks_sha': '07db808f33c038eb87cff3f91c9f0f23aba38f2e442da4586582042bcc263327', 'len_4a_0': 294.72, 'len_3_0': 1194.3, 'len_4_0': 996.0}
+m_road_ttc3 {'3a': {'before': 30, 'after': 23, 'rest': 6}, '4a': {'before': 6, 'hold': 1, 'after': 9, 'rest': 212}, '1': {'hold': 27}, '2': {'after': 10}, 'junction': {'rest': 10}, 'ramp2': {'rest': 16}, '3': {'rest': 37}}
+rows 14880 arms 31 mismatch {'E30+out': 0, 'ttc3': 0, 'm_ttc3_all': 0, 'm_road_sum': 0, 'ttc3_r_sum': 0}
+fix_x values {'True'} geom {'r2m3'} accel {(None, None)}
+seeds 7489160 7489639 480
+all wall mean 99.9 median 96.1
+E30|3E-C_TRUCK: n 480 wall mean 101.8 med 101.5 | end_stop med 288 mean 369 zero% 1 | end_stop2 med 516 mean 563 zero% 0 | ttc_net med 1388 half/net med 0.998
+E30|3E-D_TRUCK: n 480 wall mean 94.5 med 93.7 | end_stop med 243 mean 316 zero% 1 | end_stop2 med 660 mean 777 zero% 1 | ttc_net med 1480 half/net med 0.999
+E30|3e: n 480 wall mean 93.4 med 93.4 | end_stop med 190 mean 247 zero% 1 | end_stop2 med 500 mean 536 zero% 0 | ttc_net med 1455 half/net med 0.998
+E30|3ex1: n 480 wall mean 90.9 med 90.5 | end_stop med 170 mean 233 zero% 2 | end_stop2 med 507 mean 572 zero% 0 | ttc_net med 1423 half/net med 0.998
+E30|3ex2: n 480 wall mean 92.7 med 93.1 | end_stop med 264 mean 329 zero% 2 | end_stop2 med 476 mean 520 zero% 0 | ttc_net med 1405 half/net med 0.999
+E30|MPC-F: n 480 wall mean 95.3 med 98.1 | end_stop med 232 mean 325 zero% 1 | end_stop2 med 778 mean 831 zero% 0 | ttc_net med 1526 half/net med 0.999
+E30|a4400_10_1: n 480 wall mean 153.9 med 154.9 | end_stop med 234 mean 330 zero% 1 | end_stop2 med 818 mean 852 zero% 0 | ttc_net med 1664 half/net med 0.998
+E30|copy: n 480 wall mean 98.0 med 99.7 | end_stop med 252 mean 350 zero% 2 | end_stop2 med 876 mean 886 zero% 0 | ttc_net med 1706 half/net med 0.999
+E30|grid_a41000_10_2: n 480 wall mean 94.9 med 94.9 | end_stop med 221 mean 294 zero% 1 | end_stop2 med 1004 mean 1038 zero% 0 | ttc_net med 1769 half/net med 0.999
+E30|grid_lr400_13_1: n 480 wall mean 90.7 med 87.5 | end_stop med 254 mean 344 zero% 2 | end_stop2 med 901 mean 948 zero% 0 | ttc_net med 1440 half/net med 0.997
+E30|grid_os1_10_10: n 480 wall mean 98.4 med 97.0 | end_stop med 213 mean 312 zero% 0 | end_stop2 med 748 mean 745 zero% 0 | ttc_net med 1504 half/net med 0.999
+E30|grid_r4a2: n 480 wall mean 95.7 med 97.7 | end_stop med 210 mean 293 zero% 1 | end_stop2 med 996 mean 1022 zero% 0 | ttc_net med 1780 half/net med 0.999
+E30|grid_z31333: n 480 wall mean 88.6 med 85.8 | end_stop med 234 mean 327 zero% 1 | end_stop2 med 718 mean 845 zero% 1 | ttc_net med 1472 half/net med 0.998
+E30|lr1000_10_1: n 480 wall mean 157.1 med 159.0 | end_stop med 220 mean 301 zero% 1 | end_stop2 med 890 mean 943 zero% 0 | ttc_net med 1568 half/net med 1.000
+E30|lr1000_16_2: n 480 wall mean 96.7 med 97.2 | end_stop med 232 mean 328 zero% 1 | end_stop2 med 872 mean 942 zero% 0 | ttc_net med 1594 half/net med 1.001
+E30|lr400_13_2: n 480 wall mean 92.3 med 92.4 | end_stop med 245 mean 338 zero% 1 | end_stop2 med 784 mean 886 zero% 1 | ttc_net med 1420 half/net med 1.000
+E30|lr400_16_1: n 480 wall mean 163.1 med 170.3 | end_stop med 256 mean 368 zero% 1 | end_stop2 med 712 mean 798 zero% 1 | ttc_net med 1219 half/net med 1.000
+E30|nc: n 480 wall mean 87.1 med 85.2 | end_stop med 204 mean 268 zero% 1 | end_stop2 med 558 mean 574 zero% 0 | ttc_net med 1326 half/net med 1.001
+E30|os0_10_10: n 480 wall mean 97.3 med 99.2 | end_stop med 223 mean 314 zero% 1 | end_stop2 med 554 mean 599 zero% 0 | ttc_net med 1446 half/net med 1.000
+E30|os1_10_0: n 480 wall mean 96.6 med 95.8 | end_stop med 240 mean 312 zero% 1 | end_stop2 med 662 mean 722 zero% 0 | ttc_net med 1600 half/net med 1.000
+E30|os1_15_10: n 480 wall mean 89.8 med 90.9 | end_stop med 232 mean 305 zero% 1 | end_stop2 med 732 mean 775 zero% 0 | ttc_net med 1567 half/net med 0.998
+E30|p111: n 480 wall mean 96.3 med 96.0 | end_stop med 245 mean 330 zero% 1 | end_stop2 med 824 mean 840 zero% 0 | ttc_net med 1604 half/net med 1.001
+E30|p222: n 480 wall mean 98.3 med 97.3 | end_stop med 310 mean 381 zero% 0 | end_stop2 med 1000 mean 1038 zero% 0 | ttc_net med 1672 half/net med 0.998
+E30|p333: n 480 wall mean 96.1 med 97.5 | end_stop med 210 mean 301 zero% 0 | end_stop2 med 852 mean 937 zero% 0 | ttc_net med 1669 half/net med 1.000
+E30|r4a1: n 480 wall mean 89.2 med 89.3 | end_stop med 236 mean 313 zero% 0 | end_stop2 med 780 mean 830 zero% 0 | ttc_net med 1826 half/net med 0.999
+E30|w0u250: n 480 wall mean 86.9 med 84.2 | end_stop med 140 mean 208 zero% 1 | end_stop2 med 435 mean 530 zero% 0 | ttc_net med 1000 half/net med 0.997
+E30|w1u500: n 480 wall mean 91.8 med 90.1 | end_stop med 136 mean 201 zero% 1 | end_stop2 med 418 mean 511 zero% 0 | ttc_net med 1068 half/net med 0.997
+E30|w2u250: n 480 wall mean 98.0 med 98.1 | end_stop med 167 mean 254 zero% 2 | end_stop2 med 458 mean 541 zero% 0 | ttc_net med 1092 half/net med 0.998
+E30|w3u500: n 480 wall mean 91.5 med 91.0 | end_stop med 176 mean 249 zero% 2 | end_stop2 med 443 mean 500 zero% 0 | ttc_net med 1046 half/net med 0.998
+E30|w4u500: n 480 wall mean 89.0 med 87.0 | end_stop med 172 mean 235 zero% 1 | end_stop2 med 472 mean 563 zero% 0 | ttc_net med 1075 half/net med 0.998
+E30|z33133: n 480 wall mean 90.5 med 92.7 | end_stop med 220 mean 308 zero% 1 | end_stop2 med 971 mean 1038 zero% 0 | ttc_net med 1693 half/net med 0.998

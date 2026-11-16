@@ -1,0 +1,5 @@
+on-ramp vehicle-seconds right of x = 72.5 ft (1 Hz): 17263 ; below 1 m/s: 1265 ; vehicles with any: 198 of 611
+Local_Y of stopped samples (ft) p05/p25/p50/p75/p95: [343.0, 395.0, 487.0, 591.0, 702.0] ; share past 566 ft (last 100 ft before the label end 666): 0.306
+stopped samples with lane-6 vehicles within 30 m: 1265 of 1265 ; lane-6 mean speed there, m/s p25/p50/p75/p95: [0.74, 1.17, 1.72, 3.14]
+share of stopped ramp samples beside lane-6 traffic above 2 m/s: 0.185 ; above 5 m/s: 0.013
+ramp samples per speed band (m/s) <1, 1-5, 5-10, >10: [1265, 11590, 3233, 891]

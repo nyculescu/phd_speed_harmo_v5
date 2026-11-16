@@ -1,0 +1,147 @@
+===== us-101 tracks (split at time gaps): 6101
+rows sharing time+lane+position with another row: 0
+lane sequences that touch the ramp/aux lanes (top 30 of 43 ):
+Lane_ID
+7-6-5            175
+5-6-8            110
+5-7-6-8           96
+7-6-5-4           93
+7-6-5-4-3         37
+7-6-8-5           22
+7-6-5-4-3-2       16
+7-5                7
+7-6-5-4-3-2-1      7
+5-6-5              7
+7-6-5-6-5          6
+7-6-8-5-4          6
+7-5-4-3-2          5
+4-5-7-6-8          4
+4-5-6-8            4
+7-6-5-4-5          4
+7-6-8              3
+7-6-8-5-4-3        3
+7-6-5-4-5-4        3
+5-7-6-8-5          3
+7-5-4-3            3
+7-6-5-6-5-4        2
+5-7-6-5            2
+7-6-8-5-4-5-4      1
+1-2-3-4-5-6-8      1
+5-7-5-6-8          1
+5-7-5-6-8-5        1
+7-6-5-4-3-4        1
+5-6-5-4            1
+5-7-6-5-6-8-5      1
+lane-change counts (from,to):
+frm  Lane_ID
+1    2          161
+2    1          219
+     3          110
+3    2          233
+     4          139
+4    3          359
+     5          173
+5    4          411
+     6          142
+     7          111
+     8            5
+6    5          376
+     8          261
+7    5           18
+     6          495
+8    5           40
+raw src->dst transitions: 376 tracks with one: 354 with more than one (flicker or re-entry): 11
+dst->src transitions: 142 tracks: 140
+Local_Y at 7->6: n=495 min=615 p05=616 p50=653 p95=659 max=662 ft
+Local_Y at 6->8: n=261 min=1310 p05=1311 p50=1347 p95=1355 max=1356 ft
+Local_Y at 5->6: n=142 min=616 p05=648 p50=776 p95=1259 max=1307 ft
+Local_Y at 6->5: n=376 min=620 p05=679 p50=840 p95=1280 max=1345 ft
+first-seen lane of tracks: {1: 1087, 2: 1170, 3: 1107, 4: 1144, 5: 1191, 7: 402}
+first Local_Y of tracks first seen on ramp lane 7 : {'count': 402.0, 'mean': 525.5, 'std': 18.8, 'min': 483.9, '25%': 503.7, '50%': 537.5, '75%': 541.1, 'max': 553.6}
+first Local_Y of tracks first seen on src lane 6 : {'count': 0.0, 'mean': nan, 'std': nan, 'min': nan, '25%': nan, '50%': nan, '75%': nan, 'max': nan}
+===== i-80 tracks (split at time gaps): 5678
+rows sharing time+lane+position with another row: 0
+lane sequences that touch the ramp/aux lanes (top 30 of 23 ):
+Lane_ID
+7-6                  381
+7-6-5                107
+7-6-5-4               61
+6-7-6                 31
+7-6-5-4-3             14
+7-6-5-4-3-2           11
+7-6-5-6-5              8
+7-6-5-4-3-2-1          7
+7-6-5-4-5-4            3
+7-6-5-6                3
+7-6-7-6-5              3
+7-6-7-6-5-4            2
+7-6-5-6-5-4            2
+7-6-7-6                2
+5-6-7-6                1
+7-6-7-6-5-4-3-2-1      1
+7-6-5-6-5-6-5          1
+7-6-5-4-5-4-3-2        1
+7-6-5-4-3-2-1-2        1
+7-6-5-4-3-4-3-2-1      1
+7-6-7-6-7-6-5          1
+6-7-6-5                1
+7-6-7-6-5-4-3          1
+lane-change counts (from,to):
+frm  Lane_ID
+1    2           83
+2    1          114
+     3           73
+3    2          254
+     4           78
+4    3          357
+     5           96
+5    4          450
+     6          180
+6    5          541
+     7           44
+7    6          655
+raw src->dst transitions: 655 tracks with one: 634 with more than one (flicker or re-entry): 10
+dst->src transitions: 44 tracks: 43
+Local_Y at 7->6: n=655 min=351 p05=511 p50=666 p95=668 max=700 ft
+lane 7 and lane 6 median Local_X by 50-ft Local_Y bin (ramp angle, taper):
+         x7_p50       n7  x6_p50  x6_p95
+Local_Y                                 
+0           NaN      NaN    65.9    68.0
+50          NaN      NaN    66.1    68.1
+100        96.5     93.0    66.1    68.1
+150        94.1    341.0    66.1    68.6
+200        92.9    522.0    66.3    68.8
+250        91.5    834.0    66.4    69.4
+300        87.6   8727.0    66.3    69.3
+350        86.2  21544.0    66.4    69.9
+400        84.8  22941.0    66.6    70.2
+450        82.7  23836.0    67.0    70.5
+500        80.3  24336.0    67.0    71.1
+550        78.7  23699.0    67.3    70.8
+600        77.2  21412.0    67.4    71.4
+650        76.7   6112.0    68.7    78.0
+700         NaN      NaN    68.0    75.7
+750         NaN      NaN    66.5    72.8
+800         NaN      NaN    66.3    71.0
+850         NaN      NaN    65.8    69.6
+900         NaN      NaN    65.3    68.7
+950         NaN      NaN    64.9    68.2
+1000        NaN      NaN    65.0    68.0
+1050        NaN      NaN    66.9    70.6
+1100        NaN      NaN    68.4    71.6
+1150        NaN      NaN    68.5    71.3
+1200        NaN      NaN    68.7    71.5
+1250        NaN      NaN    67.8    70.6
+1300        NaN      NaN    66.7    69.2
+1350        NaN      NaN    66.6    69.0
+1400        NaN      NaN    66.5    68.7
+1450        NaN      NaN    66.5    68.7
+1500        NaN      NaN    66.6    68.9
+1550        NaN      NaN    66.7    69.4
+1600        NaN      NaN    67.0    69.6
+1650        NaN      NaN    67.0    69.5
+1700        NaN      NaN    66.9    68.3
+1750        NaN      NaN    68.2    68.2
+first-seen lane of tracks: {1: 1130, 2: 852, 3: 719, 4: 783, 5: 796, 6: 787, 7: 611}
+first Local_Y of tracks first seen on ramp lane 7 : {'count': 611.0, 'mean': 327.6, 'std': 24.2, 'min': 124.6, '25%': 330.8, '50%': 333.3, '75%': 334.8, 'max': 388.2}
+first Local_Y of tracks first seen on src lane 7 : {'count': 611.0, 'mean': 327.6, 'std': 24.2, 'min': 124.6, '25%': 330.8, '50%': 333.3, '75%': 334.8, 'max': 388.2}

@@ -1,0 +1,10 @@
+after+rest edge +10.66 [+6.42,+15.76] med opp 1081.5 v3w mean med 896.4
+before                                   +4.83 SE 2.92  97.5%[+0.69,+13.10] 98.75%[+0.00,+14.83]
+power LB>0 n=480 SE 1.92 edge 9.9: z2.24 0.998 z2.50 0.996
+power LB>0 n=480 SE 1.92 edge 6.2: z2.24 0.839 z2.50 0.767
+power LB>0 n=480 SE 1.92 edge 5.0: z2.24 0.642 z2.50 0.541
+0 of 20 UB95 0.139, 0 of 40 0.072
+n for +5 power .9 z2.24: 877 ; power .8: 671
+E30|nc random-half cut 2.5/97.5 pct -0.136 0.114
+E30|lr400_16_1 random-half cut 2.5/97.5 pct -0.148 0.133
+E30|w1u500 random-half cut 2.5/97.5 pct -0.182 0.154

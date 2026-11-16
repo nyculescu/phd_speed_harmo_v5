@@ -1,0 +1,24 @@
+== E30|lr400_16_1 (edge %, 97.5 % interval, opponent median, v3w mean of medians)
+  speed <5 m/s                    +14.33     +9.17    +20.53   +436.00   +355.60
+  5-10 m/s                         +7.58     +4.17    +11.37   +417.00   +375.80
+  >=10 m/s                         +8.59     +5.47    +12.24   +362.00   +316.50
+  before                           +4.83     +0.69    +13.79    +29.00    +26.40
+  taper+hold                      -47.11    -56.05    -37.63    +38.00    +56.50
+  after+rest                      +10.66     +6.45    +15.93  +1081.50   +896.40
+  end_stop+end_stop2 (veh-s)      +31.27    +24.59    +38.75  +1120.00   +679.50
+  end_stop merge1                 +28.03    +17.62    +40.98   +256.50   +158.60
+  all_delay                        +0.44     -0.31     +1.30 +168300.17 +166219.42
+== E30|grid_lr400_13_1 (edge %, 97.5 % interval, opponent median, v3w mean of medians)
+  speed <5 m/s                    +25.08    +19.06    +31.68   +519.50   +355.60
+  5-10 m/s                        +18.77    +14.91    +23.15   +495.00   +375.80
+  >=10 m/s                        +21.12    +16.96    +25.12   +427.50   +316.50
+  before                          +11.56     +3.12    +20.62    +32.00    +26.40
+  taper+hold                      -39.22    -48.31    -30.65    +38.50    +56.50
+  after+rest                      +23.85    +19.12    +28.67  +1271.50   +896.40
+  end_stop+end_stop2 (veh-s)      +37.77    +29.64    +46.10  +1225.50   +679.50
+  end_stop merge1                 +23.16    +13.13    +35.27   +253.50   +158.60
+  all_delay                        +1.18     +0.26     +2.21 +170627.69 +166219.42
+E30|lr400_16_1 unpaired null of the cut in median stops between two random halves (n=240 each): 2.5/50/97.5 %: [-0.15  -0.003  0.131]
+E30|w1u500 unpaired null of the cut in median stops between two random halves (n=240 each): 2.5/50/97.5 %: [-0.177 -0.004  0.153]
+E30|nc unpaired null of the cut in median stops between two random halves (n=240 each): 2.5/50/97.5 %: [-0.14   0.001  0.118]
+p333 vs nc delay, median paired % of median nc: 29.08
