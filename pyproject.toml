@@ -3,13 +3,13 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "v5b"
+name = "v5b2"
 version = "0.0.0"
 description = "v5.B.1: coordinated zone control on a multi-bottleneck freeway (PhD research platform)"
 requires-python = ">=3.14"
 
 [tool.setuptools]
-packages = ["v5b", "v5b.d1", "v5b.d2", "v5b.ops"]
+packages = ["v5b2", "v5b2.d1", "v5b2.d2", "v5b2.ops"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

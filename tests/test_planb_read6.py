@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import read6 as r6  # noqa: E402
 
 N = 60

@@ -2,10 +2,10 @@
 import numpy as np
 import pytest
 
-from v5b.d1.run_screen import FX_GRID
-from v5b.d2 import controllers as ctl
-from v5b.d2 import run_screen as rs
-from v5b.d2.episode import run_key
+from v5b2.d1.run_screen import FX_GRID
+from v5b2.d2 import controllers as ctl
+from v5b2.d2 import run_screen as rs
+from v5b2.d2.episode import run_key
 
 
 def test_family_g():

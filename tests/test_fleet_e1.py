@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from v5b.fleet import e1
-from v5b.fleet.day import e1_metrics
+from v5b2.fleet import e1
+from v5b2.fleet.day import e1_metrics
 
 
 def test_twins_and_arms_never_share_a_file():
@@ -24,7 +24,7 @@ def test_command_lines():
     assert a[a.index("--sumo-seed") + 1] == "7435230" and "--ctrl" in a and a[a.index("--hours") + 1] == "15,18"
     r = e1.argv(e1.job("s", "R", "nc", "base", 7430230))
     assert "--blocker" not in r and "--sumo-seed" not in r and "--ctrl" not in r
-    assert r[2:4] == ["v5b.fleet.day", "one"]             # matches the CPU guard pattern
+    assert r[2:4] == ["v5b2.fleet.day", "one"]             # matches the CPU guard pattern
 
 
 def test_order_puts_i_days_and_full_days_first():
@@ -224,14 +224,14 @@ def test_rule2_fail_leaves_room_for_the_oracle_replicate(tmp_path):
 
 
 def test_intrusions_pool_nc_only_over_the_cells_a_point_ran_in():
-    from v5b.fleet import e1_analysis as ea
+    from v5b2.fleet import e1_analysis as ea
     assert ea.intrusion_flag(5, 0)["flag"]
     # a one-cell point with 5 intrusions against NC's 2 in that cell only, not 4 over both cells
     assert ea.intrusion_flag(5, 2)["p"] < ea.intrusion_flag(5, 4)["p"]
 
 
 def test_decision_tree_order():
-    from v5b.fleet import e1_analysis as ea
+    from v5b2.fleet import e1_analysis as ea
     base = {"P_T": False, "P_O": False, "F": [], "powered": True}
     assert ea.verdict({"R": dict(base, P_T=True), "I": base})["verdict"] == "CONTINUE-T"
     assert ea.verdict({"R": dict(base, F=["M*"]), "I": dict(base, P_O=True)})["verdict"] == "I-ONLY"
@@ -284,7 +284,7 @@ def test_idle_replacement(tmp_path):
 
 
 def test_tie_break_prefers_the_middle_then_short_then_alinea():
-    from v5b.fleet import e1_analysis as ea
+    from v5b2.fleet import e1_analysis as ea
     nc = np.full(10, 100.0)
     pts = {"c/p0.85_short": np.full(10, 95.0), "c/p0.95_long": np.full(10, 95.05), "c/p1.05_short": np.full(10, 94.95)}
     assert ea.tuned(nc, pts, ("c",)) == "c/p0.95_long"             # not the strict best
@@ -332,7 +332,7 @@ def test_pi_reads_the_3_min_window_and_wave2c():
 
 
 def test_hold_test_skips_breakdown_episodes(monkeypatch):
-    from v5b.fleet import e1_analysis as ea
+    from v5b2.fleet import e1_analysis as ea
     monkeypatch.setattr(ea, "_episodes", lambda ser, f: [(1000.0, 2000.0)])
     d = {"series": [], "alks": {"hold_free": [(500, -0.2), (950, -5.0), (1500, -6.0), (2050, -4.0), (2100, -0.4)]},
          "blocker": {"t": 2080.0, "duration": 100.0}}
@@ -425,7 +425,7 @@ def test_prefix_check_skips_a_per_cell_mc_star(tmp_path):
 
 
 def test_resume_refuses_after_a_stop_and_other_code(tmp_path):
-    from v5b.fleet.day import code_id
+    from v5b2.fleet.day import code_id
     j = e1.job("A", "R", "ma", "p0.85", 1, ctrl={"meter": {"setpoint": 10.0}})
     d = {"ctrl": j["ctrl"], "sumo_seed": None, "hours": None, "code": code_id(), "plant": e1.PLANT,
          "inputs": {"adt": e1.ADT, "crash_k": None, "blocker": None, "forced": None}}

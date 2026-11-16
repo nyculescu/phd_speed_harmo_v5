@@ -1,8 +1,8 @@
-"""Fleet sampler (v5b/fleet/fleet.py): shares, bounds, moments, CRN and the vType XML."""
+"""Fleet sampler (v5b2/fleet/fleet.py): shares, bounds, moments, CRN and the vType XML."""
 import numpy as np
 import pytest
 
-from v5b.fleet import fleet as fl
+from v5b2.fleet import fleet as fl
 
 SEED, N = 7_400_000, 20_000
 
@@ -85,7 +85,7 @@ def test_vtype_xml(veh):
 
 
 def test_bn4x_geometry():
-    from v5b.p1c import plant as pl
+    from v5b2.p1c import plant as pl
     a, b = dict(pl.GEOMS["bn4"]["nodes"]), dict(pl.GEOMS["bn4x"]["nodes"])
     assert b["2"] - b["1"] == a["2"] - a["1"] + fl.UPSTREAM_EXTRA
     assert all(b[n] - b["2"] == a[n] - a["2"] for n in a if n != "1")   # downstream of edge 1 unchanged
@@ -105,8 +105,8 @@ def test_calibration_knobs(monkeypatch):
 
 def test_ramp_corridor_demand():
     from collections import Counter
-    from v5b.fleet import corridor
-    from v5b.fleet.smoke import CFG
+    from v5b2.fleet import corridor
+    from v5b2.fleet.smoke import CFG
     cfg = fl.apply_plant("v190", CFG)
     try:
         dem = fl.FleetDemand(SEED, [(0.0, 3600.0, 4000.0)], cfg)

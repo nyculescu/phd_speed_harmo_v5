@@ -9,9 +9,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b.fleet import b_merge as bm, fleet as fl, perturb as pt
+from v5b2.fleet import b_merge as bm, fleet as fl, perturb as pt
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "docs/research/conf3"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analysis/conf3"))
 from common import COND  # noqa: E402
 
 SURGE, TRUCK = COND["SURGE"], COND["TRUCK"]     # the spec tests run on the dicts the runs use (review F28)
@@ -38,7 +38,7 @@ def test_truck_fixed_takes_the_first_eligible_truck_at_or_after_each_slot(seed):
 
 
 def test_reset_builds_the_vehicle_sets_after_the_perturbed_demand():
-    from v5b.fleet import b_env as be
+    from v5b2.fleet import b_env as be
     src = inspect.getsource(be.MergeEnv.reset)
     assert src.index("self.pert.demand()") < src.index("self._demand_sets()") < src.index("self.dem.write(")
     env = env_for(7_480_001)
@@ -133,7 +133,7 @@ def test_existing_kinds_leave_the_demand_list_alone():
 
 
 # The pack's Plan B keys on planted traces (planb.md §5, PR-24).
-from v5b.fleet import measure as me
+from v5b2.fleet import measure as me
 
 
 class _Pert:
@@ -310,7 +310,7 @@ def scene(t):
 def test_pack_and_recount_agree_on_a_planted_world():
     """PR-24 on a planted trace: the pack's Plan B counters equal the independent recount, and the hand counts hold."""
     import importlib
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "docs/research/planb"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analysis/planb"))
     pr24 = importlib.import_module("pr24")
     saved = (me.Measure.__init__, me.Measure.second, me.Measure.vehicle_step)
     try:

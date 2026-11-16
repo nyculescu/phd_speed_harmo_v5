@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from v5b.d1 import episode
-from v5b.d1 import run_screen as rs
-from v5b.d1.faults import ANY, FAULTS
+from v5b2.d1 import episode
+from v5b2.d1 import run_screen as rs
+from v5b2.d1.faults import ANY, FAULTS
 
 
 def test_seed_blocks_disjoint_and_as_approved():

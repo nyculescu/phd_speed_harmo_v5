@@ -3,7 +3,7 @@ known answers."""
 import numpy as np
 import pytest
 
-from v5b.fleet import measure as me
+from v5b2.fleet import measure as me
 
 
 class _Env:

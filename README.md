@@ -18,7 +18,7 @@ Nothing is implemented yet. The network is not chosen (CORR2X is one candidate).
 ## Layout
 | Path | Content |
 |---|---|
-| `v5b/` | the Python package (empty at init) |
+| `v5b2/` | the Python package (empty at init) |
 | `tests/` | pytest suite; `test_toolchain.py` pins the toolchain |
 | `docs/architecture/` | system context, interfaces, diagrams |
 | `docs/testing/` | test strategy |

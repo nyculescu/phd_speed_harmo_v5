@@ -41,7 +41,7 @@ $T/venv/bin/python -c "import os, sys, torch, numpy, libsumo; print('python', sy
 $T/venv/bin/netconvert --version | head -1
 $T/venv/bin/python -m pytest -q tests/test_round1.py
 # Rows stored on the laptop must reproduce on every key; a difference means this CPU or build gives other numbers.
-$T/venv/bin/python docs/research/round1/checks1.py rows "$P/v5b1_runs/accept_$(hostname)"
+$T/venv/bin/python analysis/round1/checks1.py rows "$P/v5b1_runs/accept_$(hostname)"
 $T/venv/bin/python toolchain/remote/fingerprint.py "$P/v5b1_runs/accept_$(hostname)" --check toolchain/remote/fingerprint.ref
 # Containers often see every host thread but may use only their cgroup quota; worker counts must follow the quota.
 q=$(awk '$1 != "max" {printf "%.1f", $1 / $2}' /sys/fs/cgroup/cpu.max 2>/dev/null || true)

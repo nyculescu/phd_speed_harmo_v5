@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.fleet import b_env as be, corridor, fleet as fl, vv_merge as vm
-from v5b.fleet.plant_sweep import geometry_guard
+from v5b2.fleet import b_env as be, corridor, fleet as fl, vv_merge as vm
+from v5b2.fleet.plant_sweep import geometry_guard
 
 E30_NET = "r2m3_096c8f0288"     # the cached 300-m net every E30 row ran on
 

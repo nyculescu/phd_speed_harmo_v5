@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.fleet import day
+from v5b2.fleet import day
 
 
 def test_parse_trips_leaves_out_removed_vehicles(tmp_path):

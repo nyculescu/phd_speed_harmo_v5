@@ -2,8 +2,8 @@
 import numpy as np
 import pandas as pd
 
-from v5b import screen1 as s1
-from v5b import screen1b as sb
+from v5b2 import screen1 as s1
+from v5b2 import screen1b as sb
 
 
 def test_batched_tracker_reaches_alpha():

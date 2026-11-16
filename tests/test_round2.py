@@ -8,13 +8,13 @@ import pytest
 import torch
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path[:0] = [str(ROOT / "docs/research/round2"), str(ROOT / "docs/research/round1"), str(ROOT)]
+sys.path[:0] = [str(ROOT / "analysis/round2"), str(ROOT / "analysis/round1"), str(ROOT)]
 
 import cma2  # noqa: E402
 import decide2 as dc  # noqa: E402
-from v5b.fleet import b_env as be, c_train as ct  # noqa: E402
+from v5b2.fleet import b_env as be, c_train as ct  # noqa: E402
 
-E3 = ROOT / "docs/research/round2/3e"
+E3 = ROOT / "analysis/round2/3e"
 FINAL_RUNS = Path("/home/catalin/work/phd/v5b1_runs/round2_remote/cma3e/final_runs.jsonl")
 
 

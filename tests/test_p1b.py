@@ -9,17 +9,17 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b.d1 import plant
-from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
-from v5b.d2.incidents import INCIDENTS, NONE
-from v5b.p1 import family as fam
-from v5b.p1 import run as p1run
-from v5b.p1b import analysis as an
-from v5b.p1b import family as fb
-from v5b.p1b import meters as mt
-from v5b.p1b import run as rs
-from v5b.p1b import runners as rn
-from v5b.p1b.episode import make_spec
+from v5b2.d1 import plant
+from v5b2.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b2.d2.incidents import INCIDENTS, NONE
+from v5b2.p1 import family as fam
+from v5b2.p1 import run as p1run
+from v5b2.p1b import analysis as an
+from v5b2.p1b import family as fb
+from v5b2.p1b import meters as mt
+from v5b2.p1b import run as rs
+from v5b2.p1b import runners as rn
+from v5b2.p1b.episode import make_spec
 
 
 # ---------------------------------------------------------------- meter (B1, R2, R3)
@@ -294,7 +294,7 @@ def test_seed_ranges_as_approved():
     assert not p1 & set().union(*blocks)                                        # fresh seeds (not P1's)
     assert all(7_400_010 <= s <= 7_400_699 for b in blocks for s in b)          # 700-999 untouched
     assert all(s in rs.CALIB_ONLY for v in rs.SMOKE_SEEDS.values() for s in v)
-    from v5b.p1.meters import replicate_seeds
+    from v5b2.p1.meters import replicate_seeds
     reps = {replicate_seeds(s, k)["sumo_seed"] for s in S["eval"] for k in (1, 2, 3, 4)}
     assert min(reps) == 17_400_600 and max(reps) == 47_400_699
     t3 = [p for p in rs.t3_specs(S["tcheck"][0]) if p[0]["k"]]
@@ -306,7 +306,7 @@ def test_sentinel_paths_and_run_once(tmp_path):
         assert str(rs.SENTINEL) == "/home/catalin/work/phd/v5b1_runs/P1B_EVAL_STARTED.json"
         assert str(rs.DEFAULT_OUT) == "/home/catalin/work/phd/v5b1_runs/p1b/v108"
     env = {**clean_sumo_env(), "V5B1_RUNS": str(tmp_path / "root")}
-    o = subprocess.run([PYTHON_BIN, "-c", "from v5b.p1b import run as r; print(r.SENTINEL, r.DEFAULT_OUT)"],
+    o = subprocess.run([PYTHON_BIN, "-c", "from v5b2.p1b import run as r; print(r.SENTINEL, r.DEFAULT_OUT)"],
                        cwd=REPO_ROOT, env=env, capture_output=True, text=True).stdout.split()
     assert o == [str(tmp_path / "root" / "P1B_EVAL_STARTED.json"), str(tmp_path / "root" / "p1b" / "v108")]
     sen, out = tmp_path / "P1B.json", tmp_path / "p1b" / "v108"
@@ -354,7 +354,7 @@ def test_pool_reuse_checks_runner_share_and_signal():
     assert p1run.reuse_mismatch(stored, s, "abc", mt.SIGNAL, rs.Pool.FIELDS) == []
     assert "rs" in p1run.reuse_mismatch({**stored, "rs": 0.1}, s, "abc", mt.SIGNAL, rs.Pool.FIELDS)
     assert p1run.reuse_mismatch(stored, s, "abc", "continuous", rs.Pool.FIELDS) == ["signal"]
-    assert rs.Pool.MODULE == "v5b.p1b.episode" and p1run.Pool.MODULE == "v5b.p1.episode"     # P1 unchanged
+    assert rs.Pool.MODULE == "v5b2.p1b.episode" and p1run.Pool.MODULE == "v5b2.p1.episode"     # P1 unchanged
     assert set(rs.KEEP) > set(p1run.KEEP)
 
 

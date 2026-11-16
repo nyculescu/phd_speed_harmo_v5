@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from v5b.fleet import b_env as be, b_train as bt
+from v5b2.fleet import b_env as be, b_train as bt
 
 
 def test_spaces_and_seed_layout():
@@ -169,7 +169,7 @@ def test_cav_counts_a_reversal_and_charges_a_move():
 
 
 def test_gae_matches_hand_values_and_bootstraps():
-    from v5b.fleet.c_train import gae
+    from v5b2.fleet.c_train import gae
     r, v = np.array([1.0, 1.0]), np.array([0.5, 0.5])
     d1 = 1.0 + 0.9 * 2.0 - 0.5
     d0 = 1.0 + 0.9 * 0.5 - 0.5
@@ -224,7 +224,7 @@ def test_cav_rule_lane_mode_moves_only_due_mainline_alks_upstream():
 
 
 def test_plant_score_is_paired_clipped_and_counts_collisions():
-    from v5b.fleet import plant_sweep as ps
+    from v5b2.fleet import plant_sweep as ps
     base = {"passed": 100.0, "N": 100.0, "fuel_km": 100.0, "ttc_net": 100.0, "brake_net": 100.0, "b45_net": 100.0, "collisions": 0}
     rows = [{"name": "base", "q": 1.0, "seed": 1, **base}, {"name": "x", "q": 1.0, "seed": 1, **{**base, "passed": 110.0, "N": 10.0, "collisions": 2}}]
     s = ps.score(rows)["x"]
@@ -235,7 +235,7 @@ def test_plant_score_is_paired_clipped_and_counts_collisions():
 
 
 def test_plant_settings_reach_the_right_groups():
-    from v5b.fleet import plant_sweep as ps
+    from v5b2.fleet import plant_sweep as ps
     p = ps.to_plant({"lcSpeedGain": 5, "limit_kmh": 90, "model": "IDM", "sigma_scale": 0.5, "accel_len": 450})
     assert p["lc"] == {"lcSpeedGain": 5} and p["limit"] == pytest.approx(25.0) and p["hdv"] == {"carFollowModel": "IDM"}
     assert p["truck"] == {"sigma": 0.25} and p["sigma_scale"] == 0.5 and p["accel_len"] == 450

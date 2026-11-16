@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "docs" / "research" / "vv"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis" / "vv"))
 import ngsim_merges as nm  # noqa: E402
 
 T0 = 1118848075000     # 08:07:55 PDT

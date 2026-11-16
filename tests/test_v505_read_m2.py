@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "docs/research/v505"))
+sys.path.insert(0, str(ROOT / "analysis/v505"))
 import read_m2 as rm  # noqa: E402
 import v5  # noqa: E402
 

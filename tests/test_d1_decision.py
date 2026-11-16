@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from v5b.d1 import stats
+from v5b2.d1 import stats
 
 
 def _rng(k=0):

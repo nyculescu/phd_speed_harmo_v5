@@ -9,12 +9,12 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
-from v5b.p1 import family as fam
-from v5b.p1 import run as p1run
-from v5b.p1b import analysis as an
-from v5b.p1b import confirm_c1 as cf
-from v5b.p1b import run as rs
+from v5b2.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b2.p1 import family as fam
+from v5b2.p1 import run as p1run
+from v5b2.p1b import analysis as an
+from v5b2.p1b import confirm_c1 as cf
+from v5b2.p1b import run as rs
 
 
 # ---------------------------------------------------------------- arms
@@ -115,7 +115,7 @@ def test_spill_v109():
     assert not cf.spill_v109({**base, "max_queue_m": 359.9})
     assert cf.spill_v109({**base, "depart_delay_s": 5.01})
     assert not cf.spill_v109({**base, "depart_delay_s": 5.0})
-    assert "depart_delay_s" in cf.Pool.KEEP_FIELDS and cf.Pool.MODULE == "v5b.p1b.episode"
+    assert "depart_delay_s" in cf.Pool.KEEP_FIELDS and cf.Pool.MODULE == "v5b2.p1b.episode"
     assert rs.Pool.KEEP_FIELDS == rs.KEEP                                       # P1b unchanged
 
 
@@ -125,7 +125,7 @@ def test_sentinel_paths_follow_runs_root(tmp_path):
         assert str(cf.SENTINEL) == "/home/catalin/work/phd/v5b1_runs/P1B_C1_STARTED.json"
         assert str(cf.DEFAULT_OUT) == "/home/catalin/work/phd/v5b1_runs/p1b_c1/v114"
     env = {**clean_sumo_env(), "V5B1_RUNS": str(tmp_path / "root")}
-    o = subprocess.run([PYTHON_BIN, "-c", "from v5b.p1b import confirm_c1 as c; print(c.SENTINEL, c.DEFAULT_OUT)"],
+    o = subprocess.run([PYTHON_BIN, "-c", "from v5b2.p1b import confirm_c1 as c; print(c.SENTINEL, c.DEFAULT_OUT)"],
                        cwd=REPO_ROOT, env=env, capture_output=True, text=True).stdout.split()
     assert o == [str(tmp_path / "root" / "P1B_C1_STARTED.json"), str(tmp_path / "root" / "p1b_c1" / "v114")]
 
@@ -205,7 +205,7 @@ def test_run_once_sentinel_and_resume(monkeypatch, tmp_path):
 
 def test_dirty_tree_refused_and_smoke_writes_no_sentinel(monkeypatch, tmp_path):
     calls = []
-    sen = _patch(monkeypatch, tmp_path, calls, dirty=" M v5b/p1b/confirm_c1.py")
+    sen = _patch(monkeypatch, tmp_path, calls, dirty=" M v5b2/p1b/confirm_c1.py")
     with pytest.raises(SystemExit):
         cf.main(["--confirm-run-once", "--workers", "2", "--out", str(tmp_path / "c1")])
     assert not sen.exists() and calls == []

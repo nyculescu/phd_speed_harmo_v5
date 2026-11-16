@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "docs" / "research" / "vv"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis" / "vv"))
 import read_vv as rv  # noqa: E402
 
 ARMS = rv.V3W + rv.RULES + rv.REFS

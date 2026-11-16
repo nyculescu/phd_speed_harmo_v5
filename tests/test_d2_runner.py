@@ -4,10 +4,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.d1 import run_screen as d1
-from v5b.d2 import controllers as ctl
-from v5b.d2 import run_screen as rs
-from v5b.d2.incidents import INCIDENTS
+from v5b2.d1 import run_screen as d1
+from v5b2.d2 import controllers as ctl
+from v5b2.d2 import run_screen as rs
+from v5b2.d2.incidents import INCIDENTS
 
 
 def test_seed_blocks_as_approved_and_disjoint():

@@ -7,12 +7,12 @@ import types
 import numpy as np
 import pytest
 
-import v5b.d1.episode as d1e
-from v5b import bugrerun
-from v5b.d1 import run_screen as rs1
-from v5b.d1.meter_signal import SIGNALS, SignalClock
-from v5b.d2 import controllers as ctl
-from v5b.d2 import run_screen as rs2
+import v5b2.d1.episode as d1e
+from v5b2 import bugrerun
+from v5b2.d1 import run_screen as rs1
+from v5b2.d1.meter_signal import SIGNALS, SignalClock
+from v5b2.d2 import controllers as ctl
+from v5b2.d2 import run_screen as rs2
 
 GREEN, C_MAX = 6.0, 2.0 * 4 * 3600.0 / 200.0   # c(q_min) = 144 s
 
@@ -115,7 +115,7 @@ def test_d1_fx_switch_constant_after_switch(tls):
 
 
 def test_p1_shares_the_clock():
-    from v5b.p1 import meters as pm
+    from v5b2.p1 import meters as pm
     mt = pm.FBSignalMeter(K_F=0.0, q0=1600.0, read=lambda t: 0.0, signal="continuous", set_state=lambda s: None)
     assert isinstance(mt._clock, SignalClock) and mt._clock.signal == "continuous"
     assert pm.SIGNALS is SIGNALS

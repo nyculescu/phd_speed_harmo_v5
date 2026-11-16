@@ -2,7 +2,7 @@
 from collections import defaultdict
 from types import SimpleNamespace
 
-from v5b.fleet.v505 import AFTER, BEFORE, KEY, ON, Ramp2Assertive, slowdown_limit, t0_step
+from v5b2.fleet.v505 import AFTER, BEFORE, KEY, ON, Ramp2Assertive, slowdown_limit, t0_step
 
 
 class FakeLs:

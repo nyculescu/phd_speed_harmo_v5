@@ -1,7 +1,7 @@
 """B bind check rules (V258, bind_B_core_v2 §4) on synthetic inputs."""
 import numpy as np
 
-from v5b.fleet import b_merge as bm, b_stage as bs
+from v5b2.fleet import b_merge as bm, b_stage as bs
 
 
 def _row(t, merges=10, stand=0, sched=10, ma=40, ma0=12):

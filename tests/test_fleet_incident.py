@@ -3,7 +3,7 @@ import pytest
 
 pytest.importorskip("libsumo")
 
-from v5b.fleet import fleet as fl, incident  # noqa: E402
+from v5b2.fleet import fleet as fl, incident  # noqa: E402
 
 
 @pytest.fixture

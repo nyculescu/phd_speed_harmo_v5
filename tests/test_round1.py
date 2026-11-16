@@ -9,11 +9,11 @@ import pytest
 import torch
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/round1"))
+sys.path.insert(0, str(ROOT / "analysis/round1"))
 import common1 as c1  # noqa: E402
 import decide1 as dc1  # noqa: E402
 import tbcheck1 as tb  # noqa: E402
-from v5b.fleet import b_env as be, c_train as ct  # noqa: E402
+from v5b2.fleet import b_env as be, c_train as ct  # noqa: E402
 
 V3_TRAIN = Path("/home/catalin/work/phd/v5b1_runs/baseline_v3/conf3/train")
 
@@ -80,7 +80,7 @@ def test_expected_seeds_match_baseline_v3():
 
 @pytest.mark.skipif(not V3_TRAIN.exists(), reason="baseline-v3 logs not on this machine")
 def test_collapse_rule_agrees_with_confirmatory_3_on_baseline_v3():
-    sys.path.insert(0, str(ROOT / "docs/research/conf3"))
+    sys.path.insert(0, str(ROOT / "analysis/conf3"))
     import collapse as cl
     for i in range(5):
         rows = [json.loads(x) for x in open(V3_TRAIN / f"C{i}_updates.jsonl")]
@@ -149,7 +149,7 @@ def test_bonferroni():
 
 def test_tuned_reading_reproduces_confirmatory_3():
     T = c1.load(c1.BASE / "rows/conf3_eval_primary.jsonl.gz")
-    sys.path.insert(0, str(ROOT / "docs/research/conf3"))
+    sys.path.insert(0, str(ROOT / "analysis/conf3"))
     import decide3 as d3
     for cell in c1.PRIMARY:
         r = d3.read_cell(T, cell, c1.OPPONENTS)

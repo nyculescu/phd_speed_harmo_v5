@@ -9,7 +9,7 @@ import pytest
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(HERE.parent / "docs/research/planb"))
+sys.path.insert(0, str(HERE.parent / "analysis/planb"))
 import read6_regress  # noqa: E402
 import test_planb_read6 as t1  # noqa: E402
 from test_planb_read6 import LEARN, OPP, cfg, r6, world  # noqa: E402

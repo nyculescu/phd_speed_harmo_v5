@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "docs/research/c1"))
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/c1"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import c1  # noqa: E402
 import read_cf as rf  # noqa: E402
 

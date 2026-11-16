@@ -8,11 +8,11 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import asch  # noqa: E402
 import mpcf  # noqa: E402
 import pb  # noqa: E402
-from v5b.fleet import planb_ctrl as pc  # noqa: E402
+from v5b2.fleet import planb_ctrl as pc  # noqa: E402
 
 
 class Const:
@@ -143,7 +143,7 @@ def test_mpcf_control_mode_picks_the_cheapest(tmp_path, monkeypatch):
         pc.MpcF.__init__(pc.MpcF.__new__(pc.MpcF), env, {"actions": [{"lv": 0}, {"lv": 3}], "model": str(f), "model_sha256": "0" * 64}, True)
     with pytest.raises(ValueError):
         pc.MpcF.__init__(pc.MpcF.__new__(pc.MpcF), env, {"actions": [{"lv": 0}, {"lv": 3}], "model": str(f)}, True)
-    from v5b.fleet import measure as me
+    from v5b2.fleet import measure as me
     o = (["a"], np.zeros((1, 16), np.float32), None, np.array([True]))
     assert me.policy_probs(m, o) == {}     # the pack's probe never treats MPC-F's model as a policy (review F2)
 
@@ -377,19 +377,19 @@ def test_repick_writes_the_v482_fallback_start(tmp_path):
 
 def test_code_state_of_a_deployed_copy(tmp_path):
     import hashlib
-    (tmp_path / "v5b").mkdir()
-    files = {"a.py": b"x = 1\n", "v5b/b.py": b"y = 2\n"}
+    (tmp_path / "v5b2").mkdir()
+    files = {"a.py": b"x = 1\n", "v5b2/b.py": b"y = 2\n"}
     for f, b in files.items():
         (tmp_path / f).write_bytes(b)
     (tmp_path / "COMMIT").write_text("f" * 40 + "\n")
     (tmp_path / "MANIFEST").write_text("".join(f"{hashlib.sha256(b).hexdigest()}  ./{f}\n" for f, b in sorted(files.items())))
     cs = pb.code_state(tmp_path)
     assert cs == {"commit": "f" * 40, "clean": True, "detached": True, "diff_sha256": hashlib.sha256(b"").hexdigest()}
-    (tmp_path / "v5b" / "__pycache__").mkdir()
-    (tmp_path / "v5b" / "__pycache__" / "b.py").write_bytes(b"cache")     # caches are not code
+    (tmp_path / "v5b2" / "__pycache__").mkdir()
+    (tmp_path / "v5b2" / "__pycache__" / "b.py").write_bytes(b"cache")     # caches are not code
     assert pb.code_state(tmp_path)["clean"]
-    (tmp_path / "v5b" / "c.py").write_bytes(b"z = 3\n")     # a file added on the host
+    (tmp_path / "v5b2" / "c.py").write_bytes(b"z = 3\n")     # a file added on the host
     assert not pb.code_state(tmp_path)["clean"]
-    (tmp_path / "v5b" / "c.py").unlink()
+    (tmp_path / "v5b2" / "c.py").unlink()
     (tmp_path / "a.py").write_bytes(b"x = 9\n")     # a file edited on the host
     assert not pb.code_state(tmp_path)["clean"]

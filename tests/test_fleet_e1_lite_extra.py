@@ -1,7 +1,7 @@
 """V240 report-only additions to E1-lite on synthetic numbers."""
 import numpy as np
 
-from v5b.fleet import e1_lite_extra as ex
+from v5b2.fleet import e1_lite_extra as ex
 
 
 def test_null_floor_centres_and_flips():

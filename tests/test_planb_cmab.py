@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import cmab  # noqa: E402
 import cma2  # noqa: E402
 

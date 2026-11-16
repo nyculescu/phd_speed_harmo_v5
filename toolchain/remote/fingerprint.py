@@ -1,5 +1,5 @@
 """One pilot and one PPO update in baseline-v3's mode on fixed seeds (as in checks1.py identity), then a SHA-256 of the weights, scale and pilot statistics.
-Equal fingerprints on two machines mean training gives identical numbers on both. The reference is made on the laptop and belongs to one version of v5b/.
+Equal fingerprints on two machines mean training gives identical numbers on both. The reference is made on the laptop and belongs to one version of v5b2/.
 usage: fingerprint.py OUT_DIR [--write REF_FILE | --check REF_FILE]"""
 import hashlib
 import json
@@ -12,7 +12,7 @@ from pathlib import Path
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT), str(ROOT / "docs/research/round1")]
+sys.path[:0] = [str(ROOT), str(ROOT / "analysis/round1")]
 from checks1 import ENV_V3, GAMMA, LAM, NET_SEED, PY, Q, SHORT  # noqa: E402
 
 
@@ -33,7 +33,7 @@ def feed(h, x) -> None:
 
 def code_hash() -> str:
     h = hashlib.sha256()
-    for f in sorted((ROOT / "v5b").rglob("*.py")):
+    for f in sorted((ROOT / "v5b2").rglob("*.py")):
         h.update(str(f.relative_to(ROOT)).encode() + f.read_bytes())
     return h.hexdigest()[:16]
 
@@ -41,7 +41,7 @@ def code_hash() -> str:
 def fingerprint(out: Path) -> str:
     d = out / "fingerprint"
     shutil.rmtree(d, ignore_errors=True)
-    cmd = [PY, "-m", "v5b.fleet.c_train", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1",
+    cmd = [PY, "-m", "v5b2.fleet.c_train", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1",
            "--env", json.dumps({**ENV_V3, **SHORT}), "--levels", json.dumps([Q]), "--gamma", str(GAMMA), "--lam", str(LAM),
            "--net-seed", str(NET_SEED)]
     subprocess.run(cmd, cwd=ROOT, env={**os.environ, "PYTHONPATH": str(ROOT), "PYTHONDONTWRITEBYTECODE": "1"}, check=True,

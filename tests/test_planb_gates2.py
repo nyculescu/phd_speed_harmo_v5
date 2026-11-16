@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import gates2 as g2  # noqa: E402
 
 TRACE = {"S": True, "SURGE": True, "TRUCK": True}

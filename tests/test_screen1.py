@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from v5b import screen1 as s1
+from v5b2 import screen1 as s1
 
 
 def brute_gap(b_hat, v, dt=1e-4):

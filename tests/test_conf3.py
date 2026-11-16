@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/conf3"))
+sys.path.insert(0, str(ROOT / "analysis/conf3"))
 import common as cm  # noqa: E402
 import decide3 as dc  # noqa: E402
 import make_env as me  # noqa: E402
@@ -32,8 +32,8 @@ def test_rule_counts():
 
 
 def test_conditions_match_the_earlier_runs():
-    sys.path.insert(0, str(ROOT / "docs/research/phase3"))
-    text = (ROOT / "docs/research/phase3/runs.py").read_text()
+    sys.path.insert(0, str(ROOT / "docs/local/research/phase3"))
+    text = (ROOT / "docs/local/research/phase3/runs.py").read_text()
     assert '"limit_kmh": 25, "dur": 120.0, "times": [600.0, 1200.0], "taper": 20.0' in text and cm.COND["X1"]["times"] == [600.0, 1200.0]
     assert '"limit_kmh": 30, "dur": 180.0, "times": [700.0], "taper": 20.0' in text and cm.COND["X2"]["dur"] == 180.0
 
@@ -46,11 +46,11 @@ def test_missing_counter_is_zero():
 
 def test_statistic_reproduces_the_shot_table():
     T = {}
-    for line in gzip.open(ROOT / "docs/research/phase3/shot_rows.jsonl.gz", "rt"):
+    for line in gzip.open(ROOT / "docs/local/research/phase3/shot_rows.jsonl.gz", "rt"):
         r = json.loads(line)
         T.setdefault(r["name"], {})[r["seed"]] = r
     n = 0
-    for x in csv.DictReader(open(ROOT / "docs/research/phase3/shot_table.csv")):
+    for x in csv.DictReader(open(ROOT / "docs/local/research/phase3/shot_table.csv")):
         a, b = T[f"{x['cell']}|{x['policy']}"], T[f"{x['cell']}|r4a1"]
         for key, field in (("ttc_net", "ttc"), ("delay", "delay")):
             assert cm.effect(a, b, key) == (float(x[field]), float(x[field + "_lo"]), float(x[field + "_hi"]))

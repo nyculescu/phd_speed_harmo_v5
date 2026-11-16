@@ -11,12 +11,12 @@ import pytest
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 sys.path.insert(0, str(ROOT))
 import read6_regress  # noqa: E402
 from test_planb_read6 import cfg, r6  # noqa: E402
 from test_planb_read6_v22 import JAM, P333, X, gate, jam_world, main_world, picks_files, st_row  # noqa: E402
-from v5b.fleet import measure  # noqa: E402
+from v5b2.fleet import measure  # noqa: E402
 
 REAL_WAVES = measure.waves
 
@@ -83,14 +83,14 @@ def test_coverage_front_none_counts_only_true():
 
 
 def test_coverage_measure_is_this_trees_file_even_behind_another_v5b(tmp_path, monkeypatch):
-    """N7: a v5b earlier on sys.path, whose waves returns constants, is not used."""
-    fake = tmp_path / "fake" / "v5b" / "fleet"
+    """N7: a v5b2 earlier on sys.path, whose waves returns constants, is not used."""
+    fake = tmp_path / "fake" / "v5b2" / "fleet"
     fake.mkdir(parents=True)
     (fake.parent / "__init__.py").write_text("")
     (fake / "__init__.py").write_text("")
     (fake / "measure.py").write_text("def waves(*a, **k):\n    return dict.fromkeys(('jam_share', 'congested_share', 'jams', 'congested_km_mean', "
                                      "'congested_km_max', 'osc_kmh', 'front_kmh_median'), 0.5)\n\n\ndef congestion(*a, **k):\n    return 0.0, 0.0\n")
-    for m in [k for k in sys.modules if k == "v5b" or k.startswith("v5b.")]:
+    for m in [k for k in sys.modules if k == "v5b2" or k.startswith("v5b2.")]:
         monkeypatch.delitem(sys.modules, m)
     monkeypatch.syspath_prepend(str(tmp_path / "fake"))
     monkeypatch.setattr(r6, "_measure", [])
@@ -170,5 +170,5 @@ def test_superset_check(tmp_path):
     for name, (new, rc) in cases.items():
         n = tmp_path / "new.json"
         n.write_text(json.dumps(new))
-        p = subprocess.run([sys.executable, str(ROOT / "docs/research/planb/read6_superset.py"), str(o), str(n)], capture_output=True, text=True)
+        p = subprocess.run([sys.executable, str(ROOT / "analysis/planb/read6_superset.py"), str(o), str(n)], capture_output=True, text=True)
         assert p.returncode == rc, (name, p.stdout)

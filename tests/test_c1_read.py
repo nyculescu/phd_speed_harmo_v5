@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "docs/research/c1"))
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/c1"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import c1  # noqa: E402
 import read_c1 as rc  # noqa: E402
 
@@ -151,7 +151,7 @@ def test_plans(tmp_path):
 
 
 def test_longer_ramp2_lane_keeps_the_other_edges(tmp_path, monkeypatch):
-    from v5b.fleet import corridor
+    from v5b2.fleet import corridor
     monkeypatch.setattr(corridor, "NET_CACHE", tmp_path)
     import xml.etree.ElementTree as ET
     lens = {}

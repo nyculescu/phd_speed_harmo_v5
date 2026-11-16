@@ -1,7 +1,7 @@
 """EV-A's drawn slowdown (v505_ev_informed_rule.md §2): drawn from the seed, inside its ranges, the same for every arm, run as a slowdown."""
 from types import SimpleNamespace
 
-from v5b.fleet import perturb as pt
+from v5b2.fleet import perturb as pt
 
 SPEC = {"kind": "slowdown_draw", "edge": "2", "limit_kmh": 20.0, "onset": [450.0, 800.0], "dur": [240.0, 420.0], "taper": 20.0, "salt": 505_001}
 

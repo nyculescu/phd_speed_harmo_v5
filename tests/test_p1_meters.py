@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from v5b.d2.incidents import Incident, incident_window
-from v5b.p1 import meters as m
+from v5b2.d2.incidents import Incident, incident_window
+from v5b2.p1 import meters as m
 
 
 def _seq_reader(vals):
@@ -195,7 +195,7 @@ def test_signal_mode_is_explicit():
 
 def test_d2_signal_reproduces_d1_fbmeter(monkeypatch):
     import types
-    import v5b.d1.episode as d1e
+    import v5b2.d1.episode as d1e
     got = []
     monkeypatch.setattr(d1e, "ls", types.SimpleNamespace(
         trafficlight=types.SimpleNamespace(setRedYellowGreenState=lambda tls, s: got.append(s))))

@@ -3,8 +3,8 @@ check, CONTINUE / STOP, and the T0, T1 and T4 logic."""
 import numpy as np
 import pytest
 
-from v5b.d2 import run_screen as rs
-from v5b.d2 import stats
+from v5b2.d2 import run_screen as rs
+from v5b2.d2 import stats
 
 
 def _rng(k=0):

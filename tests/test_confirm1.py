@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from v5b import confirm1 as c1
+from v5b2 import confirm1 as c1
 
 
 def test_constants_match_protocol():
@@ -176,7 +176,7 @@ def test_stage2_smoke():
 
 
 # ---------------------------------------------------------------- review fixes (pre-download)
-from v5b import screen1 as s1
+from v5b2 import screen1 as s1
 
 
 def test_req_gap_equals_screen1_and_is_finite_at_zero():
@@ -275,10 +275,10 @@ def test_window_meta_matches_screen1b_windows():
     df = pd.DataFrame(rows, columns=["run_index", "id", "time", "xloc_kf", "yloc_kf", "lane_kf", "speed_kf", "test_row"])
     df["step"] = np.rint(df.time * 10).astype(np.int64)
     df = df.sort_values(["run_index", "id", "step"]).reset_index(drop=True)
-    lead = sb_leaders = __import__("v5b.screen1b", fromlist=["x"]).leaders(df)
+    lead = sb_leaders = __import__("v5b2.screen1b", fromlist=["x"]).leaders(df)
     W, S = c1.window_meta(df, lead, set(), "x")
     s, clip = c1.scores(S)
-    ref = __import__("v5b.screen1b", fromlist=["x"]).windows(df, lead)
+    ref = __import__("v5b2.screen1b", fromlist=["x"]).windows(df, lead)
     assert len(W) == len(ref) > 0
     assert np.allclose(np.sort(s), np.sort(ref.s.to_numpy())) and (W.regime.value_counts().sort_index() == ref.regime.value_counts().sort_index()).all()
     assert (W.known >= W.gtime + c1.DELAY).all() and (W.known > W.gtime + c1.DELAY).any()

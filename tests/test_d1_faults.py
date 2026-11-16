@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from v5b.d1.faults import ANY, FAULTS, DetectorFault, onset_time, ratio_fit, rf_fill, saturated_count
+from v5b2.d1.faults import ANY, FAULTS, DetectorFault, onset_time, ratio_fit, rf_fill, saturated_count
 
 LANES = {"3_0": 140.0, "3_1": 140.0, "3_2": 140.0, "3_3": 140.0, "4_0": 280.0, "4_1": 280.0, "5_0": 155.0}
 

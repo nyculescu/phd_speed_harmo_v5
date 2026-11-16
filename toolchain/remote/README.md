@@ -86,7 +86,7 @@ Every deploy runs these checks; a job starts only if all of them pass:
 3. `checks1.py rows`: rows stored on the laptop (simulation, rules and a trained policy) must reproduce on every key;
 4. `fingerprint.py`: one fixed-seed training update must give the same weight fingerprint as on the laptop.
 
-The laptop's reference lives in `fingerprint.ref` and belongs to one version of `v5b/`. Make it on the laptop with `fingerprint.py OUT --write toolchain/remote/fingerprint.ref` when no training is running, and remake it whenever `v5b/` changes. Without a valid reference, check 4 says so and does not fail.
+The laptop's reference lives in `fingerprint.ref` and belongs to one version of `v5b2/`. Make it on the laptop with `fingerprint.py OUT --write toolchain/remote/fingerprint.ref` when no training is running, and remake it whenever `v5b2/` changes. Without a valid reference, check 4 says so and does not fail.
 
 If checks 3 and 4 pass on every machine, the hardware cannot change the results. Trainings may then run one per machine, and the candidates still compare fairly.
 
@@ -107,7 +107,7 @@ If checks 3 and 4 pass on every machine, the hardware cannot change the results.
    It ends with `ACCEPT PASS`. Expected time is a few minutes plus the rows check, but that is untested.
 3. **Run** a job in tmux. It survives logout and stays pinned to the snapshot it started from:
    ```
-   bash toolchain/remote/remote.sh run HOST PORT NAME 'python -m v5b.fleet.c_train ...'
+   bash toolchain/remote/remote.sh run HOST PORT NAME 'python -m v5b2.fleet.c_train ...'
    ```
    `python` is the venv's, because `env.sh` puts the venv first on PATH. It also unsets `SUMO_HOME` and sets `OMP_NUM_THREADS=1`.
 4. **Watch** with `remote.sh status HOST PORT`.

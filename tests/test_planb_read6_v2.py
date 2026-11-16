@@ -147,7 +147,7 @@ def test_defaults_hit_are_counted(tmp_path):
 def v1_module(tmp_path):
     root = HERE.parent
     try:
-        src = subprocess.run(["git", "-C", str(root), "show", f"{V1_COMMIT}:docs/research/planb/read6.py"], capture_output=True, text=True, check=True).stdout
+        src = subprocess.run(["git", "-C", str(root), "show", f"{V1_COMMIT}:analysis/planb/read6.py"], capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("v1 source not available")
     p = tmp_path / "read6_v1.py"
@@ -163,6 +163,6 @@ def test_v1_fields_unchanged(tmp_path, kw):
     v1 = v1_module(tmp_path)
     T = with_report_keys(world(**kw))
     a, b = v1.read(T, cfg()), r6.read(T, conf())
-    sys.path.insert(0, str(HERE.parent / "docs/research/planb"))
+    sys.path.insert(0, str(HERE.parent / "analysis/planb"))
     import read6_regress
     assert read6_regress.diff(a, b) == []

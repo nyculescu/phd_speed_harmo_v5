@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 import drain as drain_rule  # noqa: E402
 
 ROWS = Path("/home/catalin/work/phd/v5b1_runs/planb_remote/s2/s2_runs.jsonl")

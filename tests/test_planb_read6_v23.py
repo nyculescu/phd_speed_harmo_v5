@@ -11,14 +11,14 @@ import pytest
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 sys.path.insert(0, str(ROOT))
 import read6_regress  # noqa: E402
 from test_planb_read6 import LEARN, N, OPP, cfg, r6, world  # noqa: E402
 from test_planb_read6_v2 import with_report_keys  # noqa: E402
 from test_planb_read6_v21 import universe_world  # noqa: E402
 from test_planb_read6_v22 import JAM, P333, X, gate, jam_world, main_world, os1_world, picks_files, st_row  # noqa: E402
-from v5b.fleet import measure  # noqa: E402
+from v5b2.fleet import measure  # noqa: E402
 
 
 def two_fields(path: Path, nc: bool = True) -> tuple:
@@ -77,7 +77,7 @@ def test_each_side_file_is_bound_to_its_row(tmp_path):
 
 
 def test_measure_is_loaded_from_this_tree_and_recorded():
-    m = ROOT / "v5b/fleet/measure.py"
+    m = ROOT / "v5b2/fleet/measure.py"
     sp = r6.read(with_report_keys(world()), cfg())["space_time"]
     assert sp["measure_file"] == str(m) and sp["measure_sha256"] == hashlib.sha256(m.read_bytes()).hexdigest()
 

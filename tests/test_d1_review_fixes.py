@@ -1,4 +1,4 @@
-"""Screen D1 review fixes, Addendum (2026-10-19) A1-A7 of docs/research/protocols/screen_D1_detector_faults.md.
+"""Screen D1 review fixes, Addendum (2026-10-19) A1-A7 of docs/local/research/protocols/screen_D1_detector_faults.md.
 Each test fails on the code of 70d9a65 (no SUMO)."""
 import json
 from types import SimpleNamespace
@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b.d1 import run_screen as rs
-from v5b.d1 import stats
-from v5b.d1.faults import ANY, FAULTS, fill_diagnostics
+from v5b2.d1 import run_screen as rs
+from v5b2.d1 import stats
+from v5b2.d1.faults import ANY, FAULTS, fill_diagnostics
 
 
 def _rng(k=0):
@@ -131,7 +131,7 @@ def test_page_renamed_approved_with_addendum():
     page = (rs.REPO_ROOT / rs.PAGE).read_text()
     assert rs.PAGE.endswith("screen_D1_detector_faults.md")
     assert "Status: **APPROVED (V89); addenda below.**" in page and "## Addendum (2026-10-19)" in page
-    assert not (rs.REPO_ROOT / "docs/research/protocols/screen_D1_detector_faults_draft.md").exists()
+    assert not (rs.REPO_ROOT / "docs/local/research/protocols/screen_D1_detector_faults_draft.md").exists()
 
 
 def test_summary_renders_eval_and_halt():

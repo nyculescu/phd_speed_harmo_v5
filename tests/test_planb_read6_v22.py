@@ -11,14 +11,14 @@ import pytest
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(ROOT / "docs/research/planb"))
+sys.path.insert(0, str(ROOT / "analysis/planb"))
 sys.path.insert(0, str(ROOT))
 import read6_regress  # noqa: E402
 import test_planb_read6 as t1  # noqa: E402
 from test_planb_read6 import LEARN, N, OPP, cfg, r6, world  # noqa: E402
 from test_planb_read6_v2 import PICKS, with_report_keys  # noqa: E402
 from test_planb_read6_v21 import universe_world  # noqa: E402
-from v5b.fleet import measure  # noqa: E402
+from v5b2.fleet import measure  # noqa: E402
 
 JAM = ("jam_share", "congested_share", "jams", "congested_km_mean", "congested_km_max", "osc_kmh")
 

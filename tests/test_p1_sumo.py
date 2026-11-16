@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
-from v5b.d2.incidents import incident_window
-from v5b.p1.episode import make_spec
-from v5b.p1.meters import fa_schedule, incident_ticks
+from v5b2.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b2.d2.incidents import incident_window
+from v5b2.p1.episode import make_spec
+from v5b2.p1.meters import fa_schedule, incident_ticks
 
 SEED = 7_400_000
 Q = 2000.0
@@ -37,10 +37,10 @@ def runs(tmp_path_factory):
     cmds = {}
     for name, s in SPECS.items():
         sig = "continuous" if name.endswith("_cont") else "d2"
-        cmds[name] = [PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps({**s, "signal": sig}), "--out",
+        cmds[name] = [PYTHON_BIN, "-m", "v5b2.p1.episode", "--spec", json.dumps({**s, "signal": sig}), "--out",
                       str(d / f"{name}.json"), "--run-dir", str(d / name)]
     d2spec = {"pre": "c1600", "post": "c800", "incident": "block", "q": Q, "seed": SEED, "back": True}
-    cmds["d2"] = [PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(d2spec), "--out", str(d / "d2.json"),
+    cmds["d2"] = [PYTHON_BIN, "-m", "v5b2.d2.episode", "--spec", json.dumps(d2spec), "--out", str(d / "d2.json"),
                   "--run-dir", str(d / "d2")]
     todo, running = list(cmds.items()), []
     while todo or running:
@@ -49,7 +49,7 @@ def runs(tmp_path_factory):
             running.append(subprocess.Popen(cmd, cwd=REPO_ROOT, env=clean_sumo_env(), stdout=subprocess.DEVNULL,
                                             stderr=subprocess.DEVNULL))
         assert running.pop(0).wait(timeout=600) == 0
-    no_signal = subprocess.run([PYTHON_BIN, "-m", "v5b.p1.episode", "--spec", json.dumps(SPECS["nc"]), "--out",
+    no_signal = subprocess.run([PYTHON_BIN, "-m", "v5b2.p1.episode", "--spec", json.dumps(SPECS["nc"]), "--out",
                                 str(d / "x.json"), "--run-dir", str(d / "x")], cwd=REPO_ROOT, env=clean_sumo_env(),
                                capture_output=True, text=True)
     assert no_signal.returncode != 0 and "signal" in no_signal.stderr        # no default signal

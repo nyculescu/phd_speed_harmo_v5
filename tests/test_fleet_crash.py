@@ -1,7 +1,7 @@
-"""Layer B crash rule (v5b/fleet/crash.py): weights, CRN draws, the live process and the calibration."""
+"""Layer B crash rule (v5b2/fleet/crash.py): weights, CRN draws, the live process and the calibration."""
 import numpy as np
 
-from v5b.fleet import crash as cr
+from v5b2.fleet import crash as cr
 
 
 def test_weight_and_cap():
