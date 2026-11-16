@@ -38,9 +38,9 @@ def encounter_new(last: dict, pair: tuple, t: float) -> bool:
 
 
 class VV:
-    def __init__(self, ls, c: dict, alks: set, trucks: set, side: Path | None, ramp: set | None = None):
+    def __init__(self, ls, c: dict, alks: set, trucks: set, side: Path | None, origin: dict | None = None):
         self.ls, self.alks, self.trucks, self.side = ls, alks, trucks, side
-        self.ramp = ramp     # vehicles that enter from a ramp; only they merge (a mainline car into lane 0 and back is not a merge)
+        self.origin = origin     # lane -> vehicles that enter on its ramp; only they merge there (other exits are counted, not logged)
         self.count = bool(c.get("vv_count") or c.get("vv_trace"))
         self.trace = [] if c.get("vv_trace") else None
         self.log = bool(c.get("vv_log"))
@@ -84,8 +84,12 @@ class VV:
                         h.popleft()
             now = {v: ls.vehicle.getLanePosition(v) for v in ls.lane.getLastStepVehicleIDs(x)}
             for v, p0 in self.prev[x].items():
-                if v not in now and (self.ramp is None or v in self.ramp):
+                if v in now:
+                    continue
+                if self.origin is None or v in self.origin.get(x, ()):
                     self._merge(t, v, x, p0)
+                else:
+                    self.S[f"vv_exit_other_{x}"] += 1
             self.prev[x] = now
 
     def _merge(self, t: float, v: str, x: str, p0: float) -> None:

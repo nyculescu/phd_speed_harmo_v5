@@ -166,3 +166,25 @@ def test_failed_null_reads_not_shown(monkeypatch):
     out = rv.v3(t.rows(t.plan(900, 1100, 600, 450)), list(range(t.N)), [], ["cpu"])
     assert out["v3a"]["replication"]["reading"] == "NOT REPLICATED" and out["v3b"]["reading"] == "NOT SHOWN"
     assert (rv.SWAPS, rv.NB, rv.P975) in calls and (rv.RE_SWAPS, rv.NB, rv.P975) in calls and (rv.RE_SWAPS, rv.NB_W, rv.P9875) in calls
+
+
+def test_worse_null_bar_is_094(monkeypatch):
+    import test_read_vv as t
+    monkeypatch.setattr(rv, "B", 2000)
+    for rate, ok in ((0.0094, True), (0.0095, False)):
+        monkeypatch.setattr(rv.rf, "null_rate", lambda D, swaps, nb, pct, seed, rate=rate: rate)
+        out = rv.v3(t.rows(t.plan(900, 1100, 600, 450)), list(range(t.N)), [], ["cpu"])
+        assert out["v3b"]["reading"] == ("WORSE" if ok else "NOT SHOWN")
+
+
+def test_derive_meter_presence():
+    base = {"name": "L300|nc", "all_delay": 1.0, "ttc_net": 5.0, "ttc_half": 4.0, "passed": 1.0, "N": 1.0, "collisions": 0}
+    ok = rv.derive(base | {"vv_m_time": 6.0, "vv_m_whole": 5.0, "vv_m_half": 4.0}, None)["meter_ok"]
+    bad = rv.derive(base | {"vv_m_time": 6.0, "vv_m_whole": 4.0, "vv_m_half": 4.0}, None)["meter_ok"]
+    absent = rv.derive(base, None)["meter_ok"]
+    assert ok and not bad and not absent
+
+
+def test_obs_and_missing_position_reads(smoke_plan):
+    rows = fake_rows(smoke_plan, 1)
+    assert all(v["x_out"] == 0 for v in vv.obs_checks(rows).values()) and len(vv.obs_checks(rows)) == 9

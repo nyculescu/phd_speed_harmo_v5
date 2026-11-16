@@ -175,3 +175,17 @@ def test_meter_whole_and_half():
 
 def test_flags_off_by_default():
     assert not vm.wanted({"split": True, "measure": "x"})
+
+
+def test_merge_origin_per_lane():
+    cars = {"r1": car("3a_0", 100.0, 10.0), "m": car("3a_0", 150.0, 20.0), "q": car("4a_0", 50.0, 20.0)}
+    ls = FakeLS(cars, {"3a_0": 294.72, "4a_0": 294.72})
+    vv = vm.VV(ls, {"vv_log": True}, set(), set(), None, origin={"3a_0": {"r1", "q"}, "4a_0": set()})
+    vv.step(1.0, True)
+    for v in cars:
+        cars[v]["lane"] = cars[v]["lane"][:-1] + "1"
+    vv.step(1.1, True)
+    r = vv.finish("x")
+    assert [m["v"] for m in r["vv_merges_log"]] == ["r1"] and r["vv_exit_other_3a_0"] == 1 and r["vv_exit_other_4a_0"] == 1
+    m = r["vv_merges_log"][0]
+    assert "min_gap" not in m and "lane" not in m     # no target-lane neighbours in this state
