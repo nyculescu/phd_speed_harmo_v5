@@ -305,7 +305,7 @@ def v1_row(r: dict, merges: list) -> dict:
     return out
 
 
-def v1(trace_rows: list, vv_dir: Path) -> dict:
+def v1(trace_rows: list, vv_dirs: list) -> dict:
     from vv import twin_diff, TWIN
     by = {(r["name"], r["seed"]): r for r in trace_rows}
     out = {"twins": {}, "runs": {}, "sample": []}
@@ -314,8 +314,10 @@ def v1(trace_rows: list, vv_dir: Path) -> dict:
             tw = by.get((n[: -len("~trace")] + TWIN, s))
             if tw is not None:
                 out["twins"][f"{n} {s}"] = twin_diff(r, tw)
-            f = vv_dir / r["vv_log_file"] if r.get("vv_log_file") else None
-            merges = json.load(gzip.open(f, "rt"))["merges"] if f and f.is_file() else r.get("vv_merges_log", [])
+            f = next((d / r["vv_log_file"] for d in vv_dirs if r.get("vv_log_file") and (d / r["vv_log_file"]).is_file()), None)
+            if r.get("vv_log_file") and f is None:
+                raise SystemExit(f"merge log {r['vv_log_file']} not found in {vv_dirs}")
+            merges = json.load(gzip.open(f, "rt"))["merges"] if f else r.get("vv_merges_log", [])
             out["runs"][f"{n} {s}"] = v1_row(r, merges)
     pool = [(k, i) for k, r in sorted(by.items()) if k[0].endswith("~trace") for i in range(len(r.get("vv_trace", [])))]
     rng = np.random.default_rng(20261115)
@@ -335,14 +337,14 @@ def main(argv: list) -> int:
     ap.add_argument("step", choices=("v1", "v3"))
     ap.add_argument("out")
     ap.add_argument("--trace", nargs="+")
-    ap.add_argument("--vv")
+    ap.add_argument("--vv", nargs="+")
     ap.add_argument("--rows")
     ap.add_argument("--st")
     ap.add_argument("--seeds")
     x = ap.parse_args(argv)
     if x.step == "v1":
         rows = [json.loads(line) for p in x.trace for line in open(p)]
-        res = v1(rows, Path(x.vv))
+        res = v1(rows, [Path(d) for d in x.vv])
         print("V1", res["outcome"])
     else:
         lo, hi = map(int, x.seeds.split("-"))
