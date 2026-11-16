@@ -1,0 +1,8 @@
+# The test bench
+
+::: {.callout-note}
+## By the end of this chapter
+You know the r2m3 plant in SUMO and what its V&V record says and does not say.
+:::
+
+*To be written.*

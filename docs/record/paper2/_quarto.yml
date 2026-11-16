@@ -1,0 +1,15 @@
+project:
+  type: manuscript
+
+manuscript:
+  article: index.qmd
+
+format:
+  html:
+    toc: true
+    number-sections: true
+  pdf:
+    number-sections: true
+    colorlinks: true
+
+bibliography: references.bib

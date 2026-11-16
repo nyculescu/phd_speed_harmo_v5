@@ -11,11 +11,12 @@ runs/raw/
 *.sumocfg.tmp
 .DS_Store
 
-# Thesis and paper PDFs: third-party copyright, kept local only (V151)
-docs/theses/*.pdf
-docs/theses/*.notpdf
-papers/refs_papers/
-
 # Temporary folders at the repo root
 /tmp*/
-scribble/
+docs/papers/local/*
+docs/papers/paper_1/*
+# third-party theses and private notes stay on disk only
+docs/record/theses/*.pdf
+docs/record/theses/*.notpdf
+docs/record/scribble/
+CLAUDE.md

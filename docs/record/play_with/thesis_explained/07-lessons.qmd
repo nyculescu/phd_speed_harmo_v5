@@ -1,0 +1,8 @@
+# The lessons
+
+::: {.callout-note}
+## By the end of this chapter
+You know the traps the project fell into and the method rule each one produced.
+:::
+
+*To be written.*

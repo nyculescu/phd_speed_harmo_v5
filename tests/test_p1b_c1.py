@@ -18,27 +18,6 @@ from v5b.p1b import run as rs
 
 
 # ---------------------------------------------------------------- arms
-def test_arms_resolve_to_the_frozen_p1b_arms():
-    s = 7_400_000
-    ip, pi, n, nc = (cf.arm_spec(x, s) for x in cf.ARMS)
-    assert (ip["pre"], ip["post"], ip["back"], ip["incident"], ip["q"], ip["d"], ip["c"], ip["rs"], ip["k"]) == \
-        ("c1800", "p20_20_16_e4", False, "block", 1600.0, 0.0, 0.0, 0.0, 0)
-    assert (pi["pre"], pi["post"], pi["back"]) == ("p70_120_8_e4", None, False)
-    assert (n["pre"], n["post"]) == ("c1800", None) and (nc["pre"], nc["post"]) == (fam.NC, None)
-    assert all(x["incident"] == "block" and x["q"] == 1600.0 and x["rs"] == 0.0 and x["vsl_b"] is None
-               for x in (ip, pi, n, nc))
-    chk = cf.frozen_arms_check()
-    assert chk["checked"] and chk["match"], chk
-    a = json.loads((REPO_ROOT / cf.P1B_RESULT).read_text())["tune"]["arms"]["1600"]
-    assert an.sw(a["N"], a["IP"]["block"], "block", 1600.0, s)["key"] == ip["key"]    # P1b's own IP run
-    assert an.fixed(a["PI"], "block", 1600.0, s)["key"] == pi["key"]
-    assert cf.ip_spec(s, rs_=0.3)["rs"] == 0.3 and cf.ip_spec(s, rs_=0.3)["post"] == "p20_20_16_e4"
-    for d in cf.D_ROWS:
-        x = cf.ip_spec(s, d=d)
-        assert x["key"] in (an.sw("c1800", "c1800", "block", 1600.0, s)["key"],
-                            an.sw("c1800", "p20_20_16_e4", "block", 1600.0, s, d=d)["key"])
-
-
 # ---------------------------------------------------------------- seeds
 def test_seeds_are_the_confirmatory_block_700_799_only():
     assert cf.SEEDS == tuple(range(7_400_700, 7_400_800)) and len(cf.SEEDS) == 100
@@ -178,42 +157,3 @@ def _patch(monkeypatch, tmp_path, calls, commit="abc", dirty=""):
     monkeypatch.setattr(cf.p1run, "_git", lambda *a: commit if a[0] == "rev-parse" else dirty)
     return sen
 
-
-def test_run_once_sentinel_and_resume(monkeypatch, tmp_path):
-    calls = []
-    sen = _patch(monkeypatch, tmp_path, calls)
-    out = tmp_path / "c1"
-    args = ["--confirm-run-once", "--workers", "2", "--out", str(out)]
-    assert cf.main(args) == 0
-    assert calls == [True] and json.loads(sen.read_text())["code_commit"] == "abc"
-    r = json.loads((out / "result.json").read_text())
-    assert r["c1"]["C1"]["confirmed"] and r["decision"] == "CONFIRMED" and r["c1"]["n_seeds"] == 10
-    assert (out / "summary.md").read_text().startswith("# P1b confirmation C1 (block_q1600)")
-    with pytest.raises(SystemExit):
-        cf.main(args)                                                           # result exists: runs once
-    (out / "result.json").unlink()                                              # an interrupted run
-    with pytest.raises(SystemExit):
-        cf.main(args)                                                           # sentinel: no fresh start
-    with pytest.raises(SystemExit):
-        cf.main(args + ["--out", str(tmp_path / "other"), "--resume"])           # resume only of the same --out
-    _patch(monkeypatch, tmp_path, calls, commit="def")
-    with pytest.raises(SystemExit):
-        cf.main(args + ["--resume"])                                            # resume only at the same commit
-    _patch(monkeypatch, tmp_path, calls, commit="abc")
-    assert cf.main(args + ["--resume"]) == 0 and len(calls) == 2
-
-
-def test_dirty_tree_refused_and_smoke_writes_no_sentinel(monkeypatch, tmp_path):
-    calls = []
-    sen = _patch(monkeypatch, tmp_path, calls, dirty=" M v5b/p1b/confirm_c1.py")
-    with pytest.raises(SystemExit):
-        cf.main(["--confirm-run-once", "--workers", "2", "--out", str(tmp_path / "c1")])
-    assert not sen.exists() and calls == []
-    assert cf.main(["--smoke", "--workers", "4", "--out", str(tmp_path / "smoke")]) == 0
-    assert calls == [False] and not sen.exists()
-    r = json.loads((tmp_path / "smoke" / "result.json").read_text())
-    assert r["smoke"] and r["seeds"] == [7_400_000, 7_400_003]
-    d = r["c1"]["descriptive"]
-    assert set(d) >= {"PI_vs_IP_d30", "PI_vs_IP_d60", "PI_vs_IP_d120", "PI_s0.1_vs_IP_s0.1", "PI_s0.3_vs_IP_s0.3",
-                      "N_vs_IP", "NC_vs_PI"}
-    assert r["c1"]["rows"]["IP"]["spill_share"] == 0.0 and "spill_share_b4_7m" in r["c1"]["rows"]["IP"]

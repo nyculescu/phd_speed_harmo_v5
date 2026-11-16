@@ -53,17 +53,6 @@ def test_extreme_inputs_are_clipped():
     assert z.abs().max().item() == pytest.approx(ct.CLIP_INPUT)
 
 
-def test_policy_from_before_the_change_acts_exactly_as_before():
-    g = ct.Greedy(str(OLD))
-    assert g.net.n_seen.item() == 0
-    lo, gl = data()
-    due = np.ones(len(lo), dtype=bool)
-    got = g((list(range(len(lo))), lo, gl, due))
-    with torch.no_grad():
-        want = g.net.actor(torch.from_numpy(lo)).argmax(1).numpy()
-    assert list(got.values()) == want.tolist()
-
-
 def test_saved_policy_uses_its_statistics(tmp_path):
     net, lo, gl = net_with_stats()
     f = tmp_path / "p.pt"

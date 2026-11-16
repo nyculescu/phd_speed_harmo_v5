@@ -1,0 +1,117 @@
+# The contestants
+
+::: {.callout-note}
+## By the end of this chapter
+You know what no control, the tuned rules and v3w each do, see and are tuned or trained on.
+:::
+
+*To be written.*
+
+## Committee questions {#sec-committee-contestants}
+
+::: {.callout-important collapse="true"}
+## "Why didn't you compare against MPC?"
+
+**The premise is only half true.** A model predictive controller, MPC-F, was compared. What was not built is a per-vehicle MPC.
+
+| Study | MPC-F in it? | Result |
+|---|---|---|
+| Plan B S6 (V491, V496) | yes, one of 23 deciding opponents; passed its validity gate | study NULL: in TRUCK, no clear difference (T) |
+| E30 confirmation (V530) | yes | v3w spent 28.3 % less time below 3 s TTC than MPC-F [22.4, 34.1]; the closest competitor was the rule lr400_16_1 (+9.9 %) |
+| Merge V&V, 300 m vs 600 m (V536) | no, rules only | unknown at 600 m |
+
+**What MPC-F is** (`docs/research/protocols/planb.md` §3.5):
+
+- supervisory: every 30 s it picks one of 5 rule settings for the whole network, predicting the next 300 s as if that setting were held;
+- its model is a learned surrogate (an MLP) fitted on separate seeds, not a physical traffic model, and never the true model;
+- its cost is delay + 10 × close-following, with weights chosen, not derived;
+- its gate: beat the best single fixed action on held-out seeds;
+- METANET was stopped in an earlier line (D5.5); quote that record for the reason.
+
+**An answer to give:**
+
+> "We did include a model predictive controller: a receding-horizon controller whose prediction model was fitted on separate seeds and never given the simulator's true model, and which had to pass a pre-registered validity gate against the best fixed setting. In the perturbation study it tied with the learned policies and the tuned rules. In the merge cell the learned policy spent 28 % less time below 3 s time-to-collision than it did. What we did not build is a per-vehicle MPC with a physical car-following model optimising each automated vehicle's headway continuously. That is the natural model-based counterpart to per-CAV DRL, and it is the main missing opponent. Our MPC chooses among a small set of rule settings, so it is a lower bound on what model-based control could do here, not the best MPC possible."
+
+**Answers to avoid:**
+
+- "MPC is too slow or expensive": nothing was measured to back it up.
+- "MPC isn't comparable to model-free DRL": MPC is the standard benchmark.
+- Calling MPC-F state of the art: it is a discrete supervisory MPC with a learned model; the plan itself warns about straw-man MPCs [VERIFY the source cited there].
+
+**Closing the gap:**
+
+| Option | For | Against |
+|---|---|---|
+| State the limit in chapters 3 and 4 (recommended, not decided) | costs nothing, honest | leaves the question open |
+| Per-CAV MPC with a fitted car-following model, run in E30 at 300 and 600 m | closes the strongest objection | a new study: protocol, build, rental; not yet sized |
+| Report-only oracle MPC with the true model | shows the headroom | the method forbids it as an opponent |
+:::
+
+::: {.callout-important collapse="false"}
+## "Is MPC-F comparable with v3w, or is it apples and oranges?"
+
+**Short answer:** the same task, a different controller structure. MPC-F is not a structural twin of v3w.
+
+| Dimension | v3w | MPC-F | Same? |
+|---|---|---|---|
+| Plant, seeds, demand, measures | r2m3, paired seeds | the same | yes |
+| The knob finally turned | each CAV's ALKS time headway | the same knob, through one of 5 rule settings | yes |
+| Who decides | each CAV on its own | one choice for the whole network | no |
+| What it sees | its own 200-m bin and a leader within 100 m | zone-level roadside data for the whole road | no (MPC-F sees more) |
+| How it chooses | a trained neural policy (PPO) | a fitted neural cost predictor, picking the lowest predicted cost among 5 settings | partly: both learned from simulation on separate seeds |
+| Decision period | not checked here | every 30 s, predicting the next 300 s | unknown |
+
+Outcome (positive = v3w better):
+
+| Study | Delay | Close-following / time below 3 s TTC |
+|---|---|---|
+| S6 TRUCK (`baseline_v5/readings/read6_v1_deciding.json`) | +1.1 % [0.6, 1.7], tie | +27.6 % [23.0, 31.7], v3w wins |
+| E30 confirmation (V530) | not pulled | +28.3 % [22.4, 34.1] |
+
+A win against MPC-F shows "per-CAV control beats a network-level switch between tuned rules". It does not show "learning beats model-based control".
+
+### How MPC-F came to be
+
+```{mermaid}
+flowchart TD
+  A["Day-pattern line (archive claude/v5b-core)<br/>MPC-F written for BN4 mainline-meter scheduling<br/>(commit 3637676); opponent in BN4's confirmatory"]
+  R["Method rule (CLAUDE.md, D5.1)<br/>'best non-learning' includes an MPC with a model<br/>fitted on separate seeds, never the true model"]
+  L["2026-10-13 literature check v0, F9<br/>per-CAV MPC (e.g. DeeP-LCC [VERIFY]) listed as optional;<br/>recommendation: drop it and disclose"]
+  V457["V457 (2026-11-07), author<br/>non-learning opponents: an MPC fitted on separate seeds<br/>and/or an adaptive scheduler; plant unchanged"]
+  D["V479 design workflow, 3 drafts<br/>breadth draft: omit MPC; rigor draft: port MPC-F<br/>no draft offered a per-CAV MPC"]
+  V480["V480, author approves addition (c):<br/>both ASCH and MPC-F"]
+  B["Review fixes (P7 data design, S13 gate)<br/>build 42c77fb, port of 3637676<br/>gate passed (V491), ran in S6 and the E30 confirmation"]
+  A --> V457
+  R --> V457
+  L -.-> D
+  V457 --> D --> V480 --> B
+```
+
+### Why it was built this way (reasons in the record)
+
+1. **Its role was a supervisor, not a twin.** V457 framed it as a non-learning *adaptive* opponent for the question "learning or adaptation?" (RQ4), beside the scheduler ASCH. So its actions are the tuned rules' own settings.
+2. **No physical model was available.** No macroscopic model maps headway to capacity on this plant; the METANET line was stopped (D5.5). Hence a learned surrogate cost model.
+3. **Reuse.** Working code existed from the BN4 line; the port was estimated at about a day. The other option on the table was to omit an MPC.
+4. **Deployable inputs only (PR-15).** Roadside-measurable data; no pending list, time or demand.
+5. **Never the true model** (method rule).
+
+**Inspiration:** the project's own method rule and the earlier BN4 MPC-F. I found no literature source cited for MPC-F's specific design. The only cited source is the warning that an MPC without capacity-drop hysteresis is a straw man (L62 [VERIFY]).
+
+### Why not an MPC matching v3w on every dimension
+
+- A per-CAV MPC was raised once: literature check v0 (2026-10-13, F9). It recommended dropping it and disclosing the omission, under the then-current D5.8 allowance. The reasons given were that it is costly at about 50 % penetration in SUMO and was "not field-proven at freeway scale in what I saw".
+- No decision row (V#) was found in which the author chose against it. In Plan B the options put forward were "omit MPC" or "port MPC-F". **The per-CAV MPC was never offered as an option, so it was not rejected; it was left out.** Say so if asked.
+
+A matched MPC would need:
+
+| Dimension | Matched MPC |
+|---|---|
+| Who decides | each CAV |
+| What it sees | own bin and leader, as v3w |
+| Knob | the same ALKS time headway |
+| Decision period | the same as v3w |
+| Model | car-following model fitted on separate seeds, never the true model |
+| Plant, seeds, measures | the same |
+
+Building it is a new study: protocol, build, rental. It is not yet sized and not decided.
+:::

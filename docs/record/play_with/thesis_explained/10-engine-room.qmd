@@ -1,0 +1,8 @@
+# The engine room
+
+::: {.callout-note}
+## By the end of this chapter
+You know how runs are planned, frozen, run remotely and recorded.
+:::
+
+*To be written.*

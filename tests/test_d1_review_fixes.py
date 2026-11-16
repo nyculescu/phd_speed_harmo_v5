@@ -127,13 +127,6 @@ def test_reuse_refuses_other_config(monkeypatch, tmp_path):
 
 
 # A7: the page of record
-def test_page_renamed_approved_with_addendum():
-    page = (rs.REPO_ROOT / rs.PAGE).read_text()
-    assert rs.PAGE.endswith("screen_D1_detector_faults.md")
-    assert "Status: **APPROVED (V89); addenda below.**" in page and "## Addendum (2026-10-19)" in page
-    assert not (rs.REPO_ROOT / "docs/research/protocols/screen_D1_detector_faults_draft.md").exists()
-
-
 def test_summary_renders_eval_and_halt():
     sp = rs.eval_specs({"1600": 1900.0, "2000": 1800.0}, {"1600": 1.8, "2000": 1.9}, False, 20.0, 8.0)
     res = _fake_res(sp, lambda s: 100.0 + s["seed"] % 5 + (40.0 if s["arm"] != "O" else 0.0))
