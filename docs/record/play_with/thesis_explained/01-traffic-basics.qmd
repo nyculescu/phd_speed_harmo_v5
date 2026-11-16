@@ -1,8 +1,0 @@
-# Traffic basics
-
-::: {.callout-note}
-## By the end of this chapter
-You can explain merging, acceleration lanes, why cars stop at a lane end, and time-to-collision (TTC).
-:::
-
-*To be written.*

@@ -1,8 +1,0 @@
-# The referee
-
-::: {.callout-note}
-## By the end of this chapter
-You can read a paired median difference with its CI and tell a confirmation from a replication.
-:::
-
-*To be written.*

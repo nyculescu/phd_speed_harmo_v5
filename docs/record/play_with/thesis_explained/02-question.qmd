@@ -1,8 +1,0 @@
-# The question
-
-::: {.callout-note}
-## By the end of this chapter
-You can say what "adaptive" means here, and why the goal is conditional advantages, not universal wins.
-:::
-
-*To be written.*

@@ -13,10 +13,6 @@ runs/raw/
 
 # Temporary folders at the repo root
 /tmp*/
+docs/local/
 docs/papers/local/*
-docs/papers/paper_1/*
-# third-party theses and private notes stay on disk only
-docs/record/theses/*.pdf
-docs/record/theses/*.notpdf
-docs/record/scribble/
 CLAUDE.md

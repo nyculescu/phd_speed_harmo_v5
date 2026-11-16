@@ -1,8 +1,0 @@
-p333         rho(d end_stop2, d merge2 TTC) per learner +0.90 +0.90 +0.89 +0.90 +0.88 | rho merge1 +0.80 +0.82 +0.83 +0.81 +0.85
-             seeds with |d end_stop2|<=25: n, median d merge2 there, median d merge2 all: [(np.int64(17), 14.0, 371.0), (np.int64(26), 35.5, 394.0), (np.int64(13), 49.0, 361.0), (np.int64(24), 23.0, 338.0), (np.int64(21), 4.0, 359.0)]
-lr400_16_1   rho(d end_stop2, d merge2 TTC) per learner +0.86 +0.87 +0.86 +0.86 +0.86 | rho merge1 +0.86 +0.84 +0.84 +0.82 +0.86
-             seeds with |d end_stop2|<=25: n, median d merge2 there, median d merge2 all: [(np.int64(22), 15.0, 89.0), (np.int64(16), 19.5, 67.5), (np.int64(19), -40.0, 104.0), (np.int64(22), -4.0, 105.5), (np.int64(31), 26.0, 74.0)]
-MPC-F        rho(d end_stop2, d merge2 TTC) per learner +0.90 +0.87 +0.89 +0.87 +0.86 | rho merge1 +0.81 +0.81 +0.80 +0.79 +0.84
-             seeds with |d end_stop2|<=25: n, median d merge2 there, median d merge2 all: [(np.int64(18), 64.5, 274.5), (np.int64(15), 31.0, 281.5), (np.int64(24), 20.0, 260.5), (np.int64(26), 46.0, 290.5), (np.int64(32), 11.5, 253.5)]
-3E-D_TRUCK   rho(d end_stop2, d merge2 TTC) per learner +0.86 +0.87 +0.86 +0.87 +0.85 | rho merge1 +0.83 +0.83 +0.81 +0.81 +0.83
-             seeds with |d end_stop2|<=25: n, median d merge2 there, median d merge2 all: [(np.int64(24), -20.5, 232.0), (np.int64(21), 15.0, 237.5), (np.int64(20), 26.5, 266.5), (np.int64(24), 87.5, 293.0), (np.int64(18), 48.0, 234.0)]

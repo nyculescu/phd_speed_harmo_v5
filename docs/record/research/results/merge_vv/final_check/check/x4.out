@@ -1,8 +1,0 @@
-k=0.34  P(HOLDS: both lower bounds > 0) 0.860  (lr400_16_1 alone 0.860)  P(WORSE: a 98.75 % upper bound < 0) 0.000   [300 outer x 400 inner]
-k=0.20  P(HOLDS: both lower bounds > 0) 0.367  (lr400_16_1 alone 0.367)  P(WORSE: a 98.75 % upper bound < 0) 0.000   [300 outer x 400 inner]
-k=0.10  P(HOLDS: both lower bounds > 0) 0.020  (lr400_16_1 alone 0.020)  P(WORSE: a 98.75 % upper bound < 0) 0.007   [300 outer x 400 inner]
-k=0.02  P(HOLDS: both lower bounds > 0) 0.000  (lr400_16_1 alone 0.000)  P(WORSE: a 98.75 % upper bound < 0) 0.227   [300 outer x 400 inner]
-V2 margins with the proxy SE 0.35: P(95 % interval inside +-m), one rule
-  m=1.5: true 0.0 -> 0.980 true 0.5 -> 0.815 true 1.0 -> 0.298 true 1.5 -> 0.025 true 2.0 -> 0.000 true 3.0 -> 0.000
-  m=2.0: true 0.0 -> 1.000 true 0.5 -> 0.990 true 1.0 -> 0.815 true 1.5 -> 0.298 true 2.0 -> 0.025 true 3.0 -> 0.000
-  m=3.0: true 0.0 -> 1.000 true 0.5 -> 1.000 true 1.0 -> 1.000 true 1.5 -> 0.990 true 2.0 -> 0.815 true 3.0 -> 0.025

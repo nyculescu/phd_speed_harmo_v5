@@ -1,8 +1,0 @@
-_manuscript/
-.quarto/
-index_files/
-*.pdf
-*.tex
-
-/.quarto/
-**/*.quarto_ipynb

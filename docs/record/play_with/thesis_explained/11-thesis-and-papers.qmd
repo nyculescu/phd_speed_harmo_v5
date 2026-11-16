@@ -1,8 +1,0 @@
-# The thesis and papers
-
-::: {.callout-note}
-## By the end of this chapter
-You can state the claim in its approved words and say what it never says.
-:::
-
-*To be written.*

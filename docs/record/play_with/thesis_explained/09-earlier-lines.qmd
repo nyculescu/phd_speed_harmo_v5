@@ -1,8 +1,0 @@
-# Earlier lines
-
-::: {.callout-note}
-## By the end of this chapter
-You know which lines were KILLed, withdrawn, closed or parked, and why.
-:::
-
-*To be written.*
