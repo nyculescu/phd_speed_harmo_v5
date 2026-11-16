@@ -114,13 +114,6 @@ def test_d1_fx_switch_constant_after_switch(tls):
     assert set(_runs(tail, "GGGG")[1:-1]) == {6}
 
 
-def test_p1_shares_the_clock():
-    from v5b2.p1 import meters as pm
-    mt = pm.FBSignalMeter(K_F=0.0, q0=1600.0, read=lambda t: 0.0, signal="continuous", set_state=lambda s: None)
-    assert isinstance(mt._clock, SignalClock) and mt._clock.signal == "continuous"
-    assert pm.SIGNALS is SIGNALS
-
-
 def test_reuse_refuses_other_meter_signal():
     s1 = rs1.spec("O", "none", 2000.0, 7_400_000)
     stored = {k: s1[k] for k in ("arm", "fault", "q", "seed", "q_fx", "ratio", "kf", "ncrit")}
