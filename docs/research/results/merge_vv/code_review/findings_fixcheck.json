@@ -1,0 +1,115 @@
+{
+ "chk": {
+  "summary": "**Verdict:** fafdd50 fixes both blockers and the majors correctly. I found no new blocker or major. Must-fix 7 (tests) and 8 (dry run) are only partly done, and the merge-log fix has one small hole. All 36 allowed tests pass.\n\n**What I ran (no simulation):** scripts in `/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/vvfix/fixcheck/` (`plans.py`, `smoke_int.py`, `reader_checks.py`, `next_map.py`). I also tried to run `remote_vv.sh` on a scratch copy with four more planted faults; that command was not permitted, so the remaining shell gate lines are checked by reading only.\n\n**1. Must-fix items**\n\n| # | Item | Verdict |\n|---|---|---|\n| 1 | Smoke T0 on 600-m twins (F1/B1/R2) | Fixed. The real `vv.smoke()` body, run on runner-shaped rows with `run6.execute` replaced by a writer, passes on good rows and fails on each of 12 planted faults. |\n| 2 | ident tracer bug (F2/B2/R1) | Fixed (vv.py:35, :233). Plain and traced compares both skip `arm` and `learner`; rows are matched by name, so nothing is lost. |\n| 3 | Identity gate fails open (F3/R3) | Fixed (remote_vv.sh:71-75). One residual: an unparsable ident.json would pass (info). |\n| 4 | Meter presence (R1, F8, R8) | Fixed in the smoke (vv.py:156-165, :201-202) and the reader (read_vv.py:49). A meter that counted nothing now reads as a bug. |\n| 5 | V1 with missing runs or twins (R2/F6/R4) | Fixed (remote_vv.sh:79; read_vv.py:347-348). |\n| 6 | Leader off the route (R4/F4) | Fixed in the reader (read_vv.py:259-272, :310-312). `NEXT` equals the edge successors of the built 300-m and 600-m nets. A 200-m look-ahead reaches at most 2 roads; `ahead()` allows 3. |\n| 7 | Tests (F5) | Partly. See finding N4. |\n| 8 | Dry run | Partly. See finding N2. |\n\nR5 (V4 upstream followers) is also fixed: `sumo_dist + min_gap` matches MSLane.cpp:4450 and :3890 in SUMO 1.27.1, and the drop counts are printed.\n\n**Did the fix break anything?**\n- **`vv_obs`:** all 9 screen arms at 600 m and the three 600-m traced arms carry it; no twin does. `obs_check` now has a real twin test.\n- **`obs_checks` and `x_out`:** every 600-m learner row is seen, and a learner row with no `vv_x_acc_n` fails the smoke. `nc` runs in ZoneEnv, so it has no input check; that is correct.\n- **Meter on traced 300-m rows:** not required anywhere. `meter_bugs` runs only in the smoke, which has no traced arms, and V1 does not read the meter.\n- **`env.ramp`:** set in `reset()` (b_env.py:175, :411) before VV is built (plant_sweep.py:374, :386). It holds routes `ramp` and `ramp2`. It is the right set for 3a_0 but too wide for 4a_0 (finding N1).\n- **Reader constants:** 294.72 and 594.72 match the three cached r2m3 nets and the stored CF rows.\n\n**2. What the stand-in hides:** see N2 and N3. The smoke was replaced by `{\"pass\": ...}`, so the dry run never executed its body; my in-process run closes that for row logic, not for real simulation output.\n\n**3. Other:** the screen's VOID line and a few carried minors (N5-N8). Use a fresh RUN folder for the deployed commit.",
+  "findings": [
+   {
+    "id": "N1",
+    "severity": "minor",
+    "title": "Merge log still records ramp-1 vehicles that dip into 4a_0; other exits are dropped without a count",
+    "claim": "vv_merge.py:87 keeps a lane-0 exit if the vehicle is in env.ramp, which holds both routes (b_env.py:411). Route 'ramp' is 'r rj 3a 3 4a 4 5' (corridor.py:48), so these vehicles (15 % of demand) later drive along 4a as through traffic. Concrete failure: a ramp-1 vehicle on 4a_1 moves into 4a_0 and back; it is logged as a merge with lane0 '4a_0', adds to vv_merges, to V1's 'merged 5 s' class and to V4's plant side (ngsim_merges.py:164-178 does not filter by lane0). I have not shown that it happens; that needs a run. Separately, exits by vehicles outside the set are now discarded with no counter, so how often mainline cars use a 600-m acceleration lane cannot be recovered after the rental. The filter is also untested: tests/test_vv_merge.py never passes `ramp`.",
+    "fix": "Pass the origin per lane: 3a_0 accepts route 'ramp', 4a_0 accepts route 'ramp2'. Count skipped exits in a vv_ counter per lane. Add a FakeLS test with a ramp vehicle, a mainline vehicle and a ramp-1 vehicle on 4a_0. If left as is, filter 4a_0 records offline by the seed's route draw and state it in the V4 note."
+   },
+   {
+    "id": "N2",
+    "severity": "minor",
+    "title": "Dry run covers 3 of the script's gates; the smoke body was replaced, and the critic's four named faults were not run",
+    "claim": "The stand-in's smoke (dry1/tree/docs/research/vv/vv.py:107-114) writes only {'pass': FAULT != 'smoke'}, so vv.smoke()'s body never ran in the dry run. The three fault runs hit `must smoke` (remote_vv.sh:57), action = stop (:74) and V1 TRACER BUG (:83). Not hit: replay rows missing (:70), no ident.json (:73), tracer_bug with action go (:75), trace rows missing (:79), V1 definition BUG, the cap branches (:69, :78, :85) and the VOID line (:88-89). The stand-in also wrote meta.json itself and the tree has no MANIFEST, so pb.guard never ran. What I could close in-process: the smoke body (good rows pass, 12 planted faults fail), ident's tracer_bug and exit code, v1 BUG on a cross-lane and an off-route leader, v1 with merge logs as .json.gz in two folders, and the void list. My attempt to run remote_vv.sh with the extra faults was not permitted, so lines 70, 73, 75, 79 and 88-89 are verified by reading only.",
+    "fix": "Before renting, add four fault cases to the dry run (each takes seconds): a traced replay row that differs, an ident crash with a stale ident.json in RUN, one trace row dropped, one cross-lane leader in a trace. Turn smoke_int.py into a test so the smoke body stays covered."
+   },
+   {
+    "id": "N3",
+    "severity": "info",
+    "title": "Checks that stay unexercised until the rental smoke, because they need real simulation output",
+    "claim": "No instrument has run against real libsumo (V483); tests use a FakeLS. First real execution on the rental: (a) VV's getter calls and the side-file write; (b) meter equality, vv_m_whole == ttc_net and vv_m_half == ttc_half, which the stand-in sets equal by construction (vv.py:31 of the stand-in); (c) twin equality with vv_obs, vv_meter, vv_count and vv_log on; (d) T3 replay equality of the vv_ keys; (e) T0 lane read-back and same demand at both lengths; (f) x within the training range on real positions; (g) identity of plain and traced replays against the stored rows (the stand-in copies the stored rows); (h) V1's gap rebuild within 0.01 m and the road-group, main-lane, encounter and end_stop recounts (the stand-in builds traces from the row's own counts, or reuses a 3-sample fixture identical for trace and twin); (i) pb.guard on the deployed copy; (j) jams from real 600-m space-time files (the stand-in drops m_st_file). By reading, I expect (b), (f) and (h) to hold: same-lane gaps are exact in MSVehicle.cpp:6771-6772, the remap is bounded by lane length, and stored rows have ttc3 == ttc_net == the road-group sum. A failure in any of these stops at the smoke, ident or V1, before the screen is paid for. With --st the reading costs about 0.01 s per row on the laptop (about 1.5 min for 8,640 rows).",
+    "fix": "None needed in code. Expect the first stop, if any, at the smoke; keep the launch note's fresh RUN folder so a fixed redeploy is not refused by pb.guard."
+   },
+   {
+    "id": "N4",
+    "severity": "minor",
+    "title": "Must-fix 7 is partly done: several named tests are missing",
+    "claim": "tests/test_vv_plan.py covers t0_lengths, meter_bugs, same_demand, ident, v1 with a missing twin, an off-route leader, and the failed null with its re-estimate. Missing from the critic's list: derive() on raw rows (meter equal, unequal, absent); obs_checks and the vv_x_acc_n line (vv.py:201-202); the 0.94 % bar itself (the test returns 0.03 for every null, so a rate of 0.0095 against 0.0093 is never distinguished); and smoke(). The new merge-log fields (min_gap, lane) and the ramp filter have no test either. I checked the behaviour in the scratch scripts and it is correct: derive gives meter_ok False for absent, unequal and counted-nothing; the smoke body fails on a learner row without vv_x_acc_n.",
+    "fix": "Port reader_checks.py part 2 (derive) and smoke_int.py into tests; add a null_rate stub returning 0.0093 and 0.0095 for the WORSE reading; add the ramp-filter test of N1."
+   },
+   {
+    "id": "N5",
+    "severity": "minor",
+    "title": "A void screen still prints its readings first, cites a \u00a76 outcome that does not exist, and ends with DONE",
+    "claim": "read_vv.py:244-245 adds 'instruments missing', 'lane lengths wrong' and 'seeds not paired' to `void` but computes and writes every reading. remote_vv.sh:87-90 prints 'V2 ... | V3a ... | V3b ...', then 'VOID: ... (merge_vv.md \u00a76)', then DONE. Protocol \u00a76 has no VOID outcome and no rule for what follows. Concrete case: one L600 row without vv_lanes gives status 'V2 MET | V3a REPLICATED | V3b HOLDS' followed by the VOID line; on planted rows v3 returned exactly that mix. Also, bugs.x_out (remapped position out of range during the screen) is in neither `void` nor the status line.",
+    "fix": "Print the void line before the readings and prefix the reading line with 'NOT VALID' when void is non-empty; add x_out to void. Record, as a decision before the rental, what a void row means (for example: drop that seed at both lengths, or re-run it) instead of citing \u00a76."
+   },
+   {
+    "id": "N6",
+    "severity": "info",
+    "title": "Identity gate passes an ident.json that exists but cannot be parsed",
+    "claim": "remote_vv.sh:73 requires a non-empty file; :74-75 stop only on the strings 'stop' and 'True'. If val fails to parse the file it prints nothing, both tests are false, and the script continues. ident's exit code (1 on stop, tracer bug or crash) is still discarded by `step` (:72). Unlikely, since the file is removed first and written in one call.",
+    "fix": "Use the positive form: require action = go and tracer_bug = False, else STOPPED; or run ident through `must` after printing the specific message."
+   },
+   {
+    "id": "N7",
+    "severity": "info",
+    "title": "V1 reads a traced row without any merge log as 'no merges', and never checks the meter it runs on 300-m traces",
+    "claim": "read_vv.py:349-352: a ~trace row with neither vv_log_file nor vv_merges_log is read with merges = [], so its 'merged 5 s' class is silently empty (planted case read CHECKS PASS). A missing side file for a row that names one does stop (SystemExit), which is right. The 300-m traced arms carry vv_meter (vv.py:88) but neither V1 nor the script checks meter_ok on them, so six metered runs give no check.",
+    "fix": "In v1(), add a wiring failure for a ~trace row with no merge log. Either check vv.meter_ok on the L300 ~trace rows in v1() or drop vv_meter from the traced arms."
+   },
+   {
+    "id": "N8",
+    "severity": "info",
+    "title": "Carried minors not in the must-fix list are unchanged",
+    "claim": "Still as reviewed: smoke runs a and b share one vv_log folder and T3 does not compare the merge logs (vv.py:65, :182); one empty or unbound space-time file stops the whole V2/V3 reading after the screen (read_c1.py:117-122); the WORSE null and re-estimates run outside the cap check; no wall-clock watchdog; read_vv.py:3-4 lists --replay and --workers, which argparse lacks; the I-80 'stays 1 s' test (ngsim_merges.py) is unchanged; `cut` reads 1.0 when both medians are 0 (read_vv.py:174). The default RUN folder is reused across starts (remote_vv.sh:14, :18), and pb.guard refuses a folder written by other code.",
+    "fix": "None required for the rental. Pass a fresh RUN as the 4th argument for the deployed commit and record it in the launch note; say in the quote that the reading can add up to about 1.5 h if a WORSE null is needed (the earlier review's estimate, not re-measured here)."
+   }
+  ]
+ },
+ "sk": {
+  "verdicts": [
+   {
+    "id": "N1",
+    "verdict": "confirmed",
+    "severity_after": "minor",
+    "reason": "I reproduced this with the FakeLS in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/vvfix/skep2/n1.py. A vehicle in env.ramp that leaves 4a_0 for 4a_1 is logged as a merge with lane0 '4a_0'. A mainline vehicle that does the same is dropped and no counter goes up, so S holds only vv_merges=1. The code agrees: b_env.py:411 builds ramp from every route starting with 'ramp'; corridor.py:48 sends route 'ramp' through '3 4a 4'; vv_merge.py:87 applies one set to both lanes; ngsim_merges.py:164-178 does not filter by lane0; tests/test_vv_merge.py never passes ramp. The connections send 3 lane i to 4a lane i+1 (corridor.py con lines), so route-ramp vehicles enter 4a on lane 1 or higher. A record only appears if one of them changes into 4a_0 by choice and then leaves it. Whether SUMO does that is unproven without a run, so this stays minor."
+   },
+   {
+    "id": "N2",
+    "verdict": "confirmed",
+    "severity_after": "minor",
+    "reason": "The stand-in's smoke() (dry1/tree/docs/research/vv/vv.py, near line 107) writes only {'pass': FAULT != 'smoke', ...} and never runs the real smoke body. The status.txt files of the three fault runs end at 'smoke rc=1 STOPPED', 'STOPPED: identity (bug rule)' and 'STOPPED: V1 TRACER BUG'. The good run ends at DONE. So remote_vv.sh:70, :73, :75, :79 and the VOID line :88-89 were never reached in the dry run. The tree has no MANIFEST, and the stand-in writes meta.json itself."
+   },
+   {
+    "id": "N3",
+    "verdict": "confirmed",
+    "severity_after": "info",
+    "reason": "This lists checks that only run against real output, so there is nothing to reproduce. The stand-in sets vv_m_whole = ttc_net and vv_m_half = ttc_half by construction (instr()), drops m_st_file, and builds traces from the test fixture, which supports the claim. This is information, not a defect."
+   },
+   {
+    "id": "N4",
+    "verdict": "confirmed",
+    "severity_after": "minor",
+    "reason": "Running grep over tests/test_vv_*.py and test_read_vv.py finds no call to derive(), vv.smoke(), obs_checks or vv_x_acc_n, and no test of the merge-log min_gap/lane fields or the ramp filter. test_failed_null_reads_not_shown stubs null_rate to 0.03 for every call (test_vv_plan.py:164), so nothing tests near BAR_W = 0.0094 (read_vv.py:30). All 36 allowed tests pass."
+   },
+   {
+    "id": "N5",
+    "verdict": "confirmed",
+    "severity_after": "minor",
+    "reason": "read_vv.py:244-245 builds void without stopping any reading. remote_vv.sh:87-90 prints the V2/V3a/V3b status, then 'VOID: ... (merge_vv.md \u00a76)', then DONE. The \u00a76 table in merge_vv.md v1.1 has no VOID row and no rule for void rows. bugs.x_out (read_vv.py:225, :233) is in neither void nor the status line."
+   },
+   {
+    "id": "N6",
+    "verdict": "confirmed",
+    "severity_after": "info",
+    "reason": "I reproduced it: with an unparsable ident.json, val prints nothing, both tests at remote_vv.sh:74-75 are false, and the script carries on ('continued past identity gate'). step at :72 discards ident's return code. The script removes the file at :71 first and ident writes it in one call, so this is unlikely in practice."
+   },
+   {
+    "id": "N7",
+    "verdict": "confirmed",
+    "severity_after": "info",
+    "reason": "read_vv.py:352 falls back to r.get('vv_merges_log', []) when vv_log_file is absent, so the run gets an empty merge list and nothing fails. traced() (vv.py:71) always sets vv_log to a path, so this only happens if the instrument is not wired, and the samples-vs-ttc_net wiring check would then usually fail as well. vv.py:88 gives vv_meter to the L300 ~trace arms, and v1() never calls meter_ok."
+   },
+   {
+    "id": "N8",
+    "verdict": "confirmed",
+    "severity_after": "info",
+    "reason": "Each item checked by reading. screen_arm and traced give runs a and b the same out_dir/'vv' with the same tag, and smoke's skip set drops vv_log_file, so T3 does not compare merge logs (vv.py:65, smoke). read_c1.py:117-122 raises SystemExit on one empty or unbound space-time file. The read_vv.py:3-4 docstring lists --replay and --workers, which argparse (:370-377) lacks. cut gives 1 - 0/1e-9 = 1.0 when both medians are 0 (read_vv.py:174-175), and that counts toward 'removed'. remote_vv.sh:14 defaults RUN to a fixed folder."
+   }
+  ]
+ }
+}
