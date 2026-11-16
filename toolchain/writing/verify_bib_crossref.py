@@ -1,5 +1,5 @@
 """Check a BibTeX block (or .bib file) against Crossref: title, year, volume, pages, first author per DOI.
-Usage: python3 -I tools/verify_bib_crossref.py <file.md|file.bib>   (V120; costs no LLM tokens)"""
+Usage: python3 -I toolchain/writing/verify_bib_crossref.py <file.md|file.bib>   (V120; costs no LLM tokens)"""
 import difflib, json, re, sys, time, urllib.parse, urllib.request
 t = open(sys.argv[1]).read()
 bib = t.split("```bibtex")[1].split("```")[0] if "```bibtex" in t else t
