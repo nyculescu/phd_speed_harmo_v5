@@ -1,0 +1,12 @@
+lr400_16_1 1.0 rest kept: 15.99 no e1: 17.84 | rest scaled too: 15.99 no e1: 17.84
+lr400_16_1 0.34 rest kept: 14.06 no e1: 18.15 | rest scaled too: 12.47 no e1: 17.84
+lr400_16_1 0.2 rest kept: 12.4 no e1: 17.85 | rest scaled too: 9.43 no e1: 17.84
+lr400_16_1 0.1 rest kept: 10.27 no e1: 17.53 | rest scaled too: 0.92 no e1: 17.84
+lr400_16_1 0.06 rest kept: 8.46 no e1: 16.58 | rest scaled too: -9.93 no e1: 17.84
+lr400_16_1 0.02 rest kept: 6.09 no e1: 15.64 | rest scaled too: -58.52 no e1: 17.84
+grid_lr400_13_1 1.0 rest kept: 21.7 no e1: 23.33 | rest scaled too: 21.7 no e1: 23.33
+grid_lr400_13_1 0.34 rest kept: 16.2 no e1: 20.45 | rest scaled too: 18.32 no e1: 23.33
+grid_lr400_13_1 0.2 rest kept: 13.56 no e1: 18.84 | rest scaled too: 13.88 no e1: 23.33
+grid_lr400_13_1 0.1 rest kept: 8.96 no e1: 16.12 | rest scaled too: 5.28 no e1: 23.33
+grid_lr400_13_1 0.06 rest kept: 6.6 no e1: 15.06 | rest scaled too: -4.91 no e1: 23.33
+grid_lr400_13_1 0.02 rest kept: 2.97 no e1: 12.56 | rest scaled too: -52.16 no e1: 23.33

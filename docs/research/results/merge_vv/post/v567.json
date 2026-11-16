@@ -1,0 +1,1095 @@
+[
+ {
+  "item": "V5",
+  "read": {
+   "sources": [
+    {
+     "citation": "National Highways (2022). CD 122 Geometric design of grade separated junctions (formerly TD 22/06, TD 39/94, TD 40/94), Version 1.1.1, published 31 Jan 2022. Design Manual for Roads and Bridges, Road Layout Design.",
+     "url": "https://www.standardsforhighways.co.uk/tses/attachments/3ab9ef31-9880-4e8e-a7eb-f3d218e74ffd",
+     "read_in_full": true,
+     "how_read": "Downloaded the PDF (4.56 MB, watermark 'CD 122 Version 1.1.1, published: 31-Jan-2022') and converted it with pdftotext. Read all of 'Terms and definitions' (pp. 7-9) and Section 3 on merges, 3.1 to 3.25 (pp. 12-22). Figure 3.14c (p. 18) and Table 3.21 (p. 21) were checked on rendered page images, because the figures are drawings. Also read the merge clauses of the England National Application Annex in the same PDF (E/1.3, E/2.3-E/2.5, E/3.3-E/3.4). Not read: the diverge clauses, Sections 4-5, and CD 109 (the design-speed standard it refers to).",
+     "length_definition": "Layout B, the parallel merge (Figure 3.14c), runs nose, then auxiliary lane, then auxiliary-lane taper ending at the entry datum ('end of downstream taper', Table 3.5). The auxiliary lane runs from the downstream tip of the nose to the start of the taper. The nose and the taper are separate columns in Table 3.21 and are not part of the auxiliary-lane length. NOTE 3: lengths are measured along the projected nearside edge of the mainline carriageway. Definition: 'Parallel merge/diverge: a merge or diverge layout where an auxiliary lane is provided alongside the mainline carriageway'.",
+     "design_speed": "The rural motorway rows (Mainline; Within Interchange) are not indexed by design speed. The rural all-purpose rows are '120 kph' and '100A kph or less'. 'A' is printed as shown; it is probably the CD 109 design-speed band suffix [VERIFY against CD 109]. The plant sets a 100 km/h limit, not a design speed, so the matching row is ambiguous: motorway (type of road) or 100A all-purpose (speed).",
+     "guidance_range_m": "Rural motorway mainline: auxiliary lane at least 230 m, plus a 75 m taper (nose 115 m). \u00a73.21.1: extend to 370 m or more where merge and mainline flows both reach at least 85 % of design capacity for more than 1,000 h/yr. Rural all-purpose 100A kph or less: at least 160 m plus a 55 m taper. Rural all-purpose 120 kph: at least 190 m plus 55 m. \u00a73.21.2: extend on uphill grades above 2 % with more than 10 % HGVs.",
+     "location_in_source": "Terms and definitions pp. 7-9; Table 3.5 p. 14; \u00a73.14 Figure 3.14c 'Layout B - parallel merge' p. 18; Table 3.21 'Merge layouts geometric parameters' p. 21; NOTE 3 and \u00a73.21.1-3.21.2 p. 22",
+     "verbatim_extract": "Table 3.21, columns: entry taper | min nose ratio | nose length | minimum auxiliary lane length | length of auxiliary lane taper | ghost island tail (metres). 'Rural motorway / Mainline 205 1:40 115 230 75 180'; 'Rural all-purpose design speed / 100A kph or less 130 1:25 75 160 55 150'. NOTE 3: 'The merge layout lengths are measured along the projected nearside edge of the mainline carriageway, with the exception of the overlap, reduction taper and the 50 metres and 3.75V separations ...'. 3.21.1: 'On rural motorway mainlines, auxiliary lane lengths should be extended to 370 metres or greater where merge and mainline traffic flows are both forecast to reach or exceed 85% of the maximum design capacities given in Figure 3.12b for more than 1,000 hours per year.'",
+     "plant_295m_is": "inside",
+     "note": "'Inside' here means: above the 230 m motorway minimum (and above the 160 m all-purpose 100A minimum), but below the 370 m extended length for high-flow merges. Every CD 122 parallel layout also has a taper (75 m on motorways). The plant has none: its 295 m is at full width up to an abrupt lane end. Measured from the nose tip to the end of the taper, the motorway minimum is 230 + 75 = 305 m, so the plant is 10 m shorter to the lane end. Whether the plant's flows meet the 85 %-of-capacity condition was not checked."
+    },
+    {
+     "citation": "Texas Department of Transportation. Roadway Design Manual (online): Section 15.7.7 'Ramp Terminal Design' with Figure 15-25, and Section 4.10.2.3 'Acceleration Lanes' with Table 4-18 'Minimum Acceleration Lane Lengths for Entrance Terminals with Flat Grades of Less Than 3 percent'. The site navigation lists 'Manual Notice 2024-1'; the revision date of these pages was not confirmed.",
+     "url": "https://www.txdot.gov/manuals/des/rdw/chapter-15-grade-separations-and-interchanges-/15-7-ramps---direct-connectors-/15-7-7-ramp-terminal-design.html ; https://www.txdot.gov/manuals/des/rdw/chapter-4--basic-design-criteria/4-10-cross-sectional-elements.html",
+     "read_in_full": true,
+     "how_read": "Fetched both HTML pages with curl and stripped the markup. Read all of Section 15.7.7 (15.7.7.1 to 15.7.7.9) and all of 4.10.2.3 with Tables 4-18 and 4-19. Viewed the Figure 15-25 image ('Single-Lane Entrance Ramp Terminals on a Tangent'). Not read: the rest of Section 4.10 and the rest of Chapter 15.",
+     "length_definition": "La (Table 4-18) is 'Measured Along Ramp Alignment' from Point A, the feature that controls speed on the ramp, to the beginning of the downstream taper. Lg (gap acceptance) is 'Measured Along Main Lane Alignment' from where the traveled ways are at least 2 ft apart to the start of the taper. For the parallel type: 'measured from the point where the left edge of the ramp travel way joins the traveled way of the freeway to the beginning of the downstream taper, Lg'. The taper (at least 300 ft) is excluded ('The taper section is not included in the length of the SCL'). Use La or Lg, whichever is greater.",
+     "design_speed": "Rows are highway design speed in mph; 60 mph (96.6 km/h) and 65 mph (104.6 km/h) bracket 100 km/h. Columns are the design speed of the controlling feature on the ramp, from stop condition to 50 mph. Conversions to metres are mine (1 ft = 0.3048 m).",
+     "guidance_range_m": "La at 60 mph: 1,200 ft (365.8 m) from a stop, falling to 180 ft (54.9 m) at a 50 mph ramp speed; 910 ft (277.4 m) at 30 mph, 1,020 ft (310.9 m) at 25 mph. La at 65 mph: 1,410 ft (429.8 m) from a stop, 370 ft (112.8 m) at 50 mph; 770 ft (234.7 m) at 40 mph, 1,000 ft (304.8 m) at 35 mph. Lg minimum 300 ft (91.4 m), or 300-500 ft (91-152 m) depending on nose width. Taper at least 300 ft (91.4 m). Desirable La of at least 1,200 ft (365.8 m) plus taper where the ramp-freeway volume nears 4,600 veh/h.",
+     "location_in_source": "RDM 15.7.7.1 and 15.7.7.3 (text and Figure 15-25); RDM 4.10.2.3 and Table 4-18",
+     "verbatim_extract": "15.7.7.3: 'A minimum taper length of 300-ft is required. The length of a parallel-type acceleration lane is generally measured from the point where the left edge of the ramp travel way joins the traveled way of the freeway to the beginning of the downstream taper, Lg.' ... 'An acceleration length, La, of at least 1,200-ft plus the taper is desirable where the ramp-freeway volume is nearing 4,600 vehicles per hour at the ramp-freeway junction.' 15.7.7.1: 'The minimum gap acceptance length is 300-ft.' Table 4-18 rows (ft; stop, 15, 20, 25, 30, 35, 40, 45, 50 mph): '60 | 1200 1140 1100 1020 910 800 550 420 180'; '65 | 1410 1350 1310 1220 1120 1000 770 600 370'.",
+     "plant_295m_is": "inside",
+     "note": "295 m lies inside the 55-430 m span of La at 60-65 mph, and the reading depends on the ramp speed at Point A. It is above La for ramp controlling speeds of at least 30 mph (60 mph row) or at least 40 mph (65 mph row), and above the 91-152 m Lg. It is below La from a stop (366-430 m) and below the 366 m desirable high-volume length. The plant has no end taper; TxDOT requires at least 300 ft (91 m). The plant ramp is straight with a 100 km/h limit, so under TxDOT's rule part of the ramp could count toward La. If ramp vehicles stop at the ramp signal, the stop line is about 38 m upstream of lane 3a_0 (rj_0 28.33 m plus internal lane 9.82 m), giving roughly 333 m. I believe Table 4-18 reproduces the AASHTO Green Book table (US customary), but TxDOT does not attribute it on this page and I did not confirm it [VERIFY]."
+    },
+    {
+     "citation": "California Department of Transportation (Caltrans). Highway Design Manual, Chapter 500 Traffic Interchanges, Topic 504 Interchange Design Standards. The PDF is listed on the HDM page as 09/29/2023; its page headers read July 1, 2020 and May 20, 2022.",
+     "url": "https://dot.ca.gov/-/media/dot-media/programs/design/documents/chp0500-092923-a11y.pdf",
+     "read_in_full": true,
+     "how_read": "Downloaded the current Chapter 500 PDF, as linked from https://dot.ca.gov/programs/design/manual-highway-design-manual-hdm, and converted it with pdftotext. Read Index 504.1, all of 504.2 ((1) to (7)), 504.3(1)(d), 504.3(2)(a) to (c) on metered entrances, 504.3(5) and (9), and 504.5 on auxiliary lanes. Viewed Figure 504.2A (Single Lane Freeway Entrance) and Figure 504.3C (Restrictive Condition Freeway Entrance Ramp Metering, 1 GP Lane) as rendered images. I first read an older copy (chp0500-a11y.pdf). The text windows compared were identical, and Figure 504.2A shows the same dimensions in both. Not read: the Ramp Metering Design Manual, Figures 504.3A/B/D-F, and 504.4, 504.6-504.8.",
+     "length_definition": "Metered entrances use an auxiliary lane measured 'downstream of the gore point' (504.3(2)(a)) or 'beyond the ramp convergence point' (504.3(2)(c)). In Figure 504.3C, the '300' Min.' dimension runs from the convergence point to the start of the 600 ft 50:1 taper, so the taper is excluded. The standard non-metered entrance (Figure 504.2A) is a taper-type design, not a parallel lane. Its 'acceleration lane length' runs from the inlet nose (14-ft point) to the 12-ft point: 167.11 ft + 300 ft = 467.11 ft (142.4 m). A 600 ft (182.9 m) 50:1 convergence follows (504.2(3)).",
+     "design_speed": "Not indexed by design speed. 504.2(4)(b): the inlet-nose design speed should be at least 50 mph for high-standard approaches. Conversions to metres are mine.",
+     "guidance_range_m": "Metered entrance auxiliary lane: at least 300 ft (91.4 m). At least 1,000 ft (304.8 m) when ramp volume exceeds 1,500 veh/h, or where trucks (3+ axles) are at least 5 % on sustained upgrades above 3 %. At least 500 ft (152.4 m) for trucks on grades under restrictive conditions (Figure 504.3C note 4). Each is followed by a 600 ft (182.9 m) 50:1 taper. 504.2(5)(b): 1,500 ft (457.2 m) on ascending ramps with more than 20 trucks/h and upgrades above 2 %.",
+     "location_in_source": "Index 504.2(3), p. 500-12; Figure 504.2A, p. 500-13; Index 504.3(2)(a), p. 500-18; Figure 504.3C, p. 500-22; Index 504.3(2)(c) (metered multilane text)",
+     "verbatim_extract": "504.3(2)(a): 'Due to the operational benefits of an auxiliary lane, metered single or multilane freeway entrance ramps should include an auxiliary lane with a minimum length of 300 feet downstream of the gore point.' ... 'When vehicle volume exceeds 1500 vph, a 1,000 - foot minimum length of auxiliary lane should be provided downstream of the gore point for metered single or multilane freeway entrance ramps and connectors.' 504.3(2)(c): 'The merge from the metered entrance ramp to the freeway should include a 300-foot minimum auxiliary lane beyond the ramp convergence point.' 504.2(3): 'On entrance ramps the distance from the inlet nose (14-foot point) to the end of the acceleration lane taper should equal the sum of the distances shown on Figure 504.2A.'",
+     "plant_295m_is": "inside",
+     "note": "295 m is above the 91.4 m minimum for a metered auxiliary lane and about 10 m below the 304.8 m minimum when ramp volume exceeds 1,500 veh/h. Caltrans adds a 600 ft (183 m) 50:1 taper, which the plant lacks. I did not compute the plant's ramp volumes against the 1,500 veh/h threshold. This source was not among the plan's candidates; see deviations."
+    },
+    {
+     "citation": "Kathmann, T., Roggendorf, S., Scotti, C., Baier, M. M. (2017). Verkehrssicherheit in Einfahrten auf Autobahnen. Berichte der Bundesanstalt f\u00fcr Stra\u00dfenwesen, Verkehrstechnik Heft V 277, Bergisch Gladbach, Februar 2017. ISBN 978-3-95606-286-5. SECONDARY source for FGSV RAA 2008 [VERIFY primary].",
+     "url": "https://bast.opus.hbz-nrw.de/files/1748/V277_ELBA_PDF.pdf",
+     "read_in_full": false,
+     "how_read": "Downloaded the PDF (91 pages). Read the English summary, including Fig. 1 'Entry-gateway type E1 according to RAA 2008' (p. 5); Section 2.1 and 2.2.1-2.2.2 (pp. 20-21), with the columns extracted separately to keep the reading order; and Section 4.3.2 with Bild 3 'Einfahrttyp E1 nach RAA 2008' (printed p. 32), viewed as an image. The RAA 2008 itself (FGSV, paywalled) was not read.",
+     "length_definition": "Bild 3, which reproduces RAA 2008 type E1, shows lE (Einfahrl\u00e4nge) from the separating-island tip (end of the marked nose, 'Verziehung durch Markierung') to the end of the taper. The taper lZ lies inside lE. The text places the start of lE at the Trenninselspitze: 'lZ295 f\u00fcr die L\u00e4nge der durchgezogenen Linie ... ab der Trenninselspitze'.",
+     "design_speed": "By RAA design class EKA 1 and EKA 2, not by speed. V277 does not map these classes to a speed, and nothing was found for EKA 3 [VERIFY in RAA].",
+     "guidance_range_m": "lE = 250 m including the lZ = 60 m taper, so about 190 m at full width (my subtraction). Longer lanes are allowed where the gradient requires them (as reported by V277).",
+     "location_in_source": "V277 Section 2.1, p. 20; Section 4.3.2 and Bild 3, p. 32; English summary Fig. 1, p. 5",
+     "verbatim_extract": "'Bei Einfahrten richtet sich die Einfahrl\u00e4nge lE nach der Entwurfsklasse (EKA). F\u00fcr die Entwurfsklassen EKA 1 und EKA 2 geben die RAA (2008) eine Einfahrl\u00e4nge lE von 250 m als Ma\u00dfgr\u00f6\u00dfe vor. Von dieser Vorgabe kann jedoch abgewichen werden, wenn die L\u00e4ngsneigung der Strecke l\u00e4ngere Einf\u00e4delungsstreifen erfordert. Die Verziehungsl\u00e4nge lZ des Einf\u00e4delungsstreifens betr\u00e4gt 60 m.' (p. 20)",
+     "plant_295m_is": "above",
+     "note": "295 m is above the 250 m total, and above the 190 m full-width part. The plant has no 60 m taper. The same page also cites WESTPHAL (1995): lanes longer than 200 m were not fully used [VERIFY; secondary]. Every RAA value here comes through this secondary source and is marked [VERIFY]."
+    }
+   ],
+   "plant_geometry_read": "Read-only, from the worktree /home/catalin/work/phd/wt/vvm at HEAD 6e96988.\n\nFrom /home/catalin/work/phd/wt/vvm/v5b/fleet/corridor.py:\n- Signature: `build(speed, name=NAME, accel_len=300.0, accel2_len=300.0)`.\n- In r2m3, 3a runs from node m (x 3,500) to node ae (x 3,800) with 4 lanes. 4a runs from d (x 5,000) to e2 (x 5,300) with 4 lanes. Edges 3 and 4 have 3 lanes.\n- Lane 0 of 3a and of 4a is the acceleration lane. The connections are rj_0\u21923a_0, 3a lanes 1-3 \u2192 3 lanes 0-2, rj2_0\u21924a_0, and 4a lanes 1-3 \u2192 4 lanes 0-2, so 3a_0 and 4a_0 have no successor (a dead end).\n- Ramps are one lane each: r runs from r0 (3,080, -40) to rm (3,470, -4), then rj from rm to m; r2 and rj2 do the same for 4a.\n- Every edge, ramps included, gets the same `speed` argument. In /home/catalin/work/phd/wt/vvm/v5b/fleet/fleet.py, `LIMIT = 100.0 / 3.6` (line 27) and `build_net` calls `corridor.build(LIMIT, cfg.geom, ACCEL_LEN, ACCEL2_LEN)` (line 296). So the mainline and the ramps are all limited to 100 km/h (27.78 m/s in net.xml).\n- `ACCEL_LEN = p.get(\"accel_len\", 300.0)`.\n- Node rm is a static traffic light (TLS 'rm'; net.xml program G 79 s / y 6 s / r 5 s). rm2 is a priority node with no signal. `fleet.all_green` says under no control the ramp meter 'stays green'. I did not check whether any E30 arm runs the meter.\n\nFrom the cached build /home/catalin/work/phd/v5b1_runs/_netcache/r2m3_096c8f0288 (spec.json and net.xml):\n- 3a_0 and 4a_0 are 294.72 m long, as are all 3a/4a lanes. 3a_0's shape runs from x 3,501.28 to 3,796.00 at constant y, i.e. a rectangle with no taper. 4a_0 runs from 5,001.28 to 5,296.00.\n- Netconvert marks both lane 0s acceleration=\"1\".\n- r_0 is 391.66 m and rj_0 is 28.33 m. rj_0 feeds 3a_0 through the 9.82 m internal lane :m_0_0. Junction ae has internal lanes only for 3a lanes 1-3.\n- net.xml has no lane-change restrictions, so a vehicle can leave lane 0 anywhere along it.\n- There is no gore, nose or taper. The ramp's 2-D shape is only schematic: rj_0 ends at y 38.16, inside the band of mainline lane centres (y 28.8-38.4).\n\nSo the 295 m runs from the point where the ramp lane joins lane 0 (end of junction m, 1.28 m past node m) to the abrupt lane end (start of junction ae), all at full width. The closest design equivalents of that start point are CD 122's nose tip, the TxDOT/Caltrans convergence point and the RAA separating-island tip.",
+   "deviations": "1. AASHTO Green Book (a plan candidate) was not read: it is paywalled and I found no legitimate full text. US guidance comes from two state manuals instead. TxDOT RDM Table 4-18 is, I believe, the Green Book's acceleration-length table in US customary units, but TxDOT does not say so on the page and I did not confirm it. Any AASHTO figure stays [VERIFY].\n2. Caltrans HDM Chapter 500 was added; it was not among the plan's candidates.\n3. German RAA 2008 (a plan candidate) was not read: FGSV, paywalled. Its values (lE 250 m including the 60 m taper lZ, for EKA 1 and 2) come from BASt report V277 (2017), which is a secondary source, so the RAA values are marked [VERIFY]. How RAA classes map to 100 km/h was not read.\n4. DMRB CD 122 v1.1.1 was read as a primary source.\n5. No source indexes guidance by a posted 100 km/h limit, so matching design speeds is approximate. TxDOT rows: 60 and 65 mph. CD 122: the motorway rows have no speed index, and the speed-indexed all-purpose row is '100A kph or less', with the meaning of 'A' not verified against CD 109. Caltrans and RAA are not speed-indexed.\n6. Not checked: whether the plant's flows meet the conditional triggers. These are CD 122's 85 %-of-capacity extension, Caltrans' 1,500 veh/h, and TxDOT's 4,600 veh/h. Also not checked: whether the ramp signal is active in E30.\n7. Every metric conversion is mine (1 ft = 0.3048 m).\n8. Web-search summaries were not used as evidence; only the downloaded documents were.",
+   "summary": "V5 criterion met: four sources read and recorded. The plant has a 100 km/h limit, 3a_0 and 4a_0 are 294.72 m long, and each is a full-width parallel lane from the ramp junction to an abrupt dead end, with no nose and no taper.\n\n1. **DMRB CD 122 v1.1.1** (primary), Layout B parallel merge. The auxiliary lane runs from the nose tip to the start of the taper, and the taper is not counted. Rural motorway: at least 230 m plus a 75 m taper, or 370 m or more at sustained high flows. Rural all-purpose 100A kph or less: at least 160 m plus 55 m. Reading: inside, meaning above the minimum and below the extended length. Measured to the lane end, the plant is 10 m short of 230 + 75 = 305 m.\n2. **TxDOT Roadway Design Manual** (primary; its table likely follows AASHTO [VERIFY]). La is measured from the ramp's controlling point to the start of the taper, and the taper (at least 91 m) is not counted. At 60-65 mph, La runs from 55-113 m (50 mph ramp speed) to 366-430 m (from a stop). The gap-acceptance length is at least 91-152 m. Reading: inside the La span. The plant is above La for ramp speeds of at least 30-40 mph, and below it from a stop and below the 366 m high-volume desirable length.\n3. **Caltrans HDM Chapter 500** (primary). On metered entrances, the auxiliary lane beyond the convergence point is at least 91.4 m, or at least 304.8 m above 1,500 veh/h, plus a 183 m taper. Reading: inside, about 10 m below the high-volume minimum.\n4. **RAA 2008 via BASt V277** (secondary, [VERIFY]). lE = 250 m, measured from the separating-island tip and including the 60 m taper (EKA 1-2). Reading: above.\n\nContext only: the 295 m sits between the basic minimums and the high-volume or extended lengths. Every source has a 55-183 m end taper, which the plant lacks. Downloaded copies are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad (dl_cd122, dl_txdot, dl_caltrans, dl_bast). No repo files were changed."
+  },
+  "verify": {
+   "checks": [
+    {
+     "citation": "National Highways (2022). DMRB CD 122 Geometric design of grade separated junctions, Version 1.1.1, published 31-Jan-2022",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Every extract was found verbatim. Table 3.21 (printed p. 21) gives 'Rural motorway / Mainline 205 1:40 115 230 75 180' and '100A kph or less 130 1:25 75 160 55 150'. NOTE 3 and 3.21.1 are on p. 22, Figure 3.14c on p. 18 and Table 3.5 on p. 14. Figure 3.14c shows Nose | Auxilliary lane | Taper | Entry Datum, so the auxiliary lane runs from the nose tip to the start of the taper, and the taper is not counted. The page numbers and the parallel-merge definition check out. CORRECTION to the judgement: CD 122 gives no range. It gives a 230 m minimum auxiliary lane, plus a 75 m taper, and a separate conditional minimum of 370 m or more that applies only when the 3.21.1 flow condition holds. So the correct reading is: 295 m at full width is ABOVE the 230 m motorway minimum (also above 160 m for all-purpose 100A and 190 m for 120 kph). It is BELOW 370 m only if the 85 %-of-capacity-for-more-than-1,000-h/yr condition holds, and that was not checked. 'Inside' merges two conditional minimums into one range. The plant has no taper, against the 75 m CD 122 requires. Measured from the nose tip to the lane end (entry datum), the plant has 295 m against at least 305 m. The record also leaves out a row: Table 3.21 also indexes urban roads by speed limit. 'Urban road speed limit 60 mph' (about 96.6 km/h) needs at least 125 m plus a 40 m taper, and the plant is above it. So deviation 5's 'no source indexes guidance by a posted limit' is not quite right for CD 122. Table 5.4 also lists 'Rural 100A' as a mainline design speed, which fits 'A' being a CD 109 design-speed band suffix. That is still [VERIFY CD 109].",
+     "verdict": "CORRECTED",
+     "note": "Downloaded again with my own client (4,560,374 bytes, 96 pages; watermark 'CD 122 Version 1.1.1, published: 31-Jan-2022'). I viewed the rendered Figure 3.14c on PDF page 19. The NAA E/1.3 relaxation to 'rural all-purpose 120kph' for existing motorways is real, but it does not change the reading. 'read_in_full: true' overstates what was read: only the definitions, the Section 3 merge clauses and the NAA merge clauses were read, not the whole standard."
+    },
+    {
+     "citation": "TxDOT Roadway Design Manual: 15.7.7 Ramp Terminal Design (Figure 15-25) and 4.10.2.3 Acceleration Lanes (Table 4-18)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Confirmed verbatim: 15.7.7.1 (the taper is not included in the SCL length; minimum gap-acceptance length 300 ft; use La or Lg, whichever is greater) and 15.7.7.3 (a minimum taper of 300 ft is required; the parallel-lane length is measured from the join to the start of the downstream taper, Lg; part of the ramp may count toward La if the ramp radius is at least 1,000 ft and the view is clear; 1,200 ft plus the taper is desirable near 4,600 veh/h). Table 4-18, row 60: 1200 1140 1100 1020 910 800 550 420 180. Row 65: 1410 1350 1310 1220 1120 1000 770 600 370. Figure 15-25 reads 'La (Measured Along Ramp Alignment)' from Point A, 'Lg (Measured Along Main Lane Alignment)' and '300-Ft Min.' for the taper. 4.10.2.3 gives Lg as 300 to 500 ft depending on nose width. The navigation lists 'Manual Notice 2024-1'. All metric conversions and the 30 mph and 40 mph thresholds are correct. CORRECTION to the judgement: 'inside the 55-430 m span' is a span across ramp controlling speeds, not a guidance range, so it says nothing on its own. The defensible reading is conditional on Point A. (i) Free-flowing ramp: the plant ramp is straight at 100 km/h, so the controlling speed is at or above the table's highest column (50 mph). That gives La of 55-113 m and Lg of 91-152 m, and the plant is ABOVE both. Because the ramp is straight, ramp length may also count toward La. (ii) Stop at the ramp meter: La from a stop is 366-430 m, and the plant's stop line to lane end is about 333 m (rj_0 28.33 + :m_0_0 9.82 + 3a_0 294.72), so the plant is BELOW. (iii) The 366 m desirable length near 4,600 veh/h: the plant is BELOW, but whether that condition applies was not checked. The plant has no taper, against at least 91 m required.",
+     "verdict": "CORRECTED",
+     "note": "Both HTML pages fetched (HTTP 200). I viewed the Figure 15-25 image (the full-size .jpg URL returns 403; the 1280 rendition opens). Table 4-18 sits in 4.10.2.3, whose text is about multi-lane rural highways, but 15.7.7.1 explicitly applies it to freeway entrance terminals, so using it is valid. The page does not attribute the table to AASHTO. It names AASHTO's Green Book only in 15.7.7.4 (curves), so 'Table 4-18 = Green Book' stays [VERIFY]. 'read_in_full: true' refers only to the two subsections."
+    },
+    {
+     "citation": "Caltrans Highway Design Manual, Chapter 500 Traffic Interchanges, Topic 504 (PDF listed 09/29/2023)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Confirmed. The HDM index page lists 'Chapter 500: Traffic Interchanges (PDF) 09/29/2023', and the page headers read July 1, 2020 and May 20, 2022. These match verbatim: 504.3(2)(a) (p. 500-18: 300 ft minimum auxiliary lane downstream of the gore point; 1,000 ft minimum when vehicle volume exceeds 1,500 vph; 1,000 ft for trucks on upgrades above 3 %), 504.3(2)(c) (300 ft beyond the ramp convergence point) and 504.2(3) (p. 500-12, inlet nose 14-ft point). Figure 504.2A (p. 500-13) shows ACCELERATION LANE LENGTH = 167.11 ft + 300 ft to the 12-ft point, then a 600 ft 50:1 convergence. Figure 504.3C (p. 500-22) shows '300' Min.' from the convergence point to the 600 ft 50:1 taper, and note 4 gives 500 ft for trucks. 504.2(5)(b) gives 1,500 ft for more than 20 trucks/h on upgrades above 2 %, and 504.2(4)(b) gives at least 50 mph at the inlet nose for high-standard approaches. CORRECTION to the judgement: as with CD 122, 'inside' merges a general minimum with a conditional one. The correct reading is ABOVE the 91.4 m metered minimum, and also above the 142.4 m acceleration lane of the non-metered standard design (Figure 504.2A). It is BELOW the 304.8 m minimum only if ramp volume exceeds 1,500 vph, which was not checked. The plant has no taper, against Caltrans' 183 m. Precision: 504.3(2)(c) is headed 'Metered Multilane Freeway Entrance Ramps (2 GP + 1 HOV Preferential Lane)'. The plant's single-lane metered ramp falls under (a), which carries the same 300 ft and 1,000 ft values.",
+     "verdict": "CORRECTED",
+     "note": "Downloaded again (6,279,203 bytes, 50 pages). I viewed Figures 504.2A and 504.3C on rendered pages. I confirm that Caltrans was not a plan candidate, which is a deviation. It counts as a primary source for California guidance only."
+    },
+    {
+     "citation": "Kathmann, Roggendorf, Scotti, Baier (2017). Verkehrssicherheit in Einfahrten auf Autobahnen. BASt Heft V 277, Bergisch Gladbach, Februar 2017, ISBN 978-3-95606-286-5 (SECONDARY for RAA 2008)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Confirmed as a secondary source. The authors, series and issue, ISBN, place and month, and the 91 pages all match. The p. 20 extract ('Einfahrl\u00e4nge lE ... EKA 1 und EKA 2 ... 250 m als Ma\u00dfgr\u00f6\u00dfe ... Verziehungsl\u00e4nge lZ ... 60 m') is verbatim. In Bild 3, printed p. 32 in \u00a74.3.2, lE runs from the end of the marked nose ('Verziehung durch Markierung', the separating-island tip) to the end of lZ, and lZ lies inside lE. The 'lZ295 ... ab der Trenninselspitze' sentence is on the same page. The WESTPHAL (1995) statement that lanes over 200 m were not fully used is on p. 20. The reading 295 m ABOVE 250 m (and above about 190 m at full width) is correct. Note that the RAA value is a standard dimension ('Ma\u00dfgr\u00f6\u00dfe'), not a minimum. Every RAA value stays [VERIFY primary].",
+     "verdict": "CONFIRMED",
+     "note": "The URL returns an Anubis bot-check page to a browser-like client name but serves the PDF to a plain client. The file I downloaded is byte-identical (sha256 207b6f66...) to the agent's copy. Being secondary, it does not count toward the plan's two-primary-source rule."
+    }
+   ],
+   "outcome_check": "The plan's rule is met at the section level: at least two primary sources were read, and three were (DMRB CD 122, TxDOT RDM, Caltrans HDM). I opened and checked every verbatim extract, number, figure label and page reference, and all of them are correct. Two qualifications. (1) The plan says 'read in full before citing'. The agent marked read_in_full=true for all three, but only the relevant clauses were read, not the whole documents. The record should say 'relevant sections read in full'. (2) The labels against 295 m need correcting for all three primary sources. The rule asks for a reading against 'the guidance range at the matching design speed'. CD 122 and Caltrans give a minimum plus a conditional higher minimum, not a range, so 'inside' should read 'above the minimum; below the conditional extended or high-volume minimum (condition unchecked)'. TxDOT's reading depends on Point A: above if the ramp flows freely at 100 km/h, below from a stop at the meter (about 333 m against 366-430 m). Matching the design speed is approximate in every source, which the agent disclosed. AASHTO and RAA, both plan candidates, were not read as primary sources, and the deviations note this. The plant geometry also checks out: in net.xml, 3a_0 and 4a_0 are 294.72 m long, acceleration=\"1\", speed 27.78 m/s, with no taper, and the rm TLS runs G79/y6/r5. Only the labels need fixing before V5 is recorded as met.",
+   "missing": "1. The flow triggers were not checked against the plant: CD 122 \u00a73.21.1 (both flows at or above 85 % of design capacity for more than 1,000 h/yr), Caltrans' ramp volume over 1,500 vph, and TxDOT's ramp-freeway volume near 4,600 veh/h. Each decides whether 295 m is above or below the guidance. 2. It was not checked whether the ramp meter runs in the E30 arms. This decides TxDOT's Point A (stop condition) and whether Caltrans' metered clauses apply. 3. A tapered layout is not recorded as a design deviation in its own right. Every source requires an end taper (CD 122 75 m, TxDOT at least 91 m, Caltrans 183 m, RAA 60 m), and the plant ends abruptly. The only total-length comparison given is CD 122's (295 m against at least 305 m). Caltrans would give 91.4 + 182.9 = 274 m general (plant above) and 304.8 + 182.9 = 488 m at high volume (plant below). TxDOT would give Lg plus taper, at least 183 m (plant above). 4. The CD 122 'Urban road speed limit 60 mph' row (125 m + 40 m) is missing. It is the only row indexed by a posted limit. 5. Still [VERIFY]: the AASHTO Green Book (not read; Table 4-18's AASHTO origin is unconfirmed), RAA 2008 (primary not read; EKA classes not mapped to a speed), and CD 109's 'A' suffix. 6. Plant grades were not stated. The spec is 2-D, so the network looks flat, which would rule out the grade and truck extensions, but this was not confirmed. 7. Reproducibility: BASt serves the PDF only to non-browser clients, and TxDOT's full-size figure URL returns 403 (the rendition works). My check copies are in /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/chk_cd122, /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/chk_txdot, /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/chk_caltrans and /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/chk_bast. No repo files were changed."
+  }
+ },
+ {
+  "item": "V6",
+  "read": {
+   "searches": [
+    {
+     "engine": "Google Scholar",
+     "term": "SUMO lane change model validation merge",
+     "accessible": false,
+     "note": "Search date 2026-11-16 UTC. The fetch was redirected to www.google.com/sgsync, which showed a 'Verifying your request... wait while we verify your session' page with no results. A plain HTTP retry was refused by this session's permission system. Closest accessible routes, using the same terms: OpenAlex API and a general web search tool (see deviations)."
+    },
+    {
+     "engine": "Google Scholar",
+     "term": "LC2013 on-ramp merging",
+     "accessible": false,
+     "note": "Not attempted after the block on term 1. Run on OpenAlex and WebSearch instead."
+    },
+    {
+     "engine": "Google Scholar",
+     "term": "forced merge lane drop field data",
+     "accessible": false,
+     "note": "Not attempted after the block on term 1. Run on OpenAlex and WebSearch instead."
+    },
+    {
+     "engine": "OpenAlex API (works search; Scholar substitute)",
+     "term": "SUMO lane change model validation merge",
+     "accessible": true,
+     "note": "2,523 hits. Results 1-50 screened by title. Leads: Erdmann 2014; Semrau et al. 2017; Berghaus & Oeser 2025 (results 26-50); the Egyptian two-lane calibration paper (not merges). No title showed a SUMO lane-end comparison with field data."
+    },
+    {
+     "engine": "OpenAlex API",
+     "term": "LC2013 on-ramp merging",
+     "accessible": true,
+     "note": "79 hits. Results 1-25 and 51-79 screened by title. Results 26-50 were missed by a paging error (per-page changed between calls). All titles are control or DRL studies; none is a field validation."
+    },
+    {
+     "engine": "OpenAlex API",
+     "term": "forced merge lane drop field data",
+     "accessible": true,
+     "note": "8,204 hits; results 1-25 screened. Field and work-zone studies or AIMSUN/VISSIM work (e.g. Wang et al. 2023 Sustainability, AIMSUN). No SUMO lane-end comparison by title."
+    },
+    {
+     "engine": "Semantic Scholar API",
+     "term": "SUMO lane change model validation merge",
+     "accessible": false,
+     "note": "HTTP 429 Too Many Requests on two attempts."
+    },
+    {
+     "engine": "WebSearch (general web, standard mode)",
+     "term": "SUMO lane change model validation merge",
+     "accessible": true,
+     "note": "10 links. Leads: Erdmann LC2013 slides, Wiesner et al. PSO paper, Veksler et al. arXiv 2412.02520, sumo-user threads msg00797 and msg08970, ETRR s12544-023-00586-1 (Springer redirected to a login, not read)."
+    },
+    {
+     "engine": "WebSearch (standard)",
+     "term": "LC2013 on-ramp merging",
+     "accessible": true,
+     "note": "20 links. No result mentions LC2013; general on-ramp merging literature."
+    },
+    {
+     "engine": "WebSearch (standard)",
+     "term": "forced merge lane drop field data",
+     "accessible": true,
+     "note": "10 links: work-zone lane-drop field studies (Iowa State/VISSIM, Virginia, Louisiana). None uses SUMO."
+    },
+    {
+     "engine": "WebSearch (extended mode)",
+     "term": "SUMO lane change model validation merge",
+     "accessible": true,
+     "note": "9 links. Adds sumo-user msg00829 ('Merging Lanes'), arXiv 2508.06544 (work-zone digital twin), the academia.edu copy of Semrau 2017 and the IEEE copy of Wiesner 2021."
+    },
+    {
+     "engine": "WebSearch (extended mode)",
+     "term": "LC2013 on-ramp merging",
+     "accessible": true,
+     "note": "9 links. Adds GitHub eclipse-sumo/sumo issue #12120 'LC2013 lane change model for a freeway merging area'. The other links are control papers that use LC2013 as a baseline."
+    },
+    {
+     "engine": "WebSearch (extended mode)",
+     "term": "forced merge lane drop field data",
+     "accessible": true,
+     "note": "9 links: field forced-merge studies (Iowa, NC, Nebraska, Michigan, FHWA) and Wang et al. 2023 (AIMSUN). No SUMO."
+    },
+    {
+     "engine": "TIB Open Publishing, SUMO Conference Proceedings site search",
+     "term": "merge / merging / lane change / ramp (single words; the site search matches few items)",
+     "accessible": true,
+     "note": "Hits: 'merge' 1, 'merging' 1, 'lane change' 4, 'ramp' 2. None is about merge validation."
+    },
+    {
+     "engine": "TIB Open Publishing, SUMO Conference Proceedings vols 1-7 (2020-2026), contents pages browsed",
+     "term": "title screen for the three terms' topics",
+     "accessible": true,
+     "note": "98 titles. None is about lane changing, merging, on-ramps or lane drops. Calibration papers concern car-following, urban or network demand."
+    },
+    {
+     "engine": "EasyChair EPiC, SUMO 2018 (Eng. vol 2) and SUMO 2019 (Computing vol 62) contents pages",
+     "term": "title screen (older SUMO user conference volumes)",
+     "accessible": true,
+     "note": "17 + 22 titles. One flagged and read: Semrau, Erdmann, Friedrich 2018, 'Multi-Level-Validation of Chinese traffic in the ChAoS framework'."
+    },
+    {
+     "engine": "Older SUMO volumes on eclipse.dev and DLR elib (2016 programme, 2016 and 2017 proceedings PDFs)",
+     "term": "title screen",
+     "accessible": false,
+     "note": "The SUMO 2016 programme was read (titles). The full 2016 (24 MB) and 2017 (21 MB) proceedings exceed the fetch tool's 10 MB limit, so the 2017 contents were not screened. SUMO 2013-2015 contents were not screened apart from Erdmann 2014."
+    },
+    {
+     "engine": "OpenAlex API (post hoc, outside the fixed terms)",
+     "term": "SUMO on-ramp merging lane change calibration trajectory data; SUMO acceleration lane merging highD OR exiD OR NGSIM comparison",
+     "accessible": true,
+     "note": "Supplementary and disclosed. Abstract-level checks of 6 DOIs: Berghaus & Oeser 2025 (field on-ramp trajectories, SUMO not mentioned), Zhang X. et al. 2026 TRIP (exiD + SUMO, learned policy), Liang et al. arXiv 2512.18537 (Waymo, not merges), Kusari et al. IV 2022 (car-following only). None reports a SUMO lane-end comparison with field data at abstract level."
+    }
+   ],
+   "sources": [
+    {
+     "citation": "Erdmann, J. (2014). Lane-Changing Model in SUMO. SUMO2014 conference paper, DLR elib 89233 (conference version; the Springer chapter 'SUMO's Lane-Changing Model', Modeling Mobility with Open Data, 2015, pp. 105-123, was not read and may differ) [VERIFY volume details]",
+     "url": "https://elib.dlr.de/89233/1/SUMO_Lane_change_model_Template_SUMO2014.pdf",
+     "read_in_full": true,
+     "compared": "The new lane-change model (vType laneChangeModel=\"JE2013\") against the old one (DK2008), on avgWaitingTime, wrongLaneTeleports and jamTeleports in the Braunschweig, A92 and ACOSTA scenarios. Also simulated lane counts and speeds per lane along a featureless 3-lane road, fed at its upstream end from A3 measurements.",
+     "against": "Simulation only. Realism was argued qualitatively: A92 detector data showed no jamming, and the Braunschweig deadlocks were called implausible. The A3 comparison uses measured inflow lane distribution and speeds as the starting point only.",
+     "found": "The new model cut teleports and waiting time in all three scenarios (e.g. A92 avgWaitingTime 17.16 to 0.02, teleports 21/1 to 0/0). Section 1.4.4 says stopping on a dead lane 'does occur in reality as well', with no data behind it. The outlook says the model will be calibrated and validated with real-world measurements (future work). There is no comparison of SUMO lane-end stopping with field data. The model name (JE2013) and SUMO version (0.20/0.21) differ from the plant's LC2013 in SUMO 1.27.1; whether JE2013 was renamed LC2013 is [VERIFY].",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Sec. 1.4.4 'Preventing deadlock' (p. 5); Sec. 1.10, Table 1 (pp. 9-10); Sec. 1.11 'Outlook', Figs. 1-2 (pp. 10-11)",
+     "verbatim_extract": "\"If a vehicle needs to stop on a dead lane because changing to a continuing lane did not succeed it creates an undesirable impediment to traffic flow. The measures in the previous section help to prevent this situation from occurring too often (and it does occur in reality as well).\" (Sec. 1.4.4); \"The A92 scenario is based on fine grained detector measurements which showed no jamming in the real world data.\" (Sec. 1.10); \"Using these parameters the model will be calibrated and validated using real world measurements.\" (Sec. 1.11)"
+    },
+    {
+     "citation": "Erdmann, J. (2014). Lane-Changing Model in SUMO. Presentation slides, SUMO2014, Berlin (16 charts).",
+     "url": "https://eclipse.dev/sumo/documents/2014/Presentation_LC2013_JakobErdmann.pdf",
+     "read_in_full": true,
+     "compared": "The old and new lane-change models, as a summary of improvements.",
+     "against": "No field data. The A3 lane-usage plots appear under 'Outlook'.",
+     "found": "Lists earlier 'unrealistic jamming at motorway ramps' and a 'major reduction in invalid stopping and jamming in all test scenarios'. Calibration and validation with real-world data are listed as outlook (future work). No comparison of lane-end merging with field data.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Chart 4 'Previous Issues with lane-changing'; Chart 14 'Summary of Model Improvements'; Chart 15 'Outlook'",
+     "verbatim_extract": "\"unrealistic jamming at motorway ramps (Braunschweig scenario).\" (Chart 4); \"Major reduction in invalid stopping and jamming in all test scenarios\" (Chart 14); \"Calibration / Validation using real-world data \u2013 expose parameters\" (Chart 15)"
+    },
+    {
+     "citation": "Semrau, M., Erdmann, J., Rieken, J., Friedrich, B. (2017). Modelling and calibrating situation adaptive lane changing and merging behavior on Chinese elevated roads. SUMO User Conference 2017 (cited in Semrau et al. 2018 as SUMO Proceedings, pp. 15-27, 2017). DLR elib 118860.",
+     "url": "https://elib.dlr.de/118860/1/SUMO_User_Conference.pdf",
+     "read_in_full": true,
+     "compared": "Field observations of 'pushing' (forced cooperative) merges at Shanghai motorway on-ramps were analysed, from a lidar-equipped test car (Table 1.1 reaction-pattern shares; Table 1.2 minimal longitudinal and lateral distances). These were used to build SUMO sublane extensions (lcPushy, minGapLat, an emotional-memory impatience factor). A validation concept then compares 'the parameters of the occurring pushing and merging situations' in simulation with the field values.",
+     "against": "Lidar and radar test-vehicle data and induction loops on the Shanghai Inner Ring elevated roads (Fig. 1.6).",
+     "found": "The paper claims validity of car-to-car interactions in pushing and merging but shows no simulated-versus-observed numbers. The macroscopic validation is 'not described here'. Field data show merging vehicles forced to brake when the lane ended. Neither stopping nor standing at an acceleration-lane end in SUMO is compared with field data.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Sec. 1.4.3 (pp. 7-8, Tables 1.1-1.2, Fig. 1.4); Sec. 1.4.4 (p. 11); Sec. 1.5 'Validation concept' (p. 12)",
+     "verbatim_extract": "\"We compared the parameters of the occurring pushing and merging situations with the values described in 1.4. Due to that we proved the validity of the car to car interactions in pushing and merging situations.\" and \"This macroscopic validation is still subject to ongoing research at the moment, which is why it won't be described here.\" (Sec. 1.5); \"Obviously the approaching car was forced to brake, since the lane ended and the pushing was not successful.\" (Sec. 1.4.3, field observation)"
+    },
+    {
+     "citation": "Semrau, M., Erdmann, J., Friedrich, B. (2018). Multi-Level-Validation of Chinese traffic in the ChAoS Framework. SUMO 2018, EPiC Series in Engineering vol. 2, pp. 194-205. doi:10.29007/6418",
+     "url": "https://easychair.org/publications/paper/qr2P",
+     "read_in_full": true,
+     "compared": "SUMO with Chinese driver models and the sublane model. Macroscopic: per-lane and carriageway traffic volume, speed and density (RMSPE, GEH). Microscopic: lane-change safety-factor distributions, minimal lateral gaps in 'pushing', and time gaps in lane changes (Kolmogorov-Smirnov tests). Also a benchmark with the extensions switched off.",
+     "against": ">300 induction loops on Shanghai elevated roads (two weeks, 6-20 h) and microscopic test-vehicle data from the 2017 study.",
+     "found": "RMSPE of per-lane volume was 5-18 % over ten days. GEH < 5 at 87 % of detectors. Safety-factor median deviations 1-7 %; lateral-gap median deviations -3 to 4 %. Time-gap distributions were judged equal at 95 %. Without the extensions, the per-lane density RMSPE median rose from 11.8 % to 63.56 %. One detector at an added lane was excluded because its lane errors were large. No acceleration-lane-end measure (stopping or standing at the lane end) is compared.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Sec. 2.1-2.2 (pp. 195-197); Sec. 2.3, Figs. 2-6 (pp. 197-200); Sec. 2.4, Tables 1-2, Figs. 7-9 (pp. 200-203); Sec. 2.5 (p. 203)",
+     "verbatim_extract": "\"The focus is on lane change behavior, meaning the lateral and longitudinal behavior shortly before, during and shortly after lane changes.\" (Sec. 2.2); \"As a result the median of the rmspe of the traffic density on single lanes rises from 11.8 percent to 63.56 percent. For the whole carriageway it rises from 5.3 percent to 63.81 percent.\" (Sec. 2.5)"
+    },
+    {
+     "citation": "Semrau, M., Erdmann, J., Friedrich, B., Waldmann, R. (2016). Simulation framework for testing ADAS in Chinese traffic situations. SUMO 2016 (cited in Semrau et al. 2018 as SUMO Proceedings 2016:103-114). DLR elib 104432.",
+     "url": "https://elib.dlr.de/104432/1/SUMO_2016_paper_20.pdf",
+     "read_in_full": true,
+     "compared": "Field analysis of lane-change motivations by traffic condition (about 150 h of Chinese driving, Table 1.1). A qualitative description of how SUMO lane-change parameters are to be calibrated (impatience, foresight, forced cooperation).",
+     "against": "Test-vehicle sensor data (ADAS study, traffic-situation study in Shanghai). No simulated-versus-observed comparison is shown.",
+     "found": "Validation is deferred to future work. No comparison of SUMO lane-end merging with field data.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Sec. 1.3.2, Table 1.1 (p. 4); Sec. 1.4.3 'Calibration' (pp. 9-10); Sec. 1.5 (p. 10)",
+     "verbatim_extract": "\"Drivers waiting for merging into a lane several times will be more impatient than drivers who were able to merge without problems.\" (Sec. 1.4.3); \"The simulated drivers are calibrated on the basis of real world measurement data. Future work will focus on model validation as well as evaluation of the framework.\" (Sec. 1.5)"
+    },
+    {
+     "citation": "Wiesner, N., Sheppard, J., Haberman, B. (2021). Using Particle Swarm Optimization to Learn a Lane Change Model for Autonomous Vehicle Merging. IEEE SSCI 2021 [VERIFY venue: the PDF does not print it; inferred from IEEE Xplore document 9660094 and the file name].",
+     "url": "https://www.cs.montana.edu/sheppard/pubs/ssci-sis-2021a.pdf",
+     "read_in_full": true,
+     "compared": "PSO-learned lane-change model (PSO-LCM) against SUMO's default lane-change model and against no lane-change model. Measures: merges, collisions, loop and merge speeds, on a simulated 1.9-km loop with a 0.78-km merge ramp (Krauss).",
+     "against": "Simulation only. No field data.",
+     "found": "PSO-LCM was comparable to SUMO's model in some densities and worse at 80 % merging. The text mentions avoiding deadlock at the end of the merge lane. No field comparison.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Abstract; Sec. I (p. 2, Hypothesis 1); Sec. IV-A, Table I (p. 4); Sec. V, Tables III-IV, Figs. 2-7 (pp. 5-8)",
+     "verbatim_extract": "\"A study was conducted to compare the proposed lane change model to the existing lane change model in the microscopic simulator, SUMO.\" (Abstract); \"This, in turn, will help prevent deadlock at the end of the merge lane while simultaneously increasing overall traffic flow of the closed network.\" (Sec. I)"
+    },
+    {
+     "citation": "Veksler, Y., Hornstein, S., Wang, H., Delle Monache, M. L., Urieli, D. Highway Congestion Reduction through Reinforcement Learning Based Eulerian Headway Control. arXiv:2412.02520v5 (22 Sep 2026); header states IEEE ITSC 2026, Naples.",
+     "url": "https://arxiv.org/pdf/2412.02520",
+     "read_in_full": true,
+     "compared": "RL headway control against VSL baselines in SUMO, on a 2-km I-24 merge segment taken from OpenStreetMap. The sublane model's lcAssertive was tuned by inspecting time-space diagrams.",
+     "against": "Simulation baselines only. No field data. Merge realism was judged as 'plausible congestion patterns' (Fig. 2).",
+     "found": "Up to 10.6 % speed gain over human traffic in simulation. The authors state that real-world deployment needs simulations calibrated with real-world data. No comparison of SUMO lane-end merging with field data.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Sec. III-C and Fig. 2 (p. 3); Sec. VI 'Conclusions' (p. 5)",
+     "verbatim_extract": "\"Lane-changing behavior is modeled with SUMO's sub-lane model and tuned (e.g., via SUMO's lcAssertive parameter) to avoid unrealistic extremes\" and \"The resulting configuration produces plausible congestion patterns around the bottleneck, as illustrated by time-space diagrams in Fig. 2.\" (Sec. III-C); \"deploying an RL controller trained in simulation into the real world requires it to be trained on simulations calibrated with real-world data.\" (Sec. VI)"
+    },
+    {
+     "citation": "Berghaus, M., Oeser, M. (2025). Modeling Lane Changes at Freeway On-Ramps With a Novel Car-Following Model Based on Desired Time Headways. Journal of Advanced Transportation. doi:10.1155/atr/9971254",
+     "url": "https://doi.org/10.1155/atr/9971254",
+     "read_in_full": false,
+     "compared": "Per a tool summary of the OpenAlex abstract: a new desired-time-headway car-following model with on-ramp lane-change components, compared in simulation with trajectory data.",
+     "against": "Trajectory data from two German freeway on-ramps (abstract level).",
+     "found": "Abstract level only: the model reproduced merging and follower behaviour well and slightly overestimated passing in congestion. The abstract does not mention SUMO. The full text could not be opened (Wiley HTTP 403; the RWTH repository page returned empty), so whether SUMO is involved is [VERIFY].",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Abstract only (via an OpenAlex record summarised by the fetch tool)",
+     "verbatim_extract": "None: only a tool summary of the abstract was seen; no verbatim text verified."
+    },
+    {
+     "citation": "Wang, Y., Wang, L., Yu, X., Guo, J. (2023). Capacity Drop at Freeway Ramp Merges with Its Replication in Macroscopic and Microscopic Traffic Simulations: A Tutorial Report. Sustainability 15(3):2050. doi:10.3390/su15032050",
+     "url": "https://doi.org/10.3390/su15032050",
+     "read_in_full": false,
+     "compared": "Per the abstract summary: METANET, and AIMSUN extended with forced lane changing by ramp-merging vehicles.",
+     "against": "Real data used for calibration (abstract level).",
+     "found": "The extended AIMSUN reproduces capacity drop at ramp merges. Not SUMO. MDPI returned HTTP 403, so the full text was not read.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Abstract only (OpenAlex record, tool summary)",
+     "verbatim_extract": "None: only a tool summary of the abstract was seen."
+    },
+    {
+     "citation": "GitHub eclipse-sumo/sumo issue #12120, 'LC2013 lane change model for a freeway merging area' (opened 22 Nov 2022; SUMO 1.14.1).",
+     "url": "https://github.com/eclipse-sumo/sumo/issues/12120",
+     "read_in_full": false,
+     "compared": "A user's SUMO merge-zone behaviour under LC2013 against expectations and against traffic-simulation.de (another simulator).",
+     "against": "No field data.",
+     "found": "Per the tool summary: developers attributed the blocking to high density and small gaps. They suggested lcCooperative, lcCooperativeSpeed, lcAssertive > 1 for some drivers, and departSpeed settings. No field data and no lane-end standing measurement.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Whole thread, seen only through the fetch tool's summary",
+     "verbatim_extract": "None verified (the fetch tool summarised the thread)."
+    },
+    {
+     "citation": "sumo-user mailing list, 'Re: [sumo-user] Merging Lanes' (Alan Dee, 16 Feb 2018, quoting Jakob Erdmann); and 'SUMO Parameters to Ensure Lane Change' (J. I. Bae, 7 Mar 2021, msg08970).",
+     "url": "https://www.eclipse.org/lists/sumo-user/msg00829.html",
+     "read_in_full": false,
+     "compared": "User reports of SUMO behaviour on ending lanes. In msg08970, two of five vehicles 'got stuck and waited for the next gap' at the lane end.",
+     "against": "No field data.",
+     "found": "Per the tool summary, Erdmann explains that by default an ending lane is treated as an on-ramp. Vehicles try to leave it as early as possible, with the distance set by lcStrategic; zipper merging is the alternative. Neither thread uses field data.",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "msg00829 and msg08970 bodies, seen through the fetch tool's summary",
+     "verbatim_extract": "Tool-reported, not verified against the raw page: \"vehicles try to leave the ending lane as soon as possible\" (Erdmann, quoted in msg00829)."
+    },
+    {
+     "citation": "Ahmad, M. U., Rahman, M., et al. (2025). Historical Prediction Attention Mechanism based Trajectory Forecasting for Proactive Work Zone Safety in a Digital Twin Environment. arXiv:2508.06544",
+     "url": "https://arxiv.org/abs/2508.06544",
+     "read_in_full": false,
+     "compared": "Trajectory prediction (HPNet) in a SUMO-CARLA co-simulation of a work zone.",
+     "against": "Argoverse and Interaction benchmarks (prediction accuracy), not SUMO merge behaviour.",
+     "found": "Abstract level only: not a comparison of SUMO lane-closure merging with field data. The web-search summary says the paper used SL2015 because LC2013 changes lanes instantaneously (not verified in the text).",
+     "compares_sumo_lane_end_merging_with_field_data": false,
+     "location_in_source": "Abstract only (tool summary)",
+     "verbatim_extract": "None verified."
+    }
+   ],
+   "outcome": "NOT INFORMATIVE",
+   "deviations": "1) Google Scholar was not accessible. Automated access hit a verification page ('Verifying your request...') at google.com/sgsync, and a plain HTTP retry was refused by the session permission system. Terms 2 and 3 were not tried on Scholar after that. The closest accessible routes used the same three terms: the OpenAlex works API (scholarly index) and the general WebSearch tool in standard and extended modes. The Semantic Scholar API returned HTTP 429 twice.\n2) Screening depth was limited and titles only. OpenAlex term 1: results 1-50 of 2,523. Term 2: results 1-25 and 51-79 of 79; results 26-50 were missed by a paging error. Term 3: results 1-25 of 8,204.\n3) The TIB SUMO Conference Proceedings site search used single words ('merge', 'merging', 'lane change', 'ramp') rather than the fixed phrases, because it matches very few items. All 7 volumes (2020-2026, 98 titles) were then screened by title.\n4) Older SUMO volumes were only partly screened: SUMO 2018 and 2019 (EPiC) contents and the SUMO 2016 programme were screened. The SUMO 2016 (24 MB) and 2017 (21 MB) proceedings PDFs exceed the fetch tool's 10 MB limit, so the 2017 contents were not screened. Barthauer (SUMO 2016), 'Calibrating a motorway segment in SUMO using single vehicle data', found by title in the 2016 programme, was NOT read [VERIFY]. SUMO 2013-2015 contents were not screened beyond Erdmann 2014.\n5) Post hoc supplementary searches outside the fixed terms were run and are disclosed. Two OpenAlex queries ('SUMO on-ramp merging lane change calibration trajectory data'; 'SUMO acceleration lane merging highD OR exiD OR NGSIM comparison'), plus title lookups and WebSearch lookups for full texts and proceedings contents. They yielded no SUMO lane-end comparison at abstract level.\n6) Semrau et al. 2016 was reached by following the citation in Semrau et al. 2017; it is in an older SUMO volume.\n7) 'Read in full' means each page was read, as rendered PDF pages (Erdmann paper and slides, Semrau 2016/2017/2018, Wiesner 2021) or as full extracted text (Veksler, via pdftotext). HTML pages (GitHub issue, sumo-user messages) and all abstracts were seen only through a summarising fetch tool, so they are marked read_in_full=false. Their quotes are tool-reported, not verified.\n8) Berghaus & Oeser 2025 full text was blocked (Wiley 403; the RWTH repository returned an empty page). MDPI (Wang et al. 2023) and Springer (ETRR s12544-023-00586-1) were also blocked.\n9) Erdmann 2014 was read in its elib conference version, not the Springer 2015 chapter (pp. 105-123), which may differ. It names the model JE2013 and SUMO 0.20/0.21; the link to LC2013 in SUMO 1.27.1 is [VERIFY].\n10) 7 sources were read in full (cap 10).\n11) Search date 2026-11-16 UTC (date -u gave 2026-11-16T06:24Z).\n12) No project file was modified. Temporary text extracts were written only to the session scratchpad (/tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/v6/). No simulations were run.",
+   "summary": "V6 outcome: NOT INFORMATIVE. None of the 7 sources read in full compares SUMO's lane-end (acceleration-lane-end or forced) merging with field data, in particular vehicles stopping or standing at the end of an acceleration lane. Limit M1 stays as written: \"the plant's standing at acceleration-lane ends is not validated; the E30 edge sits mostly where it occurs\".\n\nWhat each source compared:\n- Erdmann 2014 (SUMO2014 paper) compared the new lane-change model with the old one (JE2013 against DK2008) on waiting time and teleports in three simulated scenarios, arguing realism only qualitatively. It says stopping on a dead lane \"does occur in reality as well\" without data, and leaves calibration and validation with real-world measurements to future work.\n- The Erdmann 2014 slides list \"Calibration / Validation using real-world data\" as outlook.\n- Semrau et al. 2017 analysed lidar field data on 'pushing' merges at Shanghai on-ramps and built SUMO sublane extensions from them. It claims the pushing and merging parameters were compared but shows no simulated-versus-observed numbers.\n- Semrau, Erdmann, Friedrich 2018 (EPiC vol 2) is the closest work. It compared SUMO with Chinese driver models and the sublane model against more than 300 Shanghai induction loops (per-lane RMSPE 5-18 %, GEH < 5 at 87 % of detectors). It also compared lane-change safety-factor, lateral-gap and time-gap distributions with test-vehicle data and judged them equal by Kolmogorov-Smirnov tests. It has no lane-end standing measure, and it excluded the one detector at an added lane.\n- Semrau et al. 2016 calibrated models from field data and left validation to future work.\n- Wiesner et al. 2021 compared a PSO-learned merge model with SUMO's default model in simulation only.\n- Veksler et al. 2024/2026 tuned lcAssertive on an I-24 merge by inspection only, with no field data.\n\nAbstract-only and not counted: Berghaus & Oeser 2025 compared a new on-ramp model with two German on-ramps; its abstract does not mention SUMO, and the full text was blocked [VERIFY]. Wang et al. 2023 used AIMSUN, not SUMO. The user-list and GitHub threads describe SUMO lane-end behaviour (vehicles leave an ending lane early, governed by lcStrategic) without field data.\n\nMain caveats: Google Scholar was blocked, and the OpenAlex/WebSearch substitute was screened by title only and partly. The SUMO 2017 proceedings contents and Barthauer 2016 could not be fetched."
+  },
+  "verify": {
+   "checks": [
+    {
+     "citation": "Erdmann, J. (2014). Lane-Changing Model in SUMO. SUMO2014 conference paper, DLR elib 89233",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated. The open [VERIFY] about the model name is resolved: JE2013 was not renamed. The SUMO ChangeLog for 0.19.0 (27.11.2013) lists DK2008, JE2013 and LC2013 ('the new default model') as allowed values. The ChangeLog for 0.28.0 (01.11.2016) says JE2013 'has been removed due to strong similarity with LC2013'. The paper compares DK2008 (old) with JE2013 (new).",
+     "verdict": "CONFIRMED",
+     "note": "I read the 12-page PDF in full. All three extracts are verbatim: Sec. 1.4.4 on p. 5; the A92 sentence on p. 10; the 'calibrated and validated using real world measurements' sentence on p. 11. Table 1 (p. 9) matches: A92 avgWaitingTime 17.16 to 0.02, teleports 21/1 to 0/0. Sec. 1.10 starts on p. 8. Sec. 1.11 also says the behaviour 'could be tuned by inspection'. Version: footnote names 0.21.0, ref [3] tags v0_20_0. The paper has no field comparison of lane-end stopping."
+    },
+    {
+     "citation": "Erdmann, J. (2014). Lane-Changing Model in SUMO. Presentation slides, SUMO2014, Berlin (16 charts)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated. Minor point: the two plots on Chart 15 (cars per lane and speed per lane against distance) are not labelled A3 on the slide. They match Figs. 1-2 of the paper.",
+     "verdict": "CONFIRMED",
+     "note": "16 charts. Chart 4, Chart 14 and Chart 15 quotes are verbatim. Chart 16 is a '?' slide. No field comparison."
+    },
+    {
+     "citation": "Semrau, Erdmann, Rieken, Friedrich (2017). Modelling and calibrating situation adaptive lane changing and merging behavior on Chinese elevated roads. SUMO User Conference 2017. DLR elib 118860",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "The content claims are correct. Corrections: (a) Table 1.2 and Fig. 1.4 are on p. 9, not pp. 7-8. Sec. 1.4.3 runs from p. 7 to p. 11, and Table 1.1 is on p. 8. (b) The elib record gives Proceedings of the SUMO User Conference 2017, DLR, Volume 31, pp. 15-28; Semrau 2018 ref [12] gives pp. 15-27. (c) Omitted: the abstract says 'the resulting driver model is validated by using real world data from Chinese elevated road interchanges and merging areas', but Sec. 1.5 shows no simulated-versus-observed numbers. This supports the 'claimed, not shown' reading.",
+     "verdict": "CORRECTED",
+     "note": "I read the 16-page PDF in full. All three extracts are verbatim (Sec. 1.5 p. 12; Sec. 1.4.3 p. 7). The 'forced to brake, since the lane ended' sentence is one illustrated field example (pattern 2b), not a measured statistic."
+    },
+    {
+     "citation": "Semrau, Erdmann, Friedrich (2018). Multi-Level-Validation of Chinese traffic in the ChAoS Framework. SUMO 2018, EPiC Series in Engineering vol. 2, pp. 194-205, doi:10.29007/6418",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "All numbers are correct (pp. 198-203). Nuance on the 'compares lane-end merging = false' flag: the microscopic test compares distributions of minimal lateral gaps in 'pushing' situations between SUMO and test-vehicle data (Table 2, KS test). Semrau 2017 defines pushing as what drivers do when they cannot find a safe gap to merge from a motorway on-ramp, and Sec. 2.5 cites 'pushing at a motorway access'. So the paper does compare one aspect of SUMO on-ramp (lane-end) merging with field data: lateral gaps under the sublane model with Chinese-driver extensions. It does not compare stopping or standing at the lane end, and its samples are not located at the lane end. The excluded detector 7 is at an added lane (Fig. 4, 'additional lane from the right side'), not a lane end.",
+     "verdict": "CORRECTED",
+     "note": "I read the 12-page PDF in full. Both extracts are verbatim. Per-lane volume RMSPE 5-18 % over ten days; the paper also gives 5-24 % across locations, which the claim omits. GEH < 5 at 87 %. Safety-factor median deviations 1/7/7 %. Lateral-gap median deviations -2/4/-3 %. Time-gap distributions equal at 95 %. Density RMSPE 11.8 to 63.56 % without the extensions."
+    },
+    {
+     "citation": "Semrau, Erdmann, Friedrich, Waldmann (2016). Simulation framework for testing ADAS in Chinese traffic situations. SUMO 2016. DLR elib 104432",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated.",
+     "verdict": "CONFIRMED",
+     "note": "I read the 11-page PDF in full. The text layer partly overlaps a draft layer, but both quotes are verbatim: Sec. 1.4.3 'Drivers waiting for merging...' on p. 10; Sec. 1.5 'calibrated on the basis of real world measurement data. Future work will focus on model validation' on p. 10. Table 1.1 (p. 4) is based on 'around 150 hour of driving tests'. Semrau 2018 ref [11] cites it as SUMO Proceedings 2016:103-114. No simulated-versus-observed comparison."
+    },
+    {
+     "citation": "Wiesner, Sheppard, Haberman (2021). Using Particle Swarm Optimization to Learn a Lane Change Model for Autonomous Vehicle Merging",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "The venue [VERIFY] is resolved. Crossref lists it as 2021 IEEE Symposium Series on Computational Intelligence (SSCI), Orlando FL, 5-7 Dec 2021, pp. 1-8, doi:10.1109/SSCI50451.2021.9660094. On results, 'worse at 80 % merging' is too broad. Table III shows SUMO-LCM allowing more merges at 80 % merging with 20 and 50 vehicles; with 10 vehicles the two are comparable (0.246 vs 0.253).",
+     "verdict": "CORRECTED",
+     "note": "I read the 8-page PDF in full. Both extracts are verbatim. Simulation only (closed loop, Krauss, 1.9 km loop, 0.78 km ramp); no field data."
+    },
+    {
+     "citation": "Veksler, Hornstein, Wang, Delle Monache, Urieli. Highway Congestion Reduction through RL Based Eulerian Headway Control. arXiv:2412.02520v5 (22 Sep 2026), IEEE ITSC 2026 Naples",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated.",
+     "verdict": "CONFIRMED",
+     "note": "I read the 6-page PDF in full. The header reads '2026 IEEE 29th ITSC, September 15-18, 2026. Naples, Italy', and the arXiv stamp is v5, 22 Sep 2026. The lcAssertive and 'plausible congestion patterns' sentences are in Sec. III-C on p. 3 (Fig. 2). The 'calibrated with real-world data' sentence is in Sec. VI on p. 5. The figure is 'up to 10.6% relative to human-driven traffic' (Sec. V). Setting: I-24 from OpenStreetMap, IDM, sublane model. No field data."
+    },
+    {
+     "citation": "Berghaus, M., Oeser, M. (2025). Modeling Lane Changes at Freeway On-Ramps With a Novel Car-Following Model Based on Desired Time Headways. J. Adv. Transp., doi:10.1155/atr/9971254",
+     "url_opens": false,
+     "claim_found": true,
+     "corrected_claim": "I verified the abstract verbatim through the OpenAlex API. It says 'To validate the model, we conduct traffic simulations and compare the simulated traffic flow with trajectory data from two German freeway on-ramps', notes the slight overestimate of passing under congestion, and does not name a simulator. compares_sumo... should read UNKNOWN [VERIFY], not false. A co-author's group (Kolbe, Berghaus, ... Oeser 2023) built its on-ramp simulation in SUMO, so SUMO involvement here is plausible and unresolved.",
+     "verdict": "NOT CONFIRMED",
+     "note": "The full text is still blocked: Wiley full-text page HTTP 403, and the RWTH record page is empty. It must stay [VERIFY] and not be counted."
+    },
+    {
+     "citation": "Wang, Wang, Yu, Guo (2023). Capacity Drop at Freeway Ramp Merges with Its Replication in Macroscopic and Microscopic Traffic Simulations: A Tutorial Report. Sustainability 15(3):2050",
+     "url_opens": false,
+     "claim_found": true,
+     "corrected_claim": "The abstract-level claim is correct: METANET, plus AIMSUN extended with a forced lane-changing model for ramp merges and 'carefully calibrated against real data'. The full text is a tutorial overview, so whether it discusses SUMO is unknown.",
+     "verdict": "CONFIRMED",
+     "note": "Abstract only, read verbatim through the OpenAlex API. MDPI returned HTTP 403 to me too. Correctly not counted."
+    },
+    {
+     "citation": "GitHub eclipse-sumo/sumo issue #12120 'LC2013 lane change model for a freeway merging area' (22 Nov 2022; SUMO 1.14.1)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated. The issue is middle-lane blocking in a merge zone, not standing at a lane end. Verbatim (GitHub API): opener 'under the default lane change model LC2013 cars are only blocking the middle lane, while the innermost lane remains unobstructed'; namdre 'If you configure some of the drivers to be agressive (lcAssertive > 1) you will see more lane changes into the inner lane'.",
+     "verdict": "CONFIRMED",
+     "note": "I read the raw issue and all 7 comments via api.github.com. The suggestions were lcCooperative/lcCooperativeSpeed (m-kro), and lcAssertive and departSpeed 'last'/'avg' (namdre). traffic-simulation.de is the only external reference. No field data."
+    },
+    {
+     "citation": "sumo-user msg00829 'Re: Merging Lanes' (Alan Dee, 16 Feb 2018, quoting J. Erdmann of 12 Feb 2018) and msg08970 'SUMO Parameters to Ensure Lane Change' (J. I. Bae, 7 Mar 2021)",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "As stated, and now verified against the raw HTML. Erdmann: 'In this case vehicles try to leave the ending lane as soon as possible. The distance to the lane end where vehicles attempt to leave the merging lane can be configured with the lane-change model parameter lcStrategic.' Bae: '3 vehicles changed their lane in advance but 2 of them could not until the end of the lane where they got stuck and waited for the next gap.' Bae's case is a left lane ending, with vehicles departing on the left lane and routed to the right lane. It is not an on-ramp acceleration lane.",
+     "verdict": "CONFIRMED",
+     "note": "Both are short; I read them in full as raw HTML. No field data in either."
+    },
+    {
+     "citation": "Ahmad, Rahman, et al. (2025). Historical Prediction Attention Mechanism based Trajectory Forecasting for Proactive Work Zone Safety in a Digital Twin Environment. arXiv:2508.06544",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Abstract level (v1, 5 Aug 2025): SUMO-CARLA co-simulation with HPNet. Its prediction errors (Joint ADE/FDE) are compared with HPNet's reported results on Argoverse and Interaction. The abstract does not mention SL2015 or LC2013. The claim that 'SL2015 was used because LC2013 changes lanes instantaneously' is unverified and should be dropped or marked [VERIFY].",
+     "verdict": "CORRECTED",
+     "note": "Abstract only. Not a merge-validation source; correctly not counted."
+    },
+    {
+     "citation": "MISSING SOURCE: Kolbe, N., Berghaus, M., Kall\u00f3, E., Herty, M., Oeser, M. (2023). A data-driven microscopic on-ramp model based on macroscopic network flows. arXiv:2308.01093v1 (2 Aug 2023). Journal version reportedly 'A Microscopic On-Ramp Model Based on Macroscopic Network Flows', Applied Sciences 14(19):9111 (2024), doi:10.3390/app14199111 [VERIFY: journal version not opened, known only from a search summary; it may differ]",
+     "url_opens": true,
+     "claim_found": true,
+     "corrected_claim": "Kolbe et al. built a SUMO replica of the A565 Bonn-Beuel on-ramp: OpenStreetMap geometry, the same entry-lane length, demand from a 15-min excerpt of the data. They ran IDM with 'Erdmann's lane change model (Erdmann, 2014), which is the default lane change model in SUMO' (Sec. 2.4, pp. 6-7). They compared it, along with their own flow-based model, against drone trajectories: May 2019, 31 sets of about 5 min, about 270 m stretch (Sec. 2.1). Findings, Sec. 3 on p. 9: 'the IDM model produces large negative accelerations at the end of the on-ramp lane because vehicles stop and wait for a suitable gap if they do not find one. Our proposed model does not show this unrealistic behavior.' On p. 11: 'In the simulations of the IDM model vehicles preferably change to the main lane as soon as possible', whereas real drivers change more towards the end of the on-ramp (Fig. 4 right, Fig. 3 right). This is a SUMO lane-end merging comparison with field data, and it judges SUMO's stopping at the lane end unrealistic.",
+     "verdict": "CONFIRMED",
+     "note": "Found by my check outside the fixed terms (search: Berghaus Oeser ... SUMO). The title has no 'SUMO', so title-only screening would miss it. I read the 15-page arXiv PDF in full via text extraction and checked figure pages 10 and 12. Limits: one site; graphical comparison only, with no count of stopped vehicles; SUMO version and lane-change parameters not stated; IDM car-following, not stated as calibrated per vehicle. Results may differ from Krauss or other settings [VERIFY against the plant's CF model]."
+    }
+   ],
+   "outcome_check": "The NOT INFORMATIVE outcome does not hold. Under the rule, INFORMATIVE needs a source read in full that compares SUMO lane-end merging with field data. Kolbe et al. 2023 (arXiv:2308.01093), which I read in full, meets that rule. It ran SUMO with IDM and SUMO's default lane-change model on a replica of the A565 Bonn-Beuel on-ramp and compared it with drone trajectory data. In SUMO, vehicles 'stop and wait for a suitable gap' at the end of the on-ramp lane, which gives large decelerations there; the authors call this 'unrealistic' against the real data. SUMO vehicles also change lanes 'as soon as possible', while real drivers change more towards the end.\n\nThe source was found after the fact and outside the fixed terms. Google Scholar was blocked and the substitute screen was by title only, and the title has no 'SUMO'. So the record must label it post hoc.\n\nSuggested V6 wording: \"Kolbe et al. (2023) compared SUMO (IDM + default lane-change model) on one German on-ramp against drone trajectories and found simulated vehicles stopping at the on-ramp end with large decelerations, absent in the data [VERIFY version/parameters; one site; graphical].\"\n\nSemrau 2018 partly qualifies too: it compares lateral gaps in on-ramp 'pushing' merges with field data, but not lane-end standing.\n\nM1 stays as written, as the plan requires, and this evidence strengthens it. At one field site, SUMO's default lane-end stopping is judged unrealistic, so the E30 edge sitting where standing occurs is a stronger caveat. SUMO's own documentation (Motorways page, 'Motorway ramps' section, which cites no field data) also says simulated vehicles decelerate near the end of an acceleration lane, unlike humans, who 'may accelerate up to the end of the acceleration lane'. It suggests making acceleration lanes 'somewhat longer than in reality'. That statement is worth citing next to M1.",
+   "missing": "1) Kolbe et al. 2023 (arXiv:2308.01093) is absent from the agent's list. Its journal version, Applied Sciences 14(19):9111 (2024), doi:10.3390/app14199111, was not opened and may differ [VERIFY].\n2) The SUMO documentation page https://sumo.dlr.de/docs/Simulation/Motorways.html ('Motorway ramps') is absent. It is a developer statement on acceleration-lane-end deceleration and the advice to lengthen lanes, with no field data.\n3) Berghaus & Oeser 2025: the full text is still blocked (Wiley 403; RWTH page empty). Whether it uses SUMO is unknown, and it is plausible because the same group used SUMO in Kolbe 2023. Its 'false' flag should read 'unknown [VERIFY]'.\n4) Gaps the agent already disclosed, all still open:\n   - Google Scholar was not run for any term;\n   - OpenAlex term-2 results 26-50 were missed;\n   - the SUMO 2017 proceedings contents were not screened;\n   - Barthauer (SUMO 2016) was not read;\n   - SUMO 2013-2015 volumes were not screened;\n   - the Wang 2023 full text was not read; as a tutorial overview it may discuss SUMO.\n5) Small corrections:\n   - the JE2013/LC2013 link is resolved: they coexisted from 0.19.0 and JE2013 was removed in 0.28.0 as 'strongly similar' to LC2013;\n   - the Wiesner venue is confirmed as IEEE SSCI 2021;\n   - Semrau 2017 pages: Table 1.2 and Fig. 1.4 are on p. 9; proceedings pp. 15-28 per elib, 15-27 per Semrau 2018;\n   - the Semrau 2017 abstract's validation claim was omitted;\n   - Ahmad 2025's SL2015 remark is unverified and should be dropped.\n6) A search worth running before closing V6: SUMO on-ramp simulations built from drone datasets (DROVA, highD, exiD) that report lane-change positions or decelerations at the acceleration-lane end. Kolbe 2023 shows such work exists, but it does not show up in title-only screens."
+  }
+ },
+ {
+  "item": "V7",
+  "a": {
+   "obs_function": "CavEnv._obs in /home/catalin/work/phd/wt/vvm/v5b/fleet/b_env.py:923-980 (commit 6e96988). The 16 local columns are built at b_env.py:949-959. The method returns the tuple (ids, local rows, global, due) at b_env.py:975. b_env.py has three _obs methods, not two: MergeEnv._obs:327, ZoneEnv._obs:581 and CavEnv._obs:923, which overrides both. At run time the v3w actor reads only the 16 local columns. The 10 global columns (b_env.py:970-973) go to the critic only (see other_concerns).",
+   "why_this_is_v3w": "1. Arms. vv.py:27 has ARMS = pb.V3W + ..., and pb.py:106 has V3W = (w0u250, w1u500, w2u250, w3u500, w4u500). vv.py:47-52 builds each arm as c1.arm_cfg(c1.stored_cf()[r], ...) (c1.py:57-63, 76-86). That data comes from v5.s6_arms() (v5.py:32, 49-50), i.e. /home/catalin/work/phd/v5b1_runs/planb_s56_remote/jobs/s6_jobs.json. There S|wN has ctrl = {env: {hold: 10.0}, pt: .../baseline_v4/policies/C0_u250, C1_u500, C2_u250, C3_u500, C4_u500 .pt}, with fix_x true and geom r2m3. job_6c49e7e.json X1|w* uses the same pt paths and plant keys.\n2. Env class. In plant_sweep.py:84, \"pt\" in ctrl gives kw = {cav: True, decision: 5.0}. kw |= ctrl[\"env\"] at line 85, then act_env(pt) at lines 86-88. be.make(..., report_net=True, plant=to_plant(c)) is at line 93. With cav=True, make returns CavEnv (b_env.py:101-102). MergeEnv.reset (b_env.py:202) and MergeEnv.step (b_env.py:482) call self._obs(), which dispatches to CavEnv._obs.\n3. Policy object. Greedy (plant_sweep.py:105-107; c_train.py:119-134) unpacks a 4-tuple (ids, lo, _, due), and only CavEnv._obs returns a tuple. It acts with net.logits(lo[due]) (c_train.py:88-89, 133), so the global part is discarded.\n4. Checkpoint shape, read statically with pickletools and raw storage bytes, nothing unpickled. All five .pt files have n_local = 16 and n_act = 4, only actor and critic weights (no critic_c), and no act_env key, so act_env returns {} (c_train.py:47). So there is no lane, speed, residual or base_rule option, and n_local = CAV_LOCAL = 16 (b_env.py:57, 641-645). The C*_config.json files agree (env cav true, no such keys), and C0_pilot.json has 16 lo_mean and 10 gl_mean entries.",
+   "n_columns": 16,
+   "columns": [
+    {
+     "index": "0",
+     "meaning": "Position along the route in km from the 3a start, clipped to [-3.5, 3.3]",
+     "code_ref": "b_env.py:940, 949 (x_top 3.3 at 925); _x 881-895 (fix_x branch); road_starts 65-69; _x_base 913-918; _x_scale 920-921; TRAIN_LEN 62",
+     "source_quantity": "ls.vehicle.getRoadID + ls.vehicle.getLanePosition + built lane-0 lengths ls.lane.getLength(e_0). With x_remap (600-m runs, vv.py:58-59): road starts on the 300-m training net plus lane position x TRAIN_LEN/built length. Inside a junction it keeps the last value (xlast).",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "GNSS plus map. The constants (1000, 3.5, 3.3, TRAIN_LEN 294.72) are fixed numbers. The remap scale comes from the built geometry, a static map property, not from the scenario or the seed. A junction vehicle reads its last position (past, not future)."
+    },
+    {
+     "index": "1",
+     "meaning": "The same position / 300 m, clipped to [-1, 1] (fine scale centred on merge 1)",
+     "code_ref": "b_env.py:949",
+     "source_quantity": "Same x as column 0",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Fixed constant 300. V387 records it at a limit in 93 % of decisions on an earlier trace."
+    },
+    {
+     "index": "2",
+     "meaning": "On-ramp flag: on r, rj, r2 or rj2, or a ramp-origin vehicle on 3a_0/4a_0",
+     "code_ref": "b_env.py:946, 949; self.ramp from the demand list at 409-411",
+     "source_quantity": "ls.vehicle.getRoadID, ls.vehicle.getLaneID, and the vehicle's own route origin (demand route_of startswith 'ramp')",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "The demand list is generated from the seed, but this column reads only the present vehicle's own route and lane, which a car knows from its navigation and lane localisation."
+    },
+    {
+     "index": "3",
+     "meaning": "Own lane index / 3",
+     "code_ref": "b_env.py:949",
+     "source_quantity": "ls.vehicle.getLaneIndex",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "On 3a and 4a, index 0 is the acceleration lane, so main-lane indices shift by 1 there (map topology)."
+    },
+    {
+     "index": "4",
+     "meaning": "Own speed / 100 km/h (not clipped)",
+     "code_ref": "b_env.py:942, 950; fl.LIMIT = 100/3.6 at fleet.py:27",
+     "source_quantity": "ls.vehicle.getSpeed",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Fixed divisor. It does not read the lane's current max speed, so the E30 limit drop is not visible here."
+    },
+    {
+     "index": "5",
+     "meaning": "Gap to the leader / 100 m, capped at 1; 1 if there is no leader",
+     "code_ref": "b_env.py:943, 945, 951",
+     "source_quantity": "ls.vehicle.getLeader(v, 100)[1]",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Front radar. It saturates at 1.0 for gaps of 100 m or more, so a leader beyond range reads the same as no leader."
+    },
+    {
+     "index": "6",
+     "meaning": "Closing speed to the leader (own - leader) / 10 m/s, clipped to [-1, 1]; 0 if there is no leader",
+     "code_ref": "b_env.py:952",
+     "source_quantity": "ls.vehicle.getSpeed(v) - ls.vehicle.getSpeed(leader from getLeader(v, 100))",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Radar range rate. Channel caveat: SUMO 1.27.1 returns the next vehicle on the same lane with no distance check (MSVehicle.cpp:6766-6774), and on consecutive lanes can return a leader past dist (MSLane.cpp:3142-3151). So this column can carry a leader's speed from beyond 100 m and beyond 150 m. How often this happens was not measured. It is current state, so it does not breach PR-15's test."
+    },
+    {
+     "index": "7",
+     "meaning": "Leader is an ALKS (1/0)",
+     "code_ref": "b_env.py:953; alks_all at 413",
+     "source_quantity": "Leader id from getLeader(v, 100), tested for membership of the demand list's ALKS class",
+     "channel": "V2V within 150 m",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "A real car learns this from the leader's V2V broadcast. Same SUMO range caveat as column 6: the leader can lie beyond 150 m on the same lane. It gives the leader's class, not its identity."
+    },
+    {
+     "index": "8",
+     "meaning": "Gap to the follower / 100 m, capped at 1; 1 if there is no follower",
+     "code_ref": "b_env.py:944, 954",
+     "source_quantity": "ls.vehicle.getFollower(v, 100)[1]",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Rear radar. It saturates at 1.0 for 100 m or more."
+    },
+    {
+     "index": "9",
+     "meaning": "Follower closing speed (follower - own) / 10 m/s, clipped to [-1, 1]; 0 if there is no follower",
+     "code_ref": "b_env.py:955",
+     "source_quantity": "ls.vehicle.getSpeed(follower) - ls.vehicle.getSpeed(v)",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Range caveat: MSLane::getFollower returns the nearest upstream vehicle on the same lane with no distance check (MSLane.cpp:4441-4451), so this column can read a follower beyond 100 m or 150 m. Not measured."
+    },
+    {
+     "index": "10",
+     "meaning": "Own current headway level / 3",
+     "code_ref": "b_env.py:956; self.lvl set in CavEnv._apply 717-729",
+     "source_quantity": "Internal controller state (the vehicle's own last command)",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Own state. The divisor len(HEADWAYS_S)-1 = 3 is fixed."
+    },
+    {
+     "index": "11",
+     "meaning": "Remaining hold time of own level / hold (10 s)",
+     "code_ref": "b_env.py:957",
+     "source_quantity": "self.sim.t - self.moved[v] (own elapsed time since the last level change)",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "The sim clock is used only as a difference, like an on-board timer, never as a scenario index. Dead input: lo_var[11] = 0.0 in all five checkpoints, so c_train.py:86 sets it to 0 before the actor (as V387 and V389 record)."
+    },
+    {
+     "index": "12",
+     "meaning": "Mean speed of all vehicles in own 200-m bin (road, pos//200) / 100 km/h, capped at 1; 1 if no bin value",
+     "code_ref": "b_env.py:958; _bin 868-869; bins 846, 851 in CavEnv._net_stats (809), called at MergeEnv._second 436-437 with report_net=True (plant_sweep.py:93)",
+     "source_quantity": "ls.vehicle.getSpeed of every vehicle (all lanes, all classes) averaged per road and 200-m bin, at the same sim time as the observation",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "HDVs are included, so V2V cannot supply it. LocalRule reads the same env.bins (b_env.py:1047), and MPC-F's zone speeds come from it (planb_ctrl.py:94). The bins are empty at reset, so the first decision reads 1.0 (b_env.py:676)."
+    },
+    {
+     "index": "13",
+     "meaning": "Mean speed of all vehicles in the merge-1 zone / 100 km/h",
+     "code_ref": "b_env.py:928-934, 959; _zone 512-522; MA_EDGE2_TAIL 100, MA_EDGE3_HEAD 300 at b_merge.py:35",
+     "source_quantity": "ls.vehicle.getIDList + getSpeed + getRoadID/getLanePosition; zone = last 100 m of edge 2, 3a and its junctions, first 300 m of edge 3",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Every ALKS reads it wherever it is (up to about 3.5 km away). The plan names it as roadside. No V&V arm's rule reads this exact zone mean: ZoneRule reads it in ZoneEnv (b_env.py:633), and MPC-F uses zone speeds from the bins. V533 discloses that at 600 m it averages over the longer 3a."
+    },
+    {
+     "index": "14",
+     "meaning": "Signed distance in metres to the nearest other vehicle on 3a_0 or 4a_0 / 100, clipped to [-1, 1]; +1 if there is none",
+     "code_ref": "b_env.py:935, 937, 941, 947-948, 959",
+     "source_quantity": "ls.lane.getLastStepVehicleIDs(3a_0, 4a_0) with built raw route positions (_x raw=True), minus own raw position",
+     "channel": "other",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Within 100 m this could come from on-board perception or V2V (most ramp vehicles are HDVs). It is computed for every ALKS at any distance, with no range limit. A saturated -1 says some vehicle is on an acceleration lane behind, at 100 m or more, possibly km away. +1 lumps 'none' together with 'ahead at 100 m or more'. So beyond 100 m the sign needs an acceleration-lane feed (roadside). Current state only."
+    },
+    {
+     "index": "15",
+     "meaning": "Vehicle count on 3a_0 plus 4a_0 / 40, capped at 1",
+     "code_ref": "b_env.py:935-936, 959",
+     "source_quantity": "ls.lane.getLastStepVehicleNumber(3a_0) + (4a_0)",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "It sums both acceleration lanes, whose starts are about 1.49 km apart, for every ALKS. OwnState and ZoneOwnState read this column (b_env.py:1118, 1159), and MPC-F reads the same counts (planb_ctrl.py:97). Fixed cap 40; the share at the cap at 600 m is the V533 smoke check."
+    }
+   ],
+   "outcome": "MET",
+   "limit_columns": [],
+   "roadside_columns": [
+    "12 (own 200-m bin mean speed)",
+    "13 (merge-1 zone mean speed)",
+    "15 (vehicle count on 3a_0 + 4a_0)",
+    "14 beyond 100 m only (the sign of the saturated nearest-acceleration-lane value)"
+   ],
+   "other_concerns": "1. Critic-only global inputs (b_env.py:970-973). g0-g2 are zone mean speeds, g3-g5 zone counts /300, g6 the acceleration-lane count /40. g7 is the insertion backlog len(getPendingVehicles())/500, which no sensor can measure. g8 is sim.t/t_end: the simulation clock used as an episode index, i.e. event timing. g9 is flow_ema/(q/3600)/1.5: the demand level q taken from the config. The critic reads them (c_train.py:73, 94-95). The actor never does: in training (c_train.py:207) and at run time (Greedy, c_train.py:128-134) it reads only the 16 local columns. MET therefore holds for the policy's inputs at execution. If a reviewer counts inputs that shape training only through the value baseline, PR-15 would become LIMIT naming g8 and g9. This should be disclosed either way.\n2. SUMO range. getLeader and getFollower take dist only as a search bound. SUMO 1.27.1 source (toolchain sumo-src at tag v1_27_1): MSVehicle.cpp:6766-6774 and MSLane.cpp:4441-4451 return the next vehicle on the same lane at any distance, and MSLane.cpp:3142-3151 can return a leader past dist. So columns 6, 7 and 9 can carry information from beyond 100 m or 150 m; columns 5 and 8 saturate and are unaffected. How often this happens is unmeasured. The plant's V2V rule getLeader(v, 150) (b_env.py:788) has the same property; that is outside PR-15 but bears on the V2V-range assumption.\n3. Timing. The observation is read at the end of MergeEnv.step (b_env.py:482). The bins are filled at the same sim time (b_env.py:437 -> 851). The action is applied by _apply at the start of the next step (b_env.py:472), before any simulation step. No column is read after the step it is used in. The vv obs_check (vv_merge.py:148-162) only reads.\n4. Event. E30 (c1.py:36) is drawn from seed + salt (perturb.py:67-72) and acts only through ls.edge.setMaxSpeed (perturb.py:185-192). No observation code reads pert, a lane's max speed, the drawn times, seed, q or t_end; grep over b_env.py:881-980 finds them only in g7-g9. EV has no oracle or hw_oracle key, so perturb.py:131-141 is inactive.\n5. Identity. No column holds a vehicle id, and row order does not matter: the actor is a per-row MLP (c_train.py:41-42, 88-89). The due mask (b_env.py:965-969) is a per-vehicle 10-s clock used to select rows, not an input. Columns 2 and 7 use the seed-generated demand sets (b_env.py:409-414), but only for the vehicle's own route and the current leader's class.\n6. Normalisation. The actor's lo_mean and lo_var (c_train.py:76-86, clip 5) were computed from training rollouts and frozen in each checkpoint (n_seen about 23.7 M at u250 and about 47.3 M at u500). Training used seeds 7,464,000-7,471,799 (C*_config.json), random slowdowns, and levels 4,500-6,000 veh/h. The statistics come from no evaluated run, scenario or seed, and the training seeds do not overlap the V&V seeds (7,489,160-7,493,010). I read the buffer values from raw storage bytes, assuming float64 as declared at c_train.py:76-80; nothing was unpickled.\n7. Scope. I inspected only the run code at 6e96988, not the code the policies were trained with. b_env.py has a third _obs (CavEnv, line 923); the task named two."
+  },
+  "b": {
+   "obs_function": "CavEnv._obs, v5b/fleet/b_env.py:923-980 in /home/catalin/work/phd/wt/vvm at commit 6e96988. The actor reads only the 16-column per-vehicle local rows built at lines 939-959, and only for vehicles that are due (line 966). The 10-column global vector (lines 970-973) goes only to the training critic. b_env.py has three _obs methods, not two: MergeEnv._obs at 327, ZoneEnv._obs at 581 and CavEnv._obs at 923. The v3w learners use none of the first two.",
+   "why_this_is_v3w": "Call chain, all files at 6e96988:\n(1) docs/research/vv/vv.py:27 sets ARMS = pb.V3W + rules. docs/research/planb/pb.py:106 sets V3W = (w0u250, w1u500, w2u250, w3u500, w4u500).\n(2) base_arm (vv.py:47-49) builds each arm with c1.arm_cfg(c1.stored_cf()[r]). The stored CF configs (docs/research/vv/data/cf_replay_rows.jsonl, cfg field) are ctrl {\"pt\": baseline_v4/policies/C0_u250.pt | C1_u500 | C2_u250 | C3_u500 | C4_u500, \"env\": {\"hold\": 10, \"perturb\": slowdown_draw on edge 2}}, with fix_x true and geom r2m3. round2/test/job_6c49e7e.json maps X1/X2 to the same five .pt files. At 600 m, at_length adds accel_len, accel2_len and x_remap (vv.py:55-59).\n(3) The runner path is vv.run, then run6.execute(fn=c1.timed), then run6.one, then plant_sweep.run_one (run6.py:93).\n(4) In plant_sweep.py, \"pt\" in ctrl gives kw = {\"cav\": True, \"decision\": 5.0} (line 84). Line 85 adds ctrl env. Lines 86-88 add act_env(pt). act_env (c_train.py:45-47) returns the checkpoint's \"act_env\" key or {}. I disassembled the five checkpoints' data.pkl with pickletools without executing them. Their top-level keys are only net, scale, u, n_local=16 and n_act=4. There is no act_env key, so there are no lane, speed, base_rule or residual options.\n(5) be.make(cav=True) returns CavEnv (b_env.py:101-102). CavEnv derives from ZoneEnv, which derives from MergeEnv. MergeEnv.reset (202) and MergeEnv.step (482) call self._obs(), which resolves to CavEnv._obs (923) and overrides 581 and 327.\n(6) plant_sweep.py:105-107 sets rule = Greedy(pt). Greedy.__call__ unpacks ids, lo, _, due and discards the global vector (c_train.py:129). It calls net.logits(lo[due]) (133). logits feeds only the actor, built as _mlp(n_local=16, n_act) (c_train.py:72, 88-89). CAV_LOCAL = 16 (b_env.py:57). cav_sizes returns 16 with no options (641-646).\n(7) All five training configs (C0-C4_config.json) have cav true, hold 10, decision 5, fix_x true, geom r2m3 and perturb random, with no extra observation options.",
+   "n_columns": 16,
+   "columns": [
+    {
+     "index": "0",
+     "meaning": "Coarse route position: x/1000, clipped to [-3.5, 3.3], with 0 at the start of 3a",
+     "code_ref": "v5b/fleet/b_env.py:949 (x from _x at 940; _x 881-896; fix_x branch 886-896; road_starts 65-69; _x_base 913-918; _x_scale 920-921; x_top 925)",
+     "source_quantity": "ls.vehicle.getRoadID and getLanePosition, plus road starts from ls.lane.getLength(e+'_0') on the built net. With x_remap at 600 m: the TRAIN_LEN road starts plus lane position x 294.72/built length on 3a and 4a.",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Map-matched position, which a car gets from localisation and a map. Fixed constants: 1000, -3.5, 3.3 (3.3 because fix_x is set) and TRAIN_LEN 294.72. The road starts and the 600-m scale factor come from the built geometry, a map property. They do not depend on the seed or the event. Inside a junction the last on-edge value is kept, which is a past read."
+    },
+    {
+     "index": "1",
+     "meaning": "Fine route position: x/300, clipped to [-1, 1]",
+     "code_ref": "v5b/fleet/b_env.py:949 (same x as column 0)",
+     "source_quantity": "Same as column 0",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Fixed constant 300. The 600-m remap applies as in column 0."
+    },
+    {
+     "index": "2",
+     "meaning": "On-ramp flag: the vehicle is on r, rj, r2 or rj2, or it came from a ramp and is on 3a_0 or 4a_0",
+     "code_ref": "v5b/fleet/b_env.py:946, 949; self.ramp at 411",
+     "source_quantity": "ls.vehicle.getRoadID and getLaneID, plus whether the vehicle's own route starts with 'ramp' in the demand list",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "The seed generates the demand list (b_env.py:166). This column reads only the vehicle's own origin, which the vehicle knows. No seed value and no seed-drawn event parameter enters."
+    },
+    {
+     "index": "3",
+     "meaning": "Own lane index / 3",
+     "code_ref": "v5b/fleet/b_env.py:949",
+     "source_quantity": "ls.vehicle.getLaneIndex",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Lane-level localisation. On 3a and 4a, index 0 is the acceleration lane. Fixed constant 3."
+    },
+    {
+     "index": "4",
+     "meaning": "Own speed / LIMIT",
+     "code_ref": "v5b/fleet/b_env.py:950; LIMIT = 100/3.6 at v5b/fleet/fleet.py:27",
+     "source_quantity": "ls.vehicle.getSpeed",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Not clipped here; the actor's normaliser clips at 5 SD. LIMIT is a fixed number, not the edge limit that the E30 event changes."
+    },
+    {
+     "index": "5",
+     "meaning": "Gap to leader / 100, capped at 1; 1.0 if there is no leader",
+     "code_ref": "v5b/fleet/b_env.py:943, 951; GAP_NORM at 44",
+     "source_quantity": "ls.vehicle.getLeader(v, 100)[1]: front bumper + minGap to the leader's rear",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Forward ranging. A gap of 100 m or more reads 1.0, the same as no leader."
+    },
+    {
+     "index": "6",
+     "meaning": "Closing speed to leader: (own - leader speed)/10, clipped to [-1, 1]; 0 if there is no leader",
+     "code_ref": "v5b/fleet/b_env.py:952",
+     "source_quantity": "ls.vehicle.getSpeed of ego and of the getLeader vehicle",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Range caveat: in SUMO 1.27.1, getLeader(v, 100) returns the next vehicle on the same lane at any distance (MSVehicle.cpp:6759-6775). On following lanes it can also return a leader beyond 100 m (MSLane.cpp:3142-3160). The code therefore does not bound the sensing range. How often this happens was not measured."
+    },
+    {
+     "index": "7",
+     "meaning": "Leader is an ALKS (automated): 1/0",
+     "code_ref": "v5b/fleet/b_env.py:953; alks_all at 413",
+     "source_quantity": "getLeader id is in the demand list's class set (cls == 'alks')",
+     "channel": "V2V within 150 m",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Assumed channel: the leader broadcasts that it is automated. The 150-m range (V2V_RANGE, line 36) is not enforced here. A same-lane leader at any distance sets this flag, as in column 6. The class set comes from the seed-generated demand list but is read only for the leader's own class."
+    },
+    {
+     "index": "8",
+     "meaning": "Gap to follower / 100, capped at 1; 1.0 if there is no follower",
+     "code_ref": "v5b/fleet/b_env.py:944, 954",
+     "source_quantity": "ls.vehicle.getFollower(v, 100)[1]",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Rear ranging. A gap of 100 m or more reads 1.0."
+    },
+    {
+     "index": "9",
+     "meaning": "Follower approach speed: (follower - own speed)/10, clipped to [-1, 1]; 0 if there is no follower",
+     "code_ref": "v5b/fleet/b_env.py:955",
+     "source_quantity": "ls.vehicle.getSpeed of the getFollower vehicle and of ego",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Range caveat: getFollower(v, 100) returns the nearest same-lane vehicle upstream at any distance. The 100-m limit applies only to the search into upstream lanes (MSLane.cpp:4440-4456). Not measured."
+    },
+    {
+     "index": "10",
+     "meaning": "Own commanded headway level / 3",
+     "code_ref": "v5b/fleet/b_env.py:956; set in _apply at 724",
+     "source_quantity": "self.lvl[v], the policy's own last applied level",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Own state. Reads self.lvl, not the level after the hw_oracle or hw_type caps (none is active in E30). Fixed constant len(HEADWAYS_S)-1 = 3."
+    },
+    {
+     "index": "11",
+     "meaning": "Own remaining hold time: max(hold - (t - moved[v]), 0)/hold",
+     "code_ref": "v5b/fleet/b_env.py:957; moved set at 725",
+     "source_quantity": "Simulation clock minus the vehicle's own last-move time; hold = 10 from the arm config",
+     "channel": "on-board",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "The clock is used only as a difference against the vehicle's own timer, never as a scenario index. The column is dead (V387). I read lo_var[11] from the raw storage bytes of all five checkpoints without unpickling: it is exactly 0.0. _scaled therefore feeds the actor 0 for this column (c_train.py:86)."
+    },
+    {
+     "index": "12",
+     "meaning": "Mean speed of all vehicles in the ego's 200-m bin of its current road / LIMIT, capped at 1",
+     "code_ref": "v5b/fleet/b_env.py:958; bins built at 846, 851 in CavEnv._net_stats; _bin 868-869",
+     "source_quantity": "ls.vehicle.getSpeed of every vehicle (all classes, all lanes, ego included), keyed by (getRoadID, getLanePosition // 200)",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "This is the roadside 200-m bin feed that LocalRule reads (lr400_16_1 and grid_lr400_13_1, b_env.py:1016-1050). ASCH and MPC-F read it too (planb_ctrl.py:59, 95). Bins are computed in the last 1-s sample at the same simulation time as _obs (eval: 436-437; training: 874 via 576-579). The bins are empty at reset, so the first observation reads 1.0. It includes vehicles without V2V and spans up to 200 m, so V2V cannot supply it."
+    },
+    {
+     "index": "13",
+     "meaning": "Mean speed in merge zone 1 (last 100 m of edge 2, all of 3a and its junctions, first 300 m of edge 3) / LIMIT; 1.0 if empty; the same for every vehicle",
+     "code_ref": "v5b/fleet/b_env.py:926-934, 959; ZoneEnv._zone 512-522; MA_EDGE2_TAIL/MA_EDGE3_HEAD at v5b/fleet/b_merge.py:35",
+     "source_quantity": "ls.vehicle.getSpeed over ls.vehicle.getIDList, grouped by zone",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Roadside zone speed. No V&V or CF rule reads this exact aggregate (only ZoneRule, a ZoneEnv opponent, does). The rules read the same kind of roadside speed data, the 200-m bins. The E30 slowdown on edge 2 reaches this column only through measured speeds. At 600 m it averages over the longer 3a (V533)."
+    },
+    {
+     "index": "14",
+     "meaning": "Signed distance from ego to the nearest other vehicle on 3a_0 or 4a_0, along the route in built metres, /100, clipped to [-1, 1]; 1.0 if there is none",
+     "code_ref": "v5b/fleet/b_env.py:937, 941, 947-948, 959",
+     "source_quantity": "_x(v, raw=True) of every vehicle on ls.lane.getLastStepVehicleIDs('3a_0'/'4a_0'), against ego's xlast_raw",
+     "channel": "other",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Includes vehicles without V2V, up to 100 m ahead or behind, across up to three lanes, with no occlusion modelled. It needs on-board perception at that range or a per-vehicle roadside feed. No rule reads it. It stays in metres at 600 m (VV-D7). Excludes ego (V389 fix)."
+    },
+    {
+     "index": "15",
+     "meaning": "Vehicle count on both acceleration lanes (3a_0 + 4a_0) / 40, capped at 1; the same for every vehicle",
+     "code_ref": "v5b/fleet/b_env.py:935-936, 959",
+     "source_quantity": "ls.lane.getLastStepVehicleNumber('3a_0') + ('4a_0')",
+     "channel": "roadside feed also read by the rules",
+     "uses_seed": false,
+     "uses_event_timing": false,
+     "uses_future_state": false,
+     "notes": "Also read by OwnState (b_env.py:1118), ZoneOwnState/3E (1159) and MPC-F (planb_ctrl.py:97). Fixed constant 40. At 600 m more vehicles fit, so the cap binds more often. The smoke reports that share (vv.py obs_checks; V533)."
+    }
+   ],
+   "outcome": "MET",
+   "limit_columns": [],
+   "roadside_columns": [
+    "12",
+    "13",
+    "15"
+   ],
+   "other_concerns": "Outcome: MET on PR-15's test. None of the 16 actor columns reads the seed, env.pert (the E30 onset and duration drawn from seed+salt, perturb.py:67-73), any edge or lane speed limit, the demand level q, t_end, or the clock as a scenario index. None reads a future state. Disclosures for the record:\n\n1. Two of the three _obs methods are not v3w's. MergeEnv._obs (327) has the clock as an input (sim.t/t_end, line 360) plus the insertion queue (357-359). ZoneEnv._obs (581) reads the insertion queue (619). Both would fail PR-15, but v3w uses neither.\n\n2. Critic-only global vector (b_env.py:970-973). In training the critic saw the insertion queue (971), the episode clock sim.t/t_end (972) and flow_ema normalised by the configured demand q (973). They go only to Net.value (c_train.py:73, 94-95). The deployed Greedy drops them (c_train.py:129). They shaped training advantages, not deployed inputs. This should be stated so the committee does not mistake it for a leak.\n\n3. Sensing range is not bounded for columns 6, 7 and 9. SUMO 1.27.1 (v5b1 toolchain sumo-src, tag v1_27_1) returns the nearest same-lane leader or follower at any distance: MSVehicle.cpp:6759-6775 and 6785-6792, MSLane.cpp:4440-4456. The docs call getLeader's argument a \"minimum look ahead distance\" (docs/web/docs/TraCI/Vehicle_Value_Retrieval.md:180). Columns 5 and 8 saturate at 100 m, but 6, 7 and 9 still carry the far vehicle's speed difference and automation flag. So column 7's \"V2V within 150 m\" is an assumption the code does not enforce. How often it binds was not measured. A read-only count in the smoke or V1 trace would size it: the share of due decisions with a leader or follower beyond 150 m. This is not seed, timing or future state, so MET stands, but the channel statement must say so or carry a limit.\n\n4. Column 14 needs perception of vehicles without V2V on the acceleration lanes, up to \u00b1100 m and across up to three lanes, with no occlusion. It is neither V2V nor a feed the rules read: a stated assumption or a limit.\n\n5. Constants derived from runs or the scenario:\n- The running normaliser mean and variance come from training rollouts (C*_config.json: seed0 7,459,320, 520 seeds per worker) and are frozen in each checkpoint. Greedy never calls observe. They do not depend on the evaluated run, scenario or seed.\n- The x_remap scale (b_env.py:920-921) and the road starts (913-918) come from the built lane lengths. That is map geometry, fixed per plant variant.\n\n6. self.ramp and self.alks_all come from the seed-generated demand list (b_env.py:166, 409-414). They are read only for the vehicle's own origin (column 2) and the leader's class (column 7).\n\n7. Identity and order: rows follow getIDList order, but the actor is a per-row MLP (c_train.py:41-43, 72, 133). Neither the row index nor the vehicle id is an input. The due mask (966-969) uses each vehicle's own 10-s clock and selects rows; it is not an input.\n\n8. Timing: the observation is built at the end of env.step at time t (b_env.py:482). The action is applied at the start of the next step at the same t (_apply at 472; loop at plant_sweep.py:392-399). Column 12's bins come from the last 1-s sample, with no simulation step in between. Inside a junction, x is the last on-edge value, which is past.\n\n9. Instruments do not touch the policy inputs. vv.obs_check runs after the observation is built (plant_sweep.py:401-402; vv_merge.py:148-162). The read-only check that the v3w input statistics stayed identical is a twin test (V386), outside V7.\n\n10. Scope: inspection only. No runs and no web sources. SUMO behaviour was read from the local 1.27.1 source clone. The checkpoints were read with pickletools and raw tensor bytes, never unpickled."
+  },
+  "final": {
+   "disagreements": [
+    {
+     "index": "obs_function (which _obs, line range)",
+     "a": "CavEnv._obs b_env.py:923-980; local columns built at 949-959; three _obs methods (327, 581, 923).",
+     "b": "CavEnv._obs b_env.py:923-980; local rows built at 939-959; same three methods; v3w uses neither of the first two.",
+     "resolution": "No real disagreement. Both are right: the loop runs over ids at 939-959 and the 16-entry list is appended at 949-959. CavEnv overrides MergeEnv._obs and ZoneEnv._obs. MergeEnv.reset (202) and MergeEnv.step (482) call self._obs(), so the CavEnv version runs. Column count is 16 for both inspectors: CAV_LOCAL=16 (57); cav_sizes gives 16 with no options (641-645); actor.0.weight is (64,16) in all five checkpoints, which I read myself.",
+     "code_ref": "v5b/fleet/b_env.py:57, 101-102, 202, 327, 482, 581, 641-645, 923-980"
+    },
+    {
+     "index": "14 (range and meaning of the sign)",
+     "a": "No range limit. A saturated -1 means some vehicle is on an acceleration lane behind, 100 m or more away, possibly km away. +1 covers both 'none' and 'nearest ahead at 100 m or more'. Beyond 100 m the sign needs an acceleration-lane feed.",
+     "b": "Signed distance to vehicles 'up to 100 m ahead or behind' across up to three lanes. Needs on-board perception at that range or a per-vehicle roadside feed.",
+     "resolution": "A is correct. Line 937 lists every vehicle on 3a_0 and 4a_0 network-wide. Line 948 takes the nearest by |r - xr| at any distance, and line 959 only clips the magnitude to [-1,1]. The sign survives at any range. An ALKS on edge 3, 4 or 5 learns whether the nearest acceleration-lane vehicle is behind it or ahead of it from up to km away. Within 100 m the value needs perception of vehicles without V2V (mostly HDVs) across lanes, with no occlusion modelled. Channel stays 'other'.",
+     "code_ref": "v5b/fleet/b_env.py:935-937, 941, 947-948, 959"
+    },
+    {
+     "index": "roadside_columns membership",
+     "a": "12, 13, 15, plus 14 beyond 100 m.",
+     "b": "12, 13, 15.",
+     "resolution": "Name 12, 13 and 15 as roadside. Also name 14 as a limit with channel 'other', for the reason in the column-14 entry. No rule reads 14: grep finds no lo[:, 12-14] reads, and LocalRule reads env.bins directly. So 14 is not 'also read by the rules', but the plan requires every column a real car could not get on board or by V2V to be named.",
+     "code_ref": "v5b/fleet/b_env.py:937, 948, 959; rule reads at 1002-1009, 1047, 1118, 1159"
+    },
+    {
+     "index": "12 (default value)",
+     "a": "Capped at 1; 1 if there is no bin value.",
+     "b": "Capped at 1 (first observation reads 1.0 because the bins are empty at reset).",
+     "resolution": "Both are correct. bins.get(..., fl.LIMIT) gives 1.0 when the bin is missing. After the first 1-s sample, ego is always in its own bin, because the bins are computed over getIDList at the same sim time (846, 851). So the default fires only at reset: _clear_cav (676) empties the bins, and warm-up never calls _second.",
+     "code_ref": "v5b/fleet/b_env.py:676, 846, 851, 868-869, 958"
+    },
+    {
+     "index": "13 (empty-zone value)",
+     "a": "Mean speed of all vehicles in the merge-1 zone / 100 km/h (no empty case stated).",
+     "b": "Same, and 1.0 if the zone is empty.",
+     "resolution": "B is complete: line 934 uses 1.0 when cnt[z] == 0. The zone is the last 100 m of edge 2, plus 3a, :m and :ae, plus the first 300 m of edge 3 (ZoneEnv._zone 512-522; MA_EDGE2_TAIL 100 and MA_EDGE3_HEAD 300 at b_merge.py:35).",
+     "code_ref": "v5b/fleet/b_env.py:512-522, 928-934, 959; v5b/fleet/b_merge.py:35"
+    },
+    {
+     "index": "outcome treatment of the critic-only globals",
+     "a": "MET for the policy's inputs. If a reviewer counts inputs that shape training through the value baseline, PR-15 would become LIMIT naming g8 and g9. Disclose either way.",
+     "b": "MET. The critic's inputs (insertion queue, sim.t/t_end, flow_ema/q) shaped training advantages, not deployed inputs. State this so it is not mistaken for a leak.",
+     "resolution": "MET. PR-15 asks what the policy can use, and at execution the actor has no path from the global vector. Greedy discards it (c_train.py:129) and calls net.logits(lo[due]) (133). logits uses only the actor (88-89), whose first layer is (64,16) in all five checkpoints. In training the actor also reads only lo (c_train.py:207, 325). g7, g8 and g9 enter only Net.value (94-95). Disclose them as privileged training-only critic inputs (asymmetric actor-critic). This is not a LIMIT under PR-15's test.",
+     "code_ref": "v5b/fleet/b_env.py:970-975; v5b/fleet/c_train.py:68-73, 88-95, 128-134, 207, 325"
+    },
+    {
+     "index": "SUMO source line ranges (range caveat for 6, 7, 9)",
+     "a": "MSVehicle.cpp:6766-6774; MSLane.cpp:4441-4451 (follower); MSLane.cpp:3142-3151 (leader on consecutive lane).",
+     "b": "MSVehicle.cpp:6759-6775 and 6785-6792; MSLane.cpp:4440-4456; MSLane.cpp:3142-3160; the docs call the argument a 'minimum look ahead distance'.",
+     "resolution": "Same finding with slightly different spans. I verified both in the local clone at tag v1_27_1. MSVehicle.cpp:6766-6774 returns the next same-lane vehicle with no distance check. MSLane.cpp:4441-4451 returns the nearest upstream same-lane vehicle with no distance check, and dist bounds only the consecutive-lane search at 4453-4456. MSLane.cpp:3142-3151 returns the last vehicle on the next lane at seen + its position, which can exceed dist. docs/web/docs/TraCI/Vehicle_Value_Retrieval.md:180 reads 'minimum look ahead distance (in m)'. libsumo Vehicle::getLeader/getFollower (src/libsumo/Vehicle.cpp:331-365) pass dist through unchanged.",
+     "code_ref": "sumo-src v1_27_1: src/microsim/MSVehicle.cpp:6754-6792; src/microsim/MSLane.cpp:3142-3161, 4440-4456; src/libsumo/Vehicle.cpp:331-365"
+    }
+   ],
+   "final": {
+    "obs_function": "CavEnv._obs, /home/catalin/work/phd/wt/vvm/v5b/fleet/b_env.py:923-980 at commit 6e96988 (HEAD verified). It returns (ids, local rows [n x 16], global [10], due) at line 975, because base_rule is unset. The actor reads only the 16 local columns, only for rows where due is True (966-969). The global vector (970-973) feeds only the training critic. b_env.py has three _obs methods: MergeEnv._obs:327, ZoneEnv._obs:581 and CavEnv._obs:923. CavEnv derives from ZoneEnv and overrides both.",
+    "why_this_is_v3w": "(1) vv.py:27 sets ARMS = pb.V3W + (lr400_16_1, grid_lr400_13_1, p333, nc), and pb.py:106 sets V3W = (w0u250, w1u500, w2u250, w3u500, w4u500). (2) base_arm (vv.py:47-52) builds each arm as c1.arm_cfg(c1.stored_cf()[r], st, EV) and refuses any perturb other than EV (c1.py:36). I read the stored configs of the five learners in docs/research/vv/data/cf_replay_rows.jsonl. ctrl = {pt: /home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C0_u250 | C1_u500 | C2_u250 | C3_u500 | C4_u500 .pt, env: {hold: 10.0, perturb: slowdown_draw on edge 2}}. Plant keys: fix_x true, geom r2m3, smooth, ease, taper_fast, tau_rise 0.2. There is no lane, speed, residual, base_rule, hw_type, told or detect key. at_length adds accel_len, accel2_len and x_remap at 600 m (vv.py:55-59). The runner passes through unchanged: c1.timed (c1.py:140-145), then run6.one (run6.py:91-93), then plant_sweep.run_one. (3) plant_sweep.py:84 gives kw = {cav: True, decision: 5.0} because 'pt' is in ctrl. Line 85 adds ctrl.env, lines 86-88 add act_env(pt), and geometry_guard (66-76) admits pt at 600 m only with fix_x and x_remap. be.make (line 93, report_net=True) returns CavEnv (b_env.py:101-102). Lines 105-107 set rule = Greedy(pt), which unpacks (ids, lo, _, due) and acts on net.logits(lo[due]) (c_train.py:128-134). (4) I read the checkpoints myself, with a restricted unpickler that allowed only _rebuild_tensor_v2 and OrderedDict and read the raw storage bytes. Top-level keys are only net, scale, u, n_local=16 and n_act=4. There is no act_env key, so act_env returns {} (c_train.py:45-47). There is no critic_c. actor.0.weight is (64,16) and critic.0.weight is (64,26). n_seen is 23,734,158 for C0_u250, 47,349,718 for C1_u500, 23,731,429 for C2_u250, 47,340,482 for C3_u500 and 47,343,953 for C4_u500. lo_var[11] = 0 exactly in all five. (5) C0-C4_config.json: env has cav true, hold 10, decision 5, perturb random, and plant with fix_x true and geom r2m3. There are no observation options. Seeds are seed0 7,459,320 + worker x 520, with workers 9-23, i.e. 7,464,000-7,471,799. (6) Code-version check (partial). git log -L shows that CavEnv._obs was last changed before the checkpoints (dated 2026-11-06) in d2b2ecc (V389, 2026-11-05) and be01900 (base_rule branch only). The next change is a833912 (2026-11-15: the raw/remap edits to _x and to column 14's reference point), which is a no-op at 300 m. I did not establish the exact commit the policies were trained at.",
+    "n_columns": 16,
+    "columns": [
+     {
+      "index": "0",
+      "meaning": "Route position x/1000 km from the 3a start, clipped to [-3.5, 3.3] (x_top 3.3 because fix_x is set)",
+      "code_ref": "b_env.py:925, 940, 949; _x 881-901 (fix_x branch 886-896); road_starts 65-69; _x_base 913-918; _x_scale 920-921; TRAIN_LEN 62",
+      "source_quantity": "ls.vehicle.getRoadID + getLanePosition, plus road starts from built lane-0 lengths (ls.lane.getLength). With x_remap (600 m): road starts on the 300-m training net, plus lane position x 294.72 / built length on 3a and 4a. In a junction: last on-edge value (xlast).",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Localisation plus a map. The constants are fixed. The remap scale and road starts come from the built geometry, which is static per plant variant and independent of seed and event. A junction read is a past value, never a future one."
+     },
+     {
+      "index": "1",
+      "meaning": "The same x / 300 m, clipped to [-1, 1]",
+      "code_ref": "b_env.py:949",
+      "source_quantity": "Same x as column 0",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Fixed constant 300. Stored lo_var[1] is about 0.90 on a [-1,1] range, consistent with the column mostly sitting at a limit (V387)."
+     },
+     {
+      "index": "2",
+      "meaning": "On-ramp flag: on r, rj, r2 or rj2, or a ramp-origin vehicle on 3a_0 or 4a_0",
+      "code_ref": "b_env.py:946, 949; self.ramp at 411 (_demand_sets 409-414)",
+      "source_quantity": "ls.vehicle.getRoadID, getLaneID, and whether the vehicle's own route in the demand list starts with 'ramp'",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "The seed generates the demand list, but the column reads only the vehicle's own origin and current lane, which a car knows from navigation. For E30 (slowdown) the perturbation does not alter the demand list (perturb.py demand() acts only for surge, truck_fixed and burst)."
+     },
+     {
+      "index": "3",
+      "meaning": "Own lane index / 3",
+      "code_ref": "b_env.py:949",
+      "source_quantity": "ls.vehicle.getLaneIndex",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Lane-level localisation. On 3a and 4a, index 0 is the acceleration lane."
+     },
+     {
+      "index": "4",
+      "meaning": "Own speed / LIMIT (100/3.6), not clipped in the env",
+      "code_ref": "b_env.py:942, 950; fl.LIMIT at fleet.py:27",
+      "source_quantity": "ls.vehicle.getSpeed",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "fl.LIMIT is a module constant; fl.tune (fleet.py:282-290) never changes it. The column never reads a lane's current max speed, so the E30 limit itself is not an input; only its effect on measured speed is."
+     },
+     {
+      "index": "5",
+      "meaning": "Gap to leader / 100 m, capped at 1; 1.0 if there is no leader",
+      "code_ref": "b_env.py:943, 945, 951; GAP_NORM 44",
+      "source_quantity": "ls.vehicle.getLeader(v, 100)[1]",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Front ranging. A gap of 100 m or more reads the same as no leader, so the unbounded SUMO search does not reach this column's value beyond 100 m."
+     },
+     {
+      "index": "6",
+      "meaning": "Closing speed to leader (own - leader)/10 m/s, clipped to [-1, 1]; 0 if there is no leader",
+      "code_ref": "b_env.py:952",
+      "source_quantity": "ls.vehicle.getSpeed of ego and of the leader returned by getLeader(v, 100)",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Current state. The range is not bounded: SUMO 1.27.1 returns the next same-lane vehicle at any distance (MSVehicle.cpp:6766-6774), and the next lane's last vehicle can lie beyond dist (MSLane.cpp:3142-3151). This column can therefore carry the speed of a leader beyond 100 m or 150 m. The share was not measured. This is a stated channel assumption, not a PR-15 breach."
+     },
+     {
+      "index": "7",
+      "meaning": "Leader is an ALKS (1/0)",
+      "code_ref": "b_env.py:953; alks_all at 413",
+      "source_quantity": "getLeader(v, 100) id tested for membership of the demand list's ALKS class set",
+      "channel": "V2V within 150 m",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Class of the current leader, not its identity. The 150 m (V2V_RANGE, line 36) is not enforced; the SUMO range caveat is the same as for column 6. The assumption must be stated, or the share of decisions with a leader beyond 150 m measured."
+     },
+     {
+      "index": "8",
+      "meaning": "Gap to follower / 100 m, capped at 1; 1.0 if there is no follower",
+      "code_ref": "b_env.py:944, 954",
+      "source_quantity": "ls.vehicle.getFollower(v, 100)[1]",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Rear ranging. It saturates at 100 m, so the unbounded search does not affect the value."
+     },
+     {
+      "index": "9",
+      "meaning": "Follower approach speed (follower - own)/10 m/s, clipped to [-1, 1]; 0 if there is no follower",
+      "code_ref": "b_env.py:955",
+      "source_quantity": "ls.vehicle.getSpeed of the getFollower(v, 100) vehicle and of ego",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Range not bounded: MSLane::getFollower returns the nearest upstream same-lane vehicle with no distance check (MSLane.cpp:4441-4451); dist bounds only the upstream-lane search (4453-4456). Share not measured. Current state."
+     },
+     {
+      "index": "10",
+      "meaning": "Own commanded headway level / 3",
+      "code_ref": "b_env.py:956; written only in CavEnv._apply at 724",
+      "source_quantity": "self.lvl[v], the vehicle's own last applied level",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "No other run-path code writes lvl (grep). It reads the policy's level, not the level after the hw_oracle or hw_switch caps; neither is active for v3w in E30."
+     },
+     {
+      "index": "11",
+      "meaning": "Own remaining hold time max(hold - (t - moved[v]), 0)/hold, hold = 10 s",
+      "code_ref": "b_env.py:957; moved set at 725",
+      "source_quantity": "Sim clock minus the vehicle's own last-change time",
+      "channel": "on-board",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "The clock is used only as a difference, like an on-board timer. The column is dead: lo_var[11] = 0.0 in all five checkpoints (I read it), and Net._scaled feeds 0 for any column with var <= 1e-12 (c_train.py:85-86)."
+     },
+     {
+      "index": "12",
+      "meaning": "Mean speed of all vehicles in ego's (road, pos//200) bin / LIMIT, capped at 1; 1.0 if the bin is missing (only at reset)",
+      "code_ref": "b_env.py:958; _bin 868-869; bins 846, 851 in CavEnv._net_stats; called from MergeEnv._second 436-437 (report_net=True, plant_sweep.py:93); training path 874 via 571-574",
+      "source_quantity": "ls.vehicle.getSpeed of every vehicle (all classes and lanes, ego included), averaged per 200-m bin at the same sim time as the observation",
+      "channel": "roadside feed also read by the rules",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "It includes HDVs, so V2V cannot supply it. This is the only roadside feed a V&V-arm rule also reads: LocalRule (lr400_16_1, grid_lr400_13_1) reads env.bins (1047). ASCH and MPC-F, which are CF arms but not V&V arms, read zone speeds from the same bins (planb_ctrl.py:59-60, 95). pert.step runs before the bins are filled (434 vs 436), but it only sets a limit; speeds change only at the next SUMO step."
+     },
+     {
+      "index": "13",
+      "meaning": "Mean speed in merge zone 1 / LIMIT (last 100 m of edge 2, 3a and :m/:ae, first 300 m of edge 3); 1.0 if the zone is empty; the same for every vehicle",
+      "code_ref": "b_env.py:926-934, 959; _zone 512-522; b_merge.py:35",
+      "source_quantity": "ls.vehicle.getSpeed over ls.vehicle.getIDList grouped by zone",
+      "channel": "roadside feed also read by the rules",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "Every ALKS reads it wherever it is. The plan itself names it as a roadside example. No V&V-arm rule reads this exact aggregate. ZoneRule (a ZoneEnv opponent) does, and ASCH and MPC-F (CF arms) read bin-based zone speeds. The E30 slowdown on edge 2 reaches it only through measured speeds. At 600 m it averages over the longer 3a (V533)."
+     },
+     {
+      "index": "14",
+      "meaning": "Signed distance (built metres) from ego to the nearest other vehicle on 3a_0 or 4a_0, /100, clipped to [-1, 1]; +1 if there is none",
+      "code_ref": "b_env.py:935, 937, 941, 947-948, 959",
+      "source_quantity": "_x(w, raw=True) of every vehicle on ls.lane.getLastStepVehicleIDs('3a_0'/'4a_0'), minus ego's xlast_raw",
+      "channel": "other",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "No range limit. Within 100 m it needs perception of vehicles without V2V across up to three lanes, with no occlusion. Beyond 100 m the sign (-1 for nearest behind, +1 for none or nearest ahead) carries network-wide acceleration-lane presence, which needs a roadside feed that no rule reads. Inside a junction, ego's reference is its last on-edge position (past). Current state only. Name it as a limit."
+     },
+     {
+      "index": "15",
+      "meaning": "Vehicle count on 3a_0 + 4a_0 / 40, capped at 1; the same for every vehicle",
+      "code_ref": "b_env.py:935-936, 959",
+      "source_quantity": "ls.lane.getLastStepVehicleNumber('3a_0') + ('4a_0')",
+      "channel": "roadside feed also read by the rules",
+      "uses_seed": false,
+      "uses_event_timing": false,
+      "uses_future_state": false,
+      "notes": "It sums two lanes whose starts are about 1.49 km apart at 300 m. Rules in the CF set read it: OwnState (1118) and ZoneOwnState/3E (1159) read lo[:,15], and MPC-F reads the same counts (planb_ctrl.py:96). No V&V-arm rule reads it. The cap binds more often at 600 m (vv_c15_cap share, vv_merge.py:162-163)."
+     }
+    ],
+    "outcome": "MET",
+    "limit_columns": [],
+    "roadside_columns": [
+     "12 (own 200-m bin mean speed; also read by LocalRule, a V&V arm)",
+     "13 (merge-1 zone mean speed; read in bin-based form only by CF-set rules)",
+     "15 (vehicle count on 3a_0 + 4a_0; read by CF-set rules OwnState, 3E and MPC-F, no V&V arm)",
+     "14 (channel 'other': perception of non-V2V vehicles within 100 m; beyond 100 m its sign needs an acceleration-lane feed no rule reads)"
+    ],
+    "other_concerns": "1. Critic-only globals (b_env.py:970-973). The critic also saw g7, the insertion backlog len(getPendingVehicles())/500, which no sensor measures; g8, sim.t/t_end, an episode clock; and g9, flow_ema/(q/3600)/1.5, which carries the configured demand level q. They enter only Net.value (c_train.py:94-95). The actor never sees them, in training (207, 325) or at execution (Greedy 129-133; actor input 16 in all five checkpoints). Disclose them as privileged training-only inputs. They do not change MET.\n2. Sensing range is not enforced for columns 6, 7, 9 or 14. getLeader and getFollower use dist only as a search bound (SUMO 1.27.1 lines in the disagreements; docs/web/docs/TraCI/Vehicle_Value_Retrieval.md:180). Column 7's 'V2V within 150 m' and the on-board ranges are therefore stated assumptions. The plant's own V2V rule (b_env.py:788, getLeader(v, 150)) has the same property. The share of due decisions with a leader or follower beyond 150 m is unmeasured. A read-only count in the smoke or V1 trace would size it.\n3. Which rules read the roadside columns. Within the V&V arm set, only LocalRule (lr400_16_1, grid_lr400_13_1) reads a roadside feed: env.bins, the source of column 12. p333 is CavRule at a uniform level 3, and nc reads nothing. Columns 13 and 15 are 'also read by the rules' only through CF-set arms (os*, 3E, ASCH, MPC-F), not through any V&V arm. The channel statement should say which comparison it refers to.\n4. Slowdown paths checked. E30 is drawn with default_rng(seed + salt) (perturb.py:67-72) and acts only through ls.edge.setMaxSpeed on edge 2 (perturb.py:185-192). EV has no oracle or hw_oracle key, so oracle_now and hw_now stay None (perturb.py:131-141), and no told or detect switch is attached (plant_sweep.py:127-134). No observation line reads pert, a lane's max speed, the drawn times, the seed, q or t_end; those appear only in g8 and g9. One indirect SUMO path exists. getLeaderOnConsecutive resets its search bound from the next lane's current max speed (MSLane.cpp:3154-3155), and E30 sets that speed on edge 2. On r2m3 this path cannot change any result: it acts only after a whole empty next lane, and edge 2 is about 498 m (ROAD_X, b_env.py:87), longer than any bound, so the loop stops (MSLane.cpp:3157, 3161). It is also present-state information, a posted limit, not event timing.\n5. Timing. The observation is built at the end of MergeEnv.step (482), after the last 1-s sample, whose bins are filled at the same sim time (436-437 -> 851). The action from it is applied at the start of the next step (472), before any SUMO step. The instruments wrapped around _sim_step and _second (plant_sweep.py:141-370), vv_merge.py and measure.py contain no SUMO set, subscribe or env-state writes. obs_check (vv_merge.py:148-163) only reads. policy_probs is a pure function (measure.py:42-56). Every run uses measure (c1.arm_cfg sets it), and measure never calls env._x.\n6. Identity and order. No column holds a vehicle id. The actor is a per-row MLP (c_train.py:41-42, 88-89). due (966-969) is a per-vehicle 10-s clock that selects rows; it is not an input. alks_all and ramp come from the seed-generated demand list but are read only for own origin (column 2) and the leader's class (column 7).\n7. Normalisation. lo_mean and lo_var are frozen in each checkpoint from training rollouts (n_seen as above). Greedy never calls observe. Training seeds 7,464,000-7,471,799 do not overlap the V&V seeds 7,489,160-7,493,010.\n8. Scope. I inspected the run code at 6e96988 and the five checkpoints, plus a partial git-history check of CavEnv._obs and the observation helpers in b_env.py from d2b2ecc to 6e96988. I did not establish the training commit. No runs, no web sources. SUMO behaviour comes from the local clone at tag v1_27_1."
+   }
+  }
+ }
+]

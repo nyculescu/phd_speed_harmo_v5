@@ -63,3 +63,7 @@ The reading is narrower than V530's sentence suggests. The findings below change
 - An E30-tuned rule: a close-following search under a delay cap (the "best tuned" bar; stage 2, closed by V524).
 - The V510/V511 random-share row in E30.
 - V&V: a traced `ttc_net` sample including a lane-end stop (PR-24); a merge-1 length check (PR-28).
+
+## Merge V&V outcome (V536)
+
+The merge V&V (`docs/research/results/merge_vv/reading.md`) leaves the PASS reading unchanged: no counter or meter bug, and the edge replicates on 480 fresh seeds at 300 m against lr400_16_1 (+16.0 %) and grid_lr400_13_1 (+21.7 %), also on main-lane samples. With 600-m acceleration lanes it is not shown against grid_lr400_13_1 and reverses against lr400_16_1 (−21.0 % [98.75 %: −29.0, −11.4]); "the edge depends on lane length". Every E30 sentence carries the replication line, both record sentences (reading.md §2), "the 0.1-s edge is within 3 points of the 1-Hz edge against both rules", M1 and the V4 sentence, and never "survives", "shown at both lengths" or "verified and validated". Proposed, for the author: "in this plant, with 295-m acceleration lanes ending without a taper", and no "safety benefit".

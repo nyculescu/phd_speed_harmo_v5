@@ -1,0 +1,17 @@
+{
+ "inputs": {
+  "stage": "vv_replay",
+  "seed_range": [
+   7489160,
+   7489161
+  ],
+  "cpu": "AMD EPYC 7B13 64-Core Processor"
+ },
+ "jobs_sha256": "c7309c295cfc8a1127e163d193fe7026d553e96870b63bbf137a05f9dc50c4fb",
+ "code": {
+  "commit": "6e96988dab99f6676e09f33b0ae277b6fbd71878",
+  "clean": true,
+  "detached": true,
+  "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ }
+}

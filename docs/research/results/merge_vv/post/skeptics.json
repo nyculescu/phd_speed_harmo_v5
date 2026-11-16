@@ -1,0 +1,166 @@
+[
+ {
+  "verdict": "The draft's numbers hold up. I re-derived or traced every deciding number to v3.json, v1.json, ident.json, smoke.json, field.json, plant.json, v567.json or the analyses, and each one matches as printed: V1 MET (0 of 40 non-events, 7.2 % bound, 93.2/6.8/0 % leaders), V2 MET, V3a REPLICATED with nulls 1.175/1.075 %, the main lane shown, V3b WORSE against lr400_16_1 only (null 0.475 %), and the change excluding 0 against both rules. The VV-D12 cut values, the deficit groups, the period edges, the V4 tables and the V5 labels also match. The fixed wordings for V2, the V3a replication and main-lane lines, V4 and M1 match the plan word for word, and the record sentences fill its slots. I found no blocker. Three things should be fixed before the ruling is recorded. (1) V6 is attributed to [v567] as NOT INFORMATIVE \"under the pre-stated search\", but v567's own checker says NOT INFORMATIVE \"does not hold\", and the pre-stated search was never run. (2) The standing figures for v3w in the record sentence and the M1 row use the pooled form, which the judge rejects elsewhere and which understates each learner's cut. (3) The plain summary says the policy uses \"nothing a real car could not know\", which goes beyond what V7 tests and contradicts the column-14 and sensing-range limits. The rest are minor wording or coverage points. I wrote no files and ran one nice -n 19 pass over the screen rows (480 of 480 L300|nc rows carry merge logs).",
+  "findings": [
+   {
+    "severity": "major",
+    "claim": "\u00a72 V6: \"NOT INFORMATIVE under the pre-stated search, dated 2026-11-16 [v567]\" ... \"Neither source changes the reading.\"",
+    "problem": "The reading is attributed to [v567], but v567's own verification of V6 says the opposite. Also, the pre-stated search was not run. The plan's outcome rule (\u00a72 V6) says NOT INFORMATIVE only \"if none compares SUMO lane-end merging with field data\". The checker read Kolbe et al. 2023 in full and found that it does make that comparison.",
+    "evidence": "v567.json item V6, verify.outcome_check: \"The NOT INFORMATIVE outcome does not hold. Under the rule, INFORMATIVE needs a source read in full that compares SUMO lane-end merging with field data. Kolbe et al. 2023 (arXiv:2308.01093), which I read in full, meets that rule.\" The checker suggests the wording \"Kolbe et al. (2023) compared SUMO (IDM + default lane-change model) on one German on-ramp against drone trajectories and found simulated vehicles stopping at the on-ramp end with large decelerations, absent in the data [VERIFY version/parameters; one site; graphical]\", labelled post hoc. read.searches: Google Scholar was \"accessible: false\" for all three terms. OpenAlex and WebSearch were substituted, screening by title only and in part (term-2 results 26-50 were missed). The SUMO 2017 contents were not screened.",
+    "fix": "Say that the pre-stated search could not be run as fixed. Under the substitute search, none of the 7 sources read in full qualifies. Post hoc, Kolbe 2023 meets the outcome condition; record it in the plan's \"source X compared Y against Z and found W\" form, labelled post hoc [VERIFY]. Cite v567 accurately: its checker disagrees with NOT INFORMATIVE. Leave the reading to the author, as open item 1, and note that M1 stays either way."
+   },
+   {
+    "severity": "major",
+    "claim": "Record sentences: \"lane-end standing fell by 84.3 % [81.8] (v3w) and 95.8 % [93.8] (lr400_16_1) at merge 1 and 85.2 % [80.3] (v3w) ...\". \u00a75 M1 row: \"At 600 m ... v3w median 32 and 77 veh-s, no control 110 and 412\".",
+    "problem": "These v3w values are in the pooled form (the median over seeds of the per-seed mean of the 5 learners, read_vv.py arm_series). The judge rejects this form for deficit_600 but uses it here without saying so. With heavy tails, the pooled median is above every learner's own median. Placed beside the rules' figures, the sentence suggests v3w's standing fell less than the rules'. Per learner, that does not hold.",
+    "evidence": "printed_tables.md \u00a77: at 600 m the learners' medians are 5-10 veh-s (merge 1) and 21-32 (merge 2); pooled v3w is 32.1 and 76.7 (v3.json cut med600). recompute_B/posthoc_cut_forms_B.json median_form_each_learner: merge 1 0.926-0.971, merge 2 0.927-0.957. The rules are at 0.958-0.974. printed_tables.md line 343 says v3w's cut \"is not comparable with the rules' single-arm cuts\".",
+    "fix": "Name the form next to v3w's x and y and give the per-learner range, labelled post hoc: cuts 92.6-97.1 %, 600-m medians 5-10 and 21-32 veh-s. Do the same in the M1 row. Add this to open item 1, the standing slot. The VV-D12 reading does not change, because no control decides it."
+   },
+   {
+    "severity": "major",
+    "claim": "\u00a74 item 7: \"The policy uses nothing a real car could not know. Some inputs assume a roadside feed.\"",
+    "problem": "V7's test (plan \u00a72 V7) covers only the seed, event timing and future states. The V7 inspection and the judge's own \u00a72 V7 name limits beyond the roadside feed. Column 14's sign needs an acceleration-lane feed at any range. Sensing range is not enforced for columns 6, 7, 9 and 14. The critic read g7-g9 during training. The summary line overstates the answer to Q6.",
+    "evidence": "v567.json V7 final.roadside_columns: \"14 (channel 'other': perception of non-V2V vehicles within 100 m; beyond 100 m its sign needs an acceleration-lane feed no rule reads)\". final.other_concerns item 2: \"Sensing range is not enforced for columns 6, 7, 9 or 14\".",
+    "fix": "Reword to: \"The policy's 16 inputs use no seed, event timing or future state (V7 MET). Columns 12, 13 and 15 assume a roadside feed. Column 14's sign assumes an acceleration-lane feed at any range. Sensing ranges for 6, 7, 9 and 14 are assumed, not enforced.\""
+   },
+   {
+    "severity": "minor",
+    "claim": "Integrity: \"Three independent recomputations ([A], [B], [prt]) reproduce every deciding number in [v3] exactly, and the nulls agree within Monte Carlo noise.\"",
+    "problem": "[prt] recomputed none of the V3a 97.5 % bounds, the main-lane edge, the V3b HOLDS or WORSE bounds at 600 m, the change, or any null. Of the deciding numbers it covers only the V2 edges. Only [A] and [B] reproduce all of them.",
+    "evidence": "vv_post/printed/compare_v3.tsv (752 rows): its keys are the printed_300 and printed_600 items, the V2 edge_01s, edge_1hz and diff (pt, lo95, hi95 only), the cut, deficit, missed_share, collisions, p0_delay, standing_vehicles and c15. It has no v3a, v3b.holds, worse, change or null keys.",
+    "fix": "\"Two independent recomputations ([A], [B]) reproduce every deciding number exactly and the nulls within Monte Carlo noise. [prt] independently reproduces the V2 edges and all 752 printed numbers.\""
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a72 edge-1 pre-statement: \"v3w has 26.4 and 26.5 edge-1 samples per run; p333 28.0 and 27.5; lr 3.2; grid 3.3. At least 98 % of them fall in the hold period [mech].\"",
+    "problem": "The 98 % figure holds only for v3w and p333. For the lr rules it is 96-97 %. Also, p333's means (27.5-28.0) lie above the pre-statement's \"22-26\", so \"the E30 description holds\" fits the medians (v3w 25.2-25.4, p333 26-27) better than the means.",
+    "evidence": "mechanism/results.json q1, e1_hold mean divided by e1 mean: v3w 0.985 and 0.984; p333 0.984 and 0.984; lr400_16_1 0.972 and 0.968; grid_lr400_13_1 0.964 and 0.970; nc 0.944 and 0.960.",
+    "fix": "\"At least 98 % for v3w and p333, 96-97 % for the lr rules\". Give medians beside the pre-statement's range."
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a74 item 2: \"The 0.1-s edge is within 0.6 points of the 1-Hz edge.\" \u00a74 item 1: \"bounds the share of non-events below 7.2 %\".",
+    "problem": "The fixed MET wording is \"within 3 points\". The 0.6 is the largest absolute 95 % bound (+0.598), a post hoc tightening that is not labelled as such. Item 1 drops the 95 % level and the scope: the bound covers only the 18 traced runs of 3 arms (stated in PR-24, missing from the committee summary).",
+    "evidence": "v3.json v2 diff: lr [-0.410, +0.598], grid [-0.558, +0.475]. merge_vv.md \u00a72 V2 gives the wording \"the 0.1-s edge is within 3 points of the 1-Hz edge against both rules\". V1 visual: \"What the bound covers: the pooled counted samples of the 18 traced runs only\".",
+    "fix": "Use the fixed wording. If the tighter figure stays, add \"(95 % bounds \u22120.56 to +0.60; post hoc)\". In item 1, add \"(95 %, samples of the 18 traced runs only)\"."
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a74 item 5, under \"What the committee can be told\": \"Left out, v3w still has less close-following at 600 m (+8.1 %, +18.4 %). This figure is printed, not deciding.\"",
+    "problem": "The judge's own \u00a73 Rule P lists \"the edge holds at 600 m outside edge 1\" as not licensed. Item 5 states essentially that, as a fact the committee can be told.",
+    "evidence": "Draft \u00a73 Rule P, \"Does not license\": \"'the edge holds at 600 m outside edge 1' (a printed item at 95 %, with no null)\".",
+    "fix": "Reword to: \"Printed, no null, not a reading: the 600-m edge without edge-1 samples is +8.1 % [95 %: +1.9, +15.1] and +18.4 % [+11.2, +25.6].\""
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a74 item 9: \"The 295-m lane is a design-guidance length, but it has no end taper.\"",
+    "problem": "The V5 reading is mixed, and the plan says \"context only\". 295 m is above the basic minimums but below CD 122's 305 m to the taper end and its extended 370 m. It is also below TxDOT's from-a-stop length (366-430 m) and Caltrans's 304.8 m at high volume. \"Is a design-guidance length\" overstates this.",
+    "evidence": "v567.json V5 summary: \"the 295 m sits between the basic minimums and the high-volume or extended lengths. Every source has a 55-183 m end taper, which the plant lacks.\"",
+    "fix": "\"295 m lies between the guidance minimums and their high-volume or extended lengths (context only), and the lane ends without a taper.\""
+   },
+   {
+    "severity": "minor",
+    "claim": "Grid record sentence: \"... at 600 m (NOT SHOWN) ...; [the rest as above]\".",
+    "problem": "Plan \u00a72 V3b defines one reading for the cell. WORSE applies when \"a 98.75 % upper bound below 0\", and the committed reader returns reading = 'WORSE'. The plan defines no per-rule label. The judge flags this as their own choice. The literal alternative is not offered, and the grid sentence is abbreviated where the record needs it in full.",
+    "evidence": "v3.json v3b.reading = 'WORSE'; worse.worse = ['lr400_16_1']. merge_vv.md lines 83-85.",
+    "fix": "Keep it as an open approval, but show the literal fill \"(WORSE, against lr400_16_1 only)\" as the alternative. Write the grid sentence in full."
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a72: \"The merge-area value flips sign between the two forms, so do not quote it (\u00a73).\"",
+    "problem": "The sign flips only against lr400_16_1 (+5.8 pooled, \u22126.3 in the C-D5 form). Against grid both forms are negative (\u22126.1 and \u221216.1). Not quoting it is still right.",
+    "evidence": "recompute_A/posthoc_A.json deficit600: lr pooled 5.8 and cd5-form \u22126.3; grid pooled \u22126.1 and cd5-form \u221216.1. v3.json deficit_600 grid g_merge \u22126.1.",
+    "fix": "\"Flips sign against lr400_16_1 (+5.8 vs \u22126.3) and goes from \u22126.1 to \u221216.1 against grid_lr400_13_1.\""
+   },
+   {
+    "severity": "minor",
+    "claim": "PR-19 row: \"the identity replay of 9 arms (plain and traced) shows 0 differences\".",
+    "problem": "The traced replay covers 3 arms (w1u500, lr400_16_1 and no control) on 2 seeds, not 9 arms.",
+    "evidence": "vv_replay/s6_rows.jsonl has 24 rows: 9 plain E30 arms \u00d7 2 seeds, plus E30|w1u500~trace, E30|lr400_16_1~trace and E30|nc~trace \u00d7 2 seeds.",
+    "fix": "\"Identity replay: 9 arms plain and 3 arms traced, 0 differences\"."
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a72 V7 and the PR-15 row list the roadside columns as 12, 13 and 15, \"with the channel limits named\".",
+    "problem": "Plan \u00a72 V7 requires every column's channel to be listed as a stated assumption, but the row names only the limits. v567 also says columns 13 and 15 are \"also read by the rules\" only through CF-set arms, not through any V&V arm, and that the channel statement should name its comparison.",
+    "evidence": "v567.json V7 final.columns gives a channel for each of the 16 columns. other_concerns item 3: \"Columns 13 and 15 are 'also read by the rules' only through CF-set arms ... The channel statement should say which comparison it refers to.\"",
+    "fix": "Reference v567's per-column channel table in PR-15 and add the comparison caveat for 13 and 15."
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a77 item 10: \"the V1 visual agent ... Its __pycache__ folder and [prt]'s time.log are left in their output folders.\"",
+    "problem": "The list is incomplete: the mechanism output folder also contains a __pycache__ folder.",
+    "evidence": "ls /home/catalin/work/phd/v5b1_runs/vv_post/mechanism/ shows __pycache__.",
+    "fix": "Add mechanism/__pycache__ to the process note."
+   }
+  ]
+ },
+ {
+  "findings": [
+   {
+    "severity": "blocker",
+    "claim": "\u00a73 Rule P: 'Licenses: the 600-m WORSE is carried by edge 1, which is unchanged at 600 m; it is not a lane-length effect' (entered in PR-28 (2)); \u00a74 point 5 'The reversal sits on edge 1'; Rule C 'does not license v3w turns worse because the lanes are longer (Rule P forbids that)'; 'They are compatible.'",
+    "problem": "The pre-statement has been stretched into a causal label, and the judge's own mechanism evidence contradicts it. The seeds are paired and lane length is the only change. The edge-1 counts do not move, yet the reading goes from +16.0 to -21.0. On mechanism's Shapley split, edge 1 contributes +0.26 of the -37.04 change; merge contributes -20.73 and rest -16.56. The WORSE therefore exists because the longer lanes removed the merge-area advantage and cut the rule's median from 1,375.5 to 76.5, which leaves a fixed 22-sample deficit to dominate. Under the paired design, 'not a lane-length effect' is false in the counterfactual sense a committee will use, and Rule P ends up forbidding a true sentence. The ruling is also internally inconsistent. If the edge-1 term really is 'not lane-length', then Rule C's licence against grid rests on that term. Leaving edge 1 out (post hoc), the change against grid is -5.0 [-12.4, +3.1], which includes 0. Split B puts -23.3 of grid's -28.8 points (and -27.2 of lr's -37) on the edge-1 term. So P and C are not simply 'compatible': either P's label is wrong, or C's grid licence is carried by what P calls a non-lane-length effect.",
+    "evidence": "vv_post/mechanism (judge's [mech]): Shapley lr merge -20.73 [-27.12, -14.27], rest -16.56, e1 +0.26 [-0.74, +0.81]; split B edge 1 -1.6 -> -28.8; edge-1 counts v3w 26.39 -> 26.50. v3.json v3b.change: lr -37.04, grid -28.33. recompute_A/B: change with edge 1 left out is lr -9.8 [-17.0, -1.8] and grid -5.0 [-12.4, +3.1]. The mechanism report says itself: 'What only partly holds... the WORSE reading exists because the 600-m lanes removed the merge-area advantage.'",
+    "fix": "Record only the factual content of the pre-statement: 'the edge-1 deficit (about 22 samples per run, at least 98 % in the slowdown's hold period) is unchanged by lane length; at 600 m the longer lanes removed most of v3w's merge-area advantage and shrank the rule's median, so this fixed deficit outweighs the rest and the reading is WORSE.' Delete 'it is not a lane-length effect' from PR-28 and 'the reversal sits on edge 1' from \u00a74. Replace 'Rule P forbids that' with the claim that really is unlicensed: 'v3w's close-following rises with longer lanes' (it falls by about 82 %). Put the no-edge-1 change (post hoc) beside Rule C's licence for grid. Tell the author that the pre-statement cannot work as a causal label for a ratio statistic; that judgment is the author's to make."
+   },
+   {
+    "severity": "major",
+    "claim": "Record sentence: 'lane-end standing fell by 84.3 % [81.8] (v3w) and 95.8 % [93.8] (lr400_16_1) at merge 1 and 85.2 % [80.3] (v3w)...'. M1 row: 'At 600 m the arms still stand at the lane ends: v3w median 32 and 77 veh-s.'",
+    "problem": "The v3w figures come from the reader's pooled arm (the median over seeds of the per-seed mean of 5 heavy-tailed learners). c1_screen's C-D5 rejects that form because it is biased. The judge rejected the same pooling for deficit_600's merge value but used it here. The record would tell a committee that at 600 m v3w keeps about 3x the rules' lane-end standing and that its cut is about 11 points smaller. Per learner, neither is true. [prt] item 7 and recompute_B defect 2 both flagged this, and the ruling dropped it.",
+    "evidence": "v3.json v3b.cut: v3w merge1 204.4 -> 32.1 (0.843, lo 0.818), merge2 519.4 -> 76.7 (0.852, lo 0.803). My post hoc recompute from s6_rows.jsonl (one nice -n 19 pass; script /tmp/claude-1000/-srv-shared-Workspace-phd-phd-speed-harmo-v5b1/2d269ac5-95be-4f04-801b-ec9cc9873355/scratchpad/sk2/chk.py): the per-learner 600-m medians are 6.0, 9.5, 10.0, 5.5 and 5.0 veh-s at 3a_0, and 21, 32, 29, 29 and 21 at 4a_0. The rules have lr 11.5/23 and grid 9.5/26. Per-learner cuts are 92.6-97.1 % at merge 1 and 92.7-95.7 % at merge 2, against lr's 95.8/97.4.",
+    "fix": "Fill the v3w slot in the per-learner form, either the mean of the 5 learners' cuts with their range or each learner separately. If the committed reader's pooled value is kept, label it 'pooled, biased upward for heavy-tailed counts', with the per-learner range beside it. In M1, replace 'v3w median 32 and 77' with 'learners 5-10 and 21-32'. Add the pooled cut to \u00a73's list of reader print defects."
+   },
+   {
+    "severity": "major",
+    "claim": "\u00a74 point 4: 'The edge depends strongly on acceleration-lane length. With 600-m lanes it falls by 37 and 28 points.' Elsewhere the ruling says nothing on how sensitive the WORSE is to the statistic.",
+    "problem": "The judge omits a post hoc variant that was already computed and that flips the sign. At 600 m the distribution is zero-inflated and heavy-tailed (lr400_16_1's median is 76.5 and its mean 255). The C-D5 WORSE describes the median seed. In a mean-based form, v3w has fewer close-following samples at 600 m (+23.5 % against lr, +22.3 % against grid), up from +18.1/+21.7 at 300 m. Pooled v3w has fewer samples than lr400_16_1 on only 35 % of 600-m seeds (66 % at 300 m), and its mean advantage sits in the third of seeds where the rule's merges break down. Leaving this out is a hidden variant under the project's own rule. It also leaves the author exposed when a committee member computes means. Quoting it alone, on the other hand, would serve as a rescue of the WORSE. 'Strongly' and the raw -37/-28 do not name the statistic. In absolute terms, v3w's mean advantage falls from about 240 to 60 samples per run, while in mean-relative terms it does not fall at all.",
+    "evidence": "mechanism \u00a75: 'The mean-based edge at 600 m is +23.6 % against lr400_16_1 and +22.3 % against grid_lr400_13_1'. Thirds analysis: mean differences -79, -54 and +313. My recompute: mean R - P is 60.1 at 600 m against 239.5 at 300 m; share of seeds with pooled v3w below lr is 0.35 at 600 m and 0.66 at 300 m. v3.json v3b.worse lr: -21.05, 98.75 % upper bound -11.37.",
+    "fix": "Add a post hoc disclosure to PR-28 and \u00a74: 'the deciding statistic is median-based (C-D5); at 600 m the rule medians are 76.5 and 87.5 against means of 255 and 251; a mean-based form (post hoc) gives +23.5 and +22.3 in v3w's favour, and v3w has fewer samples than lr400_16_1 on 35 % of seeds; WORSE stands as pre-registered, and neither form may be quoted alone.' Replace 'strongly' with 'the median-based edge (C-D5) changes by -37.0 and -28.3 points'."
+   },
+   {
+    "severity": "major",
+    "claim": "V6: 'NOT INFORMATIVE under the pre-stated search, dated 2026-11-16 [v567]'. \u00a74: 'Post hoc evidence from one site points the other way.'",
+    "problem": "The pre-stated search, Google Scholar plus the SUMO proceedings, was never run: Scholar was blocked. So 'under the pre-stated search' names a search that did not happen. The checker inside [v567] ruled the reverse: 'The NOT INFORMATIVE outcome does not hold', because Kolbe 2023 meets the outcome rule. No resolution is recorded, and the ruling cites [v567] for NOT INFORMATIVE without mentioning that dissent. The procedural label hides the one source that compares SUMO lane-end merging with field data, and that source points against the plant behaviour on which the E30 edge rests. The plain-words line also drops SUMO's own Motorways documentation. As the checker quotes it, that page says humans 'may accelerate up to the end of the acceleration lane' and advises acceleration lanes 'somewhat longer than in reality' [VERIFY the current page]. That is the developers' statement, not 'one site'.",
+    "evidence": "v567.json [1].read.outcome = 'NOT INFORMATIVE'; [1].verify.outcome_check: 'The NOT INFORMATIVE outcome does not hold... Kolbe et al. 2023 (arXiv:2308.01093)... meets that rule'; [1].verify.missing item 4: 'Google Scholar was not run for any term'. merge_vv.md \u00a72 V6: the outcome is NOT INFORMATIVE 'if none compares SUMO lane-end merging with field data'.",
+    "fix": "Report V6 as 'INCOMPLETE: the pre-stated search could not be run (Scholar blocked) and the substitute screen found none. Post hoc, outside the fixed terms, Kolbe et al. 2023 compared SUMO (IDM plus the default lane-change model) on one on-ramp with drone data and judged its lane-end stopping unrealistic [VERIFY]. The checker read this as meeting the outcome rule.' Leave the label to the author. In \u00a74, name both Kolbe and SUMO's documentation."
+   },
+   {
+    "severity": "major",
+    "claim": "\u00a76: 'E30's PASS reading is unchanged'. Naming the plant 'with 295-m acceleration lanes ending without a taper' is offered only as 'My suggestion, not fixed by the plan'. The forbidden-words list has only 'survives', 'shown at both lengths' and 'verified and validated'.",
+    "problem": "Keeping the PASS is correct under the plan's header. But the ruling does not stop the 300-m edge being presented as a safety benefit. About 92-96 % of it sits in the merge area, where lane-end standing occurs (M1). External post hoc sources describe that standing as unlike human drivers [VERIFY]. Lengthening the lanes, which is the developers' own mitigation, removes most of the edge and reverses it against lr400_16_1. b45_step and distinct encounters also flip against v3w at 600 m. During the slowdown hold, the incident itself, v3w has more close-following than lr at both lengths. Making the lane scope optional leaves a door open to overclaiming.",
+    "evidence": "mechanism \u00a72: the merge area supplies 92 % (lr) and 96 % (grid) of the 300-m edge. [prt]: hold-period edge against lr is -63.4 [-71.2, -54.1] at 300 m and -565 at 600 m; b45_step +5.3 -> -5.1; vv_enc +12.1 -> -34.8. v3.json v3b.reading WORSE. v567 Kolbe and SUMO Motorways passages.",
+    "fix": "Make the scope mandatory in the E30 sentence: 'in this plant with 295-m acceleration lanes ending without a taper'. Add 'safer', 'safety benefit' and 'improves merge safety' to the forbidden words. State in \u00a74 that v3w had more close-following during the slowdown hold at both lengths (printed, not deciding). Keep 'whether the 300-m behaviour is an artefact is not answered by V3' (\u00a70 Q3), and add that the post hoc external evidence leans toward artefact [VERIFY]."
+   },
+   {
+    "severity": "major",
+    "claim": "\u00a74 point 7: 'The policy uses nothing a real car could not know. Some inputs assume a roadside feed.' \u00a74 point 9: 'The 295-m lane is a design-guidance length, but it has no end taper.'",
+    "problem": "Point 7 goes beyond PR-15's test, which covers only the seed, event timing and future states, and it is false as stated. The V7 resolution found that column 14's sign tells an ALKS whether the nearest acceleration-lane vehicle is ahead or behind 'from up to km away'. Sensing range is not enforced for columns 6, 7, 9 and 14, and the judge's own open item 7 says the share of decisions beyond 150 m is unmeasured. Point 9 contradicts the judge's own V5 table. 295 m is below CD 122's extended length, about 10 m below Caltrans' high-volume minimum, and below TxDOT's from-a-stop length (the checker gives about 333 m against 366-430 m). The flow triggers are unchecked, even though E30 runs at 5,300 veh/h. Every source requires an end taper.",
+    "evidence": "v567.json [2].final.disagreements[1].resolution ('The sign survives at any range... from up to km away'); [0].verify.outcome_check ('Only the labels need fixing'; TxDOT 'below from a stop at the meter (about 333 m against 366-430 m)'); [0].verify.missing items 1-3; the judge's V5 table and open items 6-7.",
+    "fix": "Point 7 should read: 'the policy's inputs use no seed, event timing or future state (PR-15); three columns assume a roadside feed, column 14 gives an acceleration-lane vehicle's side at any range, and sensing range is not enforced for four columns.' Point 9 should read: '295 m at full width is above the minimum auxiliary-lane lengths in CD 122 and Caltrans, and below their high-flow lengths and TxDOT's from-a-stop length (flow and meter conditions unchecked); every source adds a 55-183 m taper, which the plant lacks.'"
+   },
+   {
+    "severity": "minor",
+    "claim": "\u00a74 points 1, 4 and 6, and PR-24's status 'met for ttc_net'.",
+    "problem": "The committee-facing list drops the scope and the adverse context. (1) The 7.2 % bound comes from 18 traced runs (3 arms, 4 seeds) without its scope. The 40-sample draw held no edge-1 or hold-period sample (about 0.3 expected), yet the 600-m WORSE rests on edge-1 hold samples, which only the code checks cover. PR-24 'met' generalises to grid, p333 and 4 untraced learners. (4) 'Both the direction and the edge-1 effect were stated before the data' leaves out that -21.0 fell far below the expectation table's lowest row (-5.6). \u00a73 says this, but the committee list does not. (6) TTC below 2 s (+26.0) is listed as favourable at 600 m, where the rule median is 10 samples (14 % zeros, so one sample is worth 10 points). ttc15 at 0.0 [0, +40] and sev3 at 0.0 [0, 0] are omitted; their rule medians are 2 and 1, with 40-44 % zeros.",
+    "evidence": "v1_visual: period hold 0 of 40, edge 1 'none'; 108 edge-1 samples in the pool of 15,684. merge_vv.md expectation table: lowest row -5.6 %. My recompute at 600 m against lr: ttc2 rule median 10.0 (zero share 0.14), ttc15 2.0 (0.40), sev3 1.0 (0.44). [prt] 'Other measures' table.",
+    "fix": "Add the scope to point 1 ('18 traced runs, 3 arms; no edge-1 sample drawn'). Add the magnitude caveat to point 4. In point 6, list all four bands with their coarseness, or none of them. Set PR-24's status to 'met on the traced runs; other arms inferred'."
+   },
+   {
+    "severity": "minor",
+    "claim": "Integrity: 'Three independent recomputations ([A], [B], [prt]) reproduce every deciding number in [v3] exactly.'",
+    "problem": "The claim is overstated. [prt]'s comparison has no V3a or V3b deciding keys: no replication or main-lane 97.5 % bounds, no holds, worse or change, and no nulls. It covers V2, the printed group edges, the cut, deficit_600 and the side measures. Only A and B reproduce the deciding V3 numbers. Both draw the resample matrix the plan fixes, so they check the definition and the code, not resampling noise; B says so itself.",
+    "evidence": "printed/compare_v3.tsv: the keys are g_*, p_*, v2, cut, deficit, the side measures and standing_vehicles; a grep for v3a, v3b, holds, worse, change, replic or null returns 0. Recompute B: 'This independently checks the definition and the code, not bootstrap noise.'",
+    "fix": "Rewrite as: 'Two recomputations (A, B) reproduce every deciding V3 number with the plan's resample draw; a third ([prt]) reproduces V2 and 752 printed numbers; the nulls agree within Monte Carlo noise.'"
+   },
+   {
+    "severity": "minor",
+    "claim": "The record sentences '-21.0 % [-29.0, -11.4] at 600 m (WORSE)' and '-6.6 % [-15.4, +3.0] at 600 m (NOT SHOWN)', the standing '[81.8]', and PR-23's 'met for the E30 cell'.",
+    "problem": "Two parallel sentences carry intervals at different levels (98.75 % and 97.5 %), and the 95 % lower bounds on standing appear with no level stated, so a reader will compare unlike things. PR-23's 'E30 cell' does not say that the 0.1-s meter ran only at 300 m. The 600-m WORSE rests on 1-Hz counts with a rule median of 76.5, which were not checked at 0.1 s.",
+    "evidence": "v3.json v3b.worse (lo/hi at 0.625/99.375) and v3b.holds (1.25/98.75). merge_vv.md \u00a72 instruments table: '0.1-s meter: V3's 300-m runs and the smoke'.",
+    "fix": "State each level inline ('98.75 %', '97.5 %', '95 % lower bound'). Set PR-23's status to 'met at 300 m for the E30 cell; the 600-m counts are 1 Hz only'."
+   }
+  ],
+  "verdict": "The numbers and the pre-registered outcomes stand: V1 MET, V2 MET, V3a REPLICATED and shown on main-lane samples, V3b WORSE against lr400_16_1, the change excludes 0, VV-D12 not met, V7 MET, and the E30 PASS is unchanged under the plan's header. My one recompute (a nice -n 19 pass, post hoc) agrees with the source files wherever I checked. The ruling's wording is not defensible as written. Blocker: it turns the edge-1 pre-statement into a causal claim ('not a lane-length effect', 'the reversal sits on edge 1'), and its own mechanism evidence refutes that claim (the edge-1 share of the -37-point change is +0.26). It also forbids a true sentence and makes Rule C's licence against grid depend on the term that Rule P labels non-lane-length. Majors: (1) v3w's lane-end standing figures use the biased pooled form, so the record falsely implies v3w keeps about 3x the rules' standing (per learner 5-10 and 21-32 veh-s; cuts 92.6-97.1 %). (2) A computed post hoc sensitivity is left out: a mean-based form flips the 600-m sign to +23.5/+22.3, and v3w beats lr on only 35 % of seeds. Disclose it as post hoc, without using it to soften the WORSE. (3) V6 is kept at NOT INFORMATIVE under a search that never ran, against its own checker's dissent, which goes unmentioned. (4) Nothing stops the 300-m edge being called a safety benefit, although 92-96 % of it sits where external evidence calls SUMO's lane-end stopping unrealistic [VERIFY], and longer lanes reverse it. (5) Plain-words points 7 and 9 overclaim on the inputs and the lane design. Fix the wording before the author approves. No reading changes."
+ }
+]

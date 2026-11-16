@@ -1,0 +1,36 @@
+2026-11-16 03:45:06 code 6e96988dab99f6676e09f33b0ae277b6fbd71878, cpu AMD EPYC 7B13 64-Core Processor, workers 30, price 0.149/h, cap 4, rate not yet measured
+2026-11-16 03:45:07 start plan vv_smoke
+2026-11-16 03:45:08 end rc=0
+2026-11-16 03:45:08 start smoke
+2026-11-16 03:48:06 end rc=0
+2026-11-16 03:48:06 smoke wall s: {'L300|grid_lr400_13_1': 82.2, 'L300|lr400_16_1': 81.7, 'L300|nc': 73.3, 'L300|p333': 79.6, 'L300|w0u250': 82.3, 'L300|w1u500': 81.4, 'L300|w2u250': 85.5, 'L300|w3u500': 87.0, 'L300|w4u500': 96.2, 'L600|grid_lr400_13_1': 86.6, 'L600|lr400_16_1': 84.6, 'L600|nc': 74.6, 'L600|p333': 78.6, 'L600|w0u250': 82.9, 'L600|w1u500': 81.7, 'L600|w2u250': 87.8, 'L600|w3u500': 78.5, 'L600|w4u500': 82.5}
+2026-11-16 03:48:06 smoke standing for the author (end_stop, end_stop2, vehicles): {'L600|nc 7493010': {'end_stop': 433.0, 'end_stop2': 287.0, 'stand_n': {'3a_0': 20, '4a_0': 12}}, 'L300|nc 7493010': {'end_stop': 27.0, 'end_stop2': 193.0, 'stand_n': {'3a_0': 6, '4a_0': 11}}, 'L300|lr400_16_1 7493010': {'end_stop': 431.0, 'end_stop2': 1062.0, 'stand_n': {'3a_0': 12, '4a_0': 39}}, 'L600|lr400_16_1 7493010': {'end_stop': 0.0, 'end_stop2': 0.0, 'stand_n': {'3a_0': 0, '4a_0': 0}}}
+2026-11-16 03:48:07 rate from the smoke's screen arms (x 1.3): 0.00015042489754296323 USD per worker slot
+2026-11-16 03:48:07 start plan vv_replay
+2026-11-16 03:48:07 end rc=0
+2026-11-16 03:48:07 cap check vv_replay: fits/spent/next 1 0.01 0.0 (cap 4)
+2026-11-16 03:48:07 start run vv_replay (24 runs)
+2026-11-16 03:49:24 end rc=0
+2026-11-16 03:49:24 drops vv_replay: {}
+2026-11-16 03:49:24 start read ident
+2026-11-16 03:49:24 end rc=0
+2026-11-16 03:49:24 identity: learner mismatch disclosed = False
+2026-11-16 03:49:24 start plan vv_trace
+2026-11-16 03:49:25 end rc=0
+2026-11-16 03:49:25 cap check vv_trace: fits/spent/next 1 0.01 0.0 (cap 4)
+2026-11-16 03:49:25 start run vv_trace (24 runs)
+2026-11-16 03:50:43 end rc=0
+2026-11-16 03:50:43 drops vv_trace: {}
+2026-11-16 03:50:43 start read V1
+2026-11-16 03:50:44 end rc=0
+2026-11-16 03:50:44 V1: CHECKS PASS; visual check pending
+2026-11-16 03:50:44 start plan vv_screen
+2026-11-16 03:50:44 end rc=0
+2026-11-16 03:50:44 cap check vv_screen: fits/spent/next 1 0.01 1.3 (cap 4)
+2026-11-16 03:50:44 start run vv_screen (8640 runs)
+2026-11-16 13:21:44 end rc=0
+2026-11-16 13:21:44 drops vv_screen: {}
+2026-11-16 13:21:44 start read V2 V3
+2026-11-16 14:47:48 end rc=0
+2026-11-16 14:47:48 V2 MET | V3a REPLICATED | V3b WORSE
+2026-11-16 14:47:48 DONE

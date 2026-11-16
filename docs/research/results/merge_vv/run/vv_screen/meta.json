@@ -1,0 +1,17 @@
+{
+ "inputs": {
+  "stage": "vv_screen",
+  "seed_range": [
+   7492000,
+   7492479
+  ],
+  "cpu": "AMD EPYC 7B13 64-Core Processor"
+ },
+ "jobs_sha256": "fd053e614e1a216e89598bbb948c6b8abaee96cfda732850d13cb9dc07bb5bea",
+ "code": {
+  "commit": "6e96988dab99f6676e09f33b0ae277b6fbd71878",
+  "clean": true,
+  "detached": true,
+  "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ }
+}

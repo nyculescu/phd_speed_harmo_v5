@@ -1,0 +1,439 @@
+{
+ "stage": "vv_replay",
+ "seed_range": [
+  7489160,
+  7489161
+ ],
+ "q": 5300.0,
+ "arms": {
+  "E30|w0u250": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C0_u250.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|w1u500": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C1_u500.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|w2u250": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C2_u250.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|w3u500": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C3_u500.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|w4u500": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C4_u500.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|lr400_16_1": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "local_rule": {
+     "r": 400,
+     "th": 16,
+     "level": 1
+    },
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|grid_lr400_13_1": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "local_rule": {
+     "r": 400,
+     "th": 13,
+     "level": 1
+    },
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|p333": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "cav_rule": [
+     3,
+     3,
+     3
+    ],
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|nc": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "env": {
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st"
+  },
+  "E30|w1u500~trace": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "pt": "/home/catalin/work/phd/v5b1_runs/baseline_v4/policies/C1_u500.pt",
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st",
+   "vv_trace": true,
+   "vv_log": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/vv",
+   "trace_end": true
+  },
+  "E30|lr400_16_1~trace": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "local_rule": {
+     "r": 400,
+     "th": 16,
+     "level": 1
+    },
+    "env": {
+     "hold": 10.0,
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st",
+   "vv_trace": true,
+   "vv_log": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/vv",
+   "trace_end": true
+  },
+  "E30|nc~trace": {
+   "smooth": true,
+   "ease": true,
+   "lcAssertive": 1.4,
+   "smooth_s": 8.0,
+   "ease_max": 4.4,
+   "tau_rise": 0.2,
+   "taper_fast": true,
+   "fix_x": true,
+   "geom": "r2m3",
+   "ctrl": {
+    "env": {
+     "perturb": {
+      "kind": "slowdown_draw",
+      "edge": "2",
+      "onset": [
+       450.0,
+       800.0
+      ],
+      "dur": [
+       240.0,
+       420.0
+      ],
+      "taper": 20.0,
+      "salt": 505001,
+      "limit_kmh": 30.0
+     }
+    }
+   },
+   "split": true,
+   "measure": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/st",
+   "vv_trace": true,
+   "vv_log": "/home/catalin/work/phd/v5b1_runs/vv/vv_replay/vv",
+   "trace_end": true
+  }
+ }
+}
