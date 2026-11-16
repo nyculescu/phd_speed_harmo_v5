@@ -57,13 +57,14 @@ def routes_of(name: str) -> dict:
 
 
 def build(speed: float, name: str = NAME, accel_len: float = 300.0, accel2_len: float = 300.0) -> Path:
-    """accel2_len (r2m3 only, C1 check (a)): 4a is lengthened downstream; e2, b and x move by the same amount, so the merge spacing
-    and the lengths of edges 4 and 5 are kept."""
+    """Lanes are lengthened downstream. accel_len: 3a; everything after it moves by the same amount, in r2m3 the second ramp too
+    (merge V&V, V532), so every other edge keeps its length. accel2_len (r2m3 only, C1 check (a)): 4a; e2, b and x move by the
+    same amount, so the merge spacing and the lengths of edges 4 and 5 are kept."""
     edges, loops = NETS[name]
     x_ae = dict((n, x) for n, x, _ in NODES)["ae"]
     nodes = [(n, x + (accel_len - 300.0 if x >= x_ae else 0.0), y) for n, x, y in NODES]
     if name == R2M3:
-        r2 = {n: (x + (accel2_len - 300.0 if n in ("e2", "b", "x") else 0.0), y) for n, (x, y) in R2_NODES.items()}
+        r2 = {n: (x + (accel_len - 300.0) + (accel2_len - 300.0 if n in ("e2", "b", "x") else 0.0), y) for n, (x, y) in R2_NODES.items()}
         nodes = [(n, *r2.get(n, (x, y))) for n, x, y in nodes] + [(n, *r2[n]) for n in ("e2", "r02", "rm2")]
     elif accel2_len != 300.0:
         raise ValueError("accel2_len needs the r2m3 network")

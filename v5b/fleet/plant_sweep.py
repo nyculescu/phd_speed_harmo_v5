@@ -53,7 +53,7 @@ def to_plant(c: dict) -> dict:
         p["smooth"] = True
     if c.get("ease"):
         p["ease"] = True
-    for k in ("ease_max", "smooth_s", "tau_rise", "taper_fast", "fix_x"):
+    for k in ("ease_max", "smooth_s", "tau_rise", "taper_fast", "fix_x", "x_remap"):
         if k in c:
             p[k] = c[k]
     if "geom" in c:
@@ -61,6 +61,19 @@ def to_plant(c: dict) -> dict:
     if c.get("smooth") or c.get("alks_undertake"):
         p["alks"] = {"lcOvertakeRight": 1}
     return p
+
+
+def geometry_guard(c: dict, kw: dict) -> None:
+    """Merge V&V (V532): on longer acceleration lanes only controllers that read the built geometry may run; the others have
+    300-m zones or positions built in and would run silently wrong."""
+    if c.get("accel_len", 300.0) == 300.0 and c.get("accel2_len", 300.0) == 300.0:
+        return
+    ctrl = c.get("ctrl", {})
+    kind = set(ctrl) - {"env"}
+    ok = (not kind or (kind == {"cav_rule"} and len(set(ctrl["cav_rule"])) == 1 and not ctrl.get("speed")) or kind == {"local_rule"}
+          or (kind == {"pt"} and c.get("fix_x") and c.get("x_remap") and not kw.get("base_rule")))
+    if not ok:
+        raise ValueError(f"controller {sorted(kind)} reads 300-m geometry; not allowed with accel_len/accel2_len {c.get('accel_len')}/{c.get('accel2_len')}")
 
 
 def run_one(a: tuple) -> dict:
@@ -76,6 +89,7 @@ def run_one(a: tuple) -> dict:
     if "pts" in ctrl or "switch" in ctrl:     # round 2: tail takes the options of its members, sw those of its policy
         from v5b.fleet.c_train import act_env
         kw |= act_env(ctrl["pts"][-1] if "pts" in ctrl else ctrl["switch"]["pt"])
+    geometry_guard(c, kw)
     env = be.make(alks_asl=0.5, ref_delay=True, share=c.get("share", 0.5), levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "local_rule" in ctrl:
@@ -126,6 +140,7 @@ def run_one(a: tuple) -> dict:
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
     step0, sec0 = env._sim_step, env._second
     meas = None     # V468: report-only measurement pack, created after reset; reads only
+    vv = None     # merge V&V instruments (V532), created after reset; reads only
     # V508 D3 (variant V-A): ramp-2 cars merge with lcAssertive = a while on 4a_0; the hook runs every 0.1-s step, so a merged car
     # is reset within one step. The base value is the plant's own, which fleet.py:179 writes last into every vType.
     from v5b.fleet.v505 import Ramp2Assertive
@@ -159,8 +174,12 @@ def run_one(a: tuple) -> dict:
         """V369: the 1-Hz samples below can miss what a 1-Hz actuator causes (V367), so braking and fuel are also read every step."""
         half = abs(t % 1.0 - 0.5) < 1e-6
         dt = env.dt
+        if vv is not None:
+            vv.step(t, True)
         for v in ls.vehicle.getIDList():
             a, s = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v)
+            if vv is not None and vv.meter:
+                vv.meter_step(t, v, s)
             alks = v in env.alks_all
             f = ls.vehicle.getFuelConsumption(v)
             S["dist_step"] += s * dt
@@ -221,10 +240,12 @@ def run_one(a: tuple) -> dict:
             if dv <= 0:
                 continue
             gap = lead[1] + ls.vehicle.getMinGap(v)
-            road = ls.vehicle.getRoadID(v)
+            road = raw = ls.vehicle.getRoadID(v)
             road = road if road in ("3", "4a") else "ramp2" if road in ("r2", "rj2") else "rest"
             band = "lo" if s < 5.0 else "mid" if s < 10.0 else "hi"
             ttc = gap / dv
+            if vv is not None and ttc < 3.0:
+                vv.hit(t, v, lead, s, s - dv, gap, raw)
             for m, hit in (("ttc3", ttc < 3.0), ("ttc2", ttc < 2.0), ("ttc15", ttc < 1.5), ("sev3", dv * dv / (2.0 * max(gap, 0.1)) >= 3.0)):
                 if hit:
                     S[m] += 1
@@ -339,6 +360,8 @@ def run_one(a: tuple) -> dict:
         if "4a_0" in lanes:
             l4a = ls.lane.getLength("4a_0")
             S["end_stop2"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l4a - 30.0 for v in ls.lane.getLastStepVehicleIDs("4a_0"))
+        if vv is not None:
+            vv.second(env.sim.t, lanes)
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
         if r2 is not None:
             r2.read_back(S)
@@ -358,6 +381,9 @@ def run_one(a: tuple) -> dict:
     if c.get("measure"):
         from v5b.fleet.measure import Measure
         meas = Measure(env, trucks, fl.routes(env.cfg.geom), lambda e: ls.lane.getLength(f"{e}_0"), env.dt)
+    from v5b.fleet import vv_merge
+    if vv_merge.wanted(c):
+        vv = vv_merge.VV(ls, c, env.alks_all, trucks, Path(c["vv_log"]) if isinstance(c.get("vv_log"), str) else None)
     if "meter" in ctrl:
         bank = ct.LoopBank(fl.loop_ids(env.cfg.geom))
         bank.read(env.sim.t)
@@ -372,6 +398,8 @@ def run_one(a: tuple) -> dict:
             meas.decisions(ls, env, act, before, probs, roads)
         else:
             o, _, _, tr, inf = env.step(act)
+        if vv is not None:
+            vv.obs_check(o, env)
         if tr:
             break
     length = {r: sum(ls.lane.getLength(f"{e}_0") for e in x[0].split()) for r, x in fl.routes(env.cfg.geom).items()}
@@ -426,6 +454,8 @@ def run_one(a: tuple) -> dict:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
     row |= mrow
+    if vv is not None:
+        row |= vv.finish(f"{name.replace('|', '__')}__{q:.0f}__{seed}")
     return row
 
 
