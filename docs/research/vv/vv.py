@@ -32,6 +32,7 @@ TWIN = v5.TWIN
 REPLAY_ROWS = HERE / "data" / "cf_replay_rows.jsonl"     # the stored CF rows of ARMS on the vv_replay seeds
 VV_KEYS = ("vv_", "end_trace")     # instrument output, skipped when an instrumented run meets its plain twin
 CF_CPU = "AMD EPYC 7B13 64-Core Processor"     # the CF rental (V529): where the stored replay rows were made
+OWN_NAME = {"arm", "learner"}     # run6.wrap derives them from the job name, so a "~trace" job carries its own
 
 
 def vv_key(k: str) -> bool:
@@ -52,18 +53,17 @@ def base_arm(r: str, st: Path) -> dict:
 
 
 def at_length(c: dict, L: float) -> dict:
-    """VV-D3 A and VV-D7: both lanes at L; the remap and its input check on longer lanes (a no-op for rules)."""
+    """VV-D3 A and VV-D7: both lanes at L, with the policy remap on longer lanes (a no-op for rules)."""
     c = copy.deepcopy(c)
     if L != 300.0:
-        c |= {"accel_len": L, "accel2_len": L, "x_remap": True, "vv_obs": True}
+        c |= {"accel_len": L, "accel2_len": L, "x_remap": True}
     return c
 
 
 def screen_arm(r: str, L: float, out_dir: Path) -> dict:
     """§2 instruments by run set: counts and logs everywhere; the 0.1-s meter at 300 m only."""
     c = at_length(base_arm(r, out_dir / "st"), L) | {"vv_count": True, "vv_log": str(out_dir / "vv")}
-    if L == 300.0:
-        c["vv_meter"] = True
+    c |= {"vv_meter": True} if L == 300.0 else {"vv_obs": True}
     return c
 
 
@@ -85,7 +85,7 @@ def plan(stage: str, out_dir: Path) -> dict:
         for L in LENGTHS:
             for r in TRACED:
                 plain = at_length(base_arm(r, st), L)
-                jobs[name(L, r) + "~trace"] = traced(plain | ({"vv_meter": True} if L == 300.0 else {}), out_dir)
+                jobs[name(L, r) + "~trace"] = traced(plain | ({"vv_meter": True} if L == 300.0 else {"vv_obs": True}), out_dir)
                 jobs[name(L, r) + TWIN] = plain
     elif stage in ("vv_screen", "vv_smoke"):
         jobs = {name(L, r): screen_arm(r, L, out_dir) for L in LENGTHS for r in ARMS}
@@ -110,7 +110,10 @@ def t0_lengths(rows: list, arms: dict) -> list:
     by = {(r["name"], r["seed"]): r for r in rows}
     bad = []
     for (n, s), r in by.items():
-        if not n.startswith("L600|") or "vv_lanes" not in r:
+        if not n.startswith("L600|") or n.endswith(TWIN):
+            continue
+        if "vv_lanes" not in r:
+            bad.append(f"{n} {s}: no lane read-back")
             continue
         ref = by.get((n.replace("L600|", "L300|"), s))
         if ref is None or "vv_lanes" not in ref:
@@ -128,6 +131,18 @@ def t0_lengths(rows: list, arms: dict) -> list:
     return bad
 
 
+def same_demand(rows: list) -> list:
+    """The two lengths of an arm and seed insert the same vehicles and automate the same ones (c1_t0), so seeds pair (V3b)."""
+    by = {(r["name"], r["seed"]): r.get("c1_t0") for r in rows}
+    bad = []
+    for (n, s), t in by.items():
+        if n.startswith("L600|") and not n.endswith(TWIN):
+            u = by.get((n.replace("L600|", "L300|"), s))
+            if t is None or u is None or (t["veh_n"], t["alks_sha"]) != (u["veh_n"], u["alks_sha"]):
+                bad.append(f"{n} {s}")
+    return bad
+
+
 def obs_checks(rows: list) -> dict:
     """§4 smoke: the remapped position never leaves the training range on 3a and 4a; the share of decisions with column 15 capped."""
     out = {}
@@ -138,10 +153,16 @@ def obs_checks(rows: list) -> dict:
     return out
 
 
+def meter_ok(r: dict) -> bool:
+    """V2 BUG checks: the meter ran (vv_m_time is written whenever it is on), its whole-second count equals ttc_net and its
+    half-second count ttc_half."""
+    return "vv_m_time" in r and r.get("vv_m_whole", 0.0) == r["ttc_net"] and r.get("vv_m_half", 0.0) == r.get("ttc_half", 0.0)
+
+
 def meter_bugs(rows: list) -> list:
-    """V2 BUG checks: the meter's whole-second count equals ttc_net, its half-second count ttc_half."""
-    return [f"{r['name']} {r['seed']}: whole {r.get('vv_m_whole')} vs ttc_net {r['ttc_net']}, half {r.get('vv_m_half')} vs ttc_half {r.get('ttc_half')}"
-            for r in rows if "vv_m_step" in r and (r.get("vv_m_whole", 0.0) != r["ttc_net"] or r.get("vv_m_half", 0.0) != r.get("ttc_half"))]
+    """Every instrumented 300-m row must pass meter_ok."""
+    return [f"{r['name']} {r['seed']}: time {r.get('vv_m_time')}, whole {r.get('vv_m_whole')} vs ttc_net {r['ttc_net']}, half {r.get('vv_m_half')} vs ttc_half {r.get('ttc_half')}"
+            for r in rows if r["name"].startswith("L300|") and not r["name"].endswith(TWIN) and r["cfg"].get("vv_meter") and not meter_ok(r)]
 
 
 def smoke(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
@@ -177,6 +198,9 @@ def smoke(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
     mb = meter_bugs(rows)
     obs = obs_checks(rows)
     x_out = sorted(k for k, v in obs.items() if v["x_out"])
+    x_out += sorted(f"{r['name']} {r['seed']}: no position read on 3a/4a" for r in rows if r["name"].startswith("L600|") and r["cfg"].get("vv_obs")
+                    and r["name"].split("|", 1)[1].split("~")[0] in pb.V3W and not r.get("vv_x_acc_n"))
+    pairs = same_demand(rows)
     wall = {}
     for r in rows:
         wall.setdefault(r["name"].split("~")[0], []).append(r.get("wall_s") or 0.0)
@@ -184,8 +208,8 @@ def smoke(jobs: dict, out: Path, workers: int, cpu: str = "") -> dict:
                 for r in rows if r["name"].split("|", 1)[1] in ("nc", "lr400_16_1")}
     res = {"missing_in_a": missing, "replay_differs": differs, "side_files_differ": side, "twin_differs": twins, "t0_lengths": t0,
            "meter_bugs": mb, "x_out": x_out, "obs": obs, "wall_s": {k: round(sum(v) / len(v), 1) for k, v in sorted(wall.items())},
-           "standing_for_author": standing, "drops": [da, db],
-           "pass": not (missing or differs or side or twins or t0 or mb or x_out or da or db)}
+           "standing_for_author": standing, "demand_differs": pairs, "drops": [da, db],
+           "pass": not (missing or differs or side or twins or t0 or mb or x_out or pairs or da or db)}
     pb.cma2.write_json(out / "smoke.json", res)
     return res
 
@@ -206,7 +230,8 @@ def ident(rows: list, cpu: str) -> dict:
             if ref is None:
                 missing.append(f"{r['name']} {r['seed']} (no stored row)")
                 continue
-            bad = sorted(k for k in ref if key_class(k) == "traffic" and json.dumps(r.get(k), sort_keys=True) != json.dumps(ref[k], sort_keys=True))
+            bad = sorted(k for k in ref if key_class(k) == "traffic" and k not in OWN_NAME
+                         and json.dumps(r.get(k), sort_keys=True) != json.dumps(ref[k], sort_keys=True))
             dg = {k: rel_diff(r.get(k), ref[k]) for k in ref if key_class(k) == "diagnostic" and r.get(k) != ref[k]}
             if dg:
                 diag[f"{r['name']} {r['seed']}"] = dg

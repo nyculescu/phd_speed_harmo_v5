@@ -68,12 +68,15 @@ fi
 
 stage vv_replay || { say "ASK AUTHOR: cap at the replay"; exit 0; }
 [ "$(wc -l < "$R/vv_replay/s6_rows.jsonl")" -eq "$(runs_of "$R/vv_replay/jobs.json")" ] || { say "STOPPED: replay rows missing"; exit 1; }
+rm -f "$R/vv_replay/ident.json"
 step "read ident" $PY $D/vv.py ident "$R/vv_replay/s6_rows.jsonl" "$R/vv_replay/ident.json" --cpu "$CPU"
+[ -s "$R/vv_replay/ident.json" ] || { say "STOPPED: identity read wrote no result"; exit 1; }
 [ "$(val "$R/vv_replay/ident.json" '["action"]')" = stop ] && { say "STOPPED: identity (bug rule; see ident.json)"; exit 1; }
 [ "$(val "$R/vv_replay/ident.json" '["tracer_bug"]')" = True ] && { say "STOPPED: a traced replay differs from its stored row (tracer bug)"; exit 1; }
 say "identity: learner mismatch disclosed = $(val "$R/vv_replay/ident.json" '["learner_diff_disclosed"]')"
 
 stage vv_trace || { say "ASK AUTHOR: cap at the traces"; exit 0; }
+[ "$(wc -l < "$R/vv_trace/s6_rows.jsonl")" -eq "$(runs_of "$R/vv_trace/jobs.json")" ] || { say "STOPPED: trace rows missing"; exit 1; }
 must "read V1" $PY $D/read_vv.py v1 "$R/vv_trace/v1.json" --trace "$R/vv_trace/s6_rows.jsonl" "$R/vv_replay/s6_rows.jsonl" --vv "$R/vv_trace/vv" "$R/vv_replay/vv"
 o=$(val "$R/vv_trace/v1.json" '["outcome"]')
 say "V1: $o"
@@ -82,4 +85,6 @@ case "$o" in CHECKS*) ;; *) say "STOPPED: V1 $o (see v1.json; §6)"; exit 1 ;; e
 stage vv_screen || { say "ASK AUTHOR: the screen would pass the cap"; exit 0; }
 must "read V2 V3" $PY $D/read_vv.py v3 "$R/vv_screen/v3.json" --rows "$R/vv_screen/s6_rows.jsonl" --st "$R/vv_screen/st" --seeds "$(range_of "$R/vv_screen/jobs.json")"
 say "V2 $(val "$R/vv_screen/v3.json" '["v2"]["outcome"]') | V3a $(val "$R/vv_screen/v3.json" '["v3a"]["replication"]["reading"]') | V3b $(val "$R/vv_screen/v3.json" '["v3b"]["reading"]')"
+v=$(val "$R/vv_screen/v3.json" '["void"]')
+[ "$v" = "[]" ] || say "VOID: $v (merge_vv.md §6)"
 say "DONE"

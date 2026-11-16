@@ -383,7 +383,7 @@ def run_one(a: tuple) -> dict:
         meas = Measure(env, trucks, fl.routes(env.cfg.geom), lambda e: ls.lane.getLength(f"{e}_0"), env.dt)
     from v5b.fleet import vv_merge
     if vv_merge.wanted(c):
-        vv = vv_merge.VV(ls, c, env.alks_all, trucks, Path(c["vv_log"]) if isinstance(c.get("vv_log"), str) else None)
+        vv = vv_merge.VV(ls, c, env.alks_all, trucks, Path(c["vv_log"]) if isinstance(c.get("vv_log"), str) else None, env.ramp)
     if "meter" in ctrl:
         bank = ct.LoopBank(fl.loop_ids(env.cfg.geom))
         bank.read(env.sim.t)

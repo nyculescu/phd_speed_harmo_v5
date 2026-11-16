@@ -46,7 +46,11 @@ def derive(r: dict, st: Path | None) -> dict:
     d |= {k: float(r.get(k, 0.0)) for k in EXTRA + ("vv_m_time", "vv_m_whole", "vv_m_half", "vv_ttc3_main", "vv_enc", "ttc_half")}
     d |= {f"p_{p}": float(r.get(f"ttc3_p_{p}", 0.0)) for p in PERIODS}
     d["stand_n"] = r.get("vv_stand_n", {})
-    d["meter_ok"] = "vv_m_step" not in r or (r.get("vv_m_whole", 0.0) == r["ttc_net"] and r.get("vv_m_half", 0.0) == r.get("ttc_half"))
+    d["meter_ok"] = "vv_m_time" in r and r.get("vv_m_whole", 0.0) == r["ttc_net"] and r.get("vv_m_half", 0.0) == r.get("ttc_half", 0.0)
+    d["has_vv"] = "vv_lanes" in r and "vv_stand_n" in r     # finish() writes both whenever the counts and logs ran
+    d["len_acc"] = [r.get("vv_lanes", {}).get(x) for x in ("3a_0", "4a_0")]
+    t = r.get("c1_t0") or {}
+    d["demand"] = [t.get("veh_n"), t.get("alks_sha")]
     d["x_out"] = r.get("vv_x_out", 0.0)
     d["c15"] = [r.get("vv_c15_cap", 0.0), r.get("vv_c15_n", 0.0)]
     return d
@@ -213,6 +217,11 @@ def v3(T: dict, seeds: list, dropped: list, cpus: list) -> dict:
     n = len(seeds)
     idx = np.random.default_rng(RNG).integers(0, n, (B, n))
     meter_bad = [f"{a} {s}" for a in arms for s in seeds if not T[("L300", a)][s]["meter_ok"]]
+    no_vv = [f"{c} {a} {s}" for c in ("L300", "L600") for a in arms for s in seeds if not T[(c, a)][s]["has_vv"]]
+    want = {"L300": 294.72, "L600": 594.72}
+    geom = [f"{c} {a} {s}: {T[(c, a)][s]['len_acc']}" for c in want for a in arms for s in seeds
+            if any(x is None or abs(x - want[c]) > 0.01 for x in T[(c, a)][s]["len_acc"])]
+    unpaired = [f"{a} {s}" for a in arms for s in seeds if None in T[("L300", a)][s]["demand"] or T[("L300", a)][s]["demand"] != T[("L600", a)][s]["demand"]]
     x_out = [f"{a} {s}" for a in arms for s in seeds if T[("L600", a)][s]["x_out"]]
     c15 = {a: sum(T[("L600", a)][s]["c15"][0] for s in seeds) / max(sum(T[("L600", a)][s]["c15"][1] for s in seeds), 1.0) for a in V3W}
     rep = holds(c3, idx, "ttc_net", 20261300)
@@ -221,7 +230,7 @@ def v3(T: dict, seeds: list, dropped: list, cpus: list) -> dict:
     w6 = worse(c6, idx, 20261360)
     out = {
         "n": n, "dropped": dropped, "cpus": sorted(map(str, cpus)),
-        "bugs": {"meter": meter_bad, "x_out": x_out},
+        "bugs": {"meter": meter_bad, "x_out": x_out, "no_instruments": no_vv[:20], "geometry": geom[:20], "unpaired_seeds": unpaired[:20]},
         "v2": v2(c3, idx) if not meter_bad else {"outcome": "BUG", "meter": meter_bad[:20]},
         "v3a": {"replication": rep | {"reading": "REPLICATED" if rep["shown"] else "NOT REPLICATED"},
                 "main_lane": main | {"reading": "also shown on main-lane samples" if main["shown"] else "not shown on main-lane samples alone"}},
@@ -233,6 +242,7 @@ def v3(T: dict, seeds: list, dropped: list, cpus: list) -> dict:
         "standing_vehicles": {c: {a: {m: float(np.median([T[(c, a)][s]["stand_n"].get(m, 0) for s in seeds])) for m in ("3a_0", "4a_0")}
                                   for a in arms} for c in ("L300", "L600")}}
     out["void"] = [f"CPU models differ: {sorted(map(str, cpus))}"] if len(cpus) > 1 else []
+    out["void"] += [f"{k}: {len(v)} rows" for k, v in (("instruments missing", no_vv), ("lane lengths wrong", geom), ("seeds not paired", unpaired)) if v]
     return out
 
 
@@ -244,6 +254,22 @@ def period(t: float, onset: float, dur: float, taper: float = 20.0) -> str:
     if t < onset + dur:
         return "hold"
     return "after" if t < onset + dur + 120.0 else "rest"
+
+
+NEXT = {"r": ("rj",), "rj": ("3a",), "1": ("2",), "2": ("3a",), "3a": ("3",), "3": ("4a",), "4a": ("4",), "4": ("5",), "r2": ("rj2",), "rj2": ("4a",)}     # r2m3 (corridor.py connections)
+
+
+def ahead(froad: str, wroad: str, hops: int = 3) -> bool:
+    """The leader's road lies on the follower's way ahead: a junction lane, or a successor within a few roads (getLeader looks 200 m)."""
+    if wroad.startswith(":") or froad.startswith(":"):
+        return True
+    todo, seen = [froad], set()
+    for _ in range(hops):
+        todo = [n for e in todo for n in NEXT.get(e, ()) if n not in seen]
+        seen |= set(todo)
+        if wroad in seen:
+            return True
+    return False
 
 
 def v1_row(r: dict, merges: list) -> dict:
@@ -281,6 +307,9 @@ def v1_row(r: dict, merges: list) -> dict:
         elif wroad == froad:
             out["definition"].append(f"cross-lane leader {t} {v} on {flane}, {w} on {wlane}")
             rel = "cross lane"
+        elif not ahead(froad, wroad):
+            out["definition"].append(f"leader off the route {t} {v} on {flane}, {w} on {wlane}")
+            rel = "off route"
         else:
             rel = "next lane"
         stand = wlane in ("3a_0", "4a_0") and sl < 1.0 and wpos > lanes.get(wlane, 1e9) - 30.0
@@ -299,6 +328,7 @@ def v1_row(r: dict, merges: list) -> dict:
             cur[k] = (t, 1)
     enc_len += [n for _, n in cur.values()]
     out["encounters"] = {"n": len(enc_len), "durations": dict(Counter(enc_len))}
+    out["next_lane_share"] = sum(" | next lane | " in k for k in out["classes"].elements()) / max(len(tr), 1)
     out["stand_n"] = r.get("vv_stand_n")
     out["edge1"] = [{"t": s[0], "period": period(s[0], onset, dur), "pos": s[7], "type": s[3], "speed": s[15]} for s in tr if s[5] == "1"]
     out["classes"] = dict(out["classes"].most_common())
@@ -314,6 +344,8 @@ def v1(trace_rows: list, vv_dirs: list) -> dict:
             tw = by.get((n[: -len("~trace")] + TWIN, s))
             if tw is not None:
                 out["twins"][f"{n} {s}"] = twin_diff(r, tw)
+            elif n.startswith("L"):     # every V1 trace has an untraced twin; a replay trace is checked against its stored row instead
+                out["twins"][f"{n} {s}"] = ["missing twin"]
             f = next((d / r["vv_log_file"] for d in vv_dirs if r.get("vv_log_file") and (d / r["vv_log_file"]).is_file()), None)
             if r.get("vv_log_file") and f is None:
                 raise SystemExit(f"merge log {r['vv_log_file']} not found in {vv_dirs}")
@@ -327,6 +359,8 @@ def v1(trace_rows: list, vv_dirs: list) -> dict:
     wiring = {k: v["wiring"] for k, v in out["runs"].items() if v["wiring"]}
     definition = {k: v["definition"][:20] for k, v in out["runs"].items() if v["definition"]}
     twins = {k: v for k, v in out["twins"].items() if v}
+    if not pool:
+        wiring["(none)"] = ["no traced samples"]
     out["outcome"] = "BUG" if definition else "TRACER BUG" if (wiring or twins) else "CHECKS PASS; visual check pending"
     out["wiring_fail"], out["definition_fail"], out["twin_fail"] = wiring, definition, twins
     return out

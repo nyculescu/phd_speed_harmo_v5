@@ -36,7 +36,8 @@ def rows(ttc: dict, meter: dict | None = None, stand: tuple = (200.0, 400.0), se
             d |= {"ttc_net": x[i], "vv_ttc3_main": 0.3 * x[i], "g_merge": 0.8 * x[i], "g_edge1": 0.05 * x[i], "g_rest": 0.15 * x[i],
                   "ttc_no_e1": 0.95 * x[i], "all_delay": 1e5 + base[i], "N": 6e5, "passed": 2180.0, "end_stop": st[0], "end_stop2": st[1],
                   "vv_m_time": x[i] * (meter or {}).get((cell, arm), 1.0), "jams": 8.0}
-            d |= {"meter_ok": True, "x_out": 0.0, "c15": [1.0, 100.0], "stand_n": {"3a_0": 5, "4a_0": 9}}
+            d |= {"meter_ok": True, "x_out": 0.0, "c15": [1.0, 100.0], "stand_n": {"3a_0": 5, "4a_0": 9}, "has_vv": True,
+                  "len_acc": [294.72, 294.72] if cell == "L300" else [594.72, 594.72], "demand": [3000, "x"]}
             T[(cell, arm)][s] = d
     return T
 

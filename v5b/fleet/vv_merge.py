@@ -38,8 +38,9 @@ def encounter_new(last: dict, pair: tuple, t: float) -> bool:
 
 
 class VV:
-    def __init__(self, ls, c: dict, alks: set, trucks: set, side: Path | None):
+    def __init__(self, ls, c: dict, alks: set, trucks: set, side: Path | None, ramp: set | None = None):
         self.ls, self.alks, self.trucks, self.side = ls, alks, trucks, side
+        self.ramp = ramp     # vehicles that enter from a ramp; only they merge (a mainline car into lane 0 and back is not a merge)
         self.count = bool(c.get("vv_count") or c.get("vv_trace"))
         self.trace = [] if c.get("vv_trace") else None
         self.log = bool(c.get("vv_log"))
@@ -83,7 +84,7 @@ class VV:
                         h.popleft()
             now = {v: ls.vehicle.getLanePosition(v) for v in ls.lane.getLastStepVehicleIDs(x)}
             for v, p0 in self.prev[x].items():
-                if v not in now:
+                if v not in now and (self.ramp is None or v in self.ramp):
                     self._merge(t, v, x, p0)
             self.prev[x] = now
 
@@ -107,7 +108,7 @@ class VV:
                 pw = ls.vehicle.getLanePosition(w)
                 net = (pw - ls.vehicle.getLength(w) - p) if side == "lead" else (p - L - pw)
                 rec[side] = {"v": w, "type": self.kind(w), "speed": ls.vehicle.getSpeed(w), "sumo_dist": f[1], "same_lane": same,
-                             "net_gap": net if same else None}
+                             "net_gap": net if same else None, "min_gap": ls.vehicle.getMinGap(w), "lane": ls.vehicle.getLaneID(w)}
         self.merges.append(rec)
         self.S["vv_merges"] += 1
         self.hist.pop(v, None)

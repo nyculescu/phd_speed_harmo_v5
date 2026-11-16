@@ -74,4 +74,5 @@ def test_plant_side_reads_human_merges(tmp_path):
                     + json.dumps({"name": "L300|p333", "seed": 1, "vv_log_file": "a.json.gz"}) + "\n")
     out = nm.plant(tmp_path, rows)
     assert out["all"]["dv_ms"]["n"] == 2 and out["all"]["lag_s"]["n"] == 1 and out["human"]["lag_s"]["median"] == pytest.approx(1.5)
+    assert out["dropped"] == {"alks_merger": 1, "no_follower": 0}
     assert out["alks"]["dv_ms"]["median"] == pytest.approx(4.0)

@@ -155,21 +155,28 @@ def field(csv: Path) -> dict:
 
 
 def plant(vv_dir: Path, rows: Path) -> dict:
-    """Human merges (car, truck) in the L300|nc runs, from each run's merge log; split by a human or ALKS follower."""
+    """Human merges (car, truck) in the L300|nc runs, from each run's merge log; split by a human or ALKS follower. A follower on
+    another lane (still upstream of the merge point) has net gap = SUMO's distance + its minGap (MSLane::getFollowersOnConsecutive)."""
     lag, dv, run, kind = [], [], [], []
+    drop = {"alks_merger": 0, "no_follower": 0}
     for line in open(rows):
         r = json.loads(line)
         if r["name"] != "L300|nc" or not r.get("vv_log_file"):
             continue
         for m in json.load(gzip.open(vv_dir / r["vv_log_file"], "rt"))["merges"]:
             f = m.get("lag")
-            if m["type"] == "alks" or not f or not f.get("same_lane") or f.get("net_gap") is None:
+            if m["type"] == "alks":
+                drop["alks_merger"] += 1
                 continue
-            lag.append(f["net_gap"] / f["speed"] if f["speed"] > MIN_FOLLOWER_MS else None)
+            if not f:
+                drop["no_follower"] += 1
+                continue
+            net = f["net_gap"] if f.get("same_lane") else f["sumo_dist"] + f.get("min_gap", 2.5)
+            lag.append(net / f["speed"] if f["speed"] > MIN_FOLLOWER_MS else None)
             dv.append(m["speed"] - f["speed"])
             run.append(r["seed"])
             kind.append("alks" if f["type"] == "alks" else "human")
-    out = {}
+    out = {"dropped": drop}
     for k in ("all", "human", "alks"):
         sel = [i for i in range(len(run)) if k == "all" or kind[i] == k]
         out[k] = {"lag_s": med_ci([lag[i] for i in sel], [run[i] for i in sel]),
