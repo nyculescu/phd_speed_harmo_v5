@@ -1,6 +1,6 @@
 """Weather regimes (V204): calibration of the human tau factor g per wet state on the lane-drop road ld32.
 
-Protocol `docs/research/weather_evidence_v0.md` §4. Rain scales human tau by g and caps each human's desired speed at
+Protocol `docs/local/research/weather_evidence_v0.md` §4. Rain scales human tau by g and caps each human's desired speed at
 SAF × the dry desired speed (fleet.weather). g is fitted so that the paired wet/dry queue discharge ratio equals the
 SHRP 2-L08 capacity factor, then confirmed on fresh seeds. Teleporting is off, as on the plant.
 """

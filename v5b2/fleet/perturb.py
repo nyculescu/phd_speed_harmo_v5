@@ -10,8 +10,15 @@ event until it ends (V343): the upper bound of what a controller that knows the 
 With `hw_oracle` {d, level, after} every ALKS from d m upstream of edge 4 to its end uses at most that headway level, from
 d / ORACLE_SPEED s before the event until `after` s past its end (V346). `taper` lowers the limit gradually, because vehicles
 already on the edge must obey a new limit at once (V345).
+Kind slowdown_draw (V505 EV-A): a slowdown on `edge` to `limit_kmh` whose onset and duration are drawn uniformly from the ranges
+`onset` and `dur` with default_rng(seed + `salt`), then run as a slowdown.
 Kind random: for training (V358), each episode draws no perturbation (one third) or a tapered slowdown on edge 3, 4 or 5, from
 the episode's seed, so the draw repeats. `edge` selects a slowdown's edge, 4 by default.
+Plan B (planb.md §4.2) adds two kinds that act only on the demand list, before the route file is written:
+surge: the demand follows `profile` [[t0, t1, veh/h], ...] instead of the constant level; the run equals the constant one until
+the first segment ends, because the arrival stream restarts at each segment edge and vehicles are drawn by index.
+truck_fixed: for k = 0 .. n-1, the first main-route truck on departure lane `lane`, not already chosen, departing at or after
+first + k * spacing, gets its maximum speed capped at `cap_kmh` for the whole trip; every arm meets the same trucks.
 """
 from __future__ import annotations
 
@@ -19,6 +26,8 @@ import math
 
 import libsumo as ls
 import numpy as np
+
+from v5b2.fleet import fleet as fl
 
 BRAKE_EDGE, BRAKE_LANE, BRAKE_POS, BRAKE_RANGE = "4", 1, 500.0, 200.0
 DECEL = 4.0
@@ -30,22 +39,64 @@ EDGE4_X = 4989.02
 ORACLE_SPEED = 25.0
 
 
+def event_period(spec: dict | None, t: float) -> str:
+    """The period label of time t under a perturbation: slowdown as plant_sweep.period; surge before, during and after the
+    profile's middle segments; truck_fixed before and after the first slot; every other kind "rest"."""
+    if spec is None:
+        return "rest"
+    k = spec["kind"]
+    if k == "slowdown":
+        if t < spec["times"][0]:
+            return "before"
+        for t0 in spec["times"]:
+            if t0 <= t < t0 + spec.get("taper", 0.0):
+                return "taper"
+            if t0 <= t < t0 + spec["dur"]:
+                return "hold"
+            if t0 + spec["dur"] <= t < t0 + spec["dur"] + 120.0:
+                return "after"
+        return "rest"
+    if k == "surge":
+        prof = spec["profile"]
+        return "before" if t < prof[1][0] else "surge" if t < prof[-1][0] else "post"
+    if k == "truck_fixed":
+        return "before" if t < spec["first"] else "trucks"
+    return "rest"
+
+
+def draw_slowdown(spec: dict, seed: int) -> dict:
+    """V505 EV-A: a slowdown whose onset and duration are drawn from the seed, so every arm on a seed meets the same event and
+    period splits see the drawn times."""
+    r = np.random.default_rng(seed + spec["salt"])
+    t0, dur = float(r.uniform(*spec["onset"])), float(r.uniform(*spec["dur"]))
+    return {"kind": "slowdown", "edge": spec["edge"], "limit_kmh": spec["limit_kmh"], "dur": dur, "times": [t0], "taper": spec.get("taper", 0.0)}
+
+
 class Perturb:
     def __init__(self, env, spec: dict, seed: int = 0):
+        drawn = None
         if spec["kind"] == "random":
             r = np.random.default_rng(seed + 910_000)
             spec = {"kind": "none"}
             if r.random() >= 1.0 / 3.0:
                 spec = {"kind": "slowdown", "edge": str(r.choice(("3", "4", "5"))), "limit_kmh": float(r.uniform(25.0, 60.0)), "dur": float(r.uniform(60.0, 180.0)), "times": [float(r.uniform(400.0, 1200.0))], "taper": 20.0}
-        self.env, self.s, self.kind = env, spec, spec["kind"]
+        elif spec["kind"] == "slowdown_draw":
+            spec, drawn = draw_slowdown(spec, seed), spec
+        self.env, self.s, self.kind, self.seed = env, spec, spec["kind"], seed
         self.next_t = spec.get("first", env.warm)
         self.active = None
         self.slow_on = False
-        self.log = []
+        self.log = [("drawn", spec["times"][0], spec["dur"])] if drawn else []
         self.oracle_now = self.hw_now = None
         self.slow_v = env.plant.get("limit", FREE_LIMIT)
 
     def demand(self) -> None:
+        if self.kind == "surge":
+            self._demand_surge()
+            return
+        if self.kind == "truck_fixed":
+            self._demand_truck_fixed()
+            return
         if self.kind != "burst":
             return
         d, cycle = self.env.dem, self.s["cycle"]
@@ -54,6 +105,27 @@ class Perturb:
                 v.depart = math.ceil(v.depart / cycle) * cycle
         order = sorted(range(len(d.veh)), key=lambda i: d.veh[i].depart)
         d.veh[:], d.route_of[:] = [d.veh[i] for i in order], [d.route_of[i] for i in order]
+
+    def _demand_surge(self) -> None:     # not _surge: step() dispatches to _<kind>
+        prof = [tuple(float(x) for x in seg) for seg in self.s["profile"]]
+        if prof[0][0] != 0.0 or abs(prof[-1][1] - self.env.t_end) > 1e-9 or any(a[1] != b[0] for a, b in zip(prof, prof[1:])):
+            raise ValueError(f"surge profile must cover 0 to {self.env.t_end} s without gaps: {prof}")
+        self.env.dem = fl.FleetDemand(self.seed, prof, self.env.cfg)
+        self.log.append(("profile", [list(x) for x in prof]))
+
+    def _demand_truck_fixed(self) -> None:
+        d, s = self.env.dem, self.s
+        route, lane, cap = s.get("route", "main"), s.get("lane", 0), s["cap_kmh"] / 3.6
+        chosen = set()
+        for k in range(s["n"]):
+            t_k = s["first"] + k * s["spacing"]
+            v = next((v for v, r in zip(d.veh, d.route_of) if v.cls == "truck" and r == route and v.lane == lane
+                      and v.depart >= t_k and v.vid not in chosen), None)
+            if v is None:
+                raise ValueError(f"truck_fixed: no truck left for slot {k} (seed {self.seed})")
+            v.max_speed = cap
+            chosen.add(v.vid)
+            self.log.append((k, v.vid, v.depart))
 
     def step(self, t: float) -> None:
         o = self.s.get("oracle")

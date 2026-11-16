@@ -1,4 +1,4 @@
-"""Screen D2 Rules 1, 4 and 5 on numbers (pure; no SUMO). docs/research/protocols/screen_D2_incidents.md
+"""Screen D2 Rules 1, 4 and 5 on numbers (pure; no SUMO). docs/local/research/protocols/screen_D2_incidents.md
 
 Convention (CLAUDE.md, Statistics; as in D1, v5b2/d1/stats.py): paired seeds, the median of paired differences,
 95 % percentile bootstrap, B = 2,000, seeds resampled jointly. Delays: lower is better. For a baseline b and a

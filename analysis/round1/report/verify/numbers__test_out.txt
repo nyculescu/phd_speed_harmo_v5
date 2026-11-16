@@ -1,0 +1,119 @@
+arms 56 seeds per arm {40} seed range 7440500 7440539
+
+== T1 (v3w arm vs baseline-v3 arm)
+X1 pct 1.25-98.75 (97.5% CI) delay +3.46 [+1.15, +5.32] ttc +4.15 [+0.80, +8.26] better True
+X1 pct 0.625-99.375 (98.75% CI) delay +3.46 [+1.06, +5.36] ttc +4.15 [+0.70, +8.80] better True
+X1 95% delay +3.46 [+1.20, +5.09] ttc +4.15 [+0.88, +7.63] better True
+X2 pct 1.25-98.75 (97.5% CI) delay +3.36 [+0.96, +4.84] ttc +0.84 [-5.03, +5.88] better True
+X2 pct 0.625-99.375 (98.75% CI) delay +3.36 [+0.79, +5.05] ttc +0.84 [-5.23, +6.28] better True
+X2 95% delay +3.36 [+1.23, +4.59] ttc +0.84 [-4.50, +5.33] better True
+
+== counting opponents (delay within 2 % of p333, point estimate)
+X1 opponents ['p333', 'z33133', 'lr400_13_2', 'os0_10_10']
+   p333 delay vs p333 0.0 counts
+   z33133 delay vs p333 -5.17 out
+   lr400_13_2 delay vs p333 -4.81 out
+   os0_10_10 delay vs p333 -5.14 out
+   copy delay vs p333 -13.6 out
+  not opponents: {'os1_15_10': -4.82, 'copy': -13.6, 'os1_10_0': -10.14, 'lr400_16_1': -11.19, 'lr1000_16_2': -5.1, 'lr1000_10_1': -2.83, 'a4400_10_1': -13.28, 'r4a1': -7.33}
+X2 opponents ['p333', 'r4a1', 'lr1000_16_2', 'a4400_10_1', 'os1_15_10']
+   p333 delay vs p333 0.0 counts
+   r4a1 delay vs p333 -3.08 out
+   lr1000_16_2 delay vs p333 -2.91 out
+   a4400_10_1 delay vs p333 -4.89 out
+   os1_15_10 delay vs p333 -1.25 counts
+   copy delay vs p333 -10.27 out
+  not opponents: {'copy': -10.27, 'z33133': -2.35, 'os1_10_0': -2.36, 'lr400_16_1': -8.52, 'lr1000_10_1': -0.69, 'lr400_13_2': -3.13, 'os0_10_10': -0.17}
+counts {'X1': ['p333'], 'X2': ['p333', 'os1_15_10']}
+
+== T2, per learner, at percentiles 1.25-98.75 and 0.625-99.375
+X1 w B2 passed 5 of 5 [{}, {}, {}, {}, {}]
+X1 w wide passed 5 of 5 [{}, {}, {}, {}, {}]
+X1 d B2 passed 2 of 5 [{'p333': ['delay -2.85', 'flow -0.68']}, {}, {}, {'p333': ['delay -7.48', 'flow -1.30'], 'p333_anchor': ['delay -7.48', 'flow -1.30']}, {'p333': ['delay -3.20']}]
+X1 d wide passed 2 of 5 [{'p333': ['delay -2.85', 'flow -0.68']}, {}, {}, {'p333': ['delay -7.48', 'flow -1.30'], 'p333_anchor': ['delay -7.48', 'flow -1.30']}, {'p333': ['delay -3.20']}]
+X1 f B2 passed 2 of 5 [{'p333': ['delay -2.85', 'flow -0.68']}, {}, {}, {'p333': ['delay -7.48', 'flow -1.30'], 'p333_anchor': ['delay -7.48', 'flow -1.30']}, {'p333': ['delay -3.20']}]
+X1 f wide passed 2 of 5 [{'p333': ['delay -2.85', 'flow -0.68']}, {}, {}, {'p333': ['delay -7.48', 'flow -1.30'], 'p333_anchor': ['delay -7.48', 'flow -1.30']}, {'p333': ['delay -3.20']}]
+X2 w B2 passed 5 of 5 [{}, {}, {}, {}, {}]
+X2 w wide passed 5 of 5 [{}, {}, {}, {}, {}]
+X2 d B2 passed 4 of 5 [{}, {}, {}, {'p333': ['delay -2.47']}, {}]
+X2 d wide passed 4 of 5 [{}, {}, {}, {'p333': ['delay -2.47']}, {}]
+X2 f B2 passed 4 of 5 [{}, {}, {}, {'p333': ['delay -2.47']}, {}]
+X2 f wide passed 4 of 5 [{}, {}, {}, {'p333': ['delay -2.47']}, {}]
+
+== detail per learner vs counting opponents (point estimates; CI at B2)
+X1 w0 p333 ttc +42.8 [+37.0, +50.6] delay 1.65 flow 0.49 brake 17.45 perrun 1313 coll 0/0
+X1 w1 p333 ttc +35.1 [+28.9, +42.7] delay 0.16 flow 0.16 brake 15.35 perrun 1076 coll 1/0
+X1 w2 p333 ttc +41.0 [+33.4, +48.9] delay 3.84 flow 0.35 brake 14.19 perrun 1256 coll 0/0
+X1 w3 p333 ttc +46.3 [+37.3, +53.0] delay 1.82 flow 0.45 brake 17.38 perrun 1420 coll 0/0
+X1 w4 p333 ttc +39.4 [+32.4, +49.0] delay 0.77 flow 0.47 brake 14.11 perrun 1208 coll 0/0
+X1 d0 p333 ttc +37.9 [+32.1, +46.6] delay -2.85 flow -0.68 brake 16.90 perrun 1162 coll 0/0
+X1 d1 p333 ttc +38.5 [+29.3, +44.8] delay 0.42 flow 0.26 brake 15.11 perrun 1182 coll 0/0
+X1 d2 p333 ttc +34.0 [+24.7, +37.9] delay -1.80 flow -0.31 brake 11.91 perrun 1044 coll 0/0
+X1 d3 p333 ttc +41.1 [+35.5, +47.7] delay -7.48 flow -1.30 brake 20.95 perrun 1261 coll 0/0
+X1 d4 p333 ttc +39.4 [+33.3, +45.6] delay -3.20 flow -0.24 brake 15.39 perrun 1208 coll 0/0
+X2 w0 p333 ttc +40.1 [+32.7, +47.9] delay 2.97 flow 0.82 brake 15.30 perrun 982 coll 1/0 | os1_15_10 ttc +25.7 [+19.2, +39.5] delay 2.32 flow 0.70 brake 6.98 perrun 489 coll 1/0
+X2 w1 p333 ttc +36.0 [+28.9, +43.0] delay 1.94 flow 0.75 brake 12.91 perrun 881 coll 0/0 | os1_15_10 ttc +22.3 [+13.7, +35.6] delay 5.05 flow 0.61 brake 6.86 perrun 425 coll 0/0
+X2 w2 p333 ttc +42.8 [+31.2, +49.9] delay 4.26 flow 1.45 brake 14.32 perrun 1048 coll 0/0 | os1_15_10 ttc +27.1 [+21.5, +35.4] delay 3.87 flow 1.36 brake 8.16 perrun 516 coll 0/0
+X2 w3 p333 ttc +41.4 [+32.4, +50.0] delay 3.70 flow 1.22 brake 13.47 perrun 1014 coll 0/0 | os1_15_10 ttc +31.4 [+17.7, +38.4] delay 3.44 flow 0.91 brake 9.27 perrun 596 coll 0/0
+X2 w4 p333 ttc +38.9 [+32.3, +46.0] delay 3.98 flow 0.98 brake 12.66 perrun 952 coll 0/0 | os1_15_10 ttc +23.7 [+11.3, +31.2] delay 3.24 flow 0.91 brake 4.32 perrun 452 coll 0/0
+X2 d0 p333 ttc +37.6 [+29.8, +46.4] delay -1.83 flow 0.16 brake 13.80 perrun 922 coll 0/0 | os1_15_10 ttc +22.6 [+15.0, +30.6] delay -1.99 flow -0.26 brake 9.86 perrun 429 coll 0/0
+X2 d1 p333 ttc +40.3 [+34.6, +49.4] delay 2.99 flow 0.94 brake 14.65 perrun 988 coll 0/0 | os1_15_10 ttc +28.8 [+15.7, +35.7] delay 3.92 flow 0.84 brake 7.41 perrun 548 coll 0/0
+X2 d2 p333 ttc +33.8 [+27.9, +40.3] delay 0.32 flow 0.47 brake 11.20 perrun 828 coll 0/0 | os1_15_10 ttc +17.0 [+3.1, +29.3] delay 1.49 flow 0.23 brake 4.43 perrun 324 coll 0/0
+X2 d3 p333 ttc +40.1 [+35.1, +46.7] delay -2.47 flow 0.09 brake 14.29 perrun 982 coll 0/0 | os1_15_10 ttc +28.3 [+19.2, +37.4] delay -2.00 flow -0.44 brake 10.85 perrun 539 coll 0/0
+X2 d4 p333 ttc +39.6 [+34.1, +49.3] delay 2.07 flow 0.91 brake 11.06 perrun 969 coll 0/0 | os1_15_10 ttc +28.2 [+23.0, +37.7] delay 3.00 flow 0.91 brake 8.47 perrun 537 coll 0/0
+
+== beside readings (v3w learners)
+X1 replication 5 | delay opponent p333 delay wins 0 | severe ok per learner [True, True, True, True, True] [{'p333': -68.5}, {'p333': -62.5}, {'p333': -61.0}, {'p333': -67.5}, {'p333': -66.5}]
+X1 TTC vs nc per learner (97.5 % CI): ['-21.0 [-34.4, -14.7]', '-34.1 [-43.3, -26.1]', '-22.3 [-29.6, -7.6]', '-17.2 [-25.7, -10.3]', '-24.7 [-36.9, -13.9]'] clearly worse: 5 clearly better: 0
+X1 nc extra delay per learner (sign +1, ref = policy median): [38.64, 38.72, 39.23, 39.87, 40.09] median 39.23
+X1 strongest p333 gains ['+42.8 [+37.0, +50.6]', '+35.1 [+28.9, +42.7]', '+41.0 [+33.4, +48.9]', '+46.3 [+37.3, +53.0]', '+39.4 [+32.4, +49.0]'] range 35.1-46.3
+X1 arm: v3w vs nc TTC 95% -24.4 [-33.1, -15.4] delay 95% +28.0 [+25.4, +30.6] nc extra delay vs arm 40.06
+X1 arm delay vs os1_15_10 95% +5.5 [+3.1, +10.5]
+X1 arm delay vs p333 95% +2.6 [-1.8, +5.4]
+X1 arm delay vs lr1000_10_1 95% +4.3 [+2.4, +6.3]
+X1 arm delay vs p333 95% +2.6 [-1.8, +5.4]
+X2 replication 5 | delay opponent p333 delay wins 0 | severe ok per learner [True, True, True, True, True] [{'p333': -59.5, 'os1_15_10': -35.5}, {'p333': -53.0, 'os1_15_10': -30.0}, {'p333': -55.0, 'os1_15_10': -37.5}, {'p333': -59.5, 'os1_15_10': -42.5}, {'p333': -64.0, 'os1_15_10': -43.0}]
+X2 TTC vs nc per learner (97.5 % CI): ['+2.2 [-8.5, +8.5]', '-2.5 [-20.4, +8.4]', '+0.8 [-12.1, +14.6]', '+1.4 [-6.5, +15.0]', '+0.2 [-14.8, +8.1]'] clearly worse: 0 clearly better: 0
+X2 nc extra delay per learner (sign +1, ref = policy median): [28.23, 29.63, 29.82, 30.13, 30.72] median 29.82
+X2 strongest os1_15_10 gains ['+25.7 [+19.2, +39.5]', '+22.3 [+13.7, +35.6]', '+27.1 [+21.5, +35.4]', '+31.4 [+17.7, +38.4]', '+23.7 [+11.3, +31.2]'] range 22.3-31.4
+X2 arm: v3w vs nc TTC 95% -1.9 [-7.1, +9.2] delay 95% +23.2 [+20.5, +25.6] nc extra delay vs arm 29.74
+X2 arm delay vs os1_15_10 95% +4.7 [+1.3, +7.2]
+X2 arm delay vs p333 95% +3.7 [+1.7, +5.0]
+X2 arm delay vs os1_10_0 95% +6.6 [+3.4, +9.5]
+X2 arm delay vs p333 95% +3.7 [+1.7, +5.0]
+
+== counters (medians; arm = per-seed mean of 5 learners)
+X1 v3w {'all_delay': 227631.0, 'passed': 2132.4, 'ttc_net': 1825.2, 'ttc3': 1825.2, 'sev3': 94.7, 'b3_step': 3649.46, 'b7_step': 4.02, 'alks_full_moving': 0.0, 'brake_net': 3538.6, 'ttc_half': 1822.1} coll 0.2
+X1 baseline-v3 {'all_delay': 237820.27, 'passed': 2119.9, 'ttc_net': 1865.9, 'ttc3': 1865.9, 'sev3': 90.9, 'b3_step': 3623.91, 'b7_step': 4.12, 'alks_full_moving': 0.0, 'brake_net': 3520.8, 'ttc_half': 1865.6} coll 0.0
+X1 p333 {'all_delay': 229734.87, 'passed': 2123.5, 'ttc_net': 3067.5, 'ttc3': 3067.5, 'sev3': 159.0, 'b3_step': 4276.7, 'b7_step': 4.45, 'alks_full_moving': 0.0, 'brake_net': 4207.0, 'ttc_half': 3100.5} coll 0.0
+X1 os1_15_10 {'all_delay': 240686.3, 'passed': 2097.0, 'ttc_net': 2605.5, 'ttc3': 2605.5, 'sev3': 136.0, 'b3_step': 4020.3, 'b7_step': 4.4, 'alks_full_moving': 0.0, 'brake_net': 3894.5, 'ttc_half': 2629.0} coll 1.0
+X1 nc {'all_delay': 325288.8, 'passed': 2023.0, 'ttc_net': 1435.5, 'ttc3': 1435.5, 'sev3': 87.0, 'b3_step': 3143.5, 'b7_step': 3.0, 'alks_full_moving': 0.0, 'brake_net': 3057.5, 'ttc_half': 1442.0} coll 1.0
+X1 b7_step medians every arm: {'d2': 4.7, 'd1': 3.7, 'd0': 3.9, 'w0': 4.05, 'd4': 3.95, 'd3': 3.8, 'w1': 4.15, 'w2': 3.75, 'w3': 3.8, 'w4': 3.8, 'f0': 3.9, 'f1': 3.7, 'f2': 4.7, 'f3': 3.8, 'f4': 3.95, 'os1_15_10': 4.4, 'copy': 3.8, 'p333': 4.45, 'z33133': 4.9, 'os1_10_0': 4.05, 'lr400_16_1': 4.65, 'lr1000_16_2': 4.2, 'lr1000_10_1': 4.75, 'a4400_10_1': 4.35, 'r4a1': 3.85, 'lr400_13_2': 4.65, 'os0_10_10': 4.15, 'nc': 3.0}
+X1 alks_full_moving max over all rows: 2.0 median per arm max: 0.0
+X1 collisions per arm: {'d2': 0.0, 'd1': 0.0, 'd0': 0.0, 'w0': 0.0, 'd4': 0.0, 'd3': 0.0, 'w1': 1.0, 'w2': 0.0, 'w3': 0.0, 'w4': 0.0, 'f0': 0.0, 'f1': 0.0, 'f2': 0.0, 'f3': 0.0, 'f4': 0.0, 'os1_15_10': 1.0, 'copy': 0.0, 'p333': 0.0, 'z33133': 0.0, 'os1_10_0': 0.0, 'lr400_16_1': 0.0, 'lr1000_16_2': 0.0, 'lr1000_10_1': 1.0, 'a4400_10_1': 0.0, 'r4a1': 0.0, 'lr400_13_2': 0.0, 'os0_10_10': 0.0, 'nc': 1.0}
+X1 v3w arm coll 0.2 d arm coll 0.0
+X2 v3w {'all_delay': 218702.41, 'passed': 2158.6, 'ttc_net': 1504.2, 'ttc3': 1504.2, 'sev3': 76.9, 'b3_step': 3368.47, 'b7_step': 3.52, 'alks_full_moving': 0.0, 'brake_net': 3284.9, 'ttc_half': 1503.7} coll 0.2
+X2 baseline-v3 {'all_delay': 221979.01, 'passed': 2138.8, 'ttc_net': 1497.9, 'ttc3': 1497.9, 'sev3': 75.4, 'b3_step': 3312.7, 'b7_step': 3.49, 'alks_full_moving': 0.0, 'brake_net': 3210.8, 'ttc_half': 1503.3} coll 0.0
+X2 p333 {'all_delay': 223716.1, 'passed': 2134.0, 'ttc_net': 2449.0, 'ttc3': 2449.0, 'sev3': 136.5, 'b3_step': 3863.4, 'b7_step': 4.35, 'alks_full_moving': 0.0, 'brake_net': 3769.0, 'ttc_half': 2466.0} coll 0.0
+X2 os1_15_10 {'all_delay': 225575.27, 'passed': 2137.0, 'ttc_net': 1902.0, 'ttc3': 1902.0, 'sev3': 113.5, 'b3_step': 3551.2, 'b7_step': 4.0, 'alks_full_moving': 0.0, 'brake_net': 3443.0, 'ttc_half': 1898.5} coll 0.0
+X2 nc {'all_delay': 279918.5, 'passed': 2062.5, 'ttc_net': 1436.0, 'ttc3': 1436.0, 'sev3': 92.0, 'b3_step': 3210.45, 'b7_step': 3.35, 'alks_full_moving': 0.0, 'brake_net': 3164.0, 'ttc_half': 1443.0} coll 0.0
+X2 b7_step medians every arm: {'d0': 3.4, 'd1': 3.6, 'd2': 3.75, 'd3': 3.4, 'd4': 3.5, 'w0': 3.3, 'w1': 3.55, 'w2': 3.35, 'w3': 3.45, 'w4': 3.75, 'f0': 3.4, 'f1': 3.6, 'f2': 3.75, 'f3': 3.4, 'f4': 3.5, 'os1_15_10': 4.0, 'copy': 3.35, 'p333': 4.35, 'z33133': 4.15, 'os1_10_0': 3.9, 'lr400_16_1': 4.4, 'lr1000_16_2': 4.55, 'lr1000_10_1': 4.35, 'a4400_10_1': 4.1, 'r4a1': 4.1, 'lr400_13_2': 4.65, 'os0_10_10': 4.1, 'nc': 3.35}
+X2 alks_full_moving max over all rows: 3.0 median per arm max: 0.0
+X2 collisions per arm: {'d0': 0.0, 'd1': 0.0, 'd2': 0.0, 'd3': 0.0, 'd4': 0.0, 'w0': 1.0, 'w1': 0.0, 'w2': 0.0, 'w3': 0.0, 'w4': 0.0, 'f0': 0.0, 'f1': 0.0, 'f2': 0.0, 'f3': 0.0, 'f4': 0.0, 'os1_15_10': 0.0, 'copy': 0.0, 'p333': 0.0, 'z33133': 0.0, 'os1_10_0': 1.0, 'lr400_16_1': 0.0, 'lr1000_16_2': 0.0, 'lr1000_10_1': 0.0, 'a4400_10_1': 0.0, 'r4a1': 0.0, 'lr400_13_2': 0.0, 'os0_10_10': 0.0, 'nc': 0.0}
+X2 v3w arm coll 0.2 d arm coll 0.0
+
+== splits
+X1 v3w {'r_3': 414.8, 'r_4a': 970.5, 'r_ramp2': 364.9, 'r_rest': 67.1, 's_lo': 718.0, 's_mid': 632.2, 's_hi': 467.8, 'p_before': 26.6, 'p_taper': 27.1, 'p_hold': 219.2, 'p_after': 425.3, 'p_rest': 1093.9}
+X1 p333 {'r_3': 828.0, 'r_4a': 1660.0, 'r_ramp2': 427.0, 'r_rest': 87.0, 's_lo': 1312.0, 's_mid': 936.5, 's_hi': 822.0, 'p_before': 25.0, 'p_taper': 47.5, 'p_hold': 366.5, 'p_after': 720.0, 'p_rest': 1903.0}
+X1 nc {'r_3': 250.0, 'r_4a': 673.0, 'r_ramp2': 454.0, 'r_rest': 51.0, 's_lo': 593.0, 's_mid': 523.0, 's_hi': 356.5, 'p_before': 19.5, 'p_taper': 29.0, 'p_hold': 204.0, 'p_after': 337.5, 'p_rest': 799.0}
+X2 v3w {'r_3': 312.7, 'r_4a': 713.5, 'r_ramp2': 281.7, 'r_rest': 107.2, 's_lo': 616.0, 's_mid': 503.8, 's_hi': 381.0, 'p_before': 47.0, 'p_taper': 5.1, 'p_hold': 32.5, 'p_after': 92.6, 'p_rest': 1286.4}
+X2 os1_15_10 {'r_3': 522.0, 'r_4a': 869.5, 'r_ramp2': 331.0, 'r_rest': 155.0, 's_lo': 713.0, 's_mid': 616.0, 's_hi': 586.0, 'p_before': 43.0, 'p_taper': 0.0, 'p_hold': 46.0, 'p_after': 103.0, 'p_rest': 1706.0}
+X2 nc {'r_3': 93.0, 'r_4a': 621.0, 'r_ramp2': 305.0, 'r_rest': 417.5, 's_lo': 554.5, 's_mid': 513.0, 's_hi': 368.5, 'p_before': 87.0, 'p_taper': 11.5, 'p_hold': 42.5, 'p_after': 164.0, 'p_rest': 1069.0}
+rows 2240 mismatches {'ttc3!=ttc_net': 0, 'road': 0, 'speed': 0, 'period': 0} max abs diff {'road': 0, 'speed': 0, 'period': 0}
+arms where median ttc3 != median ttc_net: []
+
+== final policies f_i vs chosen d_i rows
+numeric key differences f vs d: 0
+
+== blind spots, every test arm and the two policy arms
+over 5 %: [] largest deviations: braking 0.0438 TTC 0.0189

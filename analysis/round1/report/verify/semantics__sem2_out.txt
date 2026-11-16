@@ -1,0 +1,8 @@
+opponent rules: 12 ['a4400_10_1', 'copy', 'lr1000_10_1', 'lr1000_16_2', 'lr400_13_2', 'lr400_16_1', 'os0_10_10', 'os1_10_0', 'os1_15_10', 'p333', 'r4a1', 'z33133']
+cells forms: {'X1': {'uniform': 'p333', 'zone': 'z33133', 'local': 'lr400_13_2', 'own': 'os0_10_10'}, 'X2': {'uniform': 'p333', 'on4a': 'r4a1', 'local': 'lr1000_16_2', 'adapt4a': 'a4400_10_1', 'own': 'os1_15_10'}}
+X1 w alks_full_moving total 15.0 runs 200 b7_step median per run 4.0
+X1 d alks_full_moving total 17.0 runs 200 b7_step median per run 3.95
+X1 nc all_delay median 325289 N median 756530 dist_step/27.78 median 433527 mean per-vehicle delay (finished) median 147.5
+X2 w alks_full_moving total 24.0 runs 200 b7_step median per run 3.55
+X2 d alks_full_moving total 18.0 runs 200 b7_step median per run 3.6
+X2 nc all_delay median 279919 N median 716903 dist_step/27.78 median 437109 mean per-vehicle delay (finished) median 127.8

@@ -1,4 +1,4 @@
-"""Screen D1 runner (docs/research/protocols/screen_D1_detector_faults.md, approved V89, Addendum 2026-10-19).
+"""Screen D1 runner (docs/local/research/protocols/screen_D1_detector_faults.md, approved V89, Addendum 2026-10-19).
 
 Stages: tool checks (T0, T1, T3) -> STOP on failure; tuning (FX rate per demand, RF ratio per demand) on seeds
 7,400,100-119 (halt before evaluation if a tuned FX rate is at a grid edge, A1); evaluation on 7,400,030-079
@@ -41,7 +41,7 @@ from v5b2.d1.faults import ANY, FAULTS, fill_diagnostics, ratio_fit
 from v5b2.d1.meter_signal import LEGACY
 from v5b2.ops.guard import ComputeGuard
 
-PAGE = "docs/research/protocols/screen_D1_detector_faults.md"
+PAGE = "docs/local/research/protocols/screen_D1_detector_faults.md"
 QS = (1600.0, 2000.0)
 SEEDS = {"smoke": tuple(range(7_400_000, 7_400_003)), "tcheck": tuple(range(7_400_010, 7_400_030)),
          "tune": tuple(range(7_400_100, 7_400_120)), "eval": tuple(range(7_400_030, 7_400_080))}

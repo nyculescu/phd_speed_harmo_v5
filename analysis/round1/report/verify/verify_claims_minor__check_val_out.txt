@@ -1,0 +1,8 @@
+X1 baseline-v3 ttc vs os1_15_10 [28.8, 24.4, 33.0] | ttc vs nc [-30.7, -35.7, -22.6] | delay vs nc [27.0, 23.6, 28.8]
+X1 v3w ttc vs os1_15_10 [32.1, 29.2, 35.5] | ttc vs nc [-22.0, -30.9, -16.8] | delay vs nc [28.0, 23.8, 31.4]
+X1 res ttc vs os1_15_10 [9.6, 4.5, 11.8] | ttc vs nc [-69.3, -72.3, -56.0] | delay vs nc [25.8, 21.6, 28.9]
+X1 attr ttc vs os1_15_10 [32.9, 30.4, 38.5] | ttc vs nc [-18.8, -24.6, -14.9] | delay vs nc [14.8, 13.1, 18.1]
+X2 baseline-v3 ttc vs os1_15_10 [21.5, 17.1, 28.2] | ttc vs nc [-4.4, -14.4, 2.1] | delay vs nc [20.0, 18.4, 22.6]
+X2 v3w ttc vs os1_15_10 [24.8, 19.2, 32.6] | ttc vs nc [-0.4, -5.5, 13.8] | delay vs nc [23.3, 21.8, 24.6]
+X2 res ttc vs os1_15_10 [10.0, 7.2, 17.6] | ttc vs nc [-23.6, -33.8, -7.6] | delay vs nc [22.0, 20.3, 24.0]
+X2 attr ttc vs os1_15_10 [25.2, 20.7, 31.3] | ttc vs nc [-6.2, -9.7, 10.4] | delay vs nc [12.5, 10.6, 13.7]

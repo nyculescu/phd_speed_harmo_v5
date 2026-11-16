@@ -1,4 +1,4 @@
-"""Screen D2 runner (docs/research/protocols/screen_D2_incidents.md, V91; approved V92 with Addendum A12).
+"""Screen D2 runner (docs/local/research/protocols/screen_D2_incidents.md, V91; approved V92 with Addendum A12).
 
 Post-onset action set (V92(c), Addendum D2-A12): A = G x {stay, back}. A switch run 'N before onset, a after onset'
 for a = g (stay) keeps g to the end of control; for a = g+back it runs g until the incident clears, then N again.
@@ -62,7 +62,7 @@ from v5b2.d2.episode import XF_SUMO_OFFSET, run_key  # noqa: F401
 from v5b2.d2.incidents import CONDITIONS, INCIDENTS, NONE
 from v5b2.ops.guard import ComputeGuard
 
-PAGE = "docs/research/protocols/screen_D2_incidents.md"
+PAGE = "docs/local/research/protocols/screen_D2_incidents.md"
 QS = (1600.0, 2000.0)
 SEEDS = {"smoke": tuple(range(7_400_000, 7_400_004)), "tcheck": tuple(range(7_400_080, 7_400_100)),
          "tune": tuple(range(7_400_120, 7_400_140)), "eval": tuple(range(7_400_140, 7_400_190))}

@@ -3,7 +3,7 @@ V164 default ACC gains).
 
 Every vehicle gets its own vType, drawn from the episode seed (CRN: every arm of a seed sees the same vehicles). Each
 attribute group has its own RNG stream, so adding a group does not change the others. Sources are the reference numbers
-of docs/research/driver_params_hdv_cav_v0.md.
+of docs/local/research/driver_params_hdv_cav_v0.md.
 
 Classes (share of all vehicles, V160-V161): hdv_car 42.5 %, truck 7.5 % (human, trailer class), acc 12.5 %, cacc 12.5 %,
 alks 25 % (the only commanded class).
@@ -70,6 +70,7 @@ HDV_TAU_SCALE = 1.0
 HDV_SIGMA_SCALE = 1.0
 VTYPE_TUNE = {}
 ACCEL_LEN = 300.0
+ACCEL2_LEN = 300.0     # C1 check (a): length of the ramp-2 accelerating lane 4a, lengthened downstream
 HDV_ACCEL: float | None = None
 HDV_ASL_SCALE = 1.0
 # V192 test: LC2013 lcAssertive for vehicles entering by the on-ramp; None = SUMO default
@@ -280,18 +281,19 @@ def apply_plant(name: str, cfg: pl.Config) -> pl.Config:
 
 def tune(p: dict) -> None:
     """Plant settings for the V314 sweeps, applied after apply_plant; an empty dict leaves the adopted plant unchanged."""
-    global HDV_TAU_SCALE, HDV_ASL_SCALE, HDV_SIGMA_SCALE, VTYPE_TUNE, ACCEL_LEN
+    global HDV_TAU_SCALE, HDV_ASL_SCALE, HDV_SIGMA_SCALE, VTYPE_TUNE, ACCEL_LEN, ACCEL2_LEN
     HDV_TAU_SCALE = p.get("tau_scale", HDV_TAU_SCALE)
     HDV_ASL_SCALE = p.get("asl_scale", HDV_ASL_SCALE)
     HDV_SIGMA_SCALE = p.get("sigma_scale", 1.0)
     VTYPE_TUNE = {k: p.get(k, {}) for k in ("lc", "hdv", "truck", "alks")}
     ACCEL_LEN = p.get("accel_len", 300.0)
+    ACCEL2_LEN = p.get("accel2_len", 300.0)
 
 
 def build_net(cfg: pl.Config) -> Path:
     """The p1c geometry (or the V190 on-ramp corridor) with a 100 km/h limit on every edge (V156)."""
     if cfg.geom in corridor.NETS:
-        return corridor.build(LIMIT, cfg.geom, ACCEL_LEN)
+        return corridor.build(LIMIT, cfg.geom, ACCEL_LEN, ACCEL2_LEN)
     if cfg.geom in corridor.STRAIGHT:
         return corridor.build_straight(cfg.geom, LIMIT)
     with mock.patch.object(pl, "SPEED", LIMIT):

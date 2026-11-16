@@ -1,4 +1,4 @@
-"""Screen D2 episode: one SUMO run per process (docs/research/protocols/screen_D2_incidents.md).
+"""Screen D2 episode: one SUMO run per process (docs/local/research/protocols/screen_D2_incidents.md).
 
 Reuses screen D1's episode shape unchanged (v5b2/d1/episode.py, commit a23613b): BN4 plant, constant demand q,
 40 s uncontrolled warm-up, 900 s control with 1-s decisions (meter.step before each 1-s advance), all-green

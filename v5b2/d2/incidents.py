@@ -1,4 +1,4 @@
-"""Screen D2 Rule 2: incidents on the BN4 bottleneck (docs/research/protocols/screen_D2_incidents.md).
+"""Screen D2 Rule 2: incidents on the BN4 bottleneck (docs/local/research/protocols/screen_D2_incidents.md).
 
 Kinds come from the archive's perturbations (claude/vsl-lab-core@2a79e5e vsl_lab/envs/bn4_env.py, _perturb_tick):
 - slow:  the speed limit of the final bottleneck edge 5 (1 lane; the archive's lane 5_0) drops to 5 m/s;

@@ -1,4 +1,4 @@
-"""Screen D1 episode: one SUMO run per process (docs/research/protocols/screen_D1_detector_faults.md).
+"""Screen D1 episode: one SUMO run per process (docs/local/research/protocols/screen_D1_detector_faults.md).
 
 Port: claude/vsl-lab-core@2a79e5e
 - vsl_lab/envs/bn4_env.py: FBMeter (unchanged control law; changes: the reading is injectable and a missing

@@ -1,0 +1,32 @@
+cell X2 seeds 40 Q 5300.0
+ sum check road 0.0
+ sum check speed 0.0
+ sum check period 0.0
+ ref os1_15_10: total ttc3 gain dmed=397.8 paired=517.7 mean=482.3
+   road r_3: dmed=209 pm=219 [164,254] meanshare=44%; r_4a: dmed=156 pm=131 [105,217] meanshare=32%; r_ramp2: dmed=49 pm=60 [-0,107] meanshare=7%; r_rest: dmed=48 pm=24 [6,72] meanshare=17%
+   speed s_lo: dmed=97 pm=135 [96,200] meanshare=26%; s_mid: dmed=112 pm=145 [99,180] meanshare=28%; s_hi: dmed=205 pm=230 [179,249] meanshare=46%
+   period p_before: dmed=-4 pm=-7 [-24,28] meanshare=5%; p_taper: dmed=-5 pm=-1 [-3,0] meanshare=0%; p_hold: dmed=14 pm=12 [4,18] meanshare=3%; p_after: dmed=10 pm=1 [-11,28] meanshare=3%; p_rest: dmed=420 pm=456 [356,573] meanshare=88%
+ ref p333: total ttc3 gain dmed=944.8 paired=1007.6 mean=948.5
+   road r_3: dmed=348 pm=337 [298,387] meanshare=34%; r_4a: dmed=530 pm=512 [427,610] meanshare=56%; r_ramp2: dmed=46 pm=56 [10,104] meanshare=6%; r_rest: dmed=35 pm=23 [2,52] meanshare=5%
+   speed s_lo: dmed=470 pm=500 [392,557] meanshare=49%; s_mid: dmed=245 pm=249 [210,276] meanshare=25%; s_hi: dmed=242 pm=243 [224,275] meanshare=26%
+   period p_before: dmed=-4 pm=-7 [-24,28] meanshare=3%; p_taper: dmed=-5 pm=-1 [-4,0] meanshare=0%; p_hold: dmed=14 pm=14 [6,19] meanshare=2%; p_after: dmed=17 pm=6 [-11,28] meanshare=2%; p_rest: dmed=871 pm=981 [738,1073] meanshare=94%
+ ref nc: total ttc3 gain dmed=-68.2 paired=-27.7 mean=10.8
+   road r_3: dmed=-220 pm=-208 [-246,-188] meanshare=-1878%; r_4a: dmed=-92 pm=-103 [-151,-66] meanshare=-1011%; r_ramp2: dmed=23 pm=28 [-5,49] meanshare=204%; r_rest: dmed=310 pm=207 [118,386] meanshare=2786%
+   speed s_lo: dmed=-62 pm=-31 [-84,32] meanshare=-110%; s_mid: dmed=9 pm=13 [-11,71] meanshare=286%; s_hi: dmed=-12 pm=-20 [-37,7] meanshare=-76%
+   period p_before: dmed=40 pm=13 [-7,59] meanshare=444%; p_taper: dmed=6 pm=7 [-0,10] meanshare=55%; p_hold: dmed=10 pm=3 [-7,18] meanshare=175%; p_after: dmed=71 pm=44 [6,69] meanshare=395%; p_rest: dmed=-217 pm=-156 [-296,10] meanshare=-970%
+cell X1 seeds 40 Q 5300.0
+ sum check road 0.0
+ sum check speed 0.0
+ sum check period 0.0
+ ref os1_15_10: total ttc3 gain dmed=780.3 paired=779.3 mean=739.3
+   road r_3: dmed=486 pm=489 [444,530] meanshare=60%; r_4a: dmed=204 pm=248 [137,274] meanshare=28%; r_ramp2: dmed=60 pm=58 [23,104] meanshare=8%; r_rest: dmed=17 pm=15 [-8,32] meanshare=3%
+   speed s_lo: dmed=245 pm=227 [174,288] meanshare=29%; s_mid: dmed=211 pm=217 [192,247] meanshare=28%; s_hi: dmed=326 pm=323 [308,359] meanshare=43%
+   period p_before: dmed=-2 pm=-4 [-15,11] meanshare=2%; p_taper: dmed=20 pm=14 [3,25] meanshare=2%; p_hold: dmed=97 pm=102 [41,127] meanshare=12%; p_after: dmed=180 pm=170 [152,210] meanshare=25%; p_rest: dmed=463 pm=441 [375,505] meanshare=60%
+ ref p333: total ttc3 gain dmed=1242.3 paired=1247.9 mean=1244.5
+   road r_3: dmed=413 pm=467 [363,560] meanshare=35%; r_4a: dmed=690 pm=685 [597,834] meanshare=59%; r_ramp2: dmed=62 pm=67 [17,98] meanshare=5%; r_rest: dmed=20 pm=14 [3,32] meanshare=2%
+   speed s_lo: dmed=594 pm=593 [484,731] meanshare=47%; s_mid: dmed=304 pm=308 [273,368] meanshare=25%; s_hi: dmed=354 pm=357 [319,379] meanshare=28%
+   period p_before: dmed=-2 pm=-4 [-14,11] meanshare=1%; p_taper: dmed=20 pm=20 [10,29] meanshare=2%; p_hold: dmed=147 pm=136 [90,174] meanshare=11%; p_after: dmed=295 pm=286 [230,345] meanshare=23%; p_rest: dmed=809 pm=818 [732,908] meanshare=63%
+ ref nc: total ttc3 gain dmed=-389.7 paired=-350.5 mean=-324.6
+   road r_3: dmed=-165 pm=-155 [-189,-95] meanshare=48%; r_4a: dmed=-298 pm=-308 [-357,-251] meanshare=93%; r_ramp2: dmed=89 pm=101 [52,159] meanshare=-32%; r_rest: dmed=-16 pm=-3 [-27,17] meanshare=-9%
+   speed s_lo: dmed=-125 pm=-124 [-169,-77] meanshare=36%; s_mid: dmed=-109 pm=-91 [-152,-66] meanshare=29%; s_hi: dmed=-111 pm=-118 [-138,-86] meanshare=35%
+   period p_before: dmed=-7 pm=-6 [-11,7] meanshare=-4%; p_taper: dmed=2 pm=0 [-7,8] meanshare=-1%; p_hold: dmed=-15 pm=-18 [-39,12] meanshare=3%; p_after: dmed=-88 pm=-84 [-119,-53] meanshare=28%; p_rest: dmed=-295 pm=-266 [-300,-223] meanshare=74%

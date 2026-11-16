@@ -1,4 +1,4 @@
-"""B bind check runs on m32 (V258, docs/research/protocols/drafts/bind_B_core_v2.md): no-control arms of stages S,
+"""B bind check runs on m32 (V258, docs/local/research/protocols/drafts/bind_B_core_v2.md): no-control arms of stages S,
 C0 and the ladder (NC, NCμ, the deadlock-detector controls). The control arms come with stage T.
 
 One run: constant Poisson demand Q for WINDOW_END s (warm-up to 600 s, window 600-4,200 s by scheduled departure),

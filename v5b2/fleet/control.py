@@ -1,4 +1,4 @@
-"""E1 controllers on ramp32 (V213, docs/research/protocols/e1_headroom.md §3).
+"""E1 controllers on ramp32 (V213, docs/local/research/protocols/e1_headroom.md §3).
 
 Meter at TLS 'rm': ALINEA at 'alinea_3' or PI-ALINEA at the drop loop, the 150-s queue law, the V190 bounds and
 overrides, and a red-rest actuator (one short green per waiting vehicle, 5-s amber at metering onset and, after a

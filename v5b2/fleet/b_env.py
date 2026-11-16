@@ -59,6 +59,19 @@ BIN_M = 200.0
 RAMP_LEN, RAMP_R_LEN = 420.0, 392.0     # edges r + rj before the 3a start
 LEN_3, LEN_4 = 1196.0, 1000.0
 RAMP_ZONE_END = 295.0 + bm.MA_EDGE3_HEAD     # end of the merge zone from the 3a start
+TRAIN_LEN = {"3a": 294.72, "4a": 294.72}     # lane-0 lengths of the r2m3 net every policy was trained on (V532 VV-D7)
+
+
+def road_starts(n) -> dict:
+    """Each r2m3 road's start from the 3a start, given lane-0 lengths n(road)."""
+    m2 = n("3a") + n("3")
+    return {"1": -n("1") - n("2"), "2": -n("2"), "3a": 0.0, "3": n("3a"), "4a": m2, "4": m2 + n("4a"), "5": m2 + n("4a") + n("4"),
+            "r": -n("r") - n("rj"), "rj": -n("rj"), "r2": m2 - n("r2") - n("rj2"), "rj2": m2 - n("rj2")}
+
+
+def geometry_is_trained(lane_len) -> bool:
+    """True if the acceleration lanes have the training lengths; lane_len(lane id) gives a built length."""
+    return all(abs(lane_len(e + "_0") - L) < 1e-6 for e, L in TRAIN_LEN.items())
 # Per-vehicle reward (V289, V292). Own level hardly moves own speed; randomised per trip, the flow term at 0.4 makes short headways pay outside the merge zone. Safety 20: at 10, run 3 kept 0.8 s through the merge zone.
 W_CAV_OWN, W_CAV_NEAR, W_CAV_TTC = 0.5, 0.5, 20.0
 W_CAV_FLOW = 0.4
@@ -151,18 +164,15 @@ class MergeEnv(gym.Env):
         d = fl.build_net(self.cfg)
         self.t_end = self.warm + self.episode
         self.dem = fl.FleetDemand(s, [(0.0, self.t_end, q)], self.cfg)
-        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
-        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
-        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
         self.v2v_lead, self.v2v_on, self.v2v_cur = {}, set(), {}
         self.smooth_cap, self.smooth_target, self.smooth_need = {}, {}, {}
-        self.desired = {v.vid: v.desired for v in self.dem.veh}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.rou = self.run_dir / f"r_{os.getpid()}_{s}.rou.xml"
         self.v2v_down = False
         self.pert = pt.Perturb(self, self.perturb, s) if self.perturb else None
         if self.pert:
             self.pert.demand()
+        self._demand_sets()     # after demand(): a surge replaces the demand list (planb.md §4.3)
         self.dem.write(self.rou)
         self.sim = CrashSim(d / "net.xml", self.rou, self.run_dir, self.dem, additional=[d / "add.xml"],
                             step_length=self.dt, seed=s)
@@ -395,6 +405,13 @@ class MergeEnv(gym.Env):
 
     def _cap_target(self, v: str) -> float:
         return FREE_MAX_SPEED
+
+    def _demand_sets(self) -> None:
+        """The vehicle sets the controllers and counters use, from the demand list as it will be written."""
+        self.ramp = {v.vid for v, r in zip(self.dem.veh, self.dem.route_of) if r.startswith("ramp")}
+        self.alks = {v.vid for v in self.dem.veh if v.cls == "alks" and v.vid not in self.ramp}
+        self.alks_all = {v.vid for v in self.dem.veh if v.cls == "alks"}
+        self.desired = {v.vid: v.desired for v in self.dem.veh}
 
     def _oracle_cap(self, v: str) -> float:
         o = self.pert.oracle_now if self.pert else None
@@ -657,6 +674,7 @@ class CavEnv(ZoneEnv):
     def _clear_cav(self) -> None:
         self.x_base = {}
         self.lvl, self.moved, self.ldir, self.xlast, self.bins, self.acc = {}, {}, {}, {}, {}, defaultdict(float)
+        self.xlast_raw = {}
         self.ids, self.on, self.stats, self.asked, self.lane_dir = [], set(), {}, {}, {}
         self.speed_lvl = {}
         self.cacc, self.c_net, self.offset, self.base_lvl = defaultdict(float), 0.0, {}, {}
@@ -772,6 +790,9 @@ class CavEnv(ZoneEnv):
             on = cur is not None and self.v2v_lead.get(v) == cur and not self.v2v_down
             self.v2v_lead[v] = cur
             lev = self._hw_level(v, self.lvl.get(v, 0))
+            sw = getattr(self, "hw_switch", None)     # V505 EV: a told or detected switch replaces the level (absent: unchanged)
+            if sw is not None:
+                lev = sw.level(v, lev, on)
             want = self.headways[lev] if on else ALKS_TAU0
             (self.on.add if on else self.on.discard)(v)
             if rise:     # an instant rise brakes hard and ends before the next 1-Hz sample (V377)
@@ -857,16 +878,21 @@ class CavEnv(ZoneEnv):
             return 0.0
         return shared
 
-    def _x(self, v: str) -> float:
-        """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value."""
+    def _x(self, v: str, raw: bool = False) -> float:
+        """Position along the route, 0 at the 3a start; a vehicle inside a junction keeps its last value. With x_remap (merge V&V,
+        VV-D7) the policy's position is the road's start on the 300-m training net plus the lane position scaled to the training
+        length; raw=True gives the built position in metres."""
         e = ls.vehicle.getRoadID(v)
         if self.plant.get("fix_x") and self.cfg.geom == R2M3:
             base = self._x_base().get(e)
             if base is None:
-                return self.xlast.get(v, 0.0)
-            x = base + ls.vehicle.getLanePosition(v)
-            self.xlast[v] = x
-            return x
+                return (self.xlast_raw if raw else self.xlast).get(v, 0.0)
+            p = ls.vehicle.getLanePosition(v)
+            x = x_raw = base + p
+            if self.plant.get("x_remap"):
+                x = self._x_base(train=True)[e] + p * self._x_scale(e)
+            self.xlast[v], self.xlast_raw[v] = x, x_raw
+            return x_raw if raw else x
         base = {"1": -self.l1 - self.l2, "2": -self.l2, "3a": 0.0, "3": self.l3a, "r": -RAMP_LEN, "rj": -RAMP_LEN + RAMP_R_LEN}.get(e)
         if base is None:
             two = self.cfg.geom == R2M3     # the second merge's 4a sits between edges 3 and 4
@@ -884,14 +910,15 @@ class CavEnv(ZoneEnv):
         self.xlast[v] = x
         return x
 
-    def _x_base(self) -> dict:
-        """V378: each r2m3 road's start from the 3a start, from the real lane lengths."""
-        if not self.x_base:
-            n = lambda e: ls.lane.getLength(e + "_0")
-            m2 = n("3a") + n("3")
-            self.x_base = {"1": -n("1") - n("2"), "2": -n("2"), "3a": 0.0, "3": n("3a"), "4a": m2, "4": m2 + n("4a"), "5": m2 + n("4a") + n("4"),
-                           "r": -n("r") - n("rj"), "rj": -n("rj"), "r2": m2 - n("r2") - n("rj2"), "rj2": m2 - n("rj2")}
-        return self.x_base
+    def _x_base(self, train: bool = False) -> dict:
+        """V378: each r2m3 road's start from the 3a start, from the real lane lengths; train=True: on the 300-m training net."""
+        key = "train" if train else "built"
+        if key not in self.x_base:
+            self.x_base[key] = road_starts(lambda e: TRAIN_LEN.get(e) if train and e in TRAIN_LEN else ls.lane.getLength(e + "_0"))
+        return self.x_base[key]
+
+    def _x_scale(self, e: str) -> float:
+        return TRAIN_LEN[e] / ls.lane.getLength(e + "_0") if e in TRAIN_LEN else 1.0
 
     def _obs(self) -> tuple:
         self.l3a = ls.lane.getLength("3a_0")
@@ -907,17 +934,18 @@ class CavEnv(ZoneEnv):
         vz = [min(sp[z] / cnt[z] / fl.LIMIT, 1.0) if cnt[z] else 1.0 for z in range(N_ZONES)]
         accel = ("3a_0", "4a_0") if self.cfg.geom == R2M3 else ("3a_0",)
         n3a = sum(ls.lane.getLastStepVehicleNumber(x) for x in accel)
-        ramp = sorted((self._x(v), v) for x in accel for v in ls.lane.getLastStepVehicleIDs(x))
+        ramp = sorted((self._x(v, raw=True), v) for x in accel for v in ls.lane.getLastStepVehicleIDs(x))     # "near" stays in metres
         rows = []
         for v in ids:
             x = self._x(v)
+            xr = self.xlast_raw.get(v, x)
             s = ls.vehicle.getSpeed(v)
             lead = ls.vehicle.getLeader(v, GAP_NORM)
             fol = ls.vehicle.getFollower(v, GAP_NORM)
             has_lead, has_fol = lead and lead[0], fol and fol[0]
             on_ramp = ls.vehicle.getRoadID(v) in ("r", "rj", "r2", "rj2") or (v in self.ramp and ls.vehicle.getLaneID(v) in accel)
             others = [r for r, w in ramp if w != v]     # V389: a merging vehicle was its own nearest, so it always read 0
-            near = min(others, key=lambda r: abs(r - x)) - x if others else GAP_NORM
+            near = min(others, key=lambda r: abs(r - xr)) - xr if others else GAP_NORM
             rows.append([np.clip(x / 1000.0, -3.5, x_top), np.clip(x / 300.0, -1.0, 1.0), float(on_ramp), ls.vehicle.getLaneIndex(v) / 3.0,
                          s / fl.LIMIT,
                          min(max(lead[1], 0.0) / GAP_NORM, 1.0) if has_lead else 1.0,
@@ -998,7 +1026,14 @@ class LocalRule:
             self.next |= {"3": "4a", "4a": "4", "r2": "rj2", "rj2": "4a"}
             self.n_bins |= {"4a": 2, "r2": 2, "rj2": 1}
 
+    def _bins_from_net(self) -> None:
+        """Merge V&V (V532): bins per road from the built lane-0 lengths; equal to N_BINS on the 300-m net."""
+        if not getattr(self, "_net_bins", False):
+            self.n_bins = {e: int(np.ceil(ls.lane.getLength(e + "_0") / BIN_M - 1e-9)) for e in self.n_bins}
+            self._net_bins = True
+
     def _ahead(self, v: str) -> float | None:
+        self._bins_from_net()
         road, i = self.env._bin(v)
         if road not in self.n_bins:
             return None
@@ -1098,3 +1133,28 @@ class RoadLevels:
                 self.last[v] = self.levels.get(road, self.default)
             out[v] = self.last.get(v, self.default)
         return out
+
+
+ZONE_EDGES_3E = (-100.0, 594.72, 1389.02, 2083.74)     # metres from the start of 3a: up, merge 1, between, merge 2, down (3E, V441)
+
+
+def zone_of_3e(x, on_ramp) -> np.ndarray:
+    """3E's zone index from the observation's position (m) and ramp flag. A ramp vehicle belongs to its merge, as in ZonePattern."""
+    x, ramp = np.asarray(x, float), np.asarray(on_ramp) > 0.5
+    z = np.searchsorted(ZONE_EDGES_3E, x, side="right")
+    return np.where(ramp & (x < ZONE_EDGES_3E[1]), 1, np.where(ramp & (x < ZONE_EDGES_3E[2]), 3, z))
+
+
+class ZoneOwnState:
+    """3E (round 2): OwnState with one (th, crowd, level, free) set per zone, moved unchanged from cma2.py at d2d0d04. It reads the same
+    observation columns as OwnState."""
+
+    def __init__(self, zones: list):
+        self.th, self.crowd = (np.array([z[k] for z in zones], float) for k in ("th", "crowd"))
+        self.level, self.free = (np.array([z[k] for z in zones], int) for k in ("level", "free"))
+
+    def __call__(self, o: tuple) -> dict:
+        ids, lo = o[:2]
+        z = zone_of_3e(lo[:, 0] * 1000.0, lo[:, 2])
+        hit = (lo[:, 4] * (100.0 / 3.6) < self.th[z]) & (lo[:, 15] * 40.0 >= self.crowd[z])
+        return dict(zip(ids, np.where(hit, self.level[z], self.free[z]).tolist()))

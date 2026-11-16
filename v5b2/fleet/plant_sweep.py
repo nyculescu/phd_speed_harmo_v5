@@ -8,6 +8,7 @@ Usage: python -m v5b2.fleet.plant_sweep stages --out DIR --workers 28
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import multiprocessing as mp
 import sys
@@ -35,7 +36,7 @@ ST_OFFSET = {"1": 0.0, "2": 3000.0, "3a": 3498.3, "3": 3793.02, "4": 4989.02, "5
 
 def to_plant(c: dict) -> dict:
     p = {"lc": {k: v for k, v in c.items() if k in LC}}
-    for k in ("tau_scale", "asl_scale", "sigma_scale", "accel_len"):
+    for k in ("tau_scale", "asl_scale", "sigma_scale", "accel_len", "accel2_len"):
         if k in c:
             p[k] = c[k]
     if "limit_kmh" in c:
@@ -52,7 +53,7 @@ def to_plant(c: dict) -> dict:
         p["smooth"] = True
     if c.get("ease"):
         p["ease"] = True
-    for k in ("ease_max", "smooth_s", "tau_rise", "taper_fast", "fix_x"):
+    for k in ("ease_max", "smooth_s", "tau_rise", "taper_fast", "fix_x", "x_remap"):
         if k in c:
             p[k] = c[k]
     if "geom" in c:
@@ -62,17 +63,34 @@ def to_plant(c: dict) -> dict:
     return p
 
 
+def geometry_guard(c: dict, kw: dict) -> None:
+    """Merge V&V (V532): on longer acceleration lanes only controllers that read the built geometry may run; the others have
+    300-m zones or positions built in and would run silently wrong."""
+    if c.get("accel_len", 300.0) == 300.0 and c.get("accel2_len", 300.0) == 300.0:
+        return
+    ctrl = c.get("ctrl", {})
+    kind = set(ctrl) - {"env"}
+    ok = (not kind or (kind == {"cav_rule"} and len(set(ctrl["cav_rule"])) == 1 and not ctrl.get("speed")) or kind == {"local_rule"}
+          or (kind == {"pt"} and c.get("fix_x") and c.get("x_remap") and not kw.get("base_rule")))
+    if not ok:
+        raise ValueError(f"controller {sorted(kind)} reads 300-m geometry; not allowed with accel_len/accel2_len {c.get('accel_len')}/{c.get('accel2_len')}")
+
+
 def run_one(a: tuple) -> dict:
     name, c, q, seed, rd = a
     import libsumo as ls
     from v5b2.fleet import b_env as be, control as ct, fleet as fl
     ctrl = c.get("ctrl", {})     # V332: rules on the frozen plant: {"cav_rule": [u, m, d]}, {"zones": [u, m, d]} or {"meter": {"setpoint": %}}
-    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
+    kw = {"cav": True, "decision": 5.0} if {"cav_rule", "pt", "local_rule", "pattern", "road_levels", "adaptive_4a", "own_state", "zone_own_state", "pts", "switch", "asch", "mpcf", "told", "detect"} & set(ctrl) else {"zones": True, "decision": 10.0, "w_change": 0.1}
     kw |= ctrl.get("env", {})
     if "pt" in ctrl:     # round 1: a policy brings the environment options it acts through, e.g. 3B's base rule
         from v5b2.fleet.c_train import act_env
         kw |= act_env(ctrl["pt"])
-    env = be.make(alks_asl=0.5, ref_delay=True, share=0.5, levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
+    if "pts" in ctrl or "switch" in ctrl:     # round 2: tail takes the options of its members, sw those of its policy
+        from v5b2.fleet.c_train import act_env
+        kw |= act_env(ctrl["pts"][-1] if "pts" in ctrl else ctrl["switch"]["pt"])
+    geometry_guard(c, kw)
+    env = be.make(alks_asl=0.5, ref_delay=True, share=c.get("share", 0.5), levels=(q,), run_dir=rd, seeds=[seed], report_net=True, plant=to_plant(c), **kw)
     rule = be.CavRule(ctrl["cav_rule"], speed=ctrl.get("speed", 0)) if "cav_rule" in ctrl else None
     if "local_rule" in ctrl:
         rule = be.LocalRule(env, **ctrl["local_rule"])
@@ -87,6 +105,33 @@ def run_one(a: tuple) -> dict:
     if "pt" in ctrl:
         from v5b2.fleet.c_train import Greedy
         rule = Greedy(ctrl["pt"])
+    if "zone_own_state" in ctrl:
+        rule = be.ZoneOwnState(ctrl["zone_own_state"]["zones"])
+    if "pts" in ctrl:
+        from v5b2.fleet.c_train import TailMean
+        rule = TailMean(ctrl["pts"])
+    if "switch" in ctrl:
+        from v5b2.fleet.c_train import Greedy, ZoneSwitch
+        sw = ctrl["switch"]
+        rule = ZoneSwitch(be.OwnState(**sw["own_state"]), Greedy(sw["pt"]), sw["x_from"])
+    if "asch" in ctrl:     # Plan B (planb.md §3.4)
+        from v5b2.fleet.planb_ctrl import Asch, build_rule
+        sw = ctrl["asch"]
+        rule = Asch(env, build_rule(env, sw["steady"], bool(c.get("fix_x"))), build_rule(env, sw["dist"], bool(c.get("fix_x"))),
+                    sw["theta_kmh"], sw["tau_s"], sw["h_kmh"])
+    if "mpcf" in ctrl:     # Plan B (planb.md §3.5)
+        from v5b2.fleet.planb_ctrl import MpcF
+        rule = MpcF(env, ctrl["mpcf"], bool(c.get("fix_x")))
+    sw = None
+    if "told" in ctrl or "detect" in ctrl:     # V505 EV §3: the FX base rule decides; the switch replaces its level per second
+        from v5b2.fleet.planb_ctrl import build_rule
+        from v5b2.fleet.v505 import Detect, Told
+        if ctrl.get("env", {}).get("hw_type") or (ctrl.get("env", {}).get("perturb") or {}).get("hw_oracle"):
+            raise ValueError("a told or detected switch replaces the level after the hw_type and hw_oracle caps; do not combine them")
+        k = "told" if "told" in ctrl else "detect"
+        x = dict(ctrl[k])
+        rule = build_rule(env, x.pop("base"), bool(c.get("fix_x")))
+        sw = env.hw_switch = (Told if k == "told" else Detect)(env, **x)
     meter = bank = None
     S, arr, prev, left, prev_a = defaultdict(float), {}, {}, {}, {}
     road_lane, lane_t, accel_t = {}, {}, {}
@@ -94,9 +139,32 @@ def run_one(a: tuple) -> dict:
     st = np.zeros((2, ST_T, ST_X)) if ctrl.get("st") else None
     attr = defaultdict(lambda: [0, 0, 0]) if ctrl.get("attrib") else None     # exposure, TTC below 3 s, braking at 3 m/s²
     step0, sec0 = env._sim_step, env._second
+    meas = None     # V468: report-only measurement pack, created after reset; reads only
+    vv = None     # merge V&V instruments (V532), created after reset; reads only
+    # V508 D3 (variant V-A): ramp-2 cars merge with lcAssertive = a while on 4a_0; the hook runs every 0.1-s step, so a merged car
+    # is reset within one step. The base value is the plant's own, which fleet.py:179 writes last into every vType.
+    from v5b2.fleet.v505 import Ramp2Assertive
+    r2 = Ramp2Assertive(ls, c.get("ramp2_assertive"), c.get("lcAssertive", 1.0)) if "ramp2_assertive" in c or c.get("m2_counts") else None
+    etrace = [] if c.get("trace_end") else None
+    r2_lane = {}     # last 1-Hz lane of each tracked ramp-2 car
+    t0ev = {} if c.get("t0_event") else None     # EV §8 T0: the slowdown's limit read back from SUMO every step
+    split = bool(c.get("split"))     # C1 §4: braking (every step) and fuel (1 Hz) by road group; reads only
+    from v5b2.fleet.measure import group
+
+    def t0_event(t):
+        p = env.pert
+        if p is None or p.kind != "slowdown":
+            return
+        from v5b2.fleet.v505 import t0_step
+        edge = p.s.get("edge", "4")
+        t0_step(t0ev, p.s, t, env.dt, ls.lane.getMaxSpeed(f"{edge}_0"), ls.edge.getLastStepMeanSpeed(edge), env.plant.get("limit", 100.0 / 3.6))
 
     def step():
         step0()
+        if r2 is not None:
+            r2.step(env.sim.t > env.warm + 1e-9)
+        if t0ev is not None:
+            t0_event(env.sim.t)
         for v in ls.simulation.getArrivedIDList():
             arr[v] = env.sim.t
         if env.sim.t > env.warm + 1e-9:
@@ -106,16 +174,25 @@ def run_one(a: tuple) -> dict:
         """V369: the 1-Hz samples below can miss what a 1-Hz actuator causes (V367), so braking and fuel are also read every step."""
         half = abs(t % 1.0 - 0.5) < 1e-6
         dt = env.dt
+        if vv is not None:
+            vv.step(t, True)
         for v in ls.vehicle.getIDList():
             a, s = ls.vehicle.getAcceleration(v), ls.vehicle.getSpeed(v)
+            if vv is not None and vv.meter:
+                vv.meter_step(t, v, s)
             alks = v in env.alks_all
+            f = ls.vehicle.getFuelConsumption(v)
             S["dist_step"] += s * dt
-            S["fuel_step"] += ls.vehicle.getFuelConsumption(v) * dt
+            S["fuel_step"] += f * dt
+            if meas is not None:
+                meas.vehicle_step(ls, v, a, s, f, t)
             S["jerk_step"] += abs(a - prev_a.get(v, a))
             if a <= -3.0:
                 S["b3_step"] += dt
                 S["b45_step"] += dt * (a <= -4.5)
                 S["b7_step"] += dt * (a <= -7.0)
+                if split and a <= -4.5:
+                    S["b45_step_g_" + group(ls.vehicle.getRoadID(v))] += dt
                 if alks:
                     S["alks_b3_step"] += dt
                     S["alks_b45_step"] += dt * (a <= -4.5)
@@ -134,6 +211,9 @@ def run_one(a: tuple) -> dict:
                     S["ttc_half"] += dv > 0 and (lead[1] + ls.vehicle.getMinGap(v)) / dv < 3.0
 
     def period(t):
+        if env.pert is not None and env.pert.kind in ("surge", "truck_fixed"):     # Plan B labels; slowdown keeps the code below
+            from v5b2.fleet.perturb import event_period
+            return event_period(env.pert.s, t)
         spec = env.pert.s if env.pert is not None and env.pert.kind == "slowdown" else None
         if spec is None:
             return "rest"
@@ -160,10 +240,12 @@ def run_one(a: tuple) -> dict:
             if dv <= 0:
                 continue
             gap = lead[1] + ls.vehicle.getMinGap(v)
-            road = ls.vehicle.getRoadID(v)
+            road = raw = ls.vehicle.getRoadID(v)
             road = road if road in ("3", "4a") else "ramp2" if road in ("r2", "rj2") else "rest"
             band = "lo" if s < 5.0 else "mid" if s < 10.0 else "hi"
             ttc = gap / dv
+            if vv is not None and ttc < 3.0:
+                vv.hit(t, v, lead, s, s - dv, gap, raw)
             for m, hit in (("ttc3", ttc < 3.0), ("ttc2", ttc < 2.0), ("ttc15", ttc < 1.5), ("sev3", dv * dv / (2.0 * max(gap, 0.1)) >= 3.0)):
                 if hit:
                     S[m] += 1
@@ -208,6 +290,12 @@ def run_one(a: tuple) -> dict:
                 rl = int(i) - 1 if e in ("3a", "4a") else int(i)
                 if road_lane.get(v, rl) != rl:
                     lane_t[v] = env.sim.t
+                    if r2 is not None and v in r2.state:     # M2 §2: lane changes of merged ramp-2 cars among 4a_1-3, 4 and 5 (merges: r2_merge)
+                        prev_ln = r2_lane.get(v, "")
+                        if e in ("4a", "4", "5") and ln != "4a_0" and prev_ln != "4a_0" and prev_ln.rsplit("_", 1)[0] in ("4a", "4", "5"):
+                            S[f"r2_lc_{e}"] += 1
+                if r2 is not None and v in r2.state:
+                    r2_lane[v] = ln
                 road_lane[v] = rl
                 if ln in ("3a_0", "4a_0"):
                     accel_t[v] = env.sim.t
@@ -219,6 +307,8 @@ def run_one(a: tuple) -> dict:
             S["jerk"] += abs(x - prev.get(v, x))
             prev[v] = x
             S["fuel"] += f
+            if split:
+                S["fuel_g_" + group(ls.vehicle.getRoadID(v))] += f
             S["fuel_truck"] += f * (v in trucks)
             S["b45"] += x <= -4.5
             S["b7"] += x <= -7.0
@@ -260,27 +350,62 @@ def run_one(a: tuple) -> dict:
             n = ls.lane.getLastStepVehicleNumber(x)
             S["n_" + x] += n
             S["nv_" + x] += n * ls.lane.getLastStepMeanSpeed(x)
+        if etrace is not None:     # M2 §7 PR-24: raw samples of both accelerating lanes, recounted offline; reads only
+            for x in ("3a_0", "4a_0"):
+                if x in lanes:
+                    etrace.append([env.sim.t, x, ls.lane.getLength(x),     # raw floats: the recount must see what the counter saw
+                                   [[v, ls.vehicle.getLanePosition(v), ls.vehicle.getSpeed(v)] for v in ls.lane.getLastStepVehicleIDs(x)]])
         l3a = ls.lane.getLength("3a_0")
         S["end_stop"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l3a - 30.0 for v in ls.lane.getLastStepVehicleIDs("3a_0"))
         if "4a_0" in lanes:
             l4a = ls.lane.getLength("4a_0")
             S["end_stop2"] += sum(ls.vehicle.getSpeed(v) < 1.0 and ls.vehicle.getLanePosition(v) > l4a - 30.0 for v in ls.lane.getLastStepVehicleIDs("4a_0"))
+        if vv is not None:
+            vv.second(env.sim.t, lanes)
         S["teleports"] += ls.simulation.getStartingTeleportNumber()
+        if r2 is not None:
+            r2.read_back(S)
+            r2.counts(S)
+        if meas is not None:
+            meas.second(ls, env.sim.t)
         return r
 
     env._sim_step, env._second = step, sec
     o = env.reset()[0]
     trucks = {v.vid for v in env.dem.veh if v.cls == "truck"}
+    c1_t0 = None
+    if split:     # C1 §10 T0: the realised share, which vehicles are automated, and the lane lengths the run was built with
+        alks = sorted(v.vid for v in env.dem.veh if v.cls == "alks")
+        c1_t0 = {"veh_n": len(env.dem.veh), "alks_n": len(alks), "alks_sha": hashlib.sha256("\n".join(alks).encode()).hexdigest(),
+                 "len_4a_0": ls.lane.getLength("4a_0"), "len_3_0": ls.lane.getLength("3_0"), "len_4_0": ls.lane.getLength("4_0")}
+    if c.get("measure"):
+        from v5b2.fleet.measure import Measure
+        meas = Measure(env, trucks, fl.routes(env.cfg.geom), lambda e: ls.lane.getLength(f"{e}_0"), env.dt)
+    from v5b2.fleet import vv_merge
+    if vv_merge.wanted(c):
+        origin = {"3a_0": {v.vid for v, r in zip(env.dem.veh, env.dem.route_of) if r == "ramp"},
+                  "4a_0": {v.vid for v, r in zip(env.dem.veh, env.dem.route_of) if r == "ramp2"}}
+        vv = vv_merge.VV(ls, c, env.alks_all, trucks, Path(c["vv_log"]) if isinstance(c.get("vv_log"), str) else None, origin)
     if "meter" in ctrl:
         bank = ct.LoopBank(fl.loop_ids(env.cfg.geom))
         bank.read(env.sim.t)
         meter = ct.SumoMeter(ct.Meter(ct.MeterLaw("alinea", ctrl["meter"]["setpoint"])), bank, "alinea")
     fixed = np.array(ctrl.get("zones", (0, 0, 0)), int)
     while True:
-        o, _, _, tr, inf = env.step(rule(o) if rule else fixed)
+        act = rule(o) if rule else fixed
+        if meas is not None and meas.cav and isinstance(act, dict) and act:
+            from v5b2.fleet.measure import policy_probs
+            before, probs, roads = dict(env.lvl), policy_probs(rule, o), {v: ls.vehicle.getRoadID(v) for v in act}
+            o, _, _, tr, inf = env.step(act)
+            meas.decisions(ls, env, act, before, probs, roads)
+        else:
+            o, _, _, tr, inf = env.step(act)
+        if vv is not None:
+            vv.obs_check(o, env)
         if tr:
             break
     length = {r: sum(ls.lane.getLength(f"{e}_0") for e in x[0].split()) for r, x in fl.routes(env.cfg.geom).items()}
+    mrow = meas.finish(env.sim.t, Path(c["measure"]) if isinstance(c["measure"], str) else None, f"{name.replace('|', '__')}__{q:.0f}__{seed}") if meas is not None else {}
     delay, ramp, ramp2 = [], [], []
     planned = done = 0
     for v, r in zip(env.dem.veh, env.dem.route_of):
@@ -313,11 +438,26 @@ def run_one(a: tuple) -> dict:
         row["attrib"] = dict(attr)
     if st is not None:     # mean speed x 10 and vehicle-seconds per 10-s, 100-m cell along the mainline
         row |= {"st_v": np.round(10.0 * st[0] / np.maximum(st[1], 1.0)).astype(int).ravel().tolist(), "st_n": st[1].astype(int).ravel().tolist()}
+    if etrace is not None:
+        row["end_trace"] = etrace
+    if t0ev is not None:
+        row["t0_event"] = dict(t0ev)
+    if c1_t0 is not None:
+        row["c1_t0"] = c1_t0
+    if sw is not None:
+        row["t0_switch"] = dict(sw.t0)
     if env.pert is not None:
         row["pert_log"] = env.pert.log
+    if rule is not None and hasattr(rule, "log") and ("asch" in ctrl or "mpcf" in ctrl):
+        row["ctrl_log"] = rule.log
+        if hasattr(rule, "diag"):
+            row["ctrl_diag"] = rule.diag
     if meter is not None:
         ms = meter.summary()
         row |= {"meter_wait_p95": ms["wait_p95_s"], "meter_wait_max": ms["wait_max_s"], "meter_served": ms["n_waits"]}
+    row |= mrow
+    if vv is not None:
+        row |= vv.finish(f"{name.replace('|', '__')}__{q:.0f}__{seed}")
     return row
 
 

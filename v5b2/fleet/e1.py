@@ -1,4 +1,4 @@
-"""E1 headroom check (V213, docs/research/protocols/e1_headroom.md): job lists, the runner and the stage analyses.
+"""E1 headroom check (V213, docs/local/research/protocols/e1_headroom.md): job lists, the runner and the stage analyses.
 
 A job is one day (or slice) of `v5b2.fleet.day one` on plant v199 at ADT 45,000. Outputs go to
 ROOT/<stage>/<cell>/<arm>/<point>/ss<sumo seed>/day_s<seed>.json, so twins and arms never share a file name. Jobs
@@ -393,7 +393,7 @@ def report_w1(root: Path = ROOT, r_only: bool = False) -> dict:
     calibration that wave 2a needs."""
     from v5b2.fleet import e1_analysis as ea
     st, sb = root / "stage0_w1", root / W1B
-    ref = json.loads((REPO_ROOT / "docs/research/results/fleet_v190_tpoff_v0.json").read_text())["reference_days"]
+    ref = json.loads((REPO_ROOT / "docs/local/research/results/fleet_v190_tpoff_v0.json").read_text())["reference_days"]
     out, stop = {}, []
     cells = ("R",) if r_only else ("R", "I")
     src = {"R": st, "I": sb}

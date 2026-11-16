@@ -1,4 +1,4 @@
-"""T1g (docs/research/protocols/p1c_feedback_t1g.md, V148): ALINEA / PI-ALINEA vs no control on BN4, slowdown.
+"""T1g (docs/local/research/protocols/p1c_feedback_t1g.md, V148): ALINEA / PI-ALINEA vs no control on BN4, slowdown.
 
 Usage: python -m v5b2.p1c.feedback_t1g --out DIR [--workers N]
 """

@@ -1,4 +1,4 @@
-"""A stage 0 (V251, docs/research/protocols/drafts/bind_A_core_v3.md): is BN4's drop a step artefact, and which
+"""A stage 0 (V251, docs/local/research/protocols/drafts/bind_A_core_v3.md): is BN4's drop a step artefact, and which
 mechanism gives a measurable drop? No control, bn4L, teleporting off.
 
 Phases: smoke (read-back), pre (Q1 from the V139 ramp), main (slow ramp per row and step), null (fixed-rate signal),

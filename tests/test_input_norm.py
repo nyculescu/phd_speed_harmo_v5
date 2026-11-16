@@ -7,7 +7,7 @@ import torch
 
 from v5b2.fleet import b_env as be, c_train as ct
 
-OLD = Path(__file__).resolve().parent.parent / "docs/research/phase3/shot_policies/C1_final.pt"
+OLD = Path(__file__).resolve().parent.parent / "docs/local/research/phase3/shot_policies/C1_final.pt"
 
 
 def data(n=4000, seed=1):

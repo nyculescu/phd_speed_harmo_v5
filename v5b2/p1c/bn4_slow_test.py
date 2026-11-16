@@ -1,5 +1,5 @@
 """V146 fair BN4 test, slowdown only: T1a/T1b (gate detector), T1c, T1d, T0, T1f, T3 on seeds 7,430,150-179.
-Gate criteria from docs/research/protocols/p1c_gate_t1.md (V138); T1e dropped (V140, V146).
+Gate criteria from docs/local/research/protocols/p1c_gate_t1.md (V138); T1e dropped (V140, V146).
 
 Usage: python -m v5b2.p1c.bn4_slow_test --out DIR [--workers N]
 """

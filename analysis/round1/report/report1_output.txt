@@ -1,0 +1,72 @@
+1-Hz against step braking, whole against half-second TTC, arms over 5 %: test [] band [('B|d0', 5000.0, 0.945, 1.004), ('B|d2', 5250.0, 0.948, 0.98), ('B|d1', 6000.0, 0.943, 0.998), ('B|d2', 5500.0, 0.945, 1.007), ('B|d4', 5000.0, 0.95, 1.009), ('B|w0', 5000.0, 0.949, 1.015), ('B|w1', 4500.0, 0.981, 0.89), ('B|w1', 5000.0, 0.931, 1.016), ('B|w1', 5250.0, 0.946, 1.01), ('B|w2', 5250.0, 0.945, 1.001), ('B|w3', 5500.0, 0.942, 0.994)]
+
+X1 at 5300: medians over 40 runs; collisions summed (arm: mean over 5 learners)
+arm | all_delay | passed | ttc_net | ttc3 | sev3 | b3_step | brake_net | alks_full_moving | ttc_half | collisions
+v3w arm | 227631.0 | 2132.4 | 1825.2 | 1825.2 | 94.7 | 3649.5 | 3538.6 | 0.0 | 1822.1 | 0.2
+baseline-v3 arm | 237820.3 | 2119.9 | 1865.9 | 1865.9 | 90.9 | 3623.9 | 3520.8 | 0.0 | 1865.6 | 0.0
+os1_15_10 | 240686.3 | 2097.0 | 2605.5 | 2605.5 | 136.0 | 4020.3 | 3894.5 | 0.0 | 2629.0 | 1.0
+copy | 264360.5 | 2094.0 | 2214.5 | 2214.5 | 98.0 | 3725.5 | 3627.5 | 0.0 | 2223.0 | 0.0
+p333 | 229734.9 | 2123.5 | 3067.5 | 3067.5 | 159.0 | 4276.7 | 4207.0 | 0.0 | 3100.5 | 0.0
+z33133 | 248041.6 | 2090.0 | 2968.5 | 2968.5 | 151.0 | 4185.0 | 4078.0 | 0.0 | 2983.0 | 0.0
+os1_10_0 | 247894.6 | 2106.5 | 2651.0 | 2651.0 | 137.0 | 4123.5 | 4019.5 | 0.0 | 2635.0 | 0.0
+lr400_16_1 | 255320.4 | 2076.5 | 2237.0 | 2237.0 | 113.0 | 3637.5 | 3556.5 | 0.0 | 2235.0 | 0.0
+lr1000_16_2 | 246040.9 | 2113.0 | 2685.0 | 2685.0 | 131.0 | 4007.0 | 3880.0 | 0.0 | 2679.5 | 0.0
+lr1000_10_1 | 234899.1 | 2111.5 | 3012.0 | 3012.0 | 157.5 | 4311.3 | 4190.5 | 0.0 | 3018.5 | 1.0
+a4400_10_1 | 257504.8 | 2080.5 | 2325.5 | 2325.5 | 115.5 | 3823.7 | 3716.5 | 0.0 | 2305.0 | 0.0
+r4a1 | 249026.4 | 2107.0 | 2756.5 | 2756.5 | 152.5 | 4103.8 | 3975.0 | 0.0 | 2774.0 | 0.0
+lr400_13_2 | 245002.1 | 2106.5 | 2782.0 | 2782.0 | 138.5 | 4029.6 | 3941.0 | 0.0 | 2802.0 | 0.0
+os0_10_10 | 238284.3 | 2122.5 | 2561.5 | 2561.5 | 146.0 | 4103.3 | 4041.5 | 0.0 | 2566.5 | 0.0
+nc | 325288.8 | 2023.0 | 1435.5 | 1435.5 | 87.0 | 3143.5 | 3057.5 | 0.0 | 1442.0 | 1.0
+split X1 v3w arm {'ttc3_r_3': 414.8, 'ttc3_r_4a': 970.5, 'ttc3_r_ramp2': 364.9, 'ttc3_r_rest': 67.1, 'ttc3_s_lo': 718.0, 'ttc3_s_mid': 632.2, 'ttc3_s_hi': 467.8, 'ttc3_p_before': 26.6, 'ttc3_p_taper': 27.1, 'ttc3_p_hold': 219.2, 'ttc3_p_after': 425.3, 'ttc3_p_rest': 1093.9}
+split X1 baseline-v3 arm {'ttc3_r_3': 461.5, 'ttc3_r_4a': 977.5, 'ttc3_r_ramp2': 362.6, 'ttc3_r_rest': 70.1, 'ttc3_s_lo': 721.5, 'ttc3_s_mid': 657.0, 'ttc3_s_hi': 504.2, 'ttc3_p_before': 37.7, 'ttc3_p_taper': 33.5, 'ttc3_p_hold': 242.3, 'ttc3_p_after': 457.6, 'ttc3_p_rest': 1145.4}
+split X1 p333 {'ttc3_r_3': 828.0, 'ttc3_r_4a': 1660.0, 'ttc3_r_ramp2': 427.0, 'ttc3_r_rest': 87.0, 'ttc3_s_lo': 1312.0, 'ttc3_s_mid': 936.5, 'ttc3_s_hi': 822.0, 'ttc3_p_before': 25.0, 'ttc3_p_taper': 47.5, 'ttc3_p_hold': 366.5, 'ttc3_p_after': 720.0, 'ttc3_p_rest': 1903.0}
+split X1 os1_15_10 {'ttc3_r_3': 900.5, 'ttc3_r_4a': 1174.5, 'ttc3_r_ramp2': 425.0, 'ttc3_r_rest': 84.5, 'ttc3_s_lo': 963.0, 'ttc3_s_mid': 843.5, 'ttc3_s_hi': 794.0, 'ttc3_p_before': 25.0, 'ttc3_p_taper': 47.0, 'ttc3_p_hold': 316.5, 'ttc3_p_after': 605.0, 'ttc3_p_rest': 1557.0}
+split X1 nc {'ttc3_r_3': 250.0, 'ttc3_r_4a': 673.0, 'ttc3_r_ramp2': 454.0, 'ttc3_r_rest': 51.0, 'ttc3_s_lo': 593.0, 'ttc3_s_mid': 523.0, 'ttc3_s_hi': 356.5, 'ttc3_p_before': 19.5, 'ttc3_p_taper': 29.0, 'ttc3_p_hold': 204.0, 'ttc3_p_after': 337.5, 'ttc3_p_rest': 799.0}
+
+X2 at 5300: medians over 40 runs; collisions summed (arm: mean over 5 learners)
+arm | all_delay | passed | ttc_net | ttc3 | sev3 | b3_step | brake_net | alks_full_moving | ttc_half | collisions
+v3w arm | 218702.4 | 2158.6 | 1504.2 | 1504.2 | 76.9 | 3368.5 | 3284.9 | 0.0 | 1503.7 | 0.2
+baseline-v3 arm | 221979.0 | 2138.8 | 1497.9 | 1497.9 | 75.4 | 3312.7 | 3210.8 | 0.0 | 1503.3 | 0.0
+os1_15_10 | 225575.3 | 2137.0 | 1902.0 | 1902.0 | 113.5 | 3551.2 | 3443.0 | 0.0 | 1898.5 | 0.0
+copy | 247845.0 | 2114.5 | 1756.0 | 1756.0 | 84.5 | 3432.1 | 3322.0 | 0.0 | 1747.5 | 0.0
+p333 | 223716.1 | 2134.0 | 2449.0 | 2449.0 | 136.5 | 3863.4 | 3769.0 | 0.0 | 2466.0 | 0.0
+z33133 | 230845.3 | 2118.5 | 2152.5 | 2152.5 | 123.0 | 3605.5 | 3512.5 | 0.0 | 2140.0 | 0.0
+os1_10_0 | 228843.0 | 2130.0 | 1955.0 | 1955.0 | 120.0 | 3686.9 | 3597.0 | 0.0 | 1962.5 | 1.0
+lr400_16_1 | 241080.5 | 2096.0 | 1769.5 | 1769.5 | 101.5 | 3273.3 | 3222.0 | 0.0 | 1767.5 | 0.0
+lr1000_16_2 | 225757.8 | 2114.5 | 2121.5 | 2121.5 | 118.0 | 3561.0 | 3495.0 | 0.0 | 2124.0 | 0.0
+lr1000_10_1 | 222962.1 | 2135.0 | 2309.0 | 2309.0 | 124.5 | 3713.5 | 3611.5 | 0.0 | 2308.0 | 0.0
+a4400_10_1 | 240959.9 | 2115.0 | 1846.5 | 1846.5 | 110.0 | 3465.6 | 3359.0 | 0.0 | 1838.5 | 0.0
+r4a1 | 232945.5 | 2120.5 | 2040.0 | 2040.0 | 110.0 | 3504.3 | 3420.0 | 0.0 | 2036.5 | 0.0
+lr400_13_2 | 231035.7 | 2124.0 | 2083.0 | 2083.0 | 119.5 | 3624.1 | 3528.0 | 0.0 | 2083.0 | 0.0
+os0_10_10 | 222061.9 | 2144.5 | 1863.5 | 1863.5 | 117.0 | 3543.6 | 3469.5 | 0.0 | 1857.5 | 0.0
+nc | 279918.5 | 2062.5 | 1436.0 | 1436.0 | 92.0 | 3210.4 | 3164.0 | 0.0 | 1443.0 | 0.0
+split X2 v3w arm {'ttc3_r_3': 312.7, 'ttc3_r_4a': 713.5, 'ttc3_r_ramp2': 281.7, 'ttc3_r_rest': 107.2, 'ttc3_s_lo': 616.0, 'ttc3_s_mid': 503.8, 'ttc3_s_hi': 381.0, 'ttc3_p_before': 47.0, 'ttc3_p_taper': 5.1, 'ttc3_p_hold': 32.5, 'ttc3_p_after': 92.6, 'ttc3_p_rest': 1286.4}
+split X2 baseline-v3 arm {'ttc3_r_3': 343.4, 'ttc3_r_4a': 699.5, 'ttc3_r_ramp2': 281.2, 'ttc3_r_rest': 130.2, 'ttc3_s_lo': 569.4, 'ttc3_s_mid': 507.7, 'ttc3_s_hi': 414.1, 'ttc3_p_before': 54.2, 'ttc3_p_taper': 3.8, 'ttc3_p_hold': 34.7, 'ttc3_p_after': 88.6, 'ttc3_p_rest': 1311.5}
+split X2 p333 {'ttc3_r_3': 661.0, 'ttc3_r_4a': 1244.0, 'ttc3_r_ramp2': 328.0, 'ttc3_r_rest': 142.0, 'ttc3_s_lo': 1086.0, 'ttc3_s_mid': 749.0, 'ttc3_s_hi': 622.5, 'ttc3_p_before': 43.0, 'ttc3_p_taper': 0.0, 'ttc3_p_hold': 46.0, 'ttc3_p_after': 109.5, 'ttc3_p_rest': 2157.0}
+split X2 os1_15_10 {'ttc3_r_3': 522.0, 'ttc3_r_4a': 869.5, 'ttc3_r_ramp2': 331.0, 'ttc3_r_rest': 155.0, 'ttc3_s_lo': 713.0, 'ttc3_s_mid': 616.0, 'ttc3_s_hi': 586.0, 'ttc3_p_before': 43.0, 'ttc3_p_taper': 0.0, 'ttc3_p_hold': 46.0, 'ttc3_p_after': 103.0, 'ttc3_p_rest': 1706.0}
+split X2 nc {'ttc3_r_3': 93.0, 'ttc3_r_4a': 621.0, 'ttc3_r_ramp2': 305.0, 'ttc3_r_rest': 417.5, 'ttc3_s_lo': 554.5, 'ttc3_s_mid': 513.0, 'ttc3_s_hi': 368.5, 'ttc3_p_before': 87.0, 'ttc3_p_taper': 11.5, 'ttc3_p_hold': 42.5, 'ttc3_p_after': 164.0, 'ttc3_p_rest': 1069.0}
+band 4500.0 v3w arm {'all_delay': 72101.6, 'passed': 1857.5, 'ttc_net': 73.5, 'sev3': 2.0, 'b3_step': 1485.4, 'collisions_total': 0.0, 'ttc_vs_nc': '-17.2 [-111.6, 642.3]', 'delay_vs_nc': '23.3 [21.0, 29.6]'}
+band 4500.0 baseline-v3 arm {'all_delay': 72280.5, 'passed': 1858.5, 'ttc_net': 82.6, 'sev3': 2.7, 'b3_step': 1511.3, 'collisions_total': 0.0, 'ttc_vs_nc': '-53.4 [-98.7, 250.1]', 'delay_vs_nc': '23.1 [20.9, 28.3]'}
+band 4500.0 p333 {'all_delay': 72374.2, 'passed': 1859.0, 'ttc_net': 129.5, 'sev3': 4.0, 'b3_step': 1526.4, 'collisions_total': 0.0, 'ttc_vs_nc': '-10.1 [-186.1, 297.5]', 'delay_vs_nc': '24.4 [20.8, 30.3]'}
+band 4500.0 os1_15_10 {'all_delay': 72374.2, 'passed': 1859.0, 'ttc_net': 129.5, 'sev3': 4.0, 'b3_step': 1526.4, 'collisions_total': 0.0, 'ttc_vs_nc': '30.4 [-186.1, 72.2]', 'delay_vs_nc': '24.4 [20.8, 30.3]'}
+band 4500.0 nc {'all_delay': 92144.6, 'passed': 1854.5, 'ttc_net': 39.5, 'sev3': 2.5, 'b3_step': 1557.3, 'collisions_total': 0.0}
+band 5000.0 v3w arm {'all_delay': 100459.7, 'passed': 2056.3, 'ttc_net': 201.4, 'sev3': 6.1, 'b3_step': 2059.8, 'collisions_total': 0.0, 'ttc_vs_nc': '38.2 [-10.3, 71.0]', 'delay_vs_nc': '26.3 [21.1, 31.3]'}
+band 5000.0 baseline-v3 arm {'all_delay': 100523.8, 'passed': 2056.0, 'ttc_net': 243.8, 'sev3': 9.9, 'b3_step': 2035.4, 'collisions_total': 0.0, 'ttc_vs_nc': '19.7 [-6.0, 51.3]', 'delay_vs_nc': '26.2 [21.1, 31.2]'}
+band 5000.0 p333 {'all_delay': 102057.7, 'passed': 2050.5, 'ttc_net': 211.0, 'sev3': 10.5, 'b3_step': 2111.1, 'collisions_total': 0.0, 'ttc_vs_nc': '-13.3 [-73.2, 59.1]', 'delay_vs_nc': '23.7 [18.4, 33.0]'}
+band 5000.0 os1_15_10 {'all_delay': 101550.6, 'passed': 2055.5, 'ttc_net': 211.0, 'sev3': 10.0, 'b3_step': 2111.1, 'collisions_total': 0.0, 'ttc_vs_nc': '-5.2 [-34.7, 59.1]', 'delay_vs_nc': '25.3 [19.0, 32.9]'}
+band 5000.0 nc {'all_delay': 147764.1, 'passed': 2031.0, 'ttc_net': 667.0, 'sev3': 44.0, 'b3_step': 2280.3, 'collisions_total': 0.0}
+band 5250.0 v3w arm {'all_delay': 122124.5, 'passed': 2150.4, 'ttc_net': 473.8, 'sev3': 19.9, 'b3_step': 2446.7, 'collisions_total': 0.0, 'ttc_vs_nc': '36.1 [-0.9, 75.9]', 'delay_vs_nc': '32.4 [26.5, 37.9]'}
+band 5250.0 baseline-v3 arm {'all_delay': 126669.6, 'passed': 2149.3, 'ttc_net': 543.3, 'sev3': 22.0, 'b3_step': 2562.8, 'collisions_total': 0.0, 'ttc_vs_nc': '24.9 [0.7, 75.6]', 'delay_vs_nc': '32.1 [24.4, 38.0]'}
+band 5250.0 p333 {'all_delay': 123108.5, 'passed': 2152.0, 'ttc_net': 715.5, 'sev3': 44.5, 'b3_step': 2645.3, 'collisions_total': 0.0, 'ttc_vs_nc': '27.7 [-90.7, 61.3]', 'delay_vs_nc': '33.6 [23.3, 38.0]'}
+band 5250.0 os1_15_10 {'all_delay': 141538.4, 'passed': 2152.0, 'ttc_net': 1168.0, 'sev3': 74.0, 'b3_step': 3020.0, 'collisions_total': 0.0, 'ttc_vs_nc': '-29.6 [-47.3, 33.7]', 'delay_vs_nc': '27.1 [21.9, 34.4]'}
+band 5250.0 nc {'all_delay': 196771.2, 'passed': 2099.5, 'ttc_net': 1103.0, 'sev3': 74.5, 'b3_step': 2818.9, 'collisions_total': 0.0}
+band 5500.0 v3w arm {'all_delay': 166038.4, 'passed': 2239.8, 'ttc_net': 1319.1, 'sev3': 61.2, 'b3_step': 3203.5, 'collisions_total': 0.0, 'ttc_vs_nc': '29.3 [5.2, 50.5]', 'delay_vs_nc': '28.7 [24.6, 38.0]'}
+band 5500.0 baseline-v3 arm {'all_delay': 174935.6, 'passed': 2238.1, 'ttc_net': 1259.7, 'sev3': 53.3, 'b3_step': 3228.1, 'collisions_total': 0.0, 'ttc_vs_nc': '22.9 [-7.2, 45.7]', 'delay_vs_nc': '29.5 [25.6, 35.3]'}
+band 5500.0 p333 {'all_delay': 176772.8, 'passed': 2226.5, 'ttc_net': 2119.0, 'sev3': 106.5, 'b3_step': 3638.3, 'collisions_total': 0.0, 'ttc_vs_nc': '-64.6 [-101.1, 21.4]', 'delay_vs_nc': '27.4 [24.6, 31.6]'}
+band 5500.0 os1_15_10 {'all_delay': 183133.9, 'passed': 2224.0, 'ttc_net': 1875.0, 'sev3': 107.0, 'b3_step': 3705.4, 'collisions_total': 0.0, 'ttc_vs_nc': '-25.6 [-63.9, 24.5]', 'delay_vs_nc': '29.8 [27.2, 32.7]'}
+band 5500.0 nc {'all_delay': 267927.2, 'passed': 2155.5, 'ttc_net': 1408.5, 'sev3': 80.0, 'b3_step': 3215.3, 'collisions_total': 0.0}
+band 6000.0 v3w arm {'all_delay': 292617.8, 'passed': 2327.1, 'ttc_net': 2061.3, 'sev3': 79.1, 'b3_step': 4170.1, 'collisions_total': 0.0, 'ttc_vs_nc': '7.6 [2.4, 13.8]', 'delay_vs_nc': '27.1 [22.2, 30.2]'}
+band 6000.0 baseline-v3 arm {'all_delay': 310490.5, 'passed': 2306.5, 'ttc_net': 2399.0, 'sev3': 86.6, 'b3_step': 4310.6, 'collisions_total': 0.0, 'ttc_vs_nc': '-4.9 [-12.8, 1.8]', 'delay_vs_nc': '24.4 [19.9, 27.8]'}
+band 6000.0 p333 {'all_delay': 280439.3, 'passed': 2316.5, 'ttc_net': 3678.5, 'sev3': 153.5, 'b3_step': 4902.8, 'collisions_total': 0.0, 'ttc_vs_nc': '-64.8 [-76.5, -43.1]', 'delay_vs_nc': '27.5 [22.1, 35.6]'}
+band 6000.0 os1_15_10 {'all_delay': 289580.1, 'passed': 2307.5, 'ttc_net': 2894.0, 'sev3': 127.0, 'b3_step': 4420.1, 'collisions_total': 0.0, 'ttc_vs_nc': '-18.3 [-46.6, -11.0]', 'delay_vs_nc': '22.8 [19.8, 29.6]'}
+band 6000.0 nc {'all_delay': 407958.8, 'passed': 2203.0, 'ttc_net': 2326.0, 'sev3': 111.5, 'b3_step': 3703.1, 'collisions_total': 0.0}
