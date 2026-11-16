@@ -1,0 +1,6 @@
+lr400_16_1 net (np.float64(9.93), np.float64(6.46), np.float64(14.31), 1219.0, 1056.3)
+lr400_16_1 away (np.float64(-8.62), np.float64(-16.38), np.float64(-1.53), 155.5, 155.1)
+lr400_16_1 merge2 (np.float64(11.88), np.float64(7.33), np.float64(16.4), 741.0, 619.5)
+lr400_16_1 merge1 (np.float64(10.55), np.float64(5.59), np.float64(14.71), 265.5, 243.3)
+3E-C_TRUCK away (np.float64(32.98), np.float64(25.84), np.float64(38.75), 270.5, 155.1)
+fuel vs lr400_16_1 (np.float64(-0.06), np.float64(-0.18), np.float64(0.08), 80552.4, 80625.9)

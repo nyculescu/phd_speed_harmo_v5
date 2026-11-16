@@ -1,0 +1,20 @@
+arms 31 seeds 480 7489160 7489639
+away lr400_16_1 stored: {'pt': -8.62, 'lo': -14.73, 'hi': -1.41, 'lo95': -14.02, 'hi95': -2.44, 'se': 2.92}
+away grid_lr400_13_1 stored: {'pt': 4.6, 'lo': -2.25, 'hi': 12.8, 'lo95': -1.4, 'hi95': 11.75, 'se': 3.34}
+mean samples on event edges 1-2 by period
+   before       v3w    0.0 nc    0.0 p333    0.1 lr400_16_1    0.0 grid_lr400_13_1    0.1 MPC-F    0.0
+   taper+hold   v3w   25.2 nc    1.7 p333   26.2 lr400_16_1    2.8 grid_lr400_13_1    3.2 MPC-F   19.4
+   after        v3w   12.3 nc    1.8 p333   12.7 lr400_16_1    5.4 grid_lr400_13_1    7.2 MPC-F   10.4
+   rest         v3w   16.3 nc   43.5 p333   14.3 lr400_16_1   22.1 grid_lr400_13_1   17.1 MPC-F   14.5
+mean samples whole network by period: taper+hold v3w   84.5 nc  114.0 p333  110.2 lr400_16_1   77.1 grid_lr400_13_1   85.1 MPC-F  102.5
+v3w vs nc, event edges during taper+hold: -2220.0 [-2300.0,-2140.0]  whole window event edges:  -36.2 [ -42.2, -27.6]
+v3w vs nc, whole network taper+hold:   -0.2 [ -10.0, +15.0]
+share of each arm's own mean samples at merge 2 / merges 1+2
+   v3w                58%   82%
+   nc                 60%   85%
+   p333               61%   81%
+   lr400_16_1         59%   85%
+   grid_lr400_13_1    62%   85%
+   MPC-F              59%   81%
+mean samples on 4a vs ramp2 (r2, rj2): v3w  515.5/ 94.8 nc  603.1/204.3 p333  880.5/ 93.4 lr400_16_1  610.4/103.8 grid_lr400_13_1  753.5/112.2 MPC-F  782.0/100.7
+E on ramp2 only vs lr400_16_1   +0.0 [  -4.2,  +0.0]  on 4a only  +14.6 [  +9.1, +20.8]

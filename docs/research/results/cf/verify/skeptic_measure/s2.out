@@ -1,0 +1,62 @@
+arms 31 seeds 480 7489160 7489639
+A. periods. event draws:
+  onset min/med/max 450.3 625.6 800.0 dur 240.2 331.7 419.3 same draw across arms: True
+  mean seconds per period: {'before': 330.2, 'taper+hold': 330.9, 'after': 120.0, 'rest': 718.8}  rest min 479.5
+  share of each arm's own samples per period (mean counts), and rate per s
+    v3w              before    64.2 (  6%, 0.194/s) taper+hold    84.5 (  8%, 0.255/s) after   110.0 ( 10%, 0.917/s) rest   801.1 ( 76%, 1.114/s)
+    p333             before    90.6 (  6%, 0.275/s) taper+hold   110.2 (  7%, 0.333/s) after   137.7 (  9%, 1.147/s) rest  1268.6 ( 79%, 1.765/s)
+    lr400_16_1       before    74.5 (  6%, 0.225/s) taper+hold    77.1 (  6%, 0.233/s) after   100.7 (  8%, 0.839/s) rest   955.1 ( 79%, 1.329/s)
+    grid_lr400_13_1  before    85.4 (  6%, 0.259/s) taper+hold    85.1 (  6%, 0.257/s) after   116.8 (  8%, 0.973/s) rest  1113.1 ( 79%, 1.549/s)
+    MPC-F            before    90.9 (  6%, 0.275/s) taper+hold   102.5 (  7%, 0.310/s) after   134.0 (  9%, 1.116/s) rest  1162.6 ( 78%, 1.617/s)
+  additive share of the edge per period, and C-D5 on taper+hold / after / rest, all 14
+    3E-D_TRUCK       before    4% taper+hold    3% after    5% rest   88% | t+h   +9.5 [  +4.6, +15.6] | after  +12.5 [  +8.8, +17.3] | rest  +31.5 [ +24.6, +38.8] | before   +9.4 [  +2.5, +18.8]
+    3ex2             before    7% taper+hold    9% after    8% rest   76% | t+h  +13.8 [  +7.9, +21.7] | after  +15.8 [ +10.6, +20.6] | rest  +21.1 [ +16.3, +25.7] | before   +8.1 [  +1.9, +16.6]
+    MPC-F            before    6% taper+hold    4% after    6% rest   84% | t+h   -2.8 [ -10.0,  +5.1] | after  +16.3 [ +11.6, +20.7] | rest  +28.5 [ +20.8, +36.5] | before   +9.4 [  +3.2, +20.6]
+    grid_lr400_13_1  before    6% taper+hold    0% after    2% rest   92% | t+h  -39.2 [ -48.3, -30.9] | after   +2.1 [  -2.5,  +6.7] | rest  +26.1 [ +20.6, +31.4] | before  +11.6 [  +3.1, +20.3]
+    grid_os1_10_10   before    5% taper+hold    5% after    7% rest   83% | t+h  +11.0 [  +5.5, +17.6] | after  +16.2 [ +11.9, +20.9] | rest  +27.6 [ +21.9, +33.7] | before  +11.6 [  +4.1, +21.2]
+    grid_z31333      before    4% taper+hold    4% after    1% rest   91% | t+h   +7.4 [  +1.4, +13.3] | after   +1.0 [  -3.8,  +5.0] | rest  +33.0 [ +23.1, +41.6] | before   -0.4 [  -5.4,  +7.5]
+    lr1000_10_1      before    5% taper+hold    5% after    5% rest   86% | t+h   +9.7 [  +4.1, +15.8] | after  +15.0 [ +10.6, +19.2] | rest  +35.2 [ +28.3, +42.4] | before  +12.5 [  +4.4, +22.2]
+    lr1000_16_2      before    5% taper+hold    2% after    4% rest   89% | t+h  -29.0 [ -37.8, -21.5] | after   +9.9 [  +5.3, +13.8] | rest  +31.3 [ +25.3, +37.4] | before  +12.2 [  +4.4, +21.6]
+    lr400_13_2       before    6% taper+hold    1% after    3% rest   90% | t+h  -32.9 [ -40.3, -23.8] | after   +8.0 [  +3.4, +12.2] | rest  +28.0 [ +21.4, +35.1] | before  +12.3 [  +4.0, +22.2]
+    lr400_16_1       before    7% taper+hold   -5% after   -6% rest  104% | t+h  -47.1 [ -56.1, -37.9] | after  -13.3 [ -17.9,  -8.1] | rest  +13.1 [  +8.0, +18.3] | before   +4.8 [  +0.7, +13.8]
+    os0_10_10        before    6% taper+hold    6% after    8% rest   80% | t+h  +10.5 [  +5.2, +17.4] | after  +16.4 [ +11.6, +21.1] | rest  +26.2 [ +21.5, +31.7] | before  +12.2 [  +4.4, +21.9]
+    os1_10_0         before    7% taper+hold    7% after    6% rest   80% | t+h  +20.0 [ +13.9, +26.4] | after  +16.6 [ +11.9, +21.8] | rest  +31.5 [ +27.1, +35.7] | before  +15.0 [  +7.5, +25.3]
+    os1_15_10        before    5% taper+hold    5% after    6% rest   83% | t+h  +11.6 [  +5.6, +18.1] | after  +15.3 [ +10.7, +20.7] | rest  +28.6 [ +22.8, +35.0] | before  +12.2 [  +4.1, +21.6]
+    p333             before    5% taper+hold    5% after    5% rest   85% | t+h  +11.8 [  +6.1, +18.5] | after  +15.7 [ +11.2, +20.7] | rest  +33.0 [ +25.7, +41.8] | before  +12.5 [  +4.4, +22.2]
+  competitors with taper+hold upper bound < 0: ['grid_lr400_13_1', 'lr1000_16_2', 'lr400_13_2', 'lr400_16_1']
+  medians taper+hold: v3w 56.5 {'lr400_16_1': 38.0, 'grid_lr400_13_1': 38.5, 'MPC-F': 53.0, 'p333': 62.0, 'nc': 88.0, 'lr1000_16_2': 41.0, 'lr400_13_2': 39.5}
+   taper+hold mean samples on event 1,2: v3w   25.2  lr400_16_1    2.8  p333   26.2  nc    1.7
+   taper+hold mean samples on merge1: v3w   11.3  lr400_16_1    8.4  p333   11.5  nc    6.1
+   taper+hold mean samples on merge2: v3w   44.5  lr400_16_1   61.9  p333   67.8  nc   94.2
+   taper+hold mean samples on between: v3w    3.0  lr400_16_1    3.6  p333    4.4  nc   10.4
+
+B. lane-end stops
+  medians end_stop2 / end_stop: v3w 443.0 167.0 {'lr400_16_1': (711.5, 256.5), 'p333': (852.5, 209.5), 'MPC-F': (778.5, 231.5), '3E-D_TRUCK': (660.0, 243.0), '3E-C_TRUCK': (516.0, 288.5), 'nc': (558.0, 204.5)}
+  edge on end_stop2 vs p333  +39.9 [ +27.5, +51.5]  vs lr400_16_1  +23.9 [ +13.6, +38.5]
+    p333         rho d(end_stop2),d(m2 TTC) +0.90 +0.90 +0.89 +0.90 +0.88 | merge1 +0.80 +0.82 +0.83 +0.81 +0.85 | d(veh-s on 4a),d(m2 TTC) +0.95 +0.94 +0.93 +0.93 +0.94 | d(veh-s on 3) +0.56 +0.56 +0.52 +0.49 +0.50 | d(delay) +0.83 +0.84 +0.81 +0.79 +0.80
+    lr400_16_1   rho d(end_stop2),d(m2 TTC) +0.86 +0.87 +0.86 +0.86 +0.86 | merge1 +0.86 +0.84 +0.84 +0.82 +0.86 | d(veh-s on 4a),d(m2 TTC) +0.96 +0.95 +0.95 +0.94 +0.95 | d(veh-s on 3) +0.67 +0.70 +0.67 +0.67 +0.64 | d(delay) +0.84 +0.85 +0.83 +0.82 +0.83
+    MPC-F        rho d(end_stop2),d(m2 TTC) +0.90 +0.87 +0.89 +0.87 +0.86 | merge1 +0.81 +0.81 +0.80 +0.79 +0.84 | d(veh-s on 4a),d(m2 TTC) +0.96 +0.94 +0.95 +0.94 +0.94 | d(veh-s on 3) +0.68 +0.60 +0.67 +0.58 +0.63 | d(delay) +0.88 +0.83 +0.87 +0.82 +0.84
+    3E-D_TRUCK   rho d(end_stop2),d(m2 TTC) +0.86 +0.87 +0.86 +0.87 +0.85 | merge1 +0.83 +0.83 +0.81 +0.81 +0.83 | d(veh-s on 4a),d(m2 TTC) +0.95 +0.94 +0.93 +0.93 +0.93 | d(veh-s on 3) +0.59 +0.53 +0.58 +0.50 +0.54 | d(delay) +0.85 +0.81 +0.82 +0.79 +0.80
+    within-arm rho(end_stop2, m2 TTC) w0u250 +0.83  rho(veh-s 4a, m2 TTC) +0.97
+    within-arm rho(end_stop2, m2 TTC) p333 +0.92  rho(veh-s 4a, m2 TTC) +0.97
+    within-arm rho(end_stop2, m2 TTC) lr400_16_1 +0.90  rho(veh-s 4a, m2 TTC) +0.97
+  p333, seeds with |d end_stop2|<=25: (n, median d m2 there, median d m2 all) [(17, 14.0, 371.0), (26, 35.5, 394.0), (13, 49.0, 361.0), (24, 23.0, 338.0), (21, 4.0, 359.0)]
+  E on merge-2 TTC per lane-end stop sample (ratio) vs p333:   -7.9 [ -14.0,  -2.1]  vs lr400_16_1:  -24.7 [ -31.6, -17.7]
+
+C. speed bands and severity vs lr400_16_1
+  v3w medians lo/mid/hi 352.5 376.5 313.5
+  additive shares lo/mid/hi [55, 24, 22]
+    ttc2        +32.1 [ +26.4, +37.4]  p333  +58.3 [ +49.2, +64.8]
+    ttc15       +21.9 [ +16.8, +27.2]  p333  +57.3 [ +50.2, +63.8]
+    sev3        +16.0 [ +11.7, +21.2]  p333  +37.7 [ +31.0, +44.1]
+    mild 2-3     +5.3 [  +1.1,  +9.3]  p333  +21.8 [ +17.0, +28.3]
+    ttc_half    +10.4 [  +6.2, +15.1]  p333  +31.1 [ +25.2, +37.5]
+    not lc      +10.5 [  +6.4, +15.4]  p333  +33.5 [ +26.9, +40.1]
+  medians ttc2/ttc15/sev3 v3w 166.0 35.0 50.0  lr400_16_1 256.0 47.5 65.0  lc v3w 203.5
+
+D. exposure vs lr400_16_1
+  medians passed/vs/dist: v3w 2182.0 609617.0 12403990  lr 2169.0 610290.0 12380715  p333 2181.0 608340.5
+    per veh-s    +9.9 [  +6.6, +14.8]  nc  +12.7 [  +9.4, +17.2]
+    per veh-km  +10.1 [  +6.3, +15.1]  nc  +22.0 [ +18.8, +26.0]
+    per passed  +10.3 [  +6.6, +15.4]  nc  +23.7 [ +20.6, +27.7]
+  nc raw  +20.7 [ +17.3, +24.5]
