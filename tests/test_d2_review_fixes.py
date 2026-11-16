@@ -4,11 +4,11 @@ import json
 import numpy as np
 import pytest
 
-from v5b.d2 import controllers as ctl
-from v5b.d2 import episode
-from v5b.d2 import run_screen as rs
-from v5b.d2 import stats
-from v5b.d2.episode import run_key
+from v5b2.d2 import controllers as ctl
+from v5b2.d2 import episode
+from v5b2.d2 import run_screen as rs
+from v5b2.d2 import stats
+from v5b2.d2.episode import run_key
 
 G3 = ("c800", "c1600", "f20_8")
 G8 = ("c800", "c1000", "c1200", "c1400", "c1600", "f10_6", "f20_8", "f40_10")

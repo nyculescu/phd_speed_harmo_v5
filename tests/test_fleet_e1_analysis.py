@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from v5b.fleet import e1_analysis as ea
+from v5b2.fleet import e1_analysis as ea
 
 
 def test_s_upper_factor():

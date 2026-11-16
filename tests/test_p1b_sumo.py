@@ -5,8 +5,8 @@ import subprocess
 
 import pytest
 
-from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
-from v5b.p1b.episode import make_spec
+from v5b2.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b2.p1b.episode import make_spec
 
 SEED, Q, MAX_PROCS = 7_400_000, 2000.0, 8
 
@@ -20,7 +20,7 @@ def _py(code: str) -> str:
 
 @pytest.mark.parametrize("mode", ["tick", "step"])
 def test_runner_crosses_within_1p5s_of_red_onset_normal_driver_stops(mode):
-    r = json.loads(_py(f"import json; from v5b.p1b.runners import signal_scenario; "
+    r = json.loads(_py(f"import json; from v5b2.p1b.runners import signal_scenario; "
                        f"print(json.dumps(signal_scenario('{mode}')))"))
     c, t_red = r["cross_step_start"], r["t_red"]
     # the crossing happens during the 0.5-s step starting at c: within [t_red, t_red + 1.5]
@@ -50,7 +50,7 @@ def runs(tmp_path_factory):
     while todo or running:
         while todo and len(running) < MAX_PROCS:
             name, s = todo.pop(0)
-            running.append(subprocess.Popen([PYTHON_BIN, "-m", "v5b.p1b.episode", "--spec", json.dumps(s), "--out",
+            running.append(subprocess.Popen([PYTHON_BIN, "-m", "v5b2.p1b.episode", "--spec", json.dumps(s), "--out",
                                              str(d / f"{name}.json"), "--run-dir", str(d / name)], cwd=REPO_ROOT,
                                             env=clean_sumo_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
         assert running.pop(0).wait(timeout=600) == 0

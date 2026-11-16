@@ -1,5 +1,5 @@
 """V211 collision rule: one row per event with its smallest bumper distance; contacts versus minGap intrusions."""
-from v5b.fleet.day import _first_steps, contact_counts
+from v5b2.fleet.day import _first_steps, contact_counts
 
 
 def _c(t, bumper, pair=("a", "b")):

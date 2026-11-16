@@ -1,7 +1,7 @@
 """Screen #2 Rule 5: these must pass on synthetic signal logs before any archive read."""
 import numpy as np
 
-from v5b import screen2 as s2
+from v5b2 import screen2 as s2
 
 
 def synth_log(t0=1_694_570_400, hours=30, cycle=90, green=30, seed=5):

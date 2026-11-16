@@ -1,4 +1,4 @@
-"""Compute guard (author rule 2026-10-05; v5b/ops/guard.py, ported from claude/vsl-lab-core@2a79e5e). No SUMO, no hardware reads.
+"""Compute guard (author rule 2026-10-05; v5b2/ops/guard.py, ported from claude/vsl-lab-core@2a79e5e). No SUMO, no hardware reads.
 
 Run: pytest -p no:cacheprovider tests/test_guard.py -v  (from the repo root, via python -m pytest)
 """
@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 
-from v5b.ops.guard import ComputeGuard
+from v5b2.ops.guard import ComputeGuard
 
 
 def run(g, seq, n_paused=0):

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.fleet import control as ct
+from v5b2.fleet import control as ct
 
 
 def test_alinea_and_pi_laws():

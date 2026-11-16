@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b.d1 import run_screen as rs
-from v5b.d1 import stats
-from v5b.d1.faults import ANY, FAULTS, fill_diagnostics
+from v5b2.d1 import run_screen as rs
+from v5b2.d1 import stats
+from v5b2.d1.faults import ANY, FAULTS, fill_diagnostics
 
 
 def _rng(k=0):

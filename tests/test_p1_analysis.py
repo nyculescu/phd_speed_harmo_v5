@@ -2,10 +2,10 @@
 import numpy as np
 import pytest
 
-from v5b.d2.incidents import INCIDENTS, NONE, incident_window
-from v5b.p1 import analysis as an
-from v5b.p1 import family as fam
-from v5b.p1.meters import switch_schedule
+from v5b2.d2.incidents import INCIDENTS, NONE, incident_window
+from v5b2.p1 import analysis as an
+from v5b2.p1 import family as fam
+from v5b2.p1.meters import switch_schedule
 
 G3 = ("c800", "c1600", "f20_8")
 A3 = fam.actions(G3)

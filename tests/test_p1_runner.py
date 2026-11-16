@@ -5,10 +5,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.d1 import run_screen as d1
-from v5b.d2 import run_screen as d2
-from v5b.p1 import family as fam
-from v5b.p1 import run as rs
+from v5b2.d1 import run_screen as d1
+from v5b2.d2 import run_screen as d2
+from v5b2.p1 import family as fam
+from v5b2.p1 import run as rs
 
 
 def test_seed_ranges_as_approved():
@@ -31,7 +31,7 @@ def test_seed_ranges_as_approved():
 
 
 def test_replicate_seeds_outside_every_block():
-    from v5b.p1.meters import replicate_seeds
+    from v5b2.p1.meters import replicate_seeds
     reps = {replicate_seeds(s, k)["sumo_seed"] for s in rs.SEEDS["eval"] for k in (1, 2, 3, 4)}
     assert min(reps) == 17_400_500 and max(reps) == 47_400_599
     assert not reps & set(range(7_400_000, 7_401_000)) and not reps & set(range(7_410_000, 7_420_000))

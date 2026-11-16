@@ -3,13 +3,13 @@ import json
 import subprocess
 import textwrap
 
-from v5b.d1.config import PYTHON_BIN, clean_sumo_env
+from v5b2.d1.config import PYTHON_BIN, clean_sumo_env
 
 PROBE = textwrap.dedent("""
     import json, sys
     from pathlib import Path
     import libsumo as ls
-    from v5b.fleet import fleet as fl, smoke
+    from v5b2.fleet import fleet as fl, smoke
     d = fl.build_net(smoke.CFG)
     gains = json.loads(sys.argv[2])
     r = Path(sys.argv[1])
@@ -42,7 +42,7 @@ def _trace(tmp_path, gains, name):
 
 
 def test_acc_original_gains_change_behaviour(tmp_path):
-    from v5b.fleet import fleet as fl
+    from v5b2.fleet import fleet as fl
     default = _trace(tmp_path, {}, "default")
     original = _trace(tmp_path, fl.ACC_ORIGINAL, "original")
     assert len(default) == len(original) > 100

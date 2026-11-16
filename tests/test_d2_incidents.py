@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from v5b.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
-from v5b.d1.episode import FBMeter
-from v5b.d2 import controllers as ctl
-from v5b.d2 import episode
-from v5b.d2.incidents import (BLOCK_LANE, BLOCK_MPS, DUR_MAX_S, DUR_MIN_S, INCIDENTS, SLOW_EDGE, SLOW_MPS, Incident,
+from v5b2.d1.config import PYTHON_BIN, REPO_ROOT, clean_sumo_env
+from v5b2.d1.episode import FBMeter
+from v5b2.d2 import controllers as ctl
+from v5b2.d2 import episode
+from v5b2.d2.incidents import (BLOCK_LANE, BLOCK_MPS, DUR_MAX_S, DUR_MIN_S, INCIDENTS, SLOW_EDGE, SLOW_MPS, Incident,
                               incident_window)
 
 SMOKE_SEED = 7_400_000
@@ -101,7 +101,7 @@ class _LS:
 
 
 def test_switch_changes_meter_in_place(monkeypatch):
-    from v5b.d1 import episode as e1
+    from v5b2.d1 import episode as e1
     monkeypatch.setattr(e1, "ls", _LS())
     m = FBMeter(read=lambda t: 4.0, **ctl.meter_kwargs("c1600"))
     assert m.q == 1600.0 and m.K_F == 0.0
@@ -147,7 +147,7 @@ def sumo_runs(tmp_path_factory):
     for name, (pre, post, inc) in SUMO_RUNS.items():
         s = {"pre": pre, "post": post, "incident": inc, "q": 2000.0, "seed": SMOKE_SEED, "key": name,
              "xf": name.endswith("_xf"), "back": name.endswith("_back")}
-        procs[name] = subprocess.Popen([PYTHON_BIN, "-m", "v5b.d2.episode", "--spec", json.dumps(s),
+        procs[name] = subprocess.Popen([PYTHON_BIN, "-m", "v5b2.d2.episode", "--spec", json.dumps(s),
                                         "--out", str(d / f"{name}.json"), "--run-dir", str(d / name)],
                                        cwd=REPO_ROOT, env=clean_sumo_env(), stdout=subprocess.DEVNULL,
                                        stderr=subprocess.PIPE, preexec_fn=lambda: os.nice(19))

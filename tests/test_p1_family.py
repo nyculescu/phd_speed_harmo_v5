@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b.d2 import controllers as d2
-from v5b.p1 import family as fam
+from v5b2.d2 import controllers as d2
+from v5b2.p1 import family as fam
 
 
 def test_extended_grid_a5a():

@@ -1,8 +1,8 @@
 """V204 weather states: same vehicles in every state, humans scaled, CAVs untouched; the monotone fit."""
 import pytest
 
-from v5b.fleet import fleet as fl
-from v5b.fleet.weather import pava_decreasing
+from v5b2.fleet import fleet as fl
+from v5b2.fleet.weather import pava_decreasing
 
 
 @pytest.fixture

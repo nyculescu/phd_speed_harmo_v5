@@ -1,8 +1,8 @@
 """A stage 0 (V251): estimator, criteria and route on synthetic series."""
 import numpy as np
 
-from v5b.p1c import plant as pl
-from v5b.p1c import stage0 as s0
+from v5b2.p1c import plant as pl
+from v5b2.p1c import stage0 as s0
 
 
 def _series(drop, t_b=3000.0, q=1800.0, end=6000.0, rng=None):

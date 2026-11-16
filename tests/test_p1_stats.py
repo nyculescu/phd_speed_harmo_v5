@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from v5b.p1 import stats as st
+from v5b2.p1 import stats as st
 
 rng = np.random.default_rng(1)
 

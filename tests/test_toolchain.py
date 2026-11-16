@@ -11,8 +11,8 @@ PINS = {"libsumo": "1.27.1", "sumolib": "1.27.1", "stable_baselines3": "2.8.0", 
 
 
 def test_package_imports():
-    import v5b
-    assert v5b.__version__
+    import v5b2
+    assert v5b2.__version__
 
 
 @pytest.mark.parametrize("dist,version", sorted(PINS.items()))
