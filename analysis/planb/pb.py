@@ -50,7 +50,7 @@ def slim(row: dict) -> dict:
 
 def run_cfg(a: tuple) -> dict:
     t0 = time.time()
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     return {**slim(ps.run_one(a)), "wall_s": round(time.time() - t0, 1)}
 
 

@@ -90,7 +90,7 @@ JAM_BASE = ("jam_share", "congested_share", "jams", "congested_km_mean", "conges
 JAM_KEYS = JAM_BASE + tuple(f"{k}_nc" for k in JAM_BASE)
 NO_ST = "space-time files not read (no --st)"
 EMPTY_ST = "space-time side file empty on some seeds (S6 host outage, V494)"
-MEASURE = Path(__file__).resolve().parents[2] / "v5b2/fleet/measure.py"
+MEASURE = Path(__file__).resolve().parents[2] / "v5b2/freeway/measures.py"
 _measure = []
 
 

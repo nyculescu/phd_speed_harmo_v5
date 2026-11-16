@@ -18,7 +18,7 @@ import test_planb_read6 as t1  # noqa: E402
 from test_planb_read6 import LEARN, N, OPP, cfg, r6, world  # noqa: E402
 from test_planb_read6_v2 import PICKS, with_report_keys  # noqa: E402
 from test_planb_read6_v21 import universe_world  # noqa: E402
-from v5b2.fleet import measure  # noqa: E402
+from v5b2.freeway import measures as measure  # noqa: E402
 
 JAM = ("jam_share", "congested_share", "jams", "congested_km_mean", "congested_km_max", "osc_kmh")
 

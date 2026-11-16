@@ -5,7 +5,7 @@ from pathlib import Path
 
 from common import PRIMARY, Q, cfg, check_rows, load
 from decide3 import read_cell
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 CONF3 = Path("/home/catalin/work/phd/v5b1_runs/conf3")
 SEEDS = range(7_440_220, 7_440_240)

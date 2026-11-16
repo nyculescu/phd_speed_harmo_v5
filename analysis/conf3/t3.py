@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from common import PLANT
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 P0D = {k: v for k, v in PLANT.items() if k not in ("tau_rise", "taper_fast", "fix_x", "geom")}
 SEED = 7_440_045

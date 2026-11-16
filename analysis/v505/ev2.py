@@ -1,5 +1,5 @@
 """EV part 2 (docs/local/research/protocols/v505_ev_informed_rule.md v2 §3, §5, V508, V515): tuning, picks, planned power, evaluation and
-the reading. The told rule (IP) and the detecting rule (SW (a)) act through one switch path (v5b2/fleet/v505.py), both on the FX
+the reading. The told rule (IP) and the detecting rule (SW (a)) act through one switch path (v5b2/freeway/merge_variants.py), both on the FX
 pick; ASCH is SW (b). Read once each, by this committed script.
 
 usage: ev2.py plan STAGE --out JOBS.json --limit L [--picks PICKS.json] [--a A]

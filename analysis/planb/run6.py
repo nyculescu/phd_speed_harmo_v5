@@ -89,7 +89,7 @@ def wrap(row: dict, a: tuple) -> dict:
 
 
 def one(a: tuple) -> dict:
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     return wrap(ps.run_one(a[:5]), a)
 
 

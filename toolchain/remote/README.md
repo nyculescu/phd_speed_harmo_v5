@@ -107,7 +107,7 @@ If checks 3 and 4 pass on every machine, the hardware cannot change the results.
    It ends with `ACCEPT PASS`. Expected time is a few minutes plus the rows check, but that is untested.
 3. **Run** a job in tmux. It survives logout and stays pinned to the snapshot it started from:
    ```
-   bash toolchain/remote/remote.sh run HOST PORT NAME 'python -m v5b2.fleet.c_train ...'
+   bash toolchain/remote/remote.sh run HOST PORT NAME 'python -m v5b2.freeway.train_per_cav ...'
    ```
    `python` is the venv's, because `env.sh` puts the venv first on PATH. It also unsets `SUMO_HOME` and sets `OMP_NUM_THREADS=1`.
 4. **Watch** with `remote.sh status HOST PORT`.

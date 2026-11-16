@@ -7,7 +7,7 @@ from pathlib import Path
 
 from common1 import BAND_EVAL, LEARNERS, OPPONENTS, PREFIX, PRIMARY, Q, RULE, SEEDS_BAND, SEEDS_TEST, TRAINING_SLOWDOWNS, check_rows, effect, incumbent, load, med, pt_cfg, rule_cfg
 import decide1 as dc
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 
 def tested(trained: dict, v: dict) -> list:

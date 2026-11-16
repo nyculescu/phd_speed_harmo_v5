@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 from common1 import BASE, CANDIDATES, ENV_V3, GAMMA, LAM, LEVELS, NET_SEED, OPPONENTS, Q, RULE, ROOT, SEEDS_SMOKE, env_for, incumbent, pt_cfg, rule_cfg
-from v5b2.fleet import b_env as be, c_train as ct, plant_sweep as ps
+from v5b2.freeway import environments as be, train_per_cav as ct, evaluate as ps
 
 PY = sys.executable
 SKIP = {"name", "cfg"}     # the arm label and the config, which names a policy path
@@ -82,7 +82,7 @@ def identity(out: Path, old: Path) -> list:
     for tag, code in (("old", old), ("new", ROOT)):
         d = out / f"identity_{tag}"
         shutil.rmtree(d, ignore_errors=True)
-        cmd = [PY, "-m", "v5b2.fleet.c_train", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1", "--env", env,
+        cmd = [PY, "-m", "v5b2.freeway.train_per_cav", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1", "--env", env,
                "--levels", json.dumps([Q]), "--gamma", str(GAMMA), "--lam", str(LAM), "--net-seed", str(NET_SEED)]
         subprocess.run(cmd, cwd=code, env={**os.environ, "PYTHONPATH": str(code), "PYTHONDONTWRITEBYTECODE": "1"}, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         res[tag] = torch.load(d / "C0_final.pt", map_location="cpu")

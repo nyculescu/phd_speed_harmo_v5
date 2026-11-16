@@ -10,7 +10,7 @@ import numpy as np
 
 from common1 import CHECKPOINTS, LEARNERS, LEVELS, OPPONENTS, PRIMARY, Q, RULE, SEEDS_STAGE0A, SEEDS_STAGE0B, SEEDS_STAGE0C, TRAINING_SLOWDOWNS, check_rows, incumbent, load, med, pt_cfg, raw, rule_cfg, val
 import decide1 as dc
-from v5b2.fleet import c_train as ct, plant_sweep as ps
+from v5b2.freeway import train_per_cav as ct, evaluate as ps
 
 RULES0 = {RULE: OPPONENTS["ctrl"][RULE], "p333": OPPONENTS["ctrl"]["p333"]}
 

@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "analysis" / "vv"))
 import vv  # noqa: E402
 import read_vv as rv  # noqa: E402
 from vv import run6  # noqa: E402
-from v5b2.fleet import b_env as be, vv_merge as vm  # noqa: E402
+from v5b2.freeway import environments as be, merge_instruments as vm  # noqa: E402
 
 LANES300 = {"3a_0": 294.72, "4a_0": 294.72, "3_0": 1194.3, "4_0": 996.0}
 

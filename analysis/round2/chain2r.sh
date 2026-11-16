@@ -20,7 +20,7 @@ say "code $(basename "$C"), env $ENVJ, flags [$FLAGS]"
 train() {
   [ -d "$D/tb/C$1" ] && mv "$D/tb/C$1" "$D/tb/C$1.old_$(date +%s)"
   # FLAGS is a word list on purpose: each candidate adds whole flags such as --anneal or --scale X.
-  $PY -m v5b2.fleet.c_train train --out "$D" --learner "$1" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
+  $PY -m v5b2.freeway.train_per_cav train --out "$D" --learner "$1" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
     --net-seed 20261205 --env "$ENVJ" --lagr "" $FLAGS 2>&1 | grep -av '^Warning' >> "$O/train_${K}_$1.log"; return ${PIPESTATUS[0]}
 }
 

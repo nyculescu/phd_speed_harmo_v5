@@ -6,8 +6,8 @@ import libsumo as ls
 import numpy as np
 
 from common import PLANT
-from v5b2.fleet import b_env as be, c_train as ct
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import environments as be, train_per_cav as ct
+from v5b2.freeway import evaluate as ps
 
 
 def probe(env_kw: dict, rd: str, seed: int, lane: str, until: float) -> dict:

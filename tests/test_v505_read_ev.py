@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analysis/v505"))
 import read_ev as re_  # noqa: E402
 import v5  # noqa: E402
-from v5b2.fleet.v505 import slowdown_limit  # noqa: E402
+from v5b2.freeway.merge_variants import slowdown_limit  # noqa: E402
 
 Q = {"ramp1_queue": [60.0] * 30, "ramp2_queue": [60.0] * 30, "ramp1_pending": [0.0] * 30, "ramp2_pending": [0.0] * 30}
 

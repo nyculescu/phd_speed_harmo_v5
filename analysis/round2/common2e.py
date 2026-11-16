@@ -115,7 +115,7 @@ def freeze(commit: str, run_commit: str) -> Path:
 
 RUN_SNIPPET = """import json, sys
 from pathlib import Path
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import plant_sweep as ps
 a = json.load(open(sys.argv[1]))
 ps.matrix(a["arms"], tuple(a["levels"]), a["seeds"], Path(a["out"]), a["workers"], a["rd"])
 """

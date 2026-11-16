@@ -7,7 +7,7 @@ Scope: b_env.py, c_train.py, plant_sweep.py, analysis/round1/, tests/test_round1
 ## Blocker
 
 **B1. Every 2C learner fails the log check because of `lagr/J`.**
-- Where: `analysis/round1/tbcheck1.py:43-45`, with `v5b2/fleet/c_train.py:327` and `:401`.
+- Where: `analysis/round1/tbcheck1.py:43-45`, with `v5b2/freeway/train_per_cav.py:327` and `:401`.
 - What happens: the trainer writes `lagr/J` only once λ starts moving (u ≥ 20). `log_faults` requires every tag in the file to have steps 0..499 exactly once. So each 2C learner gets "lagr/J: updates are not 0-499 once each", `wrong` lists all 5, and the script exits 1. `chain1.sh:136` then logs "lagr OUT OF THE ROUND" and goes on.
 - Verified: `ct.tb_scalars` over 25 updates, with J from u = 20, gives `['lagr/J: updates are not 0-24 once each']`.
 - Why the tests miss it: `_fake_log` (`tests/test_round1.py:101-103`) writes no `lagr/J`, and the smoke runs only 2 updates.

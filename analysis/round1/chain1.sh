@@ -28,7 +28,7 @@ step "stage 0" $PY $R/stage0.py run "$D/stage0" $W
 
 train() {     # kind learner env lagr; event files of an earlier start are moved aside, never mixed in (review, V424)
   [ -d "$D/train_$1/tb/C$2" ] && mv "$D/train_$1/tb/C$2" "$D/train_$1/tb/C$2.old_$(date +%s)"
-  $PY -m v5b2.fleet.c_train train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
+  $PY -m v5b2.freeway.train_per_cav train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
     --net-seed 20261205 --env "$3" --lagr "$4" 2>&1 | grep -av '^Warning' >> "$D/train_$1_$2.log"; return ${PIPESTATUS[0]}
 }
 

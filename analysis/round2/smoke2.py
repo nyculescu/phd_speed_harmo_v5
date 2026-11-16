@@ -16,7 +16,7 @@ def run(a: tuple):
     """(kind, trace, name, cfg, q, seed, rd, extra) -> (row, trace summary)."""
     kind, trace, name, cfg, q, seed, rd, extra = a
     import torch
-    from v5b2.fleet import b_env as be, c_train as ct, plant_sweep as ps
+    from v5b2.freeway import environments as be, train_per_cav as ct, evaluate as ps
     torch.set_num_threads(1)
     info = defaultdict(Counter)
     obs = []

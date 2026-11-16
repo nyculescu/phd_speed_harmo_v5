@@ -23,7 +23,7 @@ step "rule tuning" $PY $R/tune.py "$D" $W
 step "first selection, early kill" $PY $R/select_opp.py "$D"
 step "training config" $PY $R/make_env.py "$D/tune_nc.jsonl" "$D/env.json"
 
-train() { $PY -m v5b2.fleet.c_train train --out "$T" --learner "$1" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels '[4090.0, 4600.0, 5300.0]' --net-seed 20261205 --env "$(cat "$D/env.json")" 2>&1 | grep -av '^Warning' >> "$D/train_$1.log"; return ${PIPESTATUS[0]}; }
+train() { $PY -m v5b2.freeway.train_per_cav train --out "$T" --learner "$1" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels '[4090.0, 4600.0, 5300.0]' --net-seed 20261205 --env "$(cat "$D/env.json")" 2>&1 | grep -av '^Warning' >> "$D/train_$1.log"; return ${PIPESTATUS[0]}; }
 say "start training"
 declare -A who tried
 for L in 0 1 2 3 4; do

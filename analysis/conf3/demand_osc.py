@@ -37,7 +37,7 @@ KINDS = ("peak", "sine_slow", "sine_fast", "step")
 
 def job(a):
     name, c, seed, kind, rd = a
-    from v5b2.fleet import fleet as fl, plant_sweep as ps
+    from v5b2.freeway import vehicles as fl, evaluate as ps
     base = fl.FleetDemand
     prof = profile(kind)
     fl.FleetDemand = lambda s, _profile, cf: base(s, prof, cf)

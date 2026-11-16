@@ -50,7 +50,7 @@ def fallback_jobs(cells: list, st_dir: str) -> dict:
 
 
 def run(out: Path, cells: list, workers: int, runner=None) -> None:
-    from v5b2.fleet import plant_sweep  # noqa: F401  fail early without SUMO
+    from v5b2.freeway import evaluate as plant_sweep  # noqa: F401  fail early without SUMO
     J = jobs(cells, str(out / "st"))
     pb.guard(out, {"cells": cells, "seeds": [SEEDS[0], SEEDS[-1]]}, J, strict=runner is None)
     pb.batch(J, SEEDS, out / "s2_runs.jsonl", out / "rd", workers, runner or full_runner)
@@ -87,7 +87,7 @@ def keep_of(r: dict) -> dict:
 
 
 def full_row(a: tuple) -> dict:
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     return keep_of(ps.run_one(a))
 
 

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from v5b2.fleet import v505
+from v5b2.freeway import merge_variants as v505
 
 
 class FakeLs:
@@ -134,7 +134,7 @@ def test_detect_release_timing_is_checked(fls):
 
 
 def test_told_refuses_a_changed_edge2(fls, monkeypatch):
-    from v5b2.fleet import b_env
+    from v5b2.freeway import environments as b_env
     monkeypatch.setitem(b_env.ROAD_X, "2", 2990.0)
     with pytest.raises(ValueError):
         v505.Told(env(), d=500.0, L=1, after=0.0)

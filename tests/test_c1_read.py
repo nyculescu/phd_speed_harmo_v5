@@ -151,7 +151,7 @@ def test_plans(tmp_path):
 
 
 def test_longer_ramp2_lane_keeps_the_other_edges(tmp_path, monkeypatch):
-    from v5b2.fleet import corridor
+    from v5b2.freeway import network as corridor
     monkeypatch.setattr(corridor, "NET_CACHE", tmp_path)
     import xml.etree.ElementTree as ET
     lens = {}

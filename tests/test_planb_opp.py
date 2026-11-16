@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "analysis/planb"))
 import asch  # noqa: E402
 import mpcf  # noqa: E402
 import pb  # noqa: E402
-from v5b2.fleet import planb_ctrl as pc  # noqa: E402
+from v5b2.freeway import supervisory as pc  # noqa: E402
 
 
 class Const:
@@ -143,7 +143,7 @@ def test_mpcf_control_mode_picks_the_cheapest(tmp_path, monkeypatch):
         pc.MpcF.__init__(pc.MpcF.__new__(pc.MpcF), env, {"actions": [{"lv": 0}, {"lv": 3}], "model": str(f), "model_sha256": "0" * 64}, True)
     with pytest.raises(ValueError):
         pc.MpcF.__init__(pc.MpcF.__new__(pc.MpcF), env, {"actions": [{"lv": 0}, {"lv": 3}], "model": str(f)}, True)
-    from v5b2.fleet import measure as me
+    from v5b2.freeway import measures as me
     o = (["a"], np.zeros((1, 16), np.float32), None, np.array([True]))
     assert me.policy_probs(m, o) == {}     # the pack's probe never treats MPC-F's model as a policy (review F2)
 

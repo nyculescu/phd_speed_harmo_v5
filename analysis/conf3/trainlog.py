@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import numpy as np
 
 from common import ENVS, FIRST_WORKER, LEARNERS, LEVELS, PER_WORKER, SEED0, UPDATES
-from v5b2.fleet import perturb as pt
+from v5b2.freeway import disturbances as pt
 
 ZONES = ("upstream", "merge1", "downstream_incl_merge2")
 LEVEL_S = ("1.6s", "1.2s", "1.0s", "0.8s")

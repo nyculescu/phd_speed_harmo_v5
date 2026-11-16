@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from v5b2.fleet import b_env as be, c_train as ct
+from v5b2.freeway import environments as be, train_per_cav as ct
 
 if __name__ == "__main__":
     env, out = json.load(open(sys.argv[1])), Path(sys.argv[2])

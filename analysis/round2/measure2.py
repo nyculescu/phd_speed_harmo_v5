@@ -1,4 +1,4 @@
-"""Round 2 measurement pack (V468, report-only): re-runs round 2's test and band runs with v5b2/fleet/measure.py switched on.
+"""Round 2 measurement pack (V468, report-only): re-runs round 2's test and band runs with v5b2/freeway/measures.py switched on.
 The runs are deterministic, so they are the same trajectories that produced the round-2 readings; `smoke` proves it on a sample
 (every stored key equal) and checks the pack's own sums. No reading or verdict changes; no new seed is used.
 
@@ -27,7 +27,7 @@ sys.path[:0] = [str(ROOT), str(HERE), str(HERE.parent / "round1")]
 
 from common1 import load  # noqa: E402
 import test2  # noqa: E402
-from v5b2.fleet import measure as me  # noqa: E402
+from v5b2.freeway import measures as me  # noqa: E402
 
 SKIP = {"cfg"}     # the only stored key allowed to differ: the measured run's config carries the pack's folder
 S1_LEVELS = (3500.0, 7000.0)
@@ -60,7 +60,7 @@ def jobs(out: Path, work: Path) -> dict:
 
 
 def _run(a):
-    from v5b2.fleet.plant_sweep import run_one
+    from v5b2.freeway.evaluate import run_one
     return run_one(a)
 
 
@@ -164,7 +164,7 @@ def run(out: Path, work: Path, workers: int) -> None:
         dirty = ""
     if dirty:
         raise SystemExit("uncommitted changes in v5b2 or round2: run from a clean, frozen copy")
-    from v5b2.fleet.plant_sweep import matrix
+    from v5b2.freeway.evaluate import matrix
     for ph, j in jobs(out, work).items():
         matrix(j["arms"], tuple(j["levels"]), j["seeds"], work / f"rows_{ph}.jsonl", workers, str(work / "rd"))
 

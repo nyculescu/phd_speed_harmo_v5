@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from common1 import ENVS, FIRST_WORKER, GAMMA, LAM, LEARNERS, LEVELS, NET_SEED, PER_WORKER, SEED0, UPDATES, env_for
-from v5b2.fleet import c_train as ct
+from v5b2.freeway import train_per_cav as ct
 
 BASE_TAGS = ("ppo/reward_per_decision", "ppo/entropy", "ppo/value_loss", "ppo/kl", "ppo/clipfrac", "ppo/ev", "ppo/n", "ppo/scale", "ppo/wall_s")
 LAGR_TAGS = ("cost/per_decision", "cost/value_loss", "cost/ev", "cost/scale", "lagr/lambda")

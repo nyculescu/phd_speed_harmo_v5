@@ -16,7 +16,7 @@ SHUFFLES, SEED = 10, 20261107
 def traced(a: tuple):
     """One run with the policy's decision inputs recorded; recording copies the arrays the rule is given and changes nothing."""
     import torch
-    from v5b2.fleet import c_train as ct, plant_sweep as ps
+    from v5b2.freeway import train_per_cav as ct, evaluate as ps
     torch.set_num_threads(1)
     seen = []
 
@@ -34,7 +34,7 @@ def traced(a: tuple):
 
 def changed(path: str, X: np.ndarray, cols: tuple) -> dict:
     import torch
-    from v5b2.fleet.c_train import Greedy
+    from v5b2.freeway.train_per_cav import Greedy
     net = Greedy(path).net
     rng = np.random.default_rng(SEED)
     with torch.no_grad():

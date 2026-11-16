@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 from common import ENVS, FIRST_WORKER, LEARNERS, LEVELS, PER_WORKER, PLANT, SEED0, load, val
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 
 def refs(T: dict, n: int = 20) -> dict:

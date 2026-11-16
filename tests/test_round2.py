@@ -12,7 +12,7 @@ sys.path[:0] = [str(ROOT / "analysis/round2"), str(ROOT / "analysis/round1"), st
 
 import cma2  # noqa: E402
 import decide2 as dc  # noqa: E402
-from v5b2.fleet import b_env as be, c_train as ct  # noqa: E402
+from v5b2.freeway import environments as be, train_per_cav as ct  # noqa: E402
 
 E3 = ROOT / "analysis/round2/3e"
 FINAL_RUNS = Path("/home/catalin/work/phd/v5b1_runs/round2_remote/cma3e/final_runs.jsonl")

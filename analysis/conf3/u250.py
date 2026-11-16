@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from common import LEARNERS, PRIMARY, Q, SEEDS_TUNE, cfg, effect, load
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 if __name__ == "__main__":
     train, out, w = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3])

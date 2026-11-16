@@ -7,7 +7,7 @@ from pathlib import Path
 
 from common1 import LEARNERS, OPPONENTS, PREFIX, PRIMARY, Q, RULE, SEEDS_VAL, check_rows, incumbent, load, pt_cfg, rule_cfg
 import decide1 as dc
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 CKS = (250, 500)
 

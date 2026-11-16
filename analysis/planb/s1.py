@@ -44,7 +44,7 @@ def placeholder_model(path: Path) -> str:
     """A fixed random MPC-F model over two actions, so C2 runs control mode; returns its SHA-256."""
     import hashlib
     import torch
-    from v5b2.fleet.planb_ctrl import N_FEAT, Net
+    from v5b2.freeway.supervisory import N_FEAT, Net
     torch.manual_seed(20261108)
     net = Net(N_FEAT + 2).m
     torch.save({"state": net.state_dict(), "mu": np.zeros(N_FEAT + 2, np.float32), "sd": np.full(N_FEAT + 2, 10.0, np.float32), "n_act": 2}, path)
@@ -154,7 +154,7 @@ def check(out: Path, base: Path, workers: int) -> dict:
     jobs5 = [[f"{c}|{a}", pb.with_cond(arms[a], c), pb.Q, SMOKE[0]] for c in ("SURGE", "TRUCK") for a in ("nc", "p333", "w0u250")]
     r5 = run(pb.ROOT, jobs5, out / "c5_off.jsonl", workers)
     bad = {k[0]: d for k in r5 if (d := diff(r5[k], r1[k], only=lambda x: not x.startswith("m_") and x not in SKIP))}
-    calls = [f for f in ("v5b2/fleet/measure.py", "v5b2/fleet/planb_ctrl.py") if re.search(r"\._x\(", (pb.ROOT / f).read_text())]
+    calls = [f for f in ("v5b2/freeway/measures.py", "v5b2/freeway/supervisory.py") if re.search(r"\._x\(", (pb.ROOT / f).read_text())]
     sums = {}
     for k, row in r1.items():
         tot = sum(sum(x.values()) for x in row["m_road_ttc3"].values())

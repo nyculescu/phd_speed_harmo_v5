@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from common import cfg
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 CONF3 = Path("/home/catalin/work/phd/v5b1_runs/conf3")
 LEVELS = tuple(sorted(float(round(x, -1)) for x in np.random.default_rng(20261105).uniform(3800.0, 6000.0, 16)))

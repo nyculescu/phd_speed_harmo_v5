@@ -19,8 +19,8 @@ sys.path.insert(0, str(HERE.parent / "c1"))
 sys.path.insert(0, str(HERE.parents[1]))
 import read_c1 as rc  # noqa: E402
 import read_cf as rf  # noqa: E402
-from v5b2.fleet import vv_merge as vm  # noqa: E402
-from v5b2.fleet.measure import group as road_group  # noqa: E402
+from v5b2.freeway import merge_instruments as vm  # noqa: E402
+from v5b2.freeway.measures import group as road_group  # noqa: E402
 
 V3W = rc.V3W
 RULES = ("lr400_16_1", "grid_lr400_13_1")     # VV-D2: the deciding rules

@@ -25,7 +25,7 @@ trap 'kill $WD $(jobs -p) 2>/dev/null' EXIT
 
 train() {
   [ -d "$D/train_$1/tb/C$2" ] && mv "$D/train_$1/tb/C$2" "$D/train_$1/tb/C$2.old_$(date +%s)"
-  $PY -m v5b2.fleet.c_train train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
+  $PY -m v5b2.freeway.train_per_cav train --out "$D/train_$1" --learner "$2" --updates 500 --n-envs 3 --gamma 0.933 --lam 0.967 --levels "$LEVELS" \
     --net-seed 20261205 --env "$3" --lagr "$4" 2>&1 | grep -av '^Warning' >> "$D/train_$1_$2.log"; return ${PIPESTATUS[0]}
 }
 

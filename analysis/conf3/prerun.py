@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from common import LEVELS, Q, SEEDS_CHECK, cfg, effect, load, med, val
-from v5b2.fleet import plant_sweep as ps
+from v5b2.freeway import evaluate as ps
 
 ARMS = {"nc": {}, "p333": {"cav_rule": [3, 3, 3]}, "dup333": {"pattern": [3, 3, 3, 3, 3]}, "r4a1": {"road_levels": {"4a": 1}}, "lr1000_10": {"local_rule": {"r": 1000, "th": 10}},
         "z31333": {"pattern": [3, 1, 3, 3, 3]}, "a4": {"adaptive_4a": {"r": 1000, "th": 10, "level": 1, "road_level": 1}}, "os": {"own_state": {"level": 1, "th": 10, "crowd": 0}}, "os_crowd": {"own_state": {"level": 1, "th": 15, "crowd": 10}}}

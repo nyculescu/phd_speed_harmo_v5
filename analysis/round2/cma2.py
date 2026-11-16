@@ -32,7 +32,7 @@ for p in (ROOT, ROOT / "analysis/round1"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 from common1 import OPPONENTS, RULE, TRAINING_SLOWDOWNS, rule_cfg # noqa: E402
-from v5b2.fleet.b_env import ZONE_EDGES_3E, ZoneOwnState, zone_of_3e as zone_of # noqa: E402,F401
+from v5b2.freeway.environments import ZONE_EDGES_3E, ZoneOwnState, zone_of_3e as zone_of # noqa: E402,F401
 
 ZONES = ("up", "merge1", "between", "merge2", "down")
 EDGES = ZONE_EDGES_3E
@@ -88,7 +88,7 @@ def zone_ctrl(zones: list) -> dict:
 def run_cfg(a: tuple) -> dict:
     """One run in a fresh process."""
     t0 = time.time()
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     return {**slim(ps.run_one(a)), "wall_s": round(time.time() - t0, 1)}
 
 

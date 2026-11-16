@@ -28,7 +28,7 @@ def group(road: str) -> str:
 
 def install() -> None:
     """Wrap the pack so that, after each of its reads, the same state is recorded through getters. Called once in a worker."""
-    from v5b2.fleet import measure
+    from v5b2.freeway import measures as measure
     init0, sec0, step0 = measure.Measure.__init__, measure.Measure.second, measure.Measure.vehicle_step
 
     def init(self, env, trucks, routes, length, dt):
@@ -64,7 +64,7 @@ def nest():
 
 def recount(rec: dict) -> dict:
     """The Plan B counters from a record, by planb.md §5's definitions."""
-    from v5b2.fleet.perturb import event_period
+    from v5b2.freeway.disturbances import event_period
     t0, t_end = rec["t0"], rec["t_end"]
     nt, nm = int(np.ceil((t_end - t0) / DT)), int(np.ceil((t_end - t0) / 60.0))
     nx = int(np.ceil(rec["off"]["_end"] / DX))
@@ -205,7 +205,7 @@ def sample(rec: dict) -> dict:
 
 def traced_one(a: tuple) -> tuple:
     install()
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     row = ps.run_one(a)
     return row, recount(_REC), sample(_REC), {"seconds": len(_REC["sec"]), "braking_steps": len(_REC["brk"])}
 

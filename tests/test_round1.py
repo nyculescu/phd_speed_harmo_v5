@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "analysis/round1"))
 import common1 as c1  # noqa: E402
 import decide1 as dc1  # noqa: E402
 import tbcheck1 as tb  # noqa: E402
-from v5b2.fleet import b_env as be, c_train as ct  # noqa: E402
+from v5b2.freeway import environments as be, train_per_cav as ct  # noqa: E402
 
 V3_TRAIN = Path("/home/catalin/work/phd/v5b1_runs/baseline_v3/conf3/train")
 

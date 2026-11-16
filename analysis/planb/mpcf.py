@@ -1,5 +1,5 @@
 """Plan B (planb.md §3.5): MPC-F, the fitted-model MPC. Ported from claude/v5b-core:vsl_lab/jobs/mpcf.py (data by held
-actions, a 2 x 64 tanh MLP on standardised inputs, receding-horizon choice); the controller is v5b2/fleet/planb_ctrl.MpcF.
+actions, a 2 x 64 tanh MLP on standardised inputs, receding-horizon choice); the controller is v5b2/freeway/supervisory.MpcF.
 
 usage: mpcf.py all --out DIR --actions FILE --conds S,SURGE,TRUCK [--workers N]
   --actions: written by `plan6.py inputs` (p333, the steady pick, 3E-T, each passing cell's 3E-C), so plan6 freeze can check it.
@@ -74,7 +74,7 @@ def split(seed_list: list) -> tuple:
 
 def fit(samples: list, n_act: int, train_seeds: list, stop_seeds: set, test_seeds: set) -> dict:
     import torch
-    from v5b2.fleet.planb_ctrl import Net, onehot_features
+    from v5b2.freeway.supervisory import Net, onehot_features
     torch.manual_seed(SPLIT_SEED)
     torch.set_num_threads(1)
     X = np.stack([onehot_features(np.asarray(x["x"], np.float32), x["a"], n_act) for x in samples]).astype(np.float32)

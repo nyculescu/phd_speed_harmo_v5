@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from common import ENVS, FIRST_WORKER, LEARNERS, LEVELS, NET_SEED, UPDATES
-from v5b2.fleet import c_train as ct
+from v5b2.freeway import train_per_cav as ct
 
 
 def stat(rows: list) -> tuple:

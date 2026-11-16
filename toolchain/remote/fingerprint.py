@@ -41,7 +41,7 @@ def code_hash() -> str:
 def fingerprint(out: Path) -> str:
     d = out / "fingerprint"
     shutil.rmtree(d, ignore_errors=True)
-    cmd = [PY, "-m", "v5b2.fleet.c_train", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1",
+    cmd = [PY, "-m", "v5b2.freeway.train_per_cav", "train", "--out", str(d), "--learner", "0", "--updates", "1", "--n-envs", "1",
            "--env", json.dumps({**ENV_V3, **SHORT}), "--levels", json.dumps([Q]), "--gamma", str(GAMMA), "--lam", str(LAM),
            "--net-seed", str(NET_SEED)]
     subprocess.run(cmd, cwd=ROOT, env={**os.environ, "PYTHONPATH": str(ROOT), "PYTHONDONTWRITEBYTECODE": "1"}, check=True,

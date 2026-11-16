@@ -11,5 +11,5 @@ case "$1" in
 esac
 systemctl --user stop r1-guard
 for _ in 1 2 3 4 5 6; do systemctl --user is-active -q r1-guard || break; sleep 5; done
-systemd-run --user --unit r1-guard --collect --working-directory="$C" /bin/bash -c "PYTHONPATH=$C $PY -m v5b2.ops.watch --pattern '^/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python -c from multiprocessing.spawn' --unit r1-chain --cpu-limit $lim >> $D/guard_pace.log 2>&1"
+systemd-run --user --unit r1-guard --collect --working-directory="$C" /bin/bash -c "PYTHONPATH=$C $PY -m v5b2.ops.cpu_watch --pattern '^/home/catalin/work/phd/phd_speed_harmo_v5b1_toolchain/venv/bin/python -c from multiprocessing.spawn' --unit r1-chain --cpu-limit $lim >> $D/guard_pace.log 2>&1"
 echo "$(date '+%F %T') pace $1: guard limit $lim" >> "$D/status_pace.txt"

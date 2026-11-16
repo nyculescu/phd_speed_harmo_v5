@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 import read6_regress  # noqa: E402
 from test_planb_read6 import cfg, r6  # noqa: E402
 from test_planb_read6_v22 import JAM, P333, X, gate, jam_world, main_world, picks_files, st_row  # noqa: E402
-from v5b2.fleet import measure  # noqa: E402
+from v5b2.freeway import measures as measure  # noqa: E402
 
 REAL_WAVES = measure.waves
 

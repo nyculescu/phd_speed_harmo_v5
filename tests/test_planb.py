@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from v5b2.fleet import b_merge as bm, fleet as fl, perturb as pt
+from v5b2.freeway import merge_bind_check as bm, vehicles as fl, disturbances as pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analysis/conf3"))
 from common import COND  # noqa: E402
@@ -38,7 +38,7 @@ def test_truck_fixed_takes_the_first_eligible_truck_at_or_after_each_slot(seed):
 
 
 def test_reset_builds_the_vehicle_sets_after_the_perturbed_demand():
-    from v5b2.fleet import b_env as be
+    from v5b2.freeway import environments as be
     src = inspect.getsource(be.MergeEnv.reset)
     assert src.index("self.pert.demand()") < src.index("self._demand_sets()") < src.index("self.dem.write(")
     env = env_for(7_480_001)
@@ -133,7 +133,7 @@ def test_existing_kinds_leave_the_demand_list_alone():
 
 
 # The pack's Plan B keys on planted traces (planb.md §5, PR-24).
-from v5b2.fleet import measure as me
+from v5b2.freeway import measures as me
 
 
 class _Pert:

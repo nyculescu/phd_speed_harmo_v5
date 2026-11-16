@@ -27,13 +27,13 @@ E3KEYS = ("all_delay", "ttc_net", "collisions", "passed", "teleports", "alks_b45
 
 
 def run1(a):
-    from v5b2.fleet import plant_sweep as ps
+    from v5b2.freeway import evaluate as ps
     return ps.run_one(a)
 
 
 def run_swap(a):
     """3E's old worker route: the own_state key with the per-zone class swapped in (cma2.py at d2d0d04, run_cfg)."""
-    from v5b2.fleet import b_env as be, plant_sweep as ps
+    from v5b2.freeway import environments as be, evaluate as ps
     be.OwnState = be.ZoneOwnState
     return ps.run_one(a)
 
@@ -70,7 +70,7 @@ def identity(out: Path, w: int) -> int:
     res.append(("baseline-v4 store matches its SHA256SUMS", got == want and len(want) == 45, f"{len(want)} files"))
     old_src = subprocess.run(["git", "-C", GIT, "show", "d2d0d04:analysis/round2/cma2.py"], capture_output=True,
                              text=True, check=True).stdout
-    from v5b2.fleet import b_env as be
+    from v5b2.freeway import environments as be
     body = lambda s: s[s.index("    def __init__(self, zones: list):"):].split("\n\n\n")[0]
     new_body = body(inspect.getsource(be.ZoneOwnState)).replace("zone_of_3e(", "zone_of(").replace("(100.0 / 3.6)", "LIMIT")
     res.append(("3E class moved unchanged", body(old_src[old_src.index("class ZoneOwnState"):]).strip() == new_body.strip(), "method bodies"))
@@ -197,7 +197,7 @@ def tailobs(out: Path) -> int:
     observations of the smoke run; and TailMean([u500, u500]) against Greedy(u500)."""
     import numpy as np
     import torch
-    from v5b2.fleet.c_train import Greedy, TailMean
+    from v5b2.freeway.train_per_cav import Greedy, TailMean
     from common2e import TAIL_CKS
     X = np.load(out / "tail_obs.npy")
     ids = [f"v{i}" for i in range(len(X))]
